@@ -1,0 +1,23 @@
+{
+  "model_name": "mobilenetv3_large_mushrooms_pl_v1",
+  "input_shape": [1, 224, 224, 3],
+  "input_normalization": {
+    "mean": [0.485, 0.456, 0.406],
+    "std": [0.229, 0.224, 0.225]
+  },
+  "quantization": "INT8",
+  "classes": [
+    { "index": 0, "id": "boletus_edulis", "name": "Borowik szlachetny", "status": "EDIBLE" },
+    { "index": 1, "id": "amanita_phalloides", "name": "Muchomor sromotnikowy", "status": "DEADLY_POISONOUS" },
+    { "index": 2, "id": "macrolepiota_procera", "name": "Czubajka kania", "status": "EDIBLE" },
+    { "index": 3, "id": "cantharellus_cibarius", "name": "Pieprznik jadalny (Kurka)", "status": "EDIBLE" },
+    { "index": 4, "id": "imleria_badia", "name": "Podgrzybek brunatny", "status": "EDIBLE" },
+    { "index": 5, "id": "suillus_luteus", "name": "Maślak zwyczajny", "status": "EDIBLE" },
+    { "index": 6, "id": "leccinum_scabrum", "name": "Koźlarz babka", "status": "EDIBLE" },
+    { "index": 7, "id": "tylopilus_felleus", "name": "Goryczak żółciowy", "status": "INEDIBLE" },
+    { "index": 8, "id": "amanita_muscaria", "name": "Muchomor czerwony", "status": "POISONOUS" },
+    { "index": 9, "id": "lactarius_deliciosus", "name": "Mleczaj rydz", "status": "EDIBLE" },
+    { "index": 10, "id": "gyromitra_esculenta", "name": "Piestrzenica kasztanowata", "status": "DEADLY_POISONOUS" },
+    { "index": 11, "id": "paxillus_involutus", "name": "Krowiak podwinięty (Olszówka)", "status": "DEADLY_POISONOUS" }
+  ]
+}
