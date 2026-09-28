@@ -1,4 +1,5 @@
 import * as tf from '@tensorflow/tfjs';
+import { ensureTensorFlowPlatform } from '../utils/tfjsPlatform';
 import { ModelPrediction, MushroomSpecies } from '../types/mushroom';
 import { MUSHROOMS_DATABASE } from '../data/mushrooms';
 
@@ -24,6 +25,7 @@ class MushroomClassifierService {
    */
   public async init(): Promise<void> {
     try {
+      ensureTensorFlowPlatform();
       await tf.ready();
       
       // Budowa lokalnego grafu inferencyjnego MobileNet dla gatunków grzybów
@@ -55,6 +57,7 @@ class MushroomClassifierService {
    * Przygotowanie tensora wejściowego z obrazu [1, 224, 224, 3]
    */
   private prepareInputTensor(imageUri: string, forcedIndex?: number): tf.Tensor4D {
+    ensureTensorFlowPlatform();
     return tf.tidy(() => {
       // W środowisku przeglądarkowym / React Native:
       // Tworzymy znormalizowany tensor wejściowy [1, 224, 224, 3] w zakresie [0, 1]

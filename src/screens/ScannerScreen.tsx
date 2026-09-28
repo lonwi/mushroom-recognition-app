@@ -60,21 +60,33 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
   // Wybór zdjęcia z galerii telefonu
   const pickImageFromGallery = async () => {
     try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Brak uprawnień',
+          'Aplikacja potrzebuje dostępu do galerii zdjęć, aby wybrać zdjęcie do analizy offline.'
+        );
+        return;
+      }
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
+        allowsEditing: false,
         quality: 0.8,
       });
 
-      if (!result.canceled && result.assets && result.assets[0].uri) {
+      if (!result.canceled && result.assets && result.assets.length > 0 && result.assets[0].uri) {
         setIsAnalyzing(true);
         const res = await classifierService.classifyImage(result.assets[0].uri);
         setClassificationResult(res);
         setResultModalVisible(true);
       }
-    } catch (err) {
-      Alert.alert('Błąd', 'Nie udało się załadować zdjęcia z galerii.');
+    } catch (err: any) {
+      console.error('Gallery picker error:', err);
+      Alert.alert(
+        'Błąd',
+        `Nie udało się załadować zdjęcia z galerii: ${err?.message || 'Nieznany błąd'}`
+      );
     } finally {
       setIsAnalyzing(false);
     }

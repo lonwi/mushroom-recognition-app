@@ -82,6 +82,9 @@ mushroom-app/
 3. **Memory Management**:
    - When running inference in `classifierService.ts`, always wrap tensor operations in `tf.tidy()` to immediately free GPU/CPU memory on mobile devices.
 
+4. **Hermes Engine Compatibility**:
+   - In React Native (Hermes engine), TensorFlow.js cannot auto-detect a platform because neither DOM nor Node `process.versions.node` exist. Always ensure `PlatformReactNative` from `src/utils/tfjsPlatform.ts` is registered via `ensureTensorFlowPlatform()` to prevent `isTypedArray of undefined` errors.
+
 ---
 
 ## ⚡ Agent Workflow & Commands
