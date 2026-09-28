@@ -6,12 +6,14 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { MushroomSpecies } from '../types/mushroom';
 import { EdibilityBadge } from '../components/EdibilityBadge';
 import { LookAlikeAlert } from '../components/LookAlikeAlert';
+import { getMushroomImage } from '../utils/mushroomImages';
 
 interface Props {
   species: MushroomSpecies;
@@ -45,6 +47,12 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack }) => {
     <View style={styles.container}>
       {/* Hero Section */}
       <View style={styles.heroSection}>
+        <Image
+          source={getMushroomImage(species.id)}
+          style={StyleSheet.absoluteFillObject}
+          resizeMode="cover"
+        />
+        <View style={styles.heroOverlay} />
         <SafeAreaView>
           <View style={styles.navBar}>
             <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.8}>
@@ -213,6 +221,12 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 10,
     zIndex: 10,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(5, 30, 18, 0.68)',
   },
   navBar: {
     paddingHorizontal: 16,

@@ -6,12 +6,14 @@ import {
   TextInput,
   TouchableOpacity,
   FlatList,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MUSHROOMS_DATABASE } from '../data/mushrooms';
 import { MushroomSpecies, EdibilityStatus, HymenophoreType } from '../types/mushroom';
 import { EdibilityBadge } from '../components/EdibilityBadge';
 import { useLanguage } from '../contexts/LanguageContext';
+import { getMushroomImage } from '../utils/mushroomImages';
 
 interface Props {
   onSelectSpecies: (species: MushroomSpecies) => void;
@@ -61,30 +63,39 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
         onPress={() => onSelectSpecies(item)}
         activeOpacity={0.7}
       >
-        <View style={styles.cardHeader}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.namePl}>{item.namePl}</Text>
-            <Text style={styles.nameLatin}>{item.nameLatin}</Text>
-          </View>
-          <EdibilityBadge status={item.status} size="small" />
-        </View>
-
-        <Text style={styles.nicknames} numberOfLines={1}>
-          Potocznie: {item.commonNicknames.join(', ')}
-        </Text>
-
-        <View style={styles.cardFooter}>
-          <View style={styles.tag}>
-            <Text style={styles.tagText}>🍄 {hymenophoreLabel}</Text>
-          </View>
-          <View style={styles.tag}>
-            <Text style={styles.tagText}>📅 {monthsStr}</Text>
-          </View>
-          {item.confusionRisks.some((r) => r.fatal) && (
-            <View style={[styles.tag, styles.tagDanger]}>
-              <Text style={styles.tagDangerText}>☠ Sobowtór!</Text>
+        <View style={styles.cardMainRow}>
+          <Image
+            source={getMushroomImage(item.id)}
+            style={styles.cardThumbnail}
+            resizeMode="cover"
+          />
+          <View style={styles.cardDetails}>
+            <View style={styles.cardHeader}>
+              <View style={{ flex: 1, paddingRight: 6 }}>
+                <Text style={styles.namePl}>{item.namePl}</Text>
+                <Text style={styles.nameLatin}>{item.nameLatin}</Text>
+              </View>
+              <EdibilityBadge status={item.status} size="small" />
             </View>
-          )}
+
+            <Text style={styles.nicknames} numberOfLines={1}>
+              Potocznie: {item.commonNicknames.join(', ')}
+            </Text>
+
+            <View style={styles.cardFooter}>
+              <View style={styles.tag}>
+                <Text style={styles.tagText}>🍄 {hymenophoreLabel}</Text>
+              </View>
+              <View style={styles.tag}>
+                <Text style={styles.tagText}>📅 {monthsStr}</Text>
+              </View>
+              {item.confusionRisks.some((r) => r.fatal) && (
+                <View style={[styles.tag, styles.tagDanger]}>
+                  <Text style={styles.tagDangerText}>☠ Sobowtór!</Text>
+                </View>
+              )}
+            </View>
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -276,8 +287,8 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: 14,
+    padding: 12,
     marginBottom: 10,
     borderWidth: 1,
     borderColor: '#E2E8F0',
@@ -285,7 +296,21 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
     shadowRadius: 3,
-    elevation: 1,
+    elevation: 2,
+  },
+  cardMainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  cardThumbnail: {
+    width: 80,
+    height: 80,
+    borderRadius: 12,
+    backgroundColor: '#E2E8F0',
+    marginRight: 12,
+  },
+  cardDetails: {
+    flex: 1,
   },
   cardHeader: {
     flexDirection: 'row',

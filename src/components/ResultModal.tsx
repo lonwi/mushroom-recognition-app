@@ -16,6 +16,7 @@ import { EdibilityBadge } from './EdibilityBadge';
 import { LookAlikeAlert } from './LookAlikeAlert';
 import { storageService } from '../services/storageService';
 import * as Location from 'expo-location';
+import { getMushroomImage } from '../utils/mushroomImages';
 
 interface Props {
   visible: boolean;
@@ -97,13 +98,18 @@ export const ResultModal: React.FC<Props> = ({
           <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
             {/* Zdjęcie i wskaźnik szybkości */}
             <View style={styles.imageContainer}>
-              {result.processedImageUri ? (
-                <Image source={{ uri: result.processedImageUri }} style={styles.image} resizeMode="cover" />
-              ) : (
-                <View style={styles.placeholderImage}>
-                  <Text style={{ fontSize: 36 }}>🍄</Text>
-                </View>
-              )}
+              <Image
+                source={
+                  result.processedImageUri &&
+                  (result.processedImageUri.startsWith('file:') ||
+                   result.processedImageUri.startsWith('content:') ||
+                   result.processedImageUri.startsWith('data:'))
+                    ? { uri: result.processedImageUri }
+                    : getMushroomImage(mainSpecies.id)
+                }
+                style={styles.image}
+                resizeMode="cover"
+              />
               <View style={styles.latencyBadge}>
                 <Text style={styles.latencyText}>⚡ On-device TFLite: {result.inferenceTimeMs} ms</Text>
               </View>
