@@ -49,7 +49,7 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack }) => {
       <View style={styles.heroSection}>
         <Image
           source={getMushroomImage(species.id)}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
           resizeMode="cover"
         />
         <View style={styles.heroOverlay} />
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(5, 30, 18, 0.68)',
   },
   navBar: {

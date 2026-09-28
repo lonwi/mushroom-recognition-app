@@ -141,7 +141,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
     <View style={styles.container}>
       {/* Podgląd kamery */}
       <CameraView
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         facing="back"
         enableTorch={torchEnabled}
         ref={cameraRef}
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   cameraOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'space-between',
   },
   cameraHeader: {
