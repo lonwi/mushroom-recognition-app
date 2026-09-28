@@ -61,7 +61,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
   const pickImageFromGallery = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
@@ -129,11 +129,14 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
     <View style={styles.container}>
       {/* Podgląd kamery */}
       <CameraView
-        style={styles.camera}
+        style={StyleSheet.absoluteFillObject}
         facing="back"
         enableTorch={torchEnabled}
         ref={cameraRef}
-      >
+      />
+
+      {/* Nakładka z elementami sterowania */}
+      <View style={styles.cameraOverlay}>
         {/* Górny pasek sterowania w aparacie */}
         <View style={styles.cameraHeader}>
           <TouchableOpacity
@@ -225,7 +228,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
 
           <View style={{ width: 60 }} />
         </View>
-      </CameraView>
+      </View>
 
       {/* Modal z wynikiem rozpoznania */}
       <ResultModal
@@ -244,8 +247,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
-  camera: {
-    flex: 1,
+  cameraOverlay: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'space-between',
   },
   cameraHeader: {

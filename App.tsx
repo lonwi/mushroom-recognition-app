@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   StatusBar,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { ScannerScreen } from './src/screens/ScannerScreen';
 import { AtlasScreen } from './src/screens/AtlasScreen';
 import { SpeciesDetailScreen } from './src/screens/SpeciesDetailScreen';
@@ -181,11 +181,13 @@ function AppContent() {
 
 export default function App() {
   return (
-    <LanguageProvider>
-      <PaperProvider theme={paperTheme}>
-        <AppContent />
-      </PaperProvider>
-    </LanguageProvider>
+    <SafeAreaProvider>
+      <LanguageProvider>
+        <PaperProvider theme={paperTheme}>
+          <AppContent />
+        </PaperProvider>
+      </LanguageProvider>
+    </SafeAreaProvider>
   );
 }
 
