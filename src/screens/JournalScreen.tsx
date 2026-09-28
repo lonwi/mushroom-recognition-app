@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
   Image,
   Alert,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { storageService } from '../services/storageService';
 import { SightingRecord } from '../types/mushroom';
 import { MUSHROOMS_DATABASE } from '../data/mushrooms';

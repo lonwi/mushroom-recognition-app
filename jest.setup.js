@@ -4,6 +4,11 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
 
+// Mock react-native-safe-area-context
+jest.mock('react-native-safe-area-context', () =>
+  require('react-native-safe-area-context/jest/mock').default
+);
+
 // Mock expo-camera
 jest.mock('expo-camera', () => ({
   CameraView: 'CameraView',

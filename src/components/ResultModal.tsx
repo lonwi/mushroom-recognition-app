@@ -7,10 +7,10 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
-  SafeAreaView,
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ClassificationResult } from '../services/classifierService';
 import { EdibilityBadge } from './EdibilityBadge';
 import { LookAlikeAlert } from './LookAlikeAlert';

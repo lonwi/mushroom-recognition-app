@@ -4,9 +4,9 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { PREPARATION_GUIDE } from '../data/preparationRules';
 import { useLanguage } from '../contexts/LanguageContext';
 

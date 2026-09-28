@@ -6,8 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Linking,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { GOLDEN_RULES, POISON_SYNDROMES, TOXICOLOGY_CENTERS } from '../data/safetyRules';
 
 interface Props {

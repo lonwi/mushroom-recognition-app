@@ -6,8 +6,8 @@ import {
   TextInput,
   TouchableOpacity,
   FlatList,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { MUSHROOMS_DATABASE } from '../data/mushrooms';
 import { MushroomSpecies, EdibilityStatus, HymenophoreType } from '../types/mushroom';
 import { EdibilityBadge } from '../components/EdibilityBadge';
