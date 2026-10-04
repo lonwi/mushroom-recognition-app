@@ -1,5 +1,4 @@
 import React from 'react';
-import { Image } from 'react-native';
 import { render } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ResultModal } from '../../components/ResultModal';
@@ -55,12 +54,18 @@ describe('ResultModal when recognition is unavailable', () => {
   });
 
   it('does not substitute a stock photo when the uri is not a local capture', async () => {
-    const { UNSAFE_queryByType } = await renderModal({
+    const remote = await renderModal({
       status: 'unavailable',
       reason: 'model_missing',
       processedImageUri: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5',
     });
+    expect(remote.queryByTestId('captured-photo')).toBeNull();
 
-    expect(UNSAFE_queryByType(Image)).toBeNull();
+    const local = await renderModal({
+      status: 'unavailable',
+      reason: 'model_missing',
+      processedImageUri: 'file://camera/capture.jpg',
+    });
+    expect(local.getByTestId('captured-photo')).toBeTruthy();
   });
 });

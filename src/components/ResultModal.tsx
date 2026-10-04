@@ -51,7 +51,12 @@ export const ResultModal: React.FC<Props> = ({ visible, result, onClose }) => {
           <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
             {showPhoto ? (
               <View style={styles.imageContainer}>
-                <Image source={{ uri: photoUri }} style={styles.image} resizeMode="cover" />
+                <Image
+                  source={{ uri: photoUri }}
+                  style={styles.image}
+                  resizeMode="cover"
+                  testID="captured-photo"
+                />
               </View>
             ) : null}
 
