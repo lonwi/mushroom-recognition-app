@@ -51,7 +51,7 @@ mushroom-app/
 │   │   ├── PreparationGuideScreen.tsx # Cleaning, cooking, storing guide tabs
 │   │   └── SettingsScreen.tsx       # Language selection & offline mode indicator
 │   ├── services/
-│   │   ├── classifierService.ts     # On-Device TensorFlow.js CNN tensor inference
+│   │   ├── classifierService.ts     # Refuses a species until a real pixel model exists
 │   │   └── storageService.ts        # AsyncStorage offline persistence (sightings, disclaimer)
 │   ├── stories/             # Component stories for Storybook catalog
 │   ├── theme/               # Theme tokens (paperTheme.ts - MD3 forest palette)
@@ -84,6 +84,11 @@ mushroom-app/
 
 4. **Hermes Engine Compatibility**:
    - In React Native (Hermes engine), TensorFlow.js cannot auto-detect a platform because neither DOM nor Node `process.versions.node` exist. Always ensure `PlatformReactNative` from `src/utils/tfjsPlatform.ts` is registered via `ensureTensorFlowPlatform()` to prevent `isTypedArray of undefined` errors.
+
+5. **Recognition honesty**:
+   - `classifierService` must not return a species, a confidence percentage, or an inference time unless a real on-device model consumed that photo's pixels.
+   - Do not floor confidence, invent latency, hash a URI into a class, or pass a forced species id through the scanner and present it as a scan.
+   - `assets/models/labels.json` is not a model. Do not claim TFLite while `mushrooms_model.tflite` and `react-native-fast-tflite` are absent.
 
 ---
 

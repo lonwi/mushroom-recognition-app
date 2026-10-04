@@ -12,6 +12,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { classifierService, ClassificationResult } from '../services/classifierService';
 import { ResultModal } from '../components/ResultModal';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Props {
   onOpenAtlasSpecies?: (speciesId: string) => void;
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJournal }) => {
+  const { t } = useLanguage();
   const [permission, requestPermission] = useCameraPermissions();
   const [torchEnabled, setTorchEnabled] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -27,33 +29,37 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
 
   const cameraRef = useRef<any>(null);
 
-  // Zrobienie zdjęcia aparatem i uruchomienie klasyfikacji
-  const takePictureAndAnalyze = async () => {
-    if (cameraRef.current) {
-      try {
-        setIsAnalyzing(true);
-        const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.8,
-          skipProcessing: true,
-        });
+  const showCapturedPhoto = async (imageUri: string) => {
+    const res = await classifierService.classifyImage(imageUri);
+    setClassificationResult(res);
+    setResultModalVisible(true);
+  };
 
-        if (photo && photo.uri) {
-          const res = await classifierService.classifyImage(photo.uri);
-          setClassificationResult(res);
-          setResultModalVisible(true);
-        }
-      } catch (err) {
-        console.error('Błąd wykonania zdjęcia:', err);
-        // Fallback w symulatorze
-        const res = await classifierService.classifyImage('https://images.unsplash.com/photo-1509198397868-475647b2a1e5');
-        setClassificationResult(res);
-        setResultModalVisible(true);
-      } finally {
-        setIsAnalyzing(false);
+  // Zrobienie zdjęcia aparatem. Brak zdjęcia nie podstawia ilustracji.
+  const takePictureAndAnalyze = async () => {
+    const camera = cameraRef.current;
+    if (!camera || typeof camera.takePictureAsync !== 'function') {
+      Alert.alert(t('scanner.cameraUnavailableTitle'), t('scanner.cameraUnavailableBody'));
+      return;
+    }
+
+    try {
+      setIsAnalyzing(true);
+      const photo = await camera.takePictureAsync({
+        quality: 0.8,
+        skipProcessing: true,
+      });
+
+      if (photo && photo.uri) {
+        await showCapturedPhoto(photo.uri);
+      } else {
+        Alert.alert(t('scanner.photoFailedTitle'), t('scanner.photoFailedBody'));
       }
-    } else {
-      // Fallback jeśli kamera nie jest zainicjalizowana
-      triggerQuickTest('boletus_edulis');
+    } catch (err) {
+      console.error('Błąd wykonania zdjęcia:', err);
+      Alert.alert(t('scanner.photoFailedTitle'), t('scanner.photoFailedBody'));
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -77,9 +83,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
 
       if (!result.canceled && result.assets && result.assets.length > 0 && result.assets[0].uri) {
         setIsAnalyzing(true);
-        const res = await classifierService.classifyImage(result.assets[0].uri);
-        setClassificationResult(res);
-        setResultModalVisible(true);
+        await showCapturedPhoto(result.assets[0].uri);
       }
     } catch (err: any) {
       console.error('Gallery picker error:', err);
@@ -92,18 +96,21 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
     }
   };
 
-  // Szybki test demo z bazy danych
-  const triggerQuickTest = async (speciesId: string) => {
-    setIsAnalyzing(true);
-    try {
-      const mockUri = 'https://images.unsplash.com/photo-1546842931-886c185b4c8c';
-      const res = await classifierService.classifyImage(mockUri, speciesId);
-      setClassificationResult(res);
-      setResultModalVisible(true);
-    } finally {
-      setIsAnalyzing(false);
+  const openAtlasSample = (speciesId: string) => {
+    if (onOpenAtlasSpecies) {
+      onOpenAtlasSpecies(speciesId);
     }
   };
+
+  const resultModal = (
+    <ResultModal
+      visible={resultModalVisible}
+      result={classificationResult}
+      onClose={() => setResultModalVisible(false)}
+      onOpenAtlasSpecies={onOpenAtlasSpecies}
+      onSavedToJournal={onSavedToJournal}
+    />
+  );
 
   if (!permission) {
     return (
@@ -120,19 +127,20 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
         <Text style={styles.permissionIcon}>📷</Text>
         <Text style={styles.permissionTitle}>Dostęp do aparatu jest wymagany</Text>
         <Text style={styles.permissionDesc}>
-          Aby analizować grzyby w lesie w czasie rzeczywistym, aplikacja potrzebuje dostępu do kamery urządzenia.
+          Aparat służy do zrobienia zdjęcia grzyba. Rozpoznawanie gatunku ze zdjęcia nie jest jeszcze dostępne.
         </Text>
         <TouchableOpacity style={styles.permissionBtn} onPress={requestPermission} activeOpacity={0.8}>
           <Text style={styles.permissionBtnText}>Zezwól na aparat</Text>
         </TouchableOpacity>
 
-        {/* Możliwość testu z galerii lub demo nawet bez uprawnień do kamery */}
+        {/* Galeria bez uprawnień do kamery. Błąd wyboru nie podstawia innego zdjęcia. */}
         <View style={styles.demoFallbackBox}>
           <Text style={styles.demoFallbackTitle}>Możesz również wybrać zdjęcie z galerii:</Text>
           <TouchableOpacity style={styles.galleryBtnAlt} onPress={pickImageFromGallery}>
             <Text style={styles.galleryBtnAltText}>🖼 Wybierz z galerii</Text>
           </TouchableOpacity>
         </View>
+        {resultModal}
       </View>
     );
   }
@@ -176,35 +184,39 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
           </View>
         </View>
 
-        {/* Pasek szybkiego testu demonstracyjnego */}
+        {/* Skróty do kart w atlasie. Nie uruchamiają rozpoznawania. */}
         <View style={styles.demoTestContainer}>
-          <Text style={styles.demoTestLabel}>Szybki test gatunków (Demo offline):</Text>
+          <Text style={styles.demoTestLabel}>{t('scanner.quickDemo')}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.demoScroll}>
             <TouchableOpacity
               style={styles.demoChip}
-              onPress={() => triggerQuickTest('boletus_edulis')}
+              onPress={() => openAtlasSample('boletus_edulis')}
               disabled={isAnalyzing}
+              testID="demo-atlas-boletus"
             >
               <Text style={styles.demoChipText}>🌲 Borowik</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.demoChip, styles.demoChipDanger]}
-              onPress={() => triggerQuickTest('amanita_phalloides')}
+              onPress={() => openAtlasSample('amanita_phalloides')}
               disabled={isAnalyzing}
+              testID="demo-atlas-amanita"
             >
               <Text style={[styles.demoChipText, styles.demoChipDangerText]}>☠ Muchomor sromotnikowy</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.demoChip}
-              onPress={() => triggerQuickTest('macrolepiota_procera')}
+              onPress={() => openAtlasSample('macrolepiota_procera')}
               disabled={isAnalyzing}
+              testID="demo-atlas-macrolepiota"
             >
               <Text style={styles.demoChipText}>☂ Czubajka kania</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.demoChip}
-              onPress={() => triggerQuickTest('cantharellus_cibarius')}
+              onPress={() => openAtlasSample('cantharellus_cibarius')}
               disabled={isAnalyzing}
+              testID="demo-atlas-cantharellus"
             >
               <Text style={styles.demoChipText}>🍳 Kurka</Text>
             </TouchableOpacity>
@@ -218,6 +230,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
             onPress={pickImageFromGallery}
             disabled={isAnalyzing}
             activeOpacity={0.7}
+            testID="scanner-gallery"
           >
             <Text style={styles.galleryIcon}>🖼</Text>
             <Text style={styles.galleryText}>Galeria</Text>
@@ -228,6 +241,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
             onPress={takePictureAndAnalyze}
             disabled={isAnalyzing}
             activeOpacity={0.8}
+            testID="scanner-shutter"
           >
             <View style={styles.shutterInner}>
               {isAnalyzing ? (
@@ -242,14 +256,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
         </View>
       </View>
 
-      {/* Modal z wynikiem rozpoznania */}
-      <ResultModal
-        visible={resultModalVisible}
-        result={classificationResult}
-        onClose={() => setResultModalVisible(false)}
-        onOpenAtlasSpecies={onOpenAtlasSpecies}
-        onSavedToJournal={onSavedToJournal}
-      />
+      {resultModal}
     </View>
   );
 };

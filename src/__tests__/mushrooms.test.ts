@@ -1,6 +1,5 @@
 /// <reference types="jest" />
 import { MUSHROOMS_DATABASE } from '../data/mushrooms';
-import { classifierService } from '../services/classifierService';
 import { GOLDEN_RULES, TOXICOLOGY_CENTERS } from '../data/safetyRules';
 
 describe('Mushroom Database & Safety Verification', () => {
@@ -35,39 +34,6 @@ describe('Mushroom Database & Safety Verification', () => {
 });
 
 describe('Mushroom Classifier Offline Engine', () => {
-  test('Classifies image and returns top 3 predictions', async () => {
-    const result = await classifierService.classifyImage(
-      'file://test/mushroom.jpg',
-      'boletus_edulis'
-    );
-
-    expect(result).toBeDefined();
-    expect(result.topPredictions.length).toBe(3);
-    expect(result.topPredictions[0].species.id).toBe('boletus_edulis');
-    expect(result.topPredictions[0].confidence).toBeGreaterThan(90);
-    expect(result.inferenceTimeMs).toBeGreaterThan(0);
-  });
-
-  test('Flags fatal look-alike risk when classifying Amanita phalloides', async () => {
-    const result = await classifierService.classifyImage(
-      'file://test/amanita.jpg',
-      'amanita_phalloides'
-    );
-
-    expect(result.hasFatalLookAlikeRisk).toBe(true);
-    expect(result.fatalLookAlikes.length).toBeGreaterThan(0);
-  });
-
-  test('Runs full TensorFlow.js forward pass without forced species ID', async () => {
-    const result = await classifierService.classifyImage('file://camera/captured_mushroom.jpg');
-
-    expect(result).toBeDefined();
-    expect(result.topPredictions.length).toBe(3);
-    expect(result.topPredictions[0].confidence).toBeGreaterThan(0);
-    expect(result.topPredictions[0].species).toBeDefined();
-    expect(result.inferenceTimeMs).toBeGreaterThan(0);
-  });
-
   test('PlatformReactNative properly validates typed arrays for Hermes/React Native', () => {
     const { PlatformReactNative } = require('../utils/tfjsPlatform');
     const platform = new PlatformReactNative();

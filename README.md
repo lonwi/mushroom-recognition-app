@@ -7,11 +7,12 @@ Aplikacja stworzona z myślą o miłośnikach leśnych wypraw i zbierania grzyb�
 
 ## 🌟 Kluczowe Funkcjonalności
 
-1. **Lokalny Skaner AI (TensorFlow Lite / On-Device ML)**:
-   - Natychmiastowe rozpoznawanie ze zdjęć z aparatu lub galerii.
-   - Wyświetlanie stopnia pewności modelu (Confidence %) oraz alternatywnych hipotez.
-   - Wskaźnik czasu inferencji tensora (np. ~120-140 ms na urządzeniu).
-   - Celownik z podpowiedziami kadrowania makro (kapelusz, spód, trzon) oraz wbudowana latarka leśna.
+1. **Skaner (aparat i galeria)**:
+   - Zdjęcie z aparatu lub galerii nie jest dziś klasyfikowane. W repozytorium nie ma modelu, który czyta piksele: jest tylko `assets/models/labels.json`, a `react-native-fast-tflite` nie jest podłączony.
+   - Wynik mówi wprost, że rozpoznawanie jest niedostępne. Aplikacja nie podaje gatunku ani procentu pewności i nie opisuje tego ekranu jako TFLite.
+   - Błąd aparatu lub wyboru zdjęcia nie podstawia ilustracji zastępczej.
+   - Skróty gatunków otwierają kartę w atlasie i są opisane jako przykłady z atlasu, a nie jako wynik skanowania.
+   - Celownik z podpowiedziami kadrowania makro (kapelusz, spód, trzon) oraz latarka zostają na ekranie aparatu.
 
 2. **Zaawansowany System Bezpieczeństwa & Alerty Sobowtórów**:
    - Wyraźne oznaczenia jadalności: 🟢 **Jadalny**, 🟡 **Niejadalny**, 🔴 **Trujący**, ☠️ **Śmiertelnie trujący**.
@@ -84,12 +85,11 @@ pnpm test:e2e
 
 ---
 
-## 🧠 Integracja z Własnym Modelem TFLite
+## Model na urządzeniu — jeszcze niepodłączony
 
-W celu podmiany lub dotrenowania własnego modelu:
-1. Skonwertuj model Keras/PyTorch do formatu `.tflite` z kwantyzacją (INT8/FP16) o wymiarach wejściowych `[1, 224, 224, 3]`.
-2. Umieść plik modelu w katalogu `assets/models/mushrooms_model.tflite`.
-3. Przy generowaniu natywnym (`pnpm expo run:android` / `pnpm expo run:ios`) model jest automatycznie obsługiwany przez `react-native-fast-tflite` z akceleracją sprzętową GPU/NPU.
+Rozpoznawanie gatunku ze zdjęcia jest celowo wyłączone. W katalogu `assets/models/` jest tylko `labels.json` (lista klas). Nie ma pliku `mushrooms_model.tflite` i biblioteka `react-native-fast-tflite` nie jest zależnością tej aplikacji. Skaner nie buduje nietrenowanej sieci i nie zgaduje gatunku z adresu zdjęcia.
+
+Podłączenie prawdziwego modelu (wagi, odczyt pikseli, ścieżka „nie wiem” / „to nie jest grzyb”) to osobna zmiana. Do tego czasu skaner odmawia odpowiedzi zamiast pokazywać pewność.
 
 ---
 
