@@ -26,6 +26,6 @@ export const MUSHROOM_IMAGES: Record<string, any> = {
   paxillus_involutus: paxillusInvolutus,
 };
 
-export function getMushroomImage(speciesId: string): any {
-  return MUSHROOM_IMAGES[speciesId] || boletusEdulis;
+export function getMushroomImage(speciesId: string): any | null {
+  return MUSHROOM_IMAGES[speciesId] ?? null;
 }

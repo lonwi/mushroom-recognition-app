@@ -96,6 +96,7 @@ function AppContent() {
             <SpeciesDetailScreen
               species={selectedSpecies}
               onBack={() => setSelectedSpecies(null)}
+              onOpenLookAlike={handleOpenAtlasSpecies}
             />
           ) : (
             <AtlasScreen onSelectSpecies={(species) => setSelectedSpecies(species)} />

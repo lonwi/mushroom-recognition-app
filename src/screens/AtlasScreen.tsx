@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MUSHROOMS_DATABASE } from '../data/mushrooms';
 import { MushroomSpecies, EdibilityStatus, HymenophoreType } from '../types/mushroom';
-import { EdibilityBadge } from '../components/EdibilityBadge';
+import { SpeciesStatusBadge } from '../components/EdibilityBadge';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getMushroomImage } from '../utils/mushroomImages';
 
@@ -57,6 +57,8 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
 
     const monthsStr = `${item.months[0]} - ${item.months[item.months.length - 1]} mies.`;
 
+    const photo = getMushroomImage(item.id);
+
     return (
       <TouchableOpacity
         style={styles.card}
@@ -64,23 +66,39 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
         activeOpacity={0.7}
       >
         <View style={styles.cardMainRow}>
-          <Image
-            source={getMushroomImage(item.id)}
-            style={styles.cardThumbnail}
-            resizeMode="cover"
-          />
+          {photo ? (
+            <Image
+              source={photo}
+              style={styles.cardThumbnail}
+              resizeMode="cover"
+              testID={`atlas-photo-${item.id}`}
+            />
+          ) : (
+            <View style={[styles.cardThumbnail, styles.cardThumbnailMissing]} testID={`atlas-photo-missing-${item.id}`}>
+              <Text style={styles.cardThumbnailMissingText}>Brak zdjęcia</Text>
+            </View>
+          )}
           <View style={styles.cardDetails}>
             <View style={styles.cardHeader}>
               <View style={{ flex: 1, paddingRight: 6 }}>
                 <Text style={styles.namePl}>{item.namePl}</Text>
                 <Text style={styles.nameLatin}>{item.nameLatin}</Text>
               </View>
-              <EdibilityBadge status={item.status} size="small" />
+              <SpeciesStatusBadge
+                status={item.status}
+                incompleteCard={item.incompleteCard}
+                size="small"
+                testID={`incomplete-card-badge-${item.id}`}
+              />
             </View>
 
-            <Text style={styles.nicknames} numberOfLines={1}>
-              Potocznie: {item.commonNicknames.join(', ')}
-            </Text>
+            {item.commonNicknames.length > 0 ? (
+              <Text style={styles.nicknames} numberOfLines={1}>
+                Potocznie: {item.commonNicknames.join(', ')}
+              </Text>
+            ) : (
+              <View style={styles.nicknamesSpacer} />
+            )}
 
             <View style={styles.cardFooter}>
               <View style={styles.tag}>
@@ -188,7 +206,13 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyIcon}>🍄</Text>
               <Text style={styles.emptyTitle}>Brak wyników</Text>
-              <Text style={styles.emptyDesc}>Nie znaleziono grzyba odpowiadającego wybranym filtrom.</Text>
+              {/szatan/.test(searchQuery.toLowerCase()) ? (
+                <Text style={styles.emptyDesc} testID="atlas-szatan-notice">
+                  Borowik szatański (Rubroboletus satanas) nie jest opisany w tym atlasie. To nie jest goryczak żółciowy. Brak karty nie oznacza, że grzyb jest jadalny.
+                </Text>
+              ) : (
+                <Text style={styles.emptyDesc}>Nie znaleziono grzyba odpowiadającego wybranym filtrom.</Text>
+              )}
             </View>
           }
         />
@@ -309,6 +333,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#E2E8F0',
     marginRight: 12,
   },
+  cardThumbnailMissing: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 4,
+  },
+  cardThumbnailMissingText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#64748B',
+    textAlign: 'center',
+  },
   cardDetails: {
     flex: 1,
   },
@@ -332,6 +367,10 @@ const styles = StyleSheet.create({
   nicknames: {
     fontSize: 12,
     color: '#94A3B8',
+    marginBottom: 10,
+  },
+  nicknamesSpacer: {
+    height: 12,
     marginBottom: 10,
   },
   cardFooter: {

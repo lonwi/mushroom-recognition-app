@@ -11,17 +11,21 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { MushroomSpecies } from '../types/mushroom';
-import { EdibilityBadge } from '../components/EdibilityBadge';
+import { SpeciesStatusBadge } from '../components/EdibilityBadge';
 import { LookAlikeAlert } from '../components/LookAlikeAlert';
 import { getMushroomImage } from '../utils/mushroomImages';
+import { hasFatalLookAlikeRisk, MUSHROOM_IDS } from '../data/mushrooms';
 
 interface Props {
   species: MushroomSpecies;
   onBack: () => void;
+  onOpenLookAlike?: (speciesId: string) => void;
 }
 
-export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack }) => {
+export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLookAlike }) => {
   const monthsNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru'];
+  const photo = getMushroomImage(species.id);
+  const fatalLookAlike = hasFatalLookAlikeRisk(species);
 
   const getHymenophoreIcon = (type: string) => {
     switch(type) {
@@ -42,16 +46,25 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack }) => {
   };
 
   const isToxic = species.status === 'DEADLY_POISONOUS' || species.status === 'POISONOUS';
+  const isIncomplete = species.incompleteCard === true;
+  const useSectionTestId = isIncomplete
+    ? 'species-use-neutral'
+    : isToxic
+      ? 'species-use-toxic'
+      : 'species-use-edible';
 
   return (
     <View style={styles.container}>
       {/* Hero Section */}
       <View style={styles.heroSection}>
-        <Image
-          source={getMushroomImage(species.id)}
-          style={StyleSheet.absoluteFill}
-          resizeMode="cover"
-        />
+        {photo ? (
+          <Image
+            source={photo}
+            style={StyleSheet.absoluteFill}
+            resizeMode="cover"
+            testID="species-photo"
+          />
+        ) : null}
         <View style={styles.heroOverlay} />
         <SafeAreaView>
           <View style={styles.navBar}>
@@ -67,9 +80,26 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack }) => {
         <View style={styles.heroContent}>
            <Text style={styles.namePl}>{species.namePl}</Text>
            <Text style={styles.nameLatin}>{species.nameLatin}</Text>
+           {photo ? null : (
+             <Text style={styles.photoMissingText} testID="species-photo-missing">Brak zdjęcia</Text>
+           )}
+
+           {species.incompleteCard ? (
+             <View style={styles.incompleteBanner} testID="incomplete-card-banner">
+               <Text style={styles.incompleteBannerTitle}>Karta niepełna</Text>
+               <Text style={styles.incompleteBannerBody}>
+                 Ten skrócony opis nie jest zgodą na zbiór ani spożycie.
+               </Text>
+             </View>
+           ) : null}
            
            <View style={styles.badgesRow}>
-             <EdibilityBadge status={species.status} size="large" />
+             <SpeciesStatusBadge
+               status={species.status}
+               incompleteCard={species.incompleteCard}
+               size="large"
+               testID="incomplete-card-badge"
+             />
              <View style={styles.hymenophorePill}>
                 <Ionicons name={getHymenophoreIcon(species.hymenophore) as any} size={14} color="#047857" style={{marginRight: 4}} />
                 <Text style={styles.hymenophorePillText}>{getHymenophoreName(species.hymenophore)}</Text>
@@ -79,7 +109,23 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack }) => {
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
+
+        {fatalLookAlike ? (
+          <View style={styles.fatalBanner} testID="fatal-lookalike-banner">
+            <Text style={styles.fatalBannerTitle}>Śmiertelnie groźny sobowtór w tej karcie</Text>
+            <Text style={styles.fatalBannerBody}>
+              Nie jedz bez oceny grzyboznawcy. Różnice są poniżej.
+            </Text>
+          </View>
+        ) : null}
+
+        {species.warningNotes ? (
+          <View style={styles.warningBox} testID="species-warning-notes">
+            <Feather name="info" size={18} color="#B45309" style={{ marginTop: 2 }} />
+            <Text style={styles.warningText}>{species.warningNotes}</Text>
+          </View>
+        ) : null}
+
         {/* Main Info Card */}
         <View style={styles.mainCard}>
           <View style={styles.infoRow}>
@@ -119,7 +165,12 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack }) => {
 
         {/* Lookalikes Warning */}
         <View style={styles.lookAlikeContainer}>
-          <LookAlikeAlert risks={species.confusionRisks} />
+          <LookAlikeAlert
+            risks={species.confusionRisks}
+            noDangerousLookAlikesSource={species.noDangerousLookAlikes?.source}
+            catalogIds={MUSHROOM_IDS}
+            onOpenSpecies={onOpenLookAlike}
+          />
         </View>
 
         <Text style={styles.sectionTitle}>Morfologia i siedlisko</Text>
@@ -169,35 +220,41 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack }) => {
 
         <Text style={styles.sectionTitle}>Znaczenie i zastosowanie</Text>
 
-        {/* Action / Culinary Card */}
-        <View style={[
-          styles.actionCard, 
-          isToxic ? styles.toxicCard : styles.edibleCard
-        ]}>
+        <View
+          testID={useSectionTestId}
+          style={[
+            styles.actionCard,
+            isIncomplete ? styles.neutralCard : isToxic ? styles.toxicCard : styles.edibleCard,
+          ]}
+        >
           <View style={styles.actionHeader}>
-            <View style={[styles.actionIconCircle, isToxic ? {backgroundColor: '#FEE2E2'} : {backgroundColor: '#D1FAE5'}]}>
-              <Feather 
-                name={isToxic ? "alert-triangle" : "check"} 
-                size={22} 
-                color={isToxic ? "#DC2626" : "#059669"} 
+            <View style={[
+              styles.actionIconCircle,
+              isIncomplete
+                ? { backgroundColor: '#E2E8F0' }
+                : isToxic
+                  ? { backgroundColor: '#FEE2E2' }
+                  : { backgroundColor: '#D1FAE5' },
+            ]}>
+              <Feather
+                name={isIncomplete ? 'book-open' : isToxic ? 'alert-triangle' : 'check'}
+                size={22}
+                color={isIncomplete ? '#475569' : isToxic ? '#DC2626' : '#059669'}
               />
             </View>
             <Text style={[
               styles.actionTitle,
-              isToxic ? {color: '#B91C1C'} : {color: '#047857'}
+              isIncomplete
+                ? { color: '#334155' }
+                : isToxic
+                  ? { color: '#B91C1C' }
+                  : { color: '#047857' },
             ]}>
-              {isToxic ? 'Toksyczność i objawy' : 'W kuchni'}
+              {isIncomplete ? 'Znaczenie w literaturze' : isToxic ? 'Toksyczność i objawy' : 'W kuchni'}
             </Text>
           </View>
-          
-          <Text style={styles.actionBody}>{species.culinaryValue}</Text>
 
-          {species.warningNotes && (
-            <View style={styles.warningBox}>
-              <Feather name="info" size={18} color="#B45309" style={{marginTop: 2}} />
-              <Text style={styles.warningText}>{species.warningNotes}</Text>
-            </View>
-          )}
+          <Text style={styles.actionBody}>{species.culinaryValue}</Text>
         </View>
 
       </ScrollView>
@@ -267,6 +324,53 @@ const styles = StyleSheet.create({
     color: '#A7F3D0',
     marginTop: 4,
     fontWeight: '500',
+  },
+  photoMissingText: {
+    color: '#FDE68A',
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 8,
+  },
+  incompleteBanner: {
+    marginTop: 12,
+    backgroundColor: '#FFF7ED',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#FDBA74',
+  },
+  incompleteBannerTitle: {
+    color: '#9A3412',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  incompleteBannerBody: {
+    color: '#7C2D12',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 2,
+    fontWeight: '600',
+  },
+  fatalBanner: {
+    backgroundColor: '#FEF2F2',
+    borderWidth: 2,
+    borderColor: '#DC2626',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  fatalBannerTitle: {
+    color: '#991B1B',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  fatalBannerBody: {
+    color: '#7F1D1D',
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: 4,
+    fontWeight: '600',
   },
   badgesRow: {
     flexDirection: 'row',
@@ -433,6 +537,12 @@ const styles = StyleSheet.create({
     borderColor: '#34D399',
     shadowColor: '#059669',
   },
+  neutralCard: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    shadowColor: '#64748B',
+  },
   toxicCard: {
     backgroundColor: '#FEF2F2',
     borderWidth: 1,
@@ -464,7 +574,7 @@ const styles = StyleSheet.create({
   },
   warningBox: {
     flexDirection: 'row',
-    marginTop: 20,
+    marginBottom: 16,
     backgroundColor: '#FFFBEB',
     padding: 16,
     borderRadius: 16,

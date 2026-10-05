@@ -20,7 +20,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     confusionRisks: [
       {
         confusedWithId: 'tylopilus_felleus',
-        confusedWithName: 'Goryczak żółciowy (Szatan)',
+        confusedWithName: 'Goryczak żółciowy',
         confusedWithStatus: 'INEDIBLE',
         keyDifferences: [
           'Goryczak ma rurki brudnoróżowe (nie zielono-oliwkowe jak stary borowik)',
@@ -236,7 +236,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     id: 'tylopilus_felleus',
     namePl: 'Goryczak żółciowy',
     nameLatin: 'Tylopilus felleus',
-    commonNicknames: ['Szatan (błędnie potocznie)', 'Gorzkowik', 'Grzyb żółciowy'],
+    commonNicknames: ['Gorzkowik', 'Grzyb żółciowy'],
     family: 'Borowikowate (Boletaceae)',
     status: 'INEDIBLE',
     hymenophore: 'TUBES',
@@ -260,7 +260,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         fatal: false
       }
     ],
-    warningNotes: 'Często mylony z prawdziwkiem przez niedoświadczonych zbieraczy. Zawsze sprawdź siatkę na trzonie i kolor rurek.'
+    warningNotes: 'Często mylony z prawdziwkiem przez niedoświadczonych zbieraczy. Zawsze sprawdź siatkę na trzonie i kolor rurek. Potoczna nazwa „szatan” jest błędna: borowik szatański (Rubroboletus satanas) to inny gatunek i nie ma go w tym atlasie.'
   },
   {
     id: 'amanita_muscaria',
@@ -278,7 +278,8 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     fleshDescription: 'Biały, pod skórką kapelusza żółtopomarańczowy.',
     tasteAndSmell: 'Bez wyraźnego zapachu, smak słodkawy.',
     culinaryValue: 'TRUJĄCY. Zawiera kwas ibotenowy i muscymol. Wywołuje zespół psychotropowo-cholinergiczny (omamy, drgawki, zaburzenia równowagi, wymioty).',
-    confusionRisks: []
+    confusionRisks: [],
+    warningNotes: 'TRUJĄCY. Nie jedz i nie próbuj usuwać toksyn w domu.'
   },
   {
     id: 'lactarius_deliciosus',
@@ -358,5 +359,218 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     culinaryValue: 'ŚMIERTELNIE TRUJĄCY (kumulatywnie). Dawniej uważany za jadalny po obgotowaniu. Wywołuje autoimmunohemolizę (organizm wytwarza przeciwciała niszczące własne czerwone krwinki po wielokrotnym spożyciu).',
     confusionRisks: [],
     warningNotes: 'NIGDY NIE ZBIERAJ OLSZÓWEK! Skutki zatrucia mogą ujawnić się po latach nagłą niewydolnością nerek.'
+  },
+  {
+    id: 'russula_virescens',
+    namePl: 'Gołąbek zielonawy',
+    nameLatin: 'Russula virescens',
+    commonNicknames: [],
+    family: 'Gołąbkowate (Russulaceae)',
+    status: 'EDIBLE',
+    incompleteCard: true,
+    hymenophore: 'GILLS',
+    months: [7, 8, 9, 10],
+    habitat: 'Lasy liściaste, często pod dębami i bukami. Pora występowania jest orientacyjna.',
+    capDescription: 'Kapelusz zielonawy, pękający w poletka. Ta skrócona karta nie opisuje innych zielonych gołąbków.',
+    hymenophoreDescription: 'Blaszki jasne i kruche. Brak pierścienia.',
+    stemDescription: 'Trzon bez pierścienia i bez pochwy u nasady. Brak tych osłon nie wystarcza, by wykluczyć pomyłkę, jeśli owocnik jest młody albo uszkodzony.',
+    fleshDescription: 'Miąższ kruchy, łamliwy, bez włókien typowych dla muchomora.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem. Ta karta nie podaje cech smakowych.',
+    culinaryValue: 'W literaturze mykologicznej gatunek bywa podawany jako jadalny. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    confusionRisks: [
+      {
+        confusedWithId: 'amanita_phalloides',
+        confusedWithName: 'Muchomor sromotnikowy',
+        confusedWithStatus: 'DEADLY_POISONOUS',
+        keyDifferences: [
+          'Muchomor sromotnikowy ma pierścień i luźną pochwę u nasady; gołąbek zielonawy nie ma ani pierścienia, ani pochwy',
+          'Miąższ gołąbka jest kruchy i łamliwy; muchomor ma miąższ włóknisty',
+          'Gładki zielony kapelusz z białymi blaszkami traktuj jak muchomora, dopóki grzyboznawca nie powie inaczej'
+        ],
+        fatal: true
+      }
+    ],
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Zielony kapelusz trzeba odróżnić od muchomora sromotnikowego. Brak zdjęcia. Innych zielonych gołąbków ta karta nie oznacza. Potwierdź oznaczenie u grzyboznawcy lub w Sanepidzie.'
+  },
+  {
+    id: 'agaricus_campestris',
+    namePl: 'Pieczarka polna',
+    nameLatin: 'Agaricus campestris',
+    commonNicknames: [],
+    family: 'Pieczarkowate (Agaricaceae)',
+    status: 'EDIBLE',
+    incompleteCard: true,
+    hymenophore: 'GILLS',
+    months: [5, 6, 7, 8, 9, 10],
+    habitat: 'Łąki, pastwiska i trawniki. Nie jest typowym grzybem cienistego lasu. Pora występowania jest orientacyjna.',
+    capDescription: 'Kapelusz jasny, białawy. Ta karta nie opisuje pieczarek silnie żółknących.',
+    hymenophoreDescription: 'Blaszki dojrzałych owocników różowe, potem ciemnobrązowe. Białe blaszki nie pasują do dojrzałej pieczarki polnej.',
+    stemDescription: 'Krótki trzon z pierścieniem. Brak pochwy u nasady.',
+    fleshDescription: 'Miąższ jasny. Silne żółknięcie i zapach karbolu wskazują na inne pieczarki, których ta karta nie opisuje.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem.',
+    culinaryValue: 'W literaturze mykologicznej gatunek bywa podawany jako jadalny. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    confusionRisks: [
+      {
+        confusedWithId: 'amanita_phalloides',
+        confusedWithName: 'Muchomor sromotnikowy',
+        confusedWithStatus: 'DEADLY_POISONOUS',
+        keyDifferences: [
+          'Pieczarka polna ma blaszki różowe, a z wiekiem ciemnobrązowe; muchomor sromotnikowy ma blaszki białe',
+          'Pieczarka polna nie ma pochwy u nasady trzonu; muchomor ją ma',
+          'Owocnik z wciąż białymi blaszkami nie jest bezpieczną pieczarką — nie zbieraj go na podstawie tej karty'
+        ],
+        fatal: true
+      }
+    ],
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Białe blaszki i pochwa u nasady wskazują na muchomora, nie na pieczarkę. Młode owocniki z jeszcze jasnymi blaszkami są szczególnie ryzykowne. Pieczarek silnie żółknących o zapachu karbolu ta karta nie opisuje.'
+  },
+  {
+    id: 'chlorophyllum_rhacodes',
+    namePl: 'Czubajnik czerwieniejący',
+    nameLatin: 'Chlorophyllum rhacodes',
+    commonNicknames: ['Czubajka czerwieniejąca'],
+    family: 'Pieczarkowate (Agaricaceae)',
+    status: 'INEDIBLE',
+    hymenophore: 'GILLS',
+    months: [7, 8, 9, 10],
+    habitat: 'Lasy, parki i ogrody. Pora występowania jest orientacyjna. Podobnych czerwieniejących czubajników ta karta nie rozdziela.',
+    capDescription: 'Duży kapelusz z odstającymi, brązowawymi łuskami. Młode owocniki są zamknięte.',
+    hymenophoreDescription: 'Blaszki jasne, wolne.',
+    stemDescription: 'Trzon z pierścieniem i zgrubiałą nasadą. Ta karta nie rozstrzyga, czy pierścień jest ruchomy.',
+    fleshDescription: 'Po uszkodzeniu miąższ czerwienieje lub pomarańczowieje. To nie jest dowód bezpieczeństwa.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem.',
+    culinaryValue: 'Ta baza oznacza gatunek jako niejadalny. Część atlasów podaje go jako jadalny po obróbce i jednocześnie ostrzega o dolegliwościach żołądkowych. Ta karta nie podaje sposobu przyrządzania i nie zaleca spożycia.',
+    confusionRisks: [
+      {
+        confusedWithId: 'macrolepiota_procera',
+        confusedWithName: 'Czubajka kania',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Czubajnik czerwieniejący po uszkodzeniu czerwienieje lub pomarańczowieje',
+          'Opis kani jako jadalnej nie przenosi się na czubajnika'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'amanita_phalloides',
+        confusedWithName: 'Muchomor sromotnikowy',
+        confusedWithStatus: 'DEADLY_POISONOUS',
+        keyDifferences: [
+          'Muchomor sromotnikowy ma luźną pochwę u nasady i nie czerwienieje po przekrojeniu',
+          'Młode, zamknięte owocniki są najłatwiejsze do pomylenia — nie zbieraj ich'
+        ],
+        fatal: true
+      }
+    ],
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Młode owocniki łatwo pomylić ze śmiertelnymi muchomorami. Podobnych czerwieniejących czubajników ta karta nie rozdziela.'
+  },
+  {
+    id: 'hygrophoropsis_aurantiaca',
+    namePl: 'Lisówka pomarańczowa',
+    nameLatin: 'Hygrophoropsis aurantiaca',
+    commonNicknames: ['Fałszywa kurka'],
+    family: 'Lisówkowate (Hygrophoropsidaceae)',
+    status: 'POISONOUS',
+    hymenophore: 'GILLS',
+    months: [8, 9, 10, 11],
+    habitat: 'Lasy iglaste, często na ściółce i martwym drewnie. Pora występowania jest orientacyjna.',
+    capDescription: 'Kapelusz jaskrawo pomarańczowy, często lejkowaty, o cienkim miąższu.',
+    hymenophoreDescription: 'Prawdziwe blaszki: cienkie, gęste, wiotkie, często rozwidlone. To nie są grube listewki kurki.',
+    stemDescription: 'Trzon w barwie kapelusza, zwykle smukły.',
+    fleshDescription: 'Miąższ cienki, wiotki, bez morelowego zapachu kurki.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem. Brak wyraźnego owocowego zapachu kurki.',
+    culinaryValue: 'Nie jedz. W tej bazie gatunek jest trujący i po spożyciu może powodować zaburzenia trawienne.',
+    confusionRisks: [
+      {
+        confusedWithId: 'cantharellus_cibarius',
+        confusedWithName: 'Pieprznik jadalny (Kurka)',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Kurka ma grube, zbiegające fałdy (listewki), lisówka ma cienkie prawdziwe blaszki',
+          'Kurka jest żółta, jajeczna; lisówka bywa jaskrawo pomarańczowa',
+          'Kurka pachnie morelowo; lisówka nie'
+        ],
+        fatal: false
+      }
+    ],
+    warningNotes: 'NIE JEDZ. To nie jest kurka. W tej bazie lisówka jest trująca (dolegliwości żołądkowo-jelitowe).'
+  },
+  {
+    id: 'lactarius_torminosus',
+    namePl: 'Mleczaj wełnianka',
+    nameLatin: 'Lactarius torminosus',
+    commonNicknames: ['Wełnianka'],
+    family: 'Gołąbkowate (Russulaceae)',
+    status: 'POISONOUS',
+    hymenophore: 'GILLS',
+    months: [7, 8, 9, 10],
+    habitat: 'Pod brzozami. Pora występowania jest orientacyjna.',
+    capDescription: 'Kapelusz różowawy, z wełnisto owłosionym brzegiem.',
+    hymenophoreDescription: 'Blaszki jasne, ściekające mleczkiem po uszkodzeniu.',
+    stemDescription: 'Trzon jasny, kruchy, bez pierścienia.',
+    fleshDescription: 'Wydziela białe mleczko. Mleczko rydza jest marchewkowo-pomarańczowe.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem. Mleczko jest opisywane jako silnie piekące.',
+    culinaryValue: 'Nie jedz. W tej bazie gatunek jest trujący. Ta karta nie podaje obróbki, która miałaby go przygotować do spożycia.',
+    confusionRisks: [
+      {
+        confusedWithId: 'lactarius_deliciosus',
+        confusedWithName: 'Mleczaj rydz',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Wełnianka ma wełnisty brzeg kapelusza i białe, piekące mleczko',
+          'Rydz ma mleczko pomarańczowe i rośnie głównie pod sosnami',
+          'Wełnianka rośnie pod brzozami'
+        ],
+        fatal: false
+      }
+    ],
+    warningNotes: 'NIE JEDZ. Białe, piekące mleczko i wełnisty brzeg odróżniają ją od rydza. Ta karta nie podaje sposobu „odtruwania”.'
+  },
+  {
+    id: 'morchella_esculenta',
+    namePl: 'Smardz jadalny',
+    nameLatin: 'Morchella esculenta',
+    commonNicknames: [],
+    family: 'Smardzowate (Morchellaceae)',
+    status: 'EDIBLE',
+    incompleteCard: true,
+    hymenophore: 'OTHER',
+    months: [4, 5],
+    habitat: 'Wiosną, w lasach i zadrzewieniach liściastych oraz w sadach. Sam termin nie rozstrzyga gatunku. Siedlisko bywa różne u smardzów.',
+    capDescription: 'Główka żebrowato-plasterkowata, jak plaster miodu, a nie pofałdowana mózgowato.',
+    hymenophoreDescription: 'Warstwa rodzajna na żeberkowanej powierzchni główki.',
+    stemDescription: 'Trzon jasny, połączony z główką. Cały owocnik jest w środku pusty i tworzy jedną komorę.',
+    fleshDescription: 'Cienki, woskowaty. Wnętrze puste, nie komorowate jak u piestrzenicy.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem.',
+    culinaryValue: 'W literaturze ugotowane smardze bywają podawane jako jadalne. Surowe i niedogotowane są trujące. Ta karta nie uprawnia do zbioru ani spożycia.',
+    confusionRisks: [
+      {
+        confusedWithId: 'gyromitra_esculenta',
+        confusedWithName: 'Piestrzenica kasztanowata',
+        confusedWithStatus: 'DEADLY_POISONOUS',
+        keyDifferences: [
+          'Smardz ma główkę żebrowato-plasterkowatą; piestrzenica jest pofałdowana mózgowato',
+          'Smardz jest w środku pusty i tworzy jedną komorę',
+          'Piestrzenica kasztanowata jest śmiertelnie trująca. W razie wątpliwości nie zbieraj'
+        ],
+        fatal: true
+      }
+    ],
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Surowe i niedogotowane smardze są trujące. Piestrzenica kasztanowata jest śmiertelnie groźnym sobowtórem. Rozporządzenie Ministra Środowiska z dnia 9 października 2014 r. w sprawie ochrony gatunkowej grzybów (Dz.U. poz. 1408), załącznik nr 2: ochrona częściowa obejmuje okazy smardza jadalnego rosnące poza terenem ogrodów, upraw ogrodniczych, szkółek leśnych oraz poza terenami zieleni. § 6 ust. 2 pkt 4 zakazuje zbioru dziko występujących grzybów objętych ochroną częściową. Załącznik nr 3 wskazuje ręczny zbiór owocników, a § 7 pkt 2 uzależnia pozyskanie gatunków z tego załącznika od zezwolenia regionalnego dyrektora ochrony środowiska albo Generalnego Dyrektora Ochrony Środowiska. Ta karta nie jest takim zezwoleniem.'
   }
 ];
+
+/** True when any recorded look-alike is flagged as a deadly confusion. Not stored separately, so it cannot drift from confusionRisks. */
+export function hasFatalLookAlikeRisk(species: Pick<MushroomSpecies, 'confusionRisks'>): boolean {
+  return species.confusionRisks.some((risk) => risk.fatal);
+}
+
+export function isIncompleteSpeciesCard(speciesId: string): boolean {
+  return MUSHROOMS_DATABASE.some(
+    (species) => species.id === speciesId && species.incompleteCard === true
+  );
+}
+
+export const MUSHROOM_IDS: ReadonlySet<string> = new Set(
+  MUSHROOMS_DATABASE.map((species) => species.id)
+);
