@@ -27,19 +27,16 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.locator('body')).toContainText('112');
   });
 
-  test('ResultModal displays tensor inference time and AI confidence %', async ({ page }) => {
-    await page.goto('/iframe.html?id=mushroom-resultmodal--edible-bolete-result');
-    await expect(page.locator('body')).toContainText('Wynik Rozpoznawania AI');
-    await expect(page.locator('body')).toContainText('97.4%');
-    await expect(page.locator('body')).toContainText('128 ms');
-    await expect(page.locator('body')).toContainText('Borowik szlachetny');
-  });
-
-  test('ResultModal shows fatal look-alike alert for deadly Amanita classification', async ({ page }) => {
-    await page.goto('/iframe.html?id=mushroom-resultmodal--deadly-amanita-result');
-    await expect(page.locator('body')).toContainText('Muchomor sromotnikowy (zielonawy)');
-    await expect(page.locator('body')).toContainText('ŚMIERTELNIE GROŹNE SOBOWTÓRY!');
-    await expect(page.locator('body')).toContainText('99.1%');
+  test('ResultModal says recognition is unavailable and shows no species or confidence', async ({ page }) => {
+    await page.goto('/iframe.html?id=mushroom-resultmodal--recognition-unavailable');
+    await expect(page.getByTestId('recognition-unavailable-title')).toContainText('Rozpoznawanie niedostępne');
+    await expect(page.getByTestId('recognition-unavailable-body')).toContainText(
+      'Nie ma modelu, który odczytuje piksele zdjęcia.'
+    );
+    await expect(page.locator('body')).not.toContainText('TFLite');
+    await expect(page.locator('body')).not.toContainText('Pewność AI');
+    await expect(page.locator('body')).not.toContainText('Borowik');
+    await expect(page.locator('body')).not.toContainText('%');
   });
 
   test('PreparationGuide renders cleaning, cooking, and storing categories', async ({ page }) => {
