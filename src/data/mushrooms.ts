@@ -367,6 +367,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     commonNicknames: [],
     family: 'Gołąbkowate (Russulaceae)',
     status: 'EDIBLE',
+    incompleteCard: true,
     hymenophore: 'GILLS',
     months: [7, 8, 9, 10],
     habitat: 'Lasy liściaste, często pod dębami i bukami. Pora występowania jest orientacyjna.',
@@ -398,6 +399,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     commonNicknames: [],
     family: 'Pieczarkowate (Agaricaceae)',
     status: 'EDIBLE',
+    incompleteCard: true,
     hymenophore: 'GILLS',
     months: [5, 6, 7, 8, 9, 10],
     habitat: 'Łąki, pastwiska i trawniki. Nie jest typowym grzybem cienistego lasu. Pora występowania jest orientacyjna.',
@@ -531,6 +533,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     commonNicknames: [],
     family: 'Smardzowate (Morchellaceae)',
     status: 'EDIBLE',
+    incompleteCard: true,
     hymenophore: 'OTHER',
     months: [4, 5],
     habitat: 'Wiosną, w lasach i zadrzewieniach liściastych oraz w sadach. Sam termin nie rozstrzyga gatunku. Siedlisko bywa różne u smardzów.',
@@ -553,13 +556,19 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         fatal: true
       }
     ],
-    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Surowe i niedogotowane smardze są trujące. Piestrzenica kasztanowata jest śmiertelnie groźnym sobowtórem. W Polsce smardze podlegają ochronie gatunkowej częściowej — ta karta nie jest zezwoleniem na zbiór. Sprawdź aktualne przepisy.'
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Surowe i niedogotowane smardze są trujące. Piestrzenica kasztanowata jest śmiertelnie groźnym sobowtórem. Rozporządzenie Ministra Środowiska z dnia 9 października 2014 r. w sprawie ochrony gatunkowej grzybów (Dz.U. poz. 1408), załącznik nr 2: ochrona częściowa obejmuje okazy smardza jadalnego rosnące poza terenem ogrodów, upraw ogrodniczych, szkółek leśnych oraz poza terenami zieleni. § 6 ust. 2 pkt 4 zakazuje zbioru dziko występujących grzybów objętych ochroną częściową. Załącznik nr 3 wskazuje ręczny zbiór owocników, a § 7 pkt 2 uzależnia pozyskanie gatunków z tego załącznika od zezwolenia regionalnego dyrektora ochrony środowiska albo Generalnego Dyrektora Ochrony Środowiska. Ta karta nie jest takim zezwoleniem.'
   }
 ];
 
 /** True when any recorded look-alike is flagged as a deadly confusion. Not stored separately, so it cannot drift from confusionRisks. */
 export function hasFatalLookAlikeRisk(species: Pick<MushroomSpecies, 'confusionRisks'>): boolean {
   return species.confusionRisks.some((risk) => risk.fatal);
+}
+
+export function isIncompleteSpeciesCard(speciesId: string): boolean {
+  return MUSHROOMS_DATABASE.some(
+    (species) => species.id === speciesId && species.incompleteCard === true
+  );
 }
 
 export const MUSHROOM_IDS: ReadonlySet<string> = new Set(

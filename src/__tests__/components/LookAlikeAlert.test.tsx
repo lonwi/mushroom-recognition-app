@@ -5,6 +5,7 @@ import {
   INCOMPLETE_LOOKALIKE_TITLE,
   LookAlikeAlert,
 } from '../../components/LookAlikeAlert';
+import { INCOMPLETE_CARD_LABEL } from '../../components/EdibilityBadge';
 import { ConfusionRisk } from '../../types/mushroom';
 
 describe('LookAlikeAlert RTL Component Tests', () => {
@@ -118,5 +119,31 @@ describe('LookAlikeAlert RTL Component Tests', () => {
     expect(onOpenSpecies).toHaveBeenCalledWith('amanita_phalloides');
     expect(queryByTestId('lookalike-link-not_in_atlas')).toBeNull();
     expect(getByTestId('lookalike-unlinked-not_in_atlas')).toBeTruthy();
+  });
+
+  it('replaces the green edible badge when the look-alike card is incomplete', async () => {
+    const risks: ConfusionRisk[] = [
+      {
+        confusedWithId: 'russula_virescens',
+        confusedWithName: 'Gołąbek zielonawy',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: ['Brak pierścienia i pochwy'],
+        fatal: true,
+      },
+      {
+        confusedWithId: 'macrolepiota_procera',
+        confusedWithName: 'Czubajka kania',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: ['Ruchomy pierścień'],
+        fatal: true,
+      },
+    ];
+
+    const { getByTestId, getAllByText, queryByTestId } = await render(<LookAlikeAlert risks={risks} />);
+
+    expect(getByTestId('incomplete-card-badge-russula_virescens')).toBeTruthy();
+    expect(getAllByText(INCOMPLETE_CARD_LABEL)).toHaveLength(1);
+    expect(getAllByText('JADALNY')).toHaveLength(1);
+    expect(queryByTestId('incomplete-card-badge-macrolepiota_procera')).toBeNull();
   });
 });

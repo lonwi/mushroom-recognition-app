@@ -7,6 +7,77 @@ interface Props {
   size?: 'small' | 'medium' | 'large';
 }
 
+export const INCOMPLETE_CARD_LABEL = 'KARTA NIEPEŁNA';
+
+interface IncompleteProps {
+  size?: 'small' | 'medium' | 'large';
+  testID?: string;
+}
+
+export const IncompleteCardBadge: React.FC<IncompleteProps> = ({ size = 'medium', testID }) => {
+  const isSmall = size === 'small';
+  const isLarge = size === 'large';
+
+  return (
+    <View
+      testID={testID}
+      style={[
+        styles.badge,
+        styles.incompleteBadge,
+        {
+          paddingVertical: isSmall ? 2 : isLarge ? 8 : 4,
+          paddingHorizontal: isSmall ? 6 : isLarge ? 14 : 10,
+        },
+      ]}
+    >
+      <Text
+        style={[
+          styles.icon,
+          styles.incompleteText,
+          {
+            fontSize: isSmall ? 10 : isLarge ? 16 : 12,
+            marginRight: 4,
+          },
+        ]}
+      >
+        ◇
+      </Text>
+      <Text
+        style={[
+          styles.text,
+          styles.incompleteText,
+          {
+            fontSize: isSmall ? 10 : isLarge ? 14 : 12,
+            fontWeight: '700',
+          },
+        ]}
+      >
+        {INCOMPLETE_CARD_LABEL}
+      </Text>
+    </View>
+  );
+};
+
+interface SpeciesStatusProps {
+  status: EdibilityStatus;
+  incompleteCard?: boolean;
+  size?: 'small' | 'medium' | 'large';
+  testID?: string;
+}
+
+/** Keeps the stored edibility status, but does not lead an unfinished card with the green edible badge. */
+export const SpeciesStatusBadge: React.FC<SpeciesStatusProps> = ({
+  status,
+  incompleteCard = false,
+  size = 'medium',
+  testID,
+}) => {
+  if (incompleteCard && status === 'EDIBLE') {
+    return <IncompleteCardBadge size={size} testID={testID} />;
+  }
+  return <EdibilityBadge status={status} size={size} />;
+};
+
 export const EdibilityBadge: React.FC<Props> = ({ status, size = 'medium' }) => {
   const getBadgeConfig = () => {
     switch (status) {
@@ -103,5 +174,12 @@ const styles = StyleSheet.create({
   },
   text: {
     letterSpacing: 0.5,
+  },
+  incompleteBadge: {
+    backgroundColor: '#FFF7ED',
+    borderColor: '#C2410C',
+  },
+  incompleteText: {
+    color: '#9A3412',
   },
 });

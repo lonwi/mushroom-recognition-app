@@ -84,6 +84,33 @@ describe('Mushroom Database & Safety Verification', () => {
     }
   });
 
+  test('unfinished edible cards keep their stored status and are marked incomplete', () => {
+    for (const id of ['russula_virescens', 'agaricus_campestris', 'morchella_esculenta']) {
+      const card = MUSHROOMS_DATABASE.find((species) => species.id === id);
+      expect(card?.status).toBe('EDIBLE');
+      expect(card?.incompleteCard).toBe(true);
+    }
+
+    const shaggy = MUSHROOMS_DATABASE.find((species) => species.id === 'chlorophyllum_rhacodes');
+    expect(shaggy?.status).toBe('INEDIBLE');
+    expect(shaggy?.incompleteCard).toBeUndefined();
+  });
+
+  test('smardz protection note follows the 2014 regulation wording', () => {
+    const morel = MUSHROOMS_DATABASE.find((species) => species.id === 'morchella_esculenta');
+    const note = morel?.warningNotes ?? '';
+
+    expect(note).toContain('Dz.U. poz. 1408');
+    expect(note).toContain(
+      'poza terenem ogrodów, upraw ogrodniczych, szkółek leśnych oraz poza terenami zieleni'
+    );
+    expect(note).toContain('§ 6 ust. 2 pkt 4');
+    expect(note).toContain('ręczny zbiór owocników');
+    expect(note).toContain('§ 7 pkt 2');
+    expect(note).not.toMatch(/w lesie (jest )?zakaz/i);
+    expect(note).not.toMatch(/w parku (jest )?dozwol/i);
+  });
+
   test('szatan is not a name for goryczak and borowik szatański is absent', () => {
     const goryczak = MUSHROOMS_DATABASE.find((species) => species.id === 'tylopilus_felleus');
     expect(goryczak).toBeDefined();

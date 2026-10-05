@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { MushroomSpecies } from '../types/mushroom';
-import { EdibilityBadge } from '../components/EdibilityBadge';
+import { SpeciesStatusBadge } from '../components/EdibilityBadge';
 import { LookAlikeAlert } from '../components/LookAlikeAlert';
 import { getMushroomImage } from '../utils/mushroomImages';
 import { hasFatalLookAlikeRisk, MUSHROOM_IDS } from '../data/mushrooms';
@@ -77,9 +77,23 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
            {photo ? null : (
              <Text style={styles.photoMissingText} testID="species-photo-missing">Brak zdjęcia</Text>
            )}
+
+           {species.incompleteCard ? (
+             <View style={styles.incompleteBanner} testID="incomplete-card-banner">
+               <Text style={styles.incompleteBannerTitle}>Karta niepełna</Text>
+               <Text style={styles.incompleteBannerBody}>
+                 Ten skrócony opis nie jest zgodą na zbiór ani spożycie.
+               </Text>
+             </View>
+           ) : null}
            
            <View style={styles.badgesRow}>
-             <EdibilityBadge status={species.status} size="large" />
+             <SpeciesStatusBadge
+               status={species.status}
+               incompleteCard={species.incompleteCard}
+               size="large"
+               testID="incomplete-card-badge"
+             />
              <View style={styles.hymenophorePill}>
                 <Ionicons name={getHymenophoreIcon(species.hymenophore) as any} size={14} color="#047857" style={{marginRight: 4}} />
                 <Text style={styles.hymenophorePillText}>{getHymenophoreName(species.hymenophore)}</Text>
@@ -297,6 +311,27 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     marginTop: 8,
+  },
+  incompleteBanner: {
+    marginTop: 12,
+    backgroundColor: '#FFF7ED',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#FDBA74',
+  },
+  incompleteBannerTitle: {
+    color: '#9A3412',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  incompleteBannerBody: {
+    color: '#7C2D12',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 2,
+    fontWeight: '600',
   },
   fatalBanner: {
     backgroundColor: '#FEF2F2',

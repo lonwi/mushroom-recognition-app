@@ -56,12 +56,25 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.locator('body')).toContainText('ŚMIERTELNIE GROŹNE SOBOWTÓRY!');
   });
 
+  test('Smardz card states the 2014 partial-protection places without a green edible badge', async ({ page }) => {
+    await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--morel-protection-note');
+    await expect(page.getByTestId('incomplete-card-badge')).toContainText('KARTA NIEPEŁNA');
+    await expect(page.locator('body')).not.toContainText('JADALNY');
+    await expect(page.getByTestId('species-warning-notes')).toContainText(
+      'poza terenem ogrodów, upraw ogrodniczych, szkółek leśnych oraz poza terenami zieleni'
+    );
+    await expect(page.getByTestId('species-warning-notes')).toContainText('§ 6 ust. 2 pkt 4');
+  });
+
   test('Gołąbek zielonawy has no borrowed photo and a do-not-eat warning', async ({ page }) => {
     await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--russula-without-photo');
     await expect(page.getByTestId('species-photo-missing')).toContainText('Brak zdjęcia');
     await expect(page.getByTestId('species-photo')).toHaveCount(0);
     await expect(page.getByTestId('species-warning-notes')).toContainText('NIE JEDZ NA PODSTAWIE TEJ KARTY');
     await expect(page.getByTestId('fatal-lookalike-banner')).toBeVisible();
+    await expect(page.getByTestId('incomplete-card-banner')).toContainText('Karta niepełna');
+    await expect(page.getByTestId('incomplete-card-badge')).toContainText('KARTA NIEPEŁNA');
+    await expect(page.locator('body')).not.toContainText('JADALNY');
   });
 
   test('PreparationGuide renders cleaning, cooking, and storing categories', async ({ page }) => {

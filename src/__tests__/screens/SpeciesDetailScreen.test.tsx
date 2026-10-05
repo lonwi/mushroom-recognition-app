@@ -64,7 +64,7 @@ describe('SpeciesDetailScreen safety notices', () => {
   });
 
   it('shows a no-photo state and a do-not-eat warning for a minimal card', async () => {
-    const { getByTestId, queryByTestId, getByText } = await render(
+    const { getByTestId, queryByTestId, getByText, queryByText } = await render(
       <SpeciesDetailScreen
         species={species('russula_virescens')}
         onBack={() => {}}
@@ -77,5 +77,29 @@ describe('SpeciesDetailScreen safety notices', () => {
     expect(getByTestId('fatal-lookalike-banner')).toBeTruthy();
     expect(getByText(/NIE JEDZ NA PODSTAWIE TEJ KARTY/)).toBeTruthy();
     expect(getByTestId('lookalike-link-amanita_phalloides')).toBeTruthy();
+    expect(getByTestId('incomplete-card-banner')).toBeTruthy();
+    expect(getByTestId('incomplete-card-badge')).toBeTruthy();
+    expect(queryByText('JADALNY')).toBeNull();
+  });
+
+  it('keeps a finished edible card on the green badge', async () => {
+    const { getByText, queryByTestId } = await render(
+      <SpeciesDetailScreen species={species('boletus_edulis')} onBack={() => {}} />
+    );
+
+    expect(getByText('JADALNY')).toBeTruthy();
+    expect(queryByTestId('incomplete-card-banner')).toBeNull();
+    expect(queryByTestId('incomplete-card-badge')).toBeNull();
+  });
+
+  it('shows the incomplete badge on look-alike rows that point at unfinished edible cards', async () => {
+    const { getByTestId, getByText } = await render(
+      <SpeciesDetailScreen species={species('amanita_phalloides')} onBack={() => {}} />
+    );
+
+    expect(getByTestId('incomplete-card-badge-russula_virescens')).toBeTruthy();
+    expect(getByTestId('incomplete-card-badge-agaricus_campestris')).toBeTruthy();
+    expect(getByTestId('lookalike-status-macrolepiota_procera')).toBeTruthy();
+    expect(getByText('JADALNY')).toBeTruthy();
   });
 });

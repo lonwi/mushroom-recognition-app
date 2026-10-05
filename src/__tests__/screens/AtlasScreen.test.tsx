@@ -72,7 +72,7 @@ describe('AtlasScreen RTL Tests', () => {
 
   it('shows a no-photo state for look-alikes that have no picture', async () => {
     const onSelect = jest.fn();
-    const { getByPlaceholderText, getByTestId, queryByTestId } = await render(
+    const { getByPlaceholderText, getByTestId, queryByTestId, queryByText } = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={onSelect} />
       </LanguageProvider>
@@ -86,6 +86,8 @@ describe('AtlasScreen RTL Tests', () => {
     await waitFor(() => {
       expect(getByTestId('atlas-photo-missing-russula_virescens')).toBeTruthy();
       expect(queryByTestId('atlas-photo-russula_virescens')).toBeNull();
+      expect(getByTestId('incomplete-card-badge-russula_virescens')).toBeTruthy();
+      expect(queryByText('JADALNY')).toBeNull();
     });
   });
 });

@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { ConfusionRisk } from '../types/mushroom';
-import { EdibilityBadge } from './EdibilityBadge';
+import { SpeciesStatusBadge } from './EdibilityBadge';
+import { isIncompleteSpeciesCard } from '../data/mushrooms';
 
 interface Props {
   risks: ConfusionRisk[];
@@ -72,7 +73,14 @@ export const LookAlikeAlert: React.FC<Props> = ({
           <View key={`${risk.confusedWithId}-${idx}`} style={styles.riskCard}>
             <View style={styles.riskTop}>
               <Text style={styles.riskName}>Można pomylić z: {risk.confusedWithName}</Text>
-              <EdibilityBadge status={risk.confusedWithStatus} size="small" />
+              <View testID={`lookalike-status-${risk.confusedWithId}`}>
+                <SpeciesStatusBadge
+                  status={risk.confusedWithStatus}
+                  incompleteCard={isIncompleteSpeciesCard(risk.confusedWithId)}
+                  size="small"
+                  testID={`incomplete-card-badge-${risk.confusedWithId}`}
+                />
+              </View>
             </View>
             {canOpen ? (
               <TouchableOpacity

@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MUSHROOMS_DATABASE } from '../data/mushrooms';
 import { MushroomSpecies, EdibilityStatus, HymenophoreType } from '../types/mushroom';
-import { EdibilityBadge } from '../components/EdibilityBadge';
+import { SpeciesStatusBadge } from '../components/EdibilityBadge';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getMushroomImage } from '../utils/mushroomImages';
 
@@ -84,7 +84,12 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
                 <Text style={styles.namePl}>{item.namePl}</Text>
                 <Text style={styles.nameLatin}>{item.nameLatin}</Text>
               </View>
-              <EdibilityBadge status={item.status} size="small" />
+              <SpeciesStatusBadge
+                status={item.status}
+                incompleteCard={item.incompleteCard}
+                size="small"
+                testID={`incomplete-card-badge-${item.id}`}
+              />
             </View>
 
             {item.commonNicknames.length > 0 ? (

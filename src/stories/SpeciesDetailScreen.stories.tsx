@@ -36,6 +36,14 @@ export const KaniaFatalLookAlike: Story = {
   ),
 };
 
+export const MorelProtectionNote: Story = {
+  render: () => (
+    <View style={{ flex: 1, minHeight: 900 }}>
+      <SpeciesDetailScreen species={species('morchella_esculenta')} onBack={() => {}} />
+    </View>
+  ),
+};
+
 export const RussulaWithoutPhoto: Story = {
   render: () => (
     <View style={{ flex: 1, minHeight: 900 }}>

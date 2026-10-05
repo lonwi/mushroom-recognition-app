@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { storageService } from '../services/storageService';
 import { SightingRecord } from '../types/mushroom';
 import { MUSHROOMS_DATABASE } from '../data/mushrooms';
-import { EdibilityBadge } from '../components/EdibilityBadge';
+import { SpeciesStatusBadge } from '../components/EdibilityBadge';
 
 interface Props {
   onOpenAtlasSpecies?: (speciesId: string) => void;
@@ -79,7 +79,13 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
               <Text style={styles.speciesNamePl} numberOfLines={1}>
                 {item.speciesNamePl}
               </Text>
-              {species && <EdibilityBadge status={species.status} size="small" />}
+              {species && (
+                <SpeciesStatusBadge
+                  status={species.status}
+                  incompleteCard={species.incompleteCard}
+                  size="small"
+                />
+              )}
             </View>
 
             <Text style={styles.speciesNameLatin}>{item.speciesNameLatin}</Text>
