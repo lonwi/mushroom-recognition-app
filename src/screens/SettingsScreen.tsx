@@ -43,6 +43,11 @@ export const SettingsScreen: React.FC = () => {
             <Text style={styles.infoCardText}>{t('settings.offlineNotice')}</Text>
           </View>
 
+          <View style={styles.aboutCard} testID="training-data-license">
+            <Text style={styles.aboutTitle}>{t('settings.dataLicenseTitle')}</Text>
+            <Text style={styles.aboutVersion}>{t('settings.dataLicenseBody')}</Text>
+          </View>
+
           <View style={styles.aboutCard}>
             <Text style={styles.aboutTitle}>{t('settings.about')}</Text>
             <Text style={styles.aboutVersion}>{t('settings.version')}</Text>

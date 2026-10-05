@@ -1,23 +1,279 @@
 {
-  "model_name": "mobilenetv3_large_mushrooms_pl_v1",
-  "input_shape": [1, 224, 224, 3],
-  "input_normalization": {
-    "mean": [0.485, 0.456, 0.406],
-    "std": [0.229, 0.224, 0.225]
+  "role": "class_contract",
+  "note": "This file is the class contract for a model we train ourselves. It is not a neural network. Recognition stays unavailable until training/export_tflite.py copies a calibrated mushrooms_model.tflite into this folder and sets model_packaged to true. No species, confidence, or edibility is implied by this list.",
+  "model_file": "mushrooms_model.tflite",
+  "model_packaged": false,
+  "recognition_available": false,
+  "backbone": {
+    "name": "MobileNetV3Small",
+    "framework": "keras.applications.MobileNetV3Small",
+    "pretrained_weights": "imagenet",
+    "pretrained_weights_license": "Apache-2.0",
+    "pretrained_weights_source": "Keras Applications MobileNetV3-Small ImageNet checkpoint (keras.applications.MobileNetV3Small weights='imagenet'), published with the TensorFlow / Keras Applications code under the Apache License 2.0. ImageNet photographs are not redistributed."
   },
-  "quantization": "INT8",
+  "input": {
+    "size": 224,
+    "channels": 3,
+    "layout": "NHWC",
+    "color": "RGB",
+    "preprocess": "mobilenet_v3",
+    "formula": "(pixel / 127.5) - 1",
+    "resize": "bilinear_half_pixel_centers"
+  },
+  "output": {
+    "type": "logits",
+    "activation": "none",
+    "io_dtype": "float32"
+  },
+  "quantization": null,
+  "dangerous_genera": ["Amanita", "Cortinarius", "Galerina", "Gyromitra"],
+  "ood": {
+    "method": "energy_logsumexp_plus_background_class",
+    "reference": "Liu et al., Energy-based Out-of-distribution Detection, NeurIPS 2020. E(x) = -T * logsumexp(logits / T). In-distribution scores are lower. Reject when E(x) is above the calibrated threshold, when the background class wins, or when the top softmax is below the accept floor. A softmax cutoff alone is not the gate.",
+    "background_class_id": "not_a_mushroom",
+    "temperature": 1,
+    "energy_threshold": null,
+    "min_softmax_for_accept": null,
+    "min_top1_softmax_for_high_confidence": null,
+    "min_margin": null,
+    "calibrated": false,
+    "id_keep_rate_at_threshold": null,
+    "ood_reject_rate_at_threshold": null,
+    "softmax_above_0_5_still_rejected_rate": null
+  },
   "classes": [
-    { "index": 0, "id": "boletus_edulis", "name": "Borowik szlachetny", "status": "EDIBLE" },
-    { "index": 1, "id": "amanita_phalloides", "name": "Muchomor sromotnikowy", "status": "DEADLY_POISONOUS" },
-    { "index": 2, "id": "macrolepiota_procera", "name": "Czubajka kania", "status": "EDIBLE" },
-    { "index": 3, "id": "cantharellus_cibarius", "name": "Pieprznik jadalny (Kurka)", "status": "EDIBLE" },
-    { "index": 4, "id": "imleria_badia", "name": "Podgrzybek brunatny", "status": "EDIBLE" },
-    { "index": 5, "id": "suillus_luteus", "name": "Maślak zwyczajny", "status": "EDIBLE" },
-    { "index": 6, "id": "leccinum_scabrum", "name": "Koźlarz babka", "status": "EDIBLE" },
-    { "index": 7, "id": "tylopilus_felleus", "name": "Goryczak żółciowy", "status": "INEDIBLE" },
-    { "index": 8, "id": "amanita_muscaria", "name": "Muchomor czerwony", "status": "POISONOUS" },
-    { "index": 9, "id": "lactarius_deliciosus", "name": "Mleczaj rydz", "status": "EDIBLE" },
-    { "index": 10, "id": "gyromitra_esculenta", "name": "Piestrzenica kasztanowata", "status": "DEADLY_POISONOUS" },
-    { "index": 11, "id": "paxillus_involutus", "name": "Krowiak podwinięty (Olszówka)", "status": "DEADLY_POISONOUS" }
+    {
+      "index": 0,
+      "id": "boletus_edulis",
+      "name": "Borowik szlachetny",
+      "name_latin": "Boletus edulis",
+      "genus": "Boletus",
+      "gbif_names": ["Boletus edulis"]
+    },
+    {
+      "index": 1,
+      "id": "amanita_phalloides",
+      "name": "Muchomor sromotnikowy (zielonawy)",
+      "name_latin": "Amanita phalloides",
+      "genus": "Amanita",
+      "gbif_names": ["Amanita phalloides"]
+    },
+    {
+      "index": 2,
+      "id": "macrolepiota_procera",
+      "name": "Czubajka kania",
+      "name_latin": "Macrolepiota procera",
+      "genus": "Macrolepiota",
+      "gbif_names": ["Macrolepiota procera"]
+    },
+    {
+      "index": 3,
+      "id": "cantharellus_cibarius",
+      "name": "Pieprznik jadalny (Kurka)",
+      "name_latin": "Cantharellus cibarius",
+      "genus": "Cantharellus",
+      "gbif_names": ["Cantharellus cibarius"]
+    },
+    {
+      "index": 4,
+      "id": "imleria_badia",
+      "name": "Podgrzybek brunatny",
+      "name_latin": "Imleria badia",
+      "genus": "Imleria",
+      "gbif_names": ["Imleria badia", "Boletus badius", "Xerocomus badius"]
+    },
+    {
+      "index": 5,
+      "id": "suillus_luteus",
+      "name": "Maślak zwyczajny",
+      "name_latin": "Suillus luteus",
+      "genus": "Suillus",
+      "gbif_names": ["Suillus luteus"]
+    },
+    {
+      "index": 6,
+      "id": "leccinum_scabrum",
+      "name": "Koźlarz babka",
+      "name_latin": "Leccinum scabrum",
+      "genus": "Leccinum",
+      "gbif_names": ["Leccinum scabrum"]
+    },
+    {
+      "index": 7,
+      "id": "tylopilus_felleus",
+      "name": "Goryczak żółciowy",
+      "name_latin": "Tylopilus felleus",
+      "genus": "Tylopilus",
+      "gbif_names": ["Tylopilus felleus"]
+    },
+    {
+      "index": 8,
+      "id": "amanita_muscaria",
+      "name": "Muchomor czerwony",
+      "name_latin": "Amanita muscaria",
+      "genus": "Amanita",
+      "gbif_names": ["Amanita muscaria"]
+    },
+    {
+      "index": 9,
+      "id": "lactarius_deliciosus",
+      "name": "Mleczaj rydz",
+      "name_latin": "Lactarius deliciosus",
+      "genus": "Lactarius",
+      "gbif_names": ["Lactarius deliciosus"]
+    },
+    {
+      "index": 10,
+      "id": "gyromitra_esculenta",
+      "name": "Piestrzenica kasztanowata",
+      "name_latin": "Gyromitra esculenta",
+      "genus": "Gyromitra",
+      "gbif_names": ["Gyromitra esculenta"]
+    },
+    {
+      "index": 11,
+      "id": "paxillus_involutus",
+      "name": "Krowiak podwinięty (Olszówka)",
+      "name_latin": "Paxillus involutus",
+      "genus": "Paxillus",
+      "gbif_names": ["Paxillus involutus"]
+    },
+    {
+      "index": 12,
+      "id": "russula_virescens",
+      "name": "Gołąbek zielonawy",
+      "name_latin": "Russula virescens",
+      "genus": "Russula",
+      "gbif_names": ["Russula virescens"]
+    },
+    {
+      "index": 13,
+      "id": "agaricus_campestris",
+      "name": "Pieczarka polna",
+      "name_latin": "Agaricus campestris",
+      "genus": "Agaricus",
+      "gbif_names": ["Agaricus campestris"]
+    },
+    {
+      "index": 14,
+      "id": "chlorophyllum_rhacodes",
+      "name": "Czubajnik czerwieniejący",
+      "name_latin": "Chlorophyllum rhacodes",
+      "genus": "Chlorophyllum",
+      "gbif_names": ["Chlorophyllum rhacodes", "Chlorophyllum rachodes", "Macrolepiota rhacodes", "Macrolepiota rachodes"]
+    },
+    {
+      "index": 15,
+      "id": "hygrophoropsis_aurantiaca",
+      "name": "Lisówka pomarańczowa",
+      "name_latin": "Hygrophoropsis aurantiaca",
+      "genus": "Hygrophoropsis",
+      "gbif_names": ["Hygrophoropsis aurantiaca"]
+    },
+    {
+      "index": 16,
+      "id": "lactarius_torminosus",
+      "name": "Mleczaj wełnianka",
+      "name_latin": "Lactarius torminosus",
+      "genus": "Lactarius",
+      "gbif_names": ["Lactarius torminosus"]
+    },
+    {
+      "index": 17,
+      "id": "morchella_esculenta",
+      "name": "Smardz jadalny",
+      "name_latin": "Morchella esculenta",
+      "genus": "Morchella",
+      "gbif_names": ["Morchella esculenta"]
+    },
+    {
+      "index": 18,
+      "id": "amanita_virosa",
+      "name": "Muchomor jadowity",
+      "name_latin": "Amanita virosa",
+      "genus": "Amanita",
+      "gbif_names": ["Amanita virosa"]
+    },
+    {
+      "index": 19,
+      "id": "amanita_pantherina",
+      "name": "Muchomor plamisty",
+      "name_latin": "Amanita pantherina",
+      "genus": "Amanita",
+      "gbif_names": ["Amanita pantherina"]
+    },
+    {
+      "index": 20,
+      "id": "cortinarius_orellanus",
+      "name": "Zasłoniak rudy",
+      "name_latin": "Cortinarius orellanus",
+      "genus": "Cortinarius",
+      "gbif_names": ["Cortinarius orellanus"]
+    },
+    {
+      "index": 21,
+      "id": "cortinarius_rubellus",
+      "name": "Zasłoniak szpiczasty",
+      "name_latin": "Cortinarius rubellus",
+      "genus": "Cortinarius",
+      "gbif_names": ["Cortinarius rubellus", "Cortinarius speciosissimus", "Cortinarius orellanoides"]
+    },
+    {
+      "index": 22,
+      "id": "galerina_marginata",
+      "name": "Hełmówka jadowita",
+      "name_latin": "Galerina marginata",
+      "genus": "Galerina",
+      "gbif_names": ["Galerina marginata", "Galerina autumnalis"]
+    },
+    {
+      "index": 23,
+      "id": "kuehneromyces_mutabilis",
+      "name": "Łuskwiak zmienny",
+      "name_latin": "Kuehneromyces mutabilis",
+      "genus": "Kuehneromyces",
+      "gbif_names": ["Kuehneromyces mutabilis", "Pholiota mutabilis"]
+    },
+    {
+      "index": 24,
+      "id": "armillaria_mellea",
+      "name": "Opieńka miodowa",
+      "name_latin": "Armillaria mellea",
+      "genus": "Armillaria",
+      "gbif_names": ["Armillaria mellea"]
+    },
+    {
+      "index": 25,
+      "id": "amanita_rubescens",
+      "name": "Muchomor czerwieniejący",
+      "name_latin": "Amanita rubescens",
+      "genus": "Amanita",
+      "gbif_names": ["Amanita rubescens"]
+    },
+    {
+      "index": 26,
+      "id": "amanita_citrina",
+      "name": "Muchomor cytrynowy",
+      "name_latin": "Amanita citrina",
+      "genus": "Amanita",
+      "gbif_names": ["Amanita citrina"]
+    },
+    {
+      "index": 27,
+      "id": "not_a_mushroom",
+      "name": "To nie jest grzyb",
+      "name_latin": "Not a mushroom",
+      "genus": "",
+      "gbif_names": [
+        "Felis catus",
+        "Canis lupus familiaris",
+        "Turdus merula",
+        "Quercus robur",
+        "Bellis perennis",
+        "Apis mellifera",
+        "Sciurus vulgaris",
+        "Equus caballus"
+      ]
+    }
   ]
 }

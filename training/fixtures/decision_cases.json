@@ -1,0 +1,259 @@
+{
+  "cases": [
+    {
+      "name": "softmax_above_0_7_still_ood",
+      "logits": [
+        2.0,
+        0.3,
+        -0.4,
+        -1.0
+      ],
+      "class_ids": [
+        "boletus_edulis",
+        "amanita_phalloides",
+        "macrolepiota_procera",
+        "not_a_mushroom"
+      ],
+      "genera": [
+        "Boletus",
+        "Amanita",
+        "Macrolepiota",
+        ""
+      ],
+      "ood": {
+        "calibrated": true,
+        "background_class_id": "not_a_mushroom",
+        "temperature": 1,
+        "energy_threshold": -4.0,
+        "min_softmax_for_accept": 0.4,
+        "min_top1_softmax_for_high_confidence": 0.7,
+        "min_margin": 0.15
+      },
+      "expect": {
+        "status": "rejected",
+        "reason": "not_a_mushroom",
+        "max_softmax": 0.7557501939101271,
+        "energy": -2.2800443887428776,
+        "max_softmax_gt": 0.7
+      }
+    },
+    {
+      "name": "cat_softmax_0_53_rejected_by_energy",
+      "logits": [
+        0.96,
+        -0.19,
+        -0.2,
+        -0.4
+      ],
+      "class_ids": [
+        "boletus_edulis",
+        "amanita_phalloides",
+        "macrolepiota_procera",
+        "not_a_mushroom"
+      ],
+      "genera": [
+        "Boletus",
+        "Amanita",
+        "Macrolepiota",
+        ""
+      ],
+      "ood": {
+        "calibrated": true,
+        "background_class_id": "not_a_mushroom",
+        "temperature": 1,
+        "energy_threshold": -4.0,
+        "min_softmax_for_accept": 0.4,
+        "min_top1_softmax_for_high_confidence": 0.7,
+        "min_margin": 0.15
+      },
+      "expect": {
+        "status": "rejected",
+        "reason": "not_a_mushroom",
+        "max_softmax": 0.5300024510365813,
+        "energy": -1.5948736478493397,
+        "max_softmax_gt": 0.5
+      }
+    },
+    {
+      "name": "confident_bolete",
+      "logits": [
+        8.0,
+        1.2,
+        0.2,
+        -2.0
+      ],
+      "class_ids": [
+        "boletus_edulis",
+        "imleria_badia",
+        "suillus_luteus",
+        "not_a_mushroom"
+      ],
+      "genera": [
+        "Boletus",
+        "Imleria",
+        "Suillus",
+        ""
+      ],
+      "ood": {
+        "calibrated": true,
+        "background_class_id": "not_a_mushroom",
+        "temperature": 1,
+        "energy_threshold": -4.0,
+        "min_softmax_for_accept": 0.4,
+        "min_top1_softmax_for_high_confidence": 0.7,
+        "min_margin": 0.15
+      },
+      "expect": {
+        "status": "candidates",
+        "max_softmax": 0.9984335475663892,
+        "energy": -8.001567680602971,
+        "dangerous_genus": false,
+        "low_confidence": false
+      }
+    },
+    {
+      "name": "amanita_in_top3",
+      "logits": [
+        7.0,
+        4.0,
+        3.2,
+        -2.0
+      ],
+      "class_ids": [
+        "boletus_edulis",
+        "imleria_badia",
+        "amanita_phalloides",
+        "not_a_mushroom"
+      ],
+      "genera": [
+        "Boletus",
+        "Imleria",
+        "Amanita",
+        ""
+      ],
+      "ood": {
+        "calibrated": true,
+        "background_class_id": "not_a_mushroom",
+        "temperature": 1,
+        "energy_threshold": -4.0,
+        "min_softmax_for_accept": 0.4,
+        "min_top1_softmax_for_high_confidence": 0.7,
+        "min_margin": 0.15
+      },
+      "expect": {
+        "status": "candidates",
+        "max_softmax": 0.9325911461883521,
+        "energy": -7.069788388339072,
+        "dangerous_genus": true,
+        "low_confidence": false
+      }
+    },
+    {
+      "name": "low_confidence_bolete",
+      "logits": [
+        6.0,
+        5.7,
+        0.0,
+        -2.0
+      ],
+      "class_ids": [
+        "boletus_edulis",
+        "tylopilus_felleus",
+        "suillus_luteus",
+        "not_a_mushroom"
+      ],
+      "genera": [
+        "Boletus",
+        "Tylopilus",
+        "Suillus",
+        ""
+      ],
+      "ood": {
+        "calibrated": true,
+        "background_class_id": "not_a_mushroom",
+        "temperature": 1,
+        "energy_threshold": -4.0,
+        "min_softmax_for_accept": 0.4,
+        "min_top1_softmax_for_high_confidence": 0.7,
+        "min_margin": 0.15
+      },
+      "expect": {
+        "status": "candidates",
+        "max_softmax": 0.5735153692074483,
+        "energy": -6.555970543805017,
+        "dangerous_genus": false,
+        "low_confidence": true
+      }
+    },
+    {
+      "name": "confident_background_class",
+      "logits": [
+        -2.0,
+        -2.0,
+        -2.0,
+        6.0
+      ],
+      "class_ids": [
+        "boletus_edulis",
+        "amanita_phalloides",
+        "macrolepiota_procera",
+        "not_a_mushroom"
+      ],
+      "genera": [
+        "Boletus",
+        "Amanita",
+        "Macrolepiota",
+        ""
+      ],
+      "ood": {
+        "calibrated": true,
+        "background_class_id": "not_a_mushroom",
+        "temperature": 1,
+        "energy_threshold": -4.0,
+        "min_softmax_for_accept": 0.4,
+        "min_top1_softmax_for_high_confidence": 0.7,
+        "min_margin": 0.15
+      },
+      "expect": {
+        "status": "rejected",
+        "reason": "not_a_mushroom",
+        "max_softmax": 0.9989946239146035,
+        "energy": -6.001005881814927
+      }
+    },
+    {
+      "name": "uncalibrated_gate",
+      "logits": [
+        8.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "class_ids": [
+        "boletus_edulis",
+        "amanita_phalloides",
+        "macrolepiota_procera",
+        "not_a_mushroom"
+      ],
+      "genera": [
+        "Boletus",
+        "Amanita",
+        "Macrolepiota",
+        ""
+      ],
+      "ood": {
+        "calibrated": false,
+        "background_class_id": "not_a_mushroom",
+        "temperature": 1,
+        "energy_threshold": null,
+        "min_softmax_for_accept": 0.4,
+        "min_top1_softmax_for_high_confidence": 0.7,
+        "min_margin": 0.15
+      },
+      "expect": {
+        "status": "unavailable",
+        "reason": "gate_not_calibrated"
+      }
+    }
+  ]
+}

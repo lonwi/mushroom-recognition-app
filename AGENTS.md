@@ -80,15 +80,17 @@ mushroom-app/
    - If a species can be confused with a deadly mushroom (e.g. *Macrolepiota procera* vs *Amanita phalloides*), `fatal: true` must be flagged so `LookAlikeAlert` renders prominent red alerts.
 
 3. **Memory Management**:
-   - When running inference in `classifierService.ts`, always wrap tensor operations in `tf.tidy()` to immediately free GPU/CPU memory on mobile devices.
+   - The scanner uses TFLite, not TensorFlow.js tensors. Do not allocate a long-lived copy of the input buffer. If a future change does use `@tensorflow/tfjs` tensors inside `classifierService.ts`, wrap them in `tf.tidy()`.
 
 4. **Hermes Engine Compatibility**:
-   - In React Native (Hermes engine), TensorFlow.js cannot auto-detect a platform because neither DOM nor Node `process.versions.node` exist. Always ensure `PlatformReactNative` from `src/utils/tfjsPlatform.ts` is registered via `ensureTensorFlowPlatform()` to prevent `isTypedArray of undefined` errors.
+   - In React Native (Hermes engine), TensorFlow.js cannot auto-detect a platform because neither DOM nor Node `process.versions.node` exist. Always ensure `PlatformReactNative` from `src/utils/tfjsPlatform.ts` is registered via `ensureTensorFlowPlatform()` to prevent `isTypedArray of undefined` errors. The TFLite path does not import TensorFlow.js.
 
 5. **Recognition honesty**:
    - `classifierService` must not return a species, a confidence percentage, or an inference time unless a real on-device model consumed that photo's pixels.
    - Do not floor confidence, invent latency, hash a URI into a class, or pass a forced species id through the scanner and present it as a scan.
-   - `assets/models/labels.json` is not a model. Do not claim TFLite while `mushrooms_model.tflite` and `react-native-fast-tflite` are absent.
+   - `assets/models/labels.json` is a class contract, not a model. Recognition stays unavailable while `src/services/modelPackage.ts` exports `null` and `mushrooms_model.tflite` is absent.
+   - A packaged model still must not show an edibility verdict. Amanita, Cortinarius, Galerina, or Gyromitra in the top 3, or low confidence, requires the expert / Sanepid warning. The energy gate and the `not_a_mushroom` class can reject a photo with no species at all.
+   - Training data may be CC0 or CC-BY only. Do not fetch NC, SA, or unlicensed photos, and do not install weights that failed `training/ship_gates.py`.
 
 ---
 

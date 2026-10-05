@@ -8,8 +8,9 @@ Aplikacja stworzona z myślą o miłośnikach leśnych wypraw i zbierania grzyb�
 ## 🌟 Kluczowe Funkcjonalności
 
 1. **Skaner (aparat i galeria)**:
-   - Zdjęcie z aparatu lub galerii nie jest dziś klasyfikowane. W repozytorium nie ma modelu, który czyta piksele: jest tylko `assets/models/labels.json`, a `react-native-fast-tflite` nie jest podłączony.
-   - Wynik mówi wprost, że rozpoznawanie jest niedostępne. Aplikacja nie podaje gatunku ani procentu pewności i nie opisuje tego ekranu jako TFLite.
+   - Zdjęcie z aparatu lub galerii nie jest dziś klasyfikowane. `assets/models/labels.json` to kontrakt klas, nie sieć. Pliku `mushrooms_model.tflite` nie ma, bramka odrzuceń nie jest skalibrowana, a skaner zostaje przy „rozpoznawanie niedostępne”.
+   - Potok treningu (tylko zdjęcia CC0 i CC-BY, MobileNetV3-Small na licencji Apache-2.0, eksport TFLite) jest w `training/`. Opis: `training/README.md`.
+   - Gdy skalibrowany model zostanie dołączony, skaner pokaże trzy kandydatury z pewnością, bez oceny jadalności. Rodzaj Amanita, Cortinarius, Galerina lub Gyromitra albo niska pewność wymuszają komunikat o grzyboznawcy i Sanepidzie. Zdjęcie kota albo inny wynik poza rozkładem nie dostaje nazwy gatunku.
    - Błąd aparatu lub wyboru zdjęcia nie podstawia ilustracji zastępczej.
    - Skróty gatunków otwierają kartę w atlasie i są opisane jako przykłady z atlasu, a nie jako wynik skanowania.
    - Celownik z podpowiedziami kadrowania makro (kapelusz, spód, trzon) oraz latarka zostają na ekranie aparatu.
@@ -85,11 +86,20 @@ pnpm test:e2e
 
 ---
 
-## Model na urządzeniu — jeszcze niepodłączony
+## Model na urządzeniu
 
-Rozpoznawanie gatunku ze zdjęcia jest celowo wyłączone. W katalogu `assets/models/` jest tylko `labels.json` (lista klas). Nie ma pliku `mushrooms_model.tflite` i biblioteka `react-native-fast-tflite` nie jest zależnością tej aplikacji. Skaner nie buduje nietrenowanej sieci i nie zgaduje gatunku z adresu zdjęcia.
+Rozpoznawanie jest wyłączone, dopóki w repozytorium nie ma skalibrowanego `assets/models/mushrooms_model.tflite`. Sam `labels.json` nie jest modelem. `react-native-fast-tflite` jest zależnością pod przyszły plik; bez pliku skaner go nie ładuje i nie podaje gatunku ani procentu pewności.
 
-Podłączenie prawdziwego modelu (wagi, odczyt pikseli, ścieżka „nie wiem” / „to nie jest grzyb”) to osobna zmiana. Do tego czasu skaner odmawia odpowiedzi zamiast pokazywać pewność.
+Trening opisuje `training/README.md`. Wagi z ImageNet (Keras MobileNetV3-Small, Apache-2.0) służą tylko jako inicjalizacja. Zdjęcia treningowe wolno brać wyłącznie z CC0 i CC-BY, z atrybucją w `training/data/attributions.jsonl`. Ten katalog powstaje na maszynie treningowej i nie jest częścią aplikacji.
+
+Na maszynie z GPU:
+
+```bash
+pip install -r training/requirements.txt
+python training/run_pipeline.py all
+```
+
+Kopiowanie modelu do aplikacji (`export --install-into-app`) działa dopiero wtedy, gdy progi w `training/ship_gates.py` przejdą na zmierzonych liczbach. Tu ich nie ma.
 
 ---
 
