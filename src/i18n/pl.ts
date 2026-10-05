@@ -23,7 +23,7 @@ export const pl = {
   },
   atlas: {
     title: 'Atlas Grzybów',
-    searchPlaceholder: 'Szukaj grzyba (np. borowik, kania, szatan)...',
+    searchPlaceholder: 'Szukaj grzyba (np. borowik, kania, kurka)...',
     filterAll: 'Wszystkie',
     filterEdible: 'Jadalne',
     filterInedible: 'Niejadalne',

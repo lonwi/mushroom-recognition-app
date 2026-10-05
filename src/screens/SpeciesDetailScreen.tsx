@@ -14,14 +14,18 @@ import { MushroomSpecies } from '../types/mushroom';
 import { EdibilityBadge } from '../components/EdibilityBadge';
 import { LookAlikeAlert } from '../components/LookAlikeAlert';
 import { getMushroomImage } from '../utils/mushroomImages';
+import { hasFatalLookAlikeRisk, MUSHROOM_IDS } from '../data/mushrooms';
 
 interface Props {
   species: MushroomSpecies;
   onBack: () => void;
+  onOpenLookAlike?: (speciesId: string) => void;
 }
 
-export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack }) => {
+export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLookAlike }) => {
   const monthsNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru'];
+  const photo = getMushroomImage(species.id);
+  const fatalLookAlike = hasFatalLookAlikeRisk(species);
 
   const getHymenophoreIcon = (type: string) => {
     switch(type) {
@@ -47,11 +51,14 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack }) => {
     <View style={styles.container}>
       {/* Hero Section */}
       <View style={styles.heroSection}>
-        <Image
-          source={getMushroomImage(species.id)}
-          style={StyleSheet.absoluteFill}
-          resizeMode="cover"
-        />
+        {photo ? (
+          <Image
+            source={photo}
+            style={StyleSheet.absoluteFill}
+            resizeMode="cover"
+            testID="species-photo"
+          />
+        ) : null}
         <View style={styles.heroOverlay} />
         <SafeAreaView>
           <View style={styles.navBar}>
@@ -67,6 +74,9 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack }) => {
         <View style={styles.heroContent}>
            <Text style={styles.namePl}>{species.namePl}</Text>
            <Text style={styles.nameLatin}>{species.nameLatin}</Text>
+           {photo ? null : (
+             <Text style={styles.photoMissingText} testID="species-photo-missing">Brak zdjęcia</Text>
+           )}
            
            <View style={styles.badgesRow}>
              <EdibilityBadge status={species.status} size="large" />
@@ -79,7 +89,23 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack }) => {
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
+
+        {fatalLookAlike ? (
+          <View style={styles.fatalBanner} testID="fatal-lookalike-banner">
+            <Text style={styles.fatalBannerTitle}>Śmiertelnie groźny sobowtór w tej karcie</Text>
+            <Text style={styles.fatalBannerBody}>
+              Nie jedz bez oceny grzyboznawcy. Różnice są poniżej.
+            </Text>
+          </View>
+        ) : null}
+
+        {species.warningNotes ? (
+          <View style={styles.warningBox} testID="species-warning-notes">
+            <Feather name="info" size={18} color="#B45309" style={{ marginTop: 2 }} />
+            <Text style={styles.warningText}>{species.warningNotes}</Text>
+          </View>
+        ) : null}
+
         {/* Main Info Card */}
         <View style={styles.mainCard}>
           <View style={styles.infoRow}>
@@ -119,7 +145,12 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack }) => {
 
         {/* Lookalikes Warning */}
         <View style={styles.lookAlikeContainer}>
-          <LookAlikeAlert risks={species.confusionRisks} />
+          <LookAlikeAlert
+            risks={species.confusionRisks}
+            noDangerousLookAlikesSource={species.noDangerousLookAlikes?.source}
+            catalogIds={MUSHROOM_IDS}
+            onOpenSpecies={onOpenLookAlike}
+          />
         </View>
 
         <Text style={styles.sectionTitle}>Morfologia i siedlisko</Text>
@@ -191,13 +222,6 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack }) => {
           </View>
           
           <Text style={styles.actionBody}>{species.culinaryValue}</Text>
-
-          {species.warningNotes && (
-            <View style={styles.warningBox}>
-              <Feather name="info" size={18} color="#B45309" style={{marginTop: 2}} />
-              <Text style={styles.warningText}>{species.warningNotes}</Text>
-            </View>
-          )}
         </View>
 
       </ScrollView>
@@ -267,6 +291,32 @@ const styles = StyleSheet.create({
     color: '#A7F3D0',
     marginTop: 4,
     fontWeight: '500',
+  },
+  photoMissingText: {
+    color: '#FDE68A',
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 8,
+  },
+  fatalBanner: {
+    backgroundColor: '#FEF2F2',
+    borderWidth: 2,
+    borderColor: '#DC2626',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  fatalBannerTitle: {
+    color: '#991B1B',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  fatalBannerBody: {
+    color: '#7F1D1D',
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: 4,
+    fontWeight: '600',
   },
   badgesRow: {
     flexDirection: 'row',
@@ -464,7 +514,7 @@ const styles = StyleSheet.create({
   },
   warningBox: {
     flexDirection: 'row',
-    marginTop: 20,
+    marginBottom: 16,
     backgroundColor: '#FFFBEB',
     padding: 16,
     borderRadius: 16,

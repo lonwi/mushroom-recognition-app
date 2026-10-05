@@ -21,7 +21,7 @@ Aplikacja stworzona z myślą o miłośnikach leśnych wypraw i zbierania grzyb�
 
 3. **Offline Atlas Grzybów**:
    - Kompletna baza taksonomiczna z opisami w języku polskim.
-   - Wyszukiwarka po nazwach polskich, łacińskich i nazwach potocznych (np. "prawdziwek", "sowa", "szatan").
+   - Wyszukiwarka po nazwach polskich, łacińskich i nazwach potocznych (np. "prawdziwek", "sowa", "kurka"). Borowik szatański nie jest w bazie; „szatan” nie jest nazwą goryczaka.
    - Filtrowanie po jadalności oraz typie hymenoforu (Rurki/"gąbka", Blaszki, Listewki, Inne).
    - Kalendarz miesięcy występowania oraz charakterystyka siedliska leśnego.
 

@@ -1,12 +1,53 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
-import { LookAlikeAlert } from '../../components/LookAlikeAlert';
+import { fireEvent, render } from '@testing-library/react-native';
+import {
+  INCOMPLETE_LOOKALIKE_BODY,
+  INCOMPLETE_LOOKALIKE_TITLE,
+  LookAlikeAlert,
+} from '../../components/LookAlikeAlert';
 import { ConfusionRisk } from '../../types/mushroom';
 
 describe('LookAlikeAlert RTL Component Tests', () => {
-  it('renders safe container when no look-alikes exist', async () => {
-    const { getByText } = await render(<LookAlikeAlert risks={[]} />);
-    expect(getByText('✓ Brak niebezpiecznych sobowtórów')).toBeTruthy();
+  it('does not treat an empty list as an all-clear', async () => {
+    const { getByTestId, getByText, queryByText } = await render(<LookAlikeAlert risks={[]} />);
+
+    expect(getByTestId('lookalike-incomplete')).toBeTruthy();
+    expect(getByText(INCOMPLETE_LOOKALIKE_TITLE)).toBeTruthy();
+    expect(getByText(INCOMPLETE_LOOKALIKE_BODY)).toBeTruthy();
+    expect(queryByText(/Brak niebezpiecznych sobowtórów/)).toBeNull();
+    expect(queryByText(/nie posiada w Polsce/)).toBeNull();
+  });
+
+  it('shows a sourced clearance only when the data states one explicitly', async () => {
+    const { getByTestId, getByText, queryByTestId } = await render(
+      <LookAlikeAlert risks={[]} noDangerousLookAlikesSource="Atlas X, wyd. 2, s. 10" />
+    );
+
+    expect(getByTestId('lookalike-sourced-clearance')).toBeTruthy();
+    expect(getByText(/Atlas X, wyd. 2, s. 10/)).toBeTruthy();
+    expect(getByText(/potwierdź oznaczenie u grzyboznawcy/)).toBeTruthy();
+    expect(queryByTestId('lookalike-incomplete')).toBeNull();
+    expect(queryByTestId('lookalike-sourced-clearance')).toBeTruthy();
+  });
+
+  it('ignores a sourced clearance when look-alikes are actually listed', async () => {
+    const risks: ConfusionRisk[] = [
+      {
+        confusedWithId: 'tylopilus_felleus',
+        confusedWithName: 'Goryczak żółciowy',
+        confusedWithStatus: 'INEDIBLE',
+        keyDifferences: ['Goryczak ma gorzki smak i ciemną siateczkę'],
+        fatal: false,
+      },
+    ];
+
+    const { getByText, queryByTestId } = await render(
+      <LookAlikeAlert risks={risks} noDangerousLookAlikesSource="nie powinno się pokazać" />
+    );
+
+    expect(getByText('Uwaga na możliwe pomyłki')).toBeTruthy();
+    expect(queryByTestId('lookalike-sourced-clearance')).toBeNull();
+    expect(queryByTestId('lookalike-incomplete')).toBeNull();
   });
 
   it('renders fatal warning card for dangerous look-alikes', async () => {
@@ -44,5 +85,38 @@ describe('LookAlikeAlert RTL Component Tests', () => {
     const { getByText } = await render(<LookAlikeAlert risks={inedibleRisks} />);
     expect(getByText('Uwaga na możliwe pomyłki')).toBeTruthy();
     expect(getByText('Można pomylić z: Goryczak żółciowy')).toBeTruthy();
+  });
+
+  it('links a look-alike only when that id has a card', async () => {
+    const onOpenSpecies = jest.fn();
+    const risks: ConfusionRisk[] = [
+      {
+        confusedWithId: 'amanita_phalloides',
+        confusedWithName: 'Muchomor sromotnikowy',
+        confusedWithStatus: 'DEADLY_POISONOUS',
+        keyDifferences: ['Ma pochwę'],
+        fatal: true,
+      },
+      {
+        confusedWithId: 'not_in_atlas',
+        confusedWithName: 'Gatunek bez karty',
+        confusedWithStatus: 'POISONOUS',
+        keyDifferences: ['Brak karty'],
+        fatal: false,
+      },
+    ];
+
+    const { getByTestId, queryByTestId } = await render(
+      <LookAlikeAlert
+        risks={risks}
+        catalogIds={new Set(['amanita_phalloides'])}
+        onOpenSpecies={onOpenSpecies}
+      />
+    );
+
+    fireEvent.press(getByTestId('lookalike-link-amanita_phalloides'));
+    expect(onOpenSpecies).toHaveBeenCalledWith('amanita_phalloides');
+    expect(queryByTestId('lookalike-link-not_in_atlas')).toBeNull();
+    expect(getByTestId('lookalike-unlinked-not_in_atlas')).toBeTruthy();
   });
 });

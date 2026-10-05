@@ -33,7 +33,7 @@ export const InedibleConfusionBorowikVsGoryczak: Story = {
     risks: [
       {
         confusedWithId: 'tylopilus_felleus',
-        confusedWithName: 'Goryczak żółciowy (Szatan)',
+        confusedWithName: 'Goryczak żółciowy',
         confusedWithStatus: 'INEDIBLE',
         keyDifferences: [
           'Goryczak ma rurki brudnoróżowe, a nie oliwkowo-zielone',
@@ -46,7 +46,7 @@ export const InedibleConfusionBorowikVsGoryczak: Story = {
   },
 };
 
-export const SafeSpeciesNoRisks: Story = {
+export const IncompleteLookAlikeRecord: Story = {
   args: {
     risks: [],
   },

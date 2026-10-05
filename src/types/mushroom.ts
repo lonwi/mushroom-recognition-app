@@ -37,6 +37,13 @@ export interface MushroomSpecies {
   culinaryValue: string;
   confusionRisks: ConfusionRisk[];
   warningNotes?: string;
+  /**
+   * Set only with a sourced statement that no dangerous look-alikes are known.
+   * An empty `confusionRisks` list is not this statement and must not read as an all-clear.
+   */
+  noDangerousLookAlikes?: {
+    source: string;
+  };
 }
 
 export interface ModelPrediction {
