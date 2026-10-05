@@ -60,6 +60,8 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--morel-protection-note');
     await expect(page.getByTestId('incomplete-card-badge')).toContainText('KARTA NIEPEŁNA');
     await expect(page.locator('body')).not.toContainText('JADALNY');
+    await expect(page.getByTestId('species-use-neutral')).toContainText('Znaczenie w literaturze');
+    await expect(page.locator('body')).not.toContainText('W kuchni');
     await expect(page.getByTestId('species-warning-notes')).toContainText(
       'poza terenem ogrodów, upraw ogrodniczych, szkółek leśnych oraz poza terenami zieleni'
     );
@@ -75,6 +77,14 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.getByTestId('incomplete-card-banner')).toContainText('Karta niepełna');
     await expect(page.getByTestId('incomplete-card-badge')).toContainText('KARTA NIEPEŁNA');
     await expect(page.locator('body')).not.toContainText('JADALNY');
+    await expect(page.getByTestId('species-use-neutral')).toContainText('Znaczenie w literaturze');
+    await expect(page.locator('body')).not.toContainText('W kuchni');
+  });
+
+  test('A finished edible species keeps the green kitchen section', async ({ page }) => {
+    await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--kania-fatal-look-alike');
+    await expect(page.getByTestId('species-use-edible')).toContainText('W kuchni');
+    await expect(page.getByTestId('species-use-neutral')).toHaveCount(0);
   });
 
   test('PreparationGuide renders cleaning, cooking, and storing categories', async ({ page }) => {

@@ -46,6 +46,12 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
   };
 
   const isToxic = species.status === 'DEADLY_POISONOUS' || species.status === 'POISONOUS';
+  const isIncomplete = species.incompleteCard === true;
+  const useSectionTestId = isIncomplete
+    ? 'species-use-neutral'
+    : isToxic
+      ? 'species-use-toxic'
+      : 'species-use-edible';
 
   return (
     <View style={styles.container}>
@@ -214,27 +220,40 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
 
         <Text style={styles.sectionTitle}>Znaczenie i zastosowanie</Text>
 
-        {/* Action / Culinary Card */}
-        <View style={[
-          styles.actionCard, 
-          isToxic ? styles.toxicCard : styles.edibleCard
-        ]}>
+        <View
+          testID={useSectionTestId}
+          style={[
+            styles.actionCard,
+            isIncomplete ? styles.neutralCard : isToxic ? styles.toxicCard : styles.edibleCard,
+          ]}
+        >
           <View style={styles.actionHeader}>
-            <View style={[styles.actionIconCircle, isToxic ? {backgroundColor: '#FEE2E2'} : {backgroundColor: '#D1FAE5'}]}>
-              <Feather 
-                name={isToxic ? "alert-triangle" : "check"} 
-                size={22} 
-                color={isToxic ? "#DC2626" : "#059669"} 
+            <View style={[
+              styles.actionIconCircle,
+              isIncomplete
+                ? { backgroundColor: '#E2E8F0' }
+                : isToxic
+                  ? { backgroundColor: '#FEE2E2' }
+                  : { backgroundColor: '#D1FAE5' },
+            ]}>
+              <Feather
+                name={isIncomplete ? 'book-open' : isToxic ? 'alert-triangle' : 'check'}
+                size={22}
+                color={isIncomplete ? '#475569' : isToxic ? '#DC2626' : '#059669'}
               />
             </View>
             <Text style={[
               styles.actionTitle,
-              isToxic ? {color: '#B91C1C'} : {color: '#047857'}
+              isIncomplete
+                ? { color: '#334155' }
+                : isToxic
+                  ? { color: '#B91C1C' }
+                  : { color: '#047857' },
             ]}>
-              {isToxic ? 'Toksyczność i objawy' : 'W kuchni'}
+              {isIncomplete ? 'Znaczenie w literaturze' : isToxic ? 'Toksyczność i objawy' : 'W kuchni'}
             </Text>
           </View>
-          
+
           <Text style={styles.actionBody}>{species.culinaryValue}</Text>
         </View>
 
@@ -517,6 +536,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#34D399',
     shadowColor: '#059669',
+  },
+  neutralCard: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    shadowColor: '#64748B',
   },
   toxicCard: {
     backgroundColor: '#FEF2F2',

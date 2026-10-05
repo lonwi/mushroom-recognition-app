@@ -80,16 +80,42 @@ describe('SpeciesDetailScreen safety notices', () => {
     expect(getByTestId('incomplete-card-banner')).toBeTruthy();
     expect(getByTestId('incomplete-card-badge')).toBeTruthy();
     expect(queryByText('JADALNY')).toBeNull();
+    expect(getByTestId('species-use-neutral')).toBeTruthy();
+    expect(getByText('Znaczenie w literaturze')).toBeTruthy();
+    expect(queryByText('W kuchni')).toBeNull();
+  });
+
+  it('does not present the other unfinished edible cards as a kitchen recommendation', async () => {
+    for (const id of ['agaricus_campestris', 'morchella_esculenta']) {
+      const screen = await render(<SpeciesDetailScreen species={species(id)} onBack={() => {}} />);
+      expect(screen.getByTestId('species-use-neutral')).toBeTruthy();
+      expect(screen.getByText('Znaczenie w literaturze')).toBeTruthy();
+      expect(screen.queryByText('W kuchni')).toBeNull();
+      expect(screen.queryByText('JADALNY')).toBeNull();
+    }
   });
 
   it('keeps a finished edible card on the green badge', async () => {
-    const { getByText, queryByTestId } = await render(
+    const { getByText, getByTestId, queryByTestId } = await render(
       <SpeciesDetailScreen species={species('boletus_edulis')} onBack={() => {}} />
     );
 
     expect(getByText('JADALNY')).toBeTruthy();
     expect(queryByTestId('incomplete-card-banner')).toBeNull();
     expect(queryByTestId('incomplete-card-badge')).toBeNull();
+    expect(getByText('W kuchni')).toBeTruthy();
+    expect(queryByTestId('species-use-neutral')).toBeNull();
+    expect(getByTestId('species-use-edible')).toBeTruthy();
+  });
+
+  it('keeps the green kitchen section on a finished edible species', async () => {
+    const { getByTestId, getByText, queryByText } = await render(
+      <SpeciesDetailScreen species={species('macrolepiota_procera')} onBack={() => {}} />
+    );
+
+    expect(getByTestId('species-use-edible')).toBeTruthy();
+    expect(getByText('W kuchni')).toBeTruthy();
+    expect(queryByText('Znaczenie w literaturze')).toBeNull();
   });
 
   it('shows the incomplete badge on look-alike rows that point at unfinished edible cards', async () => {
