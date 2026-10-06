@@ -58,9 +58,9 @@ Two mechanisms, both required:
 1. The background class above.
 2. An energy score `E(x) = -T * logsumexp(logits / T)` (Liu et al., NeurIPS 2020). In-distribution scores are lower. The threshold is the 95th percentile of in-distribution **validation** energies, so about 95% of validation mushrooms are kept. Test mushrooms and held-out non-mushrooms are scored only after that.
 
-A photo is rejected, and no species is shown, when the background class wins, when energy is above the threshold, or when the top softmax is below 0.40. A softmax above 0.5 is not acceptance. The shared cases in `training/fixtures/decision_cases.json` include a vector whose top softmax is about 0.53 on a bolete and a vector whose top softmax is about 0.76; both are rejected because their logits are small. A separate case is a confident “not a mushroom” (large background logit, in-distribution energy) and is still rejected.
+A photo is rejected, and no species is shown, when the background class wins, when energy is above the threshold, or when the top softmax is below 0.40. If any logit is NaN or infinite, the result is `unavailable` / `output_mismatch` and no species is named. A softmax above 0.5 is not acceptance. The shared cases in `training/fixtures/decision_cases.json` include a vector whose top softmax is about 0.53 on a bolete and a vector whose top softmax is about 0.76; both are rejected because their logits are small. A separate case is a confident “not a mushroom” (large background logit, in-distribution energy) and is still rejected.
 
-Low confidence (top softmax under 0.70 or top-1/top-2 margin under 0.15) still shows the top three, with a Sanepid / expert warning. The same warning is mandatory when any top-3 genus is Amanita, Cortinarius, Galerina, or Gyromitra.
+Low confidence (top softmax under 0.70 or top-1/top-2 margin under 0.15) still shows the top three species, with a Sanepid / expert warning. `not_a_mushroom` is omitted from that list when it is not the top class; when it is the top class the photo is rejected and no species is shown. The same warning is mandatory when any displayed top-3 genus is Amanita, Cortinarius, Galerina, or Gyromitra.
 
 Those softmax floors are policy. They are not evidence the gate works. Evidence is the measured rate at which held-out non-mushrooms with softmax above 0.5 are still rejected. The ship gate demands at least 30 such images and a rejection rate of at least 0.90. That number does not exist yet, because no model has been trained.
 
@@ -75,7 +75,9 @@ Those softmax floors are policy. They are not evidence the gate works. Evidence 
 - validation in-distribution keep rate at least 0.95
 - held-out non-mushroom reject rate at least 0.90
 - at least 30 held-out non-mushrooms with softmax above 0.5, of which at least 90% are still rejected by energy or the background class
-- a TFLite file that the interpreter actually loads, with top-1 agreement at least 0.99 against the float Keras model on random inputs in [-1, 1]
+- every class in `assets/models/labels.json` has a measured top-1/top-3, and support above 0 in both the training split and the test split. A missing class fails the gate
+- a TFLite file that the interpreter actually loads. int8 calibration uses the real training photos. Agreement, per-class metrics, and the energy threshold are computed from that interpreter's logits on the real val and test photos. Top-1 agreement with the float Keras model must be at least 0.99 on those photos
+- sha256 hashes of `model.keras` and `mushrooms_model.tflite` recorded in `metrics.json` and checked against the files on disk
 - a complete attribution row (creator, CC0 or CC-BY license, image URL, source page) for every image
 
 Export tries int8 weights with float input/output first, then fp16. Internal quantization must not change the app’s float preprocess. If neither build loads and agrees, nothing is copied into `assets/models/`.
@@ -130,8 +132,7 @@ python -m unittest discover -s training/tests -v
 - Confirmation from counsel if the Apache-2.0 Keras ImageNet initialization is acceptable. The weight file’s license is Apache-2.0; the ImageNet images themselves are not in this repo and are not all CC-BY.
 - `Armillaria mellea` is a species complex. Photos labeled that way on GBIF are often sensu lato.
 - `Amanita verna` and other white deadly Amanitas are not separate classes yet.
-- On-device measurement of accuracy, latency, and the reject rate on a phone, including Expo dev-client builds. The JS path is in place; it does not run without the file.
-- int8 calibration on real validation images rather than uniform noise in [-1, 1]. The exporter’s agreement check is necessary and not sufficient.
+- On-device measurement of accuracy, latency, and the reject rate on a phone, including Expo dev-client builds. The JS path is in place; it does not run without the file. The exporter now scores the interpreter on val/test photos, and that run has not happened here.
 
 ## Left for later
 

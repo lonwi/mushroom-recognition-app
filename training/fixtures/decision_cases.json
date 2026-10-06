@@ -222,6 +222,85 @@
       }
     },
     {
+      "name": "softmax_below_0_40_unclear",
+      "logits": [
+        4.0,
+        3.9,
+        3.8,
+        3.7
+      ],
+      "class_ids": [
+        "boletus_edulis",
+        "tylopilus_felleus",
+        "suillus_luteus",
+        "not_a_mushroom"
+      ],
+      "genera": [
+        "Boletus",
+        "Tylopilus",
+        "Suillus",
+        ""
+      ],
+      "ood": {
+        "calibrated": true,
+        "background_class_id": "not_a_mushroom",
+        "temperature": 1,
+        "energy_threshold": -4.0,
+        "min_softmax_for_accept": 0.4,
+        "min_top1_softmax_for_high_confidence": 0.7,
+        "min_margin": 0.15
+      },
+      "expect": {
+        "status": "rejected",
+        "reason": "unclear",
+        "max_softmax": 0.28865140515740234,
+        "energy": -5.2425355294551625,
+        "max_softmax_gt": 0.2
+      }
+    },
+    {
+      "name": "background_ranked_second_hidden",
+      "logits": [
+        8.0,
+        2.0,
+        1.0,
+        4.0
+      ],
+      "class_ids": [
+        "boletus_edulis",
+        "imleria_badia",
+        "suillus_luteus",
+        "not_a_mushroom"
+      ],
+      "genera": [
+        "Boletus",
+        "Imleria",
+        "Suillus",
+        ""
+      ],
+      "ood": {
+        "calibrated": true,
+        "background_class_id": "not_a_mushroom",
+        "temperature": 1,
+        "energy_threshold": -4.0,
+        "min_softmax_for_accept": 0.4,
+        "min_top1_softmax_for_high_confidence": 0.7,
+        "min_margin": 0.15
+      },
+      "expect": {
+        "status": "candidates",
+        "max_softmax": 0.97875487935827,
+        "energy": -8.021474046393745,
+        "dangerous_genus": false,
+        "low_confidence": false,
+        "top3_ids": [
+          "boletus_edulis",
+          "imleria_badia",
+          "suillus_luteus"
+        ]
+      }
+    },
+    {
       "name": "uncalibrated_gate",
       "logits": [
         8.0,

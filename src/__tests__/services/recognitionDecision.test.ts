@@ -18,6 +18,7 @@ interface DecisionCase {
     max_softmax_gt?: number;
     dangerous_genus?: boolean;
     low_confidence?: boolean;
+    top3_ids?: string[];
   };
 }
 
@@ -65,6 +66,10 @@ describe('recognition decision', () => {
       for (const candidate of decision.top3) {
         expect(candidate).not.toHaveProperty('status');
         expect(candidate).not.toHaveProperty('edibility');
+        expect(candidate.id).not.toBe('not_a_mushroom');
+      }
+      if (entry.expect.top3_ids) {
+        expect(decision.top3.map((candidate) => candidate.id)).toEqual(entry.expect.top3_ids);
       }
     }
     if (decision.status === 'rejected') {
@@ -83,6 +88,41 @@ describe('recognition decision', () => {
       expect(decision.energy).toBeGreaterThan(entry!.ood.energy_threshold as number);
       expect(decision.topClassId).toBe('boletus_edulis');
       expect(decision.reason).toBe('not_a_mushroom');
+    }
+  });
+
+  test.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+    'non-finite logit %p is output_mismatch and names no species',
+    (bad) => {
+      const entry = fixture.cases.find((item) => item.name === 'confident_bolete');
+      expect(entry).toBeTruthy();
+      const decision = decideFromLogits([8, bad, 0, -1], manifestFor(entry!));
+      expect(decision).toEqual({ status: 'unavailable', reason: 'output_mismatch' });
+      expect(JSON.stringify(decision)).not.toContain('boletus_edulis');
+      expect(decision).not.toHaveProperty('top3');
+      expect(decision).not.toHaveProperty('topClassId');
+    },
+  );
+
+  test('a top softmax below 0.40 is unclear, and the same logits pass when the floor is lowered', () => {
+    const entry = fixture.cases.find((item) => item.name === 'softmax_below_0_40_unclear');
+    expect(entry).toBeTruthy();
+    expect(entry!.ood.min_softmax_for_accept).toBe(0.4);
+    const rejected = decideFromLogits(entry!.logits, manifestFor(entry!));
+    expect(rejected.status).toBe('rejected');
+    if (rejected.status === 'rejected') {
+      expect(rejected.reason).toBe('unclear');
+      expect(rejected.maxSoftmax).toBeLessThan(0.4);
+      expect(rejected.maxSoftmax).toBeGreaterThan(0.2);
+      expect(rejected.energy).toBeLessThan(entry!.ood.energy_threshold as number);
+    }
+    const lowered = manifestFor(entry!);
+    lowered.ood = { ...lowered.ood, min_softmax_for_accept: 0.2 };
+    const accepted = decideFromLogits(entry!.logits, lowered);
+    expect(accepted.status).toBe('candidates');
+    if (accepted.status === 'candidates') {
+      expect(accepted.top3.map((candidate) => candidate.id)).not.toContain('not_a_mushroom');
+      expect(accepted.warningReasons).toContain('low_confidence');
     }
   });
 

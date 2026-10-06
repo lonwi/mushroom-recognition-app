@@ -181,6 +181,23 @@ describe('ResultModal recognition outcomes', () => {
     expect(onOpenAtlasSpecies).toHaveBeenCalledWith('boletus_edulis');
   });
 
+  it('names no species when the picture is below the accept floor', async () => {
+    const { getByTestId, queryByText, queryByTestId } = await renderModal({
+      status: 'rejected',
+      reason: 'unclear',
+      processedImageUri: 'file://camera/blur.jpg',
+      inferenceTimeMs: 11,
+    });
+
+    expect(getByTestId('recognition-rejected-title').props.children).toBe('Nie rozpoznano grzyba');
+    expect(getByTestId('recognition-rejected-body').props.children).toMatch(/zbyt niejednoznaczny/);
+    expect(queryByText(/%/)).toBeNull();
+    expect(queryByText(/Borowik/)).toBeNull();
+    expect(queryByText(/Muchomor/)).toBeNull();
+    expect(queryByText('JADALNY')).toBeNull();
+    expect(queryByTestId('candidate-rank-1')).toBeNull();
+  });
+
   it('names no species when the gate rejects the photo', async () => {
     const { getByTestId, queryByText, queryByTestId } = await renderModal({
       status: 'rejected',

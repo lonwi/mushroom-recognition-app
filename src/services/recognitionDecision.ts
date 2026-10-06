@@ -16,7 +16,7 @@ export interface SpeciesCandidate {
 }
 
 export type RecognitionDecision =
-  | { status: 'unavailable'; reason: 'gate_not_calibrated' }
+  | { status: 'unavailable'; reason: 'gate_not_calibrated' | 'output_mismatch' }
   | {
       status: 'rejected';
       reason: 'not_a_mushroom' | 'unclear';
@@ -60,6 +60,9 @@ export function decideFromLogits(logits: number[], manifest: ModelManifest): Rec
   if (logits.length !== manifest.classes.length) {
     throw new Error(`logit length ${logits.length} != class count ${manifest.classes.length}`);
   }
+  if (!logits.every((value) => Number.isFinite(value))) {
+    return { status: 'unavailable', reason: 'output_mismatch' };
+  }
   const ood = manifest.ood;
   if (!ood.calibrated || ood.energy_threshold == null) {
     return { status: 'unavailable', reason: 'gate_not_calibrated' };
@@ -102,7 +105,8 @@ export function decideFromLogits(logits: number[], manifest: ModelManifest): Rec
     lowConfidence = true;
   }
 
-  const top3 = order.slice(0, 3).map((entry, rank) => {
+  const speciesOrder = order.filter((entry) => manifest.classes[entry.index].id !== ood.background_class_id);
+  const top3 = speciesOrder.slice(0, 3).map((entry, rank) => {
     const species = manifest.classes[entry.index];
     return {
       id: species.id,

@@ -213,6 +213,51 @@ describe('classifierService when a calibrated model is injected', () => {
     });
   });
 
+  test('rejects as unclear below the 0.40 softmax floor and names no species', async () => {
+    const { manifest, logits } = manifestFor('softmax_below_0_40_unclear');
+    expect(manifest.ood.min_softmax_for_accept).toBe(0.4);
+    const result = await classifyImageWithDeps('file://camera/blur.jpg', {
+      packagedModel: 1,
+      manifest,
+      readPngBytes: async () => redPng(),
+      runLogits: async () => Float32Array.from(logits),
+    });
+
+    expect(result.status).toBe('rejected');
+    if (result.status !== 'rejected') {
+      return;
+    }
+    expect(result.reason).toBe('unclear');
+    expect(result).toHaveProperty('inferenceTimeMs');
+    expect(result).not.toHaveProperty('top3');
+    const serialized = JSON.stringify(result);
+    expect(serialized).not.toContain('boletus_edulis');
+    expect(serialized).not.toContain('tylopilus_felleus');
+    expect(serialized).not.toContain('not_a_mushroom');
+    expect(serialized).not.toMatch(/%/);
+  });
+
+  test('non-finite logits are output_mismatch and name no species', async () => {
+    const { manifest } = manifestFor('confident_bolete');
+    const result = await classifyImageWithDeps('file://camera/nan.jpg', {
+      packagedModel: 1,
+      manifest,
+      readPngBytes: async () => redPng(),
+      runLogits: async () => Float32Array.from([Number.NaN, 8, 0, -1]),
+    });
+
+    expect(result).toEqual({
+      status: 'unavailable',
+      reason: 'output_mismatch',
+      processedImageUri: 'file://camera/nan.jpg',
+    });
+    const serialized = JSON.stringify(result);
+    expect(serialized).not.toContain('boletus_edulis');
+    expect(serialized).not.toContain('not_a_mushroom');
+    expect(serialized).not.toMatch(/%/);
+    expect(result).not.toHaveProperty('inferenceTimeMs');
+  });
+
   test('a decode failure stays unavailable', async () => {
     const { manifest } = manifestFor('confident_bolete');
     const runLogits = jest.fn();

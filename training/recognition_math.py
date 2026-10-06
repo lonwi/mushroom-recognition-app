@@ -85,6 +85,8 @@ def energy_score(logits: list[float], temperature: float = 1.0) -> float:
 def decide(logits: list[float], classes: list[dict], ood: dict) -> dict:
     if len(logits) != len(classes):
         raise ValueError(f"logit length {len(logits)} != class count {len(classes)}")
+    if not all(math.isfinite(value) for value in logits):
+        return {"status": "unavailable", "reason": "output_mismatch"}
     if not ood.get("calibrated") or ood.get("energy_threshold") is None:
         return {"status": "unavailable", "reason": "gate_not_calibrated"}
 
@@ -112,7 +114,9 @@ def decide(logits: list[float], classes: list[dict], ood: dict) -> dict:
     if accept_floor is not None and max_softmax < float(accept_floor):
         return {**base, "status": "rejected", "reason": "unclear"}
 
-    top3 = order[:3]
+    background_id = ood.get("background_class_id")
+    species_order = [index for index in order if classes[index]["id"] != background_id]
+    top3 = species_order[:3]
     high_bar = ood.get("min_top1_softmax_for_high_confidence")
     min_margin = ood.get("min_margin")
     low_confidence = False

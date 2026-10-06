@@ -1,8 +1,10 @@
 """Export a float-input TFLite model and refuse to install it unless ship gates pass.
 
 Internal weights may be int8 or fp16. The interpreter is actually loaded here.
-Input and output stay float32: pixels are already MobileNetV3-normalized, and
-the output is logits.
+int8 calibration uses the training photos. Agreement, per-class metrics, and the
+energy threshold are computed from the interpreter's logits on the real val and
+test photos. Input and output stay float32: pixels are already
+MobileNetV3-normalized, and the output is logits.
 """
 
 from __future__ import annotations
@@ -12,33 +14,37 @@ import json
 import shutil
 from pathlib import Path
 
+from evaluate import DATA_DIR, assemble_report, preprocessed_batch, prediction_from_logits
 from manifest import LABELS_PATH, ROOT, load_manifest
-from ship_gates import assess_shippable
+from ship_gates import assess_shippable, sha256_file
 
 ARTIFACTS = ROOT / "training" / "artifacts"
 MODEL_DEST = ROOT / "assets" / "models" / "mushrooms_model.tflite"
 PACKAGE_MODULE = ROOT / "src" / "services" / "modelPackage.ts"
 
 
-def representative_dataset(image_size: int, class_count: int):
-    import numpy as np
+def representative_dataset(rows: list[dict], image_size: int, data_dir: Path):
+    """int8 calibration photos. Empty input is an error; noise is not a substitute."""
+    if not rows:
+        raise RuntimeError("int8 representative dataset requires real training images, not noise")
 
     def samples():
-        rng = np.random.default_rng(42)
-        for _ in range(32):
-            yield [rng.uniform(-1.0, 1.0, size=(1, image_size, image_size, 3)).astype(np.float32)]
+        for row in rows:
+            yield [preprocessed_batch(row, image_size, data_dir)]
 
     return samples
 
 
-def convert_and_load(model, quantization: str, image_size: int, class_count: int):
+def convert_and_load(model, quantization: str, image_size: int, class_count: int, train_rows: list[dict], data_dir: Path):
     import numpy as np
     import tensorflow as tf
 
+    if not train_rows:
+        raise RuntimeError("int8 representative dataset requires real training images, not noise")
     converter = tf.lite.TFLiteConverter.from_keras_model(model)
     if quantization == "int8":
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
-        converter.representative_dataset = representative_dataset(image_size, class_count)
+        converter.representative_dataset = representative_dataset(train_rows, image_size, data_dir)
         converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
         converter.inference_input_type = tf.float32
         converter.inference_output_type = tf.float32
@@ -52,7 +58,7 @@ def convert_and_load(model, quantization: str, image_size: int, class_count: int
     interpreter.allocate_tensors()
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
-    sample = np.zeros((1, image_size, image_size, 3), dtype=np.float32)
+    sample = preprocessed_batch(train_rows[0], image_size, data_dir)
     interpreter.set_tensor(input_details[0]["index"], sample)
     interpreter.invoke()
     output = interpreter.get_tensor(output_details[0]["index"])
@@ -63,22 +69,29 @@ def convert_and_load(model, quantization: str, image_size: int, class_count: int
     return payload, interpreter
 
 
-def agreement(model, interpreter, image_size: int, samples: int = 16) -> float:
+def score_interpreter(model, interpreter, rows: list[dict], image_size: int, data_dir: Path):
+    """TFLite logits on real photos, plus top-1 matches against the Keras model."""
     import numpy as np
-    import tensorflow as tf
 
-    rng = np.random.default_rng(0)
+    if not rows:
+        raise RuntimeError("TFLite scoring requires real photos, not noise")
     input_index = interpreter.get_input_details()[0]["index"]
     output_index = interpreter.get_output_details()[0]["index"]
+    predictions = []
     matches = 0
-    for _ in range(samples):
-        batch = rng.uniform(-1.0, 1.0, size=(1, image_size, image_size, 3)).astype(np.float32)
-        keras_top = int(np.argmax(model.predict(batch, verbose=0)[0]))
+    for row in rows:
+        batch = preprocessed_batch(row, image_size, data_dir)
+        keras_logits = np.asarray(model.predict(batch, verbose=0)[0], dtype=np.float64)
         interpreter.set_tensor(input_index, batch)
         interpreter.invoke()
-        lite_top = int(np.argmax(interpreter.get_tensor(output_index)[0]))
-        matches += int(keras_top == lite_top)
-    return matches / samples
+        lite_logits = np.asarray(interpreter.get_tensor(output_index)[0], dtype=np.float64)
+        if lite_logits.shape != keras_logits.shape:
+            raise RuntimeError(f"TFLite output rank does not match Keras for {row.get('file')}")
+        if not np.isfinite(lite_logits).all() or not np.isfinite(keras_logits).all():
+            raise RuntimeError(f"non-finite logits for {row.get('file')}")
+        matches += int(int(np.argmax(keras_logits)) == int(np.argmax(lite_logits)))
+        predictions.append(prediction_from_logits(row, lite_logits.tolist()))
+    return predictions, matches
 
 
 def write_packaged_module(enabled: bool, path: Path = PACKAGE_MODULE) -> None:
@@ -142,39 +155,83 @@ def main() -> None:
     manifest = load_manifest()
     class_count = len(manifest["classes"])
     image_size = int(manifest["input"]["size"])
-    model = tf.keras.models.load_model(ARTIFACTS / "model.keras")
-    metrics = json.loads((ARTIFACTS / "metrics.json").read_text(encoding="utf-8"))
+    keras_path = ARTIFACTS / "model.keras"
+    model = tf.keras.models.load_model(keras_path)
+    splits = json.loads((DATA_DIR / "splits.json").read_text(encoding="utf-8"))
+    train_rows = list(splits.get("train") or [])
+    val_rows = list(splits.get("val") or [])
+    test_rows = list(splits.get("test") or [])
+    if not train_rows or not val_rows or not test_rows:
+        raise SystemExit("export needs real train, val, and test photos; refusing synthetic inputs")
 
     chosen = None
     payload = None
     score = None
+    scored: dict | None = None
     errors = []
     for quantization in ("int8", "fp16"):
         try:
-            candidate, interpreter = convert_and_load(model, quantization, image_size, class_count)
-            score = agreement(model, interpreter, image_size)
-            if score >= 0.99:
+            candidate, interpreter = convert_and_load(
+                model, quantization, image_size, class_count, train_rows, DATA_DIR
+            )
+            val_pred, val_matches = score_interpreter(model, interpreter, val_rows, image_size, DATA_DIR)
+            test_pred, test_matches = score_interpreter(model, interpreter, test_rows, image_size, DATA_DIR)
+            total = len(val_rows) + len(test_rows)
+            candidate_score = (val_matches + test_matches) / total
+            if candidate_score >= 0.99:
                 chosen = quantization
                 payload = candidate
+                score = candidate_score
+                scored = assemble_report(manifest, splits, val_pred, test_pred)
                 break
-            errors.append(f"{quantization} loaded but top-1 agreement was {score:.3f}")
+            errors.append(f"{quantization} loaded but top-1 agreement on val/test photos was {candidate_score:.3f}")
         except Exception as error:  # noqa: BLE001 — try the next quantization
             errors.append(f"{quantization} failed: {error}")
 
-    report = {
-        "loaded": payload is not None,
-        "quantization": chosen,
-        "top1_agreement_with_fp32": score if payload is not None else None,
-        "errors": errors,
-    }
-    if payload is not None and chosen is not None:
-        (ARTIFACTS / "mushrooms_model.tflite").write_bytes(payload)
-    metrics["tflite"] = report
+    ARTIFACTS.mkdir(parents=True, exist_ok=True)
+    tflite_path = ARTIFACTS / "mushrooms_model.tflite"
+    metrics_path = ARTIFACTS / "metrics.json"
+    if payload is not None and chosen is not None and scored is not None:
+        tflite_path.write_bytes(payload)
+        metrics = scored
+        metrics["tflite"] = {
+            "loaded": True,
+            "quantization": chosen,
+            "top1_agreement_with_fp32": score,
+            "agreement_images": len(val_rows) + len(test_rows),
+            "agreement_source": "val_and_test_photos",
+            "errors": errors,
+        }
+        metrics["artifacts"] = {
+            "model_keras_sha256": sha256_file(keras_path),
+            "tflite_sha256": sha256_file(tflite_path),
+        }
+    else:
+        if tflite_path.is_file():
+            tflite_path.unlink()
+        metrics = {}
+        if metrics_path.is_file():
+            metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+        metrics["tflite"] = {
+            "loaded": False,
+            "quantization": None,
+            "top1_agreement_with_fp32": score,
+            "agreement_images": 0,
+            "agreement_source": None,
+            "errors": errors,
+        }
+        metrics["artifacts"] = {
+            "model_keras_sha256": sha256_file(keras_path),
+            "tflite_sha256": sha256_file(tflite_path) if tflite_path.is_file() else None,
+        }
     shippable, reasons = assess_shippable(metrics)
     metrics["shippable"] = shippable
     metrics["ship_blockers"] = reasons
     (ARTIFACTS / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
-    (ARTIFACTS / "export_report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    (ARTIFACTS / "export_report.json").write_text(
+        json.dumps(metrics["tflite"], indent=2),
+        encoding="utf-8",
+    )
     print(json.dumps({"shippable": shippable, "quantization": chosen, "blockers": reasons[:8]}, indent=2))
 
     if not args.install_into_app:
