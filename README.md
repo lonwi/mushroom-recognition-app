@@ -21,10 +21,11 @@ Aplikacja stworzona z myślą o miłośnikach leśnych wypraw i zbierania grzyb�
    - Zestawienie kluczowych różnic anatomicznych (pierścień ruchomy, pochwa u nasady, kolor blaszek, sinienie rurek).
 
 3. **Offline Atlas Grzybów**:
-   - Kompletna baza taksonomiczna z opisami w języku polskim.
-   - Wyszukiwarka po nazwach polskich, łacińskich i nazwach potocznych (np. "prawdziwek", "sowa", "kurka"). Borowik szatański nie jest w bazie; „szatan” nie jest nazwą goryczaka.
-   - Filtrowanie po jadalności oraz typie hymenoforu (Rurki/"gąbka", Blaszki, Listewki, Inne).
+   - Krótki zestaw kart z `src/data/mushrooms.ts`, a nie kompletny klucz do grzybów Polski. Nie zastępuje grzyboznawcy ani punktu kontroli grzybów w Sanepidzie. Liczba kart na ekranie bierze się z tej bazy.
+   - Wyszukiwarka po nazwach polskich, łacińskich i nazwach potocznych (np. "prawdziwek", "sowa", "kurka"). Borowik szatański nie jest w bazie. Słowo „szatan” bywa ludową nazwą goryczaka, ale oznacza też inny gatunek, więc to wyszukiwanie nie otwiera karty goryczaka.
+   - Filtrowanie po klasie jadalności (jadalne, niejadalne, trujące, śmiertelnie trujące) oraz po spodzie kapelusza (rurki, blaszki, kolce, listewki, inny spód). Filtry łączą się ze sobą i pokazują liczbę pasujących kart.
    - Kalendarz miesięcy występowania oraz charakterystyka siedliska leśnego.
+   - Zielona sekcja „W kuchni” jest tylko przy dopracowanej karcie jadalnej. Niejadalne, trujące i śmiertelnie trujące jej nie dostają.
 
 4. **Dziennik Leśnych Zbiorów (GPS Offline)**:
    - Zapisywanie znalezionych okazów ze zdjęciem, datą i czasem.

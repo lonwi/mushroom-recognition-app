@@ -14,7 +14,7 @@ import { MushroomSpecies } from '../types/mushroom';
 import { SpeciesStatusBadge } from '../components/EdibilityBadge';
 import { LookAlikeAlert } from '../components/LookAlikeAlert';
 import { getMushroomImage } from '../utils/mushroomImages';
-import { hasFatalLookAlikeRisk, MUSHROOM_IDS } from '../data/mushrooms';
+import { hasFatalLookAlikeRisk, MUSHROOM_IDS, showsKitchenSection } from '../data/mushrooms';
 
 interface Props {
   species: MushroomSpecies;
@@ -32,6 +32,7 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
       case 'TUBES': return 'grid-outline';
       case 'GILLS': return 'reorder-four-outline';
       case 'FOLDS': return 'water-outline';
+      case 'SPINES': return 'pin-outline';
       default: return 'help-circle-outline';
     }
   };
@@ -41,17 +42,49 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
       case 'TUBES': return 'Rurki';
       case 'GILLS': return 'Blaszki';
       case 'FOLDS': return 'Listewki';
+      case 'SPINES': return 'Kolce';
       default: return 'Inny';
     }
   };
 
+  const kitchen = showsKitchenSection(species);
   const isToxic = species.status === 'DEADLY_POISONOUS' || species.status === 'POISONOUS';
-  const isIncomplete = species.incompleteCard === true;
-  const useSectionTestId = isIncomplete
-    ? 'species-use-neutral'
-    : isToxic
-      ? 'species-use-toxic'
-      : 'species-use-edible';
+  const isInedible = species.status === 'INEDIBLE';
+  const useTone = kitchen ? 'edible' : isToxic ? 'toxic' : isInedible ? 'inedible' : 'neutral';
+  const useSection = {
+    edible: {
+      testId: 'species-use-edible',
+      title: 'W kuchni',
+      icon: 'check' as const,
+      titleColor: '#047857',
+      iconColor: '#059669',
+      iconBg: '#D1FAE5',
+    },
+    toxic: {
+      testId: 'species-use-toxic',
+      title: 'Toksyczność i objawy',
+      icon: 'alert-triangle' as const,
+      titleColor: '#B91C1C',
+      iconColor: '#DC2626',
+      iconBg: '#FEE2E2',
+    },
+    inedible: {
+      testId: 'species-use-inedible',
+      title: 'Nie do jedzenia',
+      icon: 'slash' as const,
+      titleColor: '#9A3412',
+      iconColor: '#C2410C',
+      iconBg: '#FFEDD5',
+    },
+    neutral: {
+      testId: 'species-use-neutral',
+      title: 'Znaczenie w literaturze',
+      icon: 'book-open' as const,
+      titleColor: '#334155',
+      iconColor: '#475569',
+      iconBg: '#E2E8F0',
+    },
+  }[useTone];
 
   return (
     <View style={styles.container}>
@@ -221,36 +254,21 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
         <Text style={styles.sectionTitle}>Znaczenie i zastosowanie</Text>
 
         <View
-          testID={useSectionTestId}
+          testID={useSection.testId}
           style={[
             styles.actionCard,
-            isIncomplete ? styles.neutralCard : isToxic ? styles.toxicCard : styles.edibleCard,
+            useTone === 'edible' && styles.edibleCard,
+            useTone === 'toxic' && styles.toxicCard,
+            useTone === 'inedible' && styles.inedibleCard,
+            useTone === 'neutral' && styles.neutralCard,
           ]}
         >
           <View style={styles.actionHeader}>
-            <View style={[
-              styles.actionIconCircle,
-              isIncomplete
-                ? { backgroundColor: '#E2E8F0' }
-                : isToxic
-                  ? { backgroundColor: '#FEE2E2' }
-                  : { backgroundColor: '#D1FAE5' },
-            ]}>
-              <Feather
-                name={isIncomplete ? 'book-open' : isToxic ? 'alert-triangle' : 'check'}
-                size={22}
-                color={isIncomplete ? '#475569' : isToxic ? '#DC2626' : '#059669'}
-              />
+            <View style={[styles.actionIconCircle, { backgroundColor: useSection.iconBg }]}>
+              <Feather name={useSection.icon} size={22} color={useSection.iconColor} />
             </View>
-            <Text style={[
-              styles.actionTitle,
-              isIncomplete
-                ? { color: '#334155' }
-                : isToxic
-                  ? { color: '#B91C1C' }
-                  : { color: '#047857' },
-            ]}>
-              {isIncomplete ? 'Znaczenie w literaturze' : isToxic ? 'Toksyczność i objawy' : 'W kuchni'}
+            <Text style={[styles.actionTitle, { color: useSection.titleColor }]}>
+              {useSection.title}
             </Text>
           </View>
 
@@ -542,6 +560,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#CBD5E1',
     shadowColor: '#64748B',
+  },
+  inedibleCard: {
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FDBA74',
+    shadowColor: '#C2410C',
   },
   toxicCard: {
     backgroundColor: '#FEF2F2',

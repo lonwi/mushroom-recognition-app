@@ -1,5 +1,5 @@
 /// <reference types="jest" />
-import { hasFatalLookAlikeRisk, MUSHROOM_IDS, MUSHROOMS_DATABASE } from '../data/mushrooms';
+import { hasFatalLookAlikeRisk, MUSHROOM_IDS, MUSHROOMS_DATABASE, showsKitchenSection } from '../data/mushrooms';
 import { getMushroomImage } from '../utils/mushroomImages';
 import { GOLDEN_RULES, TOXICOLOGY_CENTERS } from '../data/safetyRules';
 
@@ -46,7 +46,6 @@ describe('Mushroom Database & Safety Verification', () => {
     const empty = MUSHROOMS_DATABASE.filter((species) => species.confusionRisks.length === 0);
     expect(empty.map((species) => species.id).sort()).toEqual([
       'amanita_muscaria',
-      'paxillus_involutus',
       'suillus_luteus',
     ]);
 
@@ -68,24 +67,33 @@ describe('Mushroom Database & Safety Verification', () => {
   });
 
   test('minimal look-alike cards do not borrow another species photo', () => {
-    const minimalIds = [
-      'russula_virescens',
-      'agaricus_campestris',
-      'chlorophyllum_rhacodes',
-      'hygrophoropsis_aurantiaca',
-      'lactarius_torminosus',
-      'morchella_esculenta',
-    ];
+    const withPhoto = new Set([
+      'boletus_edulis',
+      'amanita_phalloides',
+      'macrolepiota_procera',
+      'cantharellus_cibarius',
+      'imleria_badia',
+      'suillus_luteus',
+      'leccinum_scabrum',
+      'tylopilus_felleus',
+      'amanita_muscaria',
+      'lactarius_deliciosus',
+      'gyromitra_esculenta',
+      'paxillus_involutus',
+    ]);
 
     expect(getMushroomImage('boletus_edulis')).toBeTruthy();
-    for (const id of minimalIds) {
-      expect(MUSHROOMS_DATABASE.some((species) => species.id === id)).toBe(true);
-      expect(getMushroomImage(id)).toBeNull();
+    for (const species of MUSHROOMS_DATABASE) {
+      if (withPhoto.has(species.id)) {
+        expect(getMushroomImage(species.id)).toBeTruthy();
+      } else {
+        expect(getMushroomImage(species.id)).toBeNull();
+      }
     }
   });
 
   test('unfinished edible cards keep their stored status and are marked incomplete', () => {
-    for (const id of ['russula_virescens', 'agaricus_campestris', 'morchella_esculenta']) {
+    for (const id of ['russula_virescens', 'agaricus_campestris', 'morchella_esculenta', 'hydnum_repandum']) {
       const card = MUSHROOMS_DATABASE.find((species) => species.id === id);
       expect(card?.status).toBe('EDIBLE');
       expect(card?.incompleteCard).toBe(true);
@@ -127,6 +135,34 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(
       MUSHROOMS_DATABASE.some((species) => /satana|szatańsk/i.test(`${species.namePl} ${species.nameLatin}`))
     ).toBe(false);
+  });
+
+  test('the green kitchen section is only for a finished edible card', () => {
+    const shaggy = MUSHROOMS_DATABASE.find((species) => species.id === 'chlorophyllum_rhacodes');
+    const bitter = MUSHROOMS_DATABASE.find((species) => species.id === 'tylopilus_felleus');
+    const bolete = MUSHROOMS_DATABASE.find((species) => species.id === 'boletus_edulis');
+    const russula = MUSHROOMS_DATABASE.find((species) => species.id === 'russula_virescens');
+
+    expect(shaggy && showsKitchenSection(shaggy)).toBe(false);
+    expect(bitter && showsKitchenSection(bitter)).toBe(false);
+    expect(bolete && showsKitchenSection(bolete)).toBe(true);
+    expect(russula && showsKitchenSection(russula)).toBe(false);
+
+    for (const species of MUSHROOMS_DATABASE) {
+      if (species.status !== 'EDIBLE' || species.incompleteCard === true) {
+        expect(showsKitchenSection(species)).toBe(false);
+      }
+    }
+  });
+
+  test('a zigzag on the stem is not treated as proof that the mushroom is a parasol', () => {
+    const parasol = MUSHROOMS_DATABASE.find((species) => species.id === 'macrolepiota_procera');
+    const deathCap = MUSHROOMS_DATABASE.find((species) => species.id === 'amanita_phalloides');
+    const text = JSON.stringify([parasol?.confusionRisks, deathCap?.confusionRisks, deathCap?.stemDescription]);
+
+    expect(text.toLowerCase()).not.toMatch(/muchomor ma gładki/);
+    expect(text.toLowerCase()).toMatch(/zygzak/);
+    expect(text).toMatch(/pochw/);
   });
 
   test('Golden rules and toxicology hotlines are properly configured', () => {

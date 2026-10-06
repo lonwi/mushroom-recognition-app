@@ -5,12 +5,13 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  FlatList,
+  ScrollView,
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MUSHROOMS_DATABASE } from '../data/mushrooms';
-import { MushroomSpecies, EdibilityStatus, HymenophoreType } from '../types/mushroom';
+import { countByStatus, filterAtlasSpecies, HymenophoreFilter, StatusFilter } from '../data/atlasQuery';
+import { MushroomSpecies } from '../types/mushroom';
 import { SpeciesStatusBadge } from '../components/EdibilityBadge';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getMushroomImage } from '../utils/mushroomImages';
@@ -22,38 +23,29 @@ interface Props {
 export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
   const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<EdibilityStatus | 'ALL'>('ALL');
-  const [hymenophoreFilter, setHymenophoreFilter] = useState<HymenophoreType | 'ALL'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
+  const [hymenophoreFilter, setHymenophoreFilter] = useState<HymenophoreFilter>('ALL');
+  const statusCounts = useMemo(() => countByStatus(MUSHROOMS_DATABASE), []);
 
   const filteredMushrooms = useMemo(() => {
-    return MUSHROOMS_DATABASE.filter((m) => {
-      // Filtr tekstu
-      const query = searchQuery.toLowerCase().trim();
-      const matchesSearch =
-        query === '' ||
-        m.namePl.toLowerCase().includes(query) ||
-        m.nameLatin.toLowerCase().includes(query) ||
-        m.commonNicknames.some((nick) => nick.toLowerCase().includes(query));
-
-      // Filtr jadalności
-      const matchesStatus = statusFilter === 'ALL' || m.status === statusFilter;
-
-      // Filtr hymenoforu
-      const matchesHymenophore = hymenophoreFilter === 'ALL' || m.hymenophore === hymenophoreFilter;
-
-      return matchesSearch && matchesStatus && matchesHymenophore;
+    return filterAtlasSpecies(MUSHROOMS_DATABASE, {
+      query: searchQuery,
+      status: statusFilter,
+      hymenophore: hymenophoreFilter,
     });
   }, [searchQuery, statusFilter, hymenophoreFilter]);
 
   const renderItem = ({ item }: { item: MushroomSpecies }) => {
     const hymenophoreLabel =
       item.hymenophore === 'TUBES'
-        ? 'Rurki (gąbka)'
+        ? t('atlas.hymenophoreTubes')
         : item.hymenophore === 'GILLS'
-        ? 'Blaszki'
+        ? t('atlas.hymenophoreGills')
         : item.hymenophore === 'FOLDS'
-        ? 'Listewki'
-        : 'Inny';
+        ? t('atlas.hymenophoreFolds')
+        : item.hymenophore === 'SPINES'
+        ? t('atlas.hymenophoreSpines')
+        : t('atlas.hymenophoreOther');
 
     const monthsStr = `${item.months[0]} - ${item.months[item.months.length - 1]} mies.`;
 
@@ -140,82 +132,79 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
           )}
         </View>
 
-        {/* Filtry Jadalności */}
+        <Text style={styles.scopeNotice} testID="atlas-scope-notice">
+          {t('atlas.scopeNotice').replace('{count}', String(MUSHROOMS_DATABASE.length))}
+        </Text>
+
         <View style={styles.filtersRow}>
-          <TouchableOpacity
-            style={[styles.filterChip, statusFilter === 'ALL' && styles.filterChipActive]}
-            onPress={() => setStatusFilter('ALL')}
-          >
-            <Text style={[styles.filterText, statusFilter === 'ALL' && styles.filterTextActive]}>
-              Wszystkie ({MUSHROOMS_DATABASE.length})
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.filterChip, statusFilter === 'EDIBLE' && styles.filterChipActive]}
-            onPress={() => setStatusFilter('EDIBLE')}
-          >
-            <Text style={[styles.filterText, statusFilter === 'EDIBLE' && styles.filterTextActive]}>
-              🟢 Jadalne
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.filterChip, statusFilter === 'DEADLY_POISONOUS' && styles.filterChipActive]}
-            onPress={() => setStatusFilter('DEADLY_POISONOUS')}
-          >
-            <Text style={[styles.filterText, statusFilter === 'DEADLY_POISONOUS' && styles.filterTextActive]}>
-              ☠ Śmiertelne
-            </Text>
-          </TouchableOpacity>
+          {(
+            [
+              ['ALL', `${t('atlas.filterAll')} (${statusCounts.ALL})`],
+              ['EDIBLE', `🟢 ${t('atlas.filterEdible')} (${statusCounts.EDIBLE})`],
+              ['INEDIBLE', `🟡 ${t('atlas.filterInedible')} (${statusCounts.INEDIBLE})`],
+              ['POISONOUS', `🔴 ${t('atlas.filterPoisonous')} (${statusCounts.POISONOUS})`],
+              ['DEADLY_POISONOUS', `☠ ${t('atlas.filterDeadly')} (${statusCounts.DEADLY_POISONOUS})`],
+            ] as const
+          ).map(([status, label]) => (
+            <TouchableOpacity
+              key={status}
+              testID={`filter-status-${status}`}
+              style={[styles.filterChip, statusFilter === status && styles.filterChipActive]}
+              onPress={() => setStatusFilter(status)}
+            >
+              <Text style={[styles.filterText, statusFilter === status && styles.filterTextActive]}>
+                {label}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        {/* Filtry Spodu / Hymenoforu */}
         <View style={styles.filtersRowSecondary}>
-          <TouchableOpacity
-            style={[styles.chipSecondary, hymenophoreFilter === 'TUBES' && styles.chipSecondaryActive]}
-            onPress={() => setHymenophoreFilter(hymenophoreFilter === 'TUBES' ? 'ALL' : 'TUBES')}
-          >
-            <Text style={[styles.chipSecText, hymenophoreFilter === 'TUBES' && styles.chipSecTextActive]}>
-              Rurki ("gąbka")
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.chipSecondary, hymenophoreFilter === 'GILLS' && styles.chipSecondaryActive]}
-            onPress={() => setHymenophoreFilter(hymenophoreFilter === 'GILLS' ? 'ALL' : 'GILLS')}
-          >
-            <Text style={[styles.chipSecText, hymenophoreFilter === 'GILLS' && styles.chipSecTextActive]}>
-              Blaszki
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.chipSecondary, hymenophoreFilter === 'FOLDS' && styles.chipSecondaryActive]}
-            onPress={() => setHymenophoreFilter(hymenophoreFilter === 'FOLDS' ? 'ALL' : 'FOLDS')}
-          >
-            <Text style={[styles.chipSecText, hymenophoreFilter === 'FOLDS' && styles.chipSecTextActive]}>
-              Listewki
-            </Text>
-          </TouchableOpacity>
+          {(
+            [
+              ['TUBES', t('atlas.hymenophoreTubes')],
+              ['GILLS', t('atlas.hymenophoreGills')],
+              ['SPINES', t('atlas.hymenophoreSpines')],
+              ['FOLDS', t('atlas.hymenophoreFolds')],
+              ['OTHER', t('atlas.hymenophoreOther')],
+            ] as const
+          ).map(([type, label]) => (
+            <TouchableOpacity
+              key={type}
+              testID={`filter-hymenophore-${type}`}
+              style={[styles.chipSecondary, hymenophoreFilter === type && styles.chipSecondaryActive]}
+              onPress={() => setHymenophoreFilter(hymenophoreFilter === type ? 'ALL' : type)}
+            >
+              <Text style={[styles.chipSecText, hymenophoreFilter === type && styles.chipSecTextActive]}>
+                {label}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        {/* Lista Grzybów */}
-        <FlatList
-          data={filteredMushrooms}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyIcon}>🍄</Text>
-              <Text style={styles.emptyTitle}>Brak wyników</Text>
-              {/szatan/.test(searchQuery.toLowerCase()) ? (
-                <Text style={styles.emptyDesc} testID="atlas-szatan-notice">
-                  Borowik szatański (Rubroboletus satanas) nie jest opisany w tym atlasie. To nie jest goryczak żółciowy. Brak karty nie oznacza, że grzyb jest jadalny.
-                </Text>
-              ) : (
-                <Text style={styles.emptyDesc}>Nie znaleziono grzyba odpowiadającego wybranym filtrom.</Text>
-              )}
-            </View>
-          }
-        />
+        <Text style={styles.resultCount} testID="atlas-result-count">
+          {t('atlas.resultCount').replace('{count}', String(filteredMushrooms.length))}
+        </Text>
+
+        {filteredMushrooms.length === 0 ? (
+          <View style={styles.emptyContainer} testID="atlas-empty">
+            <Text style={styles.emptyIcon}>🍄</Text>
+            <Text style={styles.emptyTitle}>{t('atlas.emptyTitle')}</Text>
+            {/szatan/.test(searchQuery.toLowerCase()) ? (
+              <Text style={styles.emptyDesc} testID="atlas-szatan-notice">
+                {t('atlas.szatanNotice')}
+              </Text>
+            ) : (
+              <Text style={styles.emptyDesc}>{t('atlas.emptyDesc')}</Text>
+            )}
+          </View>
+        ) : (
+          <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
+            {filteredMushrooms.map((item) => (
+              <View key={item.id}>{renderItem({ item })}</View>
+            ))}
+          </ScrollView>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -256,8 +245,23 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     padding: 6,
   },
+  scopeNotice: {
+    marginHorizontal: 16,
+    marginBottom: 10,
+    color: '#7C2D12',
+    backgroundColor: '#FFF7ED',
+    borderColor: '#FDBA74',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '600',
+  },
   filtersRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     paddingHorizontal: 16,
     marginBottom: 8,
     gap: 8,
@@ -281,9 +285,17 @@ const styles = StyleSheet.create({
   },
   filtersRowSecondary: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     paddingHorizontal: 16,
-    marginBottom: 12,
+    marginBottom: 8,
     gap: 8,
+  },
+  resultCount: {
+    marginHorizontal: 16,
+    marginBottom: 10,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#334155',
   },
   chipSecondary: {
     paddingVertical: 4,
@@ -304,6 +316,9 @@ const styles = StyleSheet.create({
   },
   chipSecTextActive: {
     color: '#FFF',
+  },
+  list: {
+    flex: 1,
   },
   listContent: {
     paddingHorizontal: 16,

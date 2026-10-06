@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLanguage } from '../contexts/LanguageContext';
+import { MUSHROOMS_DATABASE } from '../data/mushrooms';
 
 export const SettingsScreen: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
@@ -48,9 +49,12 @@ export const SettingsScreen: React.FC = () => {
             <Text style={styles.aboutVersion}>{t('settings.dataLicenseBody')}</Text>
           </View>
 
-          <View style={styles.aboutCard}>
+          <View style={styles.aboutCard} testID="atlas-coverage-notice">
             <Text style={styles.aboutTitle}>{t('settings.about')}</Text>
             <Text style={styles.aboutVersion}>{t('settings.version')}</Text>
+            <Text style={styles.aboutBody}>
+              {t('settings.atlasScope').replace('{count}', String(MUSHROOMS_DATABASE.length))}
+            </Text>
           </View>
         </View>
       </View>
@@ -150,5 +154,11 @@ const styles = StyleSheet.create({
   aboutVersion: {
     fontSize: 12,
     color: '#64748B',
+  },
+  aboutBody: {
+    fontSize: 13,
+    color: '#334155',
+    lineHeight: 18,
+    marginTop: 8,
   },
 });

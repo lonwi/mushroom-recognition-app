@@ -23,6 +23,8 @@ export const pl = {
       'Model, jeśli zostanie dołączony, wolno trenować tylko na zdjęciach CC0 albo CC-BY (bez NC i SA). Przy każdym zdjęciu zapisujemy autora, licencję i adres źródła w training/data/attributions.jsonl. Tego pliku nie wolno pominąć przy dystrybucji modelu.',
     about: 'O aplikacji',
     version: 'Wersja 1.0.0 (On-Device AI)',
+    atlasScope:
+      'Atlas ma {count} kart. To nie jest kompletny klucz do grzybów Polski i nie zastępuje grzyboznawcy ani punktu kontroli grzybów w Sanepidzie.',
   },
   atlas: {
     title: 'Atlas Grzybów',
@@ -32,17 +34,28 @@ export const pl = {
     filterInedible: 'Niejadalne',
     filterPoisonous: 'Trujące',
     filterDeadly: 'Śmiertelne',
+    emptyTitle: 'Brak kart',
+    emptyDesc:
+      'Żadna karta w tym atlasie nie pasuje do wybranych filtrów. Brak karty nie oznacza, że grzyb jest jadalny. Atlas nie jest kompletnym kluczem do grzybów Polski.',
     emptyResults: 'Nie znaleziono grzybów spełniających wybrane kryteria.',
-    hymenophoreTubes: 'Rurki (gąbka)',
+    szatanNotice:
+      'Słowo „szatan” bywa ludową nazwą goryczaka, ale oznacza też borowika szatańskiego (Rubroboletus satanas). Borowik szatański (Rubroboletus satanas) nie jest opisany w tym atlasie i nie jest goryczakiem żółciowym. To wyszukiwanie celowo nie otwiera karty goryczaka. Brak karty nie oznacza, że grzyb jest jadalny.',
+    resultCount: 'Pasujące karty: {count}',
+    scopeNotice:
+      'W tym atlasie jest {count} kart. To nie jest kompletny klucz do grzybów Polski i nie zastępuje oceny grzyboznawcy ani punktu kontroli grzybów w Sanepidzie.',
+    hymenophoreTubes: 'Rurki',
     hymenophoreGills: 'Blaszki',
     hymenophoreFolds: 'Listewki',
-    hymenophoreOther: 'Inne',
+    hymenophoreSpines: 'Kolce',
+    hymenophoreOther: 'Inny spód',
   },
   scanner: {
     title: 'Skaner Grzybów AI',
     takePhoto: 'Zrób zdjęcie i rozpoznaj',
     fromGallery: 'Wybierz z galerii',
     quickDemo: 'Przykłady z atlasu — to nie jest rozpoznawanie:',
+    atlasScopeHint:
+      'To kilka kart z krótkiego atlasu, a nie pełna lista grzybów Polski.',
     macroTips: 'Porady kadrowania makro:',
     tipCap: '1. Sfotografuj kapelusz z góry (kolor i faktura)',
     tipUnder: '2. Pokaż spód kapelusza (rurki czy blaszki)',
