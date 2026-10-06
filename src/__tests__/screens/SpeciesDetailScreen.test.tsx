@@ -26,7 +26,8 @@ describe('SpeciesDetailScreen safety notices', () => {
     expect(queryByText(/Brak niebezpiecznych sobowtórów/)).toBeNull();
     expect(getByTestId('species-warning-notes')).toBeTruthy();
     expect(getByText(/NIGDY NIE ZBIERAJ OLSZÓWEK/)).toBeTruthy();
-    expect(queryByTestId('fatal-lookalike-banner')).toBeNull();
+    expect(getByTestId('fatal-lookalike-banner')).toBeTruthy();
+    expect(getByText('ŚMIERTELNIE GROŹNE SOBOWTÓRY!')).toBeTruthy();
     expect(queryByText('W kuchni')).toBeNull();
     expect(getByTestId('species-use-toxic')).toBeTruthy();
   });
@@ -156,5 +157,19 @@ describe('SpeciesDetailScreen safety notices', () => {
     expect(getByTestId('incomplete-card-badge-agaricus_campestris')).toBeTruthy();
     expect(getByTestId('lookalike-status-macrolepiota_procera')).toBeTruthy();
     expect(getByText('JADALNY')).toBeTruthy();
+  });
+
+  it('shows a red look-alike warning for muchomor sromotnikowy even when the named twins are not deadly', async () => {
+    const deathCap = species('amanita_phalloides');
+    expect(deathCap.status).toBe('DEADLY_POISONOUS');
+    expect(deathCap.confusionRisks.every((risk) => risk.fatal === false)).toBe(true);
+
+    const { getByTestId, getByText } = await render(
+      <SpeciesDetailScreen species={deathCap} onBack={() => {}} />
+    );
+
+    expect(getByTestId('fatal-lookalike-banner')).toBeTruthy();
+    expect(getByText('Śmiertelnie groźny sobowtór w tej karcie')).toBeTruthy();
+    expect(getByText('ŚMIERTELNIE GROŹNE SOBOWTÓRY!')).toBeTruthy();
   });
 });

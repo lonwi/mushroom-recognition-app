@@ -5,7 +5,8 @@ import {
   INCOMPLETE_LOOKALIKE_TITLE,
   LookAlikeAlert,
 } from '../../components/LookAlikeAlert';
-import { INCOMPLETE_CARD_LABEL } from '../../components/EdibilityBadge';
+import { INCOMPLETE_CARD_LABEL, MISSING_CARD_LABEL } from '../../components/EdibilityBadge';
+import { NOT_FOR_COLLECTION_NOTE } from '../../data/mushrooms';
 import { ConfusionRisk } from '../../types/mushroom';
 
 describe('LookAlikeAlert RTL Component Tests', () => {
@@ -141,9 +142,59 @@ describe('LookAlikeAlert RTL Component Tests', () => {
     );
 
     expect(getByTestId('lookalike-unlinked-calocybe_gambosa')).toBeTruthy();
-    expect(getByTestId('incomplete-card-badge-calocybe_gambosa')).toBeTruthy();
-    expect(getByText(INCOMPLETE_CARD_LABEL)).toBeTruthy();
+    expect(getByTestId('missing-card-badge-calocybe_gambosa')).toBeTruthy();
+    expect(getByText(MISSING_CARD_LABEL)).toBeTruthy();
+    expect(getByText(new RegExp(NOT_FOR_COLLECTION_NOTE))).toBeTruthy();
+    expect(queryByText(INCOMPLETE_CARD_LABEL)).toBeNull();
     expect(queryByText('JADALNY')).toBeNull();
+  });
+
+  it('never shows a green badge for an entry without catalogIds', async () => {
+    const risks: ConfusionRisk[] = [
+      {
+        confusedWithId: 'calocybe_gambosa',
+        confusedWithName: 'Gęśnica wiosenna (majówka)',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: ['Nie czerwienieje'],
+        fatal: false,
+      },
+      {
+        confusedWithId: 'amanita_excelsa',
+        confusedWithName: 'Muchomor twardawy',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: ['Pierścień prążkowany'],
+        fatal: false,
+      },
+    ];
+
+    const { getAllByText, queryByText } = await render(<LookAlikeAlert risks={risks} />);
+
+    expect(getAllByText(MISSING_CARD_LABEL)).toHaveLength(2);
+    expect(queryByText('JADALNY')).toBeNull();
+    expect(queryByText(INCOMPLETE_CARD_LABEL)).toBeNull();
+  });
+
+  it('turns the warning red when the open card is deadly even if every twin is edible', async () => {
+    const risks: ConfusionRisk[] = [
+      {
+        confusedWithId: 'macrolepiota_procera',
+        confusedWithName: 'Czubajka kania',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: ['Ruchomy pierścień'],
+        fatal: false,
+      },
+    ];
+
+    const { getByText } = await render(
+      <LookAlikeAlert
+        risks={risks}
+        ownStatus="DEADLY_POISONOUS"
+        catalogIds={new Set(['macrolepiota_procera'])}
+      />
+    );
+
+    expect(getByText('ŚMIERTELNIE GROŹNE SOBOWTÓRY!')).toBeTruthy();
+    expect(getByText('JADALNY')).toBeTruthy();
   });
 
   it('replaces the green edible badge when the look-alike card is incomplete', async () => {

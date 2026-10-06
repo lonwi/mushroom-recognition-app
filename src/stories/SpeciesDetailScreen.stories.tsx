@@ -20,6 +20,22 @@ function species(id: string) {
   return match;
 }
 
+export const DeathCapRedWarning: Story = {
+  render: () => (
+    <View style={{ flex: 1, minHeight: 900 }}>
+      <SpeciesDetailScreen species={species('amanita_phalloides')} onBack={() => {}} />
+    </View>
+  ),
+};
+
+export const PantherMissingCardTwins: Story = {
+  render: () => (
+    <View style={{ flex: 1, minHeight: 900 }}>
+      <SpeciesDetailScreen species={species('amanita_pantherina')} onBack={() => {}} />
+    </View>
+  ),
+};
+
 export const PaxillusIncompleteLookAlikes: Story = {
   render: () => (
     <View style={{ flex: 1, minHeight: 900 }}>

@@ -9,7 +9,7 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MUSHROOMS_DATABASE } from '../data/mushrooms';
+import { hasFatalLookAlikeRisk, MUSHROOMS_DATABASE } from '../data/mushrooms';
 import { countByStatus, filterAtlasSpecies, HymenophoreFilter, StatusFilter } from '../data/atlasQuery';
 import { MushroomSpecies } from '../types/mushroom';
 import { SpeciesStatusBadge } from '../components/EdibilityBadge';
@@ -99,7 +99,7 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
               <View style={styles.tag}>
                 <Text style={styles.tagText}>📅 {monthsStr}</Text>
               </View>
-              {item.confusionRisks.some((r) => r.fatal) && (
+              {hasFatalLookAlikeRisk(item) && (
                 <View style={[styles.tag, styles.tagDanger]}>
                   <Text style={styles.tagDangerText}>☠ Sobowtór!</Text>
                 </View>
