@@ -4,7 +4,12 @@ import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
 import { JournalScreen } from '../../screens/JournalScreen';
-import { SIGHTINGS_BACKUP_KEY, SIGHTINGS_STORAGE_KEY, storageService } from '../../services/storageService';
+import {
+  SIGHTINGS_BACKUP_INDEX_KEY,
+  SIGHTINGS_STORAGE_KEY,
+  journalBackupStorageKey,
+  storageService,
+} from '../../services/storageService';
 import { LanguageProvider } from '../../contexts/LanguageContext';
 import type { SightingRecord } from '../../types/mushroom';
 
@@ -36,6 +41,16 @@ const located: SightingRecord = {
     ],
   },
 };
+
+async function journalBackupValues(): Promise<string[]> {
+  const indexRaw = await AsyncStorage.getItem(SIGHTINGS_BACKUP_INDEX_KEY);
+  const ids = indexRaw ? (JSON.parse(indexRaw) as string[]) : [];
+  const values: string[] = [];
+  for (const id of ids) {
+    values.push((await AsyncStorage.getItem(journalBackupStorageKey(id))) ?? '');
+  }
+  return values;
+}
 
 async function renderJournal() {
   return render(
@@ -147,8 +162,9 @@ describe('JournalScreen', () => {
     expect(screen.getByTestId('journal-legacy-name-notice-sighting_old')).toHaveTextContent(
       /nie jest oznaczeniem gatunku/i,
     );
-    expect(screen.getByTestId('journal-legacy-edibility-sighting_old')).toHaveTextContent(/Nie jedz/);
-    expect(screen.getByTestId('journal-legacy-edibility-sighting_old')).toHaveTextContent(/Sanepid/);
+    expect(screen.getByTestId('journal-legacy-edibility-sighting_old')).toHaveTextContent(
+      /Nie jedz grzyba na podstawie tego wpisu\. Pokaż go do oceny grzyboznawcy, na przykład w stacji sanitarno-epidemiologicznej \(Sanepid\)\./,
+    );
     expect(screen.queryByText('JADALNY')).toBeNull();
     expect(screen.queryByText(/Kandydaci ze skanu/)).toBeNull();
   });
@@ -171,7 +187,7 @@ describe('JournalScreen', () => {
 
     expect(await screen.findByTestId('journal-damaged-message')).toHaveTextContent(/uszkodzony/);
     expect(screen.queryByText('Twój koszyk jest jeszcze pusty')).toBeNull();
-    expect(await AsyncStorage.getItem(SIGHTINGS_BACKUP_KEY)).toBe('not-json');
+    expect(await journalBackupValues()).toEqual(['not-json']);
 
     await fireEvent.press(screen.getByTestId('journal-start-fresh'));
     const cancelButtons = (Alert.alert as jest.Mock).mock.calls.at(-1)?.[2] as Array<{
@@ -183,7 +199,7 @@ describe('JournalScreen', () => {
       await cancelButtons?.[0].onPress?.();
     });
     expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('not-json');
-    expect(await AsyncStorage.getItem(SIGHTINGS_BACKUP_KEY)).toBe('not-json');
+    expect(await journalBackupValues()).toEqual(['not-json']);
     expect(screen.getByTestId('journal-damaged')).toBeTruthy();
 
     (Alert.alert as jest.Mock).mockClear();
@@ -200,8 +216,41 @@ describe('JournalScreen', () => {
     });
     expect(screen.queryByTestId('journal-damaged')).toBeNull();
     expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('[]');
-    expect(await AsyncStorage.getItem(SIGHTINGS_BACKUP_KEY)).toBe('not-json');
+    expect(await journalBackupValues()).toEqual(['not-json']);
     expect(await storageService.getSightings()).toEqual([]);
+  });
+
+  it('shows a message and keeps the damaged journal when the backup cannot be written', async () => {
+    await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, 'not-json');
+    const setItem = AsyncStorage.setItem as jest.Mock;
+    const original = setItem.getMockImplementation();
+    setItem.mockImplementation(async (key: string, value: string) => {
+      if (String(key).includes('sightings_v1_backup')) {
+        throw new Error('backup failed');
+      }
+      return original?.(key, value);
+    });
+
+    try {
+      const screen = await renderJournal();
+      expect(await screen.findByTestId('journal-damaged-message')).toBeTruthy();
+
+      await fireEvent.press(screen.getByTestId('journal-start-fresh'));
+      const buttons = (Alert.alert as jest.Mock).mock.calls.at(-1)?.[2] as Array<{
+        onPress?: () => Promise<void>;
+      }>;
+      await act(async () => {
+        await buttons?.[1].onPress?.();
+      });
+
+      expect((Alert.alert as jest.Mock).mock.calls.map((call) => String(call[1])).join(' ')).toMatch(
+        /dziennik nie został wyczyszczony/i,
+      );
+      expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('not-json');
+      expect(screen.getByTestId('journal-damaged')).toBeTruthy();
+    } finally {
+      if (original) setItem.mockImplementation(original);
+    }
   });
 
   it('tells the user when deleting an entry fails and leaves the card in place', async () => {

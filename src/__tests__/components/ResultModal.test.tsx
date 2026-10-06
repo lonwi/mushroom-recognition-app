@@ -4,7 +4,7 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { ResultModal } from '../../components/ResultModal';
-import { storageService } from '../../services/storageService';
+import { SIGHTINGS_STORAGE_KEY, storageService } from '../../services/storageService';
 import { LanguageProvider } from '../../contexts/LanguageContext';
 import { ClassificationResult } from '../../services/classifierService';
 import { SpeciesCandidate } from '../../services/recognitionDecision';
@@ -304,6 +304,40 @@ describe('ResultModal recognition outcomes', () => {
     const messages = (Alert.alert as jest.Mock).mock.calls.map((call) => String(call[1]));
     expect(messages.join(' ')).toMatch(/bez współrzędnych/);
     (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
+  });
+
+  it('points to the journal when a save fails because the journal is damaged', async () => {
+    await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, 'not-json');
+    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const { getByTestId } = await render(
+      <LanguageProvider>
+        <ResultModal
+          visible
+          result={{
+            status: 'rejected',
+            reason: 'unclear',
+            processedImageUri: 'file://camera/blur.jpg',
+            inferenceTimeMs: 11,
+          }}
+          onClose={() => {}}
+        />
+      </LanguageProvider>,
+    );
+
+    (Alert.alert as jest.Mock).mockClear();
+    await fireEvent.press(getByTestId('save-to-journal'));
+    const buttons = (Alert.alert as jest.Mock).mock.calls.at(-1)?.[2] as Array<{
+      text: string;
+      onPress?: () => Promise<void>;
+    }>;
+    const withoutLocation = buttons.find((button) => button.text === 'Bez lokalizacji');
+    await act(async () => {
+      await withoutLocation?.onPress?.();
+    });
+
+    const messages = (Alert.alert as jest.Mock).mock.calls.map((call) => String(call[1]));
+    expect(messages.join(' ')).toMatch(/Otwórz Dziennik i wybierz „Zacznij nowy dziennik”/);
+    expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('not-json');
   });
 
   it('locks the first save tap so a second tap does not open another prompt', async () => {

@@ -95,6 +95,8 @@ export const en = {
       'Location permission was denied or GPS is unavailable. The entry was saved without coordinates.',
     photoNotKept: 'The photo could not be copied into app storage, so it was not attached.',
     saveFailed: 'The entry could not be saved.',
+    saveFailedDamaged:
+      'The journal is damaged, so the entry was not saved. Open the Journal and choose “Start a new journal”.',
     unavailableTitle: 'Recognition unavailable',
     unclearTitle: 'Not sure',
     notMushroomTitle: 'Not a mushroom from the model',
@@ -123,6 +125,9 @@ export const en = {
     startFreshTitle: 'Start a new journal?',
     startFreshBody:
       'The current journal will be replaced with an empty list. The raw copy of the damaged data stays and is not deleted.',
+    startFreshFailedTitle: 'A new journal was not started',
+    startFreshFailedBody:
+      'The copy of the damaged data could not be confirmed, so the journal was not cleared.',
     missingDate: 'no date',
     legacyBanner: 'This entry is from an older version of the app. It has no recognition result.',
     legacyTitle: 'Older entry',
@@ -130,7 +135,7 @@ export const en = {
     legacyNameNotice:
       'The stored name did not come from photo recognition and is not a species identification.',
     legacyEdibility:
-      'Do not eat a mushroom based on this entry. Have it checked by an expert, such as a Sanepid mushroom consultant.',
+      'Do not eat a mushroom based on this entry. Show it to a mushroom expert for assessment, for example at a sanitary-epidemiological station (Sanepid).',
     confidence: 'Confidence',
   },
   safety: {

@@ -109,7 +109,7 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
             await loadSightings();
           } catch (error) {
             console.error('Błąd podczas zakładania nowego dziennika:', error);
-            Alert.alert(t('journal.readFailedTitle'), t('journal.readFailedBody'));
+            Alert.alert(t('journal.startFreshFailedTitle'), t('journal.startFreshFailedBody'));
           }
         },
       },

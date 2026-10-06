@@ -96,6 +96,8 @@ export const pl = {
       'Brak zgody na lokalizację albo GPS jest niedostępny. Wpis zapisano bez współrzędnych.',
     photoNotKept: 'Zdjęcia nie udało się skopiować do pamięci aplikacji, więc nie zostało dołączone.',
     saveFailed: 'Nie udało się zapisać wpisu.',
+    saveFailedDamaged:
+      'Dziennik jest uszkodzony, więc wpis nie został zapisany. Otwórz Dziennik i wybierz „Zacznij nowy dziennik”.',
     unavailableTitle: 'Rozpoznawanie niedostępne',
     unclearTitle: 'Niepewny wynik',
     notMushroomTitle: 'To nie jest grzyb z modelu',
@@ -124,6 +126,9 @@ export const pl = {
     startFreshTitle: 'Zacząć nowy dziennik?',
     startFreshBody:
       'Bieżący dziennik zostanie zastąpiony pustą listą. Surowa kopia uszkodzonych danych zostaje i nie jest usuwana.',
+    startFreshFailedTitle: 'Nie udało się założyć nowego dziennika',
+    startFreshFailedBody:
+      'Kopia uszkodzonych danych nie została potwierdzona, więc dziennik nie został wyczyszczony.',
     missingDate: 'brak daty',
     legacyBanner: 'Wpis ze starszej wersji aplikacji. Nie ma przy nim wyniku rozpoznawania.',
     legacyTitle: 'Starszy wpis',
@@ -131,7 +136,7 @@ export const pl = {
     legacyNameNotice:
       'Zachowana nazwa nie pochodzi z rozpoznawania zdjęcia i nie jest oznaczeniem gatunku.',
     legacyEdibility:
-      'Nie jedz grzyba na podstawie tego wpisu. Oceń go z grzyboznawcą, na przykład w Sanepidzie.',
+      'Nie jedz grzyba na podstawie tego wpisu. Pokaż go do oceny grzyboznawcy, na przykład w stacji sanitarno-epidemiologicznej (Sanepid).',
     confidence: 'Pewność',
   },
   safety: {
