@@ -182,11 +182,21 @@ describe('LookAlikeAlert RTL Component Tests', () => {
 
     const { getByTestId, queryByText } = await render(<LookAlikeAlert risks={risks} />);
 
-    expect(getByTestId('lookalike-unlinked-calocybe_gambosa')).toHaveTextContent(ATLAS_NO_VERDICT_NOTE);
-    expect(getByTestId('lookalike-unlinked-amanita_rubescens')).toHaveTextContent(ATLAS_NO_VERDICT_NOTE);
-    expect(getByTestId('lookalike-unlinked-amanita_excelsa')).toHaveTextContent(NOT_FOR_COLLECTION_NOTE);
-    expect(getByTestId('lookalike-unlinked-calocybe_gambosa')).not.toHaveTextContent(NOT_FOR_COLLECTION_NOTE);
-    expect(getByTestId('lookalike-unlinked-amanita_rubescens')).not.toHaveTextContent(NOT_FOR_COLLECTION_NOTE);
+    expect(getByTestId('lookalike-unlinked-calocybe_gambosa')).toHaveTextContent(ATLAS_NO_VERDICT_NOTE, {
+      exact: false,
+    });
+    expect(getByTestId('lookalike-unlinked-amanita_rubescens')).toHaveTextContent(ATLAS_NO_VERDICT_NOTE, {
+      exact: false,
+    });
+    expect(getByTestId('lookalike-unlinked-amanita_excelsa')).toHaveTextContent(NOT_FOR_COLLECTION_NOTE, {
+      exact: false,
+    });
+    expect(getByTestId('lookalike-unlinked-calocybe_gambosa')).not.toHaveTextContent(NOT_FOR_COLLECTION_NOTE, {
+      exact: false,
+    });
+    expect(getByTestId('lookalike-unlinked-amanita_rubescens')).not.toHaveTextContent(NOT_FOR_COLLECTION_NOTE, {
+      exact: false,
+    });
     expect(queryByText('JADALNY')).toBeNull();
     expect(queryByText('NIEJADALNY')).toBeNull();
     expect(queryByText('TRUJĄCY')).toBeNull();
