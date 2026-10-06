@@ -20,7 +20,7 @@ export const DeadlyConfusionKaniaVsMuchomor: Story = {
         keyDifferences: [
           'Kania posiada ruchomy pierścień, dający się swobodnie przesuwać wzdłuż trzonu',
           'Muchomor sromotnikowy posiada luźną pochwę u podstawy trzonu (kania nie ma pochwy)',
-          'Kania ma łuskowaty, wężowy wzór na trzonie (trzon muchomora jest gładki lub marmurkowaty)',
+          'Zygzak na trzonie nie rozstrzyga: muchomor sromotnikowy też może mieć zygzakowaty wzór',
         ],
         fatal: true,
       },

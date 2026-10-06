@@ -84,12 +84,14 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.locator('body')).not.toContainText('%');
   });
 
-  test('Species detail shows an incomplete look-alike notice and the olszówka warning', async ({ page }) => {
+  test('Species detail keeps the olszówka warning without a kitchen section', async ({ page }) => {
     await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--paxillus-incomplete-look-alikes');
-    await expect(page.getByTestId('lookalike-incomplete')).toContainText('Informacja o sobowtórach jest niepełna');
     await expect(page.getByTestId('species-warning-notes')).toContainText('NIGDY NIE ZBIERAJ OLSZÓWEK');
+    await expect(page.getByTestId('lookalike-link-lactarius_deliciosus')).toBeVisible();
     await expect(page.locator('body')).not.toContainText('Brak niebezpiecznych sobowtórów');
     await expect(page.getByTestId('fatal-lookalike-banner')).toHaveCount(0);
+    await expect(page.getByTestId('species-use-toxic')).toContainText('Toksyczność i objawy');
+    await expect(page.locator('body')).not.toContainText('W kuchni');
   });
 
   test('Species detail shows a fatal look-alike banner and warning notes for kania', async ({ page }) => {
@@ -122,6 +124,46 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.locator('body')).not.toContainText('JADALNY');
     await expect(page.getByTestId('species-use-neutral')).toContainText('Znaczenie w literaturze');
     await expect(page.locator('body')).not.toContainText('W kuchni');
+  });
+
+  test('Czubajnik czerwieniejący does not get the green kitchen section', async ({ page }) => {
+    await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--czubajnik-not-for-the-kitchen');
+    await expect(page.getByTestId('species-use-toxic')).toContainText('Toksyczność i objawy');
+    await expect(page.locator('body')).toContainText('TRUJĄCY');
+    await expect(page.locator('body')).not.toContainText('NIEJADALNY');
+    await expect(page.locator('body')).not.toContainText('W kuchni');
+    await expect(page.getByTestId('species-use-edible')).toHaveCount(0);
+  });
+
+  test('Atlas scope matches the card list and filters combine to an empty state', async ({ page }) => {
+    await page.goto('/iframe.html?id=mushroom-atlasscreen--filters');
+    await expect(page.getByTestId('atlas-scope-notice')).toContainText('nie jest kompletny klucz');
+    await expect(page.getByTestId('atlas-scope-notice')).toContainText('Sanepidzie');
+
+    const search = page.getByPlaceholder('Szukaj grzyba (np. borowik, kania, kurka)...');
+    await search.fill('zolciowy');
+    await expect(page.getByText('Goryczak żółciowy')).toBeVisible();
+    await expect(page.getByTestId('atlas-result-count')).toContainText('Pasujące karty: 1');
+    await search.fill('');
+
+    await page.getByTestId('filter-status-INCOMPLETE').click();
+    await expect(page.getByText('Gołąbek zielonawy')).toBeVisible();
+    await expect(page.getByText('Kolczak obłączasty')).toBeVisible();
+    await expect(page.getByText('Pieczarka polna')).toBeVisible();
+    await expect(page.getByTestId('atlas-result-count')).toContainText('Pasujące karty: 4');
+    await expect(page.locator('body')).not.toContainText('JADALNY');
+    await page.getByTestId('filter-status-EDIBLE').click();
+    await expect(page.getByText('Borowik szlachetny')).toBeVisible();
+    await expect(page.getByText('Gołąbek zielonawy')).toHaveCount(0);
+
+    await page.getByTestId('filter-status-ALL').click();
+    await page.getByTestId('filter-hymenophore-SPINES').click();
+    await expect(page.getByText('Kolczak obłączasty')).toBeVisible();
+    await expect(page.getByTestId('atlas-result-count')).toContainText('Pasujące karty: 1');
+    await page.getByTestId('filter-status-DEADLY_POISONOUS').click();
+    await expect(page.getByTestId('atlas-empty')).toContainText('Brak karty nie oznacza, że grzyb jest jadalny');
+    await expect(page.getByTestId('atlas-result-count')).toContainText('Pasujące karty: 0');
+    await expect(page.getByText('Kolczak obłączasty')).toHaveCount(0);
   });
 
   test('A finished edible species keeps the green kitchen section', async ({ page }) => {
