@@ -68,10 +68,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(
-          'Brak uprawnień',
-          'Aplikacja potrzebuje dostępu do galerii zdjęć, aby wybrać zdjęcie do analizy offline.'
-        );
+        Alert.alert(t('scanner.galleryPermissionTitle'), t('scanner.galleryPermissionBody'));
         return;
       }
 
@@ -88,8 +85,11 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
     } catch (err: any) {
       console.error('Gallery picker error:', err);
       Alert.alert(
-        'Błąd',
-        `Nie udało się załadować zdjęcia z galerii: ${err?.message || 'Nieznany błąd'}`
+        t('scanner.galleryErrorTitle'),
+        t('scanner.galleryErrorBody').replace(
+          '{message}',
+          err?.message || t('scanner.unknownError'),
+        ),
       );
     } finally {
       setIsAnalyzing(false);
@@ -116,7 +116,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#1B3B22" />
-        <Text style={styles.loadingText}>Inicjalizacja modułu aparatu...</Text>
+        <Text style={styles.loadingText}>{t('scanner.cameraInit')}</Text>
       </View>
     );
   }
@@ -125,19 +125,17 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
     return (
       <View style={styles.permissionContainer}>
         <Text style={styles.permissionIcon}>📷</Text>
-        <Text style={styles.permissionTitle}>Dostęp do aparatu jest wymagany</Text>
-        <Text style={styles.permissionDesc}>
-          Aparat służy do zrobienia zdjęcia grzyba. Rozpoznawanie gatunku ze zdjęcia nie jest jeszcze dostępne.
-        </Text>
+        <Text style={styles.permissionTitle}>{t('scanner.cameraRequiredTitle')}</Text>
+        <Text style={styles.permissionDesc}>{t('scanner.cameraRequiredBody')}</Text>
         <TouchableOpacity style={styles.permissionBtn} onPress={requestPermission} activeOpacity={0.8}>
-          <Text style={styles.permissionBtnText}>Zezwól na aparat</Text>
+          <Text style={styles.permissionBtnText}>{t('scanner.allowCamera')}</Text>
         </TouchableOpacity>
 
         {/* Galeria bez uprawnień do kamery. Błąd wyboru nie podstawia innego zdjęcia. */}
         <View style={styles.demoFallbackBox}>
-          <Text style={styles.demoFallbackTitle}>Możesz również wybrać zdjęcie z galerii:</Text>
+          <Text style={styles.demoFallbackTitle}>{t('scanner.galleryFallback')}</Text>
           <TouchableOpacity style={styles.galleryBtnAlt} onPress={pickImageFromGallery}>
-            <Text style={styles.galleryBtnAltText}>🖼 Wybierz z galerii</Text>
+            <Text style={styles.galleryBtnAltText}>{t('scanner.galleryAlt')}</Text>
           </TouchableOpacity>
         </View>
         {resultModal}
@@ -164,11 +162,13 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
             onPress={() => setTorchEnabled(!torchEnabled)}
             activeOpacity={0.7}
           >
-            <Text style={styles.toolIcon}>{torchEnabled ? '🔦 WŁ' : '🔦 Latarka'}</Text>
+            <Text style={styles.toolIcon}>
+              {torchEnabled ? t('scanner.torchOnShort') : t('scanner.torchOffShort')}
+            </Text>
           </TouchableOpacity>
 
           <View style={styles.badgeOffline}>
-            <Text style={styles.badgeOfflineText}>● 100% OFFLINE</Text>
+            <Text style={styles.badgeOfflineText}>{t('scanner.offlineBadge')}</Text>
           </View>
         </View>
 
@@ -180,7 +180,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
           <View style={styles.frameCornerBottomRight} />
 
           <View style={styles.guideBadge}>
-            <Text style={styles.guideBadgeText}>Skieruj aparat na kapelusz i spód grzyba</Text>
+            <Text style={styles.guideBadgeText}>{t('scanner.aimGuide')}</Text>
           </View>
         </View>
 
@@ -197,7 +197,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
               disabled={isAnalyzing}
               testID="demo-atlas-boletus"
             >
-              <Text style={styles.demoChipText}>🌲 Borowik</Text>
+              <Text style={styles.demoChipText}>{t('scanner.sampleBoletus')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.demoChip, styles.demoChipDanger]}
@@ -205,7 +205,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
               disabled={isAnalyzing}
               testID="demo-atlas-amanita"
             >
-              <Text style={[styles.demoChipText, styles.demoChipDangerText]}>☠ Muchomor sromotnikowy</Text>
+              <Text style={[styles.demoChipText, styles.demoChipDangerText]}>{t('scanner.sampleAmanita')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.demoChip}
@@ -213,7 +213,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
               disabled={isAnalyzing}
               testID="demo-atlas-macrolepiota"
             >
-              <Text style={styles.demoChipText}>☂ Czubajka kania</Text>
+              <Text style={styles.demoChipText}>{t('scanner.sampleParasol')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.demoChip}
@@ -221,7 +221,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
               disabled={isAnalyzing}
               testID="demo-atlas-cantharellus"
             >
-              <Text style={styles.demoChipText}>🍳 Kurka</Text>
+              <Text style={styles.demoChipText}>{t('scanner.sampleChanterelle')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -236,7 +236,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
             testID="scanner-gallery"
           >
             <Text style={styles.galleryIcon}>🖼</Text>
-            <Text style={styles.galleryText}>Galeria</Text>
+            <Text style={styles.galleryText}>{t('scanner.gallery')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity

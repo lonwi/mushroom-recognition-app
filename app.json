@@ -4,10 +4,13 @@
     "slug": "mushroom-recognition-app",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "backgroundColor": "#1B3B22",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.grzybobranie.ai",
+      "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "Aplikacja potrzebuje dostępu do aparatu, aby rozpoznawać gatunki grzybów w lesie.",
         "NSPhotoLibraryUsageDescription": "Aplikacja potrzebuje dostępu do zdjęć, aby analizować wcześniej wykonane fotografie grzybów.",
@@ -16,9 +19,11 @@
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1B3B22"
       },
       "package": "com.grzybobranie.ai",
+      "versionCode": 1,
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
@@ -27,7 +32,27 @@
         "ACCESS_COARSE_LOCATION"
       ]
     },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "backgroundColor": "#1B3B22",
+      "themeColor": "#1B3B22",
+      "lang": "pl",
+      "splash": {
+        "image": "./assets/splash-icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#1B3B22"
+      }
+    },
     "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#1B3B22",
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "imageWidth": 200
+        }
+      ],
       "./plugins/withAndroidGeoQueries.js",
       [
         "expo-camera",

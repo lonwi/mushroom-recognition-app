@@ -1,4 +1,6 @@
-export const en = {
+import type { Translations } from './pl';
+
+export const en: Translations = {
   app: {
     title: 'Mushroom Hunter AI',
     subtitle: 'Local Offline Model • Europe',
@@ -87,6 +89,28 @@ export const en = {
     lowConfidenceWarning: 'Confidence is low, or the top two species are too close.',
     confidence: 'Confidence',
     openAtlas: 'Open the atlas card and look-alikes',
+    galleryPermissionTitle: 'Permission needed',
+    galleryPermissionBody:
+      'The app needs access to the photo library to choose a photo for offline analysis.',
+    galleryErrorTitle: 'Error',
+    galleryErrorBody: 'Could not load the photo from the gallery: {message}',
+    unknownError: 'Unknown error',
+    cameraInit: 'Starting the camera...',
+    cameraRequiredTitle: 'Camera access is required',
+    cameraRequiredBody:
+      'The camera is used to photograph a mushroom. Identifying a species from a photo is not available yet.',
+    allowCamera: 'Allow camera',
+    galleryFallback: 'You can also choose a photo from the gallery:',
+    galleryAlt: '🖼 Choose from gallery',
+    torchOnShort: '🔦 ON',
+    torchOffShort: '🔦 Torch',
+    offlineBadge: '● 100% OFFLINE',
+    aimGuide: 'Point the camera at the cap and the underside',
+    sampleBoletus: '🌲 Porcini',
+    sampleAmanita: '☠ Death cap',
+    sampleParasol: '☂ Parasol mushroom',
+    sampleChanterelle: '🍳 Chanterelle',
+    gallery: 'Gallery',
   },
   journal: {
     title: 'Forest Finds Journal',
@@ -157,6 +181,136 @@ export const en = {
     emergencyNumbers: '24/7 Toxicology Information Centers',
     emergency112: 'General Emergency Number 112',
     sanepidNotice: 'Remember: Sanepid sanitary centers offer free expert mushroom checks.',
+  },
+  lookalike: {
+    incompleteTitle: 'Look-alike information is incomplete',
+    incompleteBody:
+      'An empty list does not mean there are no dangerous look-alikes. Do not treat it as permission to collect. Confirm the identification with a mycologist or at a Sanepid station.',
+    sourcedTitle: 'The data records no dangerous look-alikes',
+    sourcedBody:
+      'This is a deliberate entry with a source, not a conclusion drawn from an empty list. Source: {source}. Before eating, still confirm the identification with a mycologist.',
+    fatalTitle: 'DEADLY LOOK-ALIKES!',
+    warningTitle: 'Watch for possible mix-ups',
+    subtitle: 'Before collecting, you must check the morphological differences below:',
+    confusedWith: 'Can be confused with: {name}',
+    openCard: 'Open the atlas card',
+    unlinked: 'No atlas card — the name is informational only, with no link.',
+    differences: 'Key identifying differences:',
+    noVerdict: 'The atlas does not give a verdict for this species',
+    notForCollection: 'Not recommended for collection',
+  },
+  edibility: {
+    edible: 'EDIBLE',
+    inedible: 'INEDIBLE',
+    poisonous: 'POISONOUS',
+    deadly: 'DEADLY POISONOUS',
+    incomplete: 'INCOMPLETE CARD',
+    missing: 'No card',
+  },
+  cardWarnings: {
+    fatalBannerTitle: 'This card has a deadly look-alike',
+    fatalBannerBody: 'Do not eat it without a mycologist’s assessment. The differences are below.',
+    incompleteBannerTitle: 'Incomplete card',
+    incompleteBannerBody: 'This short description is not permission to collect or to eat.',
+  },
+  disclaimer: {
+    title: 'Important warning and safety rules',
+    alertTitle: 'NEVER EAT MUSHROOMS BASED ONLY ON WHAT THIS APP SHOWS!',
+    alertBody:
+      'Artificial-intelligence algorithms (AI/ML) are only an aid and a teaching tool. Even the most advanced model can confuse a species because of lighting, the age of the fruiting body, dirt, or damage.',
+    sectionTitle: 'Remember the rules that come first:',
+    point1Label: 'One mistake can cost a life:',
+    point1Body:
+      'The death cap contains amatoxins. Eating them destroys the liver and often ends in death.',
+    point2Label: 'Limited trust:',
+    point2Body: 'If you have even a shadow of a doubt — LEAVE THE MUSHROOM IN THE FOREST!',
+    point3Label: 'Check at a Sanepid station:',
+    point3Body:
+      'Every district sanitary-epidemiological inspectorate in Poland has classifiers and mycologists on duty who assess collected specimens FREE OF CHARGE.',
+    point4Label: 'Always photograph the whole fruiting body:',
+    point4Body:
+      'The top of the cap, the underside (gills or tubes), and the base of the stem twisted out of the litter.',
+    emergencyTitle: 'If you suspect poisoning:',
+    emergencyBefore: 'Immediately call the emergency number ',
+    emergencyNumber: '112',
+    emergencyAfter: ' or contact the nearest hospital toxicology ward.',
+    accept: 'I understand and I accept the rules',
+  },
+  safetyGuide: {
+    title: 'Safety Guide & Help',
+    subtitle: 'Safe foraging rules and emergency numbers',
+    call112Title: 'Call the emergency number 112',
+    call112Sub: 'If you suspect you have eaten a poisonous mushroom',
+    goldenRulesTitle: '🌲 Golden rules for foragers',
+    badgeCritical: '⚡ IMPORTANT',
+    badgeTip: 'ℹ TIP',
+    syndromesTitle: '☠ Recognising poisoning symptoms',
+    speciesLabel: 'Species:',
+    latencyLabel: 'Time until symptoms appear:',
+    symptomsLabel: 'Symptoms:',
+    actionLabel: '🚨 What to do:',
+    centersTitle: '📞 Toxicology centres in Poland (24/7)',
+    centersSub: 'On-duty toxicologists give immediate advice by phone:',
+    availabilityLabel: 'Availability:',
+    hours247: 'Around the clock, 24/7',
+    preparationTitle: 'How to prepare mushrooms?',
+    preparationSub: 'A guide to cleaning, cooking, and storing',
+    reopenDisclaimer: '📄 Read the rules and the AI warning again',
+    rules: {
+      rule_tubes_first: {
+        title: 'For beginners: only mushrooms with tubes (a “sponge”)',
+        description:
+          'Among tube mushrooms (boletes, bay boletes, slippery jacks, birch boletes) in Central Europe there are NO deadly poisonous species (only bitter ones, or ones that cause stomach upset). The most dangerous killers have gills under the cap!',
+      },
+      rule_no_taste_test: {
+        title: 'Never taste-test mushrooms!',
+        description:
+          'The myth that poisonous mushrooms are bitter or peppery is deadly dangerous. The death cap has a mild, pleasant taste!',
+      },
+      rule_avoid_young_buttons: {
+        title: 'Avoid very young fruiting bodies (“eggs / buttons”)',
+        description:
+          'Unopened fruiting bodies do not yet show the key botanical features (a ring, gill colour, a volva at the base). At this stage a deadly amanita looks almost identical to a field mushroom, a parasol, or a russula.',
+      },
+      rule_no_plastic_bags: {
+        title: 'Collect only into airy wicker baskets',
+        description:
+          'In plastic bags or buckets mushrooms quickly sweat and rot. Proteins break down and produce toxic bacterial compounds (ptomaines), which leads to severe secondary poisoning even from edible mushrooms.',
+      },
+      rule_whole_mushroom: {
+        title: 'Twist out the whole fruiting body, including the stem base',
+        description:
+          'The base of the stem (a bulb, a volva, or the lack of one) is the key feature that separates a parasol and a field mushroom from the deadly death cap.',
+      },
+    },
+    syndromes: {
+      amatoxin: {
+        name: 'Death cap syndrome (amatoxins)',
+        species: 'Death cap (A. phalloides), destroying angel',
+        latency: '8–24 hours after eating (a dangerous delay!)',
+        symptoms:
+          'Phase 1: violent vomiting, painful abdominal cramps, watery diarrhoea. Phase 2 (day 2): a false sense of improvement. Phase 3 (days 3–4): irreversible liver and kidney damage, a bleeding disorder, hepatic coma.',
+        action:
+          'CALL AN AMBULANCE IMMEDIATELY (112) or go to a toxicology ward. Every hour of delay reduces the chance of survival (a liver transplant may be required).',
+      },
+      muscarinic: {
+        name: 'Muscarinic syndrome (cholinergic)',
+        species: 'Fibrecaps (Inocybe), funnels (Clitocybe)',
+        latency: '15–30 minutes after eating',
+        symptoms:
+          'Profuse sweating, heavy salivation, tearing, pinpoint pupils, shortness of breath, a slowed heart rate.',
+        action: 'Call an ambulance. The specific antidote is atropine, given by a doctor.',
+      },
+      gastric: {
+        name: 'Gastrointestinal syndrome',
+        species: 'Bitter bolete, woolly milkcap, false chanterelle, earthballs',
+        latency: '1–3 hours after eating',
+        symptoms:
+          'Nausea, vomiting, abdominal pain, diarrhoea. It usually passes after 1–2 days of hydration.',
+        action:
+          'Drink plenty of water, take activated charcoal, and see a doctor to rule out amatoxins.',
+      },
+    },
   },
   preparation: {
     title: 'Preparation Guide',

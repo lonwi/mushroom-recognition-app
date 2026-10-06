@@ -3,8 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { pl } from '../i18n/pl';
 import { en } from '../i18n/en';
 
-type LanguageType = 'pl' | 'en';
-type TranslationsType = typeof pl;
+export type LanguageType = 'pl' | 'en';
 
 interface LanguageContextType {
   language: LanguageType;
@@ -12,10 +11,24 @@ interface LanguageContextType {
   t: (key: string) => string;
 }
 
+export function translate(language: LanguageType, path: string): string {
+  const dict = language === 'en' ? en : pl;
+  const keys = path.split('.');
+  let current: unknown = dict;
+  for (const key of keys) {
+    if (current && typeof current === 'object' && key in (current as Record<string, unknown>)) {
+      current = (current as Record<string, unknown>)[key];
+    } else {
+      return path;
+    }
+  }
+  return typeof current === 'string' ? current : path;
+}
+
 const LanguageContext = createContext<LanguageContextType>({
   language: 'pl',
   setLanguage: () => {},
-  t: (key: string) => key,
+  t: (key: string) => translate('pl', key),
 });
 
 export const useLanguage = () => useContext(LanguageContext);
@@ -49,19 +62,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  const t = (path: string): string => {
-    const dict = language === 'en' ? en : pl;
-    const keys = path.split('.');
-    let current: any = dict;
-    for (const key of keys) {
-      if (current[key] !== undefined) {
-        current = current[key];
-      } else {
-        return path;
-      }
-    }
-    return current as string;
-  };
+  const t = (path: string): string => translate(language, path);
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>

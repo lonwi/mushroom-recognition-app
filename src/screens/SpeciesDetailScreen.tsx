@@ -15,6 +15,7 @@ import { SpeciesStatusBadge } from '../components/EdibilityBadge';
 import { LookAlikeAlert } from '../components/LookAlikeAlert';
 import { getMushroomImage } from '../utils/mushroomImages';
 import { hasFatalLookAlikeRisk, MUSHROOM_IDS, showsKitchenSection } from '../data/mushrooms';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Props {
   species: MushroomSpecies;
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLookAlike }) => {
+  const { t } = useLanguage();
   const monthsNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru'];
   const photo = getMushroomImage(species.id);
   const fatalLookAlike = hasFatalLookAlikeRisk(species);
@@ -119,10 +121,8 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
 
            {species.incompleteCard ? (
              <View style={styles.incompleteBanner} testID="incomplete-card-banner">
-               <Text style={styles.incompleteBannerTitle}>Karta niepełna</Text>
-               <Text style={styles.incompleteBannerBody}>
-                 Ten skrócony opis nie jest zgodą na zbiór ani spożycie.
-               </Text>
+               <Text style={styles.incompleteBannerTitle}>{t('cardWarnings.incompleteBannerTitle')}</Text>
+               <Text style={styles.incompleteBannerBody}>{t('cardWarnings.incompleteBannerBody')}</Text>
              </View>
            ) : null}
            
@@ -145,10 +145,8 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
 
         {fatalLookAlike ? (
           <View style={styles.fatalBanner} testID="fatal-lookalike-banner">
-            <Text style={styles.fatalBannerTitle}>Śmiertelnie groźny sobowtór w tej karcie</Text>
-            <Text style={styles.fatalBannerBody}>
-              Nie jedz bez oceny grzyboznawcy. Różnice są poniżej.
-            </Text>
+            <Text style={styles.fatalBannerTitle}>{t('cardWarnings.fatalBannerTitle')}</Text>
+            <Text style={styles.fatalBannerBody}>{t('cardWarnings.fatalBannerBody')}</Text>
           </View>
         ) : null}
 

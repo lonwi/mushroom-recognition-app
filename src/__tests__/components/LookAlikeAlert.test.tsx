@@ -1,5 +1,6 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   INCOMPLETE_LOOKALIKE_BODY,
   INCOMPLETE_LOOKALIKE_TITLE,
@@ -8,6 +9,8 @@ import {
 import { INCOMPLETE_CARD_LABEL, MISSING_CARD_LABEL } from '../../components/EdibilityBadge';
 import { ATLAS_NO_VERDICT_NOTE, MUSHROOMS_DATABASE, NOT_FOR_COLLECTION_NOTE } from '../../data/mushrooms';
 import { ConfusionRisk } from '../../types/mushroom';
+import { LanguageProvider } from '../../contexts/LanguageContext';
+import { en } from '../../i18n/en';
 
 describe('LookAlikeAlert RTL Component Tests', () => {
   it('does not treat an empty list as an all-clear', async () => {
@@ -249,5 +252,30 @@ describe('LookAlikeAlert RTL Component Tests', () => {
     expect(getAllByText(INCOMPLETE_CARD_LABEL)).toHaveLength(1);
     expect(getAllByText('JADALNY')).toHaveLength(1);
     expect(queryByTestId('incomplete-card-badge-macrolepiota_procera')).toBeNull();
+  });
+
+  it('keeps the deadly warning in English without softening it', async () => {
+    await AsyncStorage.setItem('app_language', 'en');
+    const risks: ConfusionRisk[] = [
+      {
+        confusedWithId: 'amanita_phalloides',
+        confusedWithName: 'Muchomor sromotnikowy',
+        confusedWithStatus: 'DEADLY_POISONOUS',
+        keyDifferences: ['Ma pochwę'],
+        fatal: true,
+      },
+    ];
+
+    const screen = await render(
+      <LanguageProvider>
+        <LookAlikeAlert risks={risks} />
+      </LanguageProvider>,
+    );
+
+    expect(await screen.findByText(en.lookalike.fatalTitle)).toBeTruthy();
+    expect(screen.getByText(en.lookalike.subtitle)).toBeTruthy();
+    expect(en.lookalike.fatalTitle).toMatch(/DEADLY/);
+    expect(en.lookalike.subtitle).toMatch(/must check/);
+    expect(screen.queryByText(/safe to eat/i)).toBeNull();
   });
 });

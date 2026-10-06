@@ -89,6 +89,28 @@ export const pl = {
     lowConfidenceWarning: 'Pewność jest niska albo dwa gatunki są zbyt blisko siebie.',
     confidence: 'Pewność',
     openAtlas: 'Zobacz kartę i sobowtóry',
+    galleryPermissionTitle: 'Brak uprawnień',
+    galleryPermissionBody:
+      'Aplikacja potrzebuje dostępu do galerii zdjęć, aby wybrać zdjęcie do analizy offline.',
+    galleryErrorTitle: 'Błąd',
+    galleryErrorBody: 'Nie udało się załadować zdjęcia z galerii: {message}',
+    unknownError: 'Nieznany błąd',
+    cameraInit: 'Inicjalizacja modułu aparatu...',
+    cameraRequiredTitle: 'Dostęp do aparatu jest wymagany',
+    cameraRequiredBody:
+      'Aparat służy do zrobienia zdjęcia grzyba. Rozpoznawanie gatunku ze zdjęcia nie jest jeszcze dostępne.',
+    allowCamera: 'Zezwól na aparat',
+    galleryFallback: 'Możesz również wybrać zdjęcie z galerii:',
+    galleryAlt: '🖼 Wybierz z galerii',
+    torchOnShort: '🔦 WŁ',
+    torchOffShort: '🔦 Latarka',
+    offlineBadge: '● 100% OFFLINE',
+    aimGuide: 'Skieruj aparat na kapelusz i spód grzyba',
+    sampleBoletus: '🌲 Borowik',
+    sampleAmanita: '☠ Muchomor sromotnikowy',
+    sampleParasol: '☂ Czubajka kania',
+    sampleChanterelle: '🍳 Kurka',
+    gallery: 'Galeria',
   },
   journal: {
     title: 'Dziennik Leśnych Zbiorów',
@@ -160,6 +182,133 @@ export const pl = {
     emergency112: 'Ogólny numer alarmowy 112',
     sanepidNotice: 'Pamiętaj: Sanepid oferuje bezpłatną ocenę grzybów przez certyfikowanych grzyboznawców.',
   },
+  lookalike: {
+    incompleteTitle: 'Informacja o sobowtórach jest niepełna',
+    incompleteBody:
+      'Pusta lista nie oznacza braku groźnych sobowtórów. Nie traktuj jej jako zgody na zbiór. Oznaczenie potwierdź u grzyboznawcy lub w stacji Sanepid.',
+    sourcedTitle: 'W danych zapisano brak groźnych sobowtórów',
+    sourcedBody:
+      'To świadomy wpis ze źródłem, a nie wniosek z pustej listy. Źródło: {source}. Przed spożyciem i tak potwierdź oznaczenie u grzyboznawcy.',
+    fatalTitle: 'ŚMIERTELNIE GROŹNE SOBOWTÓRY!',
+    warningTitle: 'Uwaga na możliwe pomyłki',
+    subtitle: 'Przed zbiorem koniecznie sprawdź poniższe różnice morfologiczne:',
+    confusedWith: 'Można pomylić z: {name}',
+    openCard: 'Zobacz kartę w atlasie',
+    unlinked: 'Brak karty w atlasie — nazwa tylko informacyjna, bez linku.',
+    differences: 'Kluczowe różnice rozpoznawcze:',
+    noVerdict: 'Atlas nie wydaje werdyktu dla tego gatunku',
+    notForCollection: 'Niezalecany do zbioru',
+  },
+  edibility: {
+    edible: 'JADALNY',
+    inedible: 'NIEJADALNY',
+    poisonous: 'TRUJĄCY',
+    deadly: 'ŚMIERTELNIE TRUJĄCY',
+    incomplete: 'KARTA NIEPEŁNA',
+    missing: 'Brak karty',
+  },
+  cardWarnings: {
+    fatalBannerTitle: 'Śmiertelnie groźny sobowtór w tej karcie',
+    fatalBannerBody: 'Nie jedz bez oceny grzyboznawcy. Różnice są poniżej.',
+    incompleteBannerTitle: 'Karta niepełna',
+    incompleteBannerBody: 'Ten skrócony opis nie jest zgodą na zbiór ani spożycie.',
+  },
+  disclaimer: {
+    title: 'Ważne Ostrzeżenie i Zasady Bezpieczeństwa',
+    alertTitle: 'NIGDY NIE SPOŻYWAJ GRZYBÓW WYŁĄCZNIE NA PODSTAWIE WSKAZAŃ APLIKACJI!',
+    alertBody:
+      'Algorytmy sztucznej inteligencji (AI/ML) mają wyłącznie charakter pomocniczy i edukacyjny. Nawet najbardziej zaawansowany model może pomylić gatunek ze względu na oświetlenie, wiek owocnika, zanieczyszczenia lub uszkodzenia.',
+    sectionTitle: 'Pamiętaj o nadrzędnych zasadach:',
+    point1Label: 'Jeden błąd może kosztować życie:',
+    point1Body:
+      'Muchomor sromotnikowy (zielonawy) zawiera amatoksyny, których zjedzenie niszczy wątrobę i często kończy się śmiercią.',
+    point2Label: 'Zasada ograniczonego zaufania:',
+    point2Body: 'Jeśli masz choć cień wątpliwości – ZOSTAW GRZYBA W LESIE!',
+    point3Label: 'Weryfikacja w Sanepidzie:',
+    point3Body:
+      'W każdym powiatowym inspektoracie sanitarno-epidemiologicznym w Polsce dyżurują klasyfikatorzy i grzyboznawcy, którzy BEZPŁATNIE oceniają zebrane okazy.',
+    point4Label: 'Zawsze fotografuj cały owocnik:',
+    point4Body:
+      'Zarówno wierzch kapelusza, spód (blaszki/rurki), jak i podstawę trzonu wykręconą z ściółki.',
+    emergencyTitle: 'W razie podejrzenia zatrucia:',
+    emergencyBefore: 'Natychmiast zadzwoń pod numer alarmowy ',
+    emergencyNumber: '112',
+    emergencyAfter: ' lub skontaktuj się z najbliższym szpitalnym oddziałem toksykologii.',
+    accept: 'Rozumiem i akceptuję zasady',
+  },
+  safetyGuide: {
+    title: 'Poradnik Bezpieczeństwa & Pomoc',
+    subtitle: 'Zasady bezpiecznego grzybobrania i telefony ratunkowe',
+    call112Title: 'Zadzwoń pod numer alarmowy 112',
+    call112Sub: 'W przypadku podejrzenia spożycia trującego grzyba',
+    goldenRulesTitle: '🌲 Złote Zasady Grzybiarza',
+    badgeCritical: '⚡ WAŻNE',
+    badgeTip: 'ℹ WSKAZÓWKA',
+    syndromesTitle: '☠ Rozpoznawanie Objawów Zatrucia',
+    speciesLabel: 'Gatunki:',
+    latencyLabel: 'Czas ujawnienia objawów:',
+    symptomsLabel: 'Objawy:',
+    actionLabel: '🚨 Postępowanie:',
+    centersTitle: '📞 Ośrodki Toksykologiczne w Polsce (24/7)',
+    centersSub: 'Dyżurni toksykolodzy udzielają natychmiastowych porad telefonicznych:',
+    availabilityLabel: 'Dostępność:',
+    hours247: 'Całodobowo 24/7',
+    preparationTitle: 'Jak przygotować grzyby?',
+    preparationSub: 'Poradnik czyszczenia, gotowania i przechowywania',
+    reopenDisclaimer: '📄 Przeczytaj ponownie Regulamin i Ostrzeżenie AI',
+    rules: {
+      rule_tubes_first: {
+        title: 'Dla początkujących: tylko grzyby z rurkami (z "gąbką")',
+        description:
+          'Wśród grzybów z rurkami (borowiki, podgrzybki, maślaki, koźlarze) w Europie Środkowej NIE MA gatunków śmiertelnie trujących (jedynie gorzkie lub powodujące dolegliwości żołądkowe). Najgroźniejsze truciciele mają pod kapeluszem blaszki!',
+      },
+      rule_no_taste_test: {
+        title: 'Nigdy nie sprawdzaj grzybów "na smak"!',
+        description:
+          'Mit o tym, że grzyby trujące są gorzkie lub piekące, jest śmiertelnie niebezpieczny. Muchomor sromotnikowy (zielonawy) ma smak łagodny i przyjemny!',
+      },
+      rule_avoid_young_buttons: {
+        title: 'Unikaj bardzo młodych osobników ("jajeczek / pałeczek")',
+        description:
+          'Nierozwinięte owocniki nie mają jeszcze wykształconych kluczowych cech botanicznych (pierścienia, koloru blaszek, pochwy u nasady). W tej fazie śmiertelny muchomor wygląda niemal identycznie jak pieczarka, kania czy gołąbek.',
+      },
+      rule_no_plastic_bags: {
+        title: 'Zbieraj tylko do przewiewnych koszyków wiklinowych',
+        description:
+          'W foliowych torebkach lub wiaderkach grzyby szybko ulegają zaparzeniu i gniciu. Białka rozkładają się, wytwarzając toksyczne związki bakteryjne (jad trupi / ptomainy), co prowadzi do ciężkich zatruć wtórnych nawet grzybami jadalnymi.',
+      },
+      rule_whole_mushroom: {
+        title: 'Wykręcaj owocnik w całości z nasadą trzonu',
+        description:
+          'Podstawa trzonu (obecność bulwy, pochewki lub jej brak) to kluczowa cecha pozwalająca odróżnić kanię i pieczarkę od zabójczego muchomora sromotnikowego.',
+      },
+    },
+    syndromes: {
+      amatoxin: {
+        name: 'Zespół sromotnikowy (amatoksyny)',
+        species: 'Muchomor sromotnikowy (A. phalloides), muchomor jadowity',
+        latency: '8 – 24 godziny od spożycia (groźne opóźnienie!)',
+        symptoms:
+          'Faza 1: gwałtowne wymioty, bolesne skurcze brzucha, wodnista biegunka. Faza 2 (2. doba): pozorna poprawa samopoczucia. Faza 3 (3.-4. doba): nieodwracalne uszkodzenie wątroby i nerek, skaza krwotoczna, śpiączka wątrobowa.',
+        action:
+          'NATYCHMIASTOWE WEZWANIE POGOTOWIA (112) lub transport na oddział toksykologii. Każda godzina opóźnienia zmniejsza szansę na ratunek (wymagany przeszczep wątroby).',
+      },
+      muscarinic: {
+        name: 'Zespół muskarynowy (cholinergiczny)',
+        species: 'Strzępiaki (Inocybe), lejkówki (Clitocybe)',
+        latency: '15 – 30 minut od spożycia',
+        symptoms: 'Obfite poty, silny ślinotok, łzawienie, zwężenie źrenic, duszność, zwolnienie akcji serca.',
+        action: 'Wezwać pogotowie, odtrutką specyficzną jest atropina podawana przez lekarza.',
+      },
+      gastric: {
+        name: 'Zespół gastryczny / żołądkowo-jelitowy',
+        species: 'Goryczak żółciowy, mleczaj wełnianka, lisówka pomarańczowa, tęgoskóry',
+        latency: '1 – 3 godziny od spożycia',
+        symptoms: 'Nudności, wymioty, ból brzucha, biegunka. Zwykle mija po 1-2 dniach nawadniania.',
+        action: 'Wypić dużo wody, podać węgiel aktywny, skonsultować się z lekarzem celem wykluczenia amatoksyn.',
+      },
+    },
+  },
   preparation: {
     title: 'Poradnik Przygotowania',
     subtitle: 'Jak bezpiecznie czyścić, przetwarzać i przechowywać grzyby leśne',
@@ -168,3 +317,5 @@ export const pl = {
     storeTab: '3. Przechowywanie',
   },
 };
+
+export type Translations = typeof pl;

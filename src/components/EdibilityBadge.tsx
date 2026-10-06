@@ -1,14 +1,16 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { EdibilityStatus } from '../types/mushroom';
+import { useLanguage } from '../contexts/LanguageContext';
+import { pl } from '../i18n/pl';
 
 interface Props {
   status: EdibilityStatus;
   size?: 'small' | 'medium' | 'large';
 }
 
-export const INCOMPLETE_CARD_LABEL = 'KARTA NIEPEŁNA';
-export const MISSING_CARD_LABEL = 'Brak karty';
+export const INCOMPLETE_CARD_LABEL = pl.edibility.incomplete;
+export const MISSING_CARD_LABEL = pl.edibility.missing;
 
 interface IncompleteProps {
   size?: 'small' | 'medium' | 'large';
@@ -16,6 +18,7 @@ interface IncompleteProps {
 }
 
 export const IncompleteCardBadge: React.FC<IncompleteProps> = ({ size = 'medium', testID }) => {
+  const { t } = useLanguage();
   const isSmall = size === 'small';
   const isLarge = size === 'large';
 
@@ -53,7 +56,7 @@ export const IncompleteCardBadge: React.FC<IncompleteProps> = ({ size = 'medium'
           },
         ]}
       >
-        {INCOMPLETE_CARD_LABEL}
+        {t('edibility.incomplete')}
       </Text>
     </View>
   );
@@ -61,6 +64,7 @@ export const IncompleteCardBadge: React.FC<IncompleteProps> = ({ size = 'medium'
 
 /** A named look-alike with no atlas card. Not an edibility verdict. */
 export const MissingCardBadge: React.FC<IncompleteProps> = ({ size = 'medium', testID }) => {
+  const { t } = useLanguage();
   const isSmall = size === 'small';
   const isLarge = size === 'large';
 
@@ -86,7 +90,7 @@ export const MissingCardBadge: React.FC<IncompleteProps> = ({ size = 'medium', t
           },
         ]}
       >
-        {MISSING_CARD_LABEL}
+        {t('edibility.missing')}
       </Text>
     </View>
   );
@@ -113,11 +117,12 @@ export const SpeciesStatusBadge: React.FC<SpeciesStatusProps> = ({
 };
 
 export const EdibilityBadge: React.FC<Props> = ({ status, size = 'medium' }) => {
+  const { t } = useLanguage();
   const getBadgeConfig = () => {
     switch (status) {
       case 'EDIBLE':
         return {
-          label: 'JADALNY',
+          label: t('edibility.edible'),
           bgColor: '#E8F5E9',
           textColor: '#2E7D32',
           borderColor: '#81C784',
@@ -125,7 +130,7 @@ export const EdibilityBadge: React.FC<Props> = ({ status, size = 'medium' }) => 
         };
       case 'INEDIBLE':
         return {
-          label: 'NIEJADALNY',
+          label: t('edibility.inedible'),
           bgColor: '#FFF3E0',
           textColor: '#E65100',
           borderColor: '#FFB74D',
@@ -133,7 +138,7 @@ export const EdibilityBadge: React.FC<Props> = ({ status, size = 'medium' }) => 
         };
       case 'POISONOUS':
         return {
-          label: 'TRUJĄCY',
+          label: t('edibility.poisonous'),
           bgColor: '#FFEBEE',
           textColor: '#C62828',
           borderColor: '#EF5350',
@@ -141,7 +146,7 @@ export const EdibilityBadge: React.FC<Props> = ({ status, size = 'medium' }) => 
         };
       case 'DEADLY_POISONOUS':
         return {
-          label: 'ŚMIERTELNIE TRUJĄCY',
+          label: t('edibility.deadly'),
           bgColor: '#3E000C',
           textColor: '#FF4560',
           borderColor: '#FF1744',

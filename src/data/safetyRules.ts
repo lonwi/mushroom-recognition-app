@@ -47,6 +47,7 @@ export const GOLDEN_RULES: SafetyRule[] = [
 
 export const POISON_SYNDROMES = [
   {
+    id: 'amatoxin',
     name: 'Zespół sromotnikowy (amatoksyny)',
     species: 'Muchomor sromotnikowy (A. phalloides), muchomor jadowity',
     latency: '8 – 24 godziny od spożycia (groźne opóźnienie!)',
@@ -54,6 +55,7 @@ export const POISON_SYNDROMES = [
     action: 'NATYCHMIASTOWE WEZWANIE POGOTOWIA (112) lub transport na oddział toksykologii. Każda godzina opóźnienia zmniejsza szansę na ratunek (wymagany przeszczep wątroby).'
   },
   {
+    id: 'muscarinic',
     name: 'Zespół muskarynowy (cholinergiczny)',
     species: 'Strzępiaki (Inocybe), lejkówki (Clitocybe)',
     latency: '15 – 30 minut od spożycia',
@@ -61,6 +63,7 @@ export const POISON_SYNDROMES = [
     action: 'Wezwać pogotowie, odtrutką specyficzną jest atropina podawana przez lekarza.'
   },
   {
+    id: 'gastric',
     name: 'Zespół gastryczny / żołądkowo-jelitowy',
     species: 'Goryczak żółciowy, mleczaj wełnianka, lisówka pomarańczowa, tęgoskóry',
     latency: '1 – 3 godziny od spożycia',

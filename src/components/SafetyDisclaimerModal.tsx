@@ -8,6 +8,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Props {
   visible: boolean;
@@ -15,73 +16,65 @@ interface Props {
 }
 
 export const SafetyDisclaimerModal: React.FC<Props> = ({ visible, onAccept }) => {
+  const { t } = useLanguage();
   return (
     <Modal visible={visible} animationType="slide" transparent={false}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
           <View style={styles.header}>
             <Text style={styles.headerIcon}>⚠️</Text>
-            <Text style={styles.headerTitle}>Ważne Ostrzeżenie i Zasady Bezpieczeństwa</Text>
+            <Text style={styles.headerTitle}>{t('disclaimer.title')}</Text>
           </View>
 
           <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
             <View style={styles.alertBox}>
-              <Text style={styles.alertBoxTitle}>
-                NIGDY NIE SPOŻYWAJ GRZYBÓW WYŁĄCZNIE NA PODSTAWIE WSKAZAŃ APLIKACJI!
-              </Text>
-              <Text style={styles.alertBoxText}>
-                Algorytmy sztucznej inteligencji (AI/ML) mają wyłącznie charakter pomocniczy i edukacyjny.
-                Nawet najbardziej zaawansowany model może pomylić gatunek ze względu na oświetlenie, wiek owocnika, zanieczyszczenia lub uszkodzenia.
-              </Text>
+              <Text style={styles.alertBoxTitle}>{t('disclaimer.alertTitle')}</Text>
+              <Text style={styles.alertBoxText}>{t('disclaimer.alertBody')}</Text>
             </View>
 
-            <Text style={styles.sectionTitle}>Pamiętaj o nadrzędnych zasadach:</Text>
+            <Text style={styles.sectionTitle}>{t('disclaimer.sectionTitle')}</Text>
 
             <View style={styles.pointRow}>
               <Text style={styles.pointNum}>1</Text>
               <Text style={styles.pointText}>
-                <Text style={styles.bold}>Jeden błąd może kosztować życie:</Text> Muchomor sromotnikowy
-                (zielonawy) zawiera amatoksyny, których zjedzenie niszczy wątrobę i często kończy się śmiercią.
+                <Text style={styles.bold}>{t('disclaimer.point1Label')}</Text> {t('disclaimer.point1Body')}
               </Text>
             </View>
 
             <View style={styles.pointRow}>
               <Text style={styles.pointNum}>2</Text>
               <Text style={styles.pointText}>
-                <Text style={styles.bold}>Zasada ograniczonego zaufania:</Text> Jeśli masz choć cień
-                wątpliwości – ZOSTAW GRZYBA W LESIE!
+                <Text style={styles.bold}>{t('disclaimer.point2Label')}</Text> {t('disclaimer.point2Body')}
               </Text>
             </View>
 
             <View style={styles.pointRow}>
               <Text style={styles.pointNum}>3</Text>
               <Text style={styles.pointText}>
-                <Text style={styles.bold}>Weryfikacja w Sanepidzie:</Text> W każdym powiatowym
-                inspektoracie sanitarno-epidemiologicznym w Polsce dyżurują klasyfikatorzy i grzyboznawcy,
-                którzy BEZPŁATNIE oceniają zebrane okazy.
+                <Text style={styles.bold}>{t('disclaimer.point3Label')}</Text> {t('disclaimer.point3Body')}
               </Text>
             </View>
 
             <View style={styles.pointRow}>
               <Text style={styles.pointNum}>4</Text>
               <Text style={styles.pointText}>
-                <Text style={styles.bold}>Zawsze fotografuj cały owocnik:</Text> Zarówno wierzch kapelusza,
-                spód (blaszki/rurki), jak i podstawę trzonu wykręconą z ściółki.
+                <Text style={styles.bold}>{t('disclaimer.point4Label')}</Text> {t('disclaimer.point4Body')}
               </Text>
             </View>
 
             <View style={styles.emergencyBanner}>
-              <Text style={styles.emergencyTitle}>W razie podejrzenia zatrucia:</Text>
+              <Text style={styles.emergencyTitle}>{t('disclaimer.emergencyTitle')}</Text>
               <Text style={styles.emergencyText}>
-                Natychmiast zadzwoń pod numer alarmowy <Text style={styles.bold}>112</Text> lub skontaktuj
-                się z najbliższym szpitalnym oddziałem toksykologii.
+                {t('disclaimer.emergencyBefore')}
+                <Text style={styles.bold}>{t('disclaimer.emergencyNumber')}</Text>
+                {t('disclaimer.emergencyAfter')}
               </Text>
             </View>
           </ScrollView>
 
           <View style={styles.footer}>
             <TouchableOpacity style={styles.button} onPress={onAccept} activeOpacity={0.8}>
-              <Text style={styles.buttonText}>Rozumiem i akceptuję zasady</Text>
+              <Text style={styles.buttonText}>{t('disclaimer.accept')}</Text>
             </TouchableOpacity>
           </View>
         </View>

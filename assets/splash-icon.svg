@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <g transform="translate(512 512) scale(0.92) translate(-512 -500)">
+    <ellipse cx="512" cy="860" rx="230" ry="26" fill="#122818"/>
+    <path d="M456 520 C448 640 418 760 472 824 C494 852 530 852 552 824 C606 760 576 640 568 520 Z" fill="#F4E8D8"/>
+    <path d="M492 540 C488 650 478 750 502 812 C512 790 510 650 514 540 Z" fill="#FFF8EF" opacity="0.6"/>
+    <ellipse cx="512" cy="430" rx="280" ry="172" fill="#7A3E22"/>
+    <ellipse cx="512" cy="404" rx="236" ry="132" fill="#C56A3A"/>
+    <ellipse cx="420" cy="360" rx="78" ry="40" fill="#E7A56C" opacity="0.7"/>
+    <ellipse cx="512" cy="528" rx="248" ry="48" fill="#F7E7CF"/>
+    <path d="M300 522 C380 548 644 548 724 522" fill="none" stroke="#E2C8A4" stroke-width="6" stroke-linecap="round"/>
+    <path d="M340 530 C420 560 604 560 684 530" fill="none" stroke="#E2C8A4" stroke-width="4" stroke-linecap="round"/>
+    <path d="M430 824 C400 760 418 790 436 820" fill="none" stroke="#4ADE80" stroke-width="10" stroke-linecap="round"/>
+    <path d="M610 834 C652 760 620 800 596 828" fill="none" stroke="#86EFAC" stroke-width="10" stroke-linecap="round"/>
+  </g>
+</svg>

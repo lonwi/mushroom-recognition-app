@@ -306,6 +306,48 @@ describe('ResultModal recognition outcomes', () => {
     (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
   });
 
+  it('saves the copied photo and coordinates when location is allowed', async () => {
+    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
+    (Location.getCurrentPositionAsync as jest.Mock).mockResolvedValue({
+      coords: { latitude: 49.12345, longitude: 20.54321 },
+    });
+    const { getByTestId } = await render(
+      <LanguageProvider>
+        <ResultModal
+          visible
+          result={{
+            status: 'unavailable',
+            reason: 'model_missing',
+            processedImageUri: 'file://camera/capture.jpg',
+          }}
+          onClose={() => {}}
+        />
+      </LanguageProvider>,
+    );
+
+    (Alert.alert as jest.Mock).mockClear();
+    await fireEvent.press(getByTestId('save-to-journal'));
+    const buttons = (Alert.alert as jest.Mock).mock.calls.at(-1)?.[2] as Array<{
+      text: string;
+      onPress?: () => Promise<void>;
+    }>;
+    const withLocation = buttons.find((button) => button.text === 'Użyj lokalizacji');
+    await act(async () => {
+      await withLocation?.onPress?.();
+    });
+
+    const saved = await storageService.getSightings();
+    expect(saved).toHaveLength(1);
+    expect(saved[0].photoFile).toMatch(/^[A-Za-z0-9_-]+\.jpg$/);
+    expect(saved[0].latitude).toBe(49.12345);
+    expect(saved[0].longitude).toBe(20.54321);
+    expect(saved[0].recognition).toEqual({ status: 'unavailable' });
+    const messages = (Alert.alert as jest.Mock).mock.calls.map((call) => String(call[1]));
+    expect(messages.join(' ')).toMatch(/Zdjęcie i współrzędne są w dzienniku/);
+    expect(Location.getCurrentPositionAsync).toHaveBeenCalled();
+  });
+
   it('points to the journal when a save fails because the journal is damaged', async () => {
     await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, 'not-json');
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
