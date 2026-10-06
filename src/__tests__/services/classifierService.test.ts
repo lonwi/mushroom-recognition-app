@@ -24,6 +24,9 @@ describe('classifierService when no pixel model is installed', () => {
     const result = await classifierService.classifyImage('file://camera/capture.jpg');
 
     expect(result.status).toBe('unavailable');
+    if (result.status !== 'unavailable') {
+      return;
+    }
     expect(result.reason).toBe(MODEL_MISSING_REASON);
     expect(result.processedImageUri).toBe('file://camera/capture.jpg');
     expect(Object.keys(result).sort()).toEqual(['processedImageUri', 'reason', 'status']);
@@ -45,6 +48,9 @@ describe('classifierService when no pixel model is installed', () => {
 
     expect(first.status).toBe('unavailable');
     expect(second.status).toBe('unavailable');
+    if (first.status !== 'unavailable' || second.status !== 'unavailable') {
+      return;
+    }
     expect(first.reason).toBe(second.reason);
   });
 
