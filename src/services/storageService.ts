@@ -1,61 +1,239 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SightingRecord } from '../types/mushroom';
+import { isUsableCoordinate } from './journalLocation';
+import { deleteManagedJournalPhoto, journalPhotoFileName } from './journalPhotos';
+import {
+  JournalCandidate,
+  JournalRecognition,
+  SightingRecord,
+} from '../types/mushroom';
 
-const SIGHTINGS_KEY = '@grzybobranie_ai:sightings_v1';
+export const SIGHTINGS_STORAGE_KEY = '@grzybobranie_ai:sightings_v1';
+export const SIGHTINGS_BACKUP_KEY = '@grzybobranie_ai:sightings_v1_backup';
 const DISCLAIMER_KEY = '@grzybobranie_ai:disclaimer_accepted_v1';
 
+export class JournalReadError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'JournalReadError';
+  }
+}
+
+function textField(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
+}
+
+function finiteNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function legacyFromFields(source: Record<string, unknown>): JournalRecognition | null {
+  const speciesId = textField(source.speciesId);
+  const speciesNamePl = textField(source.speciesNamePl);
+  const speciesNameLatin = textField(source.speciesNameLatin);
+  const confidence = finiteNumber(source.confidence);
+  if (!speciesId && !speciesNamePl && !speciesNameLatin && confidence === undefined) {
+    return null;
+  }
+  return {
+    status: 'legacy',
+    ...(speciesId ? { speciesId } : {}),
+    ...(speciesNamePl ? { speciesNamePl } : {}),
+    ...(speciesNameLatin ? { speciesNameLatin } : {}),
+    ...(confidence !== undefined ? { confidence } : {}),
+  };
+}
+
+function sanitizeCandidate(value: unknown): JournalCandidate | null {
+  if (!value || typeof value !== 'object') return null;
+  const candidate = value as Record<string, unknown>;
+  if (
+    typeof candidate.id !== 'string' ||
+    typeof candidate.namePl !== 'string' ||
+    typeof candidate.nameLatin !== 'string' ||
+    typeof candidate.confidence !== 'number' ||
+    !Number.isFinite(candidate.confidence) ||
+    typeof candidate.rank !== 'number' ||
+    !Number.isFinite(candidate.rank)
+  ) {
+    return null;
+  }
+  return {
+    id: candidate.id,
+    namePl: candidate.namePl,
+    nameLatin: candidate.nameLatin,
+    confidence: candidate.confidence,
+    rank: candidate.rank,
+  };
+}
+
+export function sanitizeRecognition(value: unknown): JournalRecognition {
+  if (!value || typeof value !== 'object') {
+    return { status: 'unavailable' };
+  }
+  const record = value as Record<string, unknown>;
+  if (record.status === 'rejected' && (record.reason === 'not_a_mushroom' || record.reason === 'unclear')) {
+    return { status: 'rejected', reason: record.reason };
+  }
+  if (record.status === 'candidates' && Array.isArray(record.top3)) {
+    const warningReasons = Array.isArray(record.warningReasons)
+      ? record.warningReasons.filter(
+          (reason): reason is 'dangerous_genus' | 'low_confidence' =>
+            reason === 'dangerous_genus' || reason === 'low_confidence',
+        )
+      : [];
+    return {
+      status: 'candidates',
+      top3: record.top3.flatMap((item) => {
+        const candidate = sanitizeCandidate(item);
+        return candidate ? [candidate] : [];
+      }),
+      expertVerificationRequired: record.expertVerificationRequired === true || warningReasons.length > 0,
+      warningReasons,
+    };
+  }
+  if (record.status === 'legacy') {
+    return legacyFromFields(record) ?? { status: 'legacy' };
+  }
+  return { status: 'unavailable' };
+}
+
+export function sanitizeSighting(value: unknown): SightingRecord | null {
+  if (!value || typeof value !== 'object') return null;
+  const raw = value as Record<string, unknown>;
+  if (typeof raw.id !== 'string' || raw.id.length === 0) return null;
+
+  const latitude = raw.latitude;
+  const longitude = raw.longitude;
+  const notes = typeof raw.notes === 'string' ? raw.notes.trim() : '';
+  const storedPhoto =
+    typeof raw.photoFile === 'string' ? raw.photoFile : typeof raw.photoUri === 'string' ? raw.photoUri : undefined;
+  const photoFile = journalPhotoFileName(storedPhoto);
+  const coordinates =
+    isUsableCoordinate(latitude, longitude) && typeof longitude === 'number'
+      ? { latitude, longitude }
+      : {};
+
+  let recognition = sanitizeRecognition(raw.recognition);
+  if (recognition.status === 'unavailable' || recognition.status === 'legacy') {
+    const fromParent = legacyFromFields(raw);
+    if (recognition.status === 'legacy') {
+      recognition = recognition.speciesId || recognition.speciesNamePl || recognition.speciesNameLatin || recognition.confidence !== undefined
+        ? recognition
+        : fromParent ?? recognition;
+    } else if (fromParent) {
+      recognition = fromParent;
+    }
+  }
+
+  return {
+    id: raw.id,
+    timestamp: typeof raw.timestamp === 'number' && Number.isFinite(raw.timestamp) ? raw.timestamp : 0,
+    recognition,
+    ...(photoFile ? { photoFile } : {}),
+    ...coordinates,
+    ...(notes ? { notes } : {}),
+  };
+}
+
 class StorageService {
-  /**
-   * Pobiera wszystkie zapisane znaleziska z pamięci lokalnej
-   */
-  public async getSightings(): Promise<SightingRecord[]> {
+  private tail: Promise<unknown> = Promise.resolve();
+
+  private enqueue<T>(task: () => Promise<T>): Promise<T> {
+    const run = this.tail.then(task, task);
+    this.tail = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    return run;
+  }
+
+  private async backupRawJournal(raw: string): Promise<void> {
     try {
-      const data = await AsyncStorage.getItem(SIGHTINGS_KEY);
-      if (!data) return [];
-      return JSON.parse(data) as SightingRecord[];
+      await AsyncStorage.setItem(SIGHTINGS_BACKUP_KEY, raw);
+    } catch (error) {
+      console.error('Błąd kopii zapasowej dziennika:', error);
+    }
+  }
+
+  private async readSightings(): Promise<SightingRecord[]> {
+    let data: string | null;
+    try {
+      data = await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY);
     } catch (error) {
       console.error('Błąd podczas odczytu dziennika znalezisk:', error);
-      return [];
+      throw new JournalReadError('Nie udało się odczytać dziennika');
     }
-  }
+    if (!data) return [];
 
-  /**
-   * Zapisuje nowe znalezisko grzyba w dzienniku
-   */
-  public async saveSighting(record: Omit<SightingRecord, 'id'>): Promise<SightingRecord> {
+    let parsed: unknown;
     try {
-      const existing = await this.getSightings();
-      const newRecord: SightingRecord = {
-        ...record,
-        id: `sighting_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
-      };
-
-      const updated = [newRecord, ...existing];
-      await AsyncStorage.setItem(SIGHTINGS_KEY, JSON.stringify(updated));
-      return newRecord;
+      parsed = JSON.parse(data);
     } catch (error) {
-      console.error('Błąd podczas zapisu znaleziska:', error);
-      throw error;
+      console.error('Błąd podczas odczytu dziennika znalezisk:', error);
+      await this.backupRawJournal(data);
+      throw new JournalReadError('Dziennik jest uszkodzony i nie został nadpisany');
     }
+    if (!Array.isArray(parsed)) {
+      await this.backupRawJournal(data);
+      throw new JournalReadError('Dziennik ma nieprawidłowy kształt i nie został nadpisany');
+    }
+    return parsed.flatMap((item) => {
+      const sighting = sanitizeSighting(item);
+      return sighting ? [sighting] : [];
+    });
   }
 
-  /**
-   * Usuwa wpis z dziennika
-   */
-  public async deleteSighting(id: string): Promise<void> {
-    try {
-      const existing = await this.getSightings();
+  public getSightings(): Promise<SightingRecord[]> {
+    return this.enqueue(() => this.readSightings());
+  }
+
+  public saveSighting(record: SightingRecord): Promise<SightingRecord> {
+    return this.enqueue(async () => {
+      const sighting = sanitizeSighting(record);
+      if (!sighting) {
+        throw new Error('Nie można zapisać pustego wpisu dziennika');
+      }
+      const existing = await this.readSightings();
+      const updated = [sighting, ...existing.filter((item) => item.id !== sighting.id)];
+      await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, JSON.stringify(updated));
+      return sighting;
+    });
+  }
+
+  public updateSightingNotes(id: string, notes: string): Promise<SightingRecord | null> {
+    return this.enqueue(async () => {
+      const existing = await this.readSightings();
+      const index = existing.findIndex((item) => item.id === id);
+      if (index < 0) return null;
+
+      const trimmed = notes.trim();
+      const next: SightingRecord = { ...existing[index] };
+      if (trimmed) next.notes = trimmed;
+      else delete next.notes;
+
+      const updated = [...existing];
+      updated[index] = next;
+      await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, JSON.stringify(updated));
+      return next;
+    });
+  }
+
+  public deleteSighting(id: string): Promise<void> {
+    return this.enqueue(async () => {
+      const existing = await this.readSightings();
+      const target = existing.find((item) => item.id === id);
       const updated = existing.filter((item) => item.id !== id);
-      await AsyncStorage.setItem(SIGHTINGS_KEY, JSON.stringify(updated));
-    } catch (error) {
-      console.error('Błąd podczas usuwania znaleziska:', error);
-      throw error;
-    }
+      await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, JSON.stringify(updated));
+      if (target?.photoFile) {
+        try {
+          await deleteManagedJournalPhoto(target.photoFile);
+        } catch (error) {
+          console.error('Błąd podczas usuwania zdjęcia znaleziska:', error);
+        }
+      }
+    });
   }
 
-  /**
-   * Sprawdza czy użytkownik zaakceptował regulamin bezpieczeństwa
-   */
   public async hasAcceptedDisclaimer(): Promise<boolean> {
     try {
       const val = await AsyncStorage.getItem(DISCLAIMER_KEY);
@@ -65,9 +243,6 @@ class StorageService {
     }
   }
 
-  /**
-   * Zapisuje akceptację ostrzeżenia o bezpieczeństwie
-   */
   public async setAcceptedDisclaimer(accepted: boolean): Promise<void> {
     try {
       await AsyncStorage.setItem(DISCLAIMER_KEY, accepted ? 'true' : 'false');

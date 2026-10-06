@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
+  Alert,
   Modal,
   View,
   Text,
@@ -7,11 +8,14 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MUSHROOMS_DATABASE } from '../data/mushrooms';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { ClassificationResult } from '../services/classifierService';
+import { createJournalEntryFromScan, type SavedJournalEntry } from '../services/journalEntry';
+import { isDisplayableCaptureUri } from '../services/journalPhotos';
 import { formatConfidencePercent } from '../services/recognitionDecision';
 
 interface Props {
@@ -22,19 +26,72 @@ interface Props {
   onSavedToJournal?: () => void;
 }
 
-function isLocalCaptureUri(uri: string): boolean {
-  return /^(file:|content:|data:|blob:|ph:|assets-library:)/.test(uri);
+function savedMessage(outcome: SavedJournalEntry, t: (key: string) => string): string {
+  const location =
+    outcome.location.state === 'recorded'
+      ? t('journal.savedWithLocation')
+      : outcome.location.state === 'unavailable'
+        ? t('journal.savedWithoutGps')
+        : t('journal.savedWithoutLocationChoice');
+  if (outcome.photo.state === 'missing') {
+    return `${location} ${t('journal.photoNotKept')}`;
+  }
+  return location;
 }
 
-export const ResultModal: React.FC<Props> = ({ visible, result, onClose, onOpenAtlasSpecies }) => {
+export const ResultModal: React.FC<Props> = ({
+  visible,
+  result,
+  onClose,
+  onOpenAtlasSpecies,
+  onSavedToJournal,
+}) => {
   const { t } = useLanguage();
+  const [saving, setSaving] = useState(false);
+  const saveLock = useRef(false);
+  const persistStarted = useRef(false);
 
   if (!result) {
     return null;
   }
 
   const photoUri = result.processedImageUri;
-  const showPhoto = !!photoUri && isLocalCaptureUri(photoUri);
+  const showPhoto = !!photoUri && isDisplayableCaptureUri(photoUri);
+
+  const persist = async (includeLocation: boolean) => {
+    if (persistStarted.current) return;
+    persistStarted.current = true;
+    setSaving(true);
+    try {
+      const outcome = await createJournalEntryFromScan(result, includeLocation);
+      Alert.alert(t('journal.savedTitle'), savedMessage(outcome, t));
+      onSavedToJournal?.();
+      onClose();
+    } catch (error) {
+      console.error('Błąd zapisu znaleziska:', error);
+      Alert.alert(t('journal.savedTitle'), t('journal.saveFailed'));
+    } finally {
+      persistStarted.current = false;
+      saveLock.current = false;
+      setSaving(false);
+    }
+  };
+
+  const askToSave = () => {
+    if (saveLock.current) return;
+    saveLock.current = true;
+    Alert.alert(t('journal.locationTitle'), t('journal.locationExplain'), [
+      {
+        text: t('journal.cancel'),
+        style: 'cancel',
+        onPress: () => {
+          saveLock.current = false;
+        },
+      },
+      { text: t('journal.withoutLocation'), onPress: () => persist(false) },
+      { text: t('journal.withLocation'), onPress: () => persist(true) },
+    ]);
+  };
   const title =
     result.status === 'unavailable'
       ? t('scanner.recognitionUnavailableTitle')
@@ -142,6 +199,19 @@ export const ResultModal: React.FC<Props> = ({ visible, result, onClose, onOpenA
                 </View>
               </View>
             ) : null}
+
+            <TouchableOpacity
+              style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
+              onPress={askToSave}
+              disabled={saving}
+              testID="save-to-journal"
+            >
+              {saving ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.saveBtnText}>{t('journal.addToJournal')}</Text>
+              )}
+            </TouchableOpacity>
           </ScrollView>
         </View>
       </SafeAreaView>
@@ -284,5 +354,20 @@ const styles = StyleSheet.create({
     color: '#14532D',
     fontWeight: '700',
     fontSize: 13,
+  },
+  saveBtn: {
+    backgroundColor: '#1B3B22',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  saveBtnDisabled: {
+    opacity: 0.7,
+  },
+  saveBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 15,
   },
 });

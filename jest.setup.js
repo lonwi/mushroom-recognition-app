@@ -24,8 +24,18 @@ jest.mock('expo-image-picker', () => ({
 
 // Mock expo-location
 jest.mock('expo-location', () => ({
+  Accuracy: { Balanced: 3, High: 4, Low: 1 },
   requestForegroundPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
   getCurrentPositionAsync: jest.fn().mockResolvedValue({
     coords: { latitude: 52.2297, longitude: 21.0122 },
   }),
+}));
+
+// The preset mock omits documentDirectory, so journal photos would look unsaved.
+jest.mock('expo-file-system/legacy', () => ({
+  documentDirectory: 'file:///mock/document/',
+  cacheDirectory: 'file:///mock/cache/',
+  copyAsync: jest.fn(() => Promise.resolve()),
+  deleteAsync: jest.fn(() => Promise.resolve()),
+  makeDirectoryAsync: jest.fn(() => Promise.resolve()),
 }));
