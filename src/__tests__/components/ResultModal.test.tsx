@@ -248,7 +248,7 @@ describe('ResultModal recognition outcomes', () => {
       onPress?: () => Promise<void>;
     }>;
     expect(buttons.map((button) => button.text).join(' ')).toMatch(/lokalizacji/);
-    expect((Alert.alert as jest.Mock).mock.calls[0][1]).toMatch(/nie wysyła lokalizacji/i);
+    expect((Alert.alert as jest.Mock).mock.calls[0][1]).toMatch(/współrzędne zostają w dzienniku/i);
 
     const withoutLocation = buttons.find((button) => button.text === 'Bez lokalizacji');
     await act(async () => {
@@ -258,7 +258,8 @@ describe('ResultModal recognition outcomes', () => {
     const saved = await storageService.getSightings();
     expect(saved).toHaveLength(1);
     expect(saved[0].recognition).toEqual({ status: 'rejected', reason: 'unclear' });
-    expect(saved[0].photoUri).toMatch(/journal-photos/);
+    expect(saved[0].photoFile).toMatch(/^[A-Za-z0-9_-]+\.jpg$/);
+    expect(saved[0].photoFile).not.toContain('/');
     expect(saved[0].latitude).toBeUndefined();
     expect(JSON.stringify(saved[0])).not.toMatch(/Borowik|speciesId|confidence/);
     expect(onSavedToJournal).toHaveBeenCalled();
@@ -303,5 +304,29 @@ describe('ResultModal recognition outcomes', () => {
     const messages = (Alert.alert as jest.Mock).mock.calls.map((call) => String(call[1]));
     expect(messages.join(' ')).toMatch(/bez współrzędnych/);
     (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
+  });
+
+  it('locks the first save tap so a second tap does not open another prompt', async () => {
+    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const { getByTestId } = await render(
+      <LanguageProvider>
+        <ResultModal
+          visible
+          result={{
+            status: 'rejected',
+            reason: 'unclear',
+            processedImageUri: 'file://camera/blur.jpg',
+            inferenceTimeMs: 11,
+          }}
+          onClose={() => {}}
+        />
+      </LanguageProvider>,
+    );
+
+    (Alert.alert as jest.Mock).mockClear();
+    await fireEvent.press(getByTestId('save-to-journal'));
+    await fireEvent.press(getByTestId('save-to-journal'));
+
+    expect(Alert.alert).toHaveBeenCalledTimes(1);
   });
 });

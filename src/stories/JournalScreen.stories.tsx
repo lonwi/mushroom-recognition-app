@@ -14,7 +14,7 @@ const entries: SightingRecord[] = [
   {
     id: 'sighting_spot',
     timestamp: 1_720_000_100_000,
-    photoUri: 'file:///mock/document/journal-photos/sighting_spot.jpg',
+    photoFile: 'sighting_spot.jpg',
     latitude: 49.12345,
     longitude: 20.54321,
     notes: 'stary dukt',

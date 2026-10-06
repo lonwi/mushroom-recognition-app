@@ -11,7 +11,7 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Aplikacja potrzebuje dostępu do aparatu, aby rozpoznawać gatunki grzybów w lesie.",
         "NSPhotoLibraryUsageDescription": "Aplikacja potrzebuje dostępu do zdjęć, aby analizować wcześniej wykonane fotografie grzybów.",
-        "NSLocationWhenInUseUsageDescription": "Grzybobranie AI zapisuje współrzędne miejsca znalezienia w dzienniku na tym urządzeniu, żebyś mógł wrócić do tej miejscówki. Lokalizacja nie opuszcza telefonu."
+        "NSLocationWhenInUseUsageDescription": "Grzybobranie AI może zapisać miejsce znalezienia w dzienniku na tym urządzeniu, żeby łatwiej było tu wrócić."
       }
     },
     "android": {
@@ -28,6 +28,7 @@
       ]
     },
     "plugins": [
+      "./plugins/withAndroidGeoQueries.js",
       [
         "expo-camera",
         {
@@ -37,7 +38,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Grzybobranie AI zapisuje współrzędne miejsca znalezienia w dzienniku na tym urządzeniu, żebyś mógł wrócić do tej miejscówki. Lokalizacja nie opuszcza telefonu.",
+          "locationWhenInUsePermission": "Grzybobranie AI może zapisać miejsce znalezienia w dzienniku na tym urządzeniu, żeby łatwiej było tu wrócić.",
           "locationAlwaysAndWhenInUsePermission": false,
           "locationAlwaysPermission": false,
           "isIosBackgroundLocationEnabled": false,

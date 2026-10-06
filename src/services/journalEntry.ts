@@ -1,6 +1,6 @@
 import type { ClassificationResult } from './classifierService';
 import { readFindLocation, type FindCoordinates } from './journalLocation';
-import { isLocalCaptureUri, persistJournalPhoto } from './journalPhotos';
+import { deleteManagedJournalPhoto, isLocalCaptureUri, persistJournalPhoto } from './journalPhotos';
 import { storageService } from './storageService';
 import type { JournalCandidate, JournalRecognition, SightingRecord } from '../types/mushroom';
 
@@ -35,7 +35,7 @@ export type JournalLocationOutcome =
   | { state: 'skipped' }
   | { state: 'unavailable' };
 
-export type JournalPhotoOutcome = { state: 'stored'; uri: string } | { state: 'missing' };
+export type JournalPhotoOutcome = { state: 'stored'; fileName: string } | { state: 'missing' };
 
 export interface SavedJournalEntry {
   record: SightingRecord;
@@ -51,9 +51,19 @@ export interface CreateJournalEntryDependencies {
   save?: (record: SightingRecord) => Promise<SightingRecord>;
 }
 
+async function discardCopiedPhoto(fileName: string | undefined): Promise<void> {
+  if (!fileName) return;
+  try {
+    await deleteManagedJournalPhoto(fileName);
+  } catch (error) {
+    console.error('Nie udało się usunąć zdjęcia po nieudanym zapisie:', error);
+  }
+}
+
 /**
  * Stores the scan that actually happened. Unclear and non-mushroom results
  * stay without a species name. Candidate confidence is copied, not raised.
+ * The timestamp is taken once, here, and is not refreshed on later reads.
  */
 export async function createJournalEntryFromScan(
   result: ClassificationResult,
@@ -68,6 +78,7 @@ export async function createJournalEntryFromScan(
 
   const id = createId();
   const recognition = recognitionFromClassification(result);
+  const timestamp = now();
 
   let location: JournalLocationOutcome = { state: 'skipped' };
   if (includeLocation) {
@@ -78,10 +89,12 @@ export async function createJournalEntryFromScan(
   }
 
   let photo: JournalPhotoOutcome = { state: 'missing' };
+  let storedFile: string | undefined;
   const sourceUri = result.processedImageUri;
   if (sourceUri && isLocalCaptureUri(sourceUri)) {
     try {
-      photo = { state: 'stored', uri: await persistPhoto(sourceUri, id) };
+      storedFile = await persistPhoto(sourceUri, id);
+      photo = { state: 'stored', fileName: storedFile };
     } catch (error) {
       console.error('Nie udało się skopiować zdjęcia do pamięci dziennika:', error);
     }
@@ -89,14 +102,23 @@ export async function createJournalEntryFromScan(
 
   const record: SightingRecord = {
     id,
-    timestamp: now(),
+    timestamp,
     recognition,
-    ...(photo.state === 'stored' ? { photoUri: photo.uri } : {}),
+    ...(storedFile ? { photoFile: storedFile } : {}),
     ...(location.state === 'recorded'
       ? { latitude: location.latitude, longitude: location.longitude }
       : {}),
   };
 
-  const saved = await save(record);
-  return { record: saved, location, photo };
+  try {
+    const saved = await save(record);
+    if (storedFile && saved.photoFile !== storedFile) {
+      await discardCopiedPhoto(storedFile);
+      photo = { state: 'missing' };
+    }
+    return { record: saved, location, photo };
+  } catch (error) {
+    await discardCopiedPhoto(storedFile);
+    throw error;
+  }
 }

@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isUsableCoordinate } from './journalLocation';
-import { deleteManagedJournalPhoto, isManagedJournalPhoto } from './journalPhotos';
+import { deleteManagedJournalPhoto, journalPhotoFileName } from './journalPhotos';
 import {
   JournalCandidate,
   JournalRecognition,
@@ -8,7 +8,40 @@ import {
 } from '../types/mushroom';
 
 export const SIGHTINGS_STORAGE_KEY = '@grzybobranie_ai:sightings_v1';
+export const SIGHTINGS_BACKUP_KEY = '@grzybobranie_ai:sightings_v1_backup';
 const DISCLAIMER_KEY = '@grzybobranie_ai:disclaimer_accepted_v1';
+
+export class JournalReadError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'JournalReadError';
+  }
+}
+
+function textField(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
+}
+
+function finiteNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function legacyFromFields(source: Record<string, unknown>): JournalRecognition | null {
+  const speciesId = textField(source.speciesId);
+  const speciesNamePl = textField(source.speciesNamePl);
+  const speciesNameLatin = textField(source.speciesNameLatin);
+  const confidence = finiteNumber(source.confidence);
+  if (!speciesId && !speciesNamePl && !speciesNameLatin && confidence === undefined) {
+    return null;
+  }
+  return {
+    status: 'legacy',
+    ...(speciesId ? { speciesId } : {}),
+    ...(speciesNamePl ? { speciesNamePl } : {}),
+    ...(speciesNameLatin ? { speciesNameLatin } : {}),
+    ...(confidence !== undefined ? { confidence } : {}),
+  };
+}
 
 function sanitizeCandidate(value: unknown): JournalCandidate | null {
   if (!value || typeof value !== 'object') return null;
@@ -58,6 +91,9 @@ export function sanitizeRecognition(value: unknown): JournalRecognition {
       warningReasons,
     };
   }
+  if (record.status === 'legacy') {
+    return legacyFromFields(record) ?? { status: 'legacy' };
+  }
   return { status: 'unavailable' };
 }
 
@@ -69,83 +105,133 @@ export function sanitizeSighting(value: unknown): SightingRecord | null {
   const latitude = raw.latitude;
   const longitude = raw.longitude;
   const notes = typeof raw.notes === 'string' ? raw.notes.trim() : '';
-  const photoUri = typeof raw.photoUri === 'string' ? raw.photoUri : undefined;
+  const storedPhoto =
+    typeof raw.photoFile === 'string' ? raw.photoFile : typeof raw.photoUri === 'string' ? raw.photoUri : undefined;
+  const photoFile = journalPhotoFileName(storedPhoto);
   const coordinates =
     isUsableCoordinate(latitude, longitude) && typeof longitude === 'number'
       ? { latitude, longitude }
       : {};
 
+  let recognition = sanitizeRecognition(raw.recognition);
+  if (recognition.status === 'unavailable' || recognition.status === 'legacy') {
+    const fromParent = legacyFromFields(raw);
+    if (recognition.status === 'legacy') {
+      recognition = recognition.speciesId || recognition.speciesNamePl || recognition.speciesNameLatin || recognition.confidence !== undefined
+        ? recognition
+        : fromParent ?? recognition;
+    } else if (fromParent) {
+      recognition = fromParent;
+    }
+  }
+
   return {
     id: raw.id,
-    timestamp: typeof raw.timestamp === 'number' && Number.isFinite(raw.timestamp) ? raw.timestamp : Date.now(),
-    recognition: sanitizeRecognition(raw.recognition),
-    ...(isManagedJournalPhoto(photoUri) ? { photoUri } : {}),
+    timestamp: typeof raw.timestamp === 'number' && Number.isFinite(raw.timestamp) ? raw.timestamp : 0,
+    recognition,
+    ...(photoFile ? { photoFile } : {}),
     ...coordinates,
     ...(notes ? { notes } : {}),
   };
 }
 
 class StorageService {
-  public async getSightings(): Promise<SightingRecord[]> {
+  private tail: Promise<unknown> = Promise.resolve();
+
+  private enqueue<T>(task: () => Promise<T>): Promise<T> {
+    const run = this.tail.then(task, task);
+    this.tail = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    return run;
+  }
+
+  private async backupRawJournal(raw: string): Promise<void> {
     try {
-      const data = await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY);
-      if (!data) return [];
-      const parsed = JSON.parse(data);
-      if (!Array.isArray(parsed)) return [];
-      return parsed.flatMap((item) => {
-        const sighting = sanitizeSighting(item);
-        return sighting ? [sighting] : [];
-      });
+      await AsyncStorage.setItem(SIGHTINGS_BACKUP_KEY, raw);
     } catch (error) {
-      console.error('Błąd podczas odczytu dziennika znalezisk:', error);
-      return [];
+      console.error('Błąd kopii zapasowej dziennika:', error);
     }
   }
 
-  public async saveSighting(record: SightingRecord): Promise<SightingRecord> {
-    const sighting = sanitizeSighting(record);
-    if (!sighting) {
-      throw new Error('Nie można zapisać pustego wpisu dziennika');
-    }
+  private async readSightings(): Promise<SightingRecord[]> {
+    let data: string | null;
     try {
-      const existing = await this.getSightings();
+      data = await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY);
+    } catch (error) {
+      console.error('Błąd podczas odczytu dziennika znalezisk:', error);
+      throw new JournalReadError('Nie udało się odczytać dziennika');
+    }
+    if (!data) return [];
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(data);
+    } catch (error) {
+      console.error('Błąd podczas odczytu dziennika znalezisk:', error);
+      await this.backupRawJournal(data);
+      throw new JournalReadError('Dziennik jest uszkodzony i nie został nadpisany');
+    }
+    if (!Array.isArray(parsed)) {
+      await this.backupRawJournal(data);
+      throw new JournalReadError('Dziennik ma nieprawidłowy kształt i nie został nadpisany');
+    }
+    return parsed.flatMap((item) => {
+      const sighting = sanitizeSighting(item);
+      return sighting ? [sighting] : [];
+    });
+  }
+
+  public getSightings(): Promise<SightingRecord[]> {
+    return this.enqueue(() => this.readSightings());
+  }
+
+  public saveSighting(record: SightingRecord): Promise<SightingRecord> {
+    return this.enqueue(async () => {
+      const sighting = sanitizeSighting(record);
+      if (!sighting) {
+        throw new Error('Nie można zapisać pustego wpisu dziennika');
+      }
+      const existing = await this.readSightings();
       const updated = [sighting, ...existing.filter((item) => item.id !== sighting.id)];
       await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, JSON.stringify(updated));
       return sighting;
-    } catch (error) {
-      console.error('Błąd podczas zapisu znaleziska:', error);
-      throw error;
-    }
+    });
   }
 
-  public async updateSightingNotes(id: string, notes: string): Promise<SightingRecord | null> {
-    const existing = await this.getSightings();
-    const index = existing.findIndex((item) => item.id === id);
-    if (index < 0) return null;
+  public updateSightingNotes(id: string, notes: string): Promise<SightingRecord | null> {
+    return this.enqueue(async () => {
+      const existing = await this.readSightings();
+      const index = existing.findIndex((item) => item.id === id);
+      if (index < 0) return null;
 
-    const trimmed = notes.trim();
-    const next: SightingRecord = { ...existing[index] };
-    if (trimmed) next.notes = trimmed;
-    else delete next.notes;
+      const trimmed = notes.trim();
+      const next: SightingRecord = { ...existing[index] };
+      if (trimmed) next.notes = trimmed;
+      else delete next.notes;
 
-    const updated = [...existing];
-    updated[index] = next;
-    await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, JSON.stringify(updated));
-    return next;
+      const updated = [...existing];
+      updated[index] = next;
+      await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, JSON.stringify(updated));
+      return next;
+    });
   }
 
-  public async deleteSighting(id: string): Promise<void> {
-    const existing = await this.getSightings();
-    const target = existing.find((item) => item.id === id);
-    const updated = existing.filter((item) => item.id !== id);
-    await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, JSON.stringify(updated));
-    if (target?.photoUri) {
-      try {
-        await deleteManagedJournalPhoto(target.photoUri);
-      } catch (error) {
-        console.error('Błąd podczas usuwania zdjęcia znaleziska:', error);
+  public deleteSighting(id: string): Promise<void> {
+    return this.enqueue(async () => {
+      const existing = await this.readSightings();
+      const target = existing.find((item) => item.id === id);
+      const updated = existing.filter((item) => item.id !== id);
+      await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, JSON.stringify(updated));
+      if (target?.photoFile) {
+        try {
+          await deleteManagedJournalPhoto(target.photoFile);
+        } catch (error) {
+          console.error('Błąd podczas usuwania zdjęcia znaleziska:', error);
+        }
       }
-    }
+    });
   }
 
   public async hasAcceptedDisclaimer(): Promise<boolean> {

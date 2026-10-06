@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Alert,
   Modal,
@@ -48,6 +48,8 @@ export const ResultModal: React.FC<Props> = ({
 }) => {
   const { t } = useLanguage();
   const [saving, setSaving] = useState(false);
+  const saveLock = useRef(false);
+  const persistStarted = useRef(false);
 
   if (!result) {
     return null;
@@ -57,6 +59,8 @@ export const ResultModal: React.FC<Props> = ({
   const showPhoto = !!photoUri && isDisplayableCaptureUri(photoUri);
 
   const persist = async (includeLocation: boolean) => {
+    if (persistStarted.current) return;
+    persistStarted.current = true;
     setSaving(true);
     try {
       const outcome = await createJournalEntryFromScan(result, includeLocation);
@@ -67,14 +71,23 @@ export const ResultModal: React.FC<Props> = ({
       console.error('Błąd zapisu znaleziska:', error);
       Alert.alert(t('journal.savedTitle'), t('journal.saveFailed'));
     } finally {
+      persistStarted.current = false;
+      saveLock.current = false;
       setSaving(false);
     }
   };
 
   const askToSave = () => {
-    if (saving) return;
+    if (saveLock.current) return;
+    saveLock.current = true;
     Alert.alert(t('journal.locationTitle'), t('journal.locationExplain'), [
-      { text: t('journal.cancel'), style: 'cancel' },
+      {
+        text: t('journal.cancel'),
+        style: 'cancel',
+        onPress: () => {
+          saveLock.current = false;
+        },
+      },
       { text: t('journal.withoutLocation'), onPress: () => persist(false) },
       { text: t('journal.withLocation'), onPress: () => persist(true) },
     ]);

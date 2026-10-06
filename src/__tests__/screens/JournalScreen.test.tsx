@@ -17,7 +17,7 @@ const unclear: SightingRecord = {
 const located: SightingRecord = {
   id: 'sighting_spot',
   timestamp: 1_720_000_100_000,
-  photoUri: 'file:///mock/document/journal-photos/sighting_spot.jpg',
+  photoFile: 'sighting_spot.jpg',
   latitude: 49.12345,
   longitude: 20.54321,
   notes: 'stary dukt',
@@ -49,7 +49,6 @@ describe('JournalScreen', () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-    jest.spyOn(Linking, 'canOpenURL').mockResolvedValue(true);
     jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
     (FileSystem.deleteAsync as jest.Mock).mockReset();
     (FileSystem.deleteAsync as jest.Mock).mockResolvedValue(undefined);
@@ -83,13 +82,16 @@ describe('JournalScreen', () => {
     expect(screen.queryByText('JADALNY')).toBeNull();
     expect(screen.getByTestId('journal-notes-sighting_spot')).toHaveTextContent(/stary dukt/);
     expect(screen.getByTestId('journal-photo-sighting_spot').props.source).toEqual({
-      uri: located.photoUri,
+      uri: 'file:///mock/document/journal-photos/sighting_spot.jpg',
     });
+    expect(screen.getByTestId('journal-coordinates-sighting_spot')).toHaveTextContent(
+      /49\.123450, 20\.543210/,
+    );
 
     await fireEvent.press(screen.getByTestId('journal-open-map-sighting_spot'));
     await waitFor(() => {
       expect(Linking.openURL).toHaveBeenCalledWith(
-        'http://maps.apple.com/?ll=49.12345,20.54321&q=49.12345,20.54321',
+        'https://maps.apple.com/?ll=49.12345,20.54321&q=49.12345,20.54321',
       );
     });
   });
@@ -110,8 +112,80 @@ describe('JournalScreen', () => {
     await waitFor(() => {
       expect(screen.queryByTestId('journal-entry-sighting_spot')).toBeNull();
     });
-    expect(FileSystem.deleteAsync).toHaveBeenCalledWith(located.photoUri, { idempotent: true });
+    expect(FileSystem.deleteAsync).toHaveBeenCalledWith(
+      'file:///mock/document/journal-photos/sighting_spot.jpg',
+      { idempotent: true },
+    );
     expect(await storageService.getSightings()).toEqual([]);
+  });
+
+  it('labels an older entry that has no recognition result', async () => {
+    await storageService.saveSighting({
+      id: 'sighting_old',
+      timestamp: 1_720_000_200_000,
+      recognition: {
+        status: 'legacy',
+        speciesNamePl: 'Borowik szlachetny',
+        speciesNameLatin: 'Boletus edulis',
+        confidence: 95,
+      },
+    });
+    const screen = await renderJournal();
+
+    expect(await screen.findByTestId('journal-legacy-sighting_old')).toHaveTextContent(
+      /starszej wersji aplikacji/,
+    );
+    expect(screen.getByTestId('journal-title-sighting_old')).toHaveTextContent('Starszy wpis');
+    expect(screen.getByTestId('journal-legacy-name-sighting_old')).toHaveTextContent(
+      /Zachowana nazwa: Borowik szlachetny/,
+    );
+    expect(screen.getByTestId('journal-legacy-confidence-sighting_old')).toHaveTextContent(/95/);
+    expect(screen.getByTestId('journal-legacy-confidence-sighting_old')).not.toHaveTextContent(/%/);
+    expect(screen.queryByText('JADALNY')).toBeNull();
+    expect(screen.queryByText(/Kandydaci ze skanu/)).toBeNull();
+  });
+
+  it('tells the user when deleting an entry fails and leaves the card in place', async () => {
+    await storageService.saveSighting(located);
+    const screen = await renderJournal();
+    await screen.findByTestId('journal-delete-sighting_spot');
+    jest.spyOn(storageService, 'deleteSighting').mockRejectedValue(new Error('locked'));
+
+    await fireEvent.press(screen.getByTestId('journal-delete-sighting_spot'));
+    const buttons = (Alert.alert as jest.Mock).mock.calls.at(-1)?.[2] as Array<{
+      onPress?: () => Promise<void>;
+    }>;
+    await act(async () => {
+      await buttons?.[1].onPress?.();
+    });
+
+    expect((Alert.alert as jest.Mock).mock.calls.map((call) => String(call[0])).join(' ')).toMatch(
+      /Nie udało się usunąć wpisu/,
+    );
+    expect(screen.getByTestId('journal-entry-sighting_spot')).toBeTruthy();
+    expect(await storageService.getSightings()).toHaveLength(1);
+  });
+
+  it('tells the user when a note cannot be saved and keeps the editor open', async () => {
+    await storageService.saveSighting(located);
+    const screen = await renderJournal();
+    await screen.findByTestId('journal-edit-notes-sighting_spot');
+    jest.spyOn(storageService, 'updateSightingNotes').mockRejectedValue(new Error('locked'));
+
+    await fireEvent.press(screen.getByTestId('journal-edit-notes-sighting_spot'));
+    await fireEvent.changeText(screen.getByTestId('journal-notes-input'), 'nowa notatka');
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('journal-notes-save'));
+    });
+
+    await waitFor(() => {
+      expect((Alert.alert as jest.Mock).mock.calls.map((call) => String(call[0])).join(' ')).toMatch(
+        /Nie udało się zapisać notatki/,
+      );
+    });
+    expect(screen.getByTestId('journal-notes-input').props.value).toBe('nowa notatka');
+    const stored = await storageService.getSightings();
+    expect(stored[0].notes).toBe('stary dukt');
   });
 
   it('keeps an edited note after the journal is opened again', async () => {

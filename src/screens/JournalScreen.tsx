@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { storageService } from '../services/storageService';
+import { resolveJournalPhotoUri } from '../services/journalPhotos';
 import { openSpotInMaps } from '../services/mapsLink';
 import { formatConfidencePercent } from '../services/recognitionDecision';
 import { SightingRecord } from '../types/mushroom';
@@ -37,9 +38,15 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
 
   const loadSightings = async () => {
     setLoading(true);
-    const data = await storageService.getSightings();
-    setSightings(data);
-    setLoading(false);
+    try {
+      const data = await storageService.getSightings();
+      setSightings(data);
+    } catch (error) {
+      console.error('Błąd podczas odczytu dziennika znalezisk:', error);
+      Alert.alert(t('journal.readFailedTitle'), t('journal.readFailedBody'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -53,8 +60,13 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
         text: t('journal.delete'),
         style: 'destructive',
         onPress: async () => {
-          await storageService.deleteSighting(item.id);
-          loadSightings();
+          try {
+            await storageService.deleteSighting(item.id);
+            await loadSightings();
+          } catch (error) {
+            console.error('Błąd podczas usuwania znaleziska:', error);
+            Alert.alert(t('journal.deleteFailedTitle'), t('journal.deleteFailedBody'));
+          }
         },
       },
     ]);
@@ -67,10 +79,15 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
 
   const saveNotes = async () => {
     if (!editing) return;
-    await storageService.updateSightingNotes(editing.id, draftNotes);
-    setEditing(null);
-    setDraftNotes('');
-    await loadSightings();
+    try {
+      await storageService.updateSightingNotes(editing.id, draftNotes);
+      setEditing(null);
+      setDraftNotes('');
+      await loadSightings();
+    } catch (error) {
+      console.error('Błąd podczas zapisu notatki:', error);
+      Alert.alert(t('journal.notesFailedTitle'), t('journal.notesFailedBody'));
+    }
   };
 
   const openMap = async (latitude: number, longitude: number) => {
@@ -84,6 +101,29 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
 
   const renderRecognition = (item: SightingRecord) => {
     const recognition = item.recognition;
+    if (recognition.status === 'legacy') {
+      return (
+        <View>
+          <Text style={styles.legacyBanner} testID={`journal-legacy-${item.id}`}>
+            {t('journal.legacyBanner')}
+          </Text>
+          <Text style={styles.speciesNamePl} testID={`journal-title-${item.id}`}>
+            {t('journal.legacyTitle')}
+          </Text>
+          {recognition.speciesNamePl ? (
+            <Text style={styles.honestBody} testID={`journal-legacy-name-${item.id}`}>
+              {t('journal.legacyStoredName')}: {recognition.speciesNamePl}
+              {recognition.speciesNameLatin ? ` (${recognition.speciesNameLatin})` : ''}
+            </Text>
+          ) : null}
+          {typeof recognition.confidence === 'number' ? (
+            <Text style={styles.honestBody} testID={`journal-legacy-confidence-${item.id}`}>
+              {t('journal.legacyStoredConfidence')}: {recognition.confidence}
+            </Text>
+          ) : null}
+        </View>
+      );
+    }
     if (recognition.status === 'rejected' && recognition.reason === 'unclear') {
       return (
         <View>
@@ -172,12 +212,13 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
       minute: '2-digit',
     });
     const located = hasGps(item);
+    const photoUri = resolveJournalPhotoUri(item.photoFile);
 
     return (
       <View key={item.id} style={styles.card} testID={`journal-entry-${item.id}`}>
         <View style={styles.cardMain}>
-          {item.photoUri ? (
-            <Image source={{ uri: item.photoUri }} style={styles.thumbnail} testID={`journal-photo-${item.id}`} />
+          {photoUri ? (
+            <Image source={{ uri: photoUri }} style={styles.thumbnail} testID={`journal-photo-${item.id}`} />
           ) : (
             <View style={styles.thumbPlaceholder}>
               <Text style={{ fontSize: 24 }}>🍄</Text>
@@ -191,7 +232,7 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
             {located ? (
               <View>
                 <Text style={styles.gpsText} testID={`journal-coordinates-${item.id}`}>
-                  📍 {t('journal.coordinates')}: {item.latitude.toFixed(5)}, {item.longitude.toFixed(5)}
+                  📍 {t('journal.coordinates')}: {item.latitude.toFixed(6)}, {item.longitude.toFixed(6)}
                 </Text>
                 <TouchableOpacity
                   style={styles.mapBtn}
@@ -354,6 +395,17 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     color: '#0F172A',
+  },
+  legacyBanner: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#7C2D12',
+    backgroundColor: '#FFEDD5',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginBottom: 6,
+    lineHeight: 17,
   },
   honestBody: {
     fontSize: 12,

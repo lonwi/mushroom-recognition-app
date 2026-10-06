@@ -1,7 +1,6 @@
 import { isUsableCoordinate } from './journalLocation';
 
 export interface MapsLinking {
-  canOpenURL(url: string): Promise<boolean>;
   openURL(url: string): Promise<unknown>;
 }
 
@@ -10,7 +9,7 @@ export function mapsUrlForCoordinates(latitude: number, longitude: number, platf
     throw new Error('coordinates are not usable');
   }
   if (platform === 'ios') {
-    return `http://maps.apple.com/?ll=${latitude},${longitude}&q=${latitude},${longitude}`;
+    return `https://maps.apple.com/?ll=${latitude},${longitude}&q=${latitude},${longitude}`;
   }
   if (platform === 'android') {
     return `geo:${latitude},${longitude}?q=${latitude},${longitude}`;
@@ -18,6 +17,11 @@ export function mapsUrlForCoordinates(latitude: number, longitude: number, platf
   return `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
 }
 
+/**
+ * Opens the spot without canOpenURL. Android 11+ reports geo: as unsupported
+ * unless the manifest declares a queries intent, so a failed open falls back
+ * to the https maps link instead.
+ */
 export async function openSpotInMaps(
   latitude: number,
   longitude: number,
@@ -25,15 +29,14 @@ export async function openSpotInMaps(
   linking: MapsLinking,
 ): Promise<void> {
   const primary = mapsUrlForCoordinates(latitude, longitude, platform);
-  const fallback = mapsUrlForCoordinates(latitude, longitude, 'web');
-  let url = primary;
-  if (primary !== fallback) {
+  if (platform === 'android') {
     try {
-      const supported = await linking.canOpenURL(primary);
-      if (!supported) url = fallback;
+      await linking.openURL(primary);
+      return;
     } catch {
-      url = fallback;
+      await linking.openURL(mapsUrlForCoordinates(latitude, longitude, 'web'));
+      return;
     }
   }
-  await linking.openURL(url);
+  await linking.openURL(primary);
 }

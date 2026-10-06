@@ -67,6 +67,7 @@ export interface JournalCandidate {
 /**
  * Honest scan outcome stored with a find.
  * A rejected or unavailable scan has no species name and no confidence.
+ * `legacy` keeps names saved by an older app version and is not a recognition result.
  */
 export type JournalRecognition =
   | { status: 'unavailable' }
@@ -76,12 +77,20 @@ export type JournalRecognition =
       top3: JournalCandidate[];
       expertVerificationRequired: boolean;
       warningReasons: Array<'dangerous_genus' | 'low_confidence'>;
+    }
+  | {
+      status: 'legacy';
+      speciesId?: string;
+      speciesNamePl?: string;
+      speciesNameLatin?: string;
+      confidence?: number;
     };
 
 export interface SightingRecord {
   id: string;
   timestamp: number;
-  photoUri?: string;
+  /** File name inside journal-photos. The absolute path is built from documentDirectory at runtime. */
+  photoFile?: string;
   latitude?: number;
   longitude?: number;
   notes?: string;

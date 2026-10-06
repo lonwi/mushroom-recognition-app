@@ -81,13 +81,11 @@ describe('journal entries from a scan', () => {
     expect(saved.record.recognition).toEqual({ status: 'rejected', reason: 'unclear' });
     expect(saved.location).toEqual({ state: 'recorded', latitude: 52.2297, longitude: 21.0122 });
     expect(saved.photo.state).toBe('stored');
-    expect(saved.record.photoUri).toBe(
-      `file:///mock/document/journal-photos/${saved.record.id}.jpg`,
-    );
-    expect(saved.record.photoUri).not.toBe('file://camera/blur.jpg');
+    expect(saved.record.photoFile).toBe(`${saved.record.id}.jpg`);
+    expect(saved.record.photoFile).not.toContain('/');
     expect(FileSystem.copyAsync).toHaveBeenCalledWith({
       from: 'file://camera/blur.jpg',
-      to: saved.record.photoUri,
+      to: `file:///mock/document/journal-photos/${saved.record.id}.jpg`,
     });
     expect(JSON.stringify(saved.record)).not.toMatch(/speciesId|confidence|Borowik|JADALNY/);
 
@@ -128,7 +126,7 @@ describe('journal entries from a scan', () => {
     expect(saved.location).toEqual({ state: 'unavailable' });
     expect(saved.record).not.toHaveProperty('latitude');
     expect(saved.record).not.toHaveProperty('longitude');
-    expect(saved.record.photoUri).toMatch(/journal-photos/);
+    expect(saved.record.photoFile).toMatch(/^[A-Za-z0-9_-]+\.jpg$/);
   });
 
   it('drops an unusable fix instead of storing it', async () => {
@@ -143,13 +141,13 @@ describe('journal entries from a scan', () => {
     expect(saved.record.longitude).toBeUndefined();
   });
 
-  it('keeps candidate confidence unchanged and still stores the photo when copying fails', async () => {
+  it('leaves the photo out when copying fails', async () => {
     (FileSystem.copyAsync as jest.Mock).mockRejectedValue(new Error('disk full'));
 
     const saved = await createJournalEntryFromScan(bolete, false);
 
     expect(saved.photo).toEqual({ state: 'missing' });
-    expect(saved.record.photoUri).toBeUndefined();
+    expect(saved.record.photoFile).toBeUndefined();
     expect(saved.record.recognition).toMatchObject({
       status: 'candidates',
       expertVerificationRequired: true,
@@ -174,27 +172,85 @@ describe('journal entries from a scan', () => {
     );
 
     expect(saved.record.recognition).toEqual({ status: 'unavailable' });
-    expect(saved.record.photoUri).toBeUndefined();
+    expect(saved.record.photoFile).toBeUndefined();
     expect(FileSystem.copyAsync).not.toHaveBeenCalled();
+  });
+
+  it('uses the source extension for png and heic captures', async () => {
+    const png = await createJournalEntryFromScan(
+      { ...unclear, processedImageUri: 'file://camera/cap.png' },
+      false,
+    );
+    expect(png.record.photoFile).toBe(`${png.record.id}.png`);
+
+    const heic = await createJournalEntryFromScan(
+      { ...unclear, processedImageUri: 'file://camera/cap.HEIC' },
+      false,
+    );
+    expect(heic.record.photoFile).toBe(`${heic.record.id}.heic`);
+  });
+
+  it('deletes the copied photo when saving the entry fails', async () => {
+    await expect(
+      createJournalEntryFromScan(unclear, false, {
+        save: async () => {
+          throw new Error('disk');
+        },
+      }),
+    ).rejects.toThrow(/disk/);
+
+    expect(FileSystem.deleteAsync).toHaveBeenCalledWith(
+      expect.stringMatching(/\/journal-photos\/sighting_.+\.jpg$/),
+      { idempotent: true },
+    );
+    expect(await storageService.getSightings()).toEqual([]);
+  });
+
+  it('removes a copied photo the journal did not keep', async () => {
+    const saved = await createJournalEntryFromScan(unclear, false, {
+      save: async (record) => {
+        const { photoFile: _dropped, ...rest } = record;
+        return rest;
+      },
+    });
+
+    expect(saved.photo).toEqual({ state: 'missing' });
+    expect(saved.record.photoFile).toBeUndefined();
+    expect(FileSystem.deleteAsync).toHaveBeenCalledWith(
+      expect.stringMatching(/\/journal-photos\/sighting_.+\.jpg$/),
+      { idempotent: true },
+    );
   });
 });
 
 describe('opening a spot in maps', () => {
   it('builds a maps link only for usable coordinates', () => {
     expect(mapsUrlForCoordinates(49.123456, 20.5, 'ios')).toBe(
-      'http://maps.apple.com/?ll=49.123456,20.5&q=49.123456,20.5',
+      'https://maps.apple.com/?ll=49.123456,20.5&q=49.123456,20.5',
     );
     expect(mapsUrlForCoordinates(49.1, 20.2, 'android')).toBe('geo:49.1,20.2?q=49.1,20.2');
     expect(mapsUrlForCoordinates(49.1, 20.2, 'web')).toContain('query=49.1,20.2');
     expect(() => mapsUrlForCoordinates(Number.NaN, 20, 'web')).toThrow(/usable/);
   });
 
-  it('falls back to a web maps link when the device cannot open the native one', async () => {
+  it('opens Apple Maps over https without asking whether the url can be opened', async () => {
     const openURL = jest.fn(async () => undefined);
-    const canOpenURL = jest.fn(async () => false);
 
-    await openSpotInMaps(49.1, 20.2, 'android', { canOpenURL, openURL });
+    await openSpotInMaps(49.1, 20.2, 'ios', { openURL });
 
-    expect(openURL).toHaveBeenCalledWith('https://www.google.com/maps/search/?api=1&query=49.1,20.2');
+    expect(openURL).toHaveBeenCalledTimes(1);
+    expect(openURL).toHaveBeenCalledWith('https://maps.apple.com/?ll=49.1,20.2&q=49.1,20.2');
+  });
+
+  it('opens the geo link on Android and uses a web link when that open fails', async () => {
+    const openURL = jest
+      .fn()
+      .mockRejectedValueOnce(new Error('no handler'))
+      .mockResolvedValueOnce(undefined);
+
+    await openSpotInMaps(49.1, 20.2, 'android', { openURL });
+
+    expect(openURL).toHaveBeenNthCalledWith(1, 'geo:49.1,20.2?q=49.1,20.2');
+    expect(openURL).toHaveBeenNthCalledWith(2, 'https://www.google.com/maps/search/?api=1&query=49.1,20.2');
   });
 });
