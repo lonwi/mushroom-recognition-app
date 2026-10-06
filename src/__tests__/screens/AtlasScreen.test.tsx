@@ -161,7 +161,7 @@ describe('AtlasScreen RTL Tests', () => {
       expect(screen.getByText('Borowik szlachetny')).toBeTruthy();
       expect(screen.queryByText('Gołąbek zielonawy')).toBeNull();
       expect(screen.queryByText('Kolczak obłączasty')).toBeNull();
-      expect(screen.queryByText('JADALNY')).toBeTruthy();
+      expect(screen.getAllByText('JADALNY').length).toBeGreaterThan(0);
     });
 
     await fireEvent.press(screen.getByTestId('filter-status-INCOMPLETE'));
@@ -171,7 +171,7 @@ describe('AtlasScreen RTL Tests', () => {
       expect(screen.getByText('Smardz jadalny')).toBeTruthy();
       expect(screen.getByText('Pieczarka polna')).toBeTruthy();
       expect(screen.queryByText('Borowik szlachetny')).toBeNull();
-      expect(screen.queryByText('JADALNY')).toBeNull();
+      expect(screen.queryAllByText('JADALNY')).toHaveLength(0);
       expect(screen.getByTestId('atlas-result-count').props.children).toBe('Pasujące karty: 4');
     });
   });
