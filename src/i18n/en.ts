@@ -23,6 +23,8 @@ export const en = {
       'A model, if one is shipped, may be trained only on CC0 or CC-BY photos (no NC or SA). Every photo keeps its author, license, and source URL in training/data/attributions.jsonl. That file has to ship with the model.',
     about: 'About App',
     version: 'Version 1.0.0 (On-Device AI)',
+    atlasScope:
+      'The atlas has {count} cards. It is not a complete key to the mushrooms of Poland and it does not replace a mycologist or a Sanepid mushroom inspection point.',
   },
   atlas: {
     title: 'Mushroom Atlas',
@@ -32,17 +34,28 @@ export const en = {
     filterInedible: 'Inedible',
     filterPoisonous: 'Poisonous',
     filterDeadly: 'Deadly',
+    filterIncomplete: 'Incomplete card',
+    emptyTitle: 'No cards',
+    emptyDesc:
+      'No card in this atlas matches the filters. A missing card does not mean the mushroom is edible. The atlas is not a complete key to the mushrooms of Poland.',
     emptyResults: 'No mushrooms match the selected criteria.',
-    hymenophoreTubes: 'Tubes (sponge)',
+    szatanNotice:
+      '“Szatan” is sometimes a folk name for the bitter bolete, and it also means Satan’s bolete (Rubroboletus satanas). Satan’s bolete is not described in this atlas and it is not the bitter bolete. This search does not open the bitter bolete card. A missing card does not mean the mushroom is edible.',
+    resultCount: 'Matching cards: {count}',
+    scopeNotice:
+      'This atlas has {count} cards. It is not a complete key to the mushrooms of Poland and it does not replace a mycologist or a Sanepid mushroom inspection point.',
+    hymenophoreTubes: 'Tubes',
     hymenophoreGills: 'Gills',
     hymenophoreFolds: 'Folds',
-    hymenophoreOther: 'Other',
+    hymenophoreSpines: 'Spines',
+    hymenophoreOther: 'Other underside',
   },
   scanner: {
     title: 'AI Mushroom Scanner',
     takePhoto: 'Take Photo & Classify',
     fromGallery: 'Choose from Gallery',
     quickDemo: 'Atlas samples — this is not recognition:',
+    atlasScopeHint: 'These are a few cards from a short atlas, not a full list of Polish mushrooms.',
     macroTips: 'Macro framing tips:',
     tipCap: '1. Photograph the cap top (color & texture)',
     tipUnder: '2. Show underside of the cap (tubes or gills)',

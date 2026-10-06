@@ -23,7 +23,11 @@ function species(id: string) {
 export const PaxillusIncompleteLookAlikes: Story = {
   render: () => (
     <View style={{ flex: 1, minHeight: 900 }}>
-      <SpeciesDetailScreen species={species('paxillus_involutus')} onBack={() => {}} />
+      <SpeciesDetailScreen
+        species={species('paxillus_involutus')}
+        onBack={() => {}}
+        onOpenLookAlike={() => {}}
+      />
     </View>
   ),
 };
@@ -40,6 +44,14 @@ export const MorelProtectionNote: Story = {
   render: () => (
     <View style={{ flex: 1, minHeight: 900 }}>
       <SpeciesDetailScreen species={species('morchella_esculenta')} onBack={() => {}} />
+    </View>
+  ),
+};
+
+export const CzubajnikNotForTheKitchen: Story = {
+  render: () => (
+    <View style={{ flex: 1, minHeight: 900 }}>
+      <SpeciesDetailScreen species={species('chlorophyllum_rhacodes')} onBack={() => {}} />
     </View>
   ),
 };

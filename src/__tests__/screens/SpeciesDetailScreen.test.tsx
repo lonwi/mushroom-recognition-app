@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import { SpeciesDetailScreen } from '../../screens/SpeciesDetailScreen';
-import { MUSHROOMS_DATABASE } from '../../data/mushrooms';
+import { MUSHROOMS_DATABASE, showsKitchenSection } from '../../data/mushrooms';
 
 function species(id: string) {
   const match = MUSHROOMS_DATABASE.find((item) => item.id === id);
@@ -12,17 +12,23 @@ function species(id: string) {
 }
 
 describe('SpeciesDetailScreen safety notices', () => {
-  it('shows an incomplete look-alike notice for krowiak and keeps the warning', async () => {
+  it('keeps the olszówka warning and does not treat the rydz mix-up as an all-clear', async () => {
     const { getByTestId, getByText, queryByTestId, queryByText } = await render(
-      <SpeciesDetailScreen species={species('paxillus_involutus')} onBack={() => {}} />
+      <SpeciesDetailScreen
+        species={species('paxillus_involutus')}
+        onBack={() => {}}
+        onOpenLookAlike={() => {}}
+      />
     );
 
-    expect(getByTestId('lookalike-incomplete')).toBeTruthy();
-    expect(getByText('Informacja o sobowtórach jest niepełna')).toBeTruthy();
+    expect(queryByTestId('lookalike-incomplete')).toBeNull();
+    expect(getByTestId('lookalike-link-lactarius_deliciosus')).toBeTruthy();
     expect(queryByText(/Brak niebezpiecznych sobowtórów/)).toBeNull();
     expect(getByTestId('species-warning-notes')).toBeTruthy();
     expect(getByText(/NIGDY NIE ZBIERAJ OLSZÓWEK/)).toBeTruthy();
     expect(queryByTestId('fatal-lookalike-banner')).toBeNull();
+    expect(queryByText('W kuchni')).toBeNull();
+    expect(getByTestId('species-use-toxic')).toBeTruthy();
   });
 
   it('shows the same incomplete notice for muchomor czerwony', async () => {
@@ -106,6 +112,29 @@ describe('SpeciesDetailScreen safety notices', () => {
     expect(getByText('W kuchni')).toBeTruthy();
     expect(queryByTestId('species-use-neutral')).toBeNull();
     expect(getByTestId('species-use-edible')).toBeTruthy();
+  });
+
+  it('does not show the green kitchen section for inedible, poisonous or deadly cards', async () => {
+    const blocked = MUSHROOMS_DATABASE.filter((item) => !showsKitchenSection(item));
+    expect(blocked.some((item) => item.id === 'chlorophyllum_rhacodes')).toBe(true);
+    expect(blocked.some((item) => item.id === 'tylopilus_felleus')).toBe(true);
+
+    for (const item of blocked) {
+      const screen = await render(<SpeciesDetailScreen species={item} onBack={() => {}} />);
+      expect(screen.queryByText('W kuchni')).toBeNull();
+      expect(screen.queryByTestId('species-use-edible')).toBeNull();
+      if (item.status === 'INEDIBLE') {
+        expect(screen.getByTestId('species-use-inedible')).toBeTruthy();
+        expect(screen.getByText('Nie do jedzenia')).toBeTruthy();
+        expect(screen.getByText('NIEJADALNY')).toBeTruthy();
+      }
+      if (item.id === 'chlorophyllum_rhacodes') {
+        expect(screen.getByTestId('species-use-toxic')).toBeTruthy();
+        expect(screen.getByText('TRUJĄCY')).toBeTruthy();
+        expect(screen.queryByText('Nie do jedzenia')).toBeNull();
+        expect(screen.queryByText('NIEJADALNY')).toBeNull();
+      }
+    }
   });
 
   it('keeps the green kitchen section on a finished edible species', async () => {

@@ -187,6 +187,9 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
         {/* Skróty do kart w atlasie. Nie uruchamiają rozpoznawania. */}
         <View style={styles.demoTestContainer}>
           <Text style={styles.demoTestLabel}>{t('scanner.quickDemo')}</Text>
+          <Text style={styles.demoScopeHint} testID="scanner-atlas-scope">
+            {t('scanner.atlasScopeHint')}
+          </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.demoScroll}>
             <TouchableOpacity
               style={styles.demoChip}
@@ -379,6 +382,12 @@ const styles = StyleSheet.create({
     color: '#CBD5E1',
     fontSize: 11,
     fontWeight: '700',
+    marginBottom: 2,
+  },
+  demoScopeHint: {
+    color: '#94A3B8',
+    fontSize: 11,
+    lineHeight: 15,
     marginBottom: 6,
   },
   demoScroll: {

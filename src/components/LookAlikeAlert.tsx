@@ -69,6 +69,9 @@ export const LookAlikeAlert: React.FC<Props> = ({
       {list.map((risk, idx) => {
         const inCatalog = catalogIds?.has(risk.confusedWithId) ?? false;
         const canOpen = inCatalog && !!onOpenSpecies;
+        const unfinishedEdible =
+          risk.confusedWithStatus === 'EDIBLE' &&
+          (isIncompleteSpeciesCard(risk.confusedWithId) || (catalogIds != null && !inCatalog));
         return (
           <View key={`${risk.confusedWithId}-${idx}`} style={styles.riskCard}>
             <View style={styles.riskTop}>
@@ -76,7 +79,7 @@ export const LookAlikeAlert: React.FC<Props> = ({
               <View testID={`lookalike-status-${risk.confusedWithId}`}>
                 <SpeciesStatusBadge
                   status={risk.confusedWithStatus}
-                  incompleteCard={isIncompleteSpeciesCard(risk.confusedWithId)}
+                  incompleteCard={unfinishedEdible}
                   size="small"
                   testID={`incomplete-card-badge-${risk.confusedWithId}`}
                 />
