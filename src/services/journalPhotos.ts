@@ -97,7 +97,16 @@ export async function persistJournalPhoto(sourceUri: string, sightingId: string)
   const destination = `${directory}${fileName}`;
   if (sourceUri !== destination) {
     await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
-    await FileSystem.copyAsync({ from: sourceUri, to: destination });
+    try {
+      await FileSystem.copyAsync({ from: sourceUri, to: destination });
+    } catch (error) {
+      try {
+        await FileSystem.deleteAsync(destination, { idempotent: true });
+      } catch (cleanupError) {
+        console.error('Nie udało się usunąć niepełnej kopii zdjęcia:', cleanupError);
+      }
+      throw error;
+    }
   }
   return fileName;
 }

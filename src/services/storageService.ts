@@ -8,13 +8,36 @@ import {
 } from '../types/mushroom';
 
 export const SIGHTINGS_STORAGE_KEY = '@grzybobranie_ai:sightings_v1';
+/** Earlier single-key backup. Read when looking for a duplicate. Never overwritten. */
 export const SIGHTINGS_BACKUP_KEY = '@grzybobranie_ai:sightings_v1_backup';
+export const SIGHTINGS_BACKUP_INDEX_KEY = '@grzybobranie_ai:sightings_v1_backups';
+const BACKUP_KEY_PREFIX = '@grzybobranie_ai:sightings_v1_backup:';
+const SAFE_BACKUP_ID = /^[A-Za-z0-9_-]+$/;
 const DISCLAIMER_KEY = '@grzybobranie_ai:disclaimer_accepted_v1';
 
+export function journalBackupStorageKey(id: string): string {
+  if (!SAFE_BACKUP_ID.test(id)) {
+    throw new Error('unsafe backup id');
+  }
+  return `${BACKUP_KEY_PREFIX}${id}`;
+}
+
+function isReadableJournal(raw: string | null): boolean {
+  if (raw == null) return true;
+  try {
+    return Array.isArray(JSON.parse(raw));
+  } catch {
+    return false;
+  }
+}
+
 export class JournalReadError extends Error {
-  constructor(message: string) {
+  readonly kind: 'unavailable' | 'corrupt';
+
+  constructor(message: string, kind: 'unavailable' | 'corrupt') {
     super(message);
     this.name = 'JournalReadError';
+    this.kind = kind;
   }
 }
 
@@ -147,11 +170,62 @@ class StorageService {
     return run;
   }
 
-  private async backupRawJournal(raw: string): Promise<void> {
+  private async readBackupIndex(): Promise<string[]> {
+    const raw = await AsyncStorage.getItem(SIGHTINGS_BACKUP_INDEX_KEY);
+    if (raw == null) return [];
+    let parsed: unknown;
     try {
-      await AsyncStorage.setItem(SIGHTINGS_BACKUP_KEY, raw);
-    } catch (error) {
-      console.error('Błąd kopii zapasowej dziennika:', error);
+      parsed = JSON.parse(raw);
+    } catch {
+      throw new Error('Lista kopii dziennika jest uszkodzona');
+    }
+    if (!Array.isArray(parsed) || parsed.some((id) => typeof id !== 'string' || !SAFE_BACKUP_ID.test(id))) {
+      throw new Error('Lista kopii dziennika jest uszkodzona');
+    }
+    return parsed;
+  }
+
+  private async backupAlreadyStored(raw: string, ids: string[]): Promise<boolean> {
+    const legacy = await AsyncStorage.getItem(SIGHTINGS_BACKUP_KEY);
+    if (legacy === raw) return true;
+    for (const id of ids) {
+      const stored = await AsyncStorage.getItem(journalBackupStorageKey(id));
+      if (stored === raw) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Stores this exact raw text under a new backup key when no earlier backup
+   * already contains it. Existing backup keys are never replaced or removed.
+   * Throws unless the written value can be read back unchanged and the backup
+   * index lists the new key. Does not modify the journal.
+   */
+  private async backupRawJournal(raw: string): Promise<void> {
+    const ids = await this.readBackupIndex();
+    if (await this.backupAlreadyStored(raw, ids)) return;
+
+    const id = `b${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+    const key = journalBackupStorageKey(id);
+    await AsyncStorage.setItem(key, raw);
+    const readBack = await AsyncStorage.getItem(key);
+    if (readBack !== raw) {
+      throw new Error('Kopia dziennika nie zgadza się z oryginałem');
+    }
+
+    const latest = await this.readBackupIndex();
+    if (latest.includes(id)) return;
+    const nextIds = [...latest, id];
+    await AsyncStorage.setItem(SIGHTINGS_BACKUP_INDEX_KEY, JSON.stringify(nextIds));
+    const indexRaw = await AsyncStorage.getItem(SIGHTINGS_BACKUP_INDEX_KEY);
+    let confirmed: unknown;
+    try {
+      confirmed = indexRaw == null ? null : JSON.parse(indexRaw);
+    } catch {
+      throw new Error('Nie udało się potwierdzić listy kopii dziennika');
+    }
+    if (!Array.isArray(confirmed) || !confirmed.includes(id)) {
+      throw new Error('Nie udało się potwierdzić listy kopii dziennika');
     }
   }
 
@@ -161,7 +235,7 @@ class StorageService {
       data = await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY);
     } catch (error) {
       console.error('Błąd podczas odczytu dziennika znalezisk:', error);
-      throw new JournalReadError('Nie udało się odczytać dziennika');
+      throw new JournalReadError('Nie udało się odczytać dziennika', 'unavailable');
     }
     if (!data) return [];
 
@@ -170,12 +244,12 @@ class StorageService {
       parsed = JSON.parse(data);
     } catch (error) {
       console.error('Błąd podczas odczytu dziennika znalezisk:', error);
-      await this.backupRawJournal(data);
-      throw new JournalReadError('Dziennik jest uszkodzony i nie został nadpisany');
+      await this.rememberCorruptJournal(data);
+      throw new JournalReadError('Dziennik jest uszkodzony i nie został nadpisany', 'corrupt');
     }
     if (!Array.isArray(parsed)) {
-      await this.backupRawJournal(data);
-      throw new JournalReadError('Dziennik ma nieprawidłowy kształt i nie został nadpisany');
+      await this.rememberCorruptJournal(data);
+      throw new JournalReadError('Dziennik ma nieprawidłowy kształt i nie został nadpisany', 'corrupt');
     }
     return parsed.flatMap((item) => {
       const sighting = sanitizeSighting(item);
@@ -185,6 +259,34 @@ class StorageService {
 
   public getSightings(): Promise<SightingRecord[]> {
     return this.enqueue(() => this.readSightings());
+  }
+
+  /**
+   * A failed backup on read must not change the journal. The error is logged so the
+   * damaged-journal screen can still open; clearing waits for startFreshJournal.
+   */
+  private async rememberCorruptJournal(raw: string): Promise<void> {
+    try {
+      await this.backupRawJournal(raw);
+    } catch (error) {
+      console.error('Błąd kopii zapasowej dziennika:', error);
+    }
+  }
+
+  /**
+   * Replaces a journal that still cannot be parsed with an empty list.
+   * Aborts without writing when the stored value is already a list, or when
+   * a verified backup of that exact text cannot be confirmed.
+   */
+  public startFreshJournal(): Promise<void> {
+    return this.enqueue(async () => {
+      const raw = await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY);
+      if (isReadableJournal(raw)) return;
+      await this.backupRawJournal(raw as string);
+      const current = await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY);
+      if (current !== raw || isReadableJournal(current)) return;
+      await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, '[]');
+    });
   }
 
   public saveSighting(record: SightingRecord): Promise<SightingRecord> {

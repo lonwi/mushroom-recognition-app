@@ -3,14 +3,26 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { isManagedJournalPhoto, journalPhotoFileName, resolveJournalPhotoUri } from '../../services/journalPhotos';
 import {
   JournalReadError,
+  SIGHTINGS_BACKUP_INDEX_KEY,
   SIGHTINGS_BACKUP_KEY,
   SIGHTINGS_STORAGE_KEY,
+  journalBackupStorageKey,
   storageService,
 } from '../../services/storageService';
 import type { SightingRecord } from '../../types/mushroom';
 
 const photoFile = 'sighting_photo.jpg';
 const resolvedPhoto = 'file:///mock/document/journal-photos/sighting_photo.jpg';
+
+async function journalBackupValues(): Promise<string[]> {
+  const indexRaw = await AsyncStorage.getItem(SIGHTINGS_BACKUP_INDEX_KEY);
+  const ids = indexRaw ? (JSON.parse(indexRaw) as string[]) : [];
+  const values: string[] = [];
+  for (const id of ids) {
+    values.push((await AsyncStorage.getItem(journalBackupStorageKey(id))) ?? '');
+  }
+  return values;
+}
 
 function unclearEntry(id: string): SightingRecord {
   return {
@@ -175,7 +187,7 @@ describe('storageService journal records', () => {
 
     await expect(storageService.getSightings()).rejects.toBeInstanceOf(JournalReadError);
     expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('not-json');
-    expect(await AsyncStorage.getItem(SIGHTINGS_BACKUP_KEY)).toBe('not-json');
+    expect(await journalBackupValues()).toEqual(['not-json']);
 
     await expect(storageService.saveSighting(unclearEntry('new'))).rejects.toBeInstanceOf(JournalReadError);
     await expect(storageService.updateSightingNotes('new', 'notatka')).rejects.toBeInstanceOf(JournalReadError);
@@ -183,11 +195,66 @@ describe('storageService journal records', () => {
     expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('not-json');
   });
 
+  it('keeps a separate backup for each distinct corruption and skips a duplicate raw value', async () => {
+    await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, 'not-json');
+    await expect(storageService.getSightings()).rejects.toBeInstanceOf(JournalReadError);
+    await expect(storageService.getSightings()).rejects.toBeInstanceOf(JournalReadError);
+    expect(await journalBackupValues()).toEqual(['not-json']);
+
+    await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, '{"no":"list"}');
+    await expect(storageService.getSightings()).rejects.toBeInstanceOf(JournalReadError);
+
+    expect(await journalBackupValues()).toEqual(['not-json', '{"no":"list"}']);
+    expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('{"no":"list"}');
+    expect(await AsyncStorage.getItem(SIGHTINGS_BACKUP_KEY)).toBeNull();
+  });
+
+  it('starts an empty journal and leaves the raw backup in place', async () => {
+    await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, 'not-json');
+    await expect(storageService.getSightings()).rejects.toBeInstanceOf(JournalReadError);
+
+    await storageService.startFreshJournal();
+
+    expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('[]');
+    expect(await journalBackupValues()).toEqual(['not-json']);
+    expect(await storageService.getSightings()).toEqual([]);
+  });
+
+  it('leaves the journal untouched when the backup cannot be written', async () => {
+    await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, 'not-json');
+    const setItem = AsyncStorage.setItem as jest.Mock;
+    const original = setItem.getMockImplementation();
+    setItem.mockImplementation(async (key: string, value: string) => {
+      if (String(key).includes('sightings_v1_backup')) {
+        throw new Error('backup failed');
+      }
+      return original?.(key, value);
+    });
+
+    try {
+      await expect(storageService.startFreshJournal()).rejects.toThrow(/backup failed/);
+      expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('not-json');
+      expect(await journalBackupValues()).toEqual([]);
+    } finally {
+      if (original) setItem.mockImplementation(original);
+    }
+  });
+
+  it('does nothing when start fresh is asked for a journal that can be read', async () => {
+    await storageService.saveSighting(unclearEntry('keep-me'));
+
+    await storageService.startFreshJournal();
+
+    const ids = (await storageService.getSightings()).map((item) => item.id);
+    expect(ids).toEqual(['keep-me']);
+    expect(await AsyncStorage.getItem(SIGHTINGS_BACKUP_INDEX_KEY)).toBeNull();
+  });
+
   it('backs up a journal that is not a list and does not replace it', async () => {
     await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, '{"no":"list"}');
 
     await expect(storageService.getSightings()).rejects.toBeInstanceOf(JournalReadError);
-    expect(await AsyncStorage.getItem(SIGHTINGS_BACKUP_KEY)).toBe('{"no":"list"}');
+    expect(await journalBackupValues()).toEqual(['{"no":"list"}']);
     await expect(storageService.saveSighting(unclearEntry('new'))).rejects.toBeInstanceOf(JournalReadError);
     expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('{"no":"list"}');
   });

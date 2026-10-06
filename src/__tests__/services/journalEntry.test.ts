@@ -159,6 +159,10 @@ describe('journal entries from a scan', () => {
     expect(saved.record.recognition.top3[0].confidence).toBe(0.5735153692074483);
     expect(saved.record).not.toHaveProperty('speciesId');
     expect(saved.record).not.toHaveProperty('confidence');
+    expect(FileSystem.deleteAsync).toHaveBeenCalledWith(
+      expect.stringMatching(/\/journal-photos\/sighting_.+\.jpg$/),
+      { idempotent: true },
+    );
   });
 
   it('does not keep a remote image uri as the journal photo', async () => {
@@ -226,10 +230,10 @@ describe('journal entries from a scan', () => {
 describe('opening a spot in maps', () => {
   it('builds a maps link only for usable coordinates', () => {
     expect(mapsUrlForCoordinates(49.123456, 20.5, 'ios')).toBe(
-      'https://maps.apple.com/?ll=49.123456,20.5&q=49.123456,20.5',
+      'https://maps.apple.com/?ll=49.123456,20.500000&q=49.123456,20.500000',
     );
-    expect(mapsUrlForCoordinates(49.1, 20.2, 'android')).toBe('geo:49.1,20.2?q=49.1,20.2');
-    expect(mapsUrlForCoordinates(49.1, 20.2, 'web')).toContain('query=49.1,20.2');
+    expect(mapsUrlForCoordinates(49.1, 20.2, 'android')).toBe('geo:49.100000,20.200000?q=49.100000,20.200000');
+    expect(mapsUrlForCoordinates(49.1, 20.2, 'web')).toContain('query=49.100000,20.200000');
     expect(() => mapsUrlForCoordinates(Number.NaN, 20, 'web')).toThrow(/usable/);
   });
 
@@ -239,7 +243,7 @@ describe('opening a spot in maps', () => {
     await openSpotInMaps(49.1, 20.2, 'ios', { openURL });
 
     expect(openURL).toHaveBeenCalledTimes(1);
-    expect(openURL).toHaveBeenCalledWith('https://maps.apple.com/?ll=49.1,20.2&q=49.1,20.2');
+    expect(openURL).toHaveBeenCalledWith('https://maps.apple.com/?ll=49.100000,20.200000&q=49.100000,20.200000');
   });
 
   it('opens the geo link on Android and uses a web link when that open fails', async () => {
@@ -250,7 +254,10 @@ describe('opening a spot in maps', () => {
 
     await openSpotInMaps(49.1, 20.2, 'android', { openURL });
 
-    expect(openURL).toHaveBeenNthCalledWith(1, 'geo:49.1,20.2?q=49.1,20.2');
-    expect(openURL).toHaveBeenNthCalledWith(2, 'https://www.google.com/maps/search/?api=1&query=49.1,20.2');
+    expect(openURL).toHaveBeenNthCalledWith(1, 'geo:49.100000,20.200000?q=49.100000,20.200000');
+    expect(openURL).toHaveBeenNthCalledWith(
+      2,
+      'https://www.google.com/maps/search/?api=1&query=49.100000,20.200000',
+    );
   });
 });

@@ -4,17 +4,22 @@ export interface MapsLinking {
   openURL(url: string): Promise<unknown>;
 }
 
+function formatMapCoordinate(value: number): string {
+  return value.toFixed(6);
+}
+
 export function mapsUrlForCoordinates(latitude: number, longitude: number, platform: string): string {
   if (!isUsableCoordinate(latitude, longitude)) {
     throw new Error('coordinates are not usable');
   }
+  const query = `${formatMapCoordinate(latitude)},${formatMapCoordinate(longitude)}`;
   if (platform === 'ios') {
-    return `https://maps.apple.com/?ll=${latitude},${longitude}&q=${latitude},${longitude}`;
+    return `https://maps.apple.com/?ll=${query}&q=${query}`;
   }
   if (platform === 'android') {
-    return `geo:${latitude},${longitude}?q=${latitude},${longitude}`;
+    return `geo:${query}?q=${query}`;
   }
-  return `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+  return `https://www.google.com/maps/search/?api=1&query=${query}`;
 }
 
 /**

@@ -13,7 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { storageService } from '../services/storageService';
+import { JournalReadError, storageService } from '../services/storageService';
 import { resolveJournalPhotoUri } from '../services/journalPhotos';
 import { openSpotInMaps } from '../services/mapsLink';
 import { formatConfidencePercent } from '../services/recognitionDecision';
@@ -33,6 +33,7 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
   const { t } = useLanguage();
   const [sightings, setSightings] = useState<SightingRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [journalDamaged, setJournalDamaged] = useState(false);
   const [editing, setEditing] = useState<SightingRecord | null>(null);
   const [draftNotes, setDraftNotes] = useState('');
 
@@ -41,9 +42,15 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
     try {
       const data = await storageService.getSightings();
       setSightings(data);
+      setJournalDamaged(false);
     } catch (error) {
       console.error('Błąd podczas odczytu dziennika znalezisk:', error);
-      Alert.alert(t('journal.readFailedTitle'), t('journal.readFailedBody'));
+      if (error instanceof JournalReadError && error.kind === 'corrupt') {
+        setSightings([]);
+        setJournalDamaged(true);
+      } else {
+        Alert.alert(t('journal.readFailedTitle'), t('journal.readFailedBody'));
+      }
     } finally {
       setLoading(false);
     }
@@ -90,6 +97,25 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
     }
   };
 
+  const confirmStartFresh = () => {
+    Alert.alert(t('journal.startFreshTitle'), t('journal.startFreshBody'), [
+      { text: t('journal.cancel'), style: 'cancel' },
+      {
+        text: t('journal.startFresh'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await storageService.startFreshJournal();
+            await loadSightings();
+          } catch (error) {
+            console.error('Błąd podczas zakładania nowego dziennika:', error);
+            Alert.alert(t('journal.startFreshFailedTitle'), t('journal.startFreshFailedBody'));
+          }
+        },
+      },
+    ]);
+  };
+
   const openMap = async (latitude: number, longitude: number) => {
     try {
       await openSpotInMaps(latitude, longitude, Platform.OS, Linking);
@@ -110,17 +136,22 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
           <Text style={styles.speciesNamePl} testID={`journal-title-${item.id}`}>
             {t('journal.legacyTitle')}
           </Text>
-          {recognition.speciesNamePl ? (
-            <Text style={styles.honestBody} testID={`journal-legacy-name-${item.id}`}>
-              {t('journal.legacyStoredName')}: {recognition.speciesNamePl}
-              {recognition.speciesNameLatin ? ` (${recognition.speciesNameLatin})` : ''}
-            </Text>
+          {recognition.speciesNamePl || recognition.speciesNameLatin ? (
+            <View>
+              <Text style={styles.honestBody} testID={`journal-legacy-name-${item.id}`}>
+                {t('journal.legacyStoredName')}: {recognition.speciesNamePl ?? recognition.speciesNameLatin}
+                {recognition.speciesNamePl && recognition.speciesNameLatin
+                  ? ` (${recognition.speciesNameLatin})`
+                  : ''}
+              </Text>
+              <Text style={styles.honestBody} testID={`journal-legacy-name-notice-${item.id}`}>
+                {t('journal.legacyNameNotice')}
+              </Text>
+            </View>
           ) : null}
-          {typeof recognition.confidence === 'number' ? (
-            <Text style={styles.honestBody} testID={`journal-legacy-confidence-${item.id}`}>
-              {t('journal.legacyStoredConfidence')}: {recognition.confidence}
-            </Text>
-          ) : null}
+          <Text style={styles.warningText} testID={`journal-legacy-edibility-${item.id}`}>
+            {t('journal.legacyEdibility')}
+          </Text>
         </View>
       );
     }
@@ -204,13 +235,16 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
   };
 
   const renderItem = ({ item }: { item: SightingRecord }) => {
-    const dateStr = new Date(item.timestamp).toLocaleDateString('pl-PL', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    const dateStr =
+      item.timestamp > 0
+        ? new Date(item.timestamp).toLocaleDateString('pl-PL', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : t('journal.missingDate');
     const located = hasGps(item);
     const photoUri = resolveJournalPhotoUri(item.photoFile);
 
@@ -227,7 +261,9 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
 
           <View style={styles.cardInfo}>
             {renderRecognition(item)}
-            <Text style={styles.dateText}>📅 {dateStr}</Text>
+            <Text style={styles.dateText} testID={`journal-date-${item.id}`}>
+              📅 {dateStr}
+            </Text>
 
             {located ? (
               <View>
@@ -313,14 +349,26 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
           contentContainerStyle={styles.listContent}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={loadSightings} />}
         >
-          {sightings.length === 0 && !loading ? (
+          {journalDamaged && !loading ? (
+            <View style={styles.emptyContainer} testID="journal-damaged">
+              <Text style={styles.emptyIcon}>🧺</Text>
+              <Text style={styles.emptyTitle}>{t('journal.readFailedTitle')}</Text>
+              <Text style={styles.damagedBody} testID="journal-damaged-message">
+                {t('journal.damagedBody')}
+              </Text>
+              <TouchableOpacity style={styles.mapBtn} onPress={confirmStartFresh} testID="journal-start-fresh">
+                <Text style={styles.mapBtnText}>{t('journal.startFresh')}</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
+          {sightings.length === 0 && !loading && !journalDamaged ? (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyIcon}>🧺</Text>
               <Text style={styles.emptyTitle}>{t('journal.emptyTitle')}</Text>
               <Text style={styles.emptyDesc}>{t('journal.emptyDesc')}</Text>
             </View>
           ) : null}
-          {sightings.map((item) => renderItem({ item }))}
+          {!journalDamaged ? sightings.map((item) => renderItem({ item })) : null}
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -506,6 +554,13 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '800',
     color: '#334155',
+  },
+  damagedBody: {
+    fontSize: 14,
+    color: '#7C2D12',
+    textAlign: 'center',
+    marginTop: 8,
+    lineHeight: 20,
   },
   emptyDesc: {
     fontSize: 13,

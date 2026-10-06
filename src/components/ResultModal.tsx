@@ -15,6 +15,7 @@ import { MUSHROOMS_DATABASE } from '../data/mushrooms';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { ClassificationResult } from '../services/classifierService';
 import { createJournalEntryFromScan, type SavedJournalEntry } from '../services/journalEntry';
+import { JournalReadError } from '../services/storageService';
 import { isDisplayableCaptureUri } from '../services/journalPhotos';
 import { formatConfidencePercent } from '../services/recognitionDecision';
 
@@ -69,7 +70,8 @@ export const ResultModal: React.FC<Props> = ({
       onClose();
     } catch (error) {
       console.error('Błąd zapisu znaleziska:', error);
-      Alert.alert(t('journal.savedTitle'), t('journal.saveFailed'));
+      const damaged = error instanceof JournalReadError && error.kind === 'corrupt';
+      Alert.alert(t('journal.savedTitle'), damaged ? t('journal.saveFailedDamaged') : t('journal.saveFailed'));
     } finally {
       persistStarted.current = false;
       saveLock.current = false;

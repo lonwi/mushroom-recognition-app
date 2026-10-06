@@ -4,7 +4,12 @@ import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
 import { JournalScreen } from '../../screens/JournalScreen';
-import { storageService } from '../../services/storageService';
+import {
+  SIGHTINGS_BACKUP_INDEX_KEY,
+  SIGHTINGS_STORAGE_KEY,
+  journalBackupStorageKey,
+  storageService,
+} from '../../services/storageService';
 import { LanguageProvider } from '../../contexts/LanguageContext';
 import type { SightingRecord } from '../../types/mushroom';
 
@@ -36,6 +41,16 @@ const located: SightingRecord = {
     ],
   },
 };
+
+async function journalBackupValues(): Promise<string[]> {
+  const indexRaw = await AsyncStorage.getItem(SIGHTINGS_BACKUP_INDEX_KEY);
+  const ids = indexRaw ? (JSON.parse(indexRaw) as string[]) : [];
+  const values: string[] = [];
+  for (const id of ids) {
+    values.push((await AsyncStorage.getItem(journalBackupStorageKey(id))) ?? '');
+  }
+  return values;
+}
 
 async function renderJournal() {
   return render(
@@ -91,7 +106,7 @@ describe('JournalScreen', () => {
     await fireEvent.press(screen.getByTestId('journal-open-map-sighting_spot'));
     await waitFor(() => {
       expect(Linking.openURL).toHaveBeenCalledWith(
-        'https://maps.apple.com/?ll=49.12345,20.54321&q=49.12345,20.54321',
+        'https://maps.apple.com/?ll=49.123450,20.543210&q=49.123450,20.543210',
       );
     });
   });
@@ -139,10 +154,103 @@ describe('JournalScreen', () => {
     expect(screen.getByTestId('journal-legacy-name-sighting_old')).toHaveTextContent(
       /Zachowana nazwa: Borowik szlachetny/,
     );
-    expect(screen.getByTestId('journal-legacy-confidence-sighting_old')).toHaveTextContent(/95/);
-    expect(screen.getByTestId('journal-legacy-confidence-sighting_old')).not.toHaveTextContent(/%/);
+    expect(screen.queryByTestId('journal-legacy-confidence-sighting_old')).toBeNull();
+    expect(screen.queryByText(/95/)).toBeNull();
+    expect(screen.getByTestId('journal-legacy-name-notice-sighting_old')).toHaveTextContent(
+      /nie pochodzi z rozpoznawania zdjęcia/i,
+    );
+    expect(screen.getByTestId('journal-legacy-name-notice-sighting_old')).toHaveTextContent(
+      /nie jest oznaczeniem gatunku/i,
+    );
+    expect(screen.getByTestId('journal-legacy-edibility-sighting_old')).toHaveTextContent(
+      /Nie jedz grzyba na podstawie tego wpisu\. Pokaż go do oceny grzyboznawcy, na przykład w stacji sanitarno-epidemiologicznej \(Sanepid\)\./,
+    );
     expect(screen.queryByText('JADALNY')).toBeNull();
     expect(screen.queryByText(/Kandydaci ze skanu/)).toBeNull();
+  });
+
+  it('shows a missing timestamp as no date', async () => {
+    await storageService.saveSighting({
+      id: 'sighting_nodate',
+      timestamp: 0,
+      recognition: { status: 'unavailable' },
+    });
+    const screen = await renderJournal();
+
+    expect(await screen.findByTestId('journal-date-sighting_nodate')).toHaveTextContent(/brak daty/i);
+    expect(screen.queryByText(/1970/)).toBeNull();
+  });
+
+  it('starts an empty journal after confirmation and keeps the raw backup', async () => {
+    await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, 'not-json');
+    const screen = await renderJournal();
+
+    expect(await screen.findByTestId('journal-damaged-message')).toHaveTextContent(/uszkodzony/);
+    expect(screen.queryByText('Twój koszyk jest jeszcze pusty')).toBeNull();
+    expect(await journalBackupValues()).toEqual(['not-json']);
+
+    await fireEvent.press(screen.getByTestId('journal-start-fresh'));
+    const cancelButtons = (Alert.alert as jest.Mock).mock.calls.at(-1)?.[2] as Array<{
+      text?: string;
+      onPress?: () => Promise<void>;
+    }>;
+    expect(cancelButtons?.[1]?.text).toBe('Zacznij nowy dziennik');
+    await act(async () => {
+      await cancelButtons?.[0].onPress?.();
+    });
+    expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('not-json');
+    expect(await journalBackupValues()).toEqual(['not-json']);
+    expect(screen.getByTestId('journal-damaged')).toBeTruthy();
+
+    (Alert.alert as jest.Mock).mockClear();
+    await fireEvent.press(screen.getByTestId('journal-start-fresh'));
+    const confirmButtons = (Alert.alert as jest.Mock).mock.calls.at(-1)?.[2] as Array<{
+      onPress?: () => Promise<void>;
+    }>;
+    await act(async () => {
+      await confirmButtons?.[1].onPress?.();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Twój koszyk jest jeszcze pusty')).toBeTruthy();
+    });
+    expect(screen.queryByTestId('journal-damaged')).toBeNull();
+    expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('[]');
+    expect(await journalBackupValues()).toEqual(['not-json']);
+    expect(await storageService.getSightings()).toEqual([]);
+  });
+
+  it('shows a message and keeps the damaged journal when the backup cannot be written', async () => {
+    await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, 'not-json');
+    const setItem = AsyncStorage.setItem as jest.Mock;
+    const original = setItem.getMockImplementation();
+    setItem.mockImplementation(async (key: string, value: string) => {
+      if (String(key).includes('sightings_v1_backup')) {
+        throw new Error('backup failed');
+      }
+      return original?.(key, value);
+    });
+
+    try {
+      const screen = await renderJournal();
+      expect(await screen.findByTestId('journal-damaged-message')).toBeTruthy();
+
+      await fireEvent.press(screen.getByTestId('journal-start-fresh'));
+      const buttons = (Alert.alert as jest.Mock).mock.calls.at(-1)?.[2] as Array<{
+        onPress?: () => Promise<void>;
+      }>;
+      await act(async () => {
+        await buttons?.[1].onPress?.();
+      });
+
+      expect((Alert.alert as jest.Mock).mock.calls.map((call) => String(call[1])).join(' ')).toMatch(
+        /dziennik nie został wyczyszczony/i,
+      );
+      expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('not-json');
+      expect(screen.getByTestId('journal-damaged')).toBeTruthy();
+    } finally {
+      if (original) setItem.mockImplementation(original);
+    }
   });
 
   it('tells the user when deleting an entry fails and leaves the card in place', async () => {
