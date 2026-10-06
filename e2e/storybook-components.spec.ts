@@ -95,6 +95,26 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.locator('body')).not.toContainText('W kuchni');
   });
 
+  test('Muchomor sromotnikowy keeps a red look-alike warning when the named twins are edible', async ({ page }) => {
+    await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--death-cap-red-warning');
+    await expect(page.getByTestId('fatal-lookalike-banner')).toContainText('Śmiertelnie groźny sobowtór');
+    await expect(page.locator('body')).toContainText('ŚMIERTELNIE GROŹNE SOBOWTÓRY!');
+    await expect(page.getByTestId('lookalike-status-macrolepiota_procera')).toContainText('JADALNY');
+    await expect(page.getByTestId('incomplete-card-badge-russula_virescens')).toContainText('KARTA NIEPEŁNA');
+  });
+
+  test('Panther card separates twardawy by ring and bulb and does not badge a missing card as edible', async ({ page }) => {
+    await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--panther-missing-card-twins');
+    await expect(page.locator('body')).toContainText('f. abietum');
+    await expect(page.locator('body')).toContainText('pierścień gładki');
+    await expect(page.locator('body')).toContainText('pierścień prążkowany');
+    await expect(page.getByTestId('missing-card-badge-amanita_excelsa')).toContainText('Brak karty');
+    await expect(page.getByTestId('missing-card-badge-amanita_excelsa')).not.toContainText('JADALNY');
+    await expect(page.getByTestId('lookalike-unlinked-amanita_excelsa')).toContainText('Niezalecany do zbioru');
+    await expect(page.getByTestId('missing-card-badge-amanita_rubescens')).toContainText('Brak karty');
+    await expect(page.getByTestId('lookalike-status-macrolepiota_procera')).toContainText('JADALNY');
+  });
+
   test('Species detail shows a fatal look-alike banner and warning notes for kania', async ({ page }) => {
     await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--kania-fatal-look-alike');
     await expect(page.getByTestId('fatal-lookalike-banner')).toContainText('Śmiertelnie groźny sobowtór');
