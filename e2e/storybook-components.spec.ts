@@ -89,7 +89,8 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.getByTestId('species-warning-notes')).toContainText('NIGDY NIE ZBIERAJ OLSZÓWEK');
     await expect(page.getByTestId('lookalike-link-lactarius_deliciosus')).toBeVisible();
     await expect(page.locator('body')).not.toContainText('Brak niebezpiecznych sobowtórów');
-    await expect(page.getByTestId('fatal-lookalike-banner')).toHaveCount(0);
+    await expect(page.getByTestId('fatal-lookalike-banner')).toContainText('Śmiertelnie groźny sobowtór');
+    await expect(page.locator('body')).toContainText('ŚMIERTELNIE GROŹNE SOBOWTÓRY!');
     await expect(page.getByTestId('species-use-toxic')).toContainText('Toksyczność i objawy');
     await expect(page.locator('body')).not.toContainText('W kuchni');
   });

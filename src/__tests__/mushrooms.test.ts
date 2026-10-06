@@ -4,6 +4,7 @@ import {
   LOOKALIKES_WITHOUT_CARD,
   MUSHROOM_IDS,
   MUSHROOMS_DATABASE,
+  NOT_FOR_COLLECTION_NOTE,
   showsKitchenSection,
 } from '../data/mushrooms';
 import { getMushroomImage } from '../utils/mushroomImages';
@@ -49,6 +50,8 @@ describe('Mushroom Database & Safety Verification', () => {
             continue;
           }
           expect(risk.confusedWithStatus).toBe(allowed.status);
+          expect(allowed.status).not.toBe('EDIBLE');
+          expect(allowed.note).toBe(NOT_FOR_COLLECTION_NOTE);
           expect(allowed.reason.trim().length).toBeGreaterThan(0);
           continue;
         }
@@ -97,8 +100,13 @@ describe('Mushroom Database & Safety Verification', () => {
     const russula = MUSHROOMS_DATABASE.find((species) => species.id === 'russula_virescens');
 
     expect(kania && hasFatalLookAlikeRisk(kania)).toBe(true);
-    expect(paxillus && hasFatalLookAlikeRisk(paxillus)).toBe(false);
+    expect(paxillus?.confusionRisks.every((risk) => risk.fatal === false)).toBe(true);
+    expect(paxillus && hasFatalLookAlikeRisk(paxillus)).toBe(true);
     expect(russula && hasFatalLookAlikeRisk(russula)).toBe(true);
+
+    const deathCap = MUSHROOMS_DATABASE.find((species) => species.id === 'amanita_phalloides');
+    expect(deathCap?.confusionRisks.every((risk) => risk.fatal === false)).toBe(true);
+    expect(deathCap && hasFatalLookAlikeRisk(deathCap)).toBe(true);
   });
 
   test('minimal look-alike cards do not borrow another species photo', () => {
@@ -219,15 +227,19 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(panther?.confusionRisks.map((risk) => risk.confusedWithId)).toEqual(
       expect.arrayContaining(['amanita_rubescens', 'amanita_excelsa'])
     );
-    const pantherText = JSON.stringify(panther?.confusionRisks);
-    expect(pantherText).toMatch(/gładki/);
+    const pantherText = `${panther?.capDescription} ${JSON.stringify(panther?.confusionRisks)}`;
+    expect(pantherText).toMatch(/pierścień gładki/);
     expect(pantherText).toMatch(/nie czerwienieje/);
-    expect(pantherText).toMatch(/prążkowany/);
+    expect(pantherText).toMatch(/pierścień prążkowany/);
     expect(pantherText).toMatch(/rąbek/);
+    expect(pantherText).toMatch(/f\. abietum/);
+    expect(pantherText).not.toMatch(/Twardawy ma brzeg bez prążków/);
+    expect(pantherText).not.toMatch(/Plamisty ma brzeg prążkowany/);
 
     expect(hedgehog?.commonNicknames.join(' ')).not.toMatch(/Sarna/);
     expect(JSON.stringify(hedgehog)).not.toMatch(/lekko truj/);
     expect(hedgehog?.fleshDescription).toMatch(/obróbce termicznej/);
+    expect(hedgehog?.warningNotes).toMatch(/^NIE JEDZ NA PODSTAWIE TEJ KARTY\. W literaturze jadalny tylko po obróbce termicznej\./);
 
     expect(yellowStainer?.stemDescription).toMatch(/szerokim, wyraźnym/);
     expect(yellowStainer?.fleshDescription).toMatch(/potarciu/);
@@ -235,7 +247,9 @@ describe('Mushroom Database & Safety Verification', () => {
 
     expect(bitter?.months).toEqual([6, 7, 8, 9, 10]);
     expect(shaggy?.status).toBe('POISONOUS');
-    expect(shaggy?.culinaryValue).toMatch(/żołądkowo-jelitowe/);
+    expect(shaggy?.culinaryValue).toMatch(
+      /^W części źródeł nadal opisywany jako jadalny; u części osób powoduje poważne dolegliwości żołądkowo-jelitowe; łatwo pomylić z trującymi czubajnikami/
+    );
   });
 
   test('a zigzag on the stem is not treated as proof that the mushroom is a parasol', () => {

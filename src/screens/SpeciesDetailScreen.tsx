@@ -202,6 +202,7 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
             risks={species.confusionRisks}
             noDangerousLookAlikesSource={species.noDangerousLookAlikes?.source}
             catalogIds={MUSHROOM_IDS}
+            ownStatus={species.status}
             onOpenSpecies={onOpenLookAlike}
           />
         </View>

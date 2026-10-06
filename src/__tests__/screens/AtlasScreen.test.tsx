@@ -35,7 +35,7 @@ describe('AtlasScreen RTL Tests', () => {
 
   it('filters deadly poisonous mushrooms', async () => {
     const onSelect = jest.fn();
-    const { getByText, getByTestId, queryByText } = await render(
+    const { getByText, getAllByText, getByTestId, queryByText } = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={onSelect} />
       </LanguageProvider>
@@ -46,6 +46,7 @@ describe('AtlasScreen RTL Tests', () => {
     await waitFor(() => {
       expect(getByText('Muchomor sromotnikowy (zielonawy)')).toBeTruthy();
       expect(queryByText('Borowik szlachetny')).toBeNull();
+      expect(getAllByText('☠ Sobowtór!').length).toBeGreaterThan(0);
     });
   });
 

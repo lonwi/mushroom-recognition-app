@@ -128,7 +128,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         confusedWithName: 'Muchomor plamisty',
         confusedWithStatus: 'POISONOUS',
         keyDifferences: [
-          'Muchomor plamisty ma brązowy kapelusz z białymi łatkami, prążkowany brzeg i pochwę w postaci kołnierza na bulwie',
+          'Muchomor plamisty ma brązowy kapelusz z białymi łatkami, gładki pierścień i pochwę w postaci kołnierza na bulwie. Brzeg bywa prążkowany, ale forma górska ma brzeg gładki',
           'Pierścień muchomora jest przyrośnięty, a nie ruchomy',
           'Zapach muchomora plamistego bywa rzodkiewkowy'
         ],
@@ -520,7 +520,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     stemDescription: 'Do około 15 cm, u dołu z wyraźną bulwą. Pierścień jest ruchomy, nieprzyrośnięty do trzonu. Na trzonie nie ma łusek wężowej skóry kani.',
     fleshDescription: 'Miąższ białawy. Po uszkodzeniu przebarwia się na żółtopomarańczowo, a trzon szybko czerwienieje. Czerwienienie nie jest dowodem bezpieczeństwa.',
     tasteAndSmell: 'Nie sprawdzaj smakiem.',
-    culinaryValue: 'Trujący. Do niedawna bywał opisywany jako jadalny. U części osób powoduje poważne dolegliwości żołądkowo-jelitowe. Ta karta nie podaje sposobu przyrządzania i nie zaleca spożycia.',
+    culinaryValue: 'W części źródeł nadal opisywany jako jadalny; u części osób powoduje poważne dolegliwości żołądkowo-jelitowe; łatwo pomylić z trującymi czubajnikami o podobnych łuskach i czerwieniejącym miąższu. Ta karta nie podaje sposobu przyrządzania i nie zaleca spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'macrolepiota_procera',
@@ -669,7 +669,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         fatal: false
       }
     ],
-    warningNotes: 'JEŚĆ TYLKO PO OBRÓBCE TERMICZNEJ I NIE NA PODSTAWIE TEJ KARTY. Brak zdjęcia. Sarniak dachówkowaty (Sarcodon imbricatus) ma kolce i odstające łuski na kapeluszu; nie ma go w atlasie. Nazwa „sarniak” bywa też ludową nazwą kolczaka i nie rozstrzyga gatunku. Ludowe „sarna” zwykle oznacza sarniaka, nie ten gatunek.'
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. W literaturze jadalny tylko po obróbce termicznej. Brak zdjęcia. Sarniak dachówkowaty (Sarcodon imbricatus) ma kolce i odstające łuski na kapeluszu; nie ma go w atlasie. Nazwa „sarniak” bywa też ludową nazwą kolczaka i nie rozstrzyga gatunku. Ludowe „sarna” zwykle oznacza sarniaka, nie ten gatunek.'
   },
   {
     id: 'amanita_pantherina',
@@ -681,7 +681,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophore: 'GILLS',
     months: [6, 7, 8, 9, 10],
     habitat: 'Lasy iglaste i liściaste, na suchszych, piaszczystych glebach, pod sosnami, świerkami, dębami i bukami.',
-    capDescription: 'Do około 12 cm. Najpierw półkulisty, potem rozpostarty. Brązowawy, z białymi łatkami, które deszcz może zmyć. Brzeg prążkowany.',
+    capDescription: 'Do około 12 cm. Najpierw półkulisty, potem rozpostarty. Brązowawy, z białymi łatkami, które deszcz może zmyć. Brzeg zwykle krótko prążkowany, ale forma górska spod świerka (A. pantherina f. abietum) ma brzeg gładki albo tylko słabo prążkowany u starych owocników. Prążkowanie brzegu nie rozstrzyga gatunku.',
     hymenophoreDescription: 'Blaszki białe, gęste, wolne.',
     stemDescription: 'Smukły, biały, gładki, z przyrośniętym, gładkim pierścieniem. Nasada bulwiasta, z pochwą w postaci równego kołnierza i często dodatkowych wałeczków.',
     fleshDescription: 'Biały, kruchy, nie zmienia barwy po uszkodzeniu.',
@@ -691,21 +691,22 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
       {
         confusedWithId: 'amanita_rubescens',
         confusedWithName: 'Muchomor czerwieniejący',
-        confusedWithStatus: 'EDIBLE',
+        confusedWithStatus: 'INEDIBLE',
         keyDifferences: [
           'Muchomor plamisty ma pierścień gładki, nie prążkowany. Czerwieniejący ma pierścień z prążkami',
           'Miąższ plamistego nie czerwienieje. U czerwieniejącego uszkodzony miąższ różowieje albo czerwienieje',
-          'Brzeg kapelusza plamistego jest prążkowany, a bulwa ma odstający rąbek'
+          'Bulwa plamistego ma odstający rąbek. Brzeg kapelusza nie jest pewną różnicą: typowy plamisty bywa prążkowany, ale forma górska ma brzeg bez prążków'
         ],
         fatal: false
       },
       {
         confusedWithId: 'amanita_excelsa',
         confusedWithName: 'Muchomor twardawy',
-        confusedWithStatus: 'EDIBLE',
+        confusedWithStatus: 'INEDIBLE',
         keyDifferences: [
-          'Twardawy ma brzeg bez prążków i pierścień prążkowany. Plamisty ma brzeg prążkowany i pierścień gładki',
+          'Twardawy ma pierścień prążkowany od góry. Plamisty ma pierścień gładki',
           'Bulwa twardawego nie ma wyraźnego rąbka. U plamistego pochwa tworzy kołnierz na bulwie',
+          'Brzeg kapelusza nie rozstrzyga. Forma górska plamistego (A. pantherina f. abietum) ma brzeg gładki, a u twardawego prążkowanie brzegu też nie jest stałe',
           'Żaden z tych dwóch nie czerwienieje. Czerwienienie wskazuje raczej na muchomora czerwieniejącego, nie na bezpieczeństwo'
         ],
         fatal: false
@@ -716,7 +717,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         confusedWithStatus: 'EDIBLE',
         keyDifferences: [
           'Kania ma ruchomy pierścień i nie ma pochwy. Muchomor plamisty ma pierścień przyrośnięty i kołnierz na bulwie',
-          'Brzeg kapelusza muchomora plamistego jest prążkowany',
+          'Brzeg kapelusza muchomora plamistego bywa prążkowany, ale forma górska ma brzeg gładki. Pewniejsze są przyrośnięty pierścień i kołnierz na bulwie',
           'Białe łatki na brązowym kapeluszu nie czynią grzyba kanią'
         ],
         fatal: false
@@ -828,7 +829,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
       {
         confusedWithId: 'calocybe_gambosa',
         confusedWithName: 'Gęśnica wiosenna (majówka)',
-        confusedWithStatus: 'EDIBLE',
+        confusedWithStatus: 'INEDIBLE',
         keyDifferences: [
           'Gęśnica wiosenna nie czerwienieje. Strzępiak po uszkodzeniu czerwienieje i z wiekiem staje się ceglasty',
           'Gęśnica pachnie mącznie i ma gładki, mięsisty kapelusz. Strzępiak ma kapelusz promieniście popękany',
@@ -855,31 +856,47 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
 /**
  * Named on a card, with no atlas page of their own.
  * A new id must be added here with a reason, or the integrity test fails.
- * None of these is a finished edible card, so the green badge must not appear.
+ * Status is deliberately not EDIBLE: there is no finished edible card.
+ * `note` is the user-facing caution. INEDIBLE here means "not a kitchen verdict",
+ * not a claim that the species is merely bitter.
  */
+export const NOT_FOR_COLLECTION_NOTE = 'Niezalecany do zbioru';
+
 export const LOOKALIKES_WITHOUT_CARD: Readonly<
-  Record<string, { status: EdibilityStatus; reason: string }>
+  Record<string, { status: EdibilityStatus; reason: string; note: string }>
 > = {
   calocybe_gambosa: {
-    status: 'EDIBLE',
+    status: 'INEDIBLE',
+    note: NOT_FOR_COLLECTION_NOTE,
     reason:
-      'Gęśnica wiosenna (majówka) is only the spring twin of the deadly fibrecap. There is no finished card, so the atlas does not show it as edible.',
+      'Gęśnica wiosenna (majówka) is only the spring twin of the deadly fibrecap. Literature may still call it edible. There is no finished card, so this atlas does not show an edible verdict.',
   },
   amanita_rubescens: {
-    status: 'EDIBLE',
+    status: 'INEDIBLE',
+    note: NOT_FOR_COLLECTION_NOTE,
     reason:
-      'Muchomor czerwieniejący is a model class without an atlas card. Literature calls it edible only after cooking; this row does not show that verdict.',
+      'Muchomor czerwieniejący is a model class without an atlas card. Literature calls it edible only after cooking. This row does not show that verdict.',
   },
   amanita_excelsa: {
-    status: 'EDIBLE',
+    status: 'INEDIBLE',
+    note: NOT_FOR_COLLECTION_NOTE,
     reason:
-      'Muchomor twardawy (Amanita excelsa, syn. A. spissa) has no card. It is too close to the panther cap to present as a finished edible species.',
+      'Muchomor twardawy (Amanita excelsa, syn. A. spissa) has no card. Authors disagree, and it is too close to the panther cap to present as edible.',
   },
 };
 
-/** True when any recorded look-alike is flagged as a deadly confusion. Not stored separately, so it cannot drift from confusionRisks. */
-export function hasFatalLookAlikeRisk(species: Pick<MushroomSpecies, 'confusionRisks'>): boolean {
-  return species.confusionRisks.some((risk) => risk.fatal);
+/**
+ * Red look-alike chrome.
+ * True when a named twin is deadly, or when the open card itself is deadly.
+ * `fatal` on each risk stays "the named look-alike is deadly".
+ */
+export function hasFatalLookAlikeRisk(
+  species: Pick<MushroomSpecies, 'confusionRisks' | 'status'>
+): boolean {
+  return (
+    species.status === 'DEADLY_POISONOUS' ||
+    species.confusionRisks.some((risk) => risk.fatal)
+  );
 }
 
 /**

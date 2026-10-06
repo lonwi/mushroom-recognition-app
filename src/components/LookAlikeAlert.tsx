@@ -1,8 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { ConfusionRisk } from '../types/mushroom';
-import { SpeciesStatusBadge } from './EdibilityBadge';
-import { isIncompleteSpeciesCard } from '../data/mushrooms';
+import { ConfusionRisk, EdibilityStatus } from '../types/mushroom';
+import { MissingCardBadge, SpeciesStatusBadge } from './EdibilityBadge';
+import {
+  isIncompleteSpeciesCard,
+  LOOKALIKES_WITHOUT_CARD,
+  MUSHROOM_IDS,
+} from '../data/mushrooms';
 
 interface Props {
   risks: ConfusionRisk[];
@@ -13,6 +17,8 @@ interface Props {
   noDangerousLookAlikesSource?: string;
   /** Ids that have an atlas card. Unknown ids are named without a link. */
   catalogIds?: ReadonlySet<string>;
+  /** Status of the open card. A deadly card keeps the red warning even when every named twin is edible. */
+  ownStatus?: EdibilityStatus;
   onOpenSpecies?: (speciesId: string) => void;
 }
 
@@ -24,6 +30,7 @@ export const LookAlikeAlert: React.FC<Props> = ({
   risks,
   noDangerousLookAlikesSource,
   catalogIds,
+  ownStatus,
   onOpenSpecies,
 }) => {
   const list = risks ?? [];
@@ -50,7 +57,7 @@ export const LookAlikeAlert: React.FC<Props> = ({
     );
   }
 
-  const hasFatal = list.some((r) => r.fatal);
+  const hasFatal = list.some((r) => r.fatal) || ownStatus === 'DEADLY_POISONOUS';
 
   return (
     <View style={[styles.container, hasFatal ? styles.fatalBorder : styles.warningBorder]}>
@@ -67,22 +74,31 @@ export const LookAlikeAlert: React.FC<Props> = ({
       </View>
 
       {list.map((risk, idx) => {
-        const inCatalog = catalogIds?.has(risk.confusedWithId) ?? false;
-        const canOpen = inCatalog && !!onOpenSpecies;
+        const inCatalog =
+          catalogIds != null
+            ? catalogIds.has(risk.confusedWithId)
+            : MUSHROOM_IDS.has(risk.confusedWithId);
+        const canOpen = catalogIds?.has(risk.confusedWithId) === true && !!onOpenSpecies;
         const unfinishedEdible =
+          inCatalog &&
           risk.confusedWithStatus === 'EDIBLE' &&
-          (isIncompleteSpeciesCard(risk.confusedWithId) || (catalogIds != null && !inCatalog));
+          isIncompleteSpeciesCard(risk.confusedWithId);
+        const withoutCard = LOOKALIKES_WITHOUT_CARD[risk.confusedWithId];
         return (
           <View key={`${risk.confusedWithId}-${idx}`} style={styles.riskCard}>
             <View style={styles.riskTop}>
               <Text style={styles.riskName}>Można pomylić z: {risk.confusedWithName}</Text>
               <View testID={`lookalike-status-${risk.confusedWithId}`}>
-                <SpeciesStatusBadge
-                  status={risk.confusedWithStatus}
-                  incompleteCard={unfinishedEdible}
-                  size="small"
-                  testID={`incomplete-card-badge-${risk.confusedWithId}`}
-                />
+                {inCatalog ? (
+                  <SpeciesStatusBadge
+                    status={risk.confusedWithStatus}
+                    incompleteCard={unfinishedEdible}
+                    size="small"
+                    testID={`incomplete-card-badge-${risk.confusedWithId}`}
+                  />
+                ) : (
+                  <MissingCardBadge size="small" testID={`missing-card-badge-${risk.confusedWithId}`} />
+                )}
               </View>
             </View>
             {canOpen ? (
@@ -95,9 +111,10 @@ export const LookAlikeAlert: React.FC<Props> = ({
                 <Text style={styles.linkText}>Zobacz kartę w atlasie</Text>
               </TouchableOpacity>
             ) : null}
-            {catalogIds && !inCatalog ? (
+            {!inCatalog ? (
               <Text style={styles.unlinkedNote} testID={`lookalike-unlinked-${risk.confusedWithId}`}>
                 Brak karty w atlasie — nazwa tylko informacyjna, bez linku.
+                {withoutCard ? ` ${withoutCard.note}.` : ''}
               </Text>
             ) : null}
             <View style={styles.differencesBox}>

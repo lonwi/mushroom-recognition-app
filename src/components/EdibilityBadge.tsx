@@ -8,6 +8,7 @@ interface Props {
 }
 
 export const INCOMPLETE_CARD_LABEL = 'KARTA NIEPEŁNA';
+export const MISSING_CARD_LABEL = 'Brak karty';
 
 interface IncompleteProps {
   size?: 'small' | 'medium' | 'large';
@@ -53,6 +54,39 @@ export const IncompleteCardBadge: React.FC<IncompleteProps> = ({ size = 'medium'
         ]}
       >
         {INCOMPLETE_CARD_LABEL}
+      </Text>
+    </View>
+  );
+};
+
+/** A named look-alike with no atlas card. Not an edibility verdict. */
+export const MissingCardBadge: React.FC<IncompleteProps> = ({ size = 'medium', testID }) => {
+  const isSmall = size === 'small';
+  const isLarge = size === 'large';
+
+  return (
+    <View
+      testID={testID}
+      style={[
+        styles.badge,
+        styles.missingBadge,
+        {
+          paddingVertical: isSmall ? 2 : isLarge ? 8 : 4,
+          paddingHorizontal: isSmall ? 6 : isLarge ? 14 : 10,
+        },
+      ]}
+    >
+      <Text
+        style={[
+          styles.text,
+          styles.missingText,
+          {
+            fontSize: isSmall ? 10 : isLarge ? 14 : 12,
+            fontWeight: '700',
+          },
+        ]}
+      >
+        {MISSING_CARD_LABEL}
       </Text>
     </View>
   );
@@ -181,5 +215,12 @@ const styles = StyleSheet.create({
   },
   incompleteText: {
     color: '#9A3412',
+  },
+  missingBadge: {
+    backgroundColor: '#F1F5F9',
+    borderColor: '#64748B',
+  },
+  missingText: {
+    color: '#334155',
   },
 });
