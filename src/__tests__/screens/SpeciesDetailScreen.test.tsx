@@ -159,17 +159,33 @@ describe('SpeciesDetailScreen safety notices', () => {
     expect(getByText('JADALNY')).toBeTruthy();
   });
 
-  it('shows a red look-alike warning for muchomor sromotnikowy even when the named twins are not deadly', async () => {
-    const deathCap = species('amanita_phalloides');
-    expect(deathCap.status).toBe('DEADLY_POISONOUS');
-    expect(deathCap.confusionRisks.every((risk) => risk.fatal === false)).toBe(true);
+  const redWarningIds = MUSHROOMS_DATABASE.filter(
+    (item) => item.status === 'DEADLY_POISONOUS' || item.confusionRisks.some((risk) => risk.fatal),
+  ).map((item) => item.id);
 
-    const { getByTestId, getByText } = await render(
-      <SpeciesDetailScreen species={deathCap} onBack={() => {}} />
-    );
+  it('selects every deadly card and every card with a fatal twin', () => {
+    const selected = new Set(redWarningIds);
+    expect(selected.has('amanita_phalloides')).toBe(true);
+    expect(selected.has('macrolepiota_procera')).toBe(true);
 
-    expect(getByTestId('fatal-lookalike-banner')).toBeTruthy();
-    expect(getByText('Śmiertelnie groźny sobowtór w tej karcie')).toBeTruthy();
-    expect(getByText('ŚMIERTELNIE GROŹNE SOBOWTÓRY!')).toBeTruthy();
+    for (const item of MUSHROOMS_DATABASE) {
+      const needsRedWarning =
+        item.status === 'DEADLY_POISONOUS' || item.confusionRisks.some((risk) => risk.fatal);
+      expect(selected.has(item.id)).toBe(needsRedWarning);
+    }
   });
+
+  it.each(redWarningIds)(
+    'shows a red look-alike warning for %s',
+    async (id) => {
+      const card = species(id);
+      const { getByTestId, getByText } = await render(
+        <SpeciesDetailScreen species={card} onBack={() => {}} />
+      );
+
+      expect(getByTestId('fatal-lookalike-banner')).toBeTruthy();
+      expect(getByText('Śmiertelnie groźny sobowtór w tej karcie')).toBeTruthy();
+      expect(getByText('ŚMIERTELNIE GROŹNE SOBOWTÓRY!')).toBeTruthy();
+    },
+  );
 });

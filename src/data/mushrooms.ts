@@ -1,4 +1,4 @@
-import { type EdibilityStatus, type MushroomSpecies } from '../types/mushroom';
+import { type MushroomSpecies } from '../types/mushroom';
 
 export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
   {
@@ -681,7 +681,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophore: 'GILLS',
     months: [6, 7, 8, 9, 10],
     habitat: 'Lasy iglaste i liściaste, na suchszych, piaszczystych glebach, pod sosnami, świerkami, dębami i bukami.',
-    capDescription: 'Do około 12 cm. Najpierw półkulisty, potem rozpostarty. Brązowawy, z białymi łatkami, które deszcz może zmyć. Brzeg zwykle krótko prążkowany, ale forma górska spod świerka (A. pantherina f. abietum) ma brzeg gładki albo tylko słabo prążkowany u starych owocników. Prążkowanie brzegu nie rozstrzyga gatunku.',
+    capDescription: 'Do około 12 cm. Najpierw półkulisty, potem rozpostarty. Brązowawy, z białymi łatkami, które deszcz może zmyć. Brzeg zwykle krótko prążkowany, ale forma górska (A. pantherina f. abietum), w górach, pod jodłami i świerkami, ma brzeg gładki albo tylko słabo prążkowany u starych owocników. Prążkowanie brzegu nie rozstrzyga gatunku.',
     hymenophoreDescription: 'Blaszki białe, gęste, wolne.',
     stemDescription: 'Smukły, biały, gładki, z przyrośniętym, gładkim pierścieniem. Nasada bulwiasta, z pochwą w postaci równego kołnierza i często dodatkowych wałeczków.',
     fleshDescription: 'Biały, kruchy, nie zmienia barwy po uszkodzeniu.',
@@ -691,7 +691,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
       {
         confusedWithId: 'amanita_rubescens',
         confusedWithName: 'Muchomor czerwieniejący',
-        confusedWithStatus: 'INEDIBLE',
+        confusedWithStatus: 'NO_ATLAS_VERDICT',
         keyDifferences: [
           'Muchomor plamisty ma pierścień gładki, nie prążkowany. Czerwieniejący ma pierścień z prążkami',
           'Miąższ plamistego nie czerwienieje. U czerwieniejącego uszkodzony miąższ różowieje albo czerwienieje',
@@ -702,11 +702,11 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
       {
         confusedWithId: 'amanita_excelsa',
         confusedWithName: 'Muchomor twardawy',
-        confusedWithStatus: 'INEDIBLE',
+        confusedWithStatus: 'NO_ATLAS_VERDICT',
         keyDifferences: [
           'Twardawy ma pierścień prążkowany od góry. Plamisty ma pierścień gładki',
           'Bulwa twardawego nie ma wyraźnego rąbka. U plamistego pochwa tworzy kołnierz na bulwie',
-          'Brzeg kapelusza nie rozstrzyga. Forma górska plamistego (A. pantherina f. abietum) ma brzeg gładki, a u twardawego prążkowanie brzegu też nie jest stałe',
+          'Brzeg kapelusza nie rozstrzyga. Forma górska plamistego (A. pantherina f. abietum), w górach, pod jodłami i świerkami, ma brzeg gładki, a u twardawego prążkowanie brzegu też nie jest stałe',
           'Żaden z tych dwóch nie czerwienieje. Czerwienienie wskazuje raczej na muchomora czerwieniejącego, nie na bezpieczeństwo'
         ],
         fatal: false
@@ -829,7 +829,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
       {
         confusedWithId: 'calocybe_gambosa',
         confusedWithName: 'Gęśnica wiosenna (majówka)',
-        confusedWithStatus: 'INEDIBLE',
+        confusedWithStatus: 'NO_ATLAS_VERDICT',
         keyDifferences: [
           'Gęśnica wiosenna nie czerwienieje. Strzępiak po uszkodzeniu czerwienieje i z wiekiem staje się ceglasty',
           'Gęśnica pachnie mącznie i ma gładki, mięsisty kapelusz. Strzępiak ma kapelusz promieniście popękany',
@@ -856,29 +856,30 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
 /**
  * Named on a card, with no atlas page of their own.
  * A new id must be added here with a reason, or the integrity test fails.
- * Status is deliberately not EDIBLE: there is no finished edible card.
- * `note` is the user-facing caution. INEDIBLE here means "not a kitchen verdict",
- * not a claim that the species is merely bitter.
+ * `status` is `NO_ATLAS_VERDICT`, not an edibility status: there is no finished card
+ * and this atlas does not call the species edible, inedible, poisonous, or deadly.
+ * `note` is the user-facing caution.
  */
 export const NOT_FOR_COLLECTION_NOTE = 'Niezalecany do zbioru';
+export const ATLAS_NO_VERDICT_NOTE = 'Atlas nie wydaje werdyktu dla tego gatunku';
 
 export const LOOKALIKES_WITHOUT_CARD: Readonly<
-  Record<string, { status: EdibilityStatus; reason: string; note: string }>
+  Record<string, { status: 'NO_ATLAS_VERDICT'; reason: string; note: string }>
 > = {
   calocybe_gambosa: {
-    status: 'INEDIBLE',
-    note: NOT_FOR_COLLECTION_NOTE,
+    status: 'NO_ATLAS_VERDICT',
+    note: ATLAS_NO_VERDICT_NOTE,
     reason:
       'Gęśnica wiosenna (majówka) is only the spring twin of the deadly fibrecap. Literature may still call it edible. There is no finished card, so this atlas does not show an edible verdict.',
   },
   amanita_rubescens: {
-    status: 'INEDIBLE',
-    note: NOT_FOR_COLLECTION_NOTE,
+    status: 'NO_ATLAS_VERDICT',
+    note: ATLAS_NO_VERDICT_NOTE,
     reason:
       'Muchomor czerwieniejący is a model class without an atlas card. Literature calls it edible only after cooking. This row does not show that verdict.',
   },
   amanita_excelsa: {
-    status: 'INEDIBLE',
+    status: 'NO_ATLAS_VERDICT',
     note: NOT_FOR_COLLECTION_NOTE,
     reason:
       'Muchomor twardawy (Amanita excelsa, syn. A. spissa) has no card. Authors disagree, and it is too close to the panther cap to present as edible.',

@@ -1,5 +1,6 @@
 /// <reference types="jest" />
 import {
+  ATLAS_NO_VERDICT_NOTE,
   hasFatalLookAlikeRisk,
   LOOKALIKES_WITHOUT_CARD,
   MUSHROOM_IDS,
@@ -50,8 +51,10 @@ describe('Mushroom Database & Safety Verification', () => {
             continue;
           }
           expect(risk.confusedWithStatus).toBe(allowed.status);
-          expect(allowed.status).not.toBe('EDIBLE');
-          expect(allowed.note).toBe(NOT_FOR_COLLECTION_NOTE);
+          expect(allowed.status).toBe('NO_ATLAS_VERDICT');
+          expect(allowed.note).toBe(
+            risk.confusedWithId === 'amanita_excelsa' ? NOT_FOR_COLLECTION_NOTE : ATLAS_NO_VERDICT_NOTE,
+          );
           expect(allowed.reason.trim().length).toBeGreaterThan(0);
           continue;
         }
@@ -70,6 +73,34 @@ describe('Mushroom Database & Safety Verification', () => {
         )
       ).toBe(true);
     }
+  });
+
+  test('look-alikes without a card do not use a normal edibility status', () => {
+    const normalStatuses = ['EDIBLE', 'INEDIBLE', 'POISONOUS', 'DEADLY_POISONOUS'];
+    expect(Object.keys(LOOKALIKES_WITHOUT_CARD).sort()).toEqual([
+      'amanita_excelsa',
+      'amanita_rubescens',
+      'calocybe_gambosa',
+    ]);
+
+    for (const [id, entry] of Object.entries(LOOKALIKES_WITHOUT_CARD)) {
+      expect(normalStatuses).not.toContain(entry.status);
+      expect(entry.status).toBe('NO_ATLAS_VERDICT');
+      const mentions = MUSHROOMS_DATABASE.flatMap((species) =>
+        species.confusionRisks.filter((risk) => risk.confusedWithId === id),
+      );
+      expect(mentions.length).toBeGreaterThan(0);
+      for (const risk of mentions) {
+        expect(normalStatuses).not.toContain(risk.confusedWithStatus);
+        expect(risk.confusedWithStatus).toBe('NO_ATLAS_VERDICT');
+      }
+    }
+
+    expect(LOOKALIKES_WITHOUT_CARD.amanita_excelsa.note).toBe(NOT_FOR_COLLECTION_NOTE);
+    expect(LOOKALIKES_WITHOUT_CARD.calocybe_gambosa.note).toBe(ATLAS_NO_VERDICT_NOTE);
+    expect(LOOKALIKES_WITHOUT_CARD.amanita_rubescens.note).toBe(ATLAS_NO_VERDICT_NOTE);
+    expect(LOOKALIKES_WITHOUT_CARD.calocybe_gambosa.note).not.toBe(NOT_FOR_COLLECTION_NOTE);
+    expect(LOOKALIKES_WITHOUT_CARD.amanita_rubescens.note).not.toBe(NOT_FOR_COLLECTION_NOTE);
   });
 
   test('fatal is set only when the named look-alike is deadly', () => {
@@ -233,6 +264,7 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(pantherText).toMatch(/pierścień prążkowany/);
     expect(pantherText).toMatch(/rąbek/);
     expect(pantherText).toMatch(/f\. abietum/);
+    expect(pantherText).toMatch(/w górach, pod jodłami i świerkami/);
     expect(pantherText).not.toMatch(/Twardawy ma brzeg bez prążków/);
     expect(pantherText).not.toMatch(/Plamisty ma brzeg prążkowany/);
 

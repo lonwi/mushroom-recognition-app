@@ -11,10 +11,16 @@ export type HymenophoreType =
   | 'SPINES'  // Kolce - np. sarniak, kolczak
   | 'OTHER';  // Inny (np. purchawki, smardze - fałdy główki)
 
+/**
+ * Edibility of a named twin, or `NO_ATLAS_VERDICT` when that twin has no atlas card.
+ * `NO_ATLAS_VERDICT` is not one of the four edibility statuses and must not be shown as a badge.
+ */
+export type ConfusedWithStatus = EdibilityStatus | 'NO_ATLAS_VERDICT';
+
 export interface ConfusionRisk {
   confusedWithId: string;
   confusedWithName: string;
-  confusedWithStatus: EdibilityStatus;
+  confusedWithStatus: ConfusedWithStatus;
   keyDifferences: string[];
   /**
    * True only when the named look-alike is deadly (`confusedWithStatus === 'DEADLY_POISONOUS'`).
@@ -22,6 +28,7 @@ export interface ConfusionRisk {
    * Do not set this because the open card is deadly and the look-alike is edible:
    * the matching entry on the edible card carries the flag.
    * A poisonous but not deadly look-alike stays false.
+   * `NO_ATLAS_VERDICT` is not deadly.
    */
   fatal: boolean;
 }

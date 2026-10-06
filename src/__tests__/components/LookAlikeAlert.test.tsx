@@ -6,7 +6,7 @@ import {
   LookAlikeAlert,
 } from '../../components/LookAlikeAlert';
 import { INCOMPLETE_CARD_LABEL, MISSING_CARD_LABEL } from '../../components/EdibilityBadge';
-import { NOT_FOR_COLLECTION_NOTE } from '../../data/mushrooms';
+import { ATLAS_NO_VERDICT_NOTE, MUSHROOMS_DATABASE, NOT_FOR_COLLECTION_NOTE } from '../../data/mushrooms';
 import { ConfusionRisk } from '../../types/mushroom';
 
 describe('LookAlikeAlert RTL Component Tests', () => {
@@ -144,7 +144,8 @@ describe('LookAlikeAlert RTL Component Tests', () => {
     expect(getByTestId('lookalike-unlinked-calocybe_gambosa')).toBeTruthy();
     expect(getByTestId('missing-card-badge-calocybe_gambosa')).toBeTruthy();
     expect(getByText(MISSING_CARD_LABEL)).toBeTruthy();
-    expect(getByText(new RegExp(NOT_FOR_COLLECTION_NOTE))).toBeTruthy();
+    expect(getByText(new RegExp(ATLAS_NO_VERDICT_NOTE))).toBeTruthy();
+    expect(queryByText(NOT_FOR_COLLECTION_NOTE)).toBeNull();
     expect(queryByText(INCOMPLETE_CARD_LABEL)).toBeNull();
     expect(queryByText('JADALNY')).toBeNull();
   });
@@ -172,6 +173,33 @@ describe('LookAlikeAlert RTL Component Tests', () => {
     expect(getAllByText(MISSING_CARD_LABEL)).toHaveLength(2);
     expect(queryByText('JADALNY')).toBeNull();
     expect(queryByText(INCOMPLETE_CARD_LABEL)).toBeNull();
+  });
+
+  it('shows a collection warning only for twardawy and no edibility verdict for the other missing cards', async () => {
+    const risks = MUSHROOMS_DATABASE.flatMap((item) => item.confusionRisks).filter((risk) =>
+      ['calocybe_gambosa', 'amanita_rubescens', 'amanita_excelsa'].includes(risk.confusedWithId),
+    );
+
+    const { getByTestId, queryByText } = await render(<LookAlikeAlert risks={risks} />);
+
+    expect(getByTestId('lookalike-unlinked-calocybe_gambosa')).toHaveTextContent(ATLAS_NO_VERDICT_NOTE, {
+      exact: false,
+    });
+    expect(getByTestId('lookalike-unlinked-amanita_rubescens')).toHaveTextContent(ATLAS_NO_VERDICT_NOTE, {
+      exact: false,
+    });
+    expect(getByTestId('lookalike-unlinked-amanita_excelsa')).toHaveTextContent(NOT_FOR_COLLECTION_NOTE, {
+      exact: false,
+    });
+    expect(getByTestId('lookalike-unlinked-calocybe_gambosa')).not.toHaveTextContent(NOT_FOR_COLLECTION_NOTE, {
+      exact: false,
+    });
+    expect(getByTestId('lookalike-unlinked-amanita_rubescens')).not.toHaveTextContent(NOT_FOR_COLLECTION_NOTE, {
+      exact: false,
+    });
+    expect(queryByText('JADALNY')).toBeNull();
+    expect(queryByText('NIEJADALNY')).toBeNull();
+    expect(queryByText('TRUJĄCY')).toBeNull();
   });
 
   it('turns the warning red when the open card is deadly even if every twin is edible', async () => {

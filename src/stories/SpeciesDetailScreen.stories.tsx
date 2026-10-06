@@ -28,6 +28,14 @@ export const DeathCapRedWarning: Story = {
   ),
 };
 
+export const FibrecapNoAtlasVerdict: Story = {
+  render: () => (
+    <View style={{ flex: 1, minHeight: 900 }}>
+      <SpeciesDetailScreen species={species('inocybe_erubescens')} onBack={() => {}} />
+    </View>
+  ),
+};
+
 export const PantherMissingCardTwins: Story = {
   render: () => (
     <View style={{ flex: 1, minHeight: 900 }}>
