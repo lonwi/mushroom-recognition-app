@@ -56,15 +56,34 @@ export interface ModelPrediction {
   rank: number;
 }
 
+export interface JournalCandidate {
+  id: string;
+  namePl: string;
+  nameLatin: string;
+  confidence: number;
+  rank: number;
+}
+
+/**
+ * Honest scan outcome stored with a find.
+ * A rejected or unavailable scan has no species name and no confidence.
+ */
+export type JournalRecognition =
+  | { status: 'unavailable' }
+  | { status: 'rejected'; reason: 'not_a_mushroom' | 'unclear' }
+  | {
+      status: 'candidates';
+      top3: JournalCandidate[];
+      expertVerificationRequired: boolean;
+      warningReasons: Array<'dangerous_genus' | 'low_confidence'>;
+    };
+
 export interface SightingRecord {
   id: string;
-  speciesId: string;
-  speciesNamePl: string;
-  speciesNameLatin: string;
-  photoUri: string;
   timestamp: number;
+  photoUri?: string;
   latitude?: number;
   longitude?: number;
   notes?: string;
-  confidence: number;
+  recognition: JournalRecognition;
 }

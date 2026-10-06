@@ -1,7 +1,10 @@
 import React from 'react';
-import { fireEvent, render } from '@testing-library/react-native';
+import { Alert } from 'react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Location from 'expo-location';
 import { ResultModal } from '../../components/ResultModal';
+import { storageService } from '../../services/storageService';
 import { LanguageProvider } from '../../contexts/LanguageContext';
 import { ClassificationResult } from '../../services/classifierService';
 import { SpeciesCandidate } from '../../services/recognitionDecision';
@@ -213,5 +216,92 @@ describe('ResultModal recognition outcomes', () => {
     expect(queryByText(/Muchomor/)).toBeNull();
     expect(queryByText('JADALNY')).toBeNull();
     expect(queryByTestId('expert-verification-banner')).toBeNull();
+  });
+
+  it('saves an unclear scan to the journal without upgrading it to a species', async () => {
+    const onSavedToJournal = jest.fn();
+    const onClose = jest.fn();
+    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const { getByTestId, queryByText } = await render(
+      <LanguageProvider>
+        <ResultModal
+          visible
+          result={{
+            status: 'rejected',
+            reason: 'unclear',
+            processedImageUri: 'file://camera/blur.jpg',
+            inferenceTimeMs: 11,
+          }}
+          onClose={onClose}
+          onSavedToJournal={onSavedToJournal}
+        />
+      </LanguageProvider>,
+    );
+
+    expect(queryByText(/Borowik/)).toBeNull();
+    expect(queryByText(/%/)).toBeNull();
+    (Alert.alert as jest.Mock).mockClear();
+    await fireEvent.press(getByTestId('save-to-journal'));
+
+    const buttons = (Alert.alert as jest.Mock).mock.calls.at(-1)?.[2] as Array<{
+      text: string;
+      onPress?: () => Promise<void>;
+    }>;
+    expect(buttons.map((button) => button.text).join(' ')).toMatch(/lokalizacji/);
+    expect((Alert.alert as jest.Mock).mock.calls[0][1]).toMatch(/nie wysyła lokalizacji/i);
+
+    const withoutLocation = buttons.find((button) => button.text === 'Bez lokalizacji');
+    await act(async () => {
+      await withoutLocation?.onPress?.();
+    });
+
+    const saved = await storageService.getSightings();
+    expect(saved).toHaveLength(1);
+    expect(saved[0].recognition).toEqual({ status: 'rejected', reason: 'unclear' });
+    expect(saved[0].photoUri).toMatch(/journal-photos/);
+    expect(saved[0].latitude).toBeUndefined();
+    expect(JSON.stringify(saved[0])).not.toMatch(/Borowik|speciesId|confidence/);
+    expect(onSavedToJournal).toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('saves without coordinates when location permission is denied', async () => {
+    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'denied' });
+    (Location.getCurrentPositionAsync as jest.Mock).mockClear();
+    const { getByTestId } = await render(
+      <LanguageProvider>
+        <ResultModal
+          visible
+          result={{
+            status: 'unavailable',
+            reason: 'model_missing',
+            processedImageUri: 'file://camera/capture.jpg',
+          }}
+          onClose={() => {}}
+        />
+      </LanguageProvider>,
+    );
+
+    (Alert.alert as jest.Mock).mockClear();
+    await fireEvent.press(getByTestId('save-to-journal'));
+    const buttons = (Alert.alert as jest.Mock).mock.calls.at(-1)?.[2] as Array<{
+      text: string;
+      onPress?: () => Promise<void>;
+    }>;
+    const withLocation = buttons.find((button) => button.text === 'Użyj lokalizacji');
+    await act(async () => {
+      await withLocation?.onPress?.();
+    });
+
+    const saved = await storageService.getSightings();
+    expect(saved).toHaveLength(1);
+    expect(saved[0].recognition).toEqual({ status: 'unavailable' });
+    expect(saved[0].latitude).toBeUndefined();
+    expect(saved[0].longitude).toBeUndefined();
+    expect(Location.getCurrentPositionAsync).not.toHaveBeenCalled();
+    const messages = (Alert.alert as jest.Mock).mock.calls.map((call) => String(call[1]));
+    expect(messages.join(' ')).toMatch(/bez współrzędnych/);
+    (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
   });
 });

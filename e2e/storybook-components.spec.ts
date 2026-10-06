@@ -51,6 +51,27 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.locator('body')).not.toContainText('ŚMIERTELNIE TRUJĄCY');
   });
 
+  test('Journal keeps an unclear find without a map and opens a saved spot', async ({ page }) => {
+    await page.goto('/iframe.html?id=mushroom-journalscreen--saved-finds');
+    await expect(page.getByTestId('journal-title-sighting_unclear')).toContainText('Niepewny wynik');
+    await expect(page.getByTestId('journal-no-location-sighting_unclear')).toContainText(
+      'Brak zapisanej lokalizacji',
+    );
+    await expect(page.getByTestId('journal-open-map-sighting_unclear')).toHaveCount(0);
+    await expect(page.getByTestId('journal-candidate-sighting_spot-1')).toContainText('57.4%');
+    await expect(page.getByTestId('journal-not-edible-sighting_spot')).toContainText('nie jest oceną jadalności');
+    await expect(page.getByTestId('journal-open-map-sighting_spot')).toContainText('Otwórz miejsce w mapach');
+    await expect(page.locator('body')).not.toContainText('JADALNY');
+
+    await page.getByTestId('journal-edit-notes-sighting_spot').click();
+    await page.getByTestId('journal-notes-input').fill('pod dębami, 4 sztuki');
+    await page.getByTestId('journal-notes-save').click();
+    await expect(page.getByTestId('journal-notes-sighting_spot')).toContainText('pod dębami, 4 sztuki');
+    await page.reload();
+    await expect(page.getByTestId('journal-notes-sighting_spot')).toContainText('pod dębami, 4 sztuki');
+    await expect(page.getByTestId('journal-title-sighting_unclear')).toContainText('Niepewny wynik');
+  });
+
   test('ResultModal says recognition is unavailable and shows no species or confidence', async ({ page }) => {
     await page.goto('/iframe.html?id=mushroom-resultmodal--recognition-unavailable');
     await expect(page.getByTestId('recognition-unavailable-title')).toContainText('Rozpoznawanie niedostępne');

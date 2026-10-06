@@ -13,11 +13,13 @@ const config: StorybookConfig = {
     const mockCodegenPath = path.resolve(__dirname, 'mockCodegen.js');
     const mockSafeAreaPath = path.resolve(__dirname, 'mockSafeArea.js');
     const mockLocationPath = path.resolve(__dirname, 'mockLocation.js');
+    const mockFileSystemPath = path.resolve(__dirname, 'mockFileSystem.js');
 
     config.resolve = config.resolve || {};
     config.resolve.alias = {
       ...config.resolve.alias,
       'expo-location': mockLocationPath,
+      'expo-file-system/legacy': mockFileSystemPath,
       'react-native-safe-area-context': mockSafeAreaPath,
       '@expo/vector-icons/MaterialCommunityIcons': mockIconPath,
       '@expo/vector-icons/Ionicons': mockIconPath,
