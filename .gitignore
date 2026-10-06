@@ -5,3 +5,8 @@ test-results
 playwright-report
 dist
 .DS_Store
+training/data/
+training/artifacts/
+__pycache__/
+*.pyc
+.pytest_cache/

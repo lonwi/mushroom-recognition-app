@@ -9,8 +9,10 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ClassificationResult } from '../services/classifierService';
+import { MUSHROOMS_DATABASE } from '../data/mushrooms';
 import { useLanguage } from '../contexts/LanguageContext';
+import type { ClassificationResult } from '../services/classifierService';
+import { formatConfidencePercent } from '../services/recognitionDecision';
 
 interface Props {
   visible: boolean;
@@ -24,15 +26,27 @@ function isLocalCaptureUri(uri: string): boolean {
   return /^(file:|content:|data:|blob:|ph:|assets-library:)/.test(uri);
 }
 
-export const ResultModal: React.FC<Props> = ({ visible, result, onClose }) => {
+export const ResultModal: React.FC<Props> = ({ visible, result, onClose, onOpenAtlasSpecies }) => {
   const { t } = useLanguage();
 
-  if (!result || result.status !== 'unavailable') {
+  if (!result) {
     return null;
   }
 
   const photoUri = result.processedImageUri;
   const showPhoto = !!photoUri && isLocalCaptureUri(photoUri);
+  const title =
+    result.status === 'unavailable'
+      ? t('scanner.recognitionUnavailableTitle')
+      : result.status === 'rejected'
+        ? t('scanner.rejectedTitle')
+        : t('scanner.candidatesTitle');
+  const titleTestId =
+    result.status === 'unavailable'
+      ? 'recognition-unavailable-title'
+      : result.status === 'rejected'
+        ? 'recognition-rejected-title'
+        : 'recognition-candidates-title';
 
   return (
     <Modal visible={visible} animationType="slide" transparent={false}>
@@ -42,8 +56,8 @@ export const ResultModal: React.FC<Props> = ({ visible, result, onClose }) => {
             <TouchableOpacity onPress={onClose} style={styles.backBtn} activeOpacity={0.7}>
               <Text style={styles.backBtnText}>✕ {t('scanner.close')}</Text>
             </TouchableOpacity>
-            <Text style={styles.navTitle} testID="recognition-unavailable-title">
-              {t('scanner.recognitionUnavailableTitle')}
+            <Text style={styles.navTitle} testID={titleTestId}>
+              {title}
             </Text>
             <View style={{ width: 70 }} />
           </View>
@@ -60,12 +74,74 @@ export const ResultModal: React.FC<Props> = ({ visible, result, onClose }) => {
               </View>
             ) : null}
 
-            <View style={styles.resultCard}>
-              <Text style={styles.heading} testID="recognition-unavailable-body">
-                {t('scanner.recognitionUnavailableBody')}
-              </Text>
-              <Text style={styles.note}>{t('scanner.recognitionUnavailableNote')}</Text>
-            </View>
+            {result.status === 'unavailable' ? (
+              <View style={styles.resultCard}>
+                <Text style={styles.heading} testID="recognition-unavailable-body">
+                  {t('scanner.recognitionUnavailableBody')}
+                </Text>
+                <Text style={styles.note}>{t('scanner.recognitionUnavailableNote')}</Text>
+              </View>
+            ) : null}
+
+            {result.status === 'rejected' ? (
+              <View style={styles.resultCard}>
+                <Text style={styles.heading} testID="recognition-rejected-body">
+                  {result.reason === 'unclear' ? t('scanner.rejectedUnclear') : t('scanner.rejectedNotMushroom')}
+                </Text>
+                <Text style={styles.note}>{t('scanner.rejectedVerify')}</Text>
+              </View>
+            ) : null}
+
+            {result.status === 'candidates' ? (
+              <View>
+                {result.expertVerificationRequired ? (
+                  <View style={styles.expertBanner} testID="expert-verification-banner">
+                    <Text style={styles.expertTitle}>{t('scanner.expertWarningTitle')}</Text>
+                    <Text style={styles.expertBody}>{t('scanner.expertWarningBody')}</Text>
+                    {result.warningReasons.includes('dangerous_genus') ? (
+                      <Text style={styles.expertDetail} testID="dangerous-genus-warning">
+                        {t('scanner.dangerousGenusWarning')}
+                      </Text>
+                    ) : null}
+                    {result.warningReasons.includes('low_confidence') ? (
+                      <Text style={styles.expertDetail} testID="low-confidence-warning">
+                        {t('scanner.lowConfidenceWarning')}
+                      </Text>
+                    ) : null}
+                  </View>
+                ) : null}
+
+                <View style={styles.resultCard}>
+                  <Text style={styles.heading}>{t('scanner.candidatesLead')}</Text>
+                  <Text style={styles.note} testID="not-edibility-verdict">
+                    {t('scanner.notEdibilityVerdict')}
+                  </Text>
+                  {result.top3.map((candidate) => {
+                    const inAtlas = MUSHROOMS_DATABASE.some((species) => species.id === candidate.id);
+                    return (
+                      <View key={`${candidate.rank}-${candidate.id}`} style={styles.candidate} testID={`candidate-rank-${candidate.rank}`}>
+                        <Text style={styles.candidateRank}>
+                          {candidate.rank}. {candidate.namePl}
+                        </Text>
+                        <Text style={styles.candidateLatin}>{candidate.nameLatin}</Text>
+                        <Text style={styles.candidateConfidence} testID={`candidate-confidence-${candidate.rank}`}>
+                          {t('scanner.confidence')}: {formatConfidencePercent(candidate.confidence)}
+                        </Text>
+                        {inAtlas && onOpenAtlasSpecies ? (
+                          <TouchableOpacity
+                            onPress={() => onOpenAtlasSpecies(candidate.id)}
+                            style={styles.atlasBtn}
+                            testID={`open-atlas-${candidate.id}`}
+                          >
+                            <Text style={styles.atlasBtnText}>{t('scanner.openAtlas')}</Text>
+                          </TouchableOpacity>
+                        ) : null}
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            ) : null}
           </ScrollView>
         </View>
       </SafeAreaView>
@@ -147,5 +223,66 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#334155',
     lineHeight: 20,
+  },
+  expertBanner: {
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#DC2626',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 16,
+  },
+  expertTitle: {
+    color: '#991B1B',
+    fontSize: 16,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  expertBody: {
+    color: '#7F1D1D',
+    fontSize: 15,
+    lineHeight: 21,
+    fontWeight: '700',
+  },
+  expertDetail: {
+    color: '#7F1D1D',
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 8,
+  },
+  candidate: {
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+  },
+  candidateRank: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  candidateLatin: {
+    fontSize: 13,
+    fontStyle: 'italic',
+    color: '#475569',
+    marginTop: 2,
+  },
+  candidateConfidence: {
+    fontSize: 14,
+    color: '#1E293B',
+    marginTop: 4,
+  },
+  atlasBtn: {
+    alignSelf: 'flex-start',
+    marginTop: 8,
+    backgroundColor: '#E8F5E9',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  atlasBtnText: {
+    color: '#14532D',
+    fontWeight: '700',
+    fontSize: 13,
   },
 });

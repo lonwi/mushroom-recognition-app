@@ -18,6 +18,9 @@ export const en = {
     pl: 'Polski',
     en: 'English',
     offlineNotice: 'Model and database run 100% offline without network connectivity.',
+    dataLicenseTitle: 'Training photo licenses',
+    dataLicenseBody:
+      'A model, if one is shipped, may be trained only on CC0 or CC-BY photos (no NC or SA). Every photo keeps its author, license, and source URL in training/data/attributions.jsonl. That file has to ship with the model.',
     about: 'About App',
     version: 'Version 1.0.0 (On-Device AI)',
   },
@@ -55,6 +58,22 @@ export const en = {
     photoFailedBody: 'Recognition was not started. No substitute photo was used.',
     cameraUnavailableTitle: 'Camera unavailable',
     cameraUnavailableBody: 'The camera could not be started. Recognition was not started.',
+    rejectedTitle: 'No mushroom recognized',
+    rejectedNotMushroom:
+      'The photo was not accepted as a mushroom from the class set, or it sits outside the distribution the model learned. No species was named.',
+    rejectedUnclear: 'The picture is too ambiguous to name a species.',
+    rejectedVerify: 'If this is still a mushroom, have a mycologist or a Sanepid station check it.',
+    candidatesTitle: 'Scan candidates',
+    candidatesLead: 'The model’s three highest scores. This is not an identification you can forage on.',
+    notEdibilityVerdict: 'This scan is not an edibility verdict.',
+    expertWarningTitle: 'Ask an expert',
+    expertWarningBody:
+      'Do not collect this for food based on the scan. Confirm the identification with a mycologist or at a Sanepid station.',
+    dangerousGenusWarning:
+      'One of the top three candidates is in Amanita, Cortinarius, Galerina, or Gyromitra.',
+    lowConfidenceWarning: 'Confidence is low, or the top two species are too close.',
+    confidence: 'Confidence',
+    openAtlas: 'Open the atlas card and look-alikes',
   },
   journal: {
     title: 'Harvest Journal',

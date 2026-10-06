@@ -18,6 +18,9 @@ export const pl = {
     pl: 'Polski',
     en: 'English',
     offlineNotice: 'Model i baza danych działają w 100% offline bez połączenia z siecią.',
+    dataLicenseTitle: 'Licencje zdjęć treningowych',
+    dataLicenseBody:
+      'Model, jeśli zostanie dołączony, wolno trenować tylko na zdjęciach CC0 albo CC-BY (bez NC i SA). Przy każdym zdjęciu zapisujemy autora, licencję i adres źródła w training/data/attributions.jsonl. Tego pliku nie wolno pominąć przy dystrybucji modelu.',
     about: 'O aplikacji',
     version: 'Wersja 1.0.0 (On-Device AI)',
   },
@@ -56,6 +59,22 @@ export const pl = {
     photoFailedBody: 'Rozpoznawanie nie zostało uruchomione. Nie użyto zdjęcia zastępczego.',
     cameraUnavailableTitle: 'Aparat niedostępny',
     cameraUnavailableBody: 'Nie udało się uruchomić aparatu. Rozpoznawanie nie zostało uruchomione.',
+    rejectedTitle: 'Nie rozpoznano grzyba',
+    rejectedNotMushroom:
+      'Zdjęcie nie zostało uznane za grzyba z zestawu klas albo leży poza rozkładem, którego model się nauczył. Gatunek nie został podany.',
+    rejectedUnclear: 'Obraz jest zbyt niejednoznaczny, żeby podać gatunek.',
+    rejectedVerify: 'Jeśli to jednak grzyb, oceń go u grzyboznawcy albo w Sanepidzie.',
+    candidatesTitle: 'Kandydaci ze skanu',
+    candidatesLead: 'Trzy najwyższe wskazania modelu. To nie jest oznaczenie gatunku do zbioru.',
+    notEdibilityVerdict: 'Ten skan nie jest oceną jadalności.',
+    expertWarningTitle: 'Zweryfikuj u specjalisty',
+    expertWarningBody:
+      'Nie zbieraj tego do jedzenia na podstawie skanu. Potwierdź oznaczenie u grzyboznawcy albo w Sanepidzie.',
+    dangerousGenusWarning:
+      'Wśród trzech pierwszych kandydatów jest rodzaj Amanita, Cortinarius, Galerina albo Gyromitra.',
+    lowConfidenceWarning: 'Pewność jest niska albo dwa gatunki są zbyt blisko siebie.',
+    confidence: 'Pewność',
+    openAtlas: 'Zobacz kartę i sobowtóry',
   },
   journal: {
     title: 'Dziennik Zbiorów',

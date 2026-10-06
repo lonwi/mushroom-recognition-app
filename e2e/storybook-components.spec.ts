@@ -29,6 +29,28 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.locator('body')).toContainText('112');
   });
 
+  test('ResultModal rejects a non-mushroom without naming a species', async ({ page }) => {
+    await page.goto('/iframe.html?id=mushroom-resultmodal--not-a-mushroom');
+    await expect(page.getByTestId('recognition-rejected-title')).toContainText('Nie rozpoznano grzyba');
+    await expect(page.getByTestId('recognition-rejected-body')).toContainText('Gatunek nie został podany');
+    await expect(page.locator('body')).toContainText('Sanepidzie');
+    await expect(page.locator('body')).not.toContainText('%');
+    await expect(page.locator('body')).not.toContainText('Borowik');
+    await expect(page.locator('body')).not.toContainText('JADALNY');
+  });
+
+  test('ResultModal warns on a dangerous genus and does not give an edibility verdict', async ({ page }) => {
+    await page.goto('/iframe.html?id=mushroom-resultmodal--dangerous-genus-warning');
+    await expect(page.getByTestId('expert-verification-banner')).toContainText('Sanepidzie');
+    await expect(page.getByTestId('dangerous-genus-warning')).toContainText('Amanita');
+    await expect(page.getByTestId('low-confidence-warning')).toBeVisible();
+    await expect(page.getByTestId('not-edibility-verdict')).toContainText('nie jest oceną jadalności');
+    await expect(page.getByTestId('candidate-confidence-1')).toContainText('41.0%');
+    await expect(page.locator('body')).toContainText('Amanita phalloides');
+    await expect(page.locator('body')).not.toContainText('JADALNY');
+    await expect(page.locator('body')).not.toContainText('ŚMIERTELNIE TRUJĄCY');
+  });
+
   test('ResultModal says recognition is unavailable and shows no species or confidence', async ({ page }) => {
     await page.goto('/iframe.html?id=mushroom-resultmodal--recognition-unavailable');
     await expect(page.getByTestId('recognition-unavailable-title')).toContainText('Rozpoznawanie niedostępne');
