@@ -106,13 +106,31 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
   test('Panther card separates twardawy by ring and bulb and does not badge a missing card as edible', async ({ page }) => {
     await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--panther-missing-card-twins');
     await expect(page.locator('body')).toContainText('f. abietum');
+    await expect(page.locator('body')).toContainText('w górach, pod jodłami i świerkami');
     await expect(page.locator('body')).toContainText('pierścień gładki');
     await expect(page.locator('body')).toContainText('pierścień prążkowany');
     await expect(page.getByTestId('missing-card-badge-amanita_excelsa')).toContainText('Brak karty');
     await expect(page.getByTestId('missing-card-badge-amanita_excelsa')).not.toContainText('JADALNY');
     await expect(page.getByTestId('lookalike-unlinked-amanita_excelsa')).toContainText('Niezalecany do zbioru');
     await expect(page.getByTestId('missing-card-badge-amanita_rubescens')).toContainText('Brak karty');
+    await expect(page.getByTestId('lookalike-unlinked-amanita_rubescens')).toContainText(
+      'Atlas nie wydaje werdyktu dla tego gatunku'
+    );
+    await expect(page.getByTestId('lookalike-unlinked-amanita_rubescens')).not.toContainText('Niezalecany do zbioru');
     await expect(page.getByTestId('lookalike-status-macrolepiota_procera')).toContainText('JADALNY');
+  });
+
+  test('Fibrecap names majówka without an atlas verdict', async ({ page }) => {
+    await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--fibrecap-no-atlas-verdict');
+    await expect(page.getByTestId('fatal-lookalike-banner')).toContainText('Śmiertelnie groźny sobowtór');
+    await expect(page.getByTestId('missing-card-badge-calocybe_gambosa')).toContainText('Brak karty');
+    await expect(page.getByTestId('lookalike-unlinked-calocybe_gambosa')).toContainText(
+      'Atlas nie wydaje werdyktu dla tego gatunku'
+    );
+    await expect(page.getByTestId('lookalike-unlinked-calocybe_gambosa')).not.toContainText('Niezalecany do zbioru');
+    await expect(page.getByTestId('lookalike-status-calocybe_gambosa')).not.toContainText('JADALNY');
+    await expect(page.getByTestId('lookalike-status-calocybe_gambosa')).not.toContainText('NIEJADALNY');
+    await expect(page.getByTestId('lookalike-status-cantharellus_cibarius')).toContainText('JADALNY');
   });
 
   test('Species detail shows a fatal look-alike banner and warning notes for kania', async ({ page }) => {

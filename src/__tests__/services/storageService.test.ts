@@ -3,6 +3,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { isManagedJournalPhoto, journalPhotoFileName, resolveJournalPhotoUri } from '../../services/journalPhotos';
 import {
   JournalReadError,
+  MAX_JOURNAL_BACKUPS,
   SIGHTINGS_BACKUP_INDEX_KEY,
   SIGHTINGS_BACKUP_KEY,
   SIGHTINGS_STORAGE_KEY,
@@ -22,6 +23,11 @@ async function journalBackupValues(): Promise<string[]> {
     values.push((await AsyncStorage.getItem(journalBackupStorageKey(id))) ?? '');
   }
   return values;
+}
+
+async function storedBackupKeys(): Promise<string[]> {
+  const keys = await AsyncStorage.getAllKeys();
+  return keys.filter((key) => key.includes(':sightings_v1_backup:'));
 }
 
 function unclearEntry(id: string): SightingRecord {
@@ -237,6 +243,177 @@ describe('storageService journal records', () => {
       expect(await journalBackupValues()).toEqual([]);
     } finally {
       if (original) setItem.mockImplementation(original);
+    }
+  });
+
+  it('starts a fresh journal when the backup index is damaged and rebuilds it from backup keys', async () => {
+    await AsyncStorage.setItem(journalBackupStorageKey('kept'), 'older-raw');
+    await AsyncStorage.setItem(SIGHTINGS_BACKUP_INDEX_KEY, '{not-json');
+    await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, 'not-json');
+
+    await storageService.startFreshJournal();
+
+    expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('[]');
+    expect(await AsyncStorage.getItem(journalBackupStorageKey('kept'))).toBe('older-raw');
+    expect(await journalBackupValues()).toEqual(expect.arrayContaining(['older-raw', 'not-json']));
+    const index = JSON.parse((await AsyncStorage.getItem(SIGHTINGS_BACKUP_INDEX_KEY)) ?? 'null');
+    expect(index).toEqual(expect.arrayContaining(['kept']));
+    expect(index.every((id: string) => typeof id === 'string')).toBe(true);
+  });
+
+  it('rebuilds an index that lists an unsafe id and still clears the journal', async () => {
+    await AsyncStorage.setItem(journalBackupStorageKey('safeid'), 'older-raw');
+    await AsyncStorage.setItem(SIGHTINGS_BACKUP_INDEX_KEY, JSON.stringify(['safeid', '../nope']));
+    await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, '{"no":"list"}');
+
+    await storageService.startFreshJournal();
+
+    expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('[]');
+    const index = JSON.parse((await AsyncStorage.getItem(SIGHTINGS_BACKUP_INDEX_KEY)) ?? '[]') as string[];
+    expect(index).toContain('safeid');
+    expect(index).not.toContain('../nope');
+    expect(await journalBackupValues()).toEqual(expect.arrayContaining(['older-raw', '{"no":"list"}']));
+  });
+
+  it('starts a fresh journal when the damaged index cannot be rebuilt from keys', async () => {
+    await AsyncStorage.setItem(SIGHTINGS_BACKUP_INDEX_KEY, '{not-json');
+    await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, 'not-json');
+    const getAllKeys = AsyncStorage.getAllKeys as jest.Mock;
+    const original = getAllKeys.getMockImplementation();
+    getAllKeys.mockRejectedValue(new Error('keys unavailable'));
+
+    try {
+      await storageService.startFreshJournal();
+      expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('[]');
+      expect(await journalBackupValues()).toEqual(['not-json']);
+    } finally {
+      if (original) getAllKeys.mockImplementation(original);
+    }
+  });
+
+  it('reuses one stored copy when the index is empty and does not write a second key', async () => {
+    await AsyncStorage.setItem(journalBackupStorageKey('orphan1'), 'not-json');
+    await AsyncStorage.setItem(SIGHTINGS_BACKUP_INDEX_KEY, '[]');
+    await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, 'not-json');
+
+    await storageService.startFreshJournal();
+
+    expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('[]');
+    expect(await storedBackupKeys()).toEqual([journalBackupStorageKey('orphan1')]);
+    expect(await journalBackupValues()).toEqual(['not-json']);
+  });
+
+  it('clears the journal from an orphan backup when the index cannot be updated', async () => {
+    await AsyncStorage.setItem(journalBackupStorageKey('orphan1'), 'not-json');
+    await AsyncStorage.setItem(SIGHTINGS_BACKUP_INDEX_KEY, '[]');
+    await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, 'not-json');
+    const setItem = AsyncStorage.setItem as jest.Mock;
+    const original = setItem.getMockImplementation();
+    setItem.mockImplementation(async (key: string, value: string) => {
+      if (key === SIGHTINGS_BACKUP_INDEX_KEY) throw new Error('index failed');
+      return original?.(key, value);
+    });
+
+    try {
+      await storageService.startFreshJournal();
+      expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('[]');
+      expect(await storedBackupKeys()).toEqual([journalBackupStorageKey('orphan1')]);
+      expect(await AsyncStorage.getItem(SIGHTINGS_BACKUP_INDEX_KEY)).toBe('[]');
+    } finally {
+      if (original) setItem.mockImplementation(original);
+    }
+  });
+
+  it('rolls back a backup key when the index write fails', async () => {
+    await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, 'not-json');
+    const setItem = AsyncStorage.setItem as jest.Mock;
+    const original = setItem.getMockImplementation();
+    setItem.mockImplementation(async (key: string, value: string) => {
+      if (key === SIGHTINGS_BACKUP_INDEX_KEY) throw new Error('index failed');
+      return original?.(key, value);
+    });
+
+    try {
+      await expect(storageService.startFreshJournal()).rejects.toThrow(/index failed|listy kopii/);
+      expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('not-json');
+      expect(await storedBackupKeys()).toEqual([]);
+    } finally {
+      if (original) setItem.mockImplementation(original);
+    }
+  });
+
+  it('uses the leftover backup key after a failed rollback and does not store a second copy', async () => {
+    await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, 'not-json');
+    const setItem = AsyncStorage.setItem as jest.Mock;
+    const removeItem = AsyncStorage.removeItem as jest.Mock;
+    const originalSet = setItem.getMockImplementation();
+    const originalRemove = removeItem.getMockImplementation();
+    setItem.mockImplementation(async (key: string, value: string) => {
+      if (key === SIGHTINGS_BACKUP_INDEX_KEY) throw new Error('index failed');
+      return originalSet?.(key, value);
+    });
+    removeItem.mockImplementation(async (key: string) => {
+      if (String(key).includes(':sightings_v1_backup:')) throw new Error('rollback failed');
+      return originalRemove?.(key);
+    });
+
+    try {
+      await expect(storageService.startFreshJournal()).rejects.toThrow(/index failed|listy kopii/);
+      expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('not-json');
+      expect(await storedBackupKeys()).toHaveLength(1);
+    } finally {
+      if (originalSet) setItem.mockImplementation(originalSet);
+      if (originalRemove) removeItem.mockImplementation(originalRemove);
+    }
+
+    await storageService.startFreshJournal();
+
+    expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('[]');
+    expect(await storedBackupKeys()).toHaveLength(1);
+    expect(await journalBackupValues()).toEqual(['not-json']);
+  });
+
+  it('keeps only the newest backups and does not rotate the legacy key', async () => {
+    await AsyncStorage.setItem(SIGHTINGS_BACKUP_KEY, 'legacy-raw');
+
+    for (let i = 0; i < MAX_JOURNAL_BACKUPS + 3; i += 1) {
+      await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, `corrupt-${i}`);
+      await expect(storageService.getSightings()).rejects.toBeInstanceOf(JournalReadError);
+    }
+
+    const values = await journalBackupValues();
+    expect(values).toHaveLength(MAX_JOURNAL_BACKUPS);
+    expect(values[0]).toBe(`corrupt-${3}`);
+    expect(values[values.length - 1]).toBe(`corrupt-${MAX_JOURNAL_BACKUPS + 2}`);
+    expect(values).not.toContain('corrupt-0');
+    expect(await storedBackupKeys()).toHaveLength(MAX_JOURNAL_BACKUPS);
+    expect(await AsyncStorage.getItem(SIGHTINGS_BACKUP_KEY)).toBe('legacy-raw');
+
+    await expect(storageService.getSightings()).rejects.toBeInstanceOf(JournalReadError);
+    expect(await journalBackupValues()).toEqual(values);
+  });
+
+  it('does not report success when the cleared journal cannot be read back', async () => {
+    await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, 'not-json');
+    const getItem = AsyncStorage.getItem as jest.Mock;
+    const setItem = AsyncStorage.setItem as jest.Mock;
+    const originalGet = getItem.getMockImplementation();
+    const originalSet = setItem.getMockImplementation();
+    let sawClear = false;
+    setItem.mockImplementation(async (key: string, value: string) => {
+      if (key === SIGHTINGS_STORAGE_KEY && value === '[]') sawClear = true;
+      return originalSet?.(key, value);
+    });
+    getItem.mockImplementation(async (key: string) => {
+      if (sawClear && key === SIGHTINGS_STORAGE_KEY) return 'not-json';
+      return originalGet?.(key);
+    });
+
+    try {
+      await expect(storageService.startFreshJournal()).rejects.toThrow(/wyczyszczenia dziennika/);
+    } finally {
+      if (originalGet) getItem.mockImplementation(originalGet);
+      if (originalSet) setItem.mockImplementation(originalSet);
     }
   });
 
