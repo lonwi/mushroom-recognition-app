@@ -134,7 +134,26 @@ class ManifestAndShipGateTest(unittest.TestCase):
             line = line.strip()
             if line.startswith("id: '"):
                 atlas.append(line.split("'")[1])
+        # Closed list. A new atlas card with no model class fails until it is
+        # added here with a reason. labels.json is not the place to hide the gap.
+        cards_without_model_class = {
+            "hydnum_repandum": "Unfinished hedgehog card. The class contract does not include it.",
+            "agaricus_xanthodermus": "Yellow stainer is an atlas look-alike card, not a model class.",
+            "inocybe_erubescens": "Deadly fibrecap is an atlas look-alike card, not a model class.",
+        }
+        unexpected = [
+            species_id
+            for species_id in atlas
+            if species_id not in ids and species_id not in cards_without_model_class
+        ]
+        self.assertEqual(unexpected, [])
+        for species_id, reason in cards_without_model_class.items():
+            self.assertTrue(reason.strip())
+            self.assertIn(species_id, atlas)
+            self.assertNotIn(species_id, ids)
         for species_id in atlas:
+            if species_id in cards_without_model_class:
+                continue
             self.assertIn(species_id, ids)
         for species_id in (
             "amanita_virosa",

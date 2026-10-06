@@ -34,6 +34,7 @@ export const en = {
     filterInedible: 'Inedible',
     filterPoisonous: 'Poisonous',
     filterDeadly: 'Deadly',
+    filterIncomplete: 'Incomplete card',
     emptyTitle: 'No cards',
     emptyDesc:
       'No card in this atlas matches the filters. A missing card does not mean the mushroom is edible. The atlas is not a complete key to the mushrooms of Poland.',

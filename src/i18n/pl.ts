@@ -34,6 +34,7 @@ export const pl = {
     filterInedible: 'Niejadalne',
     filterPoisonous: 'Trujące',
     filterDeadly: 'Śmiertelne',
+    filterIncomplete: 'Karta niepełna',
     emptyTitle: 'Brak kart',
     emptyDesc:
       'Żadna karta w tym atlasie nie pasuje do wybranych filtrów. Brak karty nie oznacza, że grzyb jest jadalny. Atlas nie jest kompletnym kluczem do grzybów Polski.',

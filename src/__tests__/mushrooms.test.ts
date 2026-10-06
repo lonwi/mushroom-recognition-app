@@ -1,5 +1,11 @@
 /// <reference types="jest" />
-import { hasFatalLookAlikeRisk, MUSHROOM_IDS, MUSHROOMS_DATABASE, showsKitchenSection } from '../data/mushrooms';
+import {
+  hasFatalLookAlikeRisk,
+  LOOKALIKES_WITHOUT_CARD,
+  MUSHROOM_IDS,
+  MUSHROOMS_DATABASE,
+  showsKitchenSection,
+} from '../data/mushrooms';
 import { getMushroomImage } from '../utils/mushroomImages';
 import { GOLDEN_RULES, TOXICOLOGY_CENTERS } from '../data/safetyRules';
 
@@ -19,19 +25,31 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(deathCap?.hymenophore).toBe('GILLS');
 
     const hasKaniaConfusion = deathCap?.confusionRisks.some(
-      (r) => r.confusedWithId === 'macrolepiota_procera' && r.fatal === true
+      (r) => r.confusedWithId === 'macrolepiota_procera' && r.fatal === false
     );
     expect(hasKaniaConfusion).toBe(true);
+
+    const kania = MUSHROOMS_DATABASE.find((m) => m.id === 'macrolepiota_procera');
+    const kaniaFlagsDeathCap = kania?.confusionRisks.some(
+      (r) => r.confusedWithId === 'amanita_phalloides' && r.fatal === true
+    );
+    expect(kaniaFlagsDeathCap).toBe(true);
   });
 
-  test('every look-alike id points at a real species card', () => {
+  test('every look-alike id points at a real species card or a closed list', () => {
     const dangling: string[] = [];
 
     for (const species of MUSHROOMS_DATABASE) {
       for (const risk of species.confusionRisks) {
         const target = MUSHROOMS_DATABASE.find((item) => item.id === risk.confusedWithId);
         if (!target) {
-          dangling.push(`${species.id} -> ${risk.confusedWithId}`);
+          const allowed = LOOKALIKES_WITHOUT_CARD[risk.confusedWithId];
+          if (!allowed) {
+            dangling.push(`${species.id} -> ${risk.confusedWithId}`);
+            continue;
+          }
+          expect(risk.confusedWithStatus).toBe(allowed.status);
+          expect(allowed.reason.trim().length).toBeGreaterThan(0);
           continue;
         }
         expect(risk.confusedWithStatus).toBe(target.status);
@@ -40,6 +58,23 @@ describe('Mushroom Database & Safety Verification', () => {
     }
 
     expect(dangling).toEqual([]);
+
+    for (const id of Object.keys(LOOKALIKES_WITHOUT_CARD)) {
+      expect(MUSHROOMS_DATABASE.some((species) => species.id === id)).toBe(false);
+      expect(
+        MUSHROOMS_DATABASE.some((species) =>
+          species.confusionRisks.some((risk) => risk.confusedWithId === id)
+        )
+      ).toBe(true);
+    }
+  });
+
+  test('fatal is set only when the named look-alike is deadly', () => {
+    for (const species of MUSHROOMS_DATABASE) {
+      for (const risk of species.confusionRisks) {
+        expect(risk.fatal).toBe(risk.confusedWithStatus === 'DEADLY_POISONOUS');
+      }
+    }
   });
 
   test('an empty look-alike list is not a sourced all-clear', () => {
@@ -100,7 +135,7 @@ describe('Mushroom Database & Safety Verification', () => {
     }
 
     const shaggy = MUSHROOMS_DATABASE.find((species) => species.id === 'chlorophyllum_rhacodes');
-    expect(shaggy?.status).toBe('INEDIBLE');
+    expect(shaggy?.status).toBe('POISONOUS');
     expect(shaggy?.incompleteCard).toBeUndefined();
   });
 
@@ -153,6 +188,54 @@ describe('Mushroom Database & Safety Verification', () => {
         expect(showsKitchenSection(species)).toBe(false);
       }
     }
+  });
+
+  test('reviewed card facts stay within the safer wording', () => {
+    const deathCap = MUSHROOMS_DATABASE.find((species) => species.id === 'amanita_phalloides');
+    const destroyingAngel = MUSHROOMS_DATABASE.find((species) => species.id === 'amanita_virosa');
+    const fibrecap = MUSHROOMS_DATABASE.find((species) => species.id === 'inocybe_erubescens');
+    const panther = MUSHROOMS_DATABASE.find((species) => species.id === 'amanita_pantherina');
+    const hedgehog = MUSHROOMS_DATABASE.find((species) => species.id === 'hydnum_repandum');
+    const yellowStainer = MUSHROOMS_DATABASE.find((species) => species.id === 'agaricus_xanthodermus');
+    const bitter = MUSHROOMS_DATABASE.find((species) => species.id === 'tylopilus_felleus');
+    const shaggy = MUSHROOMS_DATABASE.find((species) => species.id === 'chlorophyllum_rhacodes');
+
+    const amatoxin = `${deathCap?.culinaryValue} ${deathCap?.warningNotes} ${destroyingAngel?.culinaryValue}`;
+    expect(amatoxin).not.toMatch(/10–12/);
+    expect(amatoxin).not.toMatch(/50 g/);
+    expect(amatoxin).toMatch(/6–24 h/);
+    expect(deathCap?.culinaryValue).toMatch(/jeden owocnik/);
+
+    expect(destroyingAngel?.capDescription).toMatch(/Brzeg gładki, bez prążków/);
+    expect(destroyingAngel?.capDescription).not.toMatch(/prążkowany/);
+
+    expect(fibrecap?.months[0]).toBe(5);
+    expect(fibrecap?.nameLatin).toMatch(/Inosperma erubescens/);
+    expect(fibrecap?.nameLatin).toMatch(/Inocybe erubescens/);
+    expect(fibrecap?.commonNicknames).toContain('Włókniak ceglasty');
+    expect(fibrecap?.status).toBe('DEADLY_POISONOUS');
+    expect(fibrecap?.confusionRisks[0]?.confusedWithId).toBe('calocybe_gambosa');
+
+    expect(panther?.confusionRisks.map((risk) => risk.confusedWithId)).toEqual(
+      expect.arrayContaining(['amanita_rubescens', 'amanita_excelsa'])
+    );
+    const pantherText = JSON.stringify(panther?.confusionRisks);
+    expect(pantherText).toMatch(/gładki/);
+    expect(pantherText).toMatch(/nie czerwienieje/);
+    expect(pantherText).toMatch(/prążkowany/);
+    expect(pantherText).toMatch(/rąbek/);
+
+    expect(hedgehog?.commonNicknames.join(' ')).not.toMatch(/Sarna/);
+    expect(JSON.stringify(hedgehog)).not.toMatch(/lekko truj/);
+    expect(hedgehog?.fleshDescription).toMatch(/obróbce termicznej/);
+
+    expect(yellowStainer?.stemDescription).toMatch(/szerokim, wyraźnym/);
+    expect(yellowStainer?.fleshDescription).toMatch(/potarciu/);
+    expect(yellowStainer?.tasteAndSmell).toMatch(/atramentu/);
+
+    expect(bitter?.months).toEqual([6, 7, 8, 9, 10]);
+    expect(shaggy?.status).toBe('POISONOUS');
+    expect(shaggy?.culinaryValue).toMatch(/żołądkowo-jelitowe/);
   });
 
   test('a zigzag on the stem is not treated as proof that the mushroom is a parasol', () => {

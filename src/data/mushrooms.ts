@@ -1,4 +1,4 @@
-import { MushroomSpecies } from '../types/mushroom';
+import { type EdibilityStatus, type MushroomSpecies } from '../types/mushroom';
 
 export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
   {
@@ -47,7 +47,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     stemDescription: 'Wysokość do około 15 cm. Smukły, walcowaty, biały, oliwkowy lub lekko zielonawy, często z mniej lub bardziej wyraźnym zygzakowatym wzorem. U dołu bulwa w wyraźnej, luźnej, białej pochwie. Pod kapeluszem duży, przyrośnięty, zwieszający się, prążkowany pierścień.',
     fleshDescription: 'Biały, pod skórką kapelusza nieco zielonkawy, niezmienny po przełamaniu.',
     tasteAndSmell: 'Młode mają zapach słaby, starsze mdły, miodowo-duszący. Smak (według relacji otrutych) łagodny, przyjemny – DLATEGO NIGDY NIE TESTUJ GRZYBÓW SMAKIEM!',
-    culinaryValue: 'Śmiertelnie trujący. Dla dorosłego groźna bywa już ilość rzędu około 50 gramów owocnika. Objawy zwykle przychodzą po około 10–12 godzinach. Po dobie bywa złudna poprawa, a potem wraca uszkodzenie wątroby.',
+    culinaryValue: 'Śmiertelnie trujący. Może zabić jeden owocnik, a nawet jego część; dla dzieci dawka jest mniejsza. Objawy zwykle po 6–24 h, czasem później; nie czekaj na objawy, dzwoń 112 lub do ośrodka toksykologii. Po dobie bywa złudna poprawa, a potem wraca uszkodzenie wątroby.',
     confusionRisks: [
       {
         confusedWithId: 'macrolepiota_procera',
@@ -58,7 +58,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
           'Kania nie ma luźnej pochwy u nasady. Muchomor ma bulwę w białej, workowatej pochwie',
           'Zygzak na trzonie niczego nie rozstrzyga: muchomor sromotnikowy też może mieć zygzakowaty wzór'
         ],
-        fatal: true
+        fatal: false
       },
       {
         confusedWithId: 'russula_virescens',
@@ -69,7 +69,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
           'Miąższ gołąbka jest kruchy i łamliwy jak kreda (nie ma włókien)',
           'Kapelusz gołąbka zielonawego pęka w charakterystyczne poletka'
         ],
-        fatal: true
+        fatal: false
       },
       {
         confusedWithId: 'agaricus_campestris',
@@ -79,10 +79,10 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
           'Pieczarka polna ma blaszki różowe, a z wiekiem ciemnobrązowe lub czekoladowe (muchomor ma zawsze czysto BIAŁE blaszki)',
           'Pieczarka nie posiada pochwy u dołu trzonu'
         ],
-        fatal: true
+        fatal: false
       }
     ],
-    warningNotes: 'Najgroźniejszy muchomor polskich lasów. Objawy zwykle po około 10–12 godzinach. Chwilowa poprawa nie oznacza, że wątroba jest bezpieczna. Nie zbieraj młodych, zamkniętych owocników „na oko”.'
+    warningNotes: 'Najgroźniejszy muchomor polskich lasów. Objawy zwykle po 6–24 h, czasem później; nie czekaj na objawy, dzwoń 112 lub do ośrodka toksykologii. Chwilowa poprawa nie oznacza, że wątroba jest bezpieczna. Nie zbieraj młodych, zamkniętych owocników „na oko”.'
   },
   {
     id: 'macrolepiota_procera',
@@ -137,10 +137,10 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
       {
         confusedWithId: 'chlorophyllum_rhacodes',
         confusedWithName: 'Czubajnik czerwieniejący',
-        confusedWithStatus: 'INEDIBLE',
+        confusedWithStatus: 'POISONOUS',
         keyDifferences: [
           'Czubajnik po uszkodzeniu czerwienieje, a na trzonie nie ma łuskowatego wzoru kani',
-          'Czubajnik jest niejadalny. Opis kani jako jadalnej na niego nie przechodzi'
+          'Czubajnik w tym atlasie jest trujący. Opis kani jako jadalnej na niego nie przechodzi'
         ],
         fatal: false
       }
@@ -275,7 +275,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     family: 'Borowikowate (Boletaceae)',
     status: 'INEDIBLE',
     hymenophore: 'TUBES',
-    months: [4, 5, 6, 7, 8, 9, 10],
+    months: [6, 7, 8, 9, 10],
     habitat: 'Lasy iglaste i mieszane, często na kwaśnych glebach i próchniejących pniakach sosnowych/świerkowych.',
     capDescription: 'Średnica 5-15 cm. Barwa jasnobrązowa, orzechowa, żółtobrązowa. Bardzo podobny z wierzchu do borowika szlachetnego.',
     hymenophoreDescription: 'Początkowo białawe, ale z wiekiem wyraźnie RÓŻOWIEJĄCE (brudnoróżowe). Po uciśnięciu brązowieją.',
@@ -383,7 +383,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
           'Smardz ma główkę żebrowato-plastrowatą (jak plaster miodu), piestrzenica pofałdowaną mózgowato',
           'Smardz jest w środku pusty i tworzy jedną komorę. Młoda piestrzenica bywa w środku pełna, a główka jest mózgowato pofałdowana'
         ],
-        fatal: true
+        fatal: false
       }
     ],
     warningNotes: 'Zabójczy grzyb wiosenny. Dawniej błędnie gotowany, powoduje śmiertelne zatrucia o opóźnionym działaniu.'
@@ -496,7 +496,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         confusedWithName: 'Pieczarka żółtawa',
         confusedWithStatus: 'POISONOUS',
         keyDifferences: [
-          'Pieczarka żółtawa żółknie chromowo u nasady trzonu i pachnie karbolowo, zwłaszcza przy podgrzaniu',
+          'Pieczarka żółtawa żółknie chromowo po potarciu, zwłaszcza u nasady trzonu, i pachnie fenolem, karbolowo albo atramentem',
           'Pieczarka polna tak nie żółknie i nie pachnie karbolowo',
           'Silne żółknięcie wyklucza tę kartę'
         ],
@@ -511,7 +511,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     nameLatin: 'Chlorophyllum rhacodes',
     commonNicknames: ['Czubajka czerwieniejąca'],
     family: 'Pieczarkowate (Agaricaceae)',
-    status: 'INEDIBLE',
+    status: 'POISONOUS',
     hymenophore: 'GILLS',
     months: [7, 8, 9, 10],
     habitat: 'Obrzeża lasów, polany, przy drogach, na glebie bogatej w materię organiczną. Czasem w czarcich kręgach. Pora jest orientacyjna.',
@@ -520,7 +520,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     stemDescription: 'Do około 15 cm, u dołu z wyraźną bulwą. Pierścień jest ruchomy, nieprzyrośnięty do trzonu. Na trzonie nie ma łusek wężowej skóry kani.',
     fleshDescription: 'Miąższ białawy. Po uszkodzeniu przebarwia się na żółtopomarańczowo, a trzon szybko czerwienieje. Czerwienienie nie jest dowodem bezpieczeństwa.',
     tasteAndSmell: 'Nie sprawdzaj smakiem.',
-    culinaryValue: 'Niejadalny. Do niedawna bywał opisywany jako jadalny, ale u wielu osób powoduje poważne dolegliwości żołądkowo-jelitowe. Ta karta nie podaje sposobu przyrządzania i nie zaleca spożycia.',
+    culinaryValue: 'Trujący. Do niedawna bywał opisywany jako jadalny. U części osób powoduje poważne dolegliwości żołądkowo-jelitowe. Ta karta nie podaje sposobu przyrządzania i nie zaleca spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'macrolepiota_procera',
@@ -643,7 +643,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     id: 'hydnum_repandum',
     namePl: 'Kolczak obłączasty',
     nameLatin: 'Hydnum repandum',
-    commonNicknames: ['Sarna', 'Kolczak'],
+    commonNicknames: ['Kolczak'],
     family: 'Kolczakowate (Hydnaceae)',
     status: 'EDIBLE',
     incompleteCard: true,
@@ -653,9 +653,9 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     capDescription: 'Do około 10–15 cm, nieregularny, wklęsły, kremowy do bladopomarańczowego. Brzeg za młodu podwinięty. Starsze owocniki gorzknieją.',
     hymenophoreDescription: 'Zamiast blaszek i rurek są gęste, łamliwe kolce, u młodych bladożółte, później białawe lub pomarańczowe. Mogą schodzić na trzon.',
     stemDescription: 'Krótki, dość gruby, często asymetryczny, kremowy do jasnobrązowego, bez pierścienia i bez pochwy.',
-    fleshDescription: 'Miąższ białawy, po uszkodzeniu żółknie. Jest twardy. Surowy bywa lekko trujący.',
+    fleshDescription: 'Miąższ białawy, po uszkodzeniu żółknie. Jest twardy. Jeść tylko po obróbce termicznej.',
     tasteAndSmell: 'Nie sprawdzaj smakiem. Starsze owocniki, z długimi kolcami, bywają gorzkie.',
-    culinaryValue: 'W literaturze młode owocniki po obróbce cieplnej bywają podawane jako jadalne i dopuszczone do obrotu. Na surowo są lekko trujące. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    culinaryValue: 'W literaturze młode owocniki po obróbce cieplnej bywają podawane jako jadalne i dopuszczone do obrotu. Jeść tylko po obróbce termicznej. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'cantharellus_cibarius',
@@ -669,7 +669,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         fatal: false
       }
     ],
-    warningNotes: 'NIE JEDZ NA SUROWO I NIE JEDZ NA PODSTAWIE TEJ KARTY. Brak zdjęcia. Sarniak dachówkowaty (Sarcodon imbricatus) ma kolce i odstające łuski na kapeluszu; nie ma go w atlasie. Nazwa „sarniak” bywa też ludową nazwą kolczaka i nie rozstrzyga gatunku.'
+    warningNotes: 'JEŚĆ TYLKO PO OBRÓBCE TERMICZNEJ I NIE NA PODSTAWIE TEJ KARTY. Brak zdjęcia. Sarniak dachówkowaty (Sarcodon imbricatus) ma kolce i odstające łuski na kapeluszu; nie ma go w atlasie. Nazwa „sarniak” bywa też ludową nazwą kolczaka i nie rozstrzyga gatunku. Ludowe „sarna” zwykle oznacza sarniaka, nie ten gatunek.'
   },
   {
     id: 'amanita_pantherina',
@@ -688,6 +688,28 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     tasteAndSmell: 'Zapach rzodkiewki. Nie sprawdzaj smakiem.',
     culinaryValue: 'Silnie trujący. Zawiera kwas ibotenowy i muscymol. Zatrucie przypomina muchomora czerwonego, ale bywa cięższe: wymioty, biegunka, halucynacje, drgawki. Nie jedz.',
     confusionRisks: [
+      {
+        confusedWithId: 'amanita_rubescens',
+        confusedWithName: 'Muchomor czerwieniejący',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Muchomor plamisty ma pierścień gładki, nie prążkowany. Czerwieniejący ma pierścień z prążkami',
+          'Miąższ plamistego nie czerwienieje. U czerwieniejącego uszkodzony miąższ różowieje albo czerwienieje',
+          'Brzeg kapelusza plamistego jest prążkowany, a bulwa ma odstający rąbek'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'amanita_excelsa',
+        confusedWithName: 'Muchomor twardawy',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Twardawy ma brzeg bez prążków i pierścień prążkowany. Plamisty ma brzeg prążkowany i pierścień gładki',
+          'Bulwa twardawego nie ma wyraźnego rąbka. U plamistego pochwa tworzy kołnierz na bulwie',
+          'Żaden z tych dwóch nie czerwienieje. Czerwienienie wskazuje raczej na muchomora czerwieniejącego, nie na bezpieczeństwo'
+        ],
+        fatal: false
+      },
       {
         confusedWithId: 'macrolepiota_procera',
         confusedWithName: 'Czubajka kania',
@@ -712,12 +734,12 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophore: 'GILLS',
     months: [7, 8, 9, 10, 11],
     habitat: 'Raczej nieliczny. Lasy iglaste, zwłaszcza górskie, pod świerkami, sosnami i bukami, także wilgotne miejsca z brzozą.',
-    capDescription: 'Do około 10 cm. Najpierw jajowaty, potem dzwonkowaty i lekko wypukły. Biały, na środku czasem żółtawy, w wilgoci lepki. Brzeg bywa prążkowany. Resztki osłony w postaci łat w deszczu znikają.',
+    capDescription: 'Do około 10 cm. Najpierw jajowaty, potem dzwonkowaty i lekko wypukły. Biały, na środku czasem żółtawy, w wilgoci lepki. Brzeg gładki, bez prążków. Resztki osłony w postaci łat w deszczu znikają.',
     hymenophoreDescription: 'Blaszki białe, gęste, wolne. Nie różowieją.',
     stemDescription: 'Biały, z włóknistymi łuskami i bulwiastą nasadą w postrzępionej pochwie. Pierścień przyrośnięty, u starszych owocników może zanikać.',
     fleshDescription: 'Biały, kruchy.',
     tasteAndSmell: 'Zapach bywa przyjemny albo rzodkiewkowy. Nie sprawdzaj smakiem. Śmiertelnie trujące muchomory nie smakują „jak trucizna”.',
-    culinaryValue: 'Śmiertelnie trujący, z tej samej grupy co muchomor sromotnikowy. Objawy zwykle po około 10–12 godzinach, z uszkodzeniem wątroby. Nie ma kuchennego sposobu, żeby go „odtruć”.',
+    culinaryValue: 'Śmiertelnie trujący, z tej samej grupy co muchomor sromotnikowy. Objawy zwykle po 6–24 h, czasem później; nie czekaj na objawy, dzwoń 112 lub do ośrodka toksykologii. Nie ma kuchennego sposobu, żeby go „odtruć”.',
     confusionRisks: [
       {
         confusedWithId: 'agaricus_campestris',
@@ -728,7 +750,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
           'Muchomor jadowity ma białe blaszki i pochwę u nasady',
           'Młode, jeszcze jasne owocniki zostaw'
         ],
-        fatal: true
+        fatal: false
       },
       {
         confusedWithId: 'macrolepiota_procera',
@@ -739,7 +761,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
           'Muchomor jadowity ma pochwę i włókniste łuski na trzonie',
           'Biały kapelusz z pochwą nie jest kanią'
         ],
-        fatal: true
+        fatal: false
       }
     ],
     warningNotes: 'NIE JEDZ. Śmiertelnie trujący. Biały kapelusz, białe blaszki i pochwa u nasady to powód, żeby owocnik zostawić. Brak zdjęcia.'
@@ -754,11 +776,11 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophore: 'GILLS',
     months: [5, 6, 7, 8, 9, 10],
     habitat: 'Lasy liściaste, parki, pobocza dróg i trawniki, miejsca żyzne. Często w czarcich kręgach.',
-    capDescription: 'Półkulisty do rozpostartego, białawy, kremowy lub szarobrązowy.',
+    capDescription: 'Półkulisty do rozpostartego, białawy, kremowy lub szarobrązowy. Potarty brzeg kapelusza żółknie.',
     hymenophoreDescription: 'Blaszki różowoszare, z wiekiem ciemniejsze. To nie są trwale białe blaszki muchomora.',
-    stemDescription: 'Białawy, z cienkim pierścieniem i bulwiastą podstawą. Brak pochwy.',
-    fleshDescription: 'Miąższ biały. U nasady trzonu po przekrojeniu staje się chromowożółty.',
-    tasteAndSmell: 'Zapach nieprzyjemny, karbolowy, zwłaszcza przy gotowaniu i smażeniu. Nie sprawdzaj smakiem.',
+    stemDescription: 'Białawy, z szerokim, wyraźnym, zwisającym pierścieniem i bulwiastą podstawą. Brak pochwy.',
+    fleshDescription: 'Miąższ biały. Po potarciu, a najmocniej po nacięciu nasady trzonu, szybko żółknie chromowo.',
+    tasteAndSmell: 'Zapach fenolu, karbolu albo atramentu, najmocniejszy przy naciętej nasadzie i przy podgrzaniu. Nie sprawdzaj smakiem.',
     culinaryValue: 'Trująca. Żółknięcie i zapach karbolu nie znikają od „dobrego przepisu”. Nie jedz.',
     confusionRisks: [
       {
@@ -766,8 +788,8 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         confusedWithName: 'Pieczarka polna',
         confusedWithStatus: 'EDIBLE',
         keyDifferences: [
-          'Pieczarka polna nie żółknie chromowo u nasady i nie pachnie karbolowo',
-          'Pieczarka żółtawa ma bulwiastą nasadę i żółknie po przekrojeniu',
+          'Pieczarka polna nie żółknie chromowo u nasady i nie pachnie fenolem ani atramentem',
+          'Pieczarka żółtawa ma szeroki, wyraźny pierścień. Po potarciu, zwłaszcza u nasady trzonu, żółknie chromowo',
           'Karta pieczarki polnej nie obejmuje pieczarek silnie żółknących'
         ],
         fatal: false
@@ -789,12 +811,12 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
   {
     id: 'inocybe_erubescens',
     namePl: 'Strzępiak ceglasty',
-    nameLatin: 'Inocybe erubescens',
-    commonNicknames: [],
+    nameLatin: 'Inosperma erubescens (syn. Inocybe erubescens)',
+    commonNicknames: ['Włókniak ceglasty'],
     family: 'Strzępiakowate (Inocybaceae)',
     status: 'DEADLY_POISONOUS',
     hymenophore: 'GILLS',
-    months: [6, 7, 8, 9],
+    months: [5, 6, 7, 8, 9],
     habitat: 'Prześwietlone lasy liściaste, zarośla i stare parki, pod dębami, bukami, grabami i lipami. Późna jesień jest rzadka.',
     capDescription: 'Najpierw dzwonkowaty z podwiniętym brzegiem, potem płaski z garbkiem. Promieniście popękany, od białawego przez żółtawy do ceglastobrązowego.',
     hymenophoreDescription: 'Prawdziwe blaszki, najpierw białe, potem brązowawe, gęste. Po uszkodzeniu czerwienieją. To nie są grube listewki kurki.',
@@ -804,6 +826,17 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     culinaryValue: 'Śmiertelnie trujący. Zawiera dużo muskaryny. Nie ma obróbki, która robi z niego grzyb do jedzenia.',
     confusionRisks: [
       {
+        confusedWithId: 'calocybe_gambosa',
+        confusedWithName: 'Gęśnica wiosenna (majówka)',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Gęśnica wiosenna nie czerwienieje. Strzępiak po uszkodzeniu czerwienieje i z wiekiem staje się ceglasty',
+          'Gęśnica pachnie mącznie i ma gładki, mięsisty kapelusz. Strzępiak ma kapelusz promieniście popękany',
+          'Oba wyrastają wiosną w podobnych miejscach. Czerwienienie wyklucza majówkę'
+        ],
+        fatal: false
+      },
+      {
         confusedWithId: 'cantharellus_cibarius',
         confusedWithName: 'Pieprznik jadalny (Kurka)',
         confusedWithStatus: 'EDIBLE',
@@ -812,12 +845,37 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
           'Młody, jeszcze jasny strzępiak jest najłatwiejszy do pomylenia',
           'Czerwienienie i ceglasty kolor nie są cechą kurki'
         ],
-        fatal: true
+        fatal: false
       }
     ],
-    warningNotes: 'NIE JEDZ. Śmiertelnie trujący. Młode owocniki bywają brane za kurki. Brak zdjęcia. Płachetki zwyczajnej i majówki, z którymi też bywa mylony, nie ma w tym atlasie.'
+    warningNotes: 'NIE JEDZ. Śmiertelnie trujący. Młode owocniki bywają brane za gęśnicę wiosenną (majówkę) i za kurki. Brak zdjęcia. Gęśnicy wiosennej i płachetki zwyczajnej nie ma w tym atlasie.'
   }
 ];
+
+/**
+ * Named on a card, with no atlas page of their own.
+ * A new id must be added here with a reason, or the integrity test fails.
+ * None of these is a finished edible card, so the green badge must not appear.
+ */
+export const LOOKALIKES_WITHOUT_CARD: Readonly<
+  Record<string, { status: EdibilityStatus; reason: string }>
+> = {
+  calocybe_gambosa: {
+    status: 'EDIBLE',
+    reason:
+      'Gęśnica wiosenna (majówka) is only the spring twin of the deadly fibrecap. There is no finished card, so the atlas does not show it as edible.',
+  },
+  amanita_rubescens: {
+    status: 'EDIBLE',
+    reason:
+      'Muchomor czerwieniejący is a model class without an atlas card. Literature calls it edible only after cooking; this row does not show that verdict.',
+  },
+  amanita_excelsa: {
+    status: 'EDIBLE',
+    reason:
+      'Muchomor twardawy (Amanita excelsa, syn. A. spissa) has no card. It is too close to the panther cap to present as a finished edible species.',
+  },
+};
 
 /** True when any recorded look-alike is flagged as a deadly confusion. Not stored separately, so it cannot drift from confusionRisks. */
 export function hasFatalLookAlikeRisk(species: Pick<MushroomSpecies, 'confusionRisks'>): boolean {

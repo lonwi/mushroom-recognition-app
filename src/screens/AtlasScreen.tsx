@@ -144,6 +144,7 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
               ['INEDIBLE', `🟡 ${t('atlas.filterInedible')} (${statusCounts.INEDIBLE})`],
               ['POISONOUS', `🔴 ${t('atlas.filterPoisonous')} (${statusCounts.POISONOUS})`],
               ['DEADLY_POISONOUS', `☠ ${t('atlas.filterDeadly')} (${statusCounts.DEADLY_POISONOUS})`],
+              ['INCOMPLETE', `${t('atlas.filterIncomplete')} (${statusCounts.INCOMPLETE})`],
             ] as const
           ).map(([status, label]) => (
             <TouchableOpacity

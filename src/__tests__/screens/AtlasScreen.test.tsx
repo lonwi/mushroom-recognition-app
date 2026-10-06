@@ -116,8 +116,8 @@ describe('AtlasScreen RTL Tests', () => {
 
     await fireEvent.press(screen.getByTestId('filter-status-INEDIBLE'));
     await waitFor(() => {
-      expect(screen.getByText('Czubajnik czerwieniejący')).toBeTruthy();
       expect(screen.getByText('Goryczak żółciowy')).toBeTruthy();
+      expect(screen.queryByText('Czubajnik czerwieniejący')).toBeNull();
       expect(screen.queryByText('Borowik szlachetny')).toBeNull();
       expect(screen.queryByText('W kuchni')).toBeNull();
     });
@@ -125,6 +125,7 @@ describe('AtlasScreen RTL Tests', () => {
     await fireEvent.press(screen.getByTestId('filter-status-POISONOUS'));
     await waitFor(() => {
       expect(screen.getByText('Muchomor czerwony')).toBeTruthy();
+      expect(screen.getByText('Czubajnik czerwieniejący')).toBeTruthy();
       expect(screen.queryByText('Goryczak żółciowy')).toBeNull();
       expect(screen.queryByText('Muchomor sromotnikowy (zielonawy)')).toBeNull();
     });
@@ -144,6 +145,34 @@ describe('AtlasScreen RTL Tests', () => {
       expect(screen.getByText(/Brak karty nie oznacza, że grzyb jest jadalny/)).toBeTruthy();
       expect(screen.getByTestId('atlas-result-count').props.children).toBe('Pasujące karty: 0');
       expect(screen.queryByText('Kolczak obłączasty')).toBeNull();
+    });
+  });
+
+  it('puts unfinished edible cards on the incomplete chip, not the edible one', async () => {
+    const screen = await render(
+      <LanguageProvider>
+        <AtlasScreen onSelectSpecies={() => {}} />
+      </LanguageProvider>
+    );
+
+    expect(screen.getByText(/Karta niepełna \(4\)/)).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('filter-status-EDIBLE'));
+    await waitFor(() => {
+      expect(screen.getByText('Borowik szlachetny')).toBeTruthy();
+      expect(screen.queryByText('Gołąbek zielonawy')).toBeNull();
+      expect(screen.queryByText('Kolczak obłączasty')).toBeNull();
+      expect(screen.queryByText('JADALNY')).toBeTruthy();
+    });
+
+    await fireEvent.press(screen.getByTestId('filter-status-INCOMPLETE'));
+    await waitFor(() => {
+      expect(screen.getByText('Gołąbek zielonawy')).toBeTruthy();
+      expect(screen.getByText('Kolczak obłączasty')).toBeTruthy();
+      expect(screen.getByText('Smardz jadalny')).toBeTruthy();
+      expect(screen.getByText('Pieczarka polna')).toBeTruthy();
+      expect(screen.queryByText('Borowik szlachetny')).toBeNull();
+      expect(screen.queryByText('JADALNY')).toBeNull();
+      expect(screen.getByTestId('atlas-result-count').props.children).toBe('Pasujące karty: 4');
     });
   });
 

@@ -1,6 +1,6 @@
 export type EdibilityStatus = 
   | 'EDIBLE'             // Jadalny (smaczny / dopuszczony do obrotu)
-  | 'INEDIBLE'           // Niejadalny (gorzki, twardy, niesmaczny, ale nietoksyczny)
+  | 'INEDIBLE'           // Niejadalny (gorzki, twardy, niesmaczny, ale nietoksyczny). Dolegliwości żołądkowo-jelitowe należą do POISONOUS.
   | 'POISONOUS'          // Trujący (wywołuje zaburzenia żołądkowo-jelitowe itp.)
   | 'DEADLY_POISONOUS';  // Śmiertelnie trujący (amatoksyny, orellanina, gyromitryna)
 
@@ -16,6 +16,13 @@ export interface ConfusionRisk {
   confusedWithName: string;
   confusedWithStatus: EdibilityStatus;
   keyDifferences: string[];
+  /**
+   * True only when the named look-alike is deadly (`confusedWithStatus === 'DEADLY_POISONOUS'`).
+   * The alert then calls that look-alike a deadly twin.
+   * Do not set this because the open card is deadly and the look-alike is edible:
+   * the matching entry on the edible card carries the flag.
+   * A poisonous but not deadly look-alike stays false.
+   */
   fatal: boolean;
 }
 

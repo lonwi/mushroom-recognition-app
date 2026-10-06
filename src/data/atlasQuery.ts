@@ -1,6 +1,7 @@
+import { showsKitchenSection } from './mushrooms';
 import { EdibilityStatus, HymenophoreType, MushroomSpecies } from '../types/mushroom';
 
-export type StatusFilter = EdibilityStatus | 'ALL';
+export type StatusFilter = EdibilityStatus | 'INCOMPLETE' | 'ALL';
 export type HymenophoreFilter = HymenophoreType | 'ALL';
 
 export interface AtlasFilterOptions {
@@ -9,8 +10,17 @@ export interface AtlasFilterOptions {
   hymenophore: HymenophoreFilter;
 }
 
+/**
+ * Lowercase, then NFD with combining marks removed. ł/Ł do not decompose, so they become l first.
+ * „zolciowy” then matches „żółciowy”, and „wlokniak” matches „włókniak”.
+ */
 export function normalizeAtlasQuery(query: string): string {
-  return query.toLowerCase().trim();
+  return query
+    .toLowerCase()
+    .replace(/ł/g, 'l')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
 }
 
 export function speciesMatchesSearch(species: MushroomSpecies, query: string): boolean {
@@ -19,10 +29,11 @@ export function speciesMatchesSearch(species: MushroomSpecies, query: string): b
     return true;
   }
 
+  const matches = (value: string) => normalizeAtlasQuery(value).includes(normalized);
   return (
-    species.namePl.toLowerCase().includes(normalized) ||
-    species.nameLatin.toLowerCase().includes(normalized) ||
-    species.commonNicknames.some((nickname) => nickname.toLowerCase().includes(normalized))
+    matches(species.namePl) ||
+    matches(species.nameLatin) ||
+    species.commonNicknames.some((nickname) => matches(nickname))
   );
 }
 
@@ -32,7 +43,13 @@ export function filterAtlasSpecies(
   options: AtlasFilterOptions
 ): MushroomSpecies[] {
   return species.filter((item) => {
-    const matchesStatus = options.status === 'ALL' || item.status === options.status;
+    const matchesStatus =
+      options.status === 'ALL' ||
+      (options.status === 'INCOMPLETE'
+        ? item.incompleteCard === true
+        : options.status === 'EDIBLE'
+          ? showsKitchenSection(item)
+          : item.status === options.status);
     const matchesHymenophore =
       options.hymenophore === 'ALL' || item.hymenophore === options.hymenophore;
     return matchesStatus && matchesHymenophore && speciesMatchesSearch(item, options.query);
@@ -41,10 +58,11 @@ export function filterAtlasSpecies(
 
 export function countByStatus(
   species: readonly MushroomSpecies[]
-): Record<'ALL' | EdibilityStatus, number> {
+): Record<'ALL' | 'INCOMPLETE' | EdibilityStatus, number> {
   return {
     ALL: species.length,
-    EDIBLE: species.filter((item) => item.status === 'EDIBLE').length,
+    INCOMPLETE: species.filter((item) => item.incompleteCard === true).length,
+    EDIBLE: species.filter((item) => showsKitchenSection(item)).length,
     INEDIBLE: species.filter((item) => item.status === 'INEDIBLE').length,
     POISONOUS: species.filter((item) => item.status === 'POISONOUS').length,
     DEADLY_POISONOUS: species.filter((item) => item.status === 'DEADLY_POISONOUS').length,

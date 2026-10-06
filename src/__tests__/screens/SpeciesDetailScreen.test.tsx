@@ -128,6 +128,12 @@ describe('SpeciesDetailScreen safety notices', () => {
         expect(screen.getByText('Nie do jedzenia')).toBeTruthy();
         expect(screen.getByText('NIEJADALNY')).toBeTruthy();
       }
+      if (item.id === 'chlorophyllum_rhacodes') {
+        expect(screen.getByTestId('species-use-toxic')).toBeTruthy();
+        expect(screen.getByText('TRUJĄCY')).toBeTruthy();
+        expect(screen.queryByText('Nie do jedzenia')).toBeNull();
+        expect(screen.queryByText('NIEJADALNY')).toBeNull();
+      }
     }
   });
 

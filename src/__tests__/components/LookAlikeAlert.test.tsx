@@ -121,6 +121,31 @@ describe('LookAlikeAlert RTL Component Tests', () => {
     expect(getByTestId('lookalike-unlinked-not_in_atlas')).toBeTruthy();
   });
 
+  it('does not show the green edible badge for a look-alike that has no finished card', async () => {
+    const risks: ConfusionRisk[] = [
+      {
+        confusedWithId: 'calocybe_gambosa',
+        confusedWithName: 'Gęśnica wiosenna (majówka)',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: ['Nie czerwienieje'],
+        fatal: false,
+      },
+    ];
+
+    const { getByTestId, getByText, queryByText } = await render(
+      <LookAlikeAlert
+        risks={risks}
+        catalogIds={new Set(['inocybe_erubescens'])}
+        onOpenSpecies={() => {}}
+      />
+    );
+
+    expect(getByTestId('lookalike-unlinked-calocybe_gambosa')).toBeTruthy();
+    expect(getByTestId('incomplete-card-badge-calocybe_gambosa')).toBeTruthy();
+    expect(getByText(INCOMPLETE_CARD_LABEL)).toBeTruthy();
+    expect(queryByText('JADALNY')).toBeNull();
+  });
+
   it('replaces the green edible badge when the look-alike card is incomplete', async () => {
     const risks: ConfusionRisk[] = [
       {

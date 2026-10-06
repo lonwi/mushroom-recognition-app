@@ -128,8 +128,9 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
 
   test('Czubajnik czerwieniejący does not get the green kitchen section', async ({ page }) => {
     await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--czubajnik-not-for-the-kitchen');
-    await expect(page.getByTestId('species-use-inedible')).toContainText('Nie do jedzenia');
-    await expect(page.locator('body')).toContainText('NIEJADALNY');
+    await expect(page.getByTestId('species-use-toxic')).toContainText('Toksyczność i objawy');
+    await expect(page.locator('body')).toContainText('TRUJĄCY');
+    await expect(page.locator('body')).not.toContainText('NIEJADALNY');
     await expect(page.locator('body')).not.toContainText('W kuchni');
     await expect(page.getByTestId('species-use-edible')).toHaveCount(0);
   });
