@@ -117,10 +117,20 @@ export const en = {
     notesFailedBody: 'The previous note was left unchanged.',
     readFailedTitle: 'The journal could not be read',
     readFailedBody: 'Saved finds were not overwritten. Try again.',
+    damagedBody:
+      'The journal on this phone is damaged and could not be read. A raw copy of the data stays in app storage.',
+    startFresh: 'Start a new journal',
+    startFreshTitle: 'Start a new journal?',
+    startFreshBody:
+      'The current journal will be replaced with an empty list. The raw copy of the damaged data stays and is not deleted.',
+    missingDate: 'no date',
     legacyBanner: 'This entry is from an older version of the app. It has no recognition result.',
     legacyTitle: 'Older entry',
     legacyStoredName: 'Stored name',
-    legacyStoredConfidence: 'Number kept from the older version',
+    legacyNameNotice:
+      'The stored name did not come from photo recognition and is not a species identification.',
+    legacyEdibility:
+      'Do not eat a mushroom based on this entry. Have it checked by an expert, such as a Sanepid mushroom consultant.',
     confidence: 'Confidence',
   },
   safety: {

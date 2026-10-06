@@ -12,9 +12,12 @@ export const SIGHTINGS_BACKUP_KEY = '@grzybobranie_ai:sightings_v1_backup';
 const DISCLAIMER_KEY = '@grzybobranie_ai:disclaimer_accepted_v1';
 
 export class JournalReadError extends Error {
-  constructor(message: string) {
+  readonly kind: 'unavailable' | 'corrupt';
+
+  constructor(message: string, kind: 'unavailable' | 'corrupt') {
     super(message);
     this.name = 'JournalReadError';
+    this.kind = kind;
   }
 }
 
@@ -147,8 +150,13 @@ class StorageService {
     return run;
   }
 
+  /**
+   * Keeps the first raw copy. Later failed reads do not replace it.
+   */
   private async backupRawJournal(raw: string): Promise<void> {
     try {
+      const existing = await AsyncStorage.getItem(SIGHTINGS_BACKUP_KEY);
+      if (existing != null) return;
       await AsyncStorage.setItem(SIGHTINGS_BACKUP_KEY, raw);
     } catch (error) {
       console.error('Błąd kopii zapasowej dziennika:', error);
@@ -161,7 +169,7 @@ class StorageService {
       data = await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY);
     } catch (error) {
       console.error('Błąd podczas odczytu dziennika znalezisk:', error);
-      throw new JournalReadError('Nie udało się odczytać dziennika');
+      throw new JournalReadError('Nie udało się odczytać dziennika', 'unavailable');
     }
     if (!data) return [];
 
@@ -171,11 +179,11 @@ class StorageService {
     } catch (error) {
       console.error('Błąd podczas odczytu dziennika znalezisk:', error);
       await this.backupRawJournal(data);
-      throw new JournalReadError('Dziennik jest uszkodzony i nie został nadpisany');
+      throw new JournalReadError('Dziennik jest uszkodzony i nie został nadpisany', 'corrupt');
     }
     if (!Array.isArray(parsed)) {
       await this.backupRawJournal(data);
-      throw new JournalReadError('Dziennik ma nieprawidłowy kształt i nie został nadpisany');
+      throw new JournalReadError('Dziennik ma nieprawidłowy kształt i nie został nadpisany', 'corrupt');
     }
     return parsed.flatMap((item) => {
       const sighting = sanitizeSighting(item);
@@ -185,6 +193,18 @@ class StorageService {
 
   public getSightings(): Promise<SightingRecord[]> {
     return this.enqueue(() => this.readSightings());
+  }
+
+  /**
+   * Replaces the journal with an empty list. An existing raw backup is left in place.
+   * If no backup exists yet, the current raw value is stored first.
+   */
+  public startFreshJournal(): Promise<void> {
+    return this.enqueue(async () => {
+      const raw = await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY);
+      if (raw) await this.backupRawJournal(raw);
+      await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, '[]');
+    });
   }
 
   public saveSighting(record: SightingRecord): Promise<SightingRecord> {

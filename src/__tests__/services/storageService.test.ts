@@ -183,6 +183,28 @@ describe('storageService journal records', () => {
     expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('not-json');
   });
 
+  it('keeps the first raw backup when a later read is also corrupt', async () => {
+    await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, 'not-json');
+    await expect(storageService.getSightings()).rejects.toBeInstanceOf(JournalReadError);
+
+    await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, '{"no":"list"}');
+    await expect(storageService.getSightings()).rejects.toBeInstanceOf(JournalReadError);
+
+    expect(await AsyncStorage.getItem(SIGHTINGS_BACKUP_KEY)).toBe('not-json');
+    expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('{"no":"list"}');
+  });
+
+  it('starts an empty journal and leaves the raw backup in place', async () => {
+    await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, 'not-json');
+    await expect(storageService.getSightings()).rejects.toBeInstanceOf(JournalReadError);
+
+    await storageService.startFreshJournal();
+
+    expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('[]');
+    expect(await AsyncStorage.getItem(SIGHTINGS_BACKUP_KEY)).toBe('not-json');
+    expect(await storageService.getSightings()).toEqual([]);
+  });
+
   it('backs up a journal that is not a list and does not replace it', async () => {
     await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, '{"no":"list"}');
 
