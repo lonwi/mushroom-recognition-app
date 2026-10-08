@@ -1,0 +1,371 @@
+{
+  ".storybook/mockVectorIcons.js": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  ".storybook/preview.tsx": {
+    "react-native/no-inline-styles": {
+      "count": 1
+    }
+  },
+  "App.tsx": {
+    "complexity": {
+      "count": 1
+    },
+    "react-native/no-color-literals": {
+      "count": 11
+    },
+    "react-native/no-inline-styles": {
+      "count": 3
+    }
+  },
+  "e2e/storybook-components.spec.ts": {
+    "sonarjs/no-duplicate-string": {
+      "count": 10
+    }
+  },
+  "jest.config.js": {
+    "@typescript-eslint/no-require-imports": {
+      "count": 1
+    }
+  },
+  "jest.setup.js": {
+    "@typescript-eslint/no-require-imports": {
+      "count": 2
+    }
+  },
+  "metro.config.js": {
+    "@typescript-eslint/no-require-imports": {
+      "count": 1
+    }
+  },
+  "plugins/withAndroidGeoQueries.js": {
+    "@typescript-eslint/no-require-imports": {
+      "count": 1
+    }
+  },
+  "scripts/assert-eas-release-config.mjs": {
+    "complexity": {
+      "count": 1
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    }
+  },
+  "scripts/knip-baseline.mjs": {
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    }
+  },
+  "scripts/serve-storybook.js": {
+    "@typescript-eslint/no-require-imports": {
+      "count": 3
+    }
+  },
+  "src/__tests__/components/LookAlikeAlert.test.tsx": {
+    "sonarjs/no-duplicate-string": {
+      "count": 3
+    }
+  },
+  "src/__tests__/components/PhotoCredits.test.tsx": {
+    "sonarjs/no-duplicate-string": {
+      "count": 1
+    }
+  },
+  "src/__tests__/components/ResultModal.test.tsx": {
+    "sonarjs/no-duplicate-string": {
+      "count": 4
+    }
+  },
+  "src/__tests__/mushrooms.test.ts": {
+    "@typescript-eslint/no-require-imports": {
+      "count": 1
+    },
+    "complexity": {
+      "count": 2
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    }
+  },
+  "src/__tests__/releaseConfig.test.ts": {
+    "sonarjs/no-duplicate-string": {
+      "count": 1
+    }
+  },
+  "src/__tests__/screens/AtlasScreen.test.tsx": {
+    "@typescript-eslint/no-require-imports": {
+      "count": 1
+    },
+    "sonarjs/no-duplicate-string": {
+      "count": 9
+    }
+  },
+  "src/__tests__/screens/JournalScreen.test.tsx": {
+    "sonarjs/no-duplicate-string": {
+      "count": 6
+    }
+  },
+  "src/__tests__/screens/ScannerScreen.test.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    },
+    "@typescript-eslint/no-require-imports": {
+      "count": 3
+    },
+    "sonarjs/no-duplicate-string": {
+      "count": 3
+    }
+  },
+  "src/__tests__/screens/SpeciesDetailScreen.test.tsx": {
+    "sonarjs/no-duplicate-string": {
+      "count": 15
+    }
+  },
+  "src/__tests__/services/classifierService.test.ts": {
+    "sonarjs/no-duplicate-string": {
+      "count": 2
+    }
+  },
+  "src/__tests__/services/journalEntry.test.ts": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/__tests__/services/storageService.test.ts": {
+    "sonarjs/no-duplicate-string": {
+      "count": 4
+    }
+  },
+  "src/__tests__/services/tfliteRuntime.test.ts": {
+    "@typescript-eslint/no-require-imports": {
+      "count": 2
+    }
+  },
+  "src/components/EdibilityBadge.tsx": {
+    "react-native/no-color-literals": {
+      "count": 4
+    },
+    "react-native/no-inline-styles": {
+      "count": 8
+    }
+  },
+  "src/components/LookAlikeAlert.tsx": {
+    "react-native/no-color-literals": {
+      "count": 19
+    }
+  },
+  "src/components/PhotoCredits.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    },
+    "react-native/no-color-literals": {
+      "count": 13
+    }
+  },
+  "src/components/ResultModal.tsx": {
+    "complexity": {
+      "count": 1
+    },
+    "react-native/no-color-literals": {
+      "count": 24
+    },
+    "react-native/no-inline-styles": {
+      "count": 1
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    }
+  },
+  "src/components/SafetyDisclaimerModal.tsx": {
+    "react-native/no-color-literals": {
+      "count": 16
+    }
+  },
+  "src/contexts/LanguageContext.tsx": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/data/mushrooms.ts": {
+    "sonarjs/no-duplicate-string": {
+      "count": 22
+    }
+  },
+  "src/data/safetyRules.ts": {
+    "sonarjs/no-duplicate-string": {
+      "count": 1
+    }
+  },
+  "src/screens/AtlasScreen.tsx": {
+    "react-native/no-color-literals": {
+      "count": 28
+    },
+    "react-native/no-inline-styles": {
+      "count": 1
+    }
+  },
+  "src/screens/JournalScreen.tsx": {
+    "complexity": {
+      "count": 1
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    },
+    "react-native/no-color-literals": {
+      "count": 27
+    },
+    "react-native/no-inline-styles": {
+      "count": 1
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    },
+    "sonarjs/no-duplicate-string": {
+      "count": 1
+    }
+  },
+  "src/screens/PreparationGuideScreen.tsx": {
+    "react-native/no-color-literals": {
+      "count": 12
+    }
+  },
+  "src/screens/SafetyGuideScreen.tsx": {
+    "react-native/no-color-literals": {
+      "count": 35
+    },
+    "react-native/no-inline-styles": {
+      "count": 3
+    }
+  },
+  "src/screens/ScannerScreen.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    },
+    "react-native/no-color-literals": {
+      "count": 34
+    },
+    "react-native/no-inline-styles": {
+      "count": 1
+    }
+  },
+  "src/screens/SettingsScreen.tsx": {
+    "react-native/no-color-literals": {
+      "count": 16
+    }
+  },
+  "src/screens/SpeciesDetailScreen.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    },
+    "complexity": {
+      "count": 1
+    },
+    "react-native/no-color-literals": {
+      "count": 42
+    },
+    "react-native/no-inline-styles": {
+      "count": 3
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    }
+  },
+  "src/services/attributionPackage.ts": {
+    "@typescript-eslint/no-require-imports": {
+      "count": 1
+    }
+  },
+  "src/services/decodePng.ts": {
+    "@typescript-eslint/no-require-imports": {
+      "count": 1
+    }
+  },
+  "src/services/imagePreprocess.ts": {
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    }
+  },
+  "src/services/journalEntry.ts": {
+    "complexity": {
+      "count": 1
+    }
+  },
+  "src/services/photoPixels.ts": {
+    "@typescript-eslint/no-require-imports": {
+      "count": 1
+    }
+  },
+  "src/services/recognitionDecision.ts": {
+    "complexity": {
+      "count": 1
+    }
+  },
+  "src/services/storageService.ts": {
+    "complexity": {
+      "count": 1
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    }
+  },
+  "src/services/tfliteRuntime.ts": {
+    "@typescript-eslint/no-require-imports": {
+      "count": 1
+    }
+  },
+  "src/stories/AtlasScreen.stories.tsx": {
+    "react-native/no-inline-styles": {
+      "count": 1
+    }
+  },
+  "src/stories/EdibilityBadge.stories.tsx": {
+    "react-native/no-inline-styles": {
+      "count": 1
+    }
+  },
+  "src/stories/LookAlikeAlert.stories.tsx": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/stories/PreparationGuide.stories.tsx": {
+    "react-native/no-inline-styles": {
+      "count": 1
+    }
+  },
+  "src/stories/ResultModal.stories.tsx": {
+    "react-native/no-inline-styles": {
+      "count": 4
+    }
+  },
+  "src/stories/SafetyDisclaimerModal.stories.tsx": {
+    "react-hooks/rules-of-hooks": {
+      "count": 1
+    },
+    "react-native/no-inline-styles": {
+      "count": 1
+    }
+  },
+  "src/stories/SafetyGuideScreen.stories.tsx": {
+    "react-native/no-inline-styles": {
+      "count": 1
+    }
+  },
+  "src/stories/SpeciesDetailScreen.stories.tsx": {
+    "react-native/no-inline-styles": {
+      "count": 8
+    }
+  },
+  "src/utils/mushroomImages.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    }
+  },
+  "src/utils/tfjsPlatform.ts": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    }
+  }
+}

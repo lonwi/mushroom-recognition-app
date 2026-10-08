@@ -1,0 +1,44 @@
+[
+  {
+    "type": "dependency",
+    "from": "src/contexts/LanguageContext.tsx",
+    "to": "node_modules/@react-native-async-storage/async-storage/lib/commonjs/index.js",
+    "unresolvedTo": "@react-native-async-storage/async-storage",
+    "dependencyTypes": [
+      "npm",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-storage-or-platform"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/screens/ScannerScreen.tsx",
+    "to": "node_modules/expo-camera/build/index.js",
+    "unresolvedTo": "expo-camera",
+    "dependencyTypes": [
+      "npm",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-storage-or-platform"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/screens/ScannerScreen.tsx",
+    "to": "node_modules/expo-image-picker/src/ImagePicker.ts",
+    "unresolvedTo": "expo-image-picker",
+    "dependencyTypes": [
+      "npm",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-storage-or-platform"
+    }
+  }
+]

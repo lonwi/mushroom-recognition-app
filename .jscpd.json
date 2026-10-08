@@ -1,0 +1,27 @@
+{
+  "minTokens": 50,
+  "minLines": 5,
+  "mode": "mild",
+  "format": ["javascript", "jsx", "typescript", "tsx"],
+  "pattern": "**/*.{js,jsx,mjs,cjs,ts,tsx}",
+  "ignore": [
+    "**/node_modules/**",
+    "**/__tests__/**",
+    "**/*.{test,spec}.{js,jsx,ts,tsx}",
+    "**/e2e/**",
+    "**/storybook-static/**",
+    "**/dist/**",
+    "**/coverage/**",
+    "**/.expo/**",
+    "**/.cache/**",
+    "**/training/**",
+    "**/android/**",
+    "**/ios/**",
+    "**/test-results/**",
+    "**/playwright-report/**"
+  ],
+  "reporters": ["console"],
+  "gitignore": true,
+  "absolute": false,
+  "threshold": 2
+}
