@@ -13,6 +13,12 @@ import {
 import { LanguageProvider } from '../../contexts/LanguageContext';
 import type { SightingRecord } from '../../types/mushroom';
 
+const unknown: SightingRecord = {
+  id: 'sighting_unknown',
+  timestamp: 1_720_000_050_000,
+  recognition: { status: 'rejected', reason: 'unknown_mushroom' },
+};
+
 const unclear: SightingRecord = {
   id: 'sighting_unclear',
   timestamp: 1_720_000_000_000,
@@ -85,6 +91,21 @@ describe('JournalScreen', () => {
     expect(screen.queryByText(/%/)).toBeNull();
     expect(screen.queryByText(/Borowik/)).toBeNull();
     expect(screen.queryByText('JADALNY')).toBeNull();
+  });
+
+  it('warns that an unknown mushroom may be deadly and names an expert check', async () => {
+    await storageService.saveSighting(unknown);
+    const screen = await renderJournal();
+
+    expect(await screen.findByTestId('journal-unknown-sighting_unknown')).toHaveTextContent(
+      'To wygląda na grzyba, którego aplikacja nie zna. Nie zbieraj go ani nie jedz na podstawie skanu.',
+    );
+    expect(screen.getByTestId('journal-unknown-deadly-sighting_unknown')).toHaveTextContent(
+      'Ten grzyb może być śmiertelnie trujący.',
+    );
+    expect(screen.getByTestId('journal-unknown-verify-sighting_unknown')).toHaveTextContent(/grzyboznawcy/);
+    expect(screen.queryByText(/%/)).toBeNull();
+    expect(screen.queryByText(/JADALNY/)).toBeNull();
   });
 
   it('opens the saved spot in maps and keeps the candidate confidence', async () => {

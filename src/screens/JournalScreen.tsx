@@ -164,6 +164,12 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
           <Text style={styles.honestBody} testID={`journal-unknown-${item.id}`}>
             {t('scanner.unknownMushroomBody')}
           </Text>
+          <Text style={styles.warningText} testID={`journal-unknown-deadly-${item.id}`}>
+            {t('scanner.unknownMushroomDeadly')}
+          </Text>
+          <Text style={styles.honestBody} testID={`journal-unknown-verify-${item.id}`}>
+            {t('scanner.rejectedVerify')}
+          </Text>
         </View>
       );
     }

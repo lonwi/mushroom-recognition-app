@@ -152,6 +152,12 @@ export const ResultModal: React.FC<Props> = ({
                 <Text style={styles.heading} testID="recognition-unknown-body">
                   {t('scanner.unknownMushroomBody')}
                 </Text>
+                <Text style={styles.expertBody} testID="recognition-unknown-deadly">
+                  {t('scanner.unknownMushroomDeadly')}
+                </Text>
+                <Text style={styles.note} testID="recognition-unknown-verify">
+                  {t('scanner.rejectedVerify')}
+                </Text>
               </View>
             ) : null}
 

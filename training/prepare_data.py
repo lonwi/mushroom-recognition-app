@@ -17,7 +17,7 @@ from pathlib import Path
 from dedup import average_hash_bits, dedup_records, write_jsonl
 from manifest import ROOT, load_manifest
 from preprocess import MODEL_INPUT_SIZE, ImageReadError, load_oriented_rgb, write_model_png
-from split import split_by_observation
+from split import split_by_observation, split_key_summary
 
 DATA_DIR = ROOT / "training" / "data"
 
@@ -25,10 +25,10 @@ DATA_DIR = ROOT / "training" / "data"
 def _average_hash(rgb) -> int:
     from PIL import Image
 
-    image = Image.fromarray(rgb, mode="RGB").convert("L").resize((8, 8))
-    pixels = list(image.getdata())
-    grid = [pixels[row * 8 : (row + 1) * 8] for row in range(8)]
-    return average_hash_bits(grid)
+    import numpy as np
+
+    gray = np.asarray(Image.fromarray(rgb, mode="RGB").convert("L").resize((8, 8)), dtype=np.uint8)
+    return average_hash_bits(gray.tolist())
 
 
 def _usable_records(source: Path) -> tuple[list[dict], list[dict]]:
@@ -107,6 +107,10 @@ def main() -> None:
     (DATA_DIR / "splits.json").write_text(json.dumps(serializable, ensure_ascii=False), encoding="utf-8")
     counts = {name: dict(Counter(row["class_id"] for row in rows)) for name, rows in splits.items()}
     (DATA_DIR / "split_counts.json").write_text(json.dumps(counts, indent=2), encoding="utf-8")
+    (DATA_DIR / "split_groups.json").write_text(
+        json.dumps(split_key_summary(prepared), indent=2),
+        encoding="utf-8",
+    )
     print(json.dumps({name: len(rows) for name, rows in splits.items()}))
 
 

@@ -35,6 +35,10 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.getByTestId('recognition-unknown-body')).toContainText(
       'To wygląda na grzyba, którego aplikacja nie zna. Nie zbieraj go ani nie jedz na podstawie skanu.',
     );
+    await expect(page.getByTestId('recognition-unknown-deadly')).toContainText(
+      'Ten grzyb może być śmiertelnie trujący.',
+    );
+    await expect(page.getByTestId('recognition-unknown-verify')).toContainText('Sanepid');
     await expect(page.locator('body')).not.toContainText('%');
     await expect(page.locator('body')).not.toContainText('Borowik');
     await expect(page.locator('body')).not.toContainText('JADALNY');

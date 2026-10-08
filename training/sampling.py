@@ -14,6 +14,9 @@ SPECIES_CLASS_CAP = 500
 MAX_PER_OCCURRENCE = 2
 AGGREGATE_CLASS_IDS = ("unknown_mushroom", "not_a_mushroom")
 THIN_CLASS_IDS = ("cortinarius_orellanus", "cortinarius_rubellus", "amanita_virosa")
+# Poisonous fungi held out of training. The ship gate requires this many
+# photos of each such taxon. The fetch asks for the same number first.
+TOXIC_HELDOUT_TARGET = 50
 
 
 def spread_per_taxon(class_cap: int, taxon_count: int, configured_cap: int) -> int:
@@ -95,6 +98,45 @@ def fill_regional_then_global(
             )
         )
     return accepted
+
+
+def taxon_fetch_plan(taxa: list[dict], class_cap: int, per_taxon_cap: int) -> dict[str, int]:
+    """How many photos to request from each aggregate taxon.
+
+    Poisonous held-out taxa are filled toward `TOXIC_HELDOUT_TARGET` before
+    the other names share what remains of the class cap. A smoke override
+    with a tiny class cap still stops at that cap.
+    """
+    if class_cap < 1 or per_taxon_cap < 1:
+        raise ValueError("caps must be positive")
+    remaining = class_cap
+    plan: dict[str, int] = {str(taxon["name"]): 0 for taxon in taxa}
+    priority = [taxon for taxon in taxa if taxon.get("toxic") and taxon.get("held_out")]
+    rest = [taxon for taxon in taxa if not (taxon.get("toxic") and taxon.get("held_out"))]
+    for taxon in priority:
+        if remaining < 1:
+            break
+        ask = min(per_taxon_cap, TOXIC_HELDOUT_TARGET, remaining)
+        plan[str(taxon["name"])] = ask
+        remaining -= ask
+    if rest and remaining > 0:
+        each = spread_per_taxon(remaining, len(rest), per_taxon_cap)
+        for taxon in rest:
+            if remaining < 1:
+                break
+            ask = min(each, per_taxon_cap, remaining)
+            plan[str(taxon["name"])] = ask
+            remaining -= ask
+        for taxon in rest:
+            if remaining < 1:
+                break
+            name = str(taxon["name"])
+            room = min(per_taxon_cap, plan[name] + remaining) - plan[name]
+            if room < 1:
+                continue
+            plan[name] += room
+            remaining -= room
+    return plan
 
 
 def class_fetch_cap(species: dict, override: int | None) -> int:

@@ -62,29 +62,42 @@ Poland, Germany, Czechia, Slovakia, Austria, Hungary, Lithuania, Latvia, and Est
 Defaults:
 
 - known species: 500 photos (`--max-per-class` overrides this, including for the aggregate classes)
-- `unknown_mushroom` and `not_a_mushroom`: `class_cap` 2500 in `labels.json`, spread across every listed taxon (`per_taxon_cap` 80, reduced so the cap is shared)
+- `unknown_mushroom` and `not_a_mushroom`: `class_cap` 2500 in `labels.json`, spread across every listed taxon (`per_taxon_cap` 80, reduced so the cap is shared). Poisonous held-out taxa inside `unknown_mushroom` are requested first, up to 50 photos each, before the rest of the cap is shared.
+- toxic probes: a separate test-only budget, 50 photos per taxon, not taken out of the 2500. See the probe list below.
 - at most 2 photos from one GBIF observation
 
 `Cortinarius orellanus`, `Cortinarius rubellus`, and `Amanita virosa` are thin in CC0/CC-BY. The fetch writes `training/data/fetch_report.json` with their counts and does not invent photos. The ship gate still requires 40 training images for a species, so a short class cannot ship.
 
 ## Preprocessing
 
-The phone and the trainer see the same pixels:
+The phone and the trainer share the second resize and the rounding rule:
 
-1. EXIF orientation is applied (Pillow `ImageOps.exif_transpose` in prepare; `expo-image-manipulator` with no resize in `readPhotoAsPngBytes`, because the camera uses `skipProcessing`).
-2. If both sides are at least 224, an antialiased box filter resizes to 224 and the result is rounded to uint8. `prepare_data.py` caches that PNG under `training/data/prepared/224/`.
-3. Smaller images keep the bilinear half-pixel resize.
-4. Normalization is `(pixel / 127.5) - 1`.
+1. EXIF orientation is applied by the platform image decoder. Pillow uses `ImageOps.exif_transpose` in prepare. On the phone, `readPhotoAsPngBytes` calls `expo-image-manipulator` with a width of 448 and no extra rotation. The camera uses `skipProcessing`, so the JPEG may still carry an orientation tag. ImageManipulator loads through UIImage / BitmapFactory on device, and through HTMLImageElement's default `image-orientation: from-image` on web. Those decoders bake the tag into upright pixels. The app does not rotate a second time.
+2. A photo whose both sides are at least 448 is reduced before the 224 model input. The phone's first step is that native resize to width 448, keeping aspect ratio, so a 12–50 megapixel JPEG is not pushed through base64 into JavaScript. Training's cached PNG uses an antialiased box filter to a 448 square and then to 224, and only when the model size is 224 and both sides start at or above 448. The native scaler and the box filter are not the same algorithm, so the first step is not bit-identical. A photo that is already 448px on both sides shares the second step with the phone.
+3. The 224 box filter rounds each channel with half toward +infinity (`Math.round` in `imagePreprocess.ts`, `floor(x + 0.5)` in `training/preprocess.py`). `numpy.rint` is not used: it rounds half to even, and on a 448-to-224 area resize that disagrees on about 18,649 of 150,528 values. The fixture `training/fixtures/round_half_up_2x2_to_1.json` is a 2×2 image of 10 and 11, which averages to 10.5 and must become 11.
+4. Smaller images keep the bilinear half-pixel resize.
+5. Normalization is `(pixel / 127.5) - 1`.
 
 Training reads the cached PNG. It does not decode the original JPEG with `tf.io.decode_image`, which ignores EXIF. Corrupt files are skipped.
 
-Train augmentation (after the cache) is a horizontal flip, brightness, and contrast. Class weights are inverse frequency. `dataset.cache()` sits on the deterministic decode, before augmentation.
+The sample list is shuffled in full before `from_tensor_slices`. A windowed `dataset.shuffle(1000)` on a class-sorted list is not used. Augmentation, after `dataset.cache()` on the deterministic decode, is a horizontal flip, a random scale from 1.0 to 1.25 followed by a crop back to 224, a rotation of about ±15 degrees, brightness, and contrast. Class weights are inverse frequency with mean 1, then capped at 10.
+
+## Split
+
+`training/split.py` keeps one field outing in one split. When the photo has a recorder, a finite latitude and longitude, and a date, the group is `recordedBy` (case-folded) plus a 0.01-degree grid (about 1.1 km north–south) plus the calendar day, and the taxon name so two species from the same person on the same day stay separate. Otherwise the group is the GBIF occurrence. `prepare_data.py` writes the counts of each kind of key to `training/data/split_groups.json`.
 
 ## Backbone
 
 `keras.applications.MobileNetV3Small(weights="imagenet", include_preprocessing=False)`.
 
-The checkpoint is the Keras Applications ImageNet file, published with TensorFlow / Keras under **Apache-2.0**. ImageNet photographs are not downloaded or redistributed. Training images are the CC0/CC-BY set above. TensorFlow is pinned in `training/requirements.txt`.
+What the sources say about those weights, checked against Keras 3.15.1 / TensorFlow 2.21.0:
+
+- The installed loader is `keras/src/applications/mobilenet_v3.py`. With `include_top=False` and `alpha=1.0` it downloads `weights_mobilenet_v3_small_224_1.0_float_no_top_v2.h5` from `https://storage.googleapis.com/tensorflow/keras-applications/mobilenet_v3/`. That file is what `weights="imagenet"` means in this trainer. The loader does not attach a separate license file to the `.h5`.
+- The Keras 3.15.1 repository license is the Apache License, Version 2.0: https://github.com/keras-team/keras/blob/v3.15.1/LICENSE . The installed `mobilenet_v3.py` does not repeat that header.
+- Kaggle's model `google/mobilenet-v3` (https://www.kaggle.com/models/google/mobilenet-v3 , API `licenseName` on each instance, including `small-100-224-feature-vector`) says **Apache 2.0**. Its model card says the TF Hub checkpoint was trained on the ILSVRC-2012-CLS dataset. That card describes the TensorFlow Hub / TF-Slim checkpoints, not the Keras Applications `.h5` this trainer downloads.
+- ImageNet's terms of access at https://www.image-net.org/download.php say the Researcher shall use the Database only for non-commercial research and educational purposes. Those terms are about the ImageNet photographs. This pipeline does not download or redistribute those photographs.
+
+This section records those sources. It does not decide whether commercial use of the pretrained weights is allowed. Mushroom training photos stay CC0 or CC-BY only. `assets/models/labels.json` points `pretrained_weights_license` at this section instead of storing a one-line license name. TensorFlow is pinned in `training/requirements.txt`.
 
 The network reads floats already scaled with `(pixel / 127.5) - 1` and emits **logits**, not softmax.
 
@@ -92,13 +105,46 @@ The network reads floats already scaled with `(pixel / 127.5) - 1` and emits **l
 
 29 outputs. The contract is `assets/models/labels.json` (indexes are the logit order). Edibility is absent from that file. A scan is not allowed to print a verdict.
 
-`unknown_mushroom` is the class immediately before `not_a_mushroom`. It means “this is a fungus, and it is not one of the species this model knows.” It is trained on CC0/CC-BY photos of other fungi that occur in Poland and nearby countries and that are **not** in the known species list (amanitas, boletes, russulas, milk-caps, brackets, and similar names in `labels.json`). Each taxon is capped. A fixed list of those taxa is `held_out_taxon` and is placed only in the test split, so the recall gate measures fungi the trainer never saw.
+`unknown_mushroom` is the class immediately before `not_a_mushroom`. It means “this is a fungus, and it is not one of the species this model knows.” It is trained on CC0/CC-BY photos of other fungi that occur in Poland and nearby countries and that are **not** in the known species list (amanitas, boletes, russulas, milk-caps, brackets, and similar names in `labels.json`). Each taxon is capped. A fixed list of those taxa is `held_out_taxon` and is placed only in the test split.
+
+Every species class has `safety_tag` `toxic`, `edible`, or `other`. Every aggregate taxon has `toxic` true or false. Those flags are evaluation labels. The app must not show them as an edibility verdict. Poisonous taxa inside the training unknown class (for example `Hypholoma fasciculare`) and poisonous held-out taxa (for example `Amanita verna`, `Amanita porphyria`, `Inocybe erubescens`, `Inocybe geophylla`, `Entoloma sinuatum`, `Clitocybe rivulosa`, `Gyromitra gigas`, `Agaricus xanthodermus`) are tagged so a test photo of any of them counts when `decide()` would show a confident edible species.
+
+GBIF name matching is strict. `matchType` must be `EXACT` and the rank must be species, subspecies, variety, or form. A `HIGHERRANK` hit (a genus, a class, or the kingdom) stops the fetch with `SystemExit` before any download. That is why the bare strings `Helvella crispa` and `Boletus badius` are not in the manifest: GBIF maps them to a higher rank. The held-out name is `Helvella crispa (Scop.) Fr.`. `Imleria badia` keeps the synonym `Xerocomus badius`, which shares one accepted key. Collisions are checked on that accepted key. The same key may repeat only as synonyms of one class.
 
 When the top class is `unknown_mushroom` and the energy gate accepts the photo, the app shows:
 
 > To wygląda na grzyba, którego aplikacja nie zna. Nie zbieraj go ani nie jedz na podstawie skanu.
 
-It does not show a species, a confidence, or an edibility verdict. `not_a_mushroom` stays last.
+It also says the mushroom may be deadly poisonous, and it shows the existing line that the mushroom should be checked by a mycologist or a Sanepid inspector. It does not show a species, a confidence, or an edibility verdict. The same three lines are on the journal entry. `not_a_mushroom` stays last.
+
+### Toxic probes
+
+These taxa are fetched only into the test split, labeled `unknown_mushroom`, target 50 CC0/CC-BY photos each. They are not a 30th class. Counts below are GBIF `StillImage` occurrences on 2026-10-08, before the license filter, so the licensed yield will be lower. The ship gate still requires 50 images of each poisonous held-out taxon, including a taxon that comes back with zero.
+
+| Taxon | GBIF key | StillImage occurrences | Role |
+| --- | ---: | ---: | --- |
+| Lepiota brunneoincarnata | 2535390 | 188 | parasol look-alike |
+| Lepiota subincarnata | 2535445 | 596 | parasol look-alike |
+| Lepiota cristata | 2535471 | 4232 | parasol look-alike |
+| Omphalotus olearius | 2538088 | 1563 | chanterelle look-alike |
+| Galerina sulcipes | 8003146 | 0 | Galerina look-alike; the 50-image floor stays |
+| Galerina sulciceps | 8347930 | 39 | GBIF spelling of the (Berk.) Boedijn fungus; a different key from sulcipes; still under 50 |
+| Conocybe filaris | 2529789 | 153 | species probe. `Conocybe spp.` is `HIGHERRANK` and is not fetched |
+| Tricholoma equestre | 3324883 | 2135 | |
+| Chlorophyllum molybdites | 5243168 | 17255 | |
+
+`Cortinarius orellanus`, `Cortinarius rubellus`, and `Galerina marginata` are already model classes. Fetching them again as `unknown_mushroom` would give one fungus two labels, so they are not probes. Their own test photos are poisonous (`safety_tag` `toxic`) and count in `confident_toxic_as_edible`.
+
+The fetch also keeps at most 2 photos from one GBIF occurrence, so the licensed count is lower than the still-image count. Measured on 2026-10-08 with that cap, the whole GBIF still-image result for a taxon when it fit in one page:
+
+| Taxon | CC0/CC-BY photos after the 2-per-occurrence cap |
+| --- | ---: |
+| Lepiota brunneoincarnata | 16 (the whole set; under 50) |
+| Galerina sulcipes | 0 |
+| Galerina sulciceps | 8 (the whole set; under 50) |
+| Conocybe filaris | 78 (reaches 50) |
+
+`Lepiota subincarnata`, `Lepiota cristata`, `Omphalotus olearius`, `Tricholoma equestre`, and `Chlorophyllum molybdites` each had enough licensed photos in the first page or two to reach 50. One occurrence page (300 records) took about 0.5–2.7 seconds. Three original JPEGs from iNaturalist were about 2 MB and arrived in about 0.2 seconds each on this machine. The extra probe crawl is 9 name lookups, a pass through the Central European countries, then global pages until the cap, then about 320 downloads for the taxa that can reach 50 plus the short taxa above. That is on the order of a few minutes on this CPU box (roughly one minute of occurrence requests and about a minute of JPEG transfer at the measured rate), not a separate multi-hour job. It is part of `python training/run_pipeline.py fetch` and is not run as a full download in CI. The 50-image gate still fails for `Galerina sulcipes`, `Galerina sulciceps`, and `Lepiota brunneoincarnata` at these counts.
 
 Atlas species already in the app, kept so a future model lines up with the cards:
 
@@ -123,7 +169,7 @@ Look-alikes added so those deadly species have somewhere else to go:
 
 The energy score is `E(x) = -T * logsumexp(logits / T)` (Liu et al., NeurIPS 2020). In-distribution scores are lower.
 
-The threshold is the lowest validation energy that keeps at least 95% of in-distribution validation images (everything except `not_a_mushroom`, including `unknown_mushroom`). That is an order statistic. `numpy.quantile` at 0.95 is not used: its linear interpolation can sit between samples so fewer than 95% of a short validation split fall at or below it.
+The threshold is the lowest validation energy that keeps at least 97% of in-distribution validation images (everything except `not_a_mushroom`, including `unknown_mushroom`). That is an order statistic (`ID_KEEP_FIT`). `numpy.quantile` is not used: its linear interpolation can sit between samples so fewer than the requested share of a short validation split fall at or below it. The ship gate is still 95% on the test split. The extra two points are headroom so a 95% fit does not fail that gate on split noise. The 95% floor was not lowered.
 
 `id_keep_rate_val` records that calibration. The ship gate reads `id_keep_rate_test`: the same threshold on the held-out test split. A photo is rejected, and no species is shown, when the background class wins, when energy is above the threshold, or when the top softmax is below 0.40. A confident `unknown_mushroom` (top class, softmax at least 0.40, energy inside the threshold) is also not a species result. If any logit is NaN or infinite, the result is `unavailable` / `output_mismatch`.
 
@@ -141,13 +187,17 @@ Low confidence (top softmax under 0.70 or top-1/top-2 margin under 0.15) still s
 | Species volume | Training images after dedup, each known species. | ≥ 40 |
 | Aggregate volume | Training images for `not_a_mushroom` and for `unknown_mushroom`. | ≥ 100 |
 | Pair confusion | A high-stakes photo whose argmax is an edible look-alike, for the listed pairs, both directions. | ≤ 0.05 |
-| Confident toxic → edible | Test photos of a high-risk class that the app would **show** as an edible look-alike with `low_confidence` false. Energy rejects and low-confidence candidates are not in this count. | 0 |
-| In-distribution keep | Share of test images other than `not_a_mushroom` whose energy is ≤ the **validation** threshold. | ≥ 0.95 |
+| Confident toxic → edible | Every test photo tagged poisonous (known class, unknown-class taxon, or held-out probe) that `decide()` would show as a confident edible species. Edible means every class with `safety_tag` `edible`. Energy rejects, low confidence, and a dangerous-genus warning are not in this count. | 0 |
+| Open-set safe outcome | Held-out fungi (`held_out_taxon`, class `unknown_mushroom`, including probes) whose `decide()` status is rejected, or candidates with low confidence or a dangerous-genus warning. Wilson 95% interval. | rate ≥ 0.90 and lower bound ≥ 0.85 |
+| Open-set confident edible | The same held-out photos that `decide()` would show as a confident edible. Wilson 95% interval. | rate ≤ 0.02 and upper bound ≤ 0.05 |
+| Poisonous held-out sample | Poisonous held-out photos, including every toxic probe and every toxic held-out unknown taxon, even when the count is 0. Confident edible among them must be 0. | ≥ 300 images and ≥ 50 per taxon |
+| Unknown-fungus recall | Diagnostic only. Top-1 equals `unknown_mushroom` on held-out fungi. The ship gate does not use 0.50. It does require enough photos to compute the diagnostic, and it records a per-taxon bootstrap lower bound (target 0.40, not a ship floor) plus a split of unknown genus versus unknown species of a known genus. | ≥ 200 images and ≥ 10 taxa with ≥ 10 each |
+| Unknown-fungus steal | Known-species test photos that `decide()` rejects as `unknown_mushroom`. Energy rejects are not steals. | ≤ 0.10 |
+| High-stakes steal | The same steal rate for each high-stakes class. | ≤ 0.10 on ≥ 30 images |
+| In-distribution keep | Share of test images other than `not_a_mushroom` whose energy is ≤ the validation threshold. The threshold is fit at 97%. | ≥ 0.95 |
 | Non-mushroom reject | Test `not_a_mushroom` photos rejected by energy or the background class. | ≥ 0.90 |
 | Overconfident non-mushrooms | Test non-mushrooms with softmax > 0.5 that energy or the background class still rejects. | ≥ 30 images and ≥ 0.90 |
 | Held-out non-mushroom taxa | `not_a_mushroom` taxa that never appear in train or val. | ≥ 20 images and reject ≥ 0.90 |
-| Unknown-fungus recall | Test photos of fungi taxa held out of train and val whose top class is `unknown_mushroom`. | ≥ 0.50 on ≥ 30 images |
-| Unknown-fungus steal | Known-species test photos whose top class is `unknown_mushroom`. | ≤ 0.10 |
 | Coverage | Every class in `labels.json` has a measured top-1/top-3 and support above 0 in train and in test. | required |
 | TFLite agreement | Top-1 match between the interpreter and the float Keras model on **every** val and test photo. | ≥ 0.99 |
 | TFLite high-risk agreement | The same match, only on high-risk class photos, again the full val+test count. | ≥ 0.99 |
@@ -160,6 +210,7 @@ Export builds **fp16** weights with float32 input and output. `react-native-fast
 
 - A trained checkpoint and the measured metrics above.
 - Enough CC-BY/CC0 photos of `Cortinarius orellanus`, `Amanita virosa`, and `Cortinarius rubellus`. Global fill is allowed, and it may still be short after dedup.
+- Fifty licensed photos of every poisonous held-out taxon. `Galerina sulcipes` had 0 still images and `Galerina sulciceps` had 39 before the license filter, so that gate cannot pass on current GBIF counts. The floor stays 50.
 - On-device measurement of accuracy, latency, and the reject rate on a phone. The exporter scores the interpreter on val/test photos on the training machine.
 - `Armillaria mellea` is a species complex. Photos labeled that way on GBIF are often sensu lato.
 - `Amanita verna` is not its own class. It is one of the held-out taxa inside `unknown_mushroom`.

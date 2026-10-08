@@ -24,7 +24,7 @@ from sampling import (
     MAX_PER_OCCURRENCE,
     class_fetch_cap,
     collect_licensed_media,
-    spread_per_taxon,
+    taxon_fetch_plan,
     thin_class_report,
 )
 
@@ -56,17 +56,34 @@ def _get_json(url: str, timeout: int = 60, attempts: int = 4) -> dict:
 _KEY_CACHE: dict[str, tuple[int, str] | None] = {}
 
 
+_SPECIES_RANKS = {"SPECIES", "SUBSPECIES", "VARIETY", "FORM"}
+
+
 def resolve_accepted_keys(names: list[str]) -> dict[int, str]:
-    """Map accepted GBIF usage keys to the scientific name we asked for."""
+    """Map accepted GBIF usage keys to the scientific name we asked for.
+
+    A HIGHERRANK match (a genus, a class, or the kingdom) used to be skipped
+    with a one-line note, so names such as Helvella crispa and Boletus badius
+    contributed zero photos and the fetch still looked successful. That is now
+    a hard error. The process exits before any download.
+    """
+    errors: list[str] = []
     keys: dict[int, str] = {}
     for name in names:
         if name not in _KEY_CACHE:
             query = urllib.parse.urlencode({"name": name, "strict": "true"})
             payload = _get_json(f"{GBIF_MATCH}?{query}")
             match_type = payload.get("matchType")
+            rank = payload.get("rank")
             usage = payload.get("acceptedUsageKey") or payload.get("usageKey")
-            if match_type != "EXACT" or not usage:
-                print(f"skip non-exact GBIF match for {name}: {match_type}", file=sys.stderr)
+            if match_type != "EXACT" or rank not in _SPECIES_RANKS or not usage:
+                message = (
+                    f"GBIF match for {name!r} is {match_type} rank {rank} "
+                    f"({payload.get('scientificName')}). Expected an EXACT species. "
+                    "Refusing to skip this name."
+                )
+                print(message, file=sys.stderr)
+                errors.append(message)
                 _KEY_CACHE[name] = None
             else:
                 _KEY_CACHE[name] = (int(usage), name)
@@ -76,6 +93,8 @@ def resolve_accepted_keys(names: list[str]) -> dict[int, str]:
             continue
         usage_key, queried = cached
         keys[usage_key] = queried
+    if errors:
+        raise SystemExit("fetch stopped because one or more GBIF names are not an exact species:\n" + "\n".join(errors))
     return keys
 
 
@@ -153,44 +172,44 @@ def collect_class_media(
     if not sampling:
         seen: set = set()
         rows = _pull_names(list(species["gbif_names"]), max_per_class, max_per_occurrence, max_pages, seen)
+        toxic = species.get("safety_tag") == "toxic"
         for row in rows:
             row["class_id"] = class_id
             row["held_out_taxon"] = False
+            row["toxic"] = toxic
+            row["genus_relation"] = ""
         return rows
 
-    names = [str(name) for name in species["gbif_names"]]
-    held = {str(name) for name in sampling.get("held_out_gbif_names") or []}
+    taxa = list(sampling.get("taxa") or [])
+    if not taxa:
+        held = {str(name) for name in sampling.get("held_out_gbif_names") or []}
+        taxa = [
+            {"name": str(name), "toxic": False, "held_out": str(name) in held, "relation": ""}
+            for name in species["gbif_names"]
+        ]
     configured = int(sampling["per_taxon_cap"])
-    each = spread_per_taxon(max_per_class, len(names), configured)
-    buckets: dict[str, list[dict]] = {name: [] for name in names}
-    seen_by_name = {name: set() for name in names}
+    plan = taxon_fetch_plan(taxa, max_per_class, configured)
+    by_name = {str(taxon["name"]): taxon for taxon in taxa}
+    buckets: dict[str, list[dict]] = {name: [] for name in by_name}
+    seen_by_name = {name: set() for name in by_name}
 
     def pull(name: str, cap: int) -> None:
         have = len(buckets[name])
-        if have >= cap:
+        if have >= cap or cap < 1:
             return
+        taxon = by_name[name]
         rows = _pull_names([name], cap - have, max_per_occurrence, max_pages, seen_by_name[name])
         for row in rows:
             row["class_id"] = class_id
             row["taxon_name"] = name
-            row["held_out_taxon"] = name in held
+            row["held_out_taxon"] = bool(taxon.get("held_out"))
+            row["toxic"] = bool(taxon.get("toxic"))
+            row["genus_relation"] = taxon.get("relation") or ""
         buckets[name].extend(rows)
 
-    total = 0
-    for name in names:
-        if total >= max_per_class:
-            break
-        pull(name, min(each, max_per_class - total))
-        total = sum(len(rows) for rows in buckets.values())
-    if total < max_per_class:
-        for name in names:
-            if total >= max_per_class:
-                break
-            before = len(buckets[name])
-            room = min(configured, before + (max_per_class - total))
-            pull(name, room)
-            total += len(buckets[name]) - before
-    return [row for name in names for row in buckets[name]]
+    for name, cap in plan.items():
+        pull(name, cap)
+    return [row for name in by_name for row in buckets[name]]
 
 
 def download_image(url: str, destination: Path, timeout: int = 40) -> int:
@@ -280,12 +299,49 @@ def main() -> None:
                     continue
             rows.append(row)
 
+    probes = manifest.get("toxic_probes") or {}
+    fetch_probes = not wanted or "unknown_mushroom" in wanted or "toxic_probes" in wanted
+    probe_report = []
+    if fetch_probes:
+        cap = int(probes.get("per_taxon_cap") or 50)
+        if args.max_per_class is not None:
+            cap = min(cap, args.max_per_class)
+        for taxon in probes.get("taxa") or []:
+            name = str(taxon["name"])
+            print(f"fetch toxic probe {name} (cap {cap}, test only)")
+            media = _pull_names([name], cap, args.max_per_occurrence, args.max_pages, set())
+            for row in media:
+                row["class_id"] = probes.get("class_id") or "unknown_mushroom"
+                row["taxon_name"] = name
+                row["held_out_taxon"] = True
+                row["toxic"] = True
+                row["genus_relation"] = taxon.get("relation") or ""
+                row["probe"] = True
+                filename = f"{row['occurrence_key']}_{row['media_index']}{suffix_for(row['image_url'])}"
+                relative = Path("images") / "unknown_mushroom" / filename
+                row["file"] = str(relative).replace("\\", "/")
+                row["source"] = "gbif"
+                row["downloaded"] = False
+                if not args.dry_run:
+                    destination = DATA_DIR / relative
+                    try:
+                        row["bytes"] = download_image(row["image_url"], destination)
+                        row["downloaded"] = True
+                    except Exception as error:  # noqa: BLE001 — keep the crawl going
+                        row["download_error"] = str(error)
+                        print(f"  skip {row['image_url']}: {error}", file=sys.stderr)
+                        continue
+                rows.append(row)
+            probe_report.append({"taxon": name, "accepted": len(media), "cap": cap, "gbif_key": taxon.get("gbif_key")})
+            print(f"  accepted probe media: {len(media)}")
+
     with attribution_path.open("w", encoding="utf-8") as handle:
         for row in rows:
             handle.write(json.dumps(row, ensure_ascii=False) + "\n")
     report = {
         "classes": per_class,
         "thin_classes": thin_class_report(per_class),
+        "toxic_probes": probe_report,
         "max_per_occurrence": args.max_per_occurrence,
         "note": (
             "Global fill runs after the Central European countries until the class cap. "

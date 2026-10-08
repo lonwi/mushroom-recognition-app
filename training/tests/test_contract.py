@@ -16,11 +16,12 @@ from evaluate import (
     image_counts,
 )
 from export_tflite import DEFAULT_QUANTIZATIONS, representative_dataset
-from manifest import ROOT, load_manifest
+from manifest import ROOT, load_manifest, poisonous_heldout_taxa
 from preprocess import ImageReadError, load_oriented_rgb, model_rgb_uint8, preprocess_rgb_uint8
 from recognition_math import (
     DANGEROUS_GENERA,
     DANGEROUS_PAIRS,
+    EDIBLE_LOOKALIKE_IDS,
     HIGH_STAKES_IDS,
     decide,
     energy_score,
@@ -60,6 +61,36 @@ class PreprocessTest(unittest.TestCase):
         output = preprocess_rgb_uint8(rgb, 2)
         expected = rgb.astype(np.float64) / 127.5 - 1.0
         self.assertTrue(np.allclose(output, expected, atol=1e-6))
+
+    def test_half_pixel_rounds_like_javascript(self):
+        """10.5 and 2.5 must become 11 and 3. numpy.rint would emit 10 and 2."""
+        half = np.array(
+            [
+                [[10, 10, 10], [11, 11, 11]],
+                [[10, 10, 10], [11, 11, 11]],
+            ],
+            dtype=np.uint8,
+        )
+        self.assertEqual(int(np.rint(10.5)), 10)
+        self.assertEqual(model_rgb_uint8(half, 1).reshape(-1).tolist(), [11, 11, 11])
+        two_and_half = np.array(
+            [
+                [[2, 2, 2], [3, 3, 3]],
+                [[2, 2, 2], [3, 3, 3]],
+            ],
+            dtype=np.uint8,
+        )
+        self.assertEqual(int(np.rint(2.5)), 2)
+        self.assertEqual(model_rgb_uint8(two_and_half, 1).reshape(-1).tolist(), [3, 3, 3])
+        payload = {
+            "width": 2,
+            "height": 2,
+            "size": 1,
+            "rgb": half.reshape(-1).tolist(),
+            "expected_uint8": [11, 11, 11],
+        }
+        fixture = ROOT / "training" / "fixtures" / "round_half_up_2x2_to_1.json"
+        self.assertEqual(json.loads(fixture.read_text(encoding="utf-8")), payload)
 
     def test_matches_committed_bilinear_fixture(self):
         payload = json.loads(PREPROCESS_FIXTURE.read_text(encoding="utf-8"))
@@ -214,7 +245,7 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertNotIn("status", unknown)
         self.assertFalse(manifest["model_packaged"])
         self.assertFalse(manifest["recognition_available"])
-        self.assertEqual(manifest["backbone"]["pretrained_weights_license"], "Apache-2.0")
+        self.assertEqual(manifest["backbone"]["pretrained_weights_license"], "see training/README.md")
         self.assertEqual(manifest["input"]["formula"], "(pixel / 127.5) - 1")
         self.assertFalse(manifest["ood"]["calibrated"])
         self.assertIsNone(manifest["quantization"])
@@ -251,12 +282,29 @@ class ManifestAndShipGateTest(unittest.TestCase):
             "macro_top3": 0.97,
             "dangerous_pair_rates": pair_rates,
             "coverage": {"train_images": train_images, "val_images": val_images, "test_images": test_images},
-            "confident_toxic_as_edible_lookalike": 0,
+            "confident_toxic_as_edible": 0,
+            "open_set": {
+                "held_out_support": 400,
+                "safe_count": 380,
+                "confident_edible_count": 2,
+                "poisonous_held_out_support": 50 * len(poisonous_heldout_taxa()),
+                "poisonous_held_out_confident_edible": 0,
+                "poisonous_per_taxon": [
+                    {"taxon": name, "support": 50, "confident_edible": 0}
+                    for name in poisonous_heldout_taxa()
+                ],
+            },
             "unknown_mushroom": {
-                "held_out_support": 40,
-                "held_out_recall": 0.70,
+                "held_out_support": 200,
+                "held_out_recall": 0.10,
+                "taxa_with_at_least_10": 10,
+                "per_taxon_recall_lower_bound_min": 0.05,
                 "known_support": 200,
                 "known_predicted_as_unknown_rate": 0.02,
+                "high_stakes_steal": {
+                    species_id: {"support": 40, "rate": 0.0} for species_id in HIGH_STAKES_IDS
+                },
+                "diagnostic_only": True,
             },
             "ood": {
                 "id_keep_rate_val": 0.97,
@@ -442,8 +490,8 @@ class ManifestAndShipGateTest(unittest.TestCase):
 
     def test_confident_toxic_photo_shown_as_edible_is_counted(self):
         classes = _classes(
-            ["amanita_phalloides", "macrolepiota_procera", "not_a_mushroom"],
-            ["Amanita", "Macrolepiota", ""],
+            ["macrolepiota_procera", "boletus_edulis", "not_a_mushroom"],
+            ["Macrolepiota", "Boletus", ""],
         )
         ood = {
             "calibrated": True,
@@ -457,14 +505,49 @@ class ManifestAndShipGateTest(unittest.TestCase):
         }
         confident = {
             "class_id": "amanita_phalloides",
-            "logits": [0.0, 8.0, -4.0],
+            "toxic": True,
+            "logits": [8.0, 0.0, -4.0],
         }
         unsure = {
             "class_id": "amanita_phalloides",
+            "toxic": True,
             "logits": [1.2, 1.3, 0.0],
         }
-        self.assertEqual(confident_toxic_as_edible([confident], classes, ood), 1)
-        self.assertEqual(confident_toxic_as_edible([unsure], classes, ood), 0)
+        edible = {"macrolepiota_procera"}
+        self.assertEqual(confident_toxic_as_edible([confident], classes, ood, edible), 1)
+        self.assertEqual(confident_toxic_as_edible([unsure], classes, ood, edible), 0)
+        held_out = {
+            "class_id": "unknown_mushroom",
+            "taxon_name": "Amanita verna",
+            "toxic": True,
+            "held_out_taxon": True,
+            "logits": [0.0, 8.0, -4.0],
+        }
+        classes_with_suillus = _classes(
+            ["unknown_mushroom", "suillus_luteus", "not_a_mushroom"],
+            ["", "Suillus", ""],
+        )
+        self.assertNotIn("suillus_luteus", EDIBLE_LOOKALIKE_IDS)
+        counted = confident_toxic_as_edible(
+            [held_out],
+            classes_with_suillus,
+            ood,
+            {"suillus_luteus"},
+        )
+        self.assertEqual(counted, 1)
+        warned = {
+            "class_id": "unknown_mushroom",
+            "toxic": True,
+            "logits": [0.2, 8.0, -4.0],
+        }
+        amanita_edible = _classes(
+            ["unknown_mushroom", "amanita_rubescens", "not_a_mushroom"],
+            ["", "Amanita", ""],
+        )
+        self.assertEqual(
+            confident_toxic_as_edible([warned], amanita_edible, ood, {"amanita_rubescens"}),
+            0,
+        )
 
     def test_keep_rate_gate_uses_the_test_split(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -490,6 +573,68 @@ class ManifestAndShipGateTest(unittest.TestCase):
             ok, reasons = assess_shippable(report, artifact_dir)
             self.assertFalse(ok)
             self.assertTrue(any("high-risk" in reason for reason in reasons))
+
+    def test_unknown_recall_is_diagnostic_and_poisonous_sample_is_a_gate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            report["unknown_mushroom"]["held_out_recall"] = 0.0
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertTrue(ok, reasons)
+            short = self._passing_report(artifact_dir)
+            short["open_set"]["poisonous_per_taxon"] = [
+                {"taxon": "Galerina sulcipes", "support": 0, "confident_edible": 0}
+            ]
+            short["open_set"]["poisonous_held_out_support"] = 0
+            ok, reasons = assess_shippable(short, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("Galerina sulcipes" in reason for reason in reasons))
+
+    def test_open_set_lists_a_poisonous_taxon_with_no_photos(self):
+        from evaluate import open_set_metrics
+
+        metrics = open_set_metrics([], [], {}, set(), ["Galerina sulcipes"])
+        self.assertEqual(
+            metrics["poisonous_per_taxon"],
+            [{"taxon": "Galerina sulcipes", "support": 0, "confident_edible": 0}],
+        )
+        self.assertIn("Galerina sulcipes", metrics["taxa_below_minimum"])
+
+    def test_gbif_higher_rank_match_stops_the_fetch(self):
+        import fetch_gbif
+
+        original = fetch_gbif._get_json
+        fetch_gbif._KEY_CACHE.clear()
+
+        def fake(_url):
+            return {
+                "matchType": "HIGHERRANK",
+                "rank": "KINGDOM",
+                "scientificName": "Fungi",
+                "usageKey": 5,
+            }
+
+        fetch_gbif._get_json = fake
+        original_sleep = fetch_gbif.time.sleep
+        fetch_gbif.time.sleep = lambda _seconds: None
+        try:
+            with self.assertRaises(SystemExit) as raised:
+                fetch_gbif.resolve_accepted_keys(["Helvella crispa"])
+        finally:
+            fetch_gbif._get_json = original
+            fetch_gbif.time.sleep = original_sleep
+            fetch_gbif._KEY_CACHE.clear()
+        self.assertIn("HIGHERRANK", str(raised.exception))
+
+    def test_gbif_key_collision_is_rejected(self):
+        from manifest import _claim_key
+
+        owner: dict[int, str] = {}
+        _claim_key(owner, 7832732, "imleria_badia")
+        _claim_key(owner, 7832732, "imleria_badia")
+        with self.assertRaises(ValueError) as raised:
+            _claim_key(owner, 7832732, "boletus_edulis")
+        self.assertIn("7832732", str(raised.exception))
 
     def test_fp16_is_the_default_export(self):
         self.assertEqual(DEFAULT_QUANTIZATIONS, ("fp16",))

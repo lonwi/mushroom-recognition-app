@@ -34,6 +34,7 @@ def load_manifest(path: Path | None = None) -> dict:
     if classes[-2]["id"] != UNKNOWN_CLASS_ID:
         raise ValueError("unknown_mushroom must sit immediately before not_a_mushroom")
     _validate_sampling(classes)
+    validate_toxic_probes(manifest)
     if manifest.get("model_packaged"):
         model_file = ROOT / "assets" / "models" / manifest["model_file"]
         if not model_file.is_file():
@@ -41,46 +42,177 @@ def load_manifest(path: Path | None = None) -> dict:
     return manifest
 
 
+def _gbif_key(value: object, label: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise ValueError(f"{label} needs a positive GBIF usage key, not {value!r}")
+    return value
+
+
+def _claim_key(owner_of: dict[int, str], key: int, owner: str) -> None:
+    previous = owner_of.get(key)
+    if previous is not None and previous != owner:
+        raise ValueError(f"GBIF key {key} is used by both {previous} and {owner}")
+    owner_of[key] = owner
+
+
 def _validate_sampling(classes: list[dict]) -> None:
-    known_names: set[str] = set()
+    """Collisions are GBIF accepted keys. The same key may repeat only as synonyms of one class."""
+    owner_of: dict[int, str] = {}
+    known_genera: set[str] = set()
     for item in classes:
         if item["id"] in AGGREGATE_CLASS_IDS:
             continue
         if item.get("sampling"):
             raise ValueError(f"{item['id']} is a species class and must not set aggregate sampling")
-        for name in item.get("gbif_names") or []:
-            key = str(name).casefold()
-            if key in known_names:
-                raise ValueError(f"duplicate GBIF name {name}")
-            known_names.add(key)
+        tag = item.get("safety_tag")
+        if tag not in ("toxic", "edible", "other"):
+            raise ValueError(f"{item['id']} needs safety_tag toxic, edible, or other")
+        names = [str(name) for name in item.get("gbif_names") or []]
+        keys = item.get("gbif_keys")
+        if not isinstance(keys, list) or len(keys) != len(names) or not names:
+            raise ValueError(f"{item['id']} needs one gbif_keys entry per gbif name")
+        if len(set(names)) != len(names):
+            raise ValueError(f"{item['id']} repeats a GBIF name")
+        genus = str(item.get("genus") or "")
+        if genus:
+            known_genera.add(genus)
+        for name, raw_key in zip(names, keys):
+            _claim_key(owner_of, _gbif_key(raw_key, f"{item['id']} {name}"), item["id"])
     for item in classes:
         if item["id"] not in AGGREGATE_CLASS_IDS:
             continue
-        sampling = item.get("sampling") or {}
-        names = [str(name) for name in item.get("gbif_names") or []]
-        held = [str(name) for name in sampling.get("held_out_gbif_names") or []]
-        per_taxon = sampling.get("per_taxon_cap")
-        class_cap = sampling.get("class_cap")
-        if not isinstance(per_taxon, int) or not isinstance(class_cap, int):
-            raise ValueError(f"{item['id']} needs integer per_taxon_cap and class_cap")
-        if per_taxon < 1 or class_cap < 1:
-            raise ValueError(f"{item['id']} sampling caps must be positive")
-        if not 1500 <= class_cap <= 3000:
-            raise ValueError(f"{item['id']} class_cap must sit between 1500 and 3000 images")
-        if len(names) < 30:
-            raise ValueError(f"{item['id']} needs many taxa, not a handful of GBIF names")
-        if len(held) < 8:
-            raise ValueError(f"{item['id']} must hold taxa out for the test split")
-        if len(set(names)) != len(names) or len(set(held)) != len(held):
-            raise ValueError(f"{item['id']} repeats a GBIF name")
-        missing = [name for name in held if name not in names]
-        if missing:
-            raise ValueError(f"{item['id']} held-out names are not in gbif_names: {missing}")
-        if per_taxon * len(names) < 1500:
-            raise ValueError(f"{item['id']} cannot reach 1500 images at the per-taxon cap")
-        collided = [name for name in names if name.casefold() in known_names]
-        if collided:
-            raise ValueError(f"{item['id']} reuses a known species name: {collided}")
+        if item.get("safety_tag"):
+            raise ValueError(f"{item['id']} is not a species and must not carry safety_tag")
+        _validate_aggregate(item, owner_of, known_genera)
+
+
+def _validate_aggregate(item: dict, owner_of: dict[int, str], known_genera: set[str]) -> None:
+    sampling = item.get("sampling") or {}
+    taxa = sampling.get("taxa")
+    if not isinstance(taxa, list) or not taxa:
+        raise ValueError(f"{item['id']} needs sampling.taxa")
+    names = [str(name) for name in item.get("gbif_names") or []]
+    held = [str(name) for name in sampling.get("held_out_gbif_names") or []]
+    per_taxon = sampling.get("per_taxon_cap")
+    class_cap = sampling.get("class_cap")
+    if not isinstance(per_taxon, int) or not isinstance(class_cap, int):
+        raise ValueError(f"{item['id']} needs integer per_taxon_cap and class_cap")
+    if per_taxon < 1 or class_cap < 1:
+        raise ValueError(f"{item['id']} sampling caps must be positive")
+    if not 1500 <= class_cap <= 3000:
+        raise ValueError(f"{item['id']} class_cap must sit between 1500 and 3000 images")
+    if len(names) < 30:
+        raise ValueError(f"{item['id']} needs many taxa, not a handful of GBIF names")
+    if len(held) < 8:
+        raise ValueError(f"{item['id']} must hold taxa out for the test split")
+    if len(set(names)) != len(names) or len(set(held)) != len(held):
+        raise ValueError(f"{item['id']} repeats a GBIF name")
+    taxon_names = []
+    held_from_taxa = []
+    for taxon in taxa:
+        name = str(taxon.get("name") or "")
+        if not name:
+            raise ValueError(f"{item['id']} has a taxon without a name")
+        taxon_names.append(name)
+        if taxon.get("held_out"):
+            held_from_taxa.append(name)
+        relation = taxon.get("relation")
+        if item["id"] == UNKNOWN_CLASS_ID:
+            genus = name.split()[0]
+            expected = "unknown_species_of_known_genus" if genus in known_genera else "unknown_genus"
+            if relation != expected:
+                raise ValueError(f"{name} relation {relation} does not match genus {genus}")
+        elif relation:
+            raise ValueError(f"{item['id']} taxon {name} must not set a genus relation")
+        if not isinstance(taxon.get("toxic"), bool):
+            raise ValueError(f"{name} needs toxic true or false")
+        _claim_key(owner_of, _gbif_key(taxon.get("gbif_key"), name), f"{item['id']}:{name}")
+    if taxon_names != names:
+        raise ValueError(f"{item['id']} gbif_names and sampling.taxa are out of order")
+    if held_from_taxa != held:
+        raise ValueError(f"{item['id']} held_out_gbif_names does not match taxa marked held_out")
+    missing = [name for name in held if name not in names]
+    if missing:
+        raise ValueError(f"{item['id']} held-out names are not in gbif_names: {missing}")
+    if per_taxon * len(names) < 1500:
+        raise ValueError(f"{item['id']} cannot reach 1500 images at the per-taxon cap")
+
+
+def validate_toxic_probes(manifest: dict) -> None:
+    probes = manifest.get("toxic_probes")
+    if not isinstance(probes, dict):
+        raise ValueError("labels.json needs a toxic_probes block")
+    if probes.get("class_id") != UNKNOWN_CLASS_ID:
+        raise ValueError("toxic probes are labeled unknown_mushroom and must not be their own class")
+    cap = probes.get("per_taxon_cap")
+    if not isinstance(cap, int) or cap < 50:
+        raise ValueError("toxic probes need per_taxon_cap >= 50")
+    taxa = probes.get("taxa")
+    if not isinstance(taxa, list) or len(taxa) < 8:
+        raise ValueError("toxic probes need the listed look-alike taxa")
+    classes = manifest["classes"]
+    owner_of: dict[int, str] = {}
+    for item in classes:
+        if item["id"] in AGGREGATE_CLASS_IDS:
+            for taxon in (item.get("sampling") or {}).get("taxa") or []:
+                owner_of[int(taxon["gbif_key"])] = f"{item['id']}:{taxon['name']}"
+            continue
+        for key in item.get("gbif_keys") or []:
+            owner_of[int(key)] = item["id"]
+    known_genera = {str(item.get("genus") or "") for item in classes if item["id"] not in AGGREGATE_CLASS_IDS}
+    seen_names: set[str] = set()
+    for taxon in taxa:
+        name = str(taxon.get("name") or "")
+        if name in seen_names:
+            raise ValueError(f"toxic probe {name} is repeated")
+        seen_names.add(name)
+        if taxon.get("toxic") is not True or taxon.get("held_out") is not True:
+            raise ValueError(f"toxic probe {name} must be toxic and held out of train and val")
+        genus = name.split()[0] if name else ""
+        expected = "unknown_species_of_known_genus" if genus in known_genera else "unknown_genus"
+        if taxon.get("relation") != expected:
+            raise ValueError(f"toxic probe {name} relation does not match genus {genus}")
+        _claim_key(owner_of, _gbif_key(taxon.get("gbif_key"), name), f"probe:{name}")
+
+
+def poisonous_heldout_taxa(manifest: dict | None = None) -> list[str]:
+    """Poisonous taxa that never enter train or val, including toxic probes.
+
+    A taxon with no downloaded photos is still listed. The ship gate needs
+    that zero so a short GBIF name cannot vanish from the sample check.
+    """
+    manifest = manifest or load_manifest()
+    names: list[str] = []
+    for item in manifest["classes"]:
+        if item["id"] != UNKNOWN_CLASS_ID:
+            continue
+        for taxon in (item.get("sampling") or {}).get("taxa") or []:
+            if taxon.get("toxic") and taxon.get("held_out"):
+                names.append(str(taxon["name"]))
+    for taxon in (manifest.get("toxic_probes") or {}).get("taxa") or []:
+        if taxon.get("toxic") and taxon.get("held_out"):
+            names.append(str(taxon["name"]))
+    return names
+
+
+def safety_catalog(manifest: dict | None = None) -> dict:
+    """Edible class ids and poisonous taxa. This is an evaluation label, not a verdict to show."""
+    manifest = manifest or load_manifest()
+    edible: set[str] = set()
+    toxic_classes: set[str] = set()
+    taxa: dict[str, dict] = {}
+    for item in manifest["classes"]:
+        if item["id"] in AGGREGATE_CLASS_IDS:
+            for taxon in (item.get("sampling") or {}).get("taxa") or []:
+                taxa[str(taxon["name"])] = taxon
+            continue
+        if item.get("safety_tag") == "edible":
+            edible.add(item["id"])
+        elif item.get("safety_tag") == "toxic":
+            toxic_classes.add(item["id"])
+    for taxon in (manifest.get("toxic_probes") or {}).get("taxa") or []:
+        taxa[str(taxon["name"])] = taxon
+    return {"edible_ids": edible, "toxic_class_ids": toxic_classes, "taxa": taxa}
 
 
 def species_classes(manifest: dict | None = None) -> list[dict]:

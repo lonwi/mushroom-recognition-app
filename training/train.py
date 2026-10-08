@@ -4,15 +4,18 @@ Backbone weights: keras.applications.MobileNetV3Small(weights='imagenet'),
 Apache-2.0. A CPU machine can run this. See training/README.md.
 
 Images are the oriented 224px PNGs from prepare_data.py. The loader does not
-decode the original JPEG, so EXIF orientation cannot be skipped. Training
-uses light photometric augmentation, inverse-frequency class weights, and
-dataset.cache() after the deterministic decode.
+decode the original JPEG, so EXIF orientation cannot be skipped. The sample
+list is shuffled before from_tensor_slices. Training then applies flip,
+scale-and-crop, rotation, brightness, and contrast. Class weights are
+inverse frequency, capped at 10. dataset.cache() sits on the deterministic
+decode, before augmentation.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import random
 from pathlib import Path
 
 from manifest import ROOT, load_manifest
@@ -20,6 +23,7 @@ from preprocess import load_oriented_rgb, preprocess_rgb_uint8
 
 DATA_DIR = ROOT / "training" / "data"
 ARTIFACTS = ROOT / "training" / "artifacts"
+CLASS_WEIGHT_CAP = 10.0
 
 
 def balanced_class_weights(labels: list[int], num_classes: int) -> dict[int, float]:
@@ -36,7 +40,7 @@ def balanced_class_weights(labels: list[int], num_classes: int) -> dict[int, flo
     if present == 0 or total == 0:
         raise ValueError("no training labels")
     return {
-        index: (total / (present * count) if count else 0.0)
+        index: (min(CLASS_WEIGHT_CAP, total / (present * count)) if count else 0.0)
         for index, count in enumerate(counts)
     }
 
@@ -67,6 +71,10 @@ def _dataset(split_name: str, class_index: dict[str, int], image_size: int):
         if row["class_id"] not in class_index:
             raise ValueError(f"split row class {row['class_id']} is not in labels.json")
         samples.append(row)
+    # The split file is grouped by class. Shuffle the whole list here so
+    # from_tensor_slices is not class-sorted. A later shuffle(1000) only
+    # mixes a window of that sorted order.
+    random.Random(f"42:{split_name}").shuffle(samples)
     paths = [str(_image_path(row)) for row in samples]
     labels = [class_index[row["class_id"]] for row in samples]
 
@@ -110,14 +118,22 @@ def main() -> None:
     if train_count == 0 or val_count == 0:
         raise SystemExit("train or val split is empty. Run fetch, dedup, and split first.")
 
+    rotation = tf.keras.layers.RandomRotation(15.0 / 360.0, fill_mode="reflect")
+
     def augment(image, label):
         image = tf.image.random_flip_left_right(image)
+        # Scale, then crop back to 224. Rotation is about +/- 15 degrees.
+        scale = tf.random.uniform([], 1.0, 1.25)
+        side = tf.cast(tf.round(float(args.image_size) * scale), tf.int32)
+        image = tf.image.resize(image, [side, side])
+        image = tf.image.random_crop(image, [args.image_size, args.image_size, 3])
+        image = rotation(image[None, ...], training=True)[0]
         image = tf.image.random_brightness(image, 0.12)
         image = tf.image.random_contrast(image, 0.85, 1.15)
         return tf.clip_by_value(image, -1.0, 1.0), label
 
     class_weight = balanced_class_weights(train_labels, num_classes)
-    train_ds = train_ds.shuffle(min(1000, train_count), seed=42).map(augment, num_parallel_calls=tf.data.AUTOTUNE)
+    train_ds = train_ds.map(augment, num_parallel_calls=tf.data.AUTOTUNE)
     train_ds = train_ds.batch(args.batch_size).prefetch(tf.data.AUTOTUNE)
     val_ds = val_ds.batch(args.batch_size).prefetch(tf.data.AUTOTUNE)
 
@@ -178,7 +194,14 @@ def main() -> None:
                 "train_images": train_count,
                 "val_images": val_count,
                 "class_weight": {str(index): weight for index, weight in class_weight.items()},
-                "augmentation": ["random_flip_left_right", "random_brightness_0.12", "random_contrast_0.85_1.15"],
+                "augmentation": [
+                    "random_flip_left_right",
+                    "random_scale_1.0_1.25_then_crop",
+                    "random_rotation_15deg",
+                    "random_brightness_0.12",
+                    "random_contrast_0.85_1.15",
+                ],
+                "class_weight_cap": CLASS_WEIGHT_CAP,
                 "history": history,
             },
             handle,

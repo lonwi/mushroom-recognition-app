@@ -21,6 +21,12 @@ export const pl = {
     dataLicenseTitle: 'Licencje zdjęć treningowych',
     dataLicenseBody:
       'Model, jeśli zostanie dołączony, wolno trenować tylko na zdjęciach CC0 albo CC-BY (bez NC i SA). Przy każdym zdjęciu zapisujemy autora, licencję i adres źródła. Eksport zapisuje je obok modelu w assets/models/attributions.jsonl.',
+    photoCreditsOpen: 'Autorzy zdjęć treningowych',
+    photoCreditsClose: 'Ukryj autorów zdjęć',
+    photoCreditsLead: 'Zdjęcia CC0 i CC-BY użyte do treningu dołączonego modelu.',
+    photoCreditsEmpty:
+      'Nie ma dołączonego modelu, więc nie ma listy autorów zdjęć. Rozpoznawanie ze skanu pozostaje wyłączone.',
+    photoCreditsUnknownAuthor: 'Autor niepodany',
     about: 'O aplikacji',
     version: 'Wersja 1.0.0 (On-Device AI)',
     atlasScope:
@@ -116,6 +122,7 @@ export const pl = {
     unknownMushroomTitle: 'Nieznany grzyb',
     unknownMushroomBody:
       'To wygląda na grzyba, którego aplikacja nie zna. Nie zbieraj go ani nie jedz na podstawie skanu.',
+    unknownMushroomDeadly: 'Ten grzyb może być śmiertelnie trujący.',
     candidatesTitle: 'Kandydaci ze skanu',
     candidatesLead: 'Trzy najwyższe wskazania modelu. To nie jest oznaczenie gatunku do zbioru.',
     notEdibilityVerdict: 'Ten skan nie jest oceną jadalności.',

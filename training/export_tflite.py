@@ -28,6 +28,7 @@ ARTIFACTS = ROOT / "training" / "artifacts"
 MODEL_DEST = ROOT / "assets" / "models" / "mushrooms_model.tflite"
 ATTRIBUTION_DEST = ROOT / "assets" / "models" / "attributions.jsonl"
 PACKAGE_MODULE = ROOT / "src" / "services" / "modelPackage.ts"
+ATTRIBUTION_MODULE = ROOT / "src" / "services" / "attributionPackage.ts"
 # fp16 is the phone path. int8 stays available as an explicit experiment.
 DEFAULT_QUANTIZATIONS = ("fp16",)
 
@@ -133,6 +134,48 @@ def score_interpreter(model, interpreter, rows: list[dict], image_size: int, dat
     return predictions, matches, risk_matches, risk_total
 
 
+def attribution_module_source(rows: list[dict] | None) -> str:
+    """TypeScript the app bundles. Null until a model install copies real credits."""
+    header = (
+        "/**\n"
+        " * Training-photo credits bundled with a shipped model.\n"
+        " * training/export_tflite.py rewrites this file from attributions.jsonl on install.\n"
+        " * Null means no model is installed, so there is nothing to credit.\n"
+        " */\n"
+        "export interface PhotoCredit {\n"
+        "  creator: string;\n"
+        "  license: string;\n"
+        "  licenseNormalized: string;\n"
+        "  imageUrl: string;\n"
+        "  sourceUrl: string;\n"
+        "  classId: string;\n"
+        "  taxonName: string;\n"
+        "}\n\n"
+    )
+    if not rows:
+        return header + "export const PACKAGED_PHOTO_CREDITS: PhotoCredit[] | null = null;\n"
+    credits = []
+    for row in rows:
+        slim = attribution_row(row)
+        credits.append(
+            {
+                "creator": slim["creator"],
+                "license": slim["license"],
+                "licenseNormalized": slim["license_normalized"],
+                "imageUrl": slim["image_url"],
+                "sourceUrl": slim["source_url"],
+                "classId": slim["class_id"],
+                "taxonName": slim["taxon_name"],
+            }
+        )
+    body = json.dumps(credits, ensure_ascii=False, indent=2)
+    return header + f"export const PACKAGED_PHOTO_CREDITS: PhotoCredit[] | null = {body};\n"
+
+
+def write_attribution_module(rows: list[dict] | None, path: Path = ATTRIBUTION_MODULE) -> None:
+    path.write_text(attribution_module_source(rows), encoding="utf-8")
+
+
 def write_packaged_module(enabled: bool, path: Path = PACKAGE_MODULE) -> None:
     if enabled:
         body = (
@@ -183,6 +226,12 @@ def install_calibrated_model(payload: bytes, quantization: str, metrics: dict) -
     )
     MODEL_DEST.write_bytes(payload)
     shutil.copyfile(ARTIFACTS / "attributions.jsonl", ATTRIBUTION_DEST)
+    credit_rows = [
+        json.loads(line)
+        for line in (ARTIFACTS / "attributions.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    write_attribution_module(credit_rows)
     LABELS_PATH.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     write_packaged_module(True)
 

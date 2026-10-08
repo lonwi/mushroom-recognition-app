@@ -23,6 +23,12 @@ export const en: Translations = {
     dataLicenseTitle: 'Training photo licenses',
     dataLicenseBody:
       'A model, if one is shipped, may be trained only on CC0 or CC-BY photos (no NC or SA). Every photo keeps its author, license, and source URL. Export writes them next to the model in assets/models/attributions.jsonl.',
+    photoCreditsOpen: 'Training photo credits',
+    photoCreditsClose: 'Hide photo credits',
+    photoCreditsLead: 'CC0 and CC-BY photos used to train the shipped model.',
+    photoCreditsEmpty:
+      'No model is installed, so there is no list of photo credits. Scan recognition stays off.',
+    photoCreditsUnknownAuthor: 'Author not listed',
     about: 'About App',
     version: 'Version 1.0.0 (On-Device AI)',
     atlasScope:
@@ -116,6 +122,7 @@ export const en: Translations = {
     unknownMushroomTitle: 'Unknown mushroom',
     unknownMushroomBody:
       'This looks like a mushroom the app does not know. Do not pick it or eat it based on the scan.',
+    unknownMushroomDeadly: 'This mushroom may be deadly poisonous.',
     candidatesTitle: 'Scan candidates',
     candidatesLead: 'The model’s three highest scores. This is not an identification you can forage on.',
     notEdibilityVerdict: 'This scan is not an edibility verdict.',

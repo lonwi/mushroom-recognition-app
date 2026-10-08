@@ -1,7 +1,8 @@
 """Per-class top-1/top-3, dangerous-pair confusion, and the energy gate.
 
-The threshold is chosen on the validation split so that 95% of in-distribution
+The threshold is chosen on the validation split so that 97% of in-distribution
 validation images are kept (their energy is at or below the threshold).
+The ship gate still requires 95% on the test split.
 Held-out test images, including non-mushrooms, are only scored after that.
 `training/export_tflite.py` runs this again on the TFLite interpreter's logits.
 """
@@ -12,17 +13,18 @@ import argparse
 import json
 import math
 import sys
+import zlib
 from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
 
-from manifest import ROOT, load_manifest
+from manifest import ROOT, load_manifest, poisonous_heldout_taxa, safety_catalog
+from stats import bootstrap_rate_lower, wilson_interval
 from preprocess import ImageReadError, load_oriented_rgb, preprocess_rgb_uint8
 from recognition_math import (
     BACKGROUND_CLASS_ID,
     DANGEROUS_PAIRS,
-    EDIBLE_LOOKALIKE_IDS,
     HIGH_STAKES_IDS,
     NON_SPECIES_IDS,
     POLICY_MIN_MARGIN,
@@ -36,6 +38,9 @@ from recognition_math import (
 
 DATA_DIR = ROOT / "training" / "data"
 ARTIFACTS = ROOT / "training" / "artifacts"
+# Fit the threshold a bit above the 0.95 ship floor. A threshold that keeps
+# exactly 95% of validation images fails the test gate on ordinary split noise.
+ID_KEEP_FIT = 0.97
 
 
 def attributions_complete(records: list[dict]) -> bool:
@@ -82,6 +87,8 @@ def prediction_from_logits(row: dict, logits: list[float]) -> dict:
         "file": row.get("file"),
         "held_out_taxon": bool(row.get("held_out_taxon")),
         "taxon_name": row.get("taxon_name") or "",
+        "genus_relation": row.get("genus_relation") or "",
+        "toxic": bool(row.get("toxic")),
         "logits": logits,
         "probabilities": probabilities,
         "order": order,
@@ -151,7 +158,7 @@ def summarize(predictions: list[dict], class_ids: list[str], threshold: float | 
     }
 
 
-def choose_threshold(val_predictions: list[dict], keep_rate: float = 0.95) -> float:
+def choose_threshold(val_predictions: list[dict], keep_rate: float = ID_KEEP_FIT) -> float:
     """Smallest validation energy that keeps at least `keep_rate` of ID images.
 
     This is an order statistic, not `numpy.quantile`. The linear quantile sits
@@ -179,34 +186,81 @@ def _keep_rate(predictions: list[dict], threshold: float) -> float | None:
     return sum(1 for energy in energies if energy <= threshold) / len(energies)
 
 
-def confident_toxic_as_edible(predictions: list[dict], classes: list[dict], ood_config: dict) -> int:
-    """High-risk photos the app would show as a confident edible look-alike.
+def outcome_is_safe(decision: dict) -> bool:
+    """Rejected, low confidence, or a dangerous-genus warning. Not a confident edible."""
+    if decision.get("status") == "rejected":
+        return True
+    if decision.get("status") != "candidates":
+        return False
+    return bool(decision.get("low_confidence") or decision.get("dangerous_genus"))
 
-    Rejected photos and low-confidence candidates are not counted. The ship
-    gate requires this count to be zero.
+
+def outcome_is_confident_edible(decision: dict, edible_ids: set[str]) -> bool:
+    """decide() would show an edible species with no low-confidence and no genus warning."""
+    if decision.get("status") != "candidates":
+        return False
+    if decision.get("low_confidence") or decision.get("dangerous_genus"):
+        return False
+    top3 = decision.get("top3") or []
+    if not top3:
+        return False
+    return top3[0]["id"] in edible_ids
+
+
+def annotate_safety(predictions: list[dict], manifest: dict) -> set[str]:
+    """Mark each photo poisonous from the class or from its taxon. Returns edible class ids."""
+    catalog = safety_catalog(manifest)
+    taxa = catalog["taxa"]
+    toxic_classes = catalog["toxic_class_ids"]
+    for row in predictions:
+        taxon = taxa.get(row.get("taxon_name") or "")
+        row["toxic"] = row["class_id"] in toxic_classes or bool(taxon and taxon.get("toxic"))
+        if taxon and not row.get("genus_relation"):
+            row["genus_relation"] = taxon.get("relation") or ""
+        if taxon and taxon.get("held_out"):
+            row["held_out_taxon"] = True
+    return set(catalog["edible_ids"])
+
+
+def confident_toxic_as_edible(predictions: list[dict], classes: list[dict], ood_config: dict, edible_ids: set[str]) -> int:
+    """Poisonous photos the app would show as a confident edible species.
+
+    Known classes, unknown-class taxa, and held-out probes all count when the
+    row is marked toxic. The edible side is every class tagged edible, not
+    only the named look-alikes. Energy rejects, low confidence, and a
+    dangerous-genus warning are not counted. The ship gate requires zero.
     """
-    edible = set(EDIBLE_LOOKALIKE_IDS)
     count = 0
     for row in predictions:
-        if row["class_id"] not in HIGH_STAKES_IDS:
+        if not row.get("toxic"):
             continue
         decision = decide(row["logits"], classes, ood_config)
-        if decision.get("status") != "candidates" or decision.get("low_confidence"):
-            continue
-        top = decision["top3"][0]["id"]
-        if top in edible:
+        if outcome_is_confident_edible(decision, edible_ids):
             count += 1
     return count
 
 
-def _unknown_metrics(test_pred: list[dict], class_ids: list[str]) -> dict:
+def _decision_is_unknown(row: dict, classes: list[dict], ood_config: dict) -> bool:
+    decision = decide(row["logits"], classes, ood_config)
+    return decision.get("status") == "rejected" and decision.get("reason") == "unknown_mushroom"
+
+
+def _unknown_metrics(test_pred: list[dict], class_ids: list[str], classes: list[dict], ood_config: dict) -> dict:
+    """Recall of the unknown class is a diagnostic. Steal uses decide(), not argmax alone."""
+    empty = {
+        "held_out_support": 0,
+        "held_out_recall": None,
+        "held_out_taxa": 0,
+        "taxa_with_at_least_10": 0,
+        "per_taxon_recall_lower_bound_min": None,
+        "known_support": 0,
+        "known_predicted_as_unknown_rate": None,
+        "high_stakes_steal": {},
+        "by_relation": {},
+        "diagnostic_only": True,
+    }
     if UNKNOWN_CLASS_ID not in class_ids:
-        return {
-            "held_out_support": 0,
-            "held_out_recall": None,
-            "known_support": 0,
-            "known_predicted_as_unknown_rate": None,
-        }
+        return empty
     unknown_index = class_ids.index(UNKNOWN_CLASS_ID)
     held = [
         row
@@ -217,14 +271,131 @@ def _unknown_metrics(test_pred: list[dict], class_ids: list[str]) -> dict:
     recall = (
         sum(1 for row in held if row["order"][0] == unknown_index) / len(held) if held else None
     )
-    stolen = (
-        sum(1 for row in known if row["order"][0] == unknown_index) / len(known) if known else None
-    )
+    stolen_flags = [_decision_is_unknown(row, classes, ood_config) for row in known]
+    stolen = (sum(stolen_flags) / len(known)) if known else None
+    by_taxon: dict[str, list[dict]] = defaultdict(list)
+    for row in held:
+        by_taxon[row.get("taxon_name") or ""].append(row)
+    lowers = []
+    taxa_ge_10 = 0
+    for name, rows in sorted(by_taxon.items()):
+        if len(rows) < 10:
+            continue
+        taxa_ge_10 += 1
+        hits = sum(1 for row in rows if row["order"][0] == unknown_index)
+        lowers.append(bootstrap_rate_lower(hits, len(rows), seed=zlib.crc32(name.encode("utf-8")) % 10_000))
+    steal_by_class = {}
+    for species_id in HIGH_STAKES_IDS:
+        rows = [row for row in known if row["class_id"] == species_id]
+        if not rows:
+            steal_by_class[species_id] = {"support": 0, "rate": None}
+            continue
+        taken = sum(1 for row in rows if _decision_is_unknown(row, classes, ood_config))
+        steal_by_class[species_id] = {"support": len(rows), "rate": taken / len(rows)}
+    by_relation = {}
+    for relation in ("unknown_genus", "unknown_species_of_known_genus"):
+        rows = [row for row in held if row.get("genus_relation") == relation]
+        hits = sum(1 for row in rows if row["order"][0] == unknown_index) if rows else 0
+        by_relation[relation] = {
+            "support": len(rows),
+            "unknown_recall": (hits / len(rows)) if rows else None,
+        }
     return {
         "held_out_support": len(held),
         "held_out_recall": recall,
+        "held_out_taxa": len([name for name in by_taxon if name]),
+        "taxa_with_at_least_10": taxa_ge_10,
+        "per_taxon_recall_lower_bound_min": min(lowers) if lowers else None,
         "known_support": len(known),
         "known_predicted_as_unknown_rate": stolen,
+        "high_stakes_steal": steal_by_class,
+        "by_relation": by_relation,
+        "diagnostic_only": True,
+        "diagnostic_targets": {
+            "recall": 0.50,
+            "support": 200,
+            "taxa_with_at_least_10": 10,
+            "per_taxon_bootstrap_lower_bound": 0.40,
+            "note": (
+                "Recall and the per-taxon bootstrap bound are diagnostics. "
+                "The ship gate requires the sample size so the diagnostic exists. "
+                "It does not fail the ship on the 0.50 or 0.40 figures."
+            ),
+        },
+    }
+
+
+def open_set_metrics(
+    test_pred: list[dict],
+    classes: list[dict],
+    ood_config: dict,
+    edible_ids: set[str],
+    expected_poisonous_taxa: list[str] | None = None,
+) -> dict:
+    """decide() outcomes on fungi held out of train and val, including toxic probes."""
+    held = [
+        row
+        for row in test_pred
+        if row.get("held_out_taxon") and row["class_id"] == UNKNOWN_CLASS_ID
+    ]
+    poisonous = [row for row in held if row.get("toxic")]
+    safe = 0
+    confident = 0
+    for row in held:
+        decision = decide(row["logits"], classes, ood_config)
+        if outcome_is_safe(decision):
+            safe += 1
+        if outcome_is_confident_edible(decision, edible_ids):
+            confident += 1
+    poisonous_confident = 0
+    per_taxon: dict[str, dict] = {
+        name: {"taxon": name, "support": 0, "confident_edible": 0}
+        for name in (expected_poisonous_taxa or [])
+    }
+    for row in poisonous:
+        name = row.get("taxon_name") or ""
+        bucket = per_taxon.setdefault(name, {"taxon": name, "support": 0, "confident_edible": 0})
+        bucket["support"] += 1
+        decision = decide(row["logits"], classes, ood_config)
+        if outcome_is_confident_edible(decision, edible_ids):
+            poisonous_confident += 1
+            bucket["confident_edible"] += 1
+    support = len(held)
+    safe_low = safe_high = None
+    edible_low = edible_high = None
+    if support:
+        safe_low, safe_high = wilson_interval(safe, support)
+        edible_low, edible_high = wilson_interval(confident, support)
+    below = [item["taxon"] for item in per_taxon.values() if item["support"] < 50]
+    by_relation = {}
+    for relation in ("unknown_genus", "unknown_species_of_known_genus"):
+        rows = [row for row in held if row.get("genus_relation") == relation]
+        relation_safe = 0
+        relation_edible = 0
+        for row in rows:
+            decision = decide(row["logits"], classes, ood_config)
+            if outcome_is_safe(decision):
+                relation_safe += 1
+            if outcome_is_confident_edible(decision, edible_ids):
+                relation_edible += 1
+        by_relation[relation] = {
+            "support": len(rows),
+            "safe_rate": (relation_safe / len(rows)) if rows else None,
+            "confident_edible_rate": (relation_edible / len(rows)) if rows else None,
+        }
+    return {
+        "held_out_support": support,
+        "safe_count": safe,
+        "safe_rate": (safe / support) if support else None,
+        "safe_rate_wilson_low": safe_low,
+        "confident_edible_count": confident,
+        "confident_edible_rate": (confident / support) if support else None,
+        "confident_edible_wilson_high": edible_high,
+        "poisonous_held_out_support": len(poisonous),
+        "poisonous_held_out_confident_edible": poisonous_confident,
+        "poisonous_per_taxon": sorted(per_taxon.values(), key=lambda item: item["taxon"]),
+        "taxa_below_minimum": sorted(below),
+        "by_relation": by_relation,
     }
 
 
@@ -246,13 +417,15 @@ def assemble_report(manifest: dict, splits: dict, val_pred: list[dict], test_pre
     reported for both splits and the ship gate reads the test split only.
     """
     class_ids = [item["id"] for item in manifest["classes"]]
+    classes = manifest["classes"]
+    edible_ids = annotate_safety(val_pred, manifest)
+    annotate_safety(test_pred, manifest)
     threshold = choose_threshold(val_pred)
     id_keep_val = _keep_rate(val_pred, threshold)
     id_keep_test = _keep_rate(test_pred, threshold)
     summary = summarize(test_pred, class_ids, threshold)
     ood_test = [row for row in test_pred if row["class_id"] == BACKGROUND_CLASS_ID]
     held_ood = [row for row in ood_test if row.get("held_out_taxon")]
-    classes = manifest["classes"]
     ood_config = {
         "calibrated": True,
         "background_class_id": BACKGROUND_CLASS_ID,
@@ -274,8 +447,15 @@ def assemble_report(manifest: dict, splits: dict, val_pred: list[dict], test_pre
         "macro_top1": summary["macro_top1"],
         "macro_top3": summary["macro_top3"],
         "dangerous_pair_rates": summary["dangerous_pair_rates"],
-        "confident_toxic_as_edible_lookalike": confident_toxic_as_edible(test_pred, classes, ood_config),
-        "unknown_mushroom": _unknown_metrics(test_pred, class_ids),
+        "confident_toxic_as_edible": confident_toxic_as_edible(test_pred, classes, ood_config, edible_ids),
+        "open_set": open_set_metrics(
+            test_pred,
+            classes,
+            ood_config,
+            edible_ids,
+            poisonous_heldout_taxa(manifest),
+        ),
+        "unknown_mushroom": _unknown_metrics(test_pred, class_ids, classes, ood_config),
         "coverage": {
             "train_images": image_counts(train_rows, class_ids),
             "val_images": image_counts(val_rows, class_ids),
@@ -298,9 +478,10 @@ def assemble_report(manifest: dict, splits: dict, val_pred: list[dict], test_pre
             "softmax_above_0_5_still_rejected_rate": summary["softmax_above_0_5_still_rejected_rate"],
             "note": (
                 "The energy threshold is the lowest validation in-distribution energy that "
-                "keeps at least 95% of validation ID images (an order statistic, not a linear "
-                "quantile). id_keep_rate_val is that calibration check. id_keep_rate_test is the "
-                "same threshold on the held-out test split and is the ship gate. "
+                f"keeps at least {ID_KEEP_FIT:.0%} of validation ID images (an order statistic, not a linear "
+                "quantile). The fit is above 95% so split noise does not fail a 95% test gate. "
+                "id_keep_rate_val is that calibration check. id_keep_rate_test is the "
+                "same threshold on the held-out test split and is the ship gate, still at 95%. "
                 "Export overwrites this report with TFLite interpreter logits on the real val and test photos. "
                 "softmax_above_0_5_still_rejected_rate is the share of test non-mushrooms "
                 "whose top softmax exceeds 0.5 and that the energy gate or the background class still rejects. "

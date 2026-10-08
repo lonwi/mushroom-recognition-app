@@ -1,6 +1,6 @@
 {
   "role": "class_contract",
-  "note": "This file is the class contract for a model we train ourselves. It is not a neural network. Recognition stays unavailable until training/export_tflite.py copies a calibrated mushrooms_model.tflite into this folder and sets model_packaged to true. No species, confidence, or edibility is implied by this list. unknown_mushroom means a fungus that is not one of the known species. It is not a species name and not an edibility verdict. not_a_mushroom stays last.",
+  "note": "This file is the class contract for a model we train ourselves. It is not a neural network. Recognition stays unavailable until training/export_tflite.py copies a calibrated mushrooms_model.tflite into this folder and sets model_packaged to true. No species, confidence, or edibility is implied by this list. safety_tag and taxon toxic flags are evaluation labels for the ship gates. The app must not show them as an edibility verdict. unknown_mushroom means a fungus that is not one of the known species. It is not a species name and not an edibility verdict. not_a_mushroom stays last.",
   "model_file": "mushrooms_model.tflite",
   "model_packaged": false,
   "recognition_available": false,
@@ -8,8 +8,8 @@
     "name": "MobileNetV3Small",
     "framework": "keras.applications.MobileNetV3Small",
     "pretrained_weights": "imagenet",
-    "pretrained_weights_license": "Apache-2.0",
-    "pretrained_weights_source": "Keras Applications MobileNetV3-Small ImageNet checkpoint (keras.applications.MobileNetV3Small weights='imagenet'), published with the TensorFlow / Keras Applications code under the Apache License 2.0. ImageNet photographs are not redistributed."
+    "pretrained_weights_license": "see training/README.md",
+    "pretrained_weights_source": "keras.applications.MobileNetV3Small weights='imagenet', file weights_mobilenet_v3_small_224_1.0_float_no_top_v2.h5 from https://storage.googleapis.com/tensorflow/keras-applications/mobilenet_v3/. License statements are quoted in training/README.md and are not a legal conclusion."
   },
   "input": {
     "size": 224,
@@ -18,7 +18,8 @@
     "color": "RGB",
     "preprocess": "mobilenet_v3",
     "formula": "(pixel / 127.5) - 1",
-    "resize": "area_antialias_downsample_uint8_else_bilinear_half_pixel_centers"
+    "resize": "area_antialias_downsample_uint8_round_half_up_else_bilinear_half_pixel_centers",
+    "native_long_edge": 448
   },
   "output": {
     "type": "logits",
@@ -56,7 +57,11 @@
       "genus": "Boletus",
       "gbif_names": [
         "Boletus edulis"
-      ]
+      ],
+      "gbif_keys": [
+        5954958
+      ],
+      "safety_tag": "edible"
     },
     {
       "index": 1,
@@ -66,7 +71,11 @@
       "genus": "Amanita",
       "gbif_names": [
         "Amanita phalloides"
-      ]
+      ],
+      "gbif_keys": [
+        5240325
+      ],
+      "safety_tag": "toxic"
     },
     {
       "index": 2,
@@ -76,7 +85,11 @@
       "genus": "Macrolepiota",
       "gbif_names": [
         "Macrolepiota procera"
-      ]
+      ],
+      "gbif_keys": [
+        8914748
+      ],
+      "safety_tag": "edible"
     },
     {
       "index": 3,
@@ -86,7 +99,11 @@
       "genus": "Cantharellus",
       "gbif_names": [
         "Cantharellus cibarius"
-      ]
+      ],
+      "gbif_keys": [
+        5249504
+      ],
+      "safety_tag": "edible"
     },
     {
       "index": 4,
@@ -96,9 +113,13 @@
       "genus": "Imleria",
       "gbif_names": [
         "Imleria badia",
-        "Boletus badius",
         "Xerocomus badius"
-      ]
+      ],
+      "gbif_keys": [
+        7832732,
+        7832732
+      ],
+      "safety_tag": "edible"
     },
     {
       "index": 5,
@@ -108,7 +129,11 @@
       "genus": "Suillus",
       "gbif_names": [
         "Suillus luteus"
-      ]
+      ],
+      "gbif_keys": [
+        7777157
+      ],
+      "safety_tag": "edible"
     },
     {
       "index": 6,
@@ -118,7 +143,11 @@
       "genus": "Leccinum",
       "gbif_names": [
         "Leccinum scabrum"
-      ]
+      ],
+      "gbif_keys": [
+        9141390
+      ],
+      "safety_tag": "edible"
     },
     {
       "index": 7,
@@ -128,7 +157,11 @@
       "genus": "Tylopilus",
       "gbif_names": [
         "Tylopilus felleus"
-      ]
+      ],
+      "gbif_keys": [
+        2524910
+      ],
+      "safety_tag": "other"
     },
     {
       "index": 8,
@@ -138,7 +171,11 @@
       "genus": "Amanita",
       "gbif_names": [
         "Amanita muscaria"
-      ]
+      ],
+      "gbif_keys": [
+        8168319
+      ],
+      "safety_tag": "toxic"
     },
     {
       "index": 9,
@@ -148,7 +185,11 @@
       "genus": "Lactarius",
       "gbif_names": [
         "Lactarius deliciosus"
-      ]
+      ],
+      "gbif_keys": [
+        5248629
+      ],
+      "safety_tag": "edible"
     },
     {
       "index": 10,
@@ -158,7 +199,11 @@
       "genus": "Gyromitra",
       "gbif_names": [
         "Gyromitra esculenta"
-      ]
+      ],
+      "gbif_keys": [
+        5258510
+      ],
+      "safety_tag": "toxic"
     },
     {
       "index": 11,
@@ -168,7 +213,11 @@
       "genus": "Paxillus",
       "gbif_names": [
         "Paxillus involutus"
-      ]
+      ],
+      "gbif_keys": [
+        5240002
+      ],
+      "safety_tag": "toxic"
     },
     {
       "index": 12,
@@ -178,7 +227,11 @@
       "genus": "Russula",
       "gbif_names": [
         "Russula virescens"
-      ]
+      ],
+      "gbif_keys": [
+        2551423
+      ],
+      "safety_tag": "edible"
     },
     {
       "index": 13,
@@ -188,7 +241,11 @@
       "genus": "Agaricus",
       "gbif_names": [
         "Agaricus campestris"
-      ]
+      ],
+      "gbif_keys": [
+        5243458
+      ],
+      "safety_tag": "edible"
     },
     {
       "index": 14,
@@ -201,7 +258,14 @@
         "Chlorophyllum rachodes",
         "Macrolepiota rhacodes",
         "Macrolepiota rachodes"
-      ]
+      ],
+      "gbif_keys": [
+        5955395,
+        6014677,
+        5955395,
+        6014677
+      ],
+      "safety_tag": "toxic"
     },
     {
       "index": 15,
@@ -211,7 +275,11 @@
       "genus": "Hygrophoropsis",
       "gbif_names": [
         "Hygrophoropsis aurantiaca"
-      ]
+      ],
+      "gbif_keys": [
+        2525710
+      ],
+      "safety_tag": "toxic"
     },
     {
       "index": 16,
@@ -221,7 +289,11 @@
       "genus": "Lactarius",
       "gbif_names": [
         "Lactarius torminosus"
-      ]
+      ],
+      "gbif_keys": [
+        8122710
+      ],
+      "safety_tag": "toxic"
     },
     {
       "index": 17,
@@ -231,7 +303,11 @@
       "genus": "Morchella",
       "gbif_names": [
         "Morchella esculenta"
-      ]
+      ],
+      "gbif_keys": [
+        2594602
+      ],
+      "safety_tag": "edible"
     },
     {
       "index": 18,
@@ -241,7 +317,11 @@
       "genus": "Amanita",
       "gbif_names": [
         "Amanita virosa"
-      ]
+      ],
+      "gbif_keys": [
+        5240323
+      ],
+      "safety_tag": "toxic"
     },
     {
       "index": 19,
@@ -251,7 +331,11 @@
       "genus": "Amanita",
       "gbif_names": [
         "Amanita pantherina"
-      ]
+      ],
+      "gbif_keys": [
+        8961574
+      ],
+      "safety_tag": "toxic"
     },
     {
       "index": 20,
@@ -261,7 +345,11 @@
       "genus": "Cortinarius",
       "gbif_names": [
         "Cortinarius orellanus"
-      ]
+      ],
+      "gbif_keys": [
+        2528684
+      ],
+      "safety_tag": "toxic"
     },
     {
       "index": 21,
@@ -273,7 +361,13 @@
         "Cortinarius rubellus",
         "Cortinarius speciosissimus",
         "Cortinarius orellanoides"
-      ]
+      ],
+      "gbif_keys": [
+        2528663,
+        2528663,
+        2528663
+      ],
+      "safety_tag": "toxic"
     },
     {
       "index": 22,
@@ -284,7 +378,12 @@
       "gbif_names": [
         "Galerina marginata",
         "Galerina autumnalis"
-      ]
+      ],
+      "gbif_keys": [
+        8118872,
+        8118872
+      ],
+      "safety_tag": "toxic"
     },
     {
       "index": 23,
@@ -295,7 +394,12 @@
       "gbif_names": [
         "Kuehneromyces mutabilis",
         "Pholiota mutabilis"
-      ]
+      ],
+      "gbif_keys": [
+        2533962,
+        2533962
+      ],
+      "safety_tag": "edible"
     },
     {
       "index": 24,
@@ -305,7 +409,11 @@
       "genus": "Armillaria",
       "gbif_names": [
         "Armillaria mellea"
-      ]
+      ],
+      "gbif_keys": [
+        2536891
+      ],
+      "safety_tag": "edible"
     },
     {
       "index": 25,
@@ -315,7 +423,11 @@
       "genus": "Amanita",
       "gbif_names": [
         "Amanita rubescens"
-      ]
+      ],
+      "gbif_keys": [
+        7496350
+      ],
+      "safety_tag": "edible"
     },
     {
       "index": 26,
@@ -325,7 +437,11 @@
       "genus": "Amanita",
       "gbif_names": [
         "Amanita citrina"
-      ]
+      ],
+      "gbif_keys": [
+        3328320
+      ],
+      "safety_tag": "toxic"
     },
     {
       "index": 27,
@@ -397,7 +513,7 @@
         "Inocybe geophylla",
         "Inocybe erubescens",
         "Entoloma sinuatum",
-        "Helvella crispa",
+        "Helvella crispa (Scop.) Fr.",
         "Ramaria flava",
         "Craterellus tubaeformis",
         "Macrolepiota mastoidea",
@@ -422,13 +538,505 @@
           "Inocybe geophylla",
           "Inocybe erubescens",
           "Entoloma sinuatum",
-          "Helvella crispa",
+          "Helvella crispa (Scop.) Fr.",
           "Ramaria flava",
           "Craterellus tubaeformis",
           "Macrolepiota mastoidea",
           "Clitocybe rivulosa",
           "Gyromitra gigas",
           "Agaricus xanthodermus"
+        ],
+        "taxa": [
+          {
+            "name": "Amanita fulva",
+            "gbif_key": 7765582,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Amanita vaginata",
+            "gbif_key": 5240306,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Amanita excelsa",
+            "gbif_key": 8935018,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Boletus reticulatus",
+            "gbif_key": 5954691,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Xerocomellus chrysenteron",
+            "gbif_key": 2519413,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Xerocomus subtomentosus",
+            "gbif_key": 2519457,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Leccinum versipelle",
+            "gbif_key": 2524490,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Leccinum aurantiacum",
+            "gbif_key": 2524513,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Suillus granulatus",
+            "gbif_key": 8146046,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Suillus bovinus",
+            "gbif_key": 7623986,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Suillus grevillei",
+            "gbif_key": 5239864,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Russula ochroleuca",
+            "gbif_key": 2551419,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Russula cyanoxantha",
+            "gbif_key": 2551542,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Russula emetica",
+            "gbif_key": 2551213,
+            "toxic": true,
+            "held_out": false,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Lactarius rufus",
+            "gbif_key": 5248684,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Lactarius piperatus",
+            "gbif_key": 7719797,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Lactarius quietus",
+            "gbif_key": 5248616,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Coprinus comatus",
+            "gbif_key": 7987658,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Pleurotus ostreatus",
+            "gbif_key": 2526530,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Fomes fomentarius",
+            "gbif_key": 8068867,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Trametes versicolor",
+            "gbif_key": 2548311,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Fomitopsis betulina",
+            "gbif_key": 9819973,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Laetiporus sulphureus",
+            "gbif_key": 9072021,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Lycoperdon perlatum",
+            "gbif_key": 5243258,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Phallus impudicus",
+            "gbif_key": 3314876,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Lepista nuda",
+            "gbif_key": 5242048,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Clitocybe nebularis",
+            "gbif_key": 2531072,
+            "toxic": true,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Flammulina velutipes",
+            "gbif_key": 3341441,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Hypholoma fasciculare",
+            "gbif_key": 3293632,
+            "toxic": true,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Pluteus cervinus",
+            "gbif_key": 7446067,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Schizophyllum commune",
+            "gbif_key": 5241128,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Ganoderma applanatum",
+            "gbif_key": 2549834,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Neoboletus luridiformis",
+            "gbif_key": 8208185,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Scleroderma citrinum",
+            "gbif_key": 5239982,
+            "toxic": true,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Laccaria laccata",
+            "gbif_key": 2530926,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Marasmius oreades",
+            "gbif_key": 2537250,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Sparassis crispa",
+            "gbif_key": 2550247,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Craterellus cornucopioides",
+            "gbif_key": 2554662,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Hydnum repandum",
+            "gbif_key": 2554716,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Cortinarius caperatus",
+            "gbif_key": 2529415,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Tricholoma portentosum",
+            "gbif_key": 5241860,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Agaricus arvensis",
+            "gbif_key": 5243403,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Mycena galericulata",
+            "gbif_key": 2526880,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Fistulina hepatica",
+            "gbif_key": 2531012,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Cerioporus squamosus",
+            "gbif_key": 2547092,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Calocera viscosa",
+            "gbif_key": 9134585,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Auricularia auricula-judae",
+            "gbif_key": 5249271,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Tremella mesenterica",
+            "gbif_key": 11945016,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Clitopilus prunulus",
+            "gbif_key": 2539197,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Laccaria amethystina",
+            "gbif_key": 2530983,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Amanita crocea",
+            "gbif_key": 5240282,
+            "toxic": false,
+            "held_out": true,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Amanita porphyria",
+            "gbif_key": 5240279,
+            "toxic": true,
+            "held_out": true,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Amanita verna",
+            "gbif_key": 5240320,
+            "toxic": true,
+            "held_out": true,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Boletus pinophilus",
+            "gbif_key": 5954949,
+            "toxic": false,
+            "held_out": true,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Leccinum pseudoscabrum",
+            "gbif_key": 9712569,
+            "toxic": false,
+            "held_out": true,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Russula vesca",
+            "gbif_key": 2551415,
+            "toxic": false,
+            "held_out": true,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Lactarius vellereus",
+            "gbif_key": 2551071,
+            "toxic": false,
+            "held_out": true,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Lactarius deterrimus",
+            "gbif_key": 7925734,
+            "toxic": false,
+            "held_out": true,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Coprinopsis atramentaria",
+            "gbif_key": 5242740,
+            "toxic": true,
+            "held_out": true,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Armillaria ostoyae",
+            "gbif_key": 2536899,
+            "toxic": false,
+            "held_out": true,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Inocybe geophylla",
+            "gbif_key": 3330851,
+            "toxic": true,
+            "held_out": true,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Inocybe erubescens",
+            "gbif_key": 10776858,
+            "toxic": true,
+            "held_out": true,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Entoloma sinuatum",
+            "gbif_key": 2539308,
+            "toxic": true,
+            "held_out": true,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Helvella crispa (Scop.) Fr.",
+            "gbif_key": 2554614,
+            "toxic": true,
+            "held_out": true,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Ramaria flava",
+            "gbif_key": 5238654,
+            "toxic": false,
+            "held_out": true,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Craterellus tubaeformis",
+            "gbif_key": 2554536,
+            "toxic": false,
+            "held_out": true,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Macrolepiota mastoidea",
+            "gbif_key": 2536707,
+            "toxic": false,
+            "held_out": true,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Clitocybe rivulosa",
+            "gbif_key": 2531052,
+            "toxic": true,
+            "held_out": true,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Gyromitra gigas",
+            "gbif_key": 12197740,
+            "toxic": true,
+            "held_out": true,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Agaricus xanthodermus",
+            "gbif_key": 5243412,
+            "toxic": true,
+            "held_out": true,
+            "relation": "unknown_species_of_known_genus"
+          }
         ]
       }
     },
@@ -521,8 +1129,456 @@
           "Araneus diadematus",
           "Rosa canina",
           "Sambucus nigra"
+        ],
+        "taxa": [
+          {
+            "name": "Felis catus",
+            "gbif_key": 2435035,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Canis lupus familiaris",
+            "gbif_key": 6164210,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Turdus merula",
+            "gbif_key": 2490719,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Sciurus vulgaris",
+            "gbif_key": 8211070,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Equus caballus",
+            "gbif_key": 2440886,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Vulpes vulpes",
+            "gbif_key": 5219243,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Capreolus capreolus",
+            "gbif_key": 5220126,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Sus scrofa",
+            "gbif_key": 7705930,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Erinaceus europaeus",
+            "gbif_key": 5219616,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Lepus europaeus",
+            "gbif_key": 7952072,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Meles meles",
+            "gbif_key": 2433875,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Rana temporaria",
+            "gbif_key": 2426805,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Bufo bufo",
+            "gbif_key": 5217160,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Natrix natrix",
+            "gbif_key": 6161347,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Lacerta agilis",
+            "gbif_key": 6159223,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Parus major",
+            "gbif_key": 9705453,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Fringilla coelebs",
+            "gbif_key": 2494422,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Erithacus rubecula",
+            "gbif_key": 2492462,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Garrulus glandarius",
+            "gbif_key": 5229493,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Pica pica",
+            "gbif_key": 5229490,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Columba palumbus",
+            "gbif_key": 2495455,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Dendrocopos major",
+            "gbif_key": 2477968,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Apis mellifera",
+            "gbif_key": 1341976,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Bombus terrestris",
+            "gbif_key": 1340503,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Vespa crabro",
+            "gbif_key": 1311527,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Coccinella septempunctata",
+            "gbif_key": 4990191,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Gonepteryx rhamni",
+            "gbif_key": 1920712,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Quercus robur",
+            "gbif_key": 2878688,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Bellis perennis",
+            "gbif_key": 3117424,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Betula pendula",
+            "gbif_key": 5331916,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Fagus sylvatica",
+            "gbif_key": 2882316,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Pinus sylvestris",
+            "gbif_key": 5285637,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Picea abies",
+            "gbif_key": 5284884,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Acer platanoides",
+            "gbif_key": 3189846,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Corylus avellana",
+            "gbif_key": 2875979,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Vaccinium myrtillus",
+            "gbif_key": 2882833,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Anemone nemorosa",
+            "gbif_key": 3033263,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Oxalis acetosella",
+            "gbif_key": 8211958,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Fragaria vesca",
+            "gbif_key": 3029817,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Urtica dioica",
+            "gbif_key": 7960979,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Taraxacum officinale",
+            "gbif_key": 5394163,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Trifolium repens",
+            "gbif_key": 5358748,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Plantago major",
+            "gbif_key": 3189767,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Rubus idaeus",
+            "gbif_key": 2993094,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Calluna vulgaris",
+            "gbif_key": 2882482,
+            "toxic": false,
+            "held_out": false
+          },
+          {
+            "name": "Martes martes",
+            "gbif_key": 5218878,
+            "toxic": false,
+            "held_out": true
+          },
+          {
+            "name": "Talpa europaea",
+            "gbif_key": 7872906,
+            "toxic": false,
+            "held_out": true
+          },
+          {
+            "name": "Sitta europaea",
+            "gbif_key": 2484916,
+            "toxic": false,
+            "held_out": true
+          },
+          {
+            "name": "Anguis fragilis",
+            "gbif_key": 2468095,
+            "toxic": false,
+            "held_out": true
+          },
+          {
+            "name": "Alnus glutinosa",
+            "gbif_key": 2876213,
+            "toxic": false,
+            "held_out": true
+          },
+          {
+            "name": "Tilia cordata",
+            "gbif_key": 3152047,
+            "toxic": false,
+            "held_out": true
+          },
+          {
+            "name": "Convallaria majalis",
+            "gbif_key": 7459480,
+            "toxic": false,
+            "held_out": true
+          },
+          {
+            "name": "Galanthus nivalis",
+            "gbif_key": 2855356,
+            "toxic": false,
+            "held_out": true
+          },
+          {
+            "name": "Pieris brassicae",
+            "gbif_key": 1920506,
+            "toxic": false,
+            "held_out": true
+          },
+          {
+            "name": "Formica rufa",
+            "gbif_key": 1315132,
+            "toxic": false,
+            "held_out": true
+          },
+          {
+            "name": "Corvus corax",
+            "gbif_key": 2482492,
+            "toxic": false,
+            "held_out": true
+          },
+          {
+            "name": "Hirundo rustica",
+            "gbif_key": 9515886,
+            "toxic": false,
+            "held_out": true
+          },
+          {
+            "name": "Helix pomatia",
+            "gbif_key": 2294287,
+            "toxic": false,
+            "held_out": true
+          },
+          {
+            "name": "Araneus diadematus",
+            "gbif_key": 2160133,
+            "toxic": false,
+            "held_out": true
+          },
+          {
+            "name": "Rosa canina",
+            "gbif_key": 3002461,
+            "toxic": false,
+            "held_out": true
+          },
+          {
+            "name": "Sambucus nigra",
+            "gbif_key": 2888728,
+            "toxic": false,
+            "held_out": true
+          }
         ]
       }
     }
-  ]
+  ],
+  "toxic_probes": {
+    "class_id": "unknown_mushroom",
+    "per_taxon_cap": 50,
+    "minimum_images_per_taxon": 50,
+    "minimum_poisonous_held_out_images": 300,
+    "known_class_not_probed": [
+      "cortinarius_orellanus",
+      "cortinarius_rubellus",
+      "galerina_marginata"
+    ],
+    "known_class_reason": "These species are already model classes. Their test photos are the probe. Fetching them again as unknown_mushroom would give one fungus two labels.",
+    "taxa": [
+      {
+        "name": "Lepiota brunneoincarnata",
+        "gbif_key": 2535390,
+        "toxic": true,
+        "held_out": true,
+        "relation": "unknown_genus"
+      },
+      {
+        "name": "Lepiota subincarnata",
+        "gbif_key": 2535445,
+        "toxic": true,
+        "held_out": true,
+        "relation": "unknown_genus"
+      },
+      {
+        "name": "Lepiota cristata",
+        "gbif_key": 2535471,
+        "toxic": true,
+        "held_out": true,
+        "relation": "unknown_genus"
+      },
+      {
+        "name": "Omphalotus olearius",
+        "gbif_key": 2538088,
+        "toxic": true,
+        "held_out": true,
+        "relation": "unknown_genus"
+      },
+      {
+        "name": "Galerina sulcipes",
+        "gbif_key": 8003146,
+        "toxic": true,
+        "held_out": true,
+        "relation": "unknown_species_of_known_genus",
+        "note": "GBIF had 0 StillImage occurrences for this key on 2026-10-08. The 50-image floor is unchanged."
+      },
+      {
+        "name": "Galerina sulciceps",
+        "gbif_key": 8347930,
+        "toxic": true,
+        "held_out": true,
+        "relation": "unknown_species_of_known_genus",
+        "note": "GBIF spells the (Berk.) Boedijn fungus sulciceps and gives it a different key from sulcipes. StillImage count was 39, under the 50-image floor."
+      },
+      {
+        "name": "Conocybe filaris",
+        "gbif_key": 2529789,
+        "toxic": true,
+        "held_out": true,
+        "relation": "unknown_genus",
+        "note": "Species probe. The genus label Conocybe spp. is refused because GBIF matchType is HIGHERRANK."
+      },
+      {
+        "name": "Tricholoma equestre",
+        "gbif_key": 3324883,
+        "toxic": true,
+        "held_out": true,
+        "relation": "unknown_genus"
+      },
+      {
+        "name": "Chlorophyllum molybdites",
+        "gbif_key": 5243168,
+        "toxic": true,
+        "held_out": true,
+        "relation": "unknown_species_of_known_genus"
+      }
+    ]
+  }
 }

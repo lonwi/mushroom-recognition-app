@@ -1,11 +1,14 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { PhotoCredits } from '../components/PhotoCredits';
 import { useLanguage } from '../contexts/LanguageContext';
 import { MUSHROOMS_DATABASE } from '../data/mushrooms';
+import { PACKAGED_PHOTO_CREDITS } from '../services/attributionPackage';
 
 export const SettingsScreen: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
+  const [creditsOpen, setCreditsOpen] = useState(false);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -14,7 +17,7 @@ export const SettingsScreen: React.FC = () => {
           <Text style={styles.headerTitle}>{t('settings.title')}</Text>
         </View>
 
-        <View style={styles.content}>
+        <ScrollView style={styles.content} contentContainerStyle={styles.contentInner}>
           <Text style={styles.sectionTitle}>{t('settings.language')}</Text>
 
           <View style={styles.languageOptions}>
@@ -47,6 +50,16 @@ export const SettingsScreen: React.FC = () => {
           <View style={styles.aboutCard} testID="training-data-license">
             <Text style={styles.aboutTitle}>{t('settings.dataLicenseTitle')}</Text>
             <Text style={styles.aboutVersion}>{t('settings.dataLicenseBody')}</Text>
+            <TouchableOpacity
+              onPress={() => setCreditsOpen((open) => !open)}
+              testID="btn-photo-credits"
+              style={styles.creditsButton}
+            >
+              <Text style={styles.creditsButtonText}>
+                {creditsOpen ? t('settings.photoCreditsClose') : t('settings.photoCreditsOpen')}
+              </Text>
+            </TouchableOpacity>
+            {creditsOpen ? <PhotoCredits credits={PACKAGED_PHOTO_CREDITS} /> : null}
           </View>
 
           <View style={styles.aboutCard} testID="atlas-coverage-notice">
@@ -56,7 +69,7 @@ export const SettingsScreen: React.FC = () => {
               {t('settings.atlasScope').replace('{count}', String(MUSHROOMS_DATABASE.length))}
             </Text>
           </View>
-        </View>
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
@@ -84,7 +97,19 @@ const styles = StyleSheet.create({
     color: '#1B3B22',
   },
   content: {
+    flex: 1,
+  },
+  contentInner: {
     padding: 16,
+  },
+  creditsButton: {
+    marginTop: 10,
+    alignSelf: 'flex-start',
+  },
+  creditsButtonText: {
+    color: '#166534',
+    fontWeight: '700',
+    fontSize: 14,
   },
   sectionTitle: {
     fontSize: 16,

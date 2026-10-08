@@ -216,6 +216,10 @@ describe('ResultModal recognition outcomes', () => {
     expect(getByTestId('recognition-unknown-body').props.children).toBe(
       'To wygląda na grzyba, którego aplikacja nie zna. Nie zbieraj go ani nie jedz na podstawie skanu.',
     );
+    expect(getByTestId('recognition-unknown-deadly').props.children).toBe(
+      'Ten grzyb może być śmiertelnie trujący.',
+    );
+    expect(getByTestId('recognition-unknown-verify').props.children).toMatch(/grzyboznawcy/);
     expect(queryByText(/%/)).toBeNull();
     expect(queryByText(/Borowik/)).toBeNull();
     expect(queryByText(/JADALNY/)).toBeNull();
@@ -235,6 +239,10 @@ describe('ResultModal recognition outcomes', () => {
     expect((await findByTestId('recognition-unknown-body')).props.children).toBe(
       'This looks like a mushroom the app does not know. Do not pick it or eat it based on the scan.',
     );
+    expect((await findByTestId('recognition-unknown-deadly')).props.children).toBe(
+      'This mushroom may be deadly poisonous.',
+    );
+    expect((await findByTestId('recognition-unknown-verify')).props.children).toMatch(/Sanepid/);
     expect(queryByText(/%/)).toBeNull();
     expect(queryByText(/Borowik/)).toBeNull();
     expect(queryByText(/edible/i)).toBeNull();

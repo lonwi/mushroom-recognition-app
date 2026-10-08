@@ -27,6 +27,9 @@ from pathlib import Path
 import numpy as np
 
 MODEL_INPUT_SIZE = 224
+# The phone's native decoder downscales the long side to this before the
+# shared 224 area filter, so a 12–50 MP JPEG is not decoded in JS.
+NATIVE_PREP_EDGE = MODEL_INPUT_SIZE * 2
 
 
 class ImageReadError(Exception):
@@ -67,14 +70,36 @@ def resize_area(image: np.ndarray, size: int) -> np.ndarray:
     return _resize_axis(resized, size, axis=1)
 
 
+def round_half_up(values: np.ndarray) -> np.ndarray:
+    """Match JavaScript `Math.round` for finite values: halves go toward +infinity.
+
+    `numpy.rint` uses half-to-even, so 10.5 becomes 10 and 2.5 becomes 2.
+    `Math.round(10.5)` is 11 and `Math.round(2.5)` is 3. Pixel values are
+    non-negative; `floor(x + 0.5)` matches that rule, including negatives.
+    """
+    return np.floor(np.asarray(values, dtype=np.float64) + 0.5)
+
+
 def model_rgb_uint8(rgb: np.ndarray, size: int = MODEL_INPUT_SIZE) -> np.ndarray:
     """Oriented RGB pixels as a size x size uint8 image (the cached PNG)."""
     image = np.asarray(rgb)
-    if image.shape[0] >= size and image.shape[1] >= size:
-        resized = resize_area(image, size)
+    # Large photos take the same two scales as the phone: a 448 edge, then 224.
+    # The phone's first scale is the platform bitmap scaler (EXIF already
+    # applied). This step is the area filter so a training PNG and a phone
+    # photo that is already 448px share the second resize.
+    if (
+        size == MODEL_INPUT_SIZE
+        and int(image.shape[0]) >= NATIVE_PREP_EDGE
+        and int(image.shape[1]) >= NATIVE_PREP_EDGE
+    ):
+        image = resize_area(image, NATIVE_PREP_EDGE)
+    height = int(image.shape[0])
+    width = int(image.shape[1])
+    if height >= size and width >= size:
+        resized = image.astype(np.float64) if height == size and width == size else resize_area(image, size)
     else:
         resized = _resize_bilinear(image, size)
-    return np.clip(np.rint(resized), 0, 255).astype(np.uint8)
+    return np.clip(round_half_up(resized), 0, 255).astype(np.uint8)
 
 
 def write_model_png(rgb: np.ndarray, destination: Path, size: int = MODEL_INPUT_SIZE) -> None:

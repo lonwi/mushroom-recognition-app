@@ -17,7 +17,7 @@ import re
 from pathlib import Path
 
 from evaluate import attributions_complete
-from manifest import ROOT, load_manifest
+from manifest import ROOT, load_manifest, poisonous_heldout_taxa
 from recognition_math import (
     BACKGROUND_CLASS_ID,
     DANGEROUS_PAIRS,
@@ -25,15 +25,23 @@ from recognition_math import (
     HIGH_STAKES_IDS,
     UNKNOWN_CLASS_ID,
 )
+from stats import wilson_interval
 
 ARTIFACTS = ROOT / "training" / "artifacts"
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
-# Held-out fungi the model was not trained on. 0.50 recall is the floor that
-# still means the class generalizes; 0.10 is the most known-species mass it may take.
-UNKNOWN_HELDOUT_RECALL_MIN = 0.50
-UNKNOWN_HELDOUT_SUPPORT_MIN = 30
+# Unknown-class recall stays a diagnostic (target 0.50, bootstrap lower bound
+# 0.40). The ship gate only requires enough held-out photos to compute it.
+UNKNOWN_DIAGNOSTIC_SUPPORT_MIN = 200
+UNKNOWN_DIAGNOSTIC_TAXA_MIN = 10
 UNKNOWN_STEAL_MAX = 0.10
+HIGH_STAKES_STEAL_SUPPORT_MIN = 30
 HELDOUT_BACKGROUND_SUPPORT_MIN = 20
+OPEN_SET_SAFE_MIN = 0.90
+OPEN_SET_SAFE_WILSON_LOW_MIN = 0.85
+OPEN_SET_CONFIDENT_EDIBLE_MAX = 0.02
+OPEN_SET_CONFIDENT_EDIBLE_WILSON_HIGH_MAX = 0.05
+POISONOUS_HELDOUT_SUPPORT_MIN = 300
+POISONOUS_HELDOUT_PER_TAXON_MIN = 50
 
 
 def sha256_file(path: Path) -> str | None:
@@ -111,6 +119,64 @@ def _attribution_file_reasons(directory: Path, coverage: dict) -> list[str]:
     return reasons
 
 
+def _open_set_reasons(open_set: dict) -> list[str]:
+    """Gates on decide() outcomes for fungi the trainer never saw."""
+    reasons = []
+    support = _whole_count(open_set.get("held_out_support"))
+    safe_count = _whole_count(open_set.get("safe_count"))
+    edible_count = _whole_count(open_set.get("confident_edible_count"))
+    if support is None or support < 1 or safe_count is None or edible_count is None:
+        return ["open-set held-out counts are missing"]
+    safe_rate = safe_count / support
+    safe_low, _safe_high = wilson_interval(safe_count, support)
+    if safe_rate < OPEN_SET_SAFE_MIN or safe_low < OPEN_SET_SAFE_WILSON_LOW_MIN:
+        reasons.append(
+            f"open-set safe outcome rate {safe_rate:.3f} (95% lower bound {safe_low:.3f}) "
+            f"on {support} held-out fungi (need >= {OPEN_SET_SAFE_MIN} and lower bound >= {OPEN_SET_SAFE_WILSON_LOW_MIN})"
+        )
+    edible_rate = edible_count / support
+    _edible_low, edible_high = wilson_interval(edible_count, support)
+    if edible_rate > OPEN_SET_CONFIDENT_EDIBLE_MAX or edible_high > OPEN_SET_CONFIDENT_EDIBLE_WILSON_HIGH_MAX:
+        reasons.append(
+            f"open-set confident edible rate {edible_rate:.3f} (95% upper bound {edible_high:.3f}) "
+            f"on {support} held-out fungi (need <= {OPEN_SET_CONFIDENT_EDIBLE_MAX} and upper bound <= {OPEN_SET_CONFIDENT_EDIBLE_WILSON_HIGH_MAX})"
+        )
+    poisonous_support = _whole_count(open_set.get("poisonous_held_out_support"))
+    poisonous_edible = open_set.get("poisonous_held_out_confident_edible")
+    per_taxon = open_set.get("poisonous_per_taxon")
+    if poisonous_support is None or poisonous_support < POISONOUS_HELDOUT_SUPPORT_MIN:
+        reasons.append(
+            f"poisonous held-out support {open_set.get('poisonous_held_out_support')} "
+            f"is below {POISONOUS_HELDOUT_SUPPORT_MIN}"
+        )
+    if not isinstance(poisonous_edible, int) or isinstance(poisonous_edible, bool) or poisonous_edible != 0:
+        reasons.append(
+            f"poisonous held-out photos shown as a confident edible: {poisonous_edible} (need 0)"
+        )
+    if not isinstance(per_taxon, list) or not per_taxon:
+        reasons.append("poisonous held-out per-taxon counts are missing")
+    else:
+        short = []
+        for item in per_taxon:
+            count = _whole_count(item.get("support")) if isinstance(item, dict) else None
+            if count is None or count < POISONOUS_HELDOUT_PER_TAXON_MIN:
+                label = item.get("taxon") if isinstance(item, dict) else "?"
+                short.append(f"{label}={count}")
+        if short:
+            reasons.append(
+                "poisonous held-out taxa below "
+                f"{POISONOUS_HELDOUT_PER_TAXON_MIN} images: {', '.join(short)}"
+            )
+        present = {item.get("taxon") for item in per_taxon if isinstance(item, dict)}
+        missing = [name for name in poisonous_heldout_taxa() if name not in present]
+        if missing:
+            reasons.append(
+                "poisonous held-out taxa missing from the report (counted as below "
+                f"{POISONOUS_HELDOUT_PER_TAXON_MIN}): {', '.join(missing)}"
+            )
+    return reasons
+
+
 def assess_shippable(report: dict, artifact_dir: Path | None = None) -> tuple[bool, list[str]]:
     reasons: list[str] = []
     class_ids = [item["id"] for item in load_manifest()["classes"]]
@@ -183,7 +249,7 @@ def assess_shippable(report: dict, artifact_dir: Path | None = None) -> tuple[bo
     if id_keep is None or id_keep < 0.95:
         reasons.append(
             f"held-out test in-distribution keep rate {id_keep} is below 0.95 "
-            "(threshold is fit on validation and scored on test)"
+            "(threshold is fit on validation at 0.97 and scored on test at 0.95)"
         )
     if ood_reject is None or ood_reject < 0.90:
         reasons.append(f"held-out non-mushroom reject rate {ood_reject} is below 0.90")
@@ -209,27 +275,39 @@ def assess_shippable(report: dict, artifact_dir: Path | None = None) -> tuple[bo
 
     unknown = report.get("unknown_mushroom") or {}
     held_unknown = _whole_count(unknown.get("held_out_support"))
-    held_recall = unknown.get("held_out_recall")
     known_support = _whole_count(unknown.get("known_support"))
     steal = unknown.get("known_predicted_as_unknown_rate")
-    if held_unknown is None or held_unknown < UNKNOWN_HELDOUT_SUPPORT_MIN:
+    taxa_ge_10 = _whole_count(unknown.get("taxa_with_at_least_10"))
+    if held_unknown is None or held_unknown < UNKNOWN_DIAGNOSTIC_SUPPORT_MIN:
         reasons.append(
             f"unknown_mushroom held-out support {unknown.get('held_out_support')} "
-            f"is below {UNKNOWN_HELDOUT_SUPPORT_MIN}"
+            f"is below {UNKNOWN_DIAGNOSTIC_SUPPORT_MIN} (needed to report the recall diagnostic)"
         )
-    elif not _finite(held_recall) or held_recall < UNKNOWN_HELDOUT_RECALL_MIN:
+    if taxa_ge_10 is None or taxa_ge_10 < UNKNOWN_DIAGNOSTIC_TAXA_MIN:
         reasons.append(
-            f"unknown_mushroom recall on held-out fungi {held_recall} is below {UNKNOWN_HELDOUT_RECALL_MIN}"
+            f"unknown_mushroom held-out taxa with at least 10 images: {unknown.get('taxa_with_at_least_10')} "
+            f"(need >= {UNKNOWN_DIAGNOSTIC_TAXA_MIN})"
         )
     if known_support is None or known_support < 1 or not _finite(steal) or steal > UNKNOWN_STEAL_MAX:
         reasons.append(
             f"known species predicted as unknown_mushroom at {steal} on support {known_support} "
             f"(need a rate <= {UNKNOWN_STEAL_MAX})"
         )
-    toxic_as_edible = report.get("confident_toxic_as_edible_lookalike")
+    high_stakes_steal = unknown.get("high_stakes_steal") or {}
+    for species_id in HIGH_STAKES_IDS:
+        block = high_stakes_steal.get(species_id) if isinstance(high_stakes_steal, dict) else None
+        support = _whole_count(block.get("support")) if isinstance(block, dict) else None
+        rate = block.get("rate") if isinstance(block, dict) else None
+        if support is None or support < HIGH_STAKES_STEAL_SUPPORT_MIN or not _finite(rate) or rate > UNKNOWN_STEAL_MAX:
+            reasons.append(
+                f"high-stakes class {species_id} predicted as unknown_mushroom at {rate} "
+                f"on support {support} (need <= {UNKNOWN_STEAL_MAX} and >= {HIGH_STAKES_STEAL_SUPPORT_MIN})"
+            )
+    reasons.extend(_open_set_reasons(report.get("open_set") or {}))
+    toxic_as_edible = report.get("confident_toxic_as_edible")
     if not isinstance(toxic_as_edible, int) or isinstance(toxic_as_edible, bool) or toxic_as_edible != 0:
         reasons.append(
-            f"confident toxic-as-edible-lookalike count is {toxic_as_edible} (need 0)"
+            f"confident toxic-as-edible count is {toxic_as_edible} (need 0 across every poisonous taxon)"
         )
 
     if not export_ok.get("loaded"):

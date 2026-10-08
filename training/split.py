@@ -1,12 +1,45 @@
-"""Train/val/test split grouped by GBIF occurrence.
+"""Train/val/test split grouped so near-duplicate field photos stay together.
 
-Photos from the same observation never land in two splits.
+The group is the recorder, a 0.01-degree grid (about 1.1 km north-south),
+and the calendar day, when those fields exist. Otherwise the group is the
+GBIF occurrence. Photos from one group never land in two splits.
 """
 
 from __future__ import annotations
 
+import math
 import random
 from collections import defaultdict
+
+
+def collector_group_key(record: dict) -> str:
+    """Recorder + ~1 km grid + day, or the occurrence when that is missing."""
+    recorded = " ".join(str(record.get("recorded_by") or "").casefold().split())
+    day = str(record.get("event_date") or "")[:10]
+    lat = record.get("decimal_latitude")
+    lon = record.get("decimal_longitude")
+    class_id = record.get("class_id") or ""
+    if recorded and len(day) == 10 and day[4] == "-" and day[7] == "-" and lat is not None and lon is not None:
+        try:
+            lat_f = float(lat)
+            lon_f = float(lon)
+        except (TypeError, ValueError):
+            lat_f = float("nan")
+            lon_f = float("nan")
+        if math.isfinite(lat_f) and math.isfinite(lon_f):
+            lat_bin = round(lat_f / 0.01) * 0.01
+            lon_bin = round(lon_f / 0.01) * 0.01
+            taxon = str(record.get("taxon_name") or record.get("queried_name") or "")
+            return f"collector:{class_id}:{taxon}:{recorded}:{lat_bin:.2f}:{lon_bin:.2f}:{day}"
+    return f"occurrence:{class_id}:{record.get('occurrence_key')}"
+
+
+def split_key_summary(records: list[dict]) -> dict[str, int]:
+    collector = sum(1 for record in records if collector_group_key(record).startswith("collector:"))
+    return {
+        "collector_grid_day": collector,
+        "occurrence_fallback": len(records) - collector,
+    }
 
 
 def split_by_observation(
@@ -22,7 +55,7 @@ def split_by_observation(
     records = [record for record in records if not record.get("held_out_taxon")]
     grouped = defaultdict(lambda: defaultdict(list))
     for record in records:
-        grouped[record["class_id"]][str(record["occurrence_key"])].append(record)
+        grouped[record["class_id"]][collector_group_key(record)].append(record)
 
     splits: dict[str, list[dict]] = {"train": [], "val": [], "test": []}
     for class_id in sorted(grouped):
@@ -60,11 +93,11 @@ def split_by_observation(
 
 
 def _assert_occurrence_integrity(splits: dict[str, list[dict]]) -> None:
-    seen: dict[tuple[str, str], str] = {}
+    seen: dict[str, str] = {}
     for name, records in splits.items():
         for record in records:
-            key = (record["class_id"], str(record["occurrence_key"]))
+            key = collector_group_key(record)
             previous = seen.get(key)
             if previous is not None and previous != name:
-                raise RuntimeError(f"occurrence {key} leaked into both {previous} and {name}")
+                raise RuntimeError(f"photo group {key} leaked into both {previous} and {name}")
             seen[key] = name

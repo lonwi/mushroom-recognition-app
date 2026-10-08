@@ -54,6 +54,21 @@ describe('MobileNetV3 preprocessing', () => {
     });
   });
 
+  test('rounds a half-pixel average the way Math.round does', () => {
+    const half = JSON.parse(
+      fs.readFileSync(path.join(__dirname, '../../../training/fixtures/round_half_up_2x2_to_1.json'), 'utf8'),
+    ) as { width: number; height: number; size: number; rgb: number[]; expected_uint8: number[] };
+    const output = preprocessRgbToMobileNetV3(
+      Uint8Array.from(half.rgb),
+      half.width,
+      half.height,
+      half.size,
+    );
+    half.expected_uint8.forEach((pixel, index) => {
+      expect(output[index]).toBeCloseTo(pixel / 127.5 - 1, 5);
+    });
+  });
+
   test('matches the Python bilinear fixture', () => {
     const output = preprocessRgbToMobileNetV3(
       Uint8Array.from(preprocessFixture.rgb),

@@ -10,9 +10,10 @@ from sampling import (
     collect_licensed_media,
     fill_regional_then_global,
     spread_per_taxon,
+    taxon_fetch_plan,
     thin_class_report,
 )
-from split import split_by_observation
+from split import collector_group_key, split_by_observation
 
 
 def _accept(occurrence):
@@ -26,6 +27,9 @@ class SamplingTest(unittest.TestCase):
         self.assertAlmostEqual(weights[0], 4 / 6)
         self.assertEqual(weights[2], 0.0)
         self.assertAlmostEqual(sum(weights[index] * count for index, count in ((0, 3), (1, 1))) / 4, 1.0)
+        capped = balanced_class_weights([0] * 200 + [1], 2)
+        self.assertEqual(capped[1], 10.0)
+        self.assertLess(capped[0], 1.0)
     def test_occurrence_cap_keeps_two_photos(self):
         rows = collect_licensed_media(
             [{"key": 7, "photos": 5}],
@@ -101,6 +105,45 @@ class SamplingTest(unittest.TestCase):
                 self.assertFalse(row["held_out_taxon"])
         held = [row for row in splits["test"] if row["held_out_taxon"]]
         self.assertEqual(sorted(row["occurrence_key"] for row in held), [4, 5])
+
+    def test_poisonous_held_out_taxa_are_filled_first(self):
+        plan = taxon_fetch_plan(
+            [
+                {"name": "safe", "toxic": False, "held_out": False},
+                {"name": "poison", "toxic": True, "held_out": True},
+                {"name": "other", "toxic": False, "held_out": True},
+            ],
+            100,
+            80,
+        )
+        self.assertEqual(plan["poison"], 50)
+        self.assertEqual(plan["safe"] + plan["other"], 50)
+
+    def test_collector_day_and_grid_stay_in_one_split(self):
+        records = []
+        for place, latitude in enumerate((52.00, 52.50, 53.00)):
+            for copy in range(2):
+                records.append(
+                    {
+                        "class_id": "boletus_edulis",
+                        "occurrence_key": place * 10 + copy,
+                        "recorded_by": "Ada",
+                        "decimal_latitude": latitude,
+                        "decimal_longitude": 21.01,
+                        "event_date": "2024-09-01T08:00:00",
+                        "taxon_name": "Boletus edulis",
+                    }
+                )
+        self.assertTrue(collector_group_key(records[0]).startswith("collector:"))
+        self.assertEqual(collector_group_key(records[0]), collector_group_key(records[1]))
+        self.assertNotEqual(collector_group_key(records[0]), collector_group_key(records[2]))
+        splits = split_by_observation(records, val_ratio=0.34, test_ratio=0.34, seed=1)
+        home = {}
+        for name, rows in splits.items():
+            for row in rows:
+                home.setdefault(row["decimal_latitude"], set()).add(name)
+        for names in home.values():
+            self.assertEqual(len(names), 1)
 
 
 if __name__ == "__main__":
