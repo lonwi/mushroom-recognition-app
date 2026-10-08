@@ -40,5 +40,19 @@
       "severity": "error",
       "name": "ui-not-to-storage-or-platform"
     }
+  },
+  {
+    "type": "dependency",
+    "from": "src/stories/JournalScreen.stories.tsx",
+    "to": "node_modules/@react-native-async-storage/async-storage/lib/commonjs/index.js",
+    "unresolvedTo": "@react-native-async-storage/async-storage",
+    "dependencyTypes": [
+      "npm",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-storage-or-platform"
+    }
   }
 ]
