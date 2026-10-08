@@ -307,15 +307,25 @@ export const en: Translations = {
         description:
           'Unopened fruiting bodies do not yet show the key botanical features (a ring, gill colour, a volva at the base). At this stage a deadly amanita looks almost identical to a field mushroom, a parasol, or a russula.',
       },
+      rule_whole_mushroom: {
+        title: 'Take the whole mushroom out, with the bulb and volva at the base',
+        description:
+          'Lift every gilled mushroom (including parasols, field mushrooms and brittlegills), as well as chanterelles, hedgehog mushrooms and any other mushroom without tubes, out of the ground intact. Lever it out with a knife deep beside the stem, because a death cap\'s loose volva often stays in the soil. The bulb and volva at the base are what separate the death cap, destroying angel and panther cap from parasols, shaggy parasols and field mushrooms. Never cut these above the ground. The only exception is the tip below: boletes you have identified with certainty.',
+      },
+      rule_tube_mushrooms_cut: {
+        title: 'Only boletes (with a “sponge”) may be cut low with a knife',
+        description:
+          'This applies only to mushrooms with tubes under the cap, such as ceps, bay boletes, birch boletes and slippery jacks, and only when you are sure of the species. Cut the stem as low as possible, just above the soil, or twist it out carefully. Foresters accept both methods as long as you do not dig up the litter. Cover the exposed spot with litter or moss. Never cut a gilled mushroom, however large: take a parasol out with its bulb. If you want a mushroom expert to check it, take it out whole, because inspectors assess only whole fruiting bodies with the stem.',
+      },
       rule_no_plastic_bags: {
         title: 'Collect only into airy wicker baskets',
         description:
           'In plastic bags or buckets mushrooms quickly sweat and rot. Proteins break down and produce toxic bacterial compounds (ptomaines), which leads to severe secondary poisoning even from edible mushrooms.',
       },
-      rule_whole_mushroom: {
-        title: 'Twist out the whole fruiting body, including the stem base',
+      rule_protect_forest_floor: {
+        title: 'Do not rake the litter or destroy mushrooms you are not taking',
         description:
-          'The base of the stem (a bulb, a volva, or the lack of one) is the key feature that separates a parasol and a field mushroom from the deadly death cap.',
+          'Do not rake the forest litter or dig through it looking for fruiting bodies. Do not destroy old or inedible mushrooms — leave them in the woods. Do not pick or destroy protected species, such as wild morels. Put in the basket only specimens you are completely sure about.',
       },
     },
     syndromes: {

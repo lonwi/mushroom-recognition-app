@@ -211,6 +211,26 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.getByTestId('species-use-neutral')).toHaveCount(0);
   });
 
+  test('Safety guide takes mushrooms whole and cuts only sure tube mushrooms', async ({ page }) => {
+    await page.goto('/iframe.html?id=mushroom-safetyguidescreen--golden-rules');
+    await expect(page.locator('body')).toContainText(
+      'Dla początkujących: tylko grzyby z rurkami (z "gąbką")',
+    );
+    await expect(page.locator('body')).toContainText(
+      'Wyjmuj grzyby w całości, z bulwą i pochwą u nasady',
+    );
+    await expect(page.locator('body')).toContainText('bez rurek');
+    await expect(page.locator('body')).toContainText('Takich grzybów nie ucinaj nad ziemią');
+    await expect(page.locator('body')).toContainText(
+      'Tylko grzyby rurkowe (z „gąbką”) możesz ścinać nisko nożem',
+    );
+    await expect(page.locator('body')).toContainText('Grzybów z blaszkami nie ścinaj');
+    await expect(page.locator('body')).toContainText('grzyboznawcy');
+    await expect(page.locator('body')).toContainText('dziko rosnących smardzów');
+    await expect(page.locator('body')).not.toContainText('resztki pierścienia');
+    await expect(page.locator('body')).not.toContainText('bezpodstawny');
+  });
+
   test('PreparationGuide renders cleaning, cooking, and storing categories', async ({ page }) => {
     await page.goto('/iframe.html?id=mushroom-preparationguidescreen--default-view');
     await expect(page.locator('body')).toContainText('Poradnik Przygotowania');

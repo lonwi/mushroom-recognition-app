@@ -301,6 +301,46 @@ describe('Mushroom Database & Safety Verification', () => {
     const warsaw = TOXICOLOGY_CENTERS.find((c) => c.city === 'Warszawa');
     expect(warsaw).toBeDefined();
     expect(warsaw?.phone).toContain('22');
+
+    const ids = GOLDEN_RULES.map((rule) => rule.id);
+    const wholeIndex = ids.indexOf('rule_whole_mushroom');
+    const tubeCutIndex = ids.indexOf('rule_tube_mushrooms_cut');
+    const bagsIndex = ids.indexOf('rule_no_plastic_bags');
+    expect(wholeIndex).toBeGreaterThan(-1);
+    expect(tubeCutIndex).toBe(wholeIndex + 1);
+    expect(wholeIndex).toBeLessThan(bagsIndex);
+
+    const byId = Object.fromEntries(GOLDEN_RULES.map((rule) => [rule.id, rule]));
+    expect(byId.rule_tubes_first?.critical).toBe(true);
+    expect(byId.rule_tubes_first?.title).toMatch(/początkujących/);
+    expect(byId.rule_tubes_first?.description).toMatch(/rurkami/);
+    expect(byId.rule_tubes_first?.description).toMatch(/blaszki/);
+
+    expect(byId.rule_whole_mushroom?.critical).toBe(true);
+    expect(byId.rule_whole_mushroom?.title).toMatch(/bulwą i pochwą/);
+    expect(byId.rule_whole_mushroom?.description).toMatch(/kurkę/);
+    expect(byId.rule_whole_mushroom?.description).toMatch(/kolczaka/);
+    expect(byId.rule_whole_mushroom?.description).toMatch(/bez rurek/);
+    expect(byId.rule_whole_mushroom?.description).toMatch(/nie ucinaj/);
+    expect(byId.rule_whole_mushroom?.description).toMatch(/rurk/);
+    expect(byId.rule_whole_mushroom?.description).toMatch(/luźna pochwa/);
+    expect(byId.rule_whole_mushroom?.description).not.toMatch(/pierścienia/);
+
+    expect(byId.rule_tube_mushrooms_cut?.critical).toBe(false);
+    expect(byId.rule_tube_mushrooms_cut?.title).toMatch(/rurk/);
+    expect(byId.rule_tube_mushrooms_cut?.description).toMatch(/rurk/);
+    expect(byId.rule_tube_mushrooms_cut?.description).toMatch(/nie ścinaj/);
+    expect(byId.rule_tube_mushrooms_cut?.description).toMatch(/Leśnicy dopuszczają obie metody/);
+    expect(byId.rule_tube_mushrooms_cut?.description).toMatch(/grzyboznawcy/);
+    expect(byId.rule_tube_mushrooms_cut?.description).not.toMatch(/bezpodstawny/);
+    expect(byId.rule_tube_mushrooms_cut?.description).not.toMatch(/grzybni/);
+
+    expect(byId.rule_protect_forest_floor?.critical).toBe(false);
+    expect(byId.rule_protect_forest_floor?.description).toMatch(/Nie grab leśnej ściółki/);
+    expect(byId.rule_protect_forest_floor?.description).toMatch(/niejadalnych/);
+    expect(byId.rule_protect_forest_floor?.description).toMatch(/chronionych/);
+    expect(byId.rule_protect_forest_floor?.description).toMatch(/smardz/);
+    expect(byId.rule_protect_forest_floor?.description).toMatch(/całkowitą pewność/);
   });
 });
 
