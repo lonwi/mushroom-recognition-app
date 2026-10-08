@@ -3,10 +3,5 @@
     "NSCameraUsageDescription": "Allow the Grzybobranie AI app to use the camera to recognize mushrooms.",
     "NSPhotoLibraryUsageDescription": "The app needs access to your photos to analyze mushroom photographs taken earlier.",
     "NSLocationWhenInUseUsageDescription": "Grzybobranie AI can save where you found it in the journal on this device, so it is easier to come back."
-  },
-  "android": {
-    "camera_permission": "Allow the Grzybobranie AI app to use the camera to recognize mushrooms.",
-    "photo_library_permission": "The app needs access to your photos to analyze mushroom photographs taken earlier.",
-    "location_permission": "Grzybobranie AI can save where you found it in the journal on this device, so it is easier to come back."
   }
 }

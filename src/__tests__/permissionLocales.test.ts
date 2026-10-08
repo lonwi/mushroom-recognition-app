@@ -25,11 +25,12 @@ describe('permission locales', () => {
       pl: './locales/pl.json',
       en: './locales/en.json',
     });
-    expect(app.plugins).toContain('./plugins/withDefaultPermissionStrings.js');
+    expect(fs.existsSync(path.join(root, 'plugins', 'withDefaultPermissionStrings.js'))).toBe(false);
+    expect(app.plugins).not.toContain('./plugins/withDefaultPermissionStrings.js');
 
-    expect(app.ios.infoPlist.NSCameraUsageDescription).toBe(
-      'Aplikacja potrzebuje dostępu do aparatu, aby rozpoznawać gatunki grzybów w lesie.',
-    );
+    expect(app.ios.infoPlist.NSCameraUsageDescription).toBeUndefined();
+    expect(app.ios.infoPlist.NSMicrophoneUsageDescription).toBeUndefined();
+    expect(app.ios.infoPlist.NSMotionUsageDescription).toBeUndefined();
     expect(app.ios.infoPlist.NSPhotoLibraryUsageDescription).toBe(
       'Aplikacja potrzebuje dostępu do zdjęć, aby analizować wcześniej wykonane fotografie grzybów.',
     );
@@ -38,13 +39,23 @@ describe('permission locales', () => {
     );
 
     const camera = pluginOptions('expo-camera');
+    const imagePicker = pluginOptions('expo-image-picker');
     const location = pluginOptions('expo-location');
     expect(camera.cameraPermission).toBe(
       'Zezwól aplikacji Grzybobranie AI na używanie aparatu do rozpoznawania grzybów.',
     );
+    expect(camera.microphonePermission).toBe(false);
+    expect(camera.recordAudioAndroid).toBe(false);
+    expect(imagePicker.microphonePermission).toBe(false);
     expect(location.locationWhenInUsePermission).toBe(
       app.ios.infoPlist.NSLocationWhenInUseUsageDescription,
     );
+    expect(location.motionUsagePermission).toBe(false);
+    expect(location.locationAlwaysAndWhenInUsePermission).toBe(false);
+    expect(location.locationAlwaysPermission).toBe(false);
+
+    expect(polish.android).toBeUndefined();
+    expect(english.android).toBeUndefined();
 
     expect(polish.ios.NSCameraUsageDescription).toBe(camera.cameraPermission);
     expect(polish.ios.NSPhotoLibraryUsageDescription).toBe(
@@ -53,13 +64,8 @@ describe('permission locales', () => {
     expect(polish.ios.NSLocationWhenInUseUsageDescription).toBe(
       app.ios.infoPlist.NSLocationWhenInUseUsageDescription,
     );
-    expect(polish.android.camera_permission).toBe(polish.ios.NSCameraUsageDescription);
-    expect(polish.android.photo_library_permission).toBe(polish.ios.NSPhotoLibraryUsageDescription);
-    expect(polish.android.location_permission).toBe(polish.ios.NSLocationWhenInUseUsageDescription);
 
     expect(Object.keys(english.ios).sort()).toEqual(Object.keys(polish.ios).sort());
-    expect(Object.keys(english.android).sort()).toEqual(Object.keys(polish.android).sort());
-
     expect(english.ios.NSCameraUsageDescription).toBe(
       'Allow the Grzybobranie AI app to use the camera to recognize mushrooms.',
     );
@@ -69,9 +75,6 @@ describe('permission locales', () => {
     expect(english.ios.NSLocationWhenInUseUsageDescription).toBe(
       'Grzybobranie AI can save where you found it in the journal on this device, so it is easier to come back.',
     );
-    expect(english.android.camera_permission).toBe(english.ios.NSCameraUsageDescription);
-    expect(english.android.photo_library_permission).toBe(english.ios.NSPhotoLibraryUsageDescription);
-    expect(english.android.location_permission).toBe(english.ios.NSLocationWhenInUseUsageDescription);
 
     for (const key of Object.keys(polish.ios) as Array<keyof typeof polish.ios>) {
       expect(english.ios[key]).not.toBe(polish.ios[key]);
