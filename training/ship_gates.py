@@ -405,7 +405,7 @@ def assess_shippable(report: dict, artifact_dir: Path | None = None) -> tuple[bo
     # pool will not match a hash exported from an older report until export
     # runs again. The rare-taxon floor stays 50 unless the query ended on
     # end_of_records and accepted equals that entire licensed count and the
-    # audited count. max_pages does not open the 5-photo floor.
+    # audited count. max_pages and replacement_budget do not open the 5-photo floor.
     fetch_hash = sha256_file(fetch_file) if fetch_file is not None else None
     if recorded.get("fetch_report_sha256") != fetch_hash:
         reasons.append("fetch_report sha256 does not match the file used for rare-taxon evidence")

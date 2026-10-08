@@ -246,7 +246,7 @@ def rare_exception_applies(name: str, item: dict, row: dict, probes: dict, group
 
     The query must have ended because GBIF had no further record
     (``exhausted_reason`` is ``end_of_records``). Stopping at ``--max-pages``
-    does not qualify. ``gbif_licensed_count`` is that entire licensed pool and
+    or ``replacement_budget`` does not qualify. ``gbif_licensed_count`` is that entire licensed pool and
     it equals the audited count. ``accepted`` equals that same count. A failed
     download leaves ``accepted`` short, and the 50-photo floor stays. The count
     is under 50, ``accepted`` is below the cap, the name is on the closed list,
@@ -293,7 +293,7 @@ def poisonous_sample_reasons(
     Visual groups have a total. Every taxon needs 50 images unless it is one of
     the closed rare_taxon_exceptions AND the fetch row shows the whole licensed
     GBIF pool was downloaded: ``exhausted_reason`` is ``end_of_records`` (not
-    ``max_pages``), ``gbif_licensed_count`` under 50 and equal to the audited
+    ``max_pages`` or ``replacement_budget``), ``gbif_licensed_count`` under 50 and equal to the audited
     count, and ``accepted`` equal to that count (below the cap). A failed
     download leaves ``accepted`` short, and the 50-photo floor stays.
     The exception needs 5 images, 0 confident-edible outcomes, and a group that

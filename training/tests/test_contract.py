@@ -873,6 +873,30 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertTrue(any("Lepiota brunneoincarnata" in reason and "need 50" in reason for reason in reasons))
         self.assertFalse(any("at least 5" in reason for reason in reasons))
 
+    def test_replacement_budget_does_not_apply_the_rare_taxon_exception(self):
+        """A host that rejects every photo is not an exhausted licensed pool.
+
+        accepted equals a licensed count under 50, and the cap is not filled.
+        replacement_budget still keeps the 50-photo floor.
+        """
+        probes = load_manifest()["toxic_probes"]
+        reasons = poisonous_sample_reasons(
+            self._quota_rows(
+                **{
+                    "Lepiota brunneoincarnata": {
+                        "support": 16,
+                        "accepted": 16,
+                        "gbif_licensed_count": 16,
+                        "exhausted_reason": "replacement_budget",
+                    }
+                }
+            ),
+            probes,
+            expected_names=poisonous_heldout_taxa(),
+        )
+        self.assertTrue(any("Lepiota brunneoincarnata" in reason and "need 50" in reason for reason in reasons))
+        self.assertFalse(any("at least 5" in reason for reason in reasons))
+
     def test_verna_exception_without_a_group_fails_validation_and_the_gate(self):
         import copy
 

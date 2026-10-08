@@ -6,10 +6,12 @@ Usage (from the repo root):
     python training/fetch_gbif.py --only amanita_phalloides --max-per-class 20
 
 A file already listed in checkpoints/verified.jsonl with the same size and
-mtime is skipped. Any other existing file must decode with a full Pillow
-``load()``, and ``LOAD_TRUNCATED_IMAGES`` stays false. A file that fails is
-moved to quarantine/<class>/ and downloaded again. A new download is decoded
-in memory before it is written. ``--no-resume`` downloads again anyway.
+mtime is skipped. Any other existing file must pass a structural end-of-file
+check and decode with a full Pillow ``load()``, and ``LOAD_TRUNCATED_IMAGES``
+stays false. A file that fails is moved to quarantine/<class>/ and downloaded
+again. A new download is decoded in memory before it is written.
+``--no-resume`` fetches from scratch: it does not restore ``not_selected/``
+and it does not accept a file already on disk.
 ``--verify-existing`` scans data/images with no network. If the spawn process
 pool cannot start (``PermissionError``, ``OSError``, ``NotImplementedError``,
 or ``BrokenProcessPool``), that scan uses threads and prints a warning.
@@ -20,10 +22,15 @@ A candidate that fails after retries is not accepted. The next photo in the
 same ordered GBIF pool replaces it until the cap is full or GBIF has no further
 licensed page. The first query keeps a margin of twice the cap. Later pages are
 fetched only when those replacements run out, still in that same order, so one
-worker and sixteen workers write the same bytes. ``pool_exhausted`` and
-``gbif_licensed_count`` (the entire licensed pool) are set only when the query
-really ended: no more records, or ``--max-pages``. ``exhausted_reason`` says
-which. A margin that still has unused photos does not set either field.
+worker and sixteen workers write the same bytes. Each unit also stops after
+``cap + max(cap, 20)`` network downloads, or after 50 failures in a row.
+``exhausted_reason`` is then ``replacement_budget``, and ``gbif_licensed_count``
+is not written. A file already verified, and a restore from ``not_selected/``,
+does not use that budget. ``pool_exhausted`` and ``gbif_licensed_count`` (the
+entire licensed pool) are set only when the query really ended: no more
+records, or ``--max-pages``. ``exhausted_reason`` says which. A margin that
+still has unused photos does not set either field. ``replacement_budget`` does
+not open the rare-taxon 5-photo floor.
 
 Every run walks that pool from the first candidate. A file that already
 verifies counts as accepted and is not downloaded again. A failed candidate in
@@ -32,12 +39,14 @@ the same ``fetch_report.json``. A photo that is no longer in the selection is
 moved to ``not_selected/<class>/`` only when every class and probe that writes
 that directory was fetched in this run. ``--dry-run`` does not download, move,
 or write. Before a download, a file already in ``not_selected/<class>/`` is
-checked with the same size limit and full ``Image.open().load()`` as a new
-download, and ``LOAD_TRUNCATED_IMAGES`` stays false. That check finishes
-before the file is remembered or attributed. A photo that passes is moved
-back instead of fetched again. A photo that fails goes to quarantine and is
-not accepted. Quarantine is not a source. A later page request reuses the
-GBIF page already in hand.
+checked with the same size limit, structural end-of-file check, and full
+``Image.open().load()`` as a new download, and ``LOAD_TRUNCATED_IMAGES`` stays
+false. A JPEG must end with ``FF D9`` after trailing zeros are removed, and a
+long zero tail is rejected. A PNG must end on an IEND chunk. A WebP RIFF size
+must match the file length. That check finishes before the file is remembered
+or attributed. A photo that passes is moved back instead of fetched again. A
+photo that fails goes to quarantine and is not accepted. Quarantine is not a
+source. A later page request reuses the GBIF page already in hand.
 
 ``--download-workers`` (default 16) fetches one class or probe at a time, with at
 most 4 transfers per image host. GBIF API calls stay one at a time. Images and
@@ -100,6 +109,10 @@ GBIF_PAGE_SIZE = 300
 # First licensed batch is this many times the download cap. Further GBIF pages
 # are requested only after that margin has been used as replacements.
 POOL_MARGIN_FACTOR = 2
+# A unit stops replacing photos after this many network downloads, and after
+# this many failures in a row. Restores and files already verified do not count.
+# cap + max(cap, 20) is the attempt budget. Neither reason is a full GBIF pool.
+REPLACEMENT_CONSECUTIVE_FAILURES = 50
 # Version 3 drops the download cap from the cache key and stores a GBIF cursor
 # beside the rows fetched so far. Version 1 stopped at the cap. Version 2 stored
 # an unbounded pool. Both miss this key. A fetch of that class or probe deletes
@@ -282,6 +295,12 @@ def iter_occurrences(taxon_key: int, country: str | None, max_pages: int):
         if not results or payload.get("endOfRecords") or offset >= int(payload.get("count") or 0):
             return
         time.sleep(GBIF_PAGE_DELAY)
+
+
+def _replacement_attempt_budget(cap: int) -> int:
+    """Network downloads one class, taxon, or probe may start before it stops."""
+    cap = max(0, int(cap))
+    return cap + max(cap, 20)
 
 
 def _margin_limit(cap: int) -> int:
@@ -572,6 +591,7 @@ class _Pool:
         self.meta = dict(meta)
         self.finite = finite
         self.bundle: _Bundle | None = None
+        self.budget_exhausted = False
 
     def pages_ended(self) -> bool:
         if self.finite or not isinstance(self.cursor, dict):
@@ -851,9 +871,11 @@ def _full_load_ok(path_str: str) -> bool:
     try:
         if not path.is_file() or path.stat().st_size <= 0:
             return False
+        payload = path.read_bytes()
+        _structural_image(payload)
         from PIL import Image
 
-        with Image.open(path) as image:
+        with Image.open(io.BytesIO(payload)) as image:
             image.load()
         return True
     except Exception:
@@ -1041,6 +1063,49 @@ class _TruncatedTransfer(OSError):
     """The body ended early. Retried once, as a dropped connection."""
 
 
+def _png_ends_with_iend(payload: bytes) -> bool:
+    """True when an IEND chunk is the last chunk in the file."""
+    offset = 8
+    limit = len(payload)
+    while offset + 12 <= limit:
+        length = int.from_bytes(payload[offset : offset + 4], "big")
+        end = offset + 12 + length
+        if length < 0 or end > limit:
+            return False
+        if payload[offset + 4 : offset + 8] == b"IEND":
+            return length == 0 and end == limit
+        offset = end
+    return False
+
+
+def _structural_image(payload: bytes) -> None:
+    """Reject containers Pillow can still decode after the file was cut off.
+
+    A JPEG must end with the EOI marker after trailing zeros are removed, and a
+    long zero tail is rejected on its own. A PNG must finish on an IEND chunk.
+    A WebP RIFF size must equal the file length. ``LOAD_TRUNCATED_IMAGES`` is
+    not involved and stays false.
+    """
+    if payload.startswith(b"\xff\xd8"):
+        stripped = payload.rstrip(b"\x00")
+        zeros = len(payload) - len(stripped)
+        # A long zero tail is a padded cutoff. A short tail is allowed only when
+        # the bytes that remain end with the EOI marker. Whitespace does not count.
+        if zeros > 0 and zeros * 20 >= len(payload):
+            raise _RejectedImage("jpeg trailing zeros")
+        if len(stripped) < 4 or not stripped.endswith(b"\xff\xd9"):
+            raise _TruncatedTransfer("jpeg missing EOI")
+        return
+    if payload.startswith(b"\x89PNG\r\n\x1a\n"):
+        if not _png_ends_with_iend(payload):
+            raise _RejectedImage("png missing IEND")
+        return
+    if len(payload) >= 12 and payload.startswith(b"RIFF") and payload[8:12] == b"WEBP":
+        size = int.from_bytes(payload[4:8], "little")
+        if size + 8 != len(payload):
+            raise _RejectedImage("webp riff size does not match the file")
+
+
 def _decode_image_bytes(payload: bytes) -> None:
     """Full-decode bytes before they are stored. Truncated JPEGs do not pass."""
     _ensure_truncated_images_rejected()
@@ -1066,6 +1131,7 @@ def _verified_image_payload(payload: bytes) -> None:
         raise RuntimeError(f"image too small ({len(payload)} bytes)")
     if len(payload) > MAX_IMAGE_BYTES:
         raise _RejectedImage(f"image too large ({len(payload)} bytes)")
+    _structural_image(payload)
     _decode_image_bytes(payload)
 
 
@@ -1185,7 +1251,10 @@ def download_image(
             partial.unlink(missing_ok=True)
             return destination.stat().st_size
         _quarantine_file(root, destination)
-    restored = _restore_not_selected(root, destination, index)
+    if resume:
+        restored = _restore_not_selected(root, destination, index)
+    else:
+        restored = None
     if restored is not None:
         partial.unlink(missing_ok=True)
         return restored
@@ -1326,15 +1395,57 @@ def _row_license_allowed(row: dict) -> bool:
     return True
 
 
-def _cache_token(kind: str, identity: str) -> str:
-    """Full class or probe identity. A shorter name must not be a prefix of this."""
-    safe = re.sub(r"[^A-Za-z0-9._-]+", "_", identity).strip("._") or "item"
-    return f"{kind}-{safe}"
+def _sanitize_cache_identity(identity: str) -> str:
+    return re.sub(r"[^A-Za-z0-9._-]+", "_", identity).strip("._") or "item"
+
+
+def _escape_cache_identity(identity: str) -> str:
+    """Escape so ``-v2`` inside a class name cannot look like a version marker."""
+    return (
+        identity.replace("%", "%25")
+        .replace("-", "%2D")
+        .replace("_", "%5F")
+        .replace(".", "%2E")
+    )
+
+
+def _unescape_cache_identity(text: str) -> str:
+    return (
+        text.replace("%2E", ".")
+        .replace("%5F", "_")
+        .replace("%2D", "-")
+        .replace("%25", "%")
+    )
 
 
 def _cache_file(directory: Path, kind: str, identity: str, key: str) -> Path:
-    token = _cache_token(kind, identity)
-    return directory / "gbif_cache" / f"{token}-v{_QUERY_CACHE_VERSION}-{key[:20]}.json"
+    escaped = _escape_cache_identity(identity)
+    name = f"{kind}={escaped}__v{_QUERY_CACHE_VERSION}__{key[:20]}.json"
+    return directory / "gbif_cache" / name
+
+
+def _cache_name_identity(name: str) -> tuple[str, str] | None:
+    """Kind and identity parsed from a cache filename. The identity is exact.
+
+    The current name escapes ``-`` so ``aa-v2`` cannot look like a version.
+    An older ``kind-identity-vN-rest`` name takes the last ``-vN-`` suffix, so
+    ``class-aa-v2-v3-<hash>`` is identity ``aa-v2``, not ``aa``.
+    """
+    current = re.fullmatch(r"([A-Za-z0-9]+)=(.*)__v(\d+)__([0-9a-f]{20})\.json", name)
+    if current:
+        return current.group(1), _unescape_cache_identity(current.group(2))
+    if not name.endswith(".json"):
+        return None
+    stem = name[: -len(".json")]
+    # Greedy identity, then the last "-vN-" suffix. "class-aa-v2-v3-<hash>" is
+    # aa-v2 at version 3, and "class-aa-v2-v1-old-cache" is aa-v2 as well.
+    versioned = re.fullmatch(r"([A-Za-z0-9]+)-(.+)-v(\d+)-(.+)", stem)
+    if versioned:
+        return versioned.group(1), versioned.group(2)
+    hashed = re.fullmatch(r"([A-Za-z0-9]+)-(.+)-([0-9a-f]{20})", stem)
+    if hashed is None:
+        return None
+    return hashed.group(1), hashed.group(2)
 
 
 def _query_cache_key(kind: str, identity: str, parameters: dict) -> str:
@@ -1352,21 +1463,22 @@ def _query_cache_key(kind: str, identity: str, parameters: dict) -> str:
 def _drop_stale_cache_files(directory: Path, kind: str, identity: str, keep: Path) -> None:
     """Delete other cache files for this exact class or probe, including older versions.
 
-    The identity is the whole token, then ``-v<version>-``. A name that only
-    starts with this class (``bole`` versus ``bole-extra``) is left alone.
+    The filename is parsed and the identity is compared whole. ``aa`` does not
+    match ``aa-v2``, and ``bole`` does not match ``bole-extra``.
     """
     folder = directory / "gbif_cache"
     if not folder.is_dir():
         return
-    token = _cache_token(kind, identity)
-    versioned = re.compile(rf"^{re.escape(token)}-v\d+-.*\.json$")
-    legacy = re.compile(rf"^{re.escape(token)}-[0-9a-f]{{20}}\.json$")
+    sanitized = _sanitize_cache_identity(identity)
     try:
         keep_resolved = keep.resolve() if keep.exists() else None
     except OSError:
         keep_resolved = None
     for path in folder.glob("*.json"):
-        if not (versioned.fullmatch(path.name) or legacy.fullmatch(path.name)):
+        parsed = _cache_name_identity(path.name)
+        if parsed is None or parsed[0] != kind:
+            continue
+        if parsed[1] != identity and parsed[1] != sanitized:
             continue
         try:
             if keep_resolved is not None and path.resolve() == keep_resolved:
@@ -1575,12 +1687,14 @@ def _outcome_stats(
     dry_run: bool,
     no_more_pages: bool,
     exhausted_reason: str | None,
+    budget_stop: bool = False,
 ) -> dict:
     """Counts that add up: selected = accepted + failed reasons.
 
     ``accepted`` is verified files (or, in a dry run, the candidates that would
     be written). ``shortfall``, ``pool_exhausted``, and ``gbif_licensed_count``
     are set only when the GBIF query has really ended below the cap.
+    ``replacement_budget`` stops the unit without writing ``gbif_licensed_count``.
     """
     if dry_run:
         accepted = len(kept)
@@ -1600,10 +1714,14 @@ def _outcome_stats(
         raise RuntimeError(
             f"fetch counts do not add up: selected {selected}, accepted {accepted}, failed {failed}"
         )
-    exhausted = bool(no_more_pages) and accepted < cap
-    reason = None
-    if exhausted:
-        reason = exhausted_reason or "end_of_records"
+    if budget_stop and accepted < cap:
+        exhausted = True
+        reason = "replacement_budget"
+        licensed = None
+    else:
+        exhausted = bool(no_more_pages) and accepted < cap
+        reason = (exhausted_reason or "end_of_records") if exhausted else None
+        licensed = pool_len if exhausted else None
     return {
         "accepted": accepted,
         "selected": selected,
@@ -1612,7 +1730,7 @@ def _outcome_stats(
         "shortfall": (cap - accepted) if exhausted else 0,
         "pool_exhausted": exhausted,
         "exhausted_reason": reason,
-        "gbif_licensed_count": pool_len if exhausted else None,
+        "gbif_licensed_count": licensed,
     }
 
 
@@ -1629,7 +1747,9 @@ def _combine_stats(parts: list[dict]) -> dict:
         )
     shortfall = sum(int(part["shortfall"]) for part in parts)
     reasons = [str(part["exhausted_reason"]) for part in parts if part.get("pool_exhausted") and part.get("exhausted_reason")]
-    if any(reason == "max_pages" for reason in reasons):
+    if any(reason == "replacement_budget" for reason in reasons):
+        reason = "replacement_budget"
+    elif any(reason == "max_pages" for reason in reasons):
         reason = "max_pages"
     elif reasons:
         reason = "end_of_records"
@@ -1661,6 +1781,35 @@ def _download_targets(species: dict, media: list[dict], class_cap: int) -> list[
     return [(name, plan[name], grouped[name]) for name in plan]
 
 
+def _row_skips_network(directory: Path, row: dict, resume: bool) -> bool:
+    """Verified files and parked not_selected photos are not download attempts."""
+    if not resume:
+        return False
+    destination = _destination_for(directory, row["file"])
+    if destination.is_file():
+        index = _verified_index(directory)
+        if index.matches(destination) or _full_load_ok(str(destination)):
+            return True
+    source = _not_selected_source(directory, destination)
+    return source is not None and source.is_file()
+
+
+def _settle_without_network(directory: Path, row: dict) -> None:
+    """Accept a local file, or record a parked file that failed the download checks."""
+    destination = _destination_for(directory, row["file"])
+    if _existing_verified(directory, row):
+        _accept_row(row, destination.stat().st_size)
+        return
+    try:
+        size = download_image(row["image_url"], destination, resume=True, data_dir=directory)
+    except Exception as error:  # noqa: BLE001 — same buckets as a failed download
+        row["_failure_reason"] = _failure_reason(error)
+        row["download_error"] = str(error)
+        row["downloaded"] = False
+        return
+    _accept_row(row, size)
+
+
 def _fill_to_cap(
     pool: _Pool,
     cap: int,
@@ -1674,12 +1823,14 @@ def _fill_to_cap(
     """Keep the first `cap` successes in pool order.
 
     Every run starts at the first candidate. A window is exactly the number of
-    slots still open. Workers download that window together, then the next
-    window is chosen on this thread. The set of files does not depend on which
-    transfer finishes first. A file that already verifies counts as accepted
-    and is not downloaded again. A failed candidate in the prefix is tried
-    again. When the rows on hand run out, one more GBIF batch is fetched
-    before the next window.
+    slots still open, and no wider than the remaining download budget. Workers
+    download that window together, then the next window is chosen on this
+    thread. The set of files does not depend on which transfer finishes first.
+    A file that already verifies, and a photo restored from ``not_selected/``,
+    counts as accepted and does not use the budget. A failed candidate in the
+    prefix is tried again until the attempt budget or 50 failures in a row.
+    When the rows on hand run out, one more GBIF batch is fetched before the
+    next window, and only while budget remains.
     """
     media = pool.rows
     for row in media:
@@ -1690,38 +1841,60 @@ def _fill_to_cap(
         kept = list(media[:cap])
         return kept, list(kept)
 
-    def verified(row: dict) -> bool:
-        return bool(resume) and _existing_verified(directory, row)
-
     kept: list[dict] = []
     attempted: list[dict] = []
     cursor = 0
+    attempts = 0
+    streak = 0
+    budget = _replacement_attempt_budget(cap)
     while len(kept) < cap:
+        slots = cap - len(kept)
+        failure_room = REPLACEMENT_CONSECUTIVE_FAILURES - streak
+        if failure_room < 1:
+            pool.budget_exhausted = True
+            break
+        max_network = min(budget - attempts, failure_room)
+        if max_network < 0:
+            max_network = 0
         if cursor >= len(media):
-            added = pool.fetch_more(cap - len(kept))
+            if max_network < 1:
+                pool.budget_exhausted = True
+                break
+            added = pool.fetch_more(min(slots, max_network, failure_room))
             if added:
                 for row in media[len(media) - added :]:
                     _attach_file(row, folder)
             if cursor >= len(media):
                 break
-        need = cap - len(kept)
-        window = media[cursor : cursor + need]
-        if not window:
+        batch: list[dict] = []
+        scheduled = 0
+        while len(batch) < slots and len(batch) < failure_room and cursor < len(media):
+            row = media[cursor]
+            if not _row_skips_network(directory, row, resume):
+                if scheduled >= max_network:
+                    break
+                scheduled += 1
+            batch.append(row)
+            cursor += 1
+        if not batch:
+            pool.budget_exhausted = True
             break
-        cursor += len(window)
-        attempted.extend(window)
-        pending = []
-        for row in window:
-            if verified(row):
-                destination = _destination_for(directory, row["file"])
-                _accept_row(row, destination.stat().st_size)
-            else:
-                pending.append(row)
-        if pending:
-            _download_rows(pending, directory=directory, resume=resume, workers=workers)
-        for row in window:
+        attempted.extend(batch)
+        local_ids = {id(row) for row in batch if _row_skips_network(directory, row, resume)}
+        for row in batch:
+            if id(row) in local_ids:
+                _settle_without_network(directory, row)
+        network = [row for row in batch if id(row) not in local_ids]
+        if network:
+            _download_rows(network, directory=directory, resume=resume, workers=workers)
+        for row in batch:
+            if id(row) not in local_ids:
+                attempts += 1
             if row.get("downloaded") is True:
                 kept.append(row)
+                streak = 0
+            else:
+                streak += 1
     return kept, attempted
 
 
@@ -1752,14 +1925,16 @@ def _part_caps(species: dict, class_cap: int) -> dict[str, int]:
 
 def _stats_for(pool: _Pool, kept: list[dict], attempted: list[dict], cap: int, *, dry_run: bool) -> dict:
     ran_out = len(kept) < cap
+    budget = bool(pool.budget_exhausted) and ran_out
     return _outcome_stats(
         kept,
         attempted,
         len(pool.rows),
         cap,
         dry_run=dry_run,
-        no_more_pages=ran_out,
-        exhausted_reason=pool.end_reason() if ran_out else None,
+        no_more_pages=ran_out and not budget,
+        budget_stop=budget,
+        exhausted_reason=None if budget else (pool.end_reason() if ran_out else None),
     )
 
 
@@ -2211,7 +2386,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--no-resume",
         action="store_true",
-        help="Download again even when a complete image is already on disk.",
+        help="Fetch from scratch. Do not restore not_selected files or accept an image already on disk.",
     )
     parser.add_argument(
         "--verify-existing",
