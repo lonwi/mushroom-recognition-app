@@ -874,28 +874,95 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertFalse(any("at least 5" in reason for reason in reasons))
 
     def test_replacement_budget_does_not_apply_the_rare_taxon_exception(self):
-        """A host that rejects every photo is not an exhausted licensed pool.
+        """A host that rejects photos is not an exhausted licensed pool.
 
-        accepted equals a licensed count under 50, and the cap is not filled.
-        replacement_budget still keeps the 50-photo floor.
+        The fetch report for that unit omits gbif_licensed_count. The pool is
+        under 50. rare_exception_applies is false for the report row, and it
+        stays false even if a licensed count equal to accepted is supplied.
+        The ship gate keeps the 50-photo floor in both cases.
         """
+        import fetch_gbif
+        from evaluate import attach_fetch_evidence, rare_exception_applies
+
         probes = load_manifest()["toxic_probes"]
-        reasons = poisonous_sample_reasons(
-            self._quota_rows(
-                **{
-                    "Lepiota brunneoincarnata": {
-                        "support": 16,
-                        "accepted": 16,
-                        "gbif_licensed_count": 16,
-                        "exhausted_reason": "replacement_budget",
-                    }
-                }
-            ),
-            probes,
-            expected_names=poisonous_heldout_taxa(),
+        groups = [group for group in (probes.get("visual_groups") or []) if isinstance(group, dict)]
+        audit = next(
+            item for item in probes["rare_taxon_exceptions"] if item["taxon"] == "Lepiota brunneoincarnata"
         )
-        self.assertTrue(any("Lepiota brunneoincarnata" in reason and "need 50" in reason for reason in reasons))
-        self.assertFalse(any("at least 5" in reason for reason in reasons))
+        cap = int(probes["per_taxon_cap"])
+        pool_size = 16
+        self.assertLess(pool_size, 50)
+        self.assertLess(pool_size, cap)
+        attempted = [{"downloaded": False, "_failure_reason": "http_404"} for _ in range(pool_size)]
+        pool = fetch_gbif._Pool("Lepiota brunneoincarnata", attempted, None, None, {}, finite=True)
+        pool.budget_exhausted = True
+        stats = fetch_gbif._stats_for(pool, [], attempted, cap, dry_run=False)
+        report_row = fetch_gbif._taxon_report_row(
+            "Lepiota brunneoincarnata",
+            cap,
+            stats,
+            "unknown_mushroom",
+            audit.get("gbif_key"),
+        )
+        self.assertEqual(report_row["exhausted_reason"], "replacement_budget")
+        self.assertEqual(report_row["pool"], pool_size)
+        self.assertNotIn("gbif_licensed_count", report_row)
+
+        merged = attach_fetch_evidence(
+            [
+                {
+                    "taxon": "Lepiota brunneoincarnata",
+                    "support": 16,
+                    "accepted": 16,
+                    "gbif_licensed_count": 16,
+                    "exhausted_reason": "end_of_records",
+                }
+            ],
+            {"taxa": [report_row]},
+        )
+        self.assertNotIn("gbif_licensed_count", merged[0])
+        self.assertEqual(merged[0]["exhausted_reason"], "replacement_budget")
+        self.assertFalse(rare_exception_applies("Lepiota brunneoincarnata", audit, merged[0], probes, groups))
+        supplied = {
+            "taxon": "Lepiota brunneoincarnata",
+            "accepted": 16,
+            "gbif_licensed_count": 16,
+            "exhausted_reason": "replacement_budget",
+            "support": 16,
+            "confident_edible": 0,
+        }
+        self.assertFalse(rare_exception_applies("Lepiota brunneoincarnata", audit, supplied, probes, groups))
+
+        cases = (
+            (
+                "report",
+                {
+                    "support": 16,
+                    "accepted": merged[0]["accepted"],
+                    "exhausted_reason": merged[0]["exhausted_reason"],
+                },
+            ),
+            (
+                "supplied",
+                {
+                    "support": 16,
+                    "accepted": 16,
+                    "gbif_licensed_count": 16,
+                    "exhausted_reason": "replacement_budget",
+                },
+            ),
+        )
+        for label, patch in cases:
+            reasons = poisonous_sample_reasons(
+                self._quota_rows(**{"Lepiota brunneoincarnata": patch}),
+                probes,
+                expected_names=poisonous_heldout_taxa(),
+            )
+            self.assertTrue(
+                any("Lepiota brunneoincarnata" in reason and "need 50" in reason for reason in reasons),
+                label,
+            )
+            self.assertFalse(any("at least 5" in reason for reason in reasons), label)
 
     def test_verna_exception_without_a_group_fails_validation_and_the_gate(self):
         import copy
