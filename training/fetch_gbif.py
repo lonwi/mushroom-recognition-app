@@ -44,8 +44,9 @@ checked with the same size limit, structural end-of-file check, and full
 ``Image.open().load()`` as a new download, and ``LOAD_TRUNCATED_IMAGES`` stays
 false. A JPEG is walked from SOI to the first real ``FF D9``, skipping stuffed
 ``FF 00`` bytes and restart markers, so a Motion Photo trailer after that EOI
-is kept. A tail that is only zeros and longer than 1 KiB is rejected, as is a
-file with no EOI. A PNG must contain an IEND chunk; bytes after it are kept
+is kept. A tail that is only zeros and longer than ``MAX_ZERO_TAIL_BYTES``
+is rejected, as is a file with no EOI. A PNG must contain an IEND chunk; bytes
+after it are kept
 on the same rule. A WebP RIFF size must match the file length. That check
 finishes before the file is remembered
 or attributed. A photo that passes is moved back instead of fetched again. A
@@ -118,9 +119,13 @@ POOL_MARGIN_FACTOR = 2
 # files already verified stops on the same candidates. cap + max(cap, 20) is
 # that budget. Neither stop is a full GBIF pool.
 REPLACEMENT_CONSECUTIVE_FAILURES = 50
-# Bytes after a real JPEG EOI or PNG IEND that are entirely zero and longer
-# than this are a padded cutoff, not a Motion Photo trailer.
-_ZERO_TAIL_LIMIT = 1024
+# Bytes after a real JPEG EOI or PNG IEND. A Motion Photo or Samsung trailer
+# contains non-zero container bytes (ftyp, mdat), so it is not this case.
+# A truncated scan padded out with NULs is a long run of only zeros. 1 KiB is
+# past ordinary block padding and far shorter than an embedded video, so a
+# pure-zero trailer longer than this is quarantined. A tail of exactly this
+# length is kept.
+MAX_ZERO_TAIL_BYTES = 1024
 # Version 3 drops the download cap from the cache key and stores a GBIF cursor
 # beside the rows fetched so far. Version 1 stopped at the cap. Version 2 stored
 # an unbounded pool. Both miss this key. A fetch of that class or probe deletes
@@ -1108,8 +1113,8 @@ class _TruncatedTransfer(OSError):
 
 
 def _long_zero_tail(tail: bytes) -> bool:
-    """True when the trailer is only NULs and longer than 1 KiB."""
-    return len(tail) > _ZERO_TAIL_LIMIT and tail.strip(b"\x00") == b""
+    """True when the trailer is only NULs and longer than ``MAX_ZERO_TAIL_BYTES``."""
+    return len(tail) > MAX_ZERO_TAIL_BYTES and tail.strip(b"\x00") == b""
 
 
 def _jpeg_payload_end(payload: bytes) -> int | None:
@@ -1181,9 +1186,9 @@ def _structural_image(payload: bytes) -> None:
 
     A JPEG without an EOI is rejected. Bytes after the real EOI are a trailer
     (Motion Photo, a Samsung trailer) and are kept, unless that trailer is
-    only zeros and longer than 1 KiB. A PNG must contain an IEND chunk and
-    follows the same trailer rule. A WebP RIFF size must equal the file
-    length. ``LOAD_TRUNCATED_IMAGES`` is not involved and stays false.
+    only zeros and longer than ``MAX_ZERO_TAIL_BYTES``. A PNG must contain an
+    IEND chunk and follows the same trailer rule. A WebP RIFF size must equal
+    the file length. ``LOAD_TRUNCATED_IMAGES`` is not involved and stays false.
     """
     if payload.startswith(b"\xff\xd8"):
         end = _jpeg_payload_end(payload)

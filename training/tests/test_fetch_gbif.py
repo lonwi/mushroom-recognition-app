@@ -1026,14 +1026,15 @@ class ImageIntegrityTest(FetchCase):
         self.assertFalse(fetch_gbif._full_load_ok(str(self._write_bytes("probe-padded.jpg", padded))))
         self.assertIs(ImageFile.LOAD_TRUNCATED_IMAGES, False)
 
-        tailed = raw + b"\x00" * (len(raw) // 4)
+        limit = fetch_gbif.MAX_ZERO_TAIL_BYTES
+        tailed = raw + b"\x00" * (limit + 1)
         with Image.open(io.BytesIO(tailed)) as image:
             image.load()
         with self.assertRaises(fetch_gbif._RejectedImage):
             fetch_gbif._structural_image(tailed)
         fetch_gbif._structural_image(raw + b" ")
-        fetch_gbif._structural_image(raw + b"\x00" * 16)
-        fetch_gbif._structural_image(raw + b"\x00" * fetch_gbif._ZERO_TAIL_LIMIT)
+        fetch_gbif._structural_image(raw + b"\x00" * (limit // 2))
+        fetch_gbif._structural_image(raw + b"\x00" * limit)
         fetch_gbif._structural_image(raw)
 
         png_buffer = io.BytesIO()
@@ -1172,7 +1173,7 @@ class ImageIntegrityTest(FetchCase):
         png = png_buffer.getvalue()
         fetch_gbif._structural_image(png + b"after-iend")
         with self.assertRaises(fetch_gbif._RejectedImage):
-            fetch_gbif._structural_image(png + b"\x00" * (fetch_gbif._ZERO_TAIL_LIMIT + 1))
+            fetch_gbif._structural_image(png + b"\x00" * (fetch_gbif.MAX_ZERO_TAIL_BYTES + 1))
 
         species = {"classes": [{"id": "boletus_edulis", "gbif_names": ["Boletus edulis"], "safety_tag": "edible"}]}
 
