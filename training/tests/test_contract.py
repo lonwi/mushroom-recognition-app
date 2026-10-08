@@ -791,6 +791,55 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertFalse(any("Lepiota brunneoincarnata" in reason and "need 50" in reason for reason in exhausted))
         self.assertFalse(any("at least 5" in reason for reason in exhausted))
 
+    def test_verified_files_below_the_licensed_pool_still_match_the_audit(self):
+        """accepted is verified files. gbif_licensed_count stays the licensed pool.
+
+        A failed download can leave accepted below that pool. The exception
+        still applies when the pool was exhausted and the licensed count
+        matches the audit. The gate copies both numbers from the fetch report,
+        replacing whatever the metrics row claimed.
+        """
+        from evaluate import attach_fetch_evidence
+
+        probes = load_manifest()["toxic_probes"]
+        merged = attach_fetch_evidence(
+            [
+                {
+                    "taxon": "Lepiota brunneoincarnata",
+                    "support": 15,
+                    "accepted": 80,
+                    "gbif_licensed_count": 80,
+                }
+            ],
+            {
+                "taxa": [
+                    {
+                        "taxon": "Lepiota brunneoincarnata",
+                        "accepted": 15,
+                        "gbif_licensed_count": 16,
+                        "shortfall": 65,
+                    }
+                ]
+            },
+        )
+        self.assertEqual(merged[0]["accepted"], 15)
+        self.assertEqual(merged[0]["gbif_licensed_count"], 16)
+        reasons = poisonous_sample_reasons(
+            self._quota_rows(
+                **{
+                    "Lepiota brunneoincarnata": {
+                        "support": 15,
+                        "accepted": merged[0]["accepted"],
+                        "gbif_licensed_count": merged[0]["gbif_licensed_count"],
+                    }
+                }
+            ),
+            probes,
+            expected_names=poisonous_heldout_taxa(),
+        )
+        self.assertFalse(any("Lepiota brunneoincarnata" in reason and "need 50" in reason for reason in reasons))
+        self.assertFalse(any("at least 5" in reason for reason in reasons))
+
     def test_verna_exception_without_a_group_fails_validation_and_the_gate(self):
         import copy
 

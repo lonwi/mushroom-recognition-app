@@ -1279,6 +1279,359 @@ class ImageIntegrityTest(FetchCase):
         self.assertEqual((self._root / "attributions.jsonl").read_text(encoding="utf-8"), kept)
         self.assertIn("dropped 0 attribution rows", again.getvalue())
 
+    def test_verify_existing_falls_back_to_threads_when_the_process_pool_cannot_start(self):
+        for name in ("1_0.jpg", "2_0.jpg"):
+            path = self._root / "images" / "boletus_edulis" / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(self.jpeg)
+        cases = (
+            ("permission", PermissionError("spawn blocked")),
+            ("os", OSError("spawn blocked")),
+            ("not implemented", NotImplementedError("spawn")),
+        )
+        for label, failure in cases:
+            with self.subTest(label=label):
+                stderr = io.StringIO()
+                with patch("fetch_gbif.ProcessPoolExecutor", side_effect=failure), patch("sys.stderr", stderr):
+                    counts = fetch_gbif.verify_existing_images(self._root, workers=2)
+                self.assertIn("process pool unavailable", stderr.getvalue())
+                self.assertIn("threads", stderr.getvalue())
+                self.assertEqual(counts["boletus_edulis"]["ok"], 2)
+                self.assertEqual(counts["boletus_edulis"]["quarantined"], 0)
+
+
+def _candidate(class_id: str, index: int, occurrence_key: int, taxon: str) -> dict:
+    return {
+        "occurrence_key": occurrence_key,
+        "media_index": 0,
+        "image_url": f"https://cdn.example.test/{class_id}/{occurrence_key}_{index}.jpg",
+        "creator": "Ada Łąka",
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "license_normalized": "cc-by-4.0",
+        "class_id": class_id,
+        "taxon_name": taxon,
+        "queried_name": taxon,
+        "region_scope": "central_europe",
+        "held_out_taxon": False,
+        "toxic": False,
+        "genus_relation": "",
+    }
+
+
+class AcceptedCountAndReplacementTest(FetchCase):
+    """accepted matches files and attribution rows, including after replacements."""
+
+    def _manifest(self):
+        return {
+            "classes": [
+                {"id": "boletus_edulis", "gbif_names": ["Boletus edulis"], "safety_tag": "edible"},
+                {"id": "cantharellus_cibarius", "gbif_names": ["Cantharellus cibarius"], "safety_tag": "edible"},
+                {"id": "macrolepiota_procera", "gbif_names": ["Macrolepiota procera"], "safety_tag": "edible"},
+            ],
+            "toxic_probes": {
+                "per_taxon_cap": 80,
+                "class_id": "unknown_mushroom",
+                "taxa": [
+                    {"name": "Lepiota cristata", "relation": "lookalike", "gbif_key": 2535471},
+                    {"name": "Omphalotus olearius", "relation": "lookalike", "gbif_key": 2538088},
+                ],
+            },
+        }
+
+    def _pools(self):
+        key = 8000
+        pools = {
+            "boletus_edulis": [],
+            "cantharellus_cibarius": [],
+            "macrolepiota_procera": [],
+        }
+        probes = {"Lepiota cristata": [], "Omphalotus olearius": []}
+        plan = {
+            "boletus_edulis": (8, "Boletus edulis"),
+            "cantharellus_cibarius": (4, "Cantharellus cibarius"),
+            "macrolepiota_procera": (3, "Macrolepiota procera"),
+        }
+        for class_id, (count, taxon) in plan.items():
+            for index in range(count):
+                pools[class_id].append(_candidate(class_id, index, key, taxon))
+                key += 1
+        for name, count in (("Lepiota cristata", 6), ("Omphalotus olearius", 2)):
+            for index in range(count):
+                row = _candidate("unknown_mushroom", index, key, name)
+                row["held_out_taxon"] = True
+                row["toxic"] = True
+                probes[name].append(row)
+                key += 1
+        failures = {}
+        for index, kind in ((1, "timeout"), (3, "403"), (4, "too_large"), (6, "garbage")):
+            failures[pools["boletus_edulis"][index]["image_url"]] = kind
+        failures[pools["macrolepiota_procera"][1]["image_url"]] = "timeout"
+        failures[pools["macrolepiota_procera"][2]["image_url"]] = "403"
+        failures[probes["Lepiota cristata"][1]["image_url"]] = "403"
+        failures[probes["Omphalotus olearius"][1]["image_url"]] = "timeout"
+        return pools, probes, failures
+
+    def _urlopen(self, failures: dict[str, str], payloads: dict[str, bytes], calls: list[str]):
+        def urlopen(request, timeout=40):
+            url = request.full_url
+            calls.append(url)
+            kind = failures.get(url)
+            if kind == "timeout":
+                raise urllib.error.URLError(TimeoutError("timed out"))
+            if kind == "403":
+                raise _http_error(403, "Forbidden", url=url)
+            if kind == "too_large":
+                return _Response(b"x" * (fetch_gbif.MAX_IMAGE_BYTES + 1))
+            if kind == "garbage":
+                return _Response(b"not-a-jpeg" * 800, content_type="image/jpeg")
+            return _Response(payloads[url])
+
+        return urlopen
+
+    def _payloads(self, pools: dict, probes: dict) -> dict[str, bytes]:
+        payloads = {}
+        index = 1
+        for rows in list(pools.values()) + list(probes.values()):
+            for row in rows:
+                payloads[row["image_url"]] = _jpeg_bytes(index)
+                index += 1
+        return payloads
+
+    def _run(self, directory: Path, *, workers: int, pools, probes, failures, payloads, calls: list[str]):
+        def collect(species, max_per_class, max_per_occurrence, max_pages):
+            return [dict(row) for row in pools[species["id"]]]
+
+        def pull(names, limit, max_per_occurrence, max_pages, seen):
+            return [dict(row) for row in probes[names[0]]]
+
+        with patch("fetch_gbif.collect_class_media", side_effect=collect), patch(
+            "fetch_gbif._pull_names", side_effect=pull
+        ), patch(
+            "fetch_gbif.urllib.request.urlopen",
+            side_effect=self._urlopen(failures, payloads, calls),
+        ), patch("fetch_gbif.time.sleep"), patch("fetch_gbif.random.uniform", return_value=0.0):
+            fetch_gbif.run_fetch(
+                self._manifest(),
+                max_per_class=4,
+                max_pages=1,
+                download_workers=workers,
+                data_dir=directory,
+            )
+
+    def _rows(self, root: Path) -> list[dict]:
+        text = (root / "attributions.jsonl").read_text(encoding="utf-8")
+        return [json.loads(line) for line in text.splitlines() if line.strip()]
+
+    def _files(self, root: Path, class_id: str) -> list[Path]:
+        folder = root / "images" / class_id
+        if not folder.is_dir():
+            return []
+        return [
+            path
+            for path in folder.rglob("*")
+            if path.is_file() and not path.name.endswith((".partial", ".tmp"))
+        ]
+
+    def test_accepted_never_exceeds_attribution_rows_and_matches_files(self):
+        pools, probes, failures = self._pools()
+        payloads = self._payloads(pools, probes)
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._run(root, workers=4, pools=pools, probes=probes, failures=failures, payloads=payloads, calls=[])
+            report = json.loads((root / "fetch_report.json").read_text(encoding="utf-8"))
+            rows = self._rows(root)
+            self.assertFalse(list(root.rglob("*.partial")))
+
+            def class_rows(class_id: str) -> list[dict]:
+                return [row for row in rows if row.get("class_id") == class_id and not row.get("probe")]
+
+            def probe_rows(taxon: str) -> list[dict]:
+                return [row for row in rows if row.get("probe") is True and row.get("taxon_name") == taxon]
+
+            for class_id, block in report["classes"].items():
+                matched = class_rows(class_id)
+                self.assertLessEqual(block["accepted"], len(matched), class_id)
+                self.assertEqual(block["accepted"], len(matched), class_id)
+                self.assertEqual(block["accepted"], len(self._files(root, class_id)), class_id)
+                for row in matched:
+                    self.assertTrue((root / row["file"]).is_file())
+                    self.assertEqual((root / row["file"]).read_bytes(), payloads[row["image_url"]])
+                self.assertEqual(block["selected"], block["accepted"] + sum(block["failed"].values()))
+                self.assertEqual(block["regional"] + block["global_fill"], block["accepted"])
+
+            for probe in report["toxic_probes"]:
+                matched = probe_rows(probe["taxon"])
+                self.assertLessEqual(probe["accepted"], len(matched), probe["taxon"])
+                self.assertEqual(probe["accepted"], len(matched), probe["taxon"])
+                self.assertEqual(probe["selected"], probe["accepted"] + sum(probe["failed"].values()))
+                for row in matched:
+                    self.assertTrue((root / row["file"]).is_file())
+
+            normal = report["classes"]["cantharellus_cibarius"]
+            self.assertEqual(normal["accepted"], 4)
+            self.assertEqual(normal["failed"], {})
+            self.assertEqual(normal["shortfall"], 0)
+            self.assertFalse(normal["pool_exhausted"])
+            self.assertEqual(len(class_rows("cantharellus_cibarius")), normal["accepted"])
+
+            mixed = report["classes"]["boletus_edulis"]
+            self.assertEqual(mixed["accepted"], 4)
+            self.assertEqual(mixed["pool"], 8)
+            self.assertEqual(mixed["selected"], 8)
+            self.assertEqual(
+                mixed["failed"],
+                {"http_403": 1, "timeout": 1, "too_large": 1, "undecodable": 1},
+            )
+            self.assertEqual(mixed["shortfall"], 0)
+            self.assertFalse(mixed["pool_exhausted"])
+
+            short = report["classes"]["macrolepiota_procera"]
+            self.assertEqual(short["accepted"], 1)
+            self.assertEqual(short["selected"], 3)
+            self.assertEqual(short["failed"], {"http_403": 1, "timeout": 1})
+            self.assertEqual(short["shortfall"], 3)
+            self.assertTrue(short["pool_exhausted"])
+            self.assertEqual(short["pool"], 3)
+
+            filled = next(item for item in report["toxic_probes"] if item["taxon"] == "Lepiota cristata")
+            self.assertEqual(filled["accepted"], 4)
+            self.assertEqual(filled["failed"], {"http_403": 1})
+            self.assertEqual(filled["shortfall"], 0)
+            self.assertNotIn("gbif_licensed_count", filled)
+            exhausted = next(item for item in report["toxic_probes"] if item["taxon"] == "Omphalotus olearius")
+            self.assertEqual(exhausted["accepted"], 1)
+            self.assertEqual(exhausted["failed"], {"timeout": 1})
+            self.assertEqual(exhausted["gbif_licensed_count"], 2)
+            self.assertEqual(exhausted["shortfall"], 3)
+            self.assertTrue(exhausted["pool_exhausted"])
+            self.assertEqual(len(self._files(root, "unknown_mushroom")), filled["accepted"] + exhausted["accepted"])
+
+    def test_resume_replacements_match_for_1_and_16_workers(self):
+        pools, probes, failures = self._pools()
+        # One class, no probes: the resume comparison is the image bytes too.
+        pools = {"boletus_edulis": pools["boletus_edulis"]}
+        failures = {
+            url: kind
+            for url, kind in failures.items()
+            if url.startswith("https://cdn.example.test/boletus_edulis/")
+        }
+        payloads = self._payloads(pools, {})
+        manifest = {"classes": [self._manifest()["classes"][0]]}
+        import shutil
+        import tempfile
+
+        def collect(species, max_per_class, max_per_occurrence, max_pages):
+            return [dict(row) for row in pools[species["id"]]]
+
+        def run(directory: Path, workers: int, calls: list[str], *, resume: bool = True):
+            with patch("fetch_gbif.collect_class_media", side_effect=collect), patch(
+                "fetch_gbif.urllib.request.urlopen",
+                side_effect=self._urlopen(failures, payloads, calls),
+            ), patch("fetch_gbif.time.sleep"), patch("fetch_gbif.random.uniform", return_value=0.0):
+                fetch_gbif.run_fetch(
+                    manifest,
+                    max_per_class=4,
+                    max_pages=1,
+                    download_workers=workers,
+                    resume=resume,
+                    data_dir=directory,
+                )
+
+        def snapshot(root: Path) -> dict:
+            images = {}
+            folder = root / "images"
+            for path in sorted(folder.rglob("*")):
+                if path.is_file():
+                    images[path.relative_to(root).as_posix()] = path.read_bytes()
+            return {
+                "images": images,
+                "attributions": (root / "attributions.jsonl").read_bytes(),
+                "report": (root / "fetch_report.json").read_bytes(),
+            }
+
+        with tempfile.TemporaryDirectory() as seed_dir, tempfile.TemporaryDirectory() as slow_dir, tempfile.TemporaryDirectory() as fast_dir:
+            seed = Path(seed_dir)
+            run(seed, 1, [])
+            fresh = snapshot(seed)
+            report = json.loads(fresh["report"].decode("utf-8"))
+            self.assertEqual(report["classes"]["boletus_edulis"]["accepted"], 4)
+            self.assertEqual(report["classes"]["boletus_edulis"]["shortfall"], 0)
+            kept_urls = [json.loads(line)["image_url"] for line in fresh["attributions"].decode("utf-8").splitlines()]
+            self.assertEqual(len(kept_urls), 4)
+            survivors = set(kept_urls[:2])
+            replaced = kept_urls[2:]
+            rows = [json.loads(line) for line in fresh["attributions"].decode("utf-8").splitlines()]
+            for row in rows[2:]:
+                (seed / row["file"]).unlink()
+            fetch_gbif._VERIFIED.clear()
+            shutil.copytree(seed, Path(slow_dir), dirs_exist_ok=True)
+            shutil.copytree(seed, Path(fast_dir), dirs_exist_ok=True)
+            fetch_gbif._VERIFIED.clear()
+            fetch_gbif._HOST_SEMAPHORES.clear()
+            slow_calls: list[str] = []
+            fast_calls: list[str] = []
+            run(Path(slow_dir), 1, slow_calls)
+            fetch_gbif._VERIFIED.clear()
+            fetch_gbif._HOST_SEMAPHORES.clear()
+            fetch_gbif.MAX_DOWNLOADS_PER_HOST = 32
+            try:
+                run(Path(fast_dir), 16, fast_calls)
+            finally:
+                fetch_gbif.MAX_DOWNLOADS_PER_HOST = 4
+                fetch_gbif._HOST_SEMAPHORES.clear()
+            slow = snapshot(Path(slow_dir))
+            fast = snapshot(Path(fast_dir))
+            self.assertEqual(slow["images"], fast["images"])
+            self.assertEqual(slow["attributions"], fast["attributions"])
+            self.assertEqual(slow["report"], fast["report"])
+            self.assertEqual(slow["images"], fresh["images"])
+            self.assertEqual(slow["attributions"], fresh["attributions"])
+            self.assertEqual(slow["report"], fresh["report"])
+            self.assertEqual(sorted(slow_calls), sorted(fast_calls))
+            self.assertTrue(slow_calls)
+            self.assertFalse(survivors.intersection(slow_calls))
+            self.assertFalse(survivors.intersection(fast_calls))
+            for url in replaced:
+                self.assertIn(url, slow_calls)
+                self.assertIn(url, fast_calls)
+
+
+class CandidatePoolTest(FetchCase):
+    def test_pool_keeps_candidates_past_the_download_cap(self):
+        occurrences = []
+        for index in range(6):
+            occurrences.append(
+                {
+                    "key": 5000 + index,
+                    "country": "PL",
+                    "scientificName": "Boletus edulis",
+                    "media": [
+                        {
+                            "type": "StillImage",
+                            "identifier": f"https://images.example.test/pool/{index}.jpg",
+                            "license": "https://creativecommons.org/licenses/by/4.0/",
+                            "creator": "Ada",
+                        }
+                    ],
+                }
+            )
+
+        def iterate(taxon_key, country, max_pages):
+            return list(occurrences)
+
+        species = {"id": "boletus_edulis", "gbif_names": ["Boletus edulis"], "safety_tag": "edible"}
+        with patch("fetch_gbif.resolve_accepted_keys", return_value={1: "Boletus edulis"}), patch(
+            "fetch_gbif.iter_occurrences", side_effect=iterate
+        ):
+            rows = fetch_gbif.collect_class_media(species, 2, 2, 1)
+        self.assertEqual(len(rows), 6)
+        self.assertEqual(
+            [row["image_url"] for row in rows],
+            [f"https://images.example.test/pool/{index}.jpg" for index in range(6)],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

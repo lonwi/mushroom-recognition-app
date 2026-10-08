@@ -400,6 +400,9 @@ def assess_shippable(report: dict, artifact_dir: Path | None = None) -> tuple[bo
         reasons.append("model.keras sha256 does not match the file that was evaluated")
     if tflite_hash != sha256_file(directory / "mushrooms_model.tflite"):
         reasons.append("tflite sha256 does not match the file that was evaluated")
+    # The hash is the file bytes. A report rewritten so `accepted` counts only
+    # verified files (and records replacements, failures, and shortfall) will
+    # not match a hash exported from an older report until export is run again.
     fetch_hash = sha256_file(fetch_file) if fetch_file is not None else None
     if recorded.get("fetch_report_sha256") != fetch_hash:
         reasons.append("fetch_report sha256 does not match the file used for rare-taxon evidence")

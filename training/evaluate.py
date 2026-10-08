@@ -244,9 +244,12 @@ def _integer(value: object) -> int | None:
 def rare_exception_applies(name: str, item: dict, row: dict, probes: dict, groups: list) -> bool:
     """The 5-photo floor, only for a closed-list taxon whose licensed pool was exhausted.
 
-    The fetch row must show accepted below the probe cap and the same licensed
-    count as the audited exception, and that count must be under 50. A null
-    group, an extra name, or a full cap does not qualify.
+    ``accepted`` is the verified-file count from the fetch report. It is below
+    the cap when that candidate pool could not fill the cap, including when
+    some downloads failed and nothing remained to replace them. ``gbif_licensed_count``
+    is the size of that licensed pool, not the file count, and it must match
+    the audited exception and be under 50. A null group, an extra name, or a
+    full cap does not qualify.
     """
     if name not in _REQUIRED_EXCEPTIONS:
         return False
