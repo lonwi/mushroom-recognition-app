@@ -217,16 +217,16 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
       'Dla początkujących: tylko grzyby z rurkami (z "gąbką")',
     );
     await expect(page.locator('body')).toContainText(
-      'Wyjmuj grzyb w całości, z bulwą i pochwą u nasady',
+      'Wyjmuj grzyby w całości, z bulwą i pochwą u nasady',
     );
-    await expect(page.locator('body')).toContainText('kurkę, kolczaka i smardza');
+    await expect(page.locator('body')).toContainText('bez rurek');
     await expect(page.locator('body')).toContainText('Takich grzybów nie ucinaj nad ziemią');
     await expect(page.locator('body')).toContainText(
-      'Tylko grzyby rurkowe (z "gąbką") możesz ścinać nisko nożem',
+      'Tylko grzyby rurkowe (z „gąbką”) możesz ścinać nisko nożem',
     );
     await expect(page.locator('body')).toContainText('Grzybów z blaszkami nie ścinaj');
     await expect(page.locator('body')).toContainText('grzyboznawcy');
-    await expect(page.locator('body')).toContainText('Gatunków chronionych nie zbieraj');
+    await expect(page.locator('body')).toContainText('dziko rosnących smardzów');
     await expect(page.locator('body')).not.toContainText('resztki pierścienia');
     await expect(page.locator('body')).not.toContainText('bezpodstawny');
   });

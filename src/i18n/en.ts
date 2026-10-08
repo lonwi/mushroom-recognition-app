@@ -310,7 +310,7 @@ export const en: Translations = {
       rule_whole_mushroom: {
         title: 'Take the whole mushroom out, with the bulb and volva at the base',
         description:
-          'Lift every gilled mushroom (including parasols, field mushrooms and brittlegills), as well as chanterelles, hedgehog mushrooms and morels, out of the ground intact. Lever it out with a knife deep beside the stem, because a death cap\'s loose volva often stays in the soil. The bulb and volva at the base are what separate the death cap, destroying angel and panther cap from parasols, shaggy parasols and field mushrooms. Never cut these above the ground. The only exception is the tip below: boletes you have identified with certainty.',
+          'Lift every gilled mushroom (including parasols, field mushrooms and brittlegills), as well as chanterelles, hedgehog mushrooms and any other mushroom without tubes, out of the ground intact. Lever it out with a knife deep beside the stem, because a death cap\'s loose volva often stays in the soil. The bulb and volva at the base are what separate the death cap, destroying angel and panther cap from parasols, shaggy parasols and field mushrooms. Never cut these above the ground. The only exception is the tip below: boletes you have identified with certainty.',
       },
       rule_tube_mushrooms_cut: {
         title: 'Only boletes (with a “sponge”) may be cut low with a knife',
@@ -325,7 +325,7 @@ export const en: Translations = {
       rule_protect_forest_floor: {
         title: 'Do not rake the litter or destroy mushrooms you are not taking',
         description:
-          'Do not rake the forest litter or dig through it looking for fruiting bodies. Do not destroy old or inedible mushrooms — leave them in the woods. Do not pick protected species. Put in the basket only specimens you are completely sure about.',
+          'Do not rake the forest litter or dig through it looking for fruiting bodies. Do not destroy old or inedible mushrooms — leave them in the woods. Do not pick or destroy protected species, such as wild morels. Put in the basket only specimens you are completely sure about.',
       },
     },
     syndromes: {

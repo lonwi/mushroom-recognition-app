@@ -56,7 +56,7 @@ describe('Polish and English dictionaries', () => {
     expect(en.safetyGuide.rules.rule_whole_mushroom.title).toMatch(/bulb and volva/);
     expect(en.safetyGuide.rules.rule_whole_mushroom.description).toMatch(/chanterelles/);
     expect(en.safetyGuide.rules.rule_whole_mushroom.description).toMatch(/hedgehog/);
-    expect(en.safetyGuide.rules.rule_whole_mushroom.description).toMatch(/morels/);
+    expect(en.safetyGuide.rules.rule_whole_mushroom.description).toMatch(/without tubes/);
     expect(en.safetyGuide.rules.rule_whole_mushroom.description).toMatch(/Never cut/);
     expect(en.safetyGuide.rules.rule_whole_mushroom.description).toMatch(/death cap/);
     expect(en.safetyGuide.rules.rule_whole_mushroom.description).toMatch(/loose volva/);
@@ -71,6 +71,7 @@ describe('Polish and English dictionaries', () => {
     expect(en.safetyGuide.rules.rule_protect_forest_floor.description).toMatch(/completely sure/);
     expect(en.safetyGuide.rules.rule_protect_forest_floor.description).toMatch(/inedible/);
     expect(en.safetyGuide.rules.rule_protect_forest_floor.description).toMatch(/protected species/);
+    expect(en.safetyGuide.rules.rule_protect_forest_floor.description).toMatch(/morels/);
     expect(pl.safetyGuide.rules.rule_whole_mushroom.description).toMatch(/rurk/);
     expect(pl.safetyGuide.rules.rule_whole_mushroom.description).toMatch(/nie ucinaj/);
     expect(pl.safetyGuide.rules.rule_tube_mushrooms_cut.description).toMatch(/rurk/);

@@ -320,7 +320,7 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(byId.rule_whole_mushroom?.title).toMatch(/bulwą i pochwą/);
     expect(byId.rule_whole_mushroom?.description).toMatch(/kurkę/);
     expect(byId.rule_whole_mushroom?.description).toMatch(/kolczaka/);
-    expect(byId.rule_whole_mushroom?.description).toMatch(/smardza/);
+    expect(byId.rule_whole_mushroom?.description).toMatch(/bez rurek/);
     expect(byId.rule_whole_mushroom?.description).toMatch(/nie ucinaj/);
     expect(byId.rule_whole_mushroom?.description).toMatch(/rurk/);
     expect(byId.rule_whole_mushroom?.description).toMatch(/luźna pochwa/);
@@ -339,6 +339,7 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(byId.rule_protect_forest_floor?.description).toMatch(/Nie grab leśnej ściółki/);
     expect(byId.rule_protect_forest_floor?.description).toMatch(/niejadalnych/);
     expect(byId.rule_protect_forest_floor?.description).toMatch(/chronionych/);
+    expect(byId.rule_protect_forest_floor?.description).toMatch(/smardz/);
     expect(byId.rule_protect_forest_floor?.description).toMatch(/całkowitą pewność/);
   });
 });

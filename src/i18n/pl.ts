@@ -308,12 +308,12 @@ export const pl = {
           'Nierozwinięte owocniki nie mają jeszcze wykształconych kluczowych cech botanicznych (pierścienia, koloru blaszek, pochwy u nasady). W tej fazie śmiertelny muchomor wygląda niemal identycznie jak pieczarka, kania czy gołąbek.',
       },
       rule_whole_mushroom: {
-        title: 'Wyjmuj grzyb w całości, z bulwą i pochwą u nasady',
+        title: 'Wyjmuj grzyby w całości, z bulwą i pochwą u nasady',
         description:
-          'Każdy grzyb z blaszkami (także kanię, pieczarkę i gołąbka), a także kurkę, kolczaka i smardza wyjmij z ziemi cały. Podważ go nożem głęboko przy trzonie, bo luźna pochwa muchomora często zostaje w ziemi. Bulwa i pochwa przy nasadzie odróżniają muchomora sromotnikowego, jadowitego i plamistego od kani, czubajnika i pieczarki. Takich grzybów nie ucinaj nad ziemią. Jedyny wyjątek opisuje wskazówka poniżej: pewnie rozpoznane grzyby rurkowe.',
+          'Każdego grzyba z blaszkami (także kanię, pieczarkę i gołąbka), a także kurkę, kolczaka i każdego innego grzyba bez rurek wyjmij z ziemi w całości. Podważ go nożem głęboko przy trzonie, bo luźna pochwa muchomora często zostaje w ziemi. Bulwa i pochwa przy nasadzie odróżniają muchomora sromotnikowego, jadowitego i plamistego od kani, czubajnika i pieczarki. Takich grzybów nie ucinaj nad ziemią. Jedyny wyjątek opisuje wskazówka poniżej: pewnie rozpoznane grzyby rurkowe.',
       },
       rule_tube_mushrooms_cut: {
-        title: 'Tylko grzyby rurkowe (z "gąbką") możesz ścinać nisko nożem',
+        title: 'Tylko grzyby rurkowe (z „gąbką”) możesz ścinać nisko nożem',
         description:
           'Dotyczy to wyłącznie grzybów z rurkami pod kapeluszem, takich jak borowiki, podgrzybki, koźlarze i maślaki, i tylko gdy masz pewność gatunku. Utnij trzon jak najniżej, tuż nad ziemią, albo ostrożnie go wykręć. Leśnicy dopuszczają obie metody, byle nie rozgrzebywać ściółki. Odsłonięte miejsce przykryj ściółką lub mchem. Grzybów z blaszkami nie ścinaj, nawet dużych: kanię wyjmij z bulwą. Jeśli chcesz pokazać grzyb grzyboznawcy, wyjmij go w całości, bo do oceny przynosi się całe owocniki z trzonem.',
       },
@@ -325,7 +325,7 @@ export const pl = {
       rule_protect_forest_floor: {
         title: 'Nie rozgrzebuj ściółki i nie niszcz grzybów, których nie zabierasz',
         description:
-          'Nie grab leśnej ściółki i nie przekopuj jej w poszukiwaniu owocników. Starych oraz niejadalnych grzybów nie niszcz — zostaw je w lesie. Gatunków chronionych nie zbieraj. Do koszyka wkładaj wyłącznie okazy, co do których masz całkowitą pewność.',
+          'Nie grab leśnej ściółki i nie przekopuj jej w poszukiwaniu owocników. Starych oraz niejadalnych grzybów nie niszcz — zostaw je w lesie. Gatunków chronionych, np. dziko rosnących smardzów, nie zbieraj ani nie niszcz. Do koszyka wkładaj wyłącznie okazy, co do których masz całkowitą pewność.',
       },
     },
     syndromes: {
