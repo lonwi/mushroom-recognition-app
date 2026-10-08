@@ -1,5 +1,1144 @@
 [
   {
+    "type": "reachability",
+    "from": "App.tsx",
+    "to": "src/services/attributionPackage.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/screens/SettingsScreen.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/components/PhotoCredits.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/attributionPackage.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "App.tsx",
+    "to": "src/services/journalLocation.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/screens/JournalScreen.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/mapsLink.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/journalLocation.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "App.tsx",
+    "to": "src/services/journalPhotos.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/screens/JournalScreen.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/journalPhotos.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "App.tsx",
+    "to": "src/services/photoPixels.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/screens/ScannerScreen.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/components/ResultModal.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/classifierService.ts",
+        "dependencyTypes": [
+          "local",
+          "type-only",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/photoPixels.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "App.tsx",
+    "to": "src/services/storageService.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/screens/JournalScreen.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/storageService.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "App.tsx",
+    "to": "src/services/tfliteRuntime.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/screens/ScannerScreen.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/components/ResultModal.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/classifierService.ts",
+        "dependencyTypes": [
+          "local",
+          "type-only",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/tfliteRuntime.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "index.ts",
+    "to": "src/services/attributionPackage.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "App.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/screens/SettingsScreen.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/components/PhotoCredits.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/attributionPackage.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "index.ts",
+    "to": "src/services/journalLocation.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "App.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/screens/JournalScreen.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/mapsLink.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/journalLocation.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "index.ts",
+    "to": "src/services/journalPhotos.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "App.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/screens/JournalScreen.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/journalPhotos.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "index.ts",
+    "to": "src/services/photoPixels.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "App.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/screens/ScannerScreen.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/components/ResultModal.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/classifierService.ts",
+        "dependencyTypes": [
+          "local",
+          "type-only",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/photoPixels.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "index.ts",
+    "to": "src/services/storageService.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "App.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/screens/JournalScreen.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/storageService.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "index.ts",
+    "to": "src/services/tfliteRuntime.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "App.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/screens/ScannerScreen.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/components/ResultModal.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/classifierService.ts",
+        "dependencyTypes": [
+          "local",
+          "type-only",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/tfliteRuntime.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "src/components/ResultModal.tsx",
+    "to": "src/services/journalLocation.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/services/journalEntry.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/journalLocation.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "src/components/ResultModal.tsx",
+    "to": "src/services/journalPhotos.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/services/journalEntry.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/journalPhotos.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "src/components/ResultModal.tsx",
+    "to": "src/services/photoPixels.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/services/classifierService.ts",
+        "dependencyTypes": [
+          "local",
+          "type-only",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/photoPixels.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "src/components/ResultModal.tsx",
+    "to": "src/services/storageService.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/services/journalEntry.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/storageService.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "src/components/ResultModal.tsx",
+    "to": "src/services/tfliteRuntime.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/services/classifierService.ts",
+        "dependencyTypes": [
+          "local",
+          "type-only",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/tfliteRuntime.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "src/screens/JournalScreen.tsx",
+    "to": "src/services/journalLocation.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/services/mapsLink.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/journalLocation.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "src/screens/ScannerScreen.tsx",
+    "to": "src/services/journalLocation.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/components/ResultModal.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/journalEntry.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/journalLocation.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "src/screens/ScannerScreen.tsx",
+    "to": "src/services/journalPhotos.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/components/ResultModal.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/journalEntry.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/journalPhotos.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "src/screens/ScannerScreen.tsx",
+    "to": "src/services/photoPixels.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/components/ResultModal.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/classifierService.ts",
+        "dependencyTypes": [
+          "local",
+          "type-only",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/photoPixels.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "src/screens/ScannerScreen.tsx",
+    "to": "src/services/storageService.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/components/ResultModal.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/journalEntry.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/storageService.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "src/screens/ScannerScreen.tsx",
+    "to": "src/services/tfliteRuntime.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/components/ResultModal.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/classifierService.ts",
+        "dependencyTypes": [
+          "local",
+          "type-only",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/tfliteRuntime.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "src/screens/SettingsScreen.tsx",
+    "to": "src/services/attributionPackage.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/components/PhotoCredits.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/attributionPackage.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "src/stories/JournalScreen.stories.tsx",
+    "to": "src/services/journalLocation.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/screens/JournalScreen.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/mapsLink.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/journalLocation.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "src/stories/JournalScreen.stories.tsx",
+    "to": "src/services/journalPhotos.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/screens/JournalScreen.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/journalPhotos.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "src/stories/JournalScreen.stories.tsx",
+    "to": "src/services/storageService.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/screens/JournalScreen.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/storageService.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "src/stories/ResultModal.stories.tsx",
+    "to": "src/services/journalLocation.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/components/ResultModal.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/journalEntry.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/journalLocation.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "src/stories/ResultModal.stories.tsx",
+    "to": "src/services/journalPhotos.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/components/ResultModal.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/journalEntry.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/journalPhotos.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "src/stories/ResultModal.stories.tsx",
+    "to": "src/services/photoPixels.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/components/ResultModal.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/classifierService.ts",
+        "dependencyTypes": [
+          "local",
+          "type-only",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/photoPixels.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "src/stories/ResultModal.stories.tsx",
+    "to": "src/services/storageService.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/components/ResultModal.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/journalEntry.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/storageService.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "reachability",
+    "from": "src/stories/ResultModal.stories.tsx",
+    "to": "src/services/tfliteRuntime.ts",
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter-reachable"
+    },
+    "via": [
+      {
+        "name": "src/components/ResultModal.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/classifierService.ts",
+        "dependencyTypes": [
+          "local",
+          "type-only",
+          "import"
+        ]
+      },
+      {
+        "name": "src/services/tfliteRuntime.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "dependency",
+    "from": "App.tsx",
+    "to": "src/services/storageService.ts",
+    "unresolvedTo": "./src/services/storageService",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/components/PhotoCredits.tsx",
+    "to": "src/services/attributionPackage.ts",
+    "unresolvedTo": "../services/attributionPackage",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/components/ResultModal.tsx",
+    "to": "src/services/journalPhotos.ts",
+    "unresolvedTo": "../services/journalPhotos",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/components/ResultModal.tsx",
+    "to": "src/services/storageService.ts",
+    "unresolvedTo": "../services/storageService",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/screens/JournalScreen.tsx",
+    "to": "src/services/journalPhotos.ts",
+    "unresolvedTo": "../services/journalPhotos",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/screens/JournalScreen.tsx",
+    "to": "src/services/storageService.ts",
+    "unresolvedTo": "../services/storageService",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/screens/ScannerScreen.tsx",
+    "to": "src/services/photoPixels.ts",
+    "unresolvedTo": "../services/photoPixels",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/screens/SettingsScreen.tsx",
+    "to": "src/services/attributionPackage.ts",
+    "unresolvedTo": "../services/attributionPackage",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/stories/JournalScreen.stories.tsx",
+    "to": "src/services/storageService.ts",
+    "unresolvedTo": "../services/storageService",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "ui-not-to-platform-adapter"
+    }
+  },
+  {
     "type": "dependency",
     "from": "src/contexts/LanguageContext.tsx",
     "to": "node_modules/@react-native-async-storage/async-storage/lib/commonjs/index.js",
@@ -32,20 +1171,6 @@
     "from": "src/screens/ScannerScreen.tsx",
     "to": "node_modules/expo-image-picker/src/ImagePicker.ts",
     "unresolvedTo": "expo-image-picker",
-    "dependencyTypes": [
-      "npm",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "ui-not-to-storage-or-platform"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/stories/JournalScreen.stories.tsx",
-    "to": "node_modules/@react-native-async-storage/async-storage/lib/commonjs/index.js",
-    "unresolvedTo": "@react-native-async-storage/async-storage",
     "dependencyTypes": [
       "npm",
       "import"

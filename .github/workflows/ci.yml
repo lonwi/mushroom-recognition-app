@@ -19,16 +19,16 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Cache Jest
         uses: actions/cache@v6
         with:
           path: .cache/jest
-          key: jest-${{ runner.os }}-node-22-${{ hashFiles('pnpm-lock.yaml', 'jest.config.js', 'jest.setup.js') }}
+          key: jest-${{ runner.os }}-node-${{ hashFiles('.nvmrc') }}-${{ hashFiles('pnpm-lock.yaml', 'jest.config.js', 'jest.setup.js') }}
           restore-keys: |
-            jest-${{ runner.os }}-node-22-
+            jest-${{ runner.os }}-node-${{ hashFiles('.nvmrc') }}-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -67,7 +67,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Install dependencies

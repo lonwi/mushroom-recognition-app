@@ -1,16 +1,17 @@
-// UI may talk to storage and device I/O only through src/services.
+// Platform packages (AsyncStorage, camera, file system, TFLite, …) may be
+// imported only from the adapter allowlist below. UI may not import those
+// adapter files, directly or through another module. A service that
+// re-exports a platform package is also rejected by ESLint
+// (`no-restricted-syntax` on src/services).
 //
-// `ui-not-to-storage-or-platform` forbids a direct import from App.tsx,
-// index.ts, and every module under src/ except src/services. A screen that
-// reaches AsyncStorage through src/utils (or data, theme, stories, …) fails
-// on that helper's own import.
+// src/stories is outside the platform-import rule on purpose.
+// JournalScreen.stories seeds AsyncStorage before the journal screen reads
+// it. That fixture is not production UI, so it is excluded with pathNot
+// instead of a baseline exception.
 //
-// `ui-not-to-storage-or-platform-reachable` forbids a longer path from the
-// UI entry (App.tsx, index.ts, screens, components, contexts, utils) to
-// those packages. scripts/depcruise-gate.mjs walks every path (cruiser
-// reports only the first) and keeps a path when it enters src/services or
-// a direct import that is already listed in the known-violations file.
-// A new helper that reaches a package without going through services fails.
+// src/services/keyValueStore.ts is on the allowlist before the file exists.
+// PR #16 adds it as the raw AsyncStorage adapter (get/set/remove/getAllKeys).
+// Screens must keep using the journal repository, not that adapter.
 //
 // Known violations live in .dependency-cruiser-known-violations.json.
 // `pnpm depcruise` ignores those and fails on any new one.
@@ -18,24 +19,47 @@
 // A full rewrite is: pnpm depcruise:baseline
 // Review that diff before committing it: it accepts current violations.
 //
-// TODO: when LanguageContext reads language through a service, when the
-// scanner's camera / image-picker access moves behind a service, and when
-// JournalScreen.stories stops touching AsyncStorage, run
+// TODO: when LanguageContext reads language through a service, and when the
+// scanner's camera / image-picker access moves behind an adapter, run
 // `pnpm depcruise:tighten` so those exceptions disappear.
 
-/** Packages the UI layer is not allowed to import, directly or indirectly. */
-const PLATFORM_PATH =
-  '(?:^|/)node_modules/(?:@react-native-async-storage/async-storage|expo-file-system|expo-location|expo-secure-store|expo-image-manipulator|expo-image-picker|expo-camera|react-native-fast-tflite|react-native-nitro-modules)(?:/|$)';
+/** Closed list. Adding a file here is a deliberate review, not a drive-by import. */
+const ADAPTERS = [
+  'attributionPackage',
+  'journalLocation',
+  'journalPhotos',
+  'keyValueStore',
+  'photoPixels',
+  'storageService',
+  'tfliteRuntime',
+].join('|');
 
-/** App entry, screens, components, contexts, and utils. */
-const UI_REACHABLE_FROM = '^(?:App\\.tsx|index\\.ts|src/(?:screens|components|contexts|utils)/)';
+const ADAPTER_PATH = `^src/services/(?:${ADAPTERS})\\.ts$`;
+
+const PLATFORM_PACKAGES = [
+  '@react-native-async-storage/async-storage',
+  'expo-file-system',
+  'expo-location',
+  'expo-secure-store',
+  'expo-image-manipulator',
+  'expo-image-picker',
+  'expo-camera',
+  'react-native-fast-tflite',
+  'react-native-nitro-modules',
+].join('|');
+
+const PLATFORM_PATH = `(?:^|/)node_modules/(?:${PLATFORM_PACKAGES})(?:/|$)`;
 
 /**
- * Direct imports are forbidden from every cruised file except src/services
- * and third-party packages. scripts/depcruise-gate.mjs reads this pattern
- * and refuses to run if `src/services/` disappears from it.
+ * Adapters may import platform packages. Stories are excluded (see file header).
+ * Everyone else, including other files in src/services, may not.
  */
-const NON_SERVICE_PATH_NOT = '(?:^|/)(?:src/services/|node_modules/)';
+const PLATFORM_FROM_PATH_NOT = `(?:^|/)node_modules/|^src/stories/|${ADAPTER_PATH}`;
+
+/** Production UI plus Storybook stories. These must not import adapter files. */
+const UI_FROM = '^(?:App\\.tsx|index\\.ts|src/(?:screens|components|contexts|utils|stories)/)';
+
+const VALUE_DEPENDENCY_TYPES = ['npm', 'npm-dev', 'npm-optional', 'npm-peer', 'npm-no-pkg', 'npm-unknown'];
 
 module.exports = {
   forbidden: [
@@ -53,25 +77,52 @@ module.exports = {
       name: 'ui-not-to-storage-or-platform',
       severity: 'error',
       comment:
-        'App.tsx, index.ts, screens, components, contexts, utils, and any other module outside src/services must not import AsyncStorage or other storage/platform modules. Call src/services instead (for example storageService, journalPhotos, journalLocation).',
+        'Only the adapter allowlist in this file may import AsyncStorage or other storage/platform packages. Do not re-export the package. import type is allowed.',
       from: {
-        pathNot: NON_SERVICE_PATH_NOT,
+        pathNot: PLATFORM_FROM_PATH_NOT,
       },
       to: {
         path: PLATFORM_PATH,
-        dependencyTypes: ['npm', 'npm-dev', 'npm-optional', 'npm-peer', 'npm-no-pkg', 'npm-unknown'],
+        dependencyTypes: VALUE_DEPENDENCY_TYPES,
+        dependencyTypesNot: ['type-only'],
       },
     },
     {
       name: 'ui-not-to-storage-or-platform-reachable',
       severity: 'error',
       comment:
-        'App.tsx, index.ts, screens, components, contexts, and utils must not reach AsyncStorage or other storage/platform modules through a helper outside src/services. Paths that only exist because of a direct import already listed in the known-violations file are not reported again.',
+        'UI must not reach a storage/platform package through a module that is not an adapter. scripts/depcruise-gate.mjs allows a path that enters the adapter allowlist or a direct import already listed in the known-violations file.',
       from: {
-        path: UI_REACHABLE_FROM,
+        path: UI_FROM,
+        pathNot: '^src/stories/',
       },
       to: {
         path: PLATFORM_PATH,
+        reachable: true,
+      },
+    },
+    {
+      name: 'ui-not-to-platform-adapter',
+      severity: 'error',
+      comment:
+        'App.tsx, index.ts, screens, components, contexts, utils, and stories must not import adapter files (including keyValueStore.ts). Call the journal repository or another service that does not expose the raw store.',
+      from: {
+        path: UI_FROM,
+      },
+      to: {
+        path: ADAPTER_PATH,
+      },
+    },
+    {
+      name: 'ui-not-to-platform-adapter-reachable',
+      severity: 'error',
+      comment:
+        'The same UI must not reach an adapter through a helper. scripts/depcruise-gate.mjs checks every path, not only the first one dependency-cruiser reports.',
+      from: {
+        path: UI_FROM,
+      },
+      to: {
+        path: ADAPTER_PATH,
         reachable: true,
       },
     },
