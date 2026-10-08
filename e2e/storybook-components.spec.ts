@@ -29,6 +29,18 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.locator('body')).toContainText('112');
   });
 
+  test('ResultModal says an unknown fungus is not a species and not food', async ({ page }) => {
+    await page.goto('/iframe.html?id=mushroom-resultmodal--unknown-mushroom');
+    await expect(page.getByTestId('recognition-unknown-title')).toContainText('Nieznany grzyb');
+    await expect(page.getByTestId('recognition-unknown-body')).toContainText(
+      'To wygląda na grzyba, którego aplikacja nie zna. Nie zbieraj go ani nie jedz na podstawie skanu.',
+    );
+    await expect(page.locator('body')).not.toContainText('%');
+    await expect(page.locator('body')).not.toContainText('Borowik');
+    await expect(page.locator('body')).not.toContainText('JADALNY');
+    await expect(page.getByTestId('candidate-rank-1')).toHaveCount(0);
+  });
+
   test('ResultModal rejects a non-mushroom without naming a species', async ({ page }) => {
     await page.goto('/iframe.html?id=mushroom-resultmodal--not-a-mushroom');
     await expect(page.getByTestId('recognition-rejected-title')).toContainText('Nie rozpoznano grzyba');

@@ -99,7 +99,10 @@ export function sanitizeRecognition(value: unknown): JournalRecognition {
     return { status: 'unavailable' };
   }
   const record = value as Record<string, unknown>;
-  if (record.status === 'rejected' && (record.reason === 'not_a_mushroom' || record.reason === 'unclear')) {
+  if (
+    record.status === 'rejected' &&
+    (record.reason === 'not_a_mushroom' || record.reason === 'unknown_mushroom' || record.reason === 'unclear')
+  ) {
     return { status: 'rejected', reason: record.reason };
   }
   if (record.status === 'candidates' && Array.isArray(record.top3)) {

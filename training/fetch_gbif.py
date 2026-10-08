@@ -20,6 +20,13 @@ from pathlib import Path
 
 from licenses import accepted_media_records
 from manifest import CENTRAL_EUROPE, LABELS_PATH, ROOT, load_manifest
+from sampling import (
+    MAX_PER_OCCURRENCE,
+    class_fetch_cap,
+    collect_licensed_media,
+    spread_per_taxon,
+    thin_class_report,
+)
 
 USER_AGENT = "GrzybobranieAI-training/1.0 (open-license photos only; CC0 and CC-BY)"
 DATA_DIR = ROOT / "training" / "data"
@@ -46,22 +53,29 @@ def _get_json(url: str, timeout: int = 60, attempts: int = 4) -> dict:
     raise RuntimeError(f"GBIF request failed: {url}") from last_error
 
 
+_KEY_CACHE: dict[str, tuple[int, str] | None] = {}
+
+
 def resolve_accepted_keys(names: list[str]) -> dict[int, str]:
     """Map accepted GBIF usage keys to the scientific name we asked for."""
     keys: dict[int, str] = {}
     for name in names:
-        query = urllib.parse.urlencode({"name": name, "strict": "true"})
-        payload = _get_json(f"{GBIF_MATCH}?{query}")
-        match_type = payload.get("matchType")
-        if match_type != "EXACT":
-            print(f"skip non-exact GBIF match for {name}: {match_type}", file=sys.stderr)
+        if name not in _KEY_CACHE:
+            query = urllib.parse.urlencode({"name": name, "strict": "true"})
+            payload = _get_json(f"{GBIF_MATCH}?{query}")
+            match_type = payload.get("matchType")
+            usage = payload.get("acceptedUsageKey") or payload.get("usageKey")
+            if match_type != "EXACT" or not usage:
+                print(f"skip non-exact GBIF match for {name}: {match_type}", file=sys.stderr)
+                _KEY_CACHE[name] = None
+            else:
+                _KEY_CACHE[name] = (int(usage), name)
+            time.sleep(0.2)
+        cached = _KEY_CACHE[name]
+        if cached is None:
             continue
-        usage = payload.get("acceptedUsageKey") or payload.get("usageKey")
-        if not usage:
-            print(f"no GBIF usage key for {name}", file=sys.stderr)
-            continue
-        keys[int(usage)] = name
-        time.sleep(0.2)
+        usage_key, queried = cached
+        keys[usage_key] = queried
     return keys
 
 
@@ -86,49 +100,97 @@ def iter_occurrences(taxon_key: int, country: str | None, max_pages: int):
         time.sleep(0.25)
 
 
-def collect_class_media(
-    class_id: str,
+def _pull_names(
     names: list[str],
-    max_per_class: int,
-    min_before_global: int,
+    cap: int,
+    max_per_occurrence: int,
     max_pages: int,
+    seen: set,
 ) -> list[dict]:
+    """Regional countries first, then a country-less search until `cap`."""
     keys = resolve_accepted_keys(names)
     if not keys:
-        print(f"no accepted GBIF keys for {class_id}", file=sys.stderr)
         return []
-    seen_occurrences: set[int] = set()
     accepted: list[dict] = []
 
-    def take(country: str | None, scope: str) -> None:
-        if len(accepted) >= max_per_class:
+    def pull(country: str | None, scope: str) -> None:
+        if len(accepted) >= cap:
             return
-        for taxon_key in keys:
-            if len(accepted) >= max_per_class:
+        for taxon_key, queried_name in keys.items():
+            if len(accepted) >= cap:
                 return
-            for occurrence in iter_occurrences(taxon_key, country, max_pages):
-                occurrence_key = occurrence.get("key")
-                if occurrence_key in seen_occurrences:
-                    continue
-                media_rows = accepted_media_records(occurrence)
-                if not media_rows:
-                    continue
-                seen_occurrences.add(occurrence_key)
-                for row in media_rows:
-                    if len(accepted) >= max_per_class:
-                        return
-                    row["class_id"] = class_id
-                    row["region_scope"] = scope
-                    row["queried_name"] = keys[taxon_key]
-                    accepted.append(row)
+            batch = collect_licensed_media(
+                iter_occurrences(taxon_key, country, max_pages),
+                max_items=cap - len(accepted),
+                max_per_occurrence=max_per_occurrence,
+                seen=seen,
+                accept_media=accepted_media_records,
+            )
+            for row in batch:
+                row["region_scope"] = scope
+                row["queried_name"] = queried_name
+                row["taxon_name"] = queried_name
+            accepted.extend(batch)
 
     for country in CENTRAL_EUROPE:
-        take(country, "central_europe")
-        if len(accepted) >= max_per_class:
+        pull(country, "central_europe")
+        if len(accepted) >= cap:
             break
-    if len(accepted) < min_before_global:
-        take(None, "global_fill")
+    if len(accepted) < cap:
+        pull(None, "global_fill")
     return accepted
+
+
+def collect_class_media(
+    species: dict,
+    max_per_class: int,
+    max_per_occurrence: int,
+    max_pages: int,
+) -> list[dict]:
+    """CC0/CC-BY photos for one label, capped per observation and per taxon."""
+    class_id = species["id"]
+    sampling = species.get("sampling") or None
+    if not sampling:
+        seen: set = set()
+        rows = _pull_names(list(species["gbif_names"]), max_per_class, max_per_occurrence, max_pages, seen)
+        for row in rows:
+            row["class_id"] = class_id
+            row["held_out_taxon"] = False
+        return rows
+
+    names = [str(name) for name in species["gbif_names"]]
+    held = {str(name) for name in sampling.get("held_out_gbif_names") or []}
+    configured = int(sampling["per_taxon_cap"])
+    each = spread_per_taxon(max_per_class, len(names), configured)
+    buckets: dict[str, list[dict]] = {name: [] for name in names}
+    seen_by_name = {name: set() for name in names}
+
+    def pull(name: str, cap: int) -> None:
+        have = len(buckets[name])
+        if have >= cap:
+            return
+        rows = _pull_names([name], cap - have, max_per_occurrence, max_pages, seen_by_name[name])
+        for row in rows:
+            row["class_id"] = class_id
+            row["taxon_name"] = name
+            row["held_out_taxon"] = name in held
+        buckets[name].extend(rows)
+
+    total = 0
+    for name in names:
+        if total >= max_per_class:
+            break
+        pull(name, min(each, max_per_class - total))
+        total = sum(len(rows) for rows in buckets.values())
+    if total < max_per_class:
+        for name in names:
+            if total >= max_per_class:
+                break
+            before = len(buckets[name])
+            room = min(configured, before + (max_per_class - total))
+            pull(name, room)
+            total += len(buckets[name]) - before
+    return [row for name in names for row in buckets[name]]
 
 
 def download_image(url: str, destination: Path, timeout: int = 40) -> int:
@@ -155,9 +217,20 @@ def suffix_for(url: str) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Fetch CC0/CC-BY mushroom photos from GBIF")
-    parser.add_argument("--max-per-class", type=int, default=150)
-    parser.add_argument("--min-before-global", type=int, default=40)
-    parser.add_argument("--max-pages", type=int, default=20)
+    parser.add_argument(
+        "--max-per-class",
+        type=int,
+        default=None,
+        help="Cap for every selected class. Default is 500 for species and the class_cap in labels.json for aggregate classes.",
+    )
+    parser.add_argument(
+        "--min-before-global",
+        type=int,
+        default=40,
+        help="Reported when a class has fewer regional photos than this. Global fill still runs up to the class cap.",
+    )
+    parser.add_argument("--max-per-occurrence", type=int, default=MAX_PER_OCCURRENCE)
+    parser.add_argument("--max-pages", type=int, default=40)
     parser.add_argument("--only", default="", help="Comma-separated class ids")
     parser.add_argument("--dry-run", action="store_true", help="Write attributions but do not download bytes")
     args = parser.parse_args()
@@ -167,19 +240,29 @@ def main() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     attribution_path = DATA_DIR / "attributions.jsonl"
     rows: list[dict] = []
+    per_class: dict[str, dict] = {}
 
     for species in manifest["classes"]:
         if wanted and species["id"] not in wanted:
             continue
-        print(f"fetch {species['id']}")
-        media = collect_class_media(
-            species["id"],
-            species["gbif_names"],
-            args.max_per_class,
-            args.min_before_global,
-            args.max_pages,
+        cap = class_fetch_cap(species, args.max_per_class)
+        print(f"fetch {species['id']} (cap {cap}, {args.max_per_occurrence} photos/occurrence)")
+        media = collect_class_media(species, cap, args.max_per_occurrence, args.max_pages)
+        regional = sum(1 for row in media if row.get("region_scope") == "central_europe")
+        taxa = sorted({row.get("taxon_name") or row.get("queried_name") or "" for row in media})
+        per_class[species["id"]] = {
+            "accepted": len(media),
+            "regional": regional,
+            "global_fill": len(media) - regional,
+            "cap": cap,
+            "taxa_with_photos": len([name for name in taxa if name]),
+            "held_out_photos": sum(1 for row in media if row.get("held_out_taxon")),
+            "below_regional_minimum": regional < args.min_before_global,
+        }
+        print(
+            f"  accepted media: {len(media)} "
+            f"(regional {regional}, global {len(media) - regional}, taxa {per_class[species['id']]['taxa_with_photos']})"
         )
-        print(f"  accepted media: {len(media)}")
         for row in media:
             filename = f"{row['occurrence_key']}_{row['media_index']}{suffix_for(row['image_url'])}"
             relative = Path("images") / species["id"] / filename
@@ -200,7 +283,21 @@ def main() -> None:
     with attribution_path.open("w", encoding="utf-8") as handle:
         for row in rows:
             handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+    report = {
+        "classes": per_class,
+        "thin_classes": thin_class_report(per_class),
+        "max_per_occurrence": args.max_per_occurrence,
+        "note": (
+            "Global fill runs after the Central European countries until the class cap. "
+            "It is not limited to classes below --min-before-global. "
+            "Cortinarius orellanus, Cortinarius rubellus, and Amanita virosa stay thin when CC0/CC-BY media is scarce."
+        ),
+    }
+    report_path = DATA_DIR / "fetch_report.json"
+    report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"wrote {len(rows)} rows to {attribution_path}")
+    for item in report["thin_classes"]:
+        print(f"  thin {item['class_id']}: {item['accepted']} accepted", file=sys.stderr)
 
 
 if __name__ == "__main__":

@@ -282,4 +282,37 @@ describe('classifierService when a calibrated model is injected', () => {
       processedImageUri: 'file://camera/cap.jpg',
     });
   });
+
+  test('unknown_mushroom is rejected without a species or a confidence', async () => {
+    const { manifest } = manifestFor('confident_bolete');
+    const packaged = {
+      ...manifest,
+      classes: [
+        { index: 0, id: 'boletus_edulis', name: 'Borowik szlachetny', name_latin: 'Boletus edulis', genus: 'Boletus' },
+        { index: 1, id: 'unknown_mushroom', name: 'Nieznany grzyb', name_latin: 'Unknown mushroom', genus: '' },
+        { index: 2, id: 'not_a_mushroom', name: 'To nie jest grzyb', name_latin: 'Not a mushroom', genus: '' },
+      ],
+      ood: {
+        ...manifest.ood,
+        calibrated: true,
+        background_class_id: 'not_a_mushroom',
+        unknown_class_id: 'unknown_mushroom',
+        energy_threshold: 0,
+        min_softmax_for_accept: 0.4,
+      },
+    };
+    const result = await classifyImageWithDeps('file://camera/other-fungus.jpg', {
+      packagedModel: 1,
+      manifest: packaged,
+      readPngBytes: async () => redPng(),
+      runLogits: async () => Float32Array.from([0, 8, -2]),
+    });
+    expect(result).toMatchObject({ status: 'rejected', reason: 'unknown_mushroom' });
+    expect(result).not.toHaveProperty('top3');
+    const serialized = JSON.stringify(result);
+    expect(serialized).not.toContain('boletus_edulis');
+    expect(serialized).not.toContain('Borowik');
+    expect(serialized).not.toMatch(/%/);
+    expect(serialized).not.toMatch(/edib/i);
+  });
 });

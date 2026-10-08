@@ -94,18 +94,23 @@ export const ResultModal: React.FC<Props> = ({
       { text: t('journal.withLocation'), onPress: () => persist(true) },
     ]);
   };
+  const unknownMushroom = result.status === 'rejected' && result.reason === 'unknown_mushroom';
   const title =
     result.status === 'unavailable'
       ? t('scanner.recognitionUnavailableTitle')
-      : result.status === 'rejected'
-        ? t('scanner.rejectedTitle')
-        : t('scanner.candidatesTitle');
+      : unknownMushroom
+        ? t('scanner.unknownMushroomTitle')
+        : result.status === 'rejected'
+          ? t('scanner.rejectedTitle')
+          : t('scanner.candidatesTitle');
   const titleTestId =
     result.status === 'unavailable'
       ? 'recognition-unavailable-title'
-      : result.status === 'rejected'
-        ? 'recognition-rejected-title'
-        : 'recognition-candidates-title';
+      : unknownMushroom
+        ? 'recognition-unknown-title'
+        : result.status === 'rejected'
+          ? 'recognition-rejected-title'
+          : 'recognition-candidates-title';
 
   return (
     <Modal visible={visible} animationType="slide" transparent={false}>
@@ -142,7 +147,15 @@ export const ResultModal: React.FC<Props> = ({
               </View>
             ) : null}
 
-            {result.status === 'rejected' ? (
+            {result.status === 'rejected' && result.reason === 'unknown_mushroom' ? (
+              <View style={styles.resultCard}>
+                <Text style={styles.heading} testID="recognition-unknown-body">
+                  {t('scanner.unknownMushroomBody')}
+                </Text>
+              </View>
+            ) : null}
+
+            {result.status === 'rejected' && result.reason !== 'unknown_mushroom' ? (
               <View style={styles.resultCard}>
                 <Text style={styles.heading} testID="recognition-rejected-body">
                   {result.reason === 'unclear' ? t('scanner.rejectedUnclear') : t('scanner.rejectedNotMushroom')}

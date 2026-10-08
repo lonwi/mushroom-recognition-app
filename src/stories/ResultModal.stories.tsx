@@ -41,6 +41,21 @@ export const NotAMushroom: Story = {
   ),
 };
 
+const unknownMushroomResult: ClassificationResult = {
+  status: 'rejected',
+  reason: 'unknown_mushroom',
+  processedImageUri: 'file://camera/other-fungus.jpg',
+  inferenceTimeMs: 28,
+};
+
+export const UnknownMushroom: Story = {
+  render: () => (
+    <View style={{ flex: 1, minHeight: 600 }}>
+      <ResultModal visible={true} result={unknownMushroomResult} onClose={() => {}} />
+    </View>
+  ),
+};
+
 const dangerousResult: ClassificationResult = {
   status: 'candidates',
   processedImageUri: 'file://camera/capture.jpg',

@@ -11,6 +11,7 @@ export interface ModelClass {
 export interface OodConfig {
   method: string;
   background_class_id: string;
+  unknown_class_id?: string;
   temperature: number;
   energy_threshold: number | null;
   min_softmax_for_accept: number | null;

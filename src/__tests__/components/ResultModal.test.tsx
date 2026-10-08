@@ -204,6 +204,42 @@ describe('ResultModal recognition outcomes', () => {
     expect(queryByTestId('candidate-rank-1')).toBeNull();
   });
 
+  it('says an unknown fungus is not a species and must not be eaten', async () => {
+    const { getByTestId, queryByText, queryByTestId } = await renderModal({
+      status: 'rejected',
+      reason: 'unknown_mushroom',
+      processedImageUri: 'file://camera/other-fungus.jpg',
+      inferenceTimeMs: 12,
+    });
+
+    expect(getByTestId('recognition-unknown-title').props.children).toBe('Nieznany grzyb');
+    expect(getByTestId('recognition-unknown-body').props.children).toBe(
+      'To wygląda na grzyba, którego aplikacja nie zna. Nie zbieraj go ani nie jedz na podstawie skanu.',
+    );
+    expect(queryByText(/%/)).toBeNull();
+    expect(queryByText(/Borowik/)).toBeNull();
+    expect(queryByText(/JADALNY/)).toBeNull();
+    expect(queryByTestId('candidate-rank-1')).toBeNull();
+    expect(queryByTestId('open-atlas-boletus_edulis')).toBeNull();
+  });
+
+  it('says the same in English without naming a species', async () => {
+    await AsyncStorage.setItem('app_language', 'en');
+    const { findByTestId, queryByText } = await renderModal({
+      status: 'rejected',
+      reason: 'unknown_mushroom',
+      processedImageUri: 'file://camera/other-fungus.jpg',
+      inferenceTimeMs: 12,
+    });
+
+    expect((await findByTestId('recognition-unknown-body')).props.children).toBe(
+      'This looks like a mushroom the app does not know. Do not pick it or eat it based on the scan.',
+    );
+    expect(queryByText(/%/)).toBeNull();
+    expect(queryByText(/Borowik/)).toBeNull();
+    expect(queryByText(/edible/i)).toBeNull();
+  });
+
   it('names no species when the gate rejects the photo', async () => {
     const { getByTestId, queryByText, queryByTestId } = await renderModal({
       status: 'rejected',

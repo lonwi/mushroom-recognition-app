@@ -3,20 +3,37 @@
 A missing metric fails closed. This module does not invent scores.
 Every class in assets/models/labels.json is checked. A missing class, or a
 class with no training images or no test images, cannot ship.
+
+The energy keep-rate gate reads the held-out test split. Validation is only
+where the threshold is chosen.
 """
 
 from __future__ import annotations
 
 import hashlib
+import json
 import math
 import re
 from pathlib import Path
 
+from evaluate import attributions_complete
 from manifest import ROOT, load_manifest
-from recognition_math import DANGEROUS_PAIRS, EDIBLE_LOOKALIKE_IDS, HIGH_STAKES_IDS
+from recognition_math import (
+    BACKGROUND_CLASS_ID,
+    DANGEROUS_PAIRS,
+    EDIBLE_LOOKALIKE_IDS,
+    HIGH_STAKES_IDS,
+    UNKNOWN_CLASS_ID,
+)
 
 ARTIFACTS = ROOT / "training" / "artifacts"
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
+# Held-out fungi the model was not trained on. 0.50 recall is the floor that
+# still means the class generalizes; 0.10 is the most known-species mass it may take.
+UNKNOWN_HELDOUT_RECALL_MIN = 0.50
+UNKNOWN_HELDOUT_SUPPORT_MIN = 30
+UNKNOWN_STEAL_MAX = 0.10
+HELDOUT_BACKGROUND_SUPPORT_MIN = 20
 
 
 def sha256_file(path: Path) -> str | None:
@@ -42,6 +59,56 @@ def _whole_count(value: object) -> int | None:
     if number < 0:
         return None
     return number
+
+
+def _split_total(images: object) -> int | None:
+    if not isinstance(images, dict) or not images:
+        return None
+    total = 0
+    for value in images.values():
+        count = _whole_count(value)
+        if count is None:
+            return None
+        total += count
+    return total
+
+
+def _high_risk_total(val_images: object, test_images: object) -> int | None:
+    if not isinstance(val_images, dict) or not isinstance(test_images, dict):
+        return None
+    total = 0
+    for species_id in HIGH_STAKES_IDS:
+        val_count = _whole_count(val_images.get(species_id))
+        test_count = _whole_count(test_images.get(species_id))
+        if val_count is None or test_count is None:
+            return None
+        total += val_count + test_count
+    return total
+
+
+def _attribution_file_reasons(directory: Path, coverage: dict) -> list[str]:
+    expected = _split_total(coverage.get("train_images"))
+    val_total = _split_total(coverage.get("val_images"))
+    test_total = _split_total(coverage.get("test_images"))
+    if expected is None or val_total is None or test_total is None:
+        return ["attribution file cannot be checked without train, val, and test coverage"]
+    expected += val_total + test_total
+    path = directory / "attributions.jsonl"
+    if not path.is_file():
+        return ["attribution file was not written next to the model"]
+    rows = []
+    try:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                rows.append(json.loads(line))
+    except json.JSONDecodeError:
+        return ["attribution file next to the model is not valid jsonl"]
+    reasons = []
+    if len(rows) != expected:
+        reasons.append(f"attribution file has {len(rows)} rows, not the {expected} train+val+test images")
+    if not attributions_complete(rows):
+        reasons.append("attribution file is missing creator, license, image URL, or source page")
+    return reasons
 
 
 def assess_shippable(report: dict, artifact_dir: Path | None = None) -> tuple[bool, list[str]]:
@@ -80,9 +147,10 @@ def assess_shippable(report: dict, artifact_dir: Path | None = None) -> tuple[bo
             continue
         if not _finite(stats.get("top1")) or not _finite(stats.get("top3")):
             reasons.append(f"{species_id} has no measured top-1/top-3")
-        if species_id == "not_a_mushroom":
+        if species_id in (BACKGROUND_CLASS_ID, UNKNOWN_CLASS_ID):
             if train_count < 100:
-                reasons.append(f"background class has only {train_count} training images (need >= 100)")
+                label = "background class" if species_id == BACKGROUND_CLASS_ID else "unknown_mushroom"
+                reasons.append(f"{label} has only {train_count} training images (need >= 100)")
         elif train_count < 40:
             reasons.append(f"{species_id} has only {train_count} training images after dedup (need >= 40)")
         if species_id in HIGH_STAKES_IDS:
@@ -106,14 +174,29 @@ def assess_shippable(report: dict, artifact_dir: Path | None = None) -> tuple[bo
                         f"dangerous confusion {truth}->{predicted} rate {rate} exceeds 0.05"
                     )
 
-    id_keep = ood.get("id_keep_rate_val")
+    id_keep = ood.get("id_keep_rate_test")
     ood_reject = ood.get("ood_reject_rate_test")
     confident_ood = ood.get("ood_test_softmax_above_0_5")
     caught = ood.get("softmax_above_0_5_still_rejected_rate")
+    held_background = ood.get("held_out_not_a_mushroom_support")
+    held_background_rate = ood.get("held_out_not_a_mushroom_reject_rate")
     if id_keep is None or id_keep < 0.95:
-        reasons.append(f"validation in-distribution keep rate {id_keep} is below 0.95")
+        reasons.append(
+            f"held-out test in-distribution keep rate {id_keep} is below 0.95 "
+            "(threshold is fit on validation and scored on test)"
+        )
     if ood_reject is None or ood_reject < 0.90:
         reasons.append(f"held-out non-mushroom reject rate {ood_reject} is below 0.90")
+    held_background_count = _whole_count(held_background)
+    if held_background_count is None or held_background_count < HELDOUT_BACKGROUND_SUPPORT_MIN:
+        reasons.append(
+            f"held-out non-mushroom taxa have support {held_background} "
+            f"(need >= {HELDOUT_BACKGROUND_SUPPORT_MIN})"
+        )
+    elif held_background_rate is None or held_background_rate < 0.90:
+        reasons.append(
+            f"held-out non-mushroom taxa reject rate {held_background_rate} is below 0.90"
+        )
     if confident_ood is None or confident_ood < 30:
         reasons.append(
             f"only {confident_ood} held-out non-mushroom images scored softmax > 0.5; "
@@ -124,20 +207,72 @@ def assess_shippable(report: dict, artifact_dir: Path | None = None) -> tuple[bo
             f"energy rejected only {caught} of non-mushrooms that softmax scored above 0.5 (need >= 0.90)"
         )
 
+    unknown = report.get("unknown_mushroom") or {}
+    held_unknown = _whole_count(unknown.get("held_out_support"))
+    held_recall = unknown.get("held_out_recall")
+    known_support = _whole_count(unknown.get("known_support"))
+    steal = unknown.get("known_predicted_as_unknown_rate")
+    if held_unknown is None or held_unknown < UNKNOWN_HELDOUT_SUPPORT_MIN:
+        reasons.append(
+            f"unknown_mushroom held-out support {unknown.get('held_out_support')} "
+            f"is below {UNKNOWN_HELDOUT_SUPPORT_MIN}"
+        )
+    elif not _finite(held_recall) or held_recall < UNKNOWN_HELDOUT_RECALL_MIN:
+        reasons.append(
+            f"unknown_mushroom recall on held-out fungi {held_recall} is below {UNKNOWN_HELDOUT_RECALL_MIN}"
+        )
+    if known_support is None or known_support < 1 or not _finite(steal) or steal > UNKNOWN_STEAL_MAX:
+        reasons.append(
+            f"known species predicted as unknown_mushroom at {steal} on support {known_support} "
+            f"(need a rate <= {UNKNOWN_STEAL_MAX})"
+        )
+    toxic_as_edible = report.get("confident_toxic_as_edible_lookalike")
+    if not isinstance(toxic_as_edible, int) or isinstance(toxic_as_edible, bool) or toxic_as_edible != 0:
+        reasons.append(
+            f"confident toxic-as-edible-lookalike count is {toxic_as_edible} (need 0)"
+        )
+
     if not export_ok.get("loaded"):
         reasons.append("TFLite interpreter did not load the exported model")
     if export_ok.get("agreement_source") != "val_and_test_photos":
         reasons.append("TFLite agreement was not measured on held-out val and test photos")
     agreement_images = export_ok.get("agreement_images")
-    if not isinstance(agreement_images, int) or isinstance(agreement_images, bool) or agreement_images < 1:
-        reasons.append("TFLite agreement did not include any real val/test photos")
+    expected_agreement = _split_total(coverage.get("val_images"))
+    test_total = _split_total(coverage.get("test_images"))
+    if expected_agreement is None or test_total is None:
+        reasons.append("val and test coverage is missing, so TFLite agreement cannot cover the full set")
+        expected_agreement = None
+    else:
+        expected_agreement += test_total
+    if not isinstance(agreement_images, int) or isinstance(agreement_images, bool) or expected_agreement is None:
+        reasons.append("TFLite agreement did not include the full val and test set")
+    elif agreement_images != expected_agreement:
+        reasons.append(
+            f"TFLite agreement covered {agreement_images} photos, not the full val+test set ({expected_agreement})"
+        )
     agreement = export_ok.get("top1_agreement_with_fp32")
     if agreement is None or agreement < 0.99:
         reasons.append(f"TFLite vs float32 top-1 agreement {agreement} is below 0.99")
+    high_risk_agreement = export_ok.get("high_risk_top1_agreement")
+    high_risk_images = export_ok.get("high_risk_agreement_images")
+    expected_risk = _high_risk_total(coverage.get("val_images"), coverage.get("test_images"))
+    if (
+        not isinstance(high_risk_images, int)
+        or isinstance(high_risk_images, bool)
+        or expected_risk is None
+        or high_risk_images != expected_risk
+        or high_risk_images < 1
+    ):
+        reasons.append(
+            f"TFLite high-risk agreement covered {high_risk_images} photos, not the full high-risk val+test set ({expected_risk})"
+        )
+    elif high_risk_agreement is None or high_risk_agreement < 0.99:
+        reasons.append(f"TFLite vs float32 high-risk top-1 agreement {high_risk_agreement} is below 0.99")
+    directory = ARTIFACTS if artifact_dir is None else artifact_dir
     if not report.get("attributions_complete"):
         reasons.append("per-image attribution file is incomplete")
+    reasons.extend(_attribution_file_reasons(directory, coverage))
 
-    directory = ARTIFACTS if artifact_dir is None else artifact_dir
     recorded = report.get("artifacts") or {}
     keras_hash = recorded.get("model_keras_sha256")
     tflite_hash = recorded.get("tflite_sha256")

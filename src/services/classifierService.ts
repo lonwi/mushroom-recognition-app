@@ -39,7 +39,7 @@ export interface UnavailableClassification {
 
 export interface RejectedClassification {
   status: 'rejected';
-  reason: 'not_a_mushroom' | 'unclear';
+  reason: 'not_a_mushroom' | 'unknown_mushroom' | 'unclear';
   processedImageUri: string;
   inferenceTimeMs: number;
 }

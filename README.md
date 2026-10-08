@@ -91,7 +91,7 @@ pnpm test:e2e
 
 Rozpoznawanie jest wyłączone, dopóki w repozytorium nie ma skalibrowanego `assets/models/mushrooms_model.tflite`. Sam `labels.json` nie jest modelem. `react-native-fast-tflite` jest zależnością pod przyszły plik; bez pliku skaner go nie ładuje i nie podaje gatunku ani procentu pewności.
 
-Trening opisuje `training/README.md`. Wagi z ImageNet (Keras MobileNetV3-Small, Apache-2.0) służą tylko jako inicjalizacja. Zdjęcia treningowe wolno brać wyłącznie z CC0 i CC-BY, z atrybucją w `training/data/attributions.jsonl`. Ten katalog powstaje na maszynie treningowej i nie jest częścią aplikacji.
+Trening opisuje `training/README.md`. Wagi z ImageNet (Keras MobileNetV3-Small, Apache-2.0) służą tylko jako inicjalizacja. Zdjęcia treningowe wolno brać wyłącznie z CC0 i CC-BY. Fetch zapisuje atrybucję w `training/data/attributions.jsonl` (katalog roboczy, gitignore). Eksport, który przejdzie bramki, kopiuje ją do `assets/models/attributions.jsonl` obok modelu.
 
 Na maszynie z GPU:
 

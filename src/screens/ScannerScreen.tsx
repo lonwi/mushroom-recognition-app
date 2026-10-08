@@ -47,6 +47,8 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
       setIsAnalyzing(true);
       const photo = await camera.takePictureAsync({
         quality: 0.8,
+        // Leave EXIF orientation on the file. readPhotoAsPngBytes bakes it,
+        // then imagePreprocess area-resizes to match the training PNGs.
         skipProcessing: true,
       });
 

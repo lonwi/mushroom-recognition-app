@@ -18,11 +18,11 @@ def split_by_observation(
     if val_ratio < 0 or test_ratio < 0 or val_ratio + test_ratio >= 1:
         raise ValueError("val and test ratios must leave a non-empty train share")
 
-    grouped: dict[str, dict[str, list[dict]]] = defaultdict(lambda: defaultdict(list))
+    held_out = [record for record in records if record.get("held_out_taxon")]
+    records = [record for record in records if not record.get("held_out_taxon")]
+    grouped = defaultdict(lambda: defaultdict(list))
     for record in records:
-        class_id = record["class_id"]
-        occurrence = str(record["occurrence_key"])
-        grouped[class_id][occurrence].append(record)
+        grouped[record["class_id"]][str(record["occurrence_key"])].append(record)
 
     splits: dict[str, list[dict]] = {"train": [], "val": [], "test": []}
     for class_id in sorted(grouped):
@@ -51,6 +51,10 @@ def split_by_observation(
                 val_count += len(group)
             else:
                 splits["train"].extend(group)
+    # Taxa marked held_out_taxon never enter train or val. Their test score is
+    # generalization to fungi (or non-fungi) the model was not trained on.
+    for record in held_out:
+        splits["test"].append(record)
     _assert_occurrence_integrity(splits)
     return splits
 

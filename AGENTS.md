@@ -89,7 +89,7 @@ mushroom-app/
    - `classifierService` must not return a species, a confidence percentage, or an inference time unless a real on-device model consumed that photo's pixels.
    - Do not floor confidence, invent latency, hash a URI into a class, or pass a forced species id through the scanner and present it as a scan.
    - `assets/models/labels.json` is a class contract, not a model. Recognition stays unavailable while `src/services/modelPackage.ts` exports `null` and `mushrooms_model.tflite` is absent.
-   - A packaged model still must not show an edibility verdict. Amanita, Cortinarius, Galerina, or Gyromitra in the top 3, or low confidence, requires the expert / Sanepid warning. The energy gate and the `not_a_mushroom` class can reject a photo with no species at all.
+   - A packaged model still must not show an edibility verdict. Amanita, Cortinarius, Galerina, or Gyromitra in the top 3, or low confidence, requires the expert / Sanepid warning. The energy gate and the `not_a_mushroom` class can reject a photo with no species at all. `unknown_mushroom` (the class before `not_a_mushroom`) means a fungus that is not on the species list: show the honest “the app does not know this mushroom” message and never a species or an edibility verdict.
    - Training data may be CC0 or CC-BY only. Do not fetch NC, SA, or unlicensed photos, and do not install weights that failed `training/ship_gates.py`.
 
 ---

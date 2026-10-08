@@ -10,11 +10,22 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from evaluate import image_counts
-from export_tflite import representative_dataset
+from evaluate import (
+    choose_threshold,
+    confident_toxic_as_edible,
+    image_counts,
+)
+from export_tflite import DEFAULT_QUANTIZATIONS, representative_dataset
 from manifest import ROOT, load_manifest
-from preprocess import preprocess_rgb_uint8
-from recognition_math import DANGEROUS_GENERA, DANGEROUS_PAIRS, decide, energy_score, softmax
+from preprocess import ImageReadError, load_oriented_rgb, model_rgb_uint8, preprocess_rgb_uint8
+from recognition_math import (
+    DANGEROUS_GENERA,
+    DANGEROUS_PAIRS,
+    HIGH_STAKES_IDS,
+    decide,
+    energy_score,
+    softmax,
+)
 from ship_gates import assess_shippable
 
 FIXTURE = ROOT / "training" / "fixtures" / "decision_cases.json"
@@ -56,6 +67,31 @@ class PreprocessTest(unittest.TestCase):
         output = preprocess_rgb_uint8(rgb, payload["size"]).reshape(-1)
         self.assertTrue(np.allclose(output, np.asarray(payload["expected"], dtype=np.float32), atol=1e-5))
 
+    def test_downsample_is_antialiased_and_exif_is_applied(self):
+        from PIL import Image
+
+        checker = np.zeros((8, 8, 3), dtype=np.uint8)
+        checker[::2, ::2] = 255
+        checker[1::2, 1::2] = 255
+        area = model_rgb_uint8(checker, 2)
+        self.assertEqual(area.shape, (2, 2, 3))
+        self.assertTrue(np.all(np.abs(area.astype(np.int16) - 128) <= 1))
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            turned = Image.new("RGB", (4, 2), (0, 0, 0))
+            turned.putpixel((0, 0), (255, 0, 0))
+            exif = Image.Exif()
+            exif[274] = 6
+            path = directory / "turned.jpg"
+            turned.save(path, exif=exif)
+            oriented = load_oriented_rgb(path)
+            self.assertEqual(oriented.shape[0], 4)
+            self.assertEqual(oriented.shape[1], 2)
+            broken = directory / "broken.jpg"
+            broken.write_bytes(b"this is not a jpeg")
+            with self.assertRaises(ImageReadError):
+                load_oriented_rgb(broken)
+
 
 class DecisionTest(unittest.TestCase):
     def test_committed_cases(self):
@@ -83,7 +119,7 @@ class DecisionTest(unittest.TestCase):
             if result["status"] == "candidates":
                 self.assertNotIn("status", result["top3"][0])
                 self.assertNotIn("edibility", result["top3"][0])
-                self.assertTrue(all(item["id"] != "not_a_mushroom" for item in result["top3"]))
+                self.assertTrue(all(item["id"] not in ("not_a_mushroom", "unknown_mushroom") for item in result["top3"]))
 
     def test_nonfinite_logits_are_output_mismatch(self):
         classes = _classes(["boletus_edulis", "not_a_mushroom"], ["Boletus", ""])
@@ -165,9 +201,17 @@ class ManifestAndShipGateTest(unittest.TestCase):
             "armillaria_mellea",
             "amanita_rubescens",
             "amanita_citrina",
+            "unknown_mushroom",
             "not_a_mushroom",
         ):
             self.assertIn(species_id, ids)
+        self.assertEqual(ids[-2], "unknown_mushroom")
+        self.assertEqual(ids[-1], "not_a_mushroom")
+        self.assertEqual(manifest["ood"]["unknown_class_id"], "unknown_mushroom")
+        unknown = manifest["classes"][-2]
+        self.assertGreaterEqual(len(unknown["sampling"]["held_out_gbif_names"]), 8)
+        self.assertNotIn("edibility", unknown)
+        self.assertNotIn("status", unknown)
         self.assertFalse(manifest["model_packaged"])
         self.assertFalse(manifest["recognition_available"])
         self.assertEqual(manifest["backbone"]["pretrained_weights_license"], "Apache-2.0")
@@ -192,22 +236,34 @@ class ManifestAndShipGateTest(unittest.TestCase):
             item["id"]: {"top1": 0.96, "top3": 0.99, "support": 24} for item in manifest["classes"]
         }
         train_images = {
-            item["id"]: 160 if item["id"] == "not_a_mushroom" else 80 for item in manifest["classes"]
+            item["id"]: 160 if item["id"] in ("not_a_mushroom", "unknown_mushroom") else 80
+            for item in manifest["classes"]
         }
+        val_images = {item["id"]: 8 for item in manifest["classes"]}
         test_images = {item["id"]: 24 for item in manifest["classes"]}
         pair_rates = {}
         for left, right in DANGEROUS_PAIRS:
             pair_rates[f"{left}->{right}"] = 0.0
             pair_rates[f"{right}->{left}"] = 0.0
-        return {
+        report = {
             "per_class": per_class,
             "macro_top1": 0.91,
             "macro_top3": 0.97,
             "dangerous_pair_rates": pair_rates,
-            "coverage": {"train_images": train_images, "test_images": test_images},
+            "coverage": {"train_images": train_images, "val_images": val_images, "test_images": test_images},
+            "confident_toxic_as_edible_lookalike": 0,
+            "unknown_mushroom": {
+                "held_out_support": 40,
+                "held_out_recall": 0.70,
+                "known_support": 200,
+                "known_predicted_as_unknown_rate": 0.02,
+            },
             "ood": {
-                "id_keep_rate_val": 0.95,
+                "id_keep_rate_val": 0.97,
+                "id_keep_rate_test": 0.96,
                 "ood_reject_rate_test": 0.97,
+                "held_out_not_a_mushroom_support": 24,
+                "held_out_not_a_mushroom_reject_rate": 0.95,
                 "ood_test_softmax_above_0_5": 40,
                 "softmax_above_0_5_still_rejected_rate": 0.95,
             },
@@ -215,7 +271,9 @@ class ManifestAndShipGateTest(unittest.TestCase):
                 "loaded": True,
                 "top1_agreement_with_fp32": 1.0,
                 "agreement_source": "val_and_test_photos",
-                "agreement_images": 48,
+                "agreement_images": len(manifest["classes"]) * 32,
+                "high_risk_top1_agreement": 1.0,
+                "high_risk_agreement_images": len(HIGH_STAKES_IDS) * 32,
             },
             "artifacts": {
                 "model_keras_sha256": hashlib.sha256(keras_bytes).hexdigest(),
@@ -223,6 +281,33 @@ class ManifestAndShipGateTest(unittest.TestCase):
             },
             "attributions_complete": True,
         }
+        self._write_attributions(artifact_dir, report)
+        return report
+
+    def _write_attributions(self, artifact_dir: Path, report: dict) -> None:
+        coverage = report["coverage"]
+        count = (
+            sum(coverage["train_images"].values())
+            + sum(coverage["val_images"].values())
+            + sum(coverage["test_images"].values())
+        )
+        lines = []
+        for index in range(count):
+            lines.append(
+                json.dumps(
+                    {
+                        "creator": "Ada",
+                        "license": "https://creativecommons.org/licenses/by/4.0/",
+                        "license_normalized": "cc-by-4.0",
+                        "image_url": f"https://example.test/{index}.jpg",
+                        "source_url": f"https://example.test/source/{index}",
+                        "gbif_occurrence": f"https://www.gbif.org/occurrence/{index}",
+                        "class_id": "boletus_edulis",
+                        "file": f"images/{index}.jpg",
+                    }
+                )
+            )
+        (artifact_dir / "attributions.jsonl").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     def test_ship_gates_pass_only_on_a_complete_report(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -320,6 +405,97 @@ class ManifestAndShipGateTest(unittest.TestCase):
             self.assertTrue(np.allclose(samples[0][0][0], expected))
         with self.assertRaises(RuntimeError):
             representative_dataset([], 8, Path("."))
+
+    def test_energy_threshold_is_an_order_statistic(self):
+        energies = [float(value) for value in range(8)]
+        linear = float(np.quantile(np.asarray(energies), 0.95))
+        self.assertLess(sum(energy <= linear for energy in energies) / 8, 0.95)
+        predictions = [{"class_id": "boletus_edulis", "energy": energy} for energy in energies]
+        threshold = choose_threshold(predictions)
+        self.assertGreaterEqual(sum(energy <= threshold for energy in energies) / 8, 0.95)
+        self.assertEqual(threshold, 7.0)
+
+    def test_unknown_mushroom_is_not_a_species_result(self):
+        classes = _classes(
+            ["boletus_edulis", "unknown_mushroom", "not_a_mushroom"],
+            ["Boletus", "", ""],
+        )
+        ood = {
+            "calibrated": True,
+            "background_class_id": "not_a_mushroom",
+            "unknown_class_id": "unknown_mushroom",
+            "temperature": 1,
+            "energy_threshold": 0.0,
+            "min_softmax_for_accept": 0.40,
+            "min_top1_softmax_for_high_confidence": 0.70,
+            "min_margin": 0.15,
+        }
+        result = decide([0.0, 8.0, -2.0], classes, ood)
+        self.assertEqual(result["status"], "rejected")
+        self.assertEqual(result["reason"], "unknown_mushroom")
+        self.assertNotIn("top3", result)
+        self.assertNotIn("edibility", result)
+        self.assertGreater(result["max_softmax"], 0.9)
+        skipped = decide([5.0, 1.0, -2.0], classes, ood)
+        self.assertEqual(skipped["status"], "candidates")
+        self.assertNotIn("unknown_mushroom", [item["id"] for item in skipped["top3"]])
+
+    def test_confident_toxic_photo_shown_as_edible_is_counted(self):
+        classes = _classes(
+            ["amanita_phalloides", "macrolepiota_procera", "not_a_mushroom"],
+            ["Amanita", "Macrolepiota", ""],
+        )
+        ood = {
+            "calibrated": True,
+            "background_class_id": "not_a_mushroom",
+            "unknown_class_id": "unknown_mushroom",
+            "temperature": 1,
+            "energy_threshold": 5.0,
+            "min_softmax_for_accept": 0.40,
+            "min_top1_softmax_for_high_confidence": 0.70,
+            "min_margin": 0.15,
+        }
+        confident = {
+            "class_id": "amanita_phalloides",
+            "logits": [0.0, 8.0, -4.0],
+        }
+        unsure = {
+            "class_id": "amanita_phalloides",
+            "logits": [1.2, 1.3, 0.0],
+        }
+        self.assertEqual(confident_toxic_as_edible([confident], classes, ood), 1)
+        self.assertEqual(confident_toxic_as_edible([unsure], classes, ood), 0)
+
+    def test_keep_rate_gate_uses_the_test_split(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            report["ood"]["id_keep_rate_val"] = 1.0
+            report["ood"]["id_keep_rate_test"] = 0.5
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("test in-distribution keep rate" in reason for reason in reasons))
+
+    def test_agreement_must_cover_every_val_and_test_photo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            report["tflite"]["agreement_images"] = 4
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("full val+test" in reason for reason in reasons))
+            report = self._passing_report(artifact_dir)
+            report["tflite"]["high_risk_agreement_images"] = 1
+            report["tflite"]["high_risk_top1_agreement"] = 1.0
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("high-risk" in reason for reason in reasons))
+
+    def test_fp16_is_the_default_export(self):
+        self.assertEqual(DEFAULT_QUANTIZATIONS, ("fp16",))
+        source = (ROOT / "training" / "export_tflite.py").read_text(encoding="utf-8")
+        self.assertIn('default="fp16"', source)
+        self.assertNotIn('for quantization in ("int8", "fp16")', source)
 
 
 if __name__ == "__main__":

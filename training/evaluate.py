@@ -11,18 +11,24 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import sys
 from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
 
 from manifest import ROOT, load_manifest
-from preprocess import preprocess_rgb_uint8
+from preprocess import ImageReadError, load_oriented_rgb, preprocess_rgb_uint8
 from recognition_math import (
+    BACKGROUND_CLASS_ID,
     DANGEROUS_PAIRS,
+    EDIBLE_LOOKALIKE_IDS,
+    HIGH_STAKES_IDS,
+    NON_SPECIES_IDS,
     POLICY_MIN_MARGIN,
     POLICY_MIN_SOFTMAX_FOR_ACCEPT,
     POLICY_MIN_TOP1_FOR_HIGH_CONFIDENCE,
+    UNKNOWN_CLASS_ID,
     decide,
     energy_score,
     softmax,
@@ -56,11 +62,13 @@ def image_counts(rows: list[dict], class_ids: list[str]) -> dict[str, int]:
     return counts
 
 
-def preprocessed_batch(row: dict, image_size: int, data_dir: Path = DATA_DIR) -> np.ndarray:
-    from PIL import Image
+def row_image_path(row: dict, data_dir: Path = DATA_DIR) -> Path:
+    relative = row.get("prepared_file") or row["file"]
+    return data_dir / relative
 
-    with Image.open(data_dir / row["file"]) as image:
-        rgb = np.asarray(image.convert("RGB"))
+
+def preprocessed_batch(row: dict, image_size: int, data_dir: Path = DATA_DIR) -> np.ndarray:
+    rgb = load_oriented_rgb(row_image_path(row, data_dir))
     return preprocess_rgb_uint8(rgb, image_size).astype(np.float32)[None, ...]
 
 
@@ -72,6 +80,8 @@ def prediction_from_logits(row: dict, logits: list[float]) -> dict:
     return {
         "class_id": row["class_id"],
         "file": row.get("file"),
+        "held_out_taxon": bool(row.get("held_out_taxon")),
+        "taxon_name": row.get("taxon_name") or "",
         "logits": logits,
         "probabilities": probabilities,
         "order": order,
@@ -82,7 +92,11 @@ def prediction_from_logits(row: dict, logits: list[float]) -> dict:
 def _predict_rows(model, rows: list[dict], image_size: int) -> list[dict]:
     predictions = []
     for row in rows:
-        tensor = preprocessed_batch(row, image_size)
+        try:
+            tensor = preprocessed_batch(row, image_size)
+        except (ImageReadError, OSError, ValueError) as error:
+            print(f"skip unreadable {row.get('file')}: {error}", file=sys.stderr)
+            continue
         logits = model.predict(tensor, verbose=0)[0].astype(float).tolist()
         predictions.append(prediction_from_logits(row, logits))
     return predictions
@@ -104,7 +118,7 @@ def summarize(predictions: list[dict], class_ids: list[str], threshold: float | 
         top1 = sum(1 for row in rows if row["order"][0] == index) / len(rows)
         top3 = sum(1 for row in rows if index in row["order"][:3]) / len(rows)
         per_class[class_id] = {"top1": top1, "top3": top3, "support": len(rows)}
-        if class_id != "not_a_mushroom":
+        if class_id not in NON_SPECIES_IDS:
             top1_values.append(top1)
             top3_values.append(top3)
 
@@ -118,13 +132,15 @@ def summarize(predictions: list[dict], class_ids: list[str], threshold: float | 
             predicted_index = class_ids.index(predicted)
             pair_rates[f"{truth}->{predicted}"] = sum(1 for row in rows if row["order"][0] == predicted_index) / len(rows)
 
-    ood_rows = grouped.get("not_a_mushroom") or []
+    ood_rows = grouped.get(BACKGROUND_CLASS_ID) or []
     confident = [row for row in ood_rows if max(row["probabilities"]) > 0.5]
     caught = 0
     if threshold is not None and confident:
-        classes = [{"id": class_id, "genus": ""} for class_id in class_ids]
-        # genus is filled by the caller when a full decision is required
-        caught = sum(1 for row in confident if row["energy"] > threshold or class_ids[row["order"][0]] == "not_a_mushroom")
+        caught = sum(
+            1
+            for row in confident
+            if row["energy"] > threshold or class_ids[row["order"][0]] == BACKGROUND_CLASS_ID
+        )
     return {
         "per_class": per_class,
         "macro_top1": (sum(top1_values) / len(top1_values)) if top1_values else None,
@@ -135,46 +151,135 @@ def summarize(predictions: list[dict], class_ids: list[str], threshold: float | 
     }
 
 
-def choose_threshold(val_predictions: list[dict]) -> float:
-    energies = [row["energy"] for row in val_predictions if row["class_id"] != "not_a_mushroom"]
+def choose_threshold(val_predictions: list[dict], keep_rate: float = 0.95) -> float:
+    """Smallest validation energy that keeps at least `keep_rate` of ID images.
+
+    This is an order statistic, not `numpy.quantile`. The linear quantile sits
+    between samples, so on a short validation split fewer than 95% of energies
+    are <= that interpolated value. The threshold is fit on validation only.
+    """
+    if not 0 < keep_rate < 1:
+        raise ValueError("keep_rate must be between 0 and 1")
+    energies = sorted(
+        float(row["energy"])
+        for row in val_predictions
+        if row["class_id"] != BACKGROUND_CLASS_ID
+    )
     if len(energies) < 8:
         raise RuntimeError("need at least 8 in-distribution validation images to set an energy threshold")
-    return float(np.quantile(np.asarray(energies, dtype=np.float64), 0.95))
+    keep_count = math.ceil(keep_rate * len(energies) - 1e-9)
+    keep_count = min(len(energies), max(1, keep_count))
+    return float(energies[keep_count - 1])
+
+
+def _keep_rate(predictions: list[dict], threshold: float) -> float | None:
+    energies = [row["energy"] for row in predictions if row["class_id"] != BACKGROUND_CLASS_ID]
+    if not energies:
+        return None
+    return sum(1 for energy in energies if energy <= threshold) / len(energies)
+
+
+def confident_toxic_as_edible(predictions: list[dict], classes: list[dict], ood_config: dict) -> int:
+    """High-risk photos the app would show as a confident edible look-alike.
+
+    Rejected photos and low-confidence candidates are not counted. The ship
+    gate requires this count to be zero.
+    """
+    edible = set(EDIBLE_LOOKALIKE_IDS)
+    count = 0
+    for row in predictions:
+        if row["class_id"] not in HIGH_STAKES_IDS:
+            continue
+        decision = decide(row["logits"], classes, ood_config)
+        if decision.get("status") != "candidates" or decision.get("low_confidence"):
+            continue
+        top = decision["top3"][0]["id"]
+        if top in edible:
+            count += 1
+    return count
+
+
+def _unknown_metrics(test_pred: list[dict], class_ids: list[str]) -> dict:
+    if UNKNOWN_CLASS_ID not in class_ids:
+        return {
+            "held_out_support": 0,
+            "held_out_recall": None,
+            "known_support": 0,
+            "known_predicted_as_unknown_rate": None,
+        }
+    unknown_index = class_ids.index(UNKNOWN_CLASS_ID)
+    held = [
+        row
+        for row in test_pred
+        if row["class_id"] == UNKNOWN_CLASS_ID and row.get("held_out_taxon")
+    ]
+    known = [row for row in test_pred if row["class_id"] not in NON_SPECIES_IDS]
+    recall = (
+        sum(1 for row in held if row["order"][0] == unknown_index) / len(held) if held else None
+    )
+    stolen = (
+        sum(1 for row in known if row["order"][0] == unknown_index) / len(known) if known else None
+    )
+    return {
+        "held_out_support": len(held),
+        "held_out_recall": recall,
+        "known_support": len(known),
+        "known_predicted_as_unknown_rate": stolen,
+    }
+
+
+def _reject_rate(rows: list[dict], classes: list[dict], ood_config: dict) -> float | None:
+    if not rows:
+        return None
+    rejected = 0
+    for row in rows:
+        decision = decide(row["logits"], classes, ood_config)
+        if decision["status"] == "rejected":
+            rejected += 1
+    return rejected / len(rows)
 
 
 def assemble_report(manifest: dict, splits: dict, val_pred: list[dict], test_pred: list[dict]) -> dict:
-    """Metrics for one set of logits. Export passes TFLite logits; evaluate passes Keras."""
+    """Metrics for one set of logits. Export passes TFLite logits; evaluate passes Keras.
+
+    The energy threshold is chosen on validation. In-distribution keep rate is
+    reported for both splits and the ship gate reads the test split only.
+    """
     class_ids = [item["id"] for item in manifest["classes"]]
     threshold = choose_threshold(val_pred)
-    id_val = [row for row in val_pred if row["class_id"] != "not_a_mushroom"]
-    id_keep = sum(1 for row in id_val if row["energy"] <= threshold) / len(id_val)
+    id_keep_val = _keep_rate(val_pred, threshold)
+    id_keep_test = _keep_rate(test_pred, threshold)
     summary = summarize(test_pred, class_ids, threshold)
-    ood_test = [row for row in test_pred if row["class_id"] == "not_a_mushroom"]
+    ood_test = [row for row in test_pred if row["class_id"] == BACKGROUND_CLASS_ID]
+    held_ood = [row for row in ood_test if row.get("held_out_taxon")]
     classes = manifest["classes"]
     ood_config = {
         "calibrated": True,
-        "background_class_id": "not_a_mushroom",
+        "background_class_id": BACKGROUND_CLASS_ID,
+        "unknown_class_id": UNKNOWN_CLASS_ID,
         "temperature": 1,
         "energy_threshold": threshold,
         "min_softmax_for_accept": POLICY_MIN_SOFTMAX_FOR_ACCEPT,
         "min_top1_softmax_for_high_confidence": POLICY_MIN_TOP1_FOR_HIGH_CONFIDENCE,
         "min_margin": POLICY_MIN_MARGIN,
     }
-    rejected = 0
-    for row in ood_test:
-        decision = decide(row["logits"], classes, ood_config)
-        if decision["status"] == "rejected":
-            rejected += 1
-    ood_reject = (rejected / len(ood_test)) if ood_test else None
-    all_rows = list(splits.get("train") or []) + list(splits.get("val") or []) + list(splits.get("test") or [])
+    ood_reject = _reject_rate(ood_test, classes, ood_config)
+    held_ood_reject = _reject_rate(held_ood, classes, ood_config)
+    train_rows = list(splits.get("train") or [])
+    val_rows = list(splits.get("val") or [])
+    test_rows = list(splits.get("test") or [])
+    all_rows = train_rows + val_rows + test_rows
     return {
         "per_class": summary["per_class"],
         "macro_top1": summary["macro_top1"],
         "macro_top3": summary["macro_top3"],
         "dangerous_pair_rates": summary["dangerous_pair_rates"],
+        "confident_toxic_as_edible_lookalike": confident_toxic_as_edible(test_pred, classes, ood_config),
+        "unknown_mushroom": _unknown_metrics(test_pred, class_ids),
         "coverage": {
-            "train_images": image_counts(list(splits.get("train") or []), class_ids),
-            "test_images": image_counts(list(splits.get("test") or []), class_ids),
+            "train_images": image_counts(train_rows, class_ids),
+            "val_images": image_counts(val_rows, class_ids),
+            "test_images": image_counts(test_rows, class_ids),
         },
         "ood": {
             "method": "energy_logsumexp_plus_background_class",
@@ -183,16 +288,21 @@ def assemble_report(manifest: dict, splits: dict, val_pred: list[dict], test_pre
             "min_softmax_for_accept": POLICY_MIN_SOFTMAX_FOR_ACCEPT,
             "min_top1_softmax_for_high_confidence": POLICY_MIN_TOP1_FOR_HIGH_CONFIDENCE,
             "min_margin": POLICY_MIN_MARGIN,
-            "id_keep_rate_val": id_keep,
+            "id_keep_rate_val": id_keep_val,
+            "id_keep_rate_test": id_keep_test,
             "ood_reject_rate_test": ood_reject,
             "ood_test_count": len(ood_test),
+            "held_out_not_a_mushroom_support": len(held_ood),
+            "held_out_not_a_mushroom_reject_rate": held_ood_reject,
             "ood_test_softmax_above_0_5": summary["ood_test_softmax_above_0_5"],
             "softmax_above_0_5_still_rejected_rate": summary["softmax_above_0_5_still_rejected_rate"],
             "note": (
-                "Threshold is the 95th percentile of in-distribution validation energy "
-                "on these logits. Export overwrites this report with TFLite interpreter logits "
-                "on the real val and test photos. "
-                "softmax_above_0_5_still_rejected_rate is the share of held-out non-mushrooms "
+                "The energy threshold is the lowest validation in-distribution energy that "
+                "keeps at least 95% of validation ID images (an order statistic, not a linear "
+                "quantile). id_keep_rate_val is that calibration check. id_keep_rate_test is the "
+                "same threshold on the held-out test split and is the ship gate. "
+                "Export overwrites this report with TFLite interpreter logits on the real val and test photos. "
+                "softmax_above_0_5_still_rejected_rate is the share of test non-mushrooms "
                 "whose top softmax exceeds 0.5 and that the energy gate or the background class still rejects. "
                 "A softmax cutoff of 0.5 is not the gate."
             ),

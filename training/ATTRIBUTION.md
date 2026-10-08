@@ -2,6 +2,8 @@
 
 `training/fetch_gbif.py` writes one JSON object per accepted photo to `training/data/attributions.jsonl` (gitignored; created on the training machine).
 
+`training/export_tflite.py` writes the rows that actually entered train, val, and test to `training/artifacts/attributions.jsonl`. Installing a model that passed the ship gates copies that file to `assets/models/attributions.jsonl`. That is the file the app can show later. Each line has the creator, the license, the normalized license id, the image URL, and a source page.
+
 Required fields:
 
 | Field | Meaning |

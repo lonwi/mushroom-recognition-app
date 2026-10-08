@@ -18,6 +18,11 @@ POLICY_MIN_SOFTMAX_FOR_ACCEPT = 0.40
 POLICY_MIN_TOP1_FOR_HIGH_CONFIDENCE = 0.70
 POLICY_MIN_MARGIN = 0.15
 
+BACKGROUND_CLASS_ID = "not_a_mushroom"
+UNKNOWN_CLASS_ID = "unknown_mushroom"
+# Known species only. The two trailing classes are decisions, not taxa.
+NON_SPECIES_IDS = (UNKNOWN_CLASS_ID, BACKGROUND_CLASS_ID)
+
 HIGH_STAKES_IDS = (
     "amanita_phalloides",
     "amanita_virosa",
@@ -82,6 +87,15 @@ def energy_score(logits: list[float], temperature: float = 1.0) -> float:
     return -temperature * logsumexp(scaled)
 
 
+def non_species_ids(ood: dict) -> set[str]:
+    """Classes that must never be shown as a species candidate."""
+    hidden = {
+        ood.get("background_class_id") or BACKGROUND_CLASS_ID,
+        ood.get("unknown_class_id") or UNKNOWN_CLASS_ID,
+    }
+    return {class_id for class_id in hidden if class_id}
+
+
 def decide(logits: list[float], classes: list[dict], ood: dict) -> dict:
     if len(logits) != len(classes):
         raise ValueError(f"logit length {len(logits)} != class count {len(classes)}")
@@ -106,16 +120,22 @@ def decide(logits: list[float], classes: list[dict], ood: dict) -> dict:
         "top_class_id": top_class["id"],
     }
 
-    if top_class["id"] == ood.get("background_class_id"):
+    hidden = non_species_ids(ood)
+    background_id = ood.get("background_class_id") or BACKGROUND_CLASS_ID
+    unknown_id = ood.get("unknown_class_id") or UNKNOWN_CLASS_ID
+    if top_class["id"] == background_id:
         return {**base, "status": "rejected", "reason": "not_a_mushroom"}
     if energy > float(ood["energy_threshold"]):
         return {**base, "status": "rejected", "reason": "not_a_mushroom"}
     accept_floor = ood.get("min_softmax_for_accept")
+    # A confident unknown-fungus top class is not a species and not an edibility call.
+    # Below the accept floor the picture is unclear instead of "a mushroom we don't know".
+    if top_class["id"] == unknown_id and (accept_floor is None or max_softmax >= float(accept_floor)):
+        return {**base, "status": "rejected", "reason": "unknown_mushroom"}
     if accept_floor is not None and max_softmax < float(accept_floor):
         return {**base, "status": "rejected", "reason": "unclear"}
 
-    background_id = ood.get("background_class_id")
-    species_order = [index for index in order if classes[index]["id"] != background_id]
+    species_order = [index for index in order if classes[index]["id"] not in hidden]
     top3 = species_order[:3]
     high_bar = ood.get("min_top1_softmax_for_high_confidence")
     min_margin = ood.get("min_margin")

@@ -1,6 +1,6 @@
 {
   "role": "class_contract",
-  "note": "This file is the class contract for a model we train ourselves. It is not a neural network. Recognition stays unavailable until training/export_tflite.py copies a calibrated mushrooms_model.tflite into this folder and sets model_packaged to true. No species, confidence, or edibility is implied by this list.",
+  "note": "This file is the class contract for a model we train ourselves. It is not a neural network. Recognition stays unavailable until training/export_tflite.py copies a calibrated mushrooms_model.tflite into this folder and sets model_packaged to true. No species, confidence, or edibility is implied by this list. unknown_mushroom means a fungus that is not one of the known species. It is not a species name and not an edibility verdict. not_a_mushroom stays last.",
   "model_file": "mushrooms_model.tflite",
   "model_packaged": false,
   "recognition_available": false,
@@ -18,7 +18,7 @@
     "color": "RGB",
     "preprocess": "mobilenet_v3",
     "formula": "(pixel / 127.5) - 1",
-    "resize": "bilinear_half_pixel_centers"
+    "resize": "area_antialias_downsample_uint8_else_bilinear_half_pixel_centers"
   },
   "output": {
     "type": "logits",
@@ -26,7 +26,12 @@
     "io_dtype": "float32"
   },
   "quantization": null,
-  "dangerous_genera": ["Amanita", "Cortinarius", "Galerina", "Gyromitra"],
+  "dangerous_genera": [
+    "Amanita",
+    "Cortinarius",
+    "Galerina",
+    "Gyromitra"
+  ],
   "ood": {
     "method": "energy_logsumexp_plus_background_class",
     "reference": "Liu et al., Energy-based Out-of-distribution Detection, NeurIPS 2020. E(x) = -T * logsumexp(logits / T). In-distribution scores are lower. Reject when E(x) is above the calibrated threshold, when the background class wins, or when the top softmax is below the accept floor. A softmax cutoff alone is not the gate.",
@@ -39,7 +44,8 @@
     "calibrated": false,
     "id_keep_rate_at_threshold": null,
     "ood_reject_rate_at_threshold": null,
-    "softmax_above_0_5_still_rejected_rate": null
+    "softmax_above_0_5_still_rejected_rate": null,
+    "unknown_class_id": "unknown_mushroom"
   },
   "classes": [
     {
@@ -48,7 +54,9 @@
       "name": "Borowik szlachetny",
       "name_latin": "Boletus edulis",
       "genus": "Boletus",
-      "gbif_names": ["Boletus edulis"]
+      "gbif_names": [
+        "Boletus edulis"
+      ]
     },
     {
       "index": 1,
@@ -56,7 +64,9 @@
       "name": "Muchomor sromotnikowy (zielonawy)",
       "name_latin": "Amanita phalloides",
       "genus": "Amanita",
-      "gbif_names": ["Amanita phalloides"]
+      "gbif_names": [
+        "Amanita phalloides"
+      ]
     },
     {
       "index": 2,
@@ -64,7 +74,9 @@
       "name": "Czubajka kania",
       "name_latin": "Macrolepiota procera",
       "genus": "Macrolepiota",
-      "gbif_names": ["Macrolepiota procera"]
+      "gbif_names": [
+        "Macrolepiota procera"
+      ]
     },
     {
       "index": 3,
@@ -72,7 +84,9 @@
       "name": "Pieprznik jadalny (Kurka)",
       "name_latin": "Cantharellus cibarius",
       "genus": "Cantharellus",
-      "gbif_names": ["Cantharellus cibarius"]
+      "gbif_names": [
+        "Cantharellus cibarius"
+      ]
     },
     {
       "index": 4,
@@ -80,7 +94,11 @@
       "name": "Podgrzybek brunatny",
       "name_latin": "Imleria badia",
       "genus": "Imleria",
-      "gbif_names": ["Imleria badia", "Boletus badius", "Xerocomus badius"]
+      "gbif_names": [
+        "Imleria badia",
+        "Boletus badius",
+        "Xerocomus badius"
+      ]
     },
     {
       "index": 5,
@@ -88,7 +106,9 @@
       "name": "Maślak zwyczajny",
       "name_latin": "Suillus luteus",
       "genus": "Suillus",
-      "gbif_names": ["Suillus luteus"]
+      "gbif_names": [
+        "Suillus luteus"
+      ]
     },
     {
       "index": 6,
@@ -96,7 +116,9 @@
       "name": "Koźlarz babka",
       "name_latin": "Leccinum scabrum",
       "genus": "Leccinum",
-      "gbif_names": ["Leccinum scabrum"]
+      "gbif_names": [
+        "Leccinum scabrum"
+      ]
     },
     {
       "index": 7,
@@ -104,7 +126,9 @@
       "name": "Goryczak żółciowy",
       "name_latin": "Tylopilus felleus",
       "genus": "Tylopilus",
-      "gbif_names": ["Tylopilus felleus"]
+      "gbif_names": [
+        "Tylopilus felleus"
+      ]
     },
     {
       "index": 8,
@@ -112,7 +136,9 @@
       "name": "Muchomor czerwony",
       "name_latin": "Amanita muscaria",
       "genus": "Amanita",
-      "gbif_names": ["Amanita muscaria"]
+      "gbif_names": [
+        "Amanita muscaria"
+      ]
     },
     {
       "index": 9,
@@ -120,7 +146,9 @@
       "name": "Mleczaj rydz",
       "name_latin": "Lactarius deliciosus",
       "genus": "Lactarius",
-      "gbif_names": ["Lactarius deliciosus"]
+      "gbif_names": [
+        "Lactarius deliciosus"
+      ]
     },
     {
       "index": 10,
@@ -128,7 +156,9 @@
       "name": "Piestrzenica kasztanowata",
       "name_latin": "Gyromitra esculenta",
       "genus": "Gyromitra",
-      "gbif_names": ["Gyromitra esculenta"]
+      "gbif_names": [
+        "Gyromitra esculenta"
+      ]
     },
     {
       "index": 11,
@@ -136,7 +166,9 @@
       "name": "Krowiak podwinięty (Olszówka)",
       "name_latin": "Paxillus involutus",
       "genus": "Paxillus",
-      "gbif_names": ["Paxillus involutus"]
+      "gbif_names": [
+        "Paxillus involutus"
+      ]
     },
     {
       "index": 12,
@@ -144,7 +176,9 @@
       "name": "Gołąbek zielonawy",
       "name_latin": "Russula virescens",
       "genus": "Russula",
-      "gbif_names": ["Russula virescens"]
+      "gbif_names": [
+        "Russula virescens"
+      ]
     },
     {
       "index": 13,
@@ -152,7 +186,9 @@
       "name": "Pieczarka polna",
       "name_latin": "Agaricus campestris",
       "genus": "Agaricus",
-      "gbif_names": ["Agaricus campestris"]
+      "gbif_names": [
+        "Agaricus campestris"
+      ]
     },
     {
       "index": 14,
@@ -160,7 +196,12 @@
       "name": "Czubajnik czerwieniejący",
       "name_latin": "Chlorophyllum rhacodes",
       "genus": "Chlorophyllum",
-      "gbif_names": ["Chlorophyllum rhacodes", "Chlorophyllum rachodes", "Macrolepiota rhacodes", "Macrolepiota rachodes"]
+      "gbif_names": [
+        "Chlorophyllum rhacodes",
+        "Chlorophyllum rachodes",
+        "Macrolepiota rhacodes",
+        "Macrolepiota rachodes"
+      ]
     },
     {
       "index": 15,
@@ -168,7 +209,9 @@
       "name": "Lisówka pomarańczowa",
       "name_latin": "Hygrophoropsis aurantiaca",
       "genus": "Hygrophoropsis",
-      "gbif_names": ["Hygrophoropsis aurantiaca"]
+      "gbif_names": [
+        "Hygrophoropsis aurantiaca"
+      ]
     },
     {
       "index": 16,
@@ -176,7 +219,9 @@
       "name": "Mleczaj wełnianka",
       "name_latin": "Lactarius torminosus",
       "genus": "Lactarius",
-      "gbif_names": ["Lactarius torminosus"]
+      "gbif_names": [
+        "Lactarius torminosus"
+      ]
     },
     {
       "index": 17,
@@ -184,7 +229,9 @@
       "name": "Smardz jadalny",
       "name_latin": "Morchella esculenta",
       "genus": "Morchella",
-      "gbif_names": ["Morchella esculenta"]
+      "gbif_names": [
+        "Morchella esculenta"
+      ]
     },
     {
       "index": 18,
@@ -192,7 +239,9 @@
       "name": "Muchomor jadowity",
       "name_latin": "Amanita virosa",
       "genus": "Amanita",
-      "gbif_names": ["Amanita virosa"]
+      "gbif_names": [
+        "Amanita virosa"
+      ]
     },
     {
       "index": 19,
@@ -200,7 +249,9 @@
       "name": "Muchomor plamisty",
       "name_latin": "Amanita pantherina",
       "genus": "Amanita",
-      "gbif_names": ["Amanita pantherina"]
+      "gbif_names": [
+        "Amanita pantherina"
+      ]
     },
     {
       "index": 20,
@@ -208,7 +259,9 @@
       "name": "Zasłoniak rudy",
       "name_latin": "Cortinarius orellanus",
       "genus": "Cortinarius",
-      "gbif_names": ["Cortinarius orellanus"]
+      "gbif_names": [
+        "Cortinarius orellanus"
+      ]
     },
     {
       "index": 21,
@@ -216,7 +269,11 @@
       "name": "Zasłoniak szpiczasty",
       "name_latin": "Cortinarius rubellus",
       "genus": "Cortinarius",
-      "gbif_names": ["Cortinarius rubellus", "Cortinarius speciosissimus", "Cortinarius orellanoides"]
+      "gbif_names": [
+        "Cortinarius rubellus",
+        "Cortinarius speciosissimus",
+        "Cortinarius orellanoides"
+      ]
     },
     {
       "index": 22,
@@ -224,7 +281,10 @@
       "name": "Hełmówka jadowita",
       "name_latin": "Galerina marginata",
       "genus": "Galerina",
-      "gbif_names": ["Galerina marginata", "Galerina autumnalis"]
+      "gbif_names": [
+        "Galerina marginata",
+        "Galerina autumnalis"
+      ]
     },
     {
       "index": 23,
@@ -232,7 +292,10 @@
       "name": "Łuskwiak zmienny",
       "name_latin": "Kuehneromyces mutabilis",
       "genus": "Kuehneromyces",
-      "gbif_names": ["Kuehneromyces mutabilis", "Pholiota mutabilis"]
+      "gbif_names": [
+        "Kuehneromyces mutabilis",
+        "Pholiota mutabilis"
+      ]
     },
     {
       "index": 24,
@@ -240,7 +303,9 @@
       "name": "Opieńka miodowa",
       "name_latin": "Armillaria mellea",
       "genus": "Armillaria",
-      "gbif_names": ["Armillaria mellea"]
+      "gbif_names": [
+        "Armillaria mellea"
+      ]
     },
     {
       "index": 25,
@@ -248,7 +313,9 @@
       "name": "Muchomor czerwieniejący",
       "name_latin": "Amanita rubescens",
       "genus": "Amanita",
-      "gbif_names": ["Amanita rubescens"]
+      "gbif_names": [
+        "Amanita rubescens"
+      ]
     },
     {
       "index": 26,
@@ -256,10 +323,117 @@
       "name": "Muchomor cytrynowy",
       "name_latin": "Amanita citrina",
       "genus": "Amanita",
-      "gbif_names": ["Amanita citrina"]
+      "gbif_names": [
+        "Amanita citrina"
+      ]
     },
     {
       "index": 27,
+      "id": "unknown_mushroom",
+      "name": "Nieznany grzyb",
+      "name_latin": "Unknown mushroom",
+      "genus": "",
+      "gbif_names": [
+        "Amanita fulva",
+        "Amanita vaginata",
+        "Amanita excelsa",
+        "Boletus reticulatus",
+        "Xerocomellus chrysenteron",
+        "Xerocomus subtomentosus",
+        "Leccinum versipelle",
+        "Leccinum aurantiacum",
+        "Suillus granulatus",
+        "Suillus bovinus",
+        "Suillus grevillei",
+        "Russula ochroleuca",
+        "Russula cyanoxantha",
+        "Russula emetica",
+        "Lactarius rufus",
+        "Lactarius piperatus",
+        "Lactarius quietus",
+        "Coprinus comatus",
+        "Pleurotus ostreatus",
+        "Fomes fomentarius",
+        "Trametes versicolor",
+        "Fomitopsis betulina",
+        "Laetiporus sulphureus",
+        "Lycoperdon perlatum",
+        "Phallus impudicus",
+        "Lepista nuda",
+        "Clitocybe nebularis",
+        "Flammulina velutipes",
+        "Hypholoma fasciculare",
+        "Pluteus cervinus",
+        "Schizophyllum commune",
+        "Ganoderma applanatum",
+        "Neoboletus luridiformis",
+        "Scleroderma citrinum",
+        "Laccaria laccata",
+        "Marasmius oreades",
+        "Sparassis crispa",
+        "Craterellus cornucopioides",
+        "Hydnum repandum",
+        "Cortinarius caperatus",
+        "Tricholoma portentosum",
+        "Agaricus arvensis",
+        "Mycena galericulata",
+        "Fistulina hepatica",
+        "Cerioporus squamosus",
+        "Calocera viscosa",
+        "Auricularia auricula-judae",
+        "Tremella mesenterica",
+        "Clitopilus prunulus",
+        "Laccaria amethystina",
+        "Amanita crocea",
+        "Amanita porphyria",
+        "Amanita verna",
+        "Boletus pinophilus",
+        "Leccinum pseudoscabrum",
+        "Russula vesca",
+        "Lactarius vellereus",
+        "Lactarius deterrimus",
+        "Coprinopsis atramentaria",
+        "Armillaria ostoyae",
+        "Inocybe geophylla",
+        "Inocybe erubescens",
+        "Entoloma sinuatum",
+        "Helvella crispa",
+        "Ramaria flava",
+        "Craterellus tubaeformis",
+        "Macrolepiota mastoidea",
+        "Clitocybe rivulosa",
+        "Gyromitra gigas",
+        "Agaricus xanthodermus"
+      ],
+      "sampling": {
+        "per_taxon_cap": 80,
+        "class_cap": 2500,
+        "held_out_gbif_names": [
+          "Amanita crocea",
+          "Amanita porphyria",
+          "Amanita verna",
+          "Boletus pinophilus",
+          "Leccinum pseudoscabrum",
+          "Russula vesca",
+          "Lactarius vellereus",
+          "Lactarius deterrimus",
+          "Coprinopsis atramentaria",
+          "Armillaria ostoyae",
+          "Inocybe geophylla",
+          "Inocybe erubescens",
+          "Entoloma sinuatum",
+          "Helvella crispa",
+          "Ramaria flava",
+          "Craterellus tubaeformis",
+          "Macrolepiota mastoidea",
+          "Clitocybe rivulosa",
+          "Gyromitra gigas",
+          "Agaricus xanthodermus"
+        ]
+      }
+    },
+    {
+      "index": 28,
       "id": "not_a_mushroom",
       "name": "To nie jest grzyb",
       "name_latin": "Not a mushroom",
@@ -268,12 +442,87 @@
         "Felis catus",
         "Canis lupus familiaris",
         "Turdus merula",
+        "Sciurus vulgaris",
+        "Equus caballus",
+        "Vulpes vulpes",
+        "Capreolus capreolus",
+        "Sus scrofa",
+        "Erinaceus europaeus",
+        "Lepus europaeus",
+        "Meles meles",
+        "Rana temporaria",
+        "Bufo bufo",
+        "Natrix natrix",
+        "Lacerta agilis",
+        "Parus major",
+        "Fringilla coelebs",
+        "Erithacus rubecula",
+        "Garrulus glandarius",
+        "Pica pica",
+        "Columba palumbus",
+        "Dendrocopos major",
+        "Apis mellifera",
+        "Bombus terrestris",
+        "Vespa crabro",
+        "Coccinella septempunctata",
+        "Gonepteryx rhamni",
         "Quercus robur",
         "Bellis perennis",
-        "Apis mellifera",
-        "Sciurus vulgaris",
-        "Equus caballus"
-      ]
+        "Betula pendula",
+        "Fagus sylvatica",
+        "Pinus sylvestris",
+        "Picea abies",
+        "Acer platanoides",
+        "Corylus avellana",
+        "Vaccinium myrtillus",
+        "Anemone nemorosa",
+        "Oxalis acetosella",
+        "Fragaria vesca",
+        "Urtica dioica",
+        "Taraxacum officinale",
+        "Trifolium repens",
+        "Plantago major",
+        "Rubus idaeus",
+        "Calluna vulgaris",
+        "Martes martes",
+        "Talpa europaea",
+        "Sitta europaea",
+        "Anguis fragilis",
+        "Alnus glutinosa",
+        "Tilia cordata",
+        "Convallaria majalis",
+        "Galanthus nivalis",
+        "Pieris brassicae",
+        "Formica rufa",
+        "Corvus corax",
+        "Hirundo rustica",
+        "Helix pomatia",
+        "Araneus diadematus",
+        "Rosa canina",
+        "Sambucus nigra"
+      ],
+      "sampling": {
+        "per_taxon_cap": 80,
+        "class_cap": 2500,
+        "held_out_gbif_names": [
+          "Martes martes",
+          "Talpa europaea",
+          "Sitta europaea",
+          "Anguis fragilis",
+          "Alnus glutinosa",
+          "Tilia cordata",
+          "Convallaria majalis",
+          "Galanthus nivalis",
+          "Pieris brassicae",
+          "Formica rufa",
+          "Corvus corax",
+          "Hirundo rustica",
+          "Helix pomatia",
+          "Araneus diadematus",
+          "Rosa canina",
+          "Sambucus nigra"
+        ]
+      }
     }
   ]
 }

@@ -19,7 +19,7 @@ export type RecognitionDecision =
   | { status: 'unavailable'; reason: 'gate_not_calibrated' | 'output_mismatch' }
   | {
       status: 'rejected';
-      reason: 'not_a_mushroom' | 'unclear';
+      reason: 'not_a_mushroom' | 'unknown_mushroom' | 'unclear';
       energy: number;
       maxSoftmax: number;
       topClassId: string;
@@ -78,10 +78,24 @@ export function decideFromLogits(logits: number[], manifest: ModelManifest): Rec
   const margin = top.probability - second;
   const topClass = manifest.classes[top.index];
 
+  const unknownClassId = ood.unknown_class_id ?? 'unknown_mushroom';
+  const hidden = new Set([ood.background_class_id, unknownClassId]);
   if (topClass.id === ood.background_class_id || energy > ood.energy_threshold) {
     return {
       status: 'rejected',
       reason: 'not_a_mushroom',
+      energy,
+      maxSoftmax: top.probability,
+      topClassId: topClass.id,
+    };
+  }
+  if (
+    topClass.id === unknownClassId &&
+    (ood.min_softmax_for_accept == null || top.probability >= ood.min_softmax_for_accept)
+  ) {
+    return {
+      status: 'rejected',
+      reason: 'unknown_mushroom',
       energy,
       maxSoftmax: top.probability,
       topClassId: topClass.id,
@@ -105,7 +119,7 @@ export function decideFromLogits(logits: number[], manifest: ModelManifest): Rec
     lowConfidence = true;
   }
 
-  const speciesOrder = order.filter((entry) => manifest.classes[entry.index].id !== ood.background_class_id);
+  const speciesOrder = order.filter((entry) => !hidden.has(manifest.classes[entry.index].id));
   const top3 = speciesOrder.slice(0, 3).map((entry, rank) => {
     const species = manifest.classes[entry.index];
     return {

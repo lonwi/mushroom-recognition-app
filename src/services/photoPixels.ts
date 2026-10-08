@@ -8,23 +8,26 @@ function base64ToBytes(value: string): Uint8Array {
 }
 
 /**
- * Resize a captured photo to 224 PNG bytes. Used only after a calibrated
- * model is packaged. Expo Go can run this; the TFLite runtime cannot.
+ * Bake the capture's EXIF orientation into PNG bytes. The camera uses
+ * skipProcessing, so the JPEG may still carry an orientation tag.
+ * ImageManipulator applies that tag and does not resize: the antialiased
+ * 224 resize lives in imagePreprocess.ts and matches training/preprocess.py.
+ * Expo Go can run this; the TFLite runtime cannot.
  */
 export async function readPhotoAsPngBytes(uri: string): Promise<Uint8Array> {
   const manipulator = require('expo-image-manipulator') as {
     manipulateAsync: (
       uri: string,
-      actions: { resize: { width: number; height: number } }[],
+      actions: [],
       save: { compress: number; format: string; base64: boolean },
     ) => Promise<{ base64?: string }>;
     SaveFormat: { PNG: string };
   };
-  const rendered = await manipulator.manipulateAsync(
-    uri,
-    [{ resize: { width: 224, height: 224 } }],
-    { compress: 1, format: manipulator.SaveFormat.PNG, base64: true },
-  );
+  const rendered = await manipulator.manipulateAsync(uri, [], {
+    compress: 1,
+    format: manipulator.SaveFormat.PNG,
+    base64: true,
+  });
   if (!rendered.base64) {
     throw new Error('photo_bytes_missing');
   }

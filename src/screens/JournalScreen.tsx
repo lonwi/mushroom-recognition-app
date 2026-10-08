@@ -155,6 +155,18 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
         </View>
       );
     }
+    if (recognition.status === 'rejected' && recognition.reason === 'unknown_mushroom') {
+      return (
+        <View>
+          <Text style={styles.speciesNamePl} testID={`journal-title-${item.id}`}>
+            {t('journal.unknownMushroomTitle')}
+          </Text>
+          <Text style={styles.honestBody} testID={`journal-unknown-${item.id}`}>
+            {t('scanner.unknownMushroomBody')}
+          </Text>
+        </View>
+      );
+    }
     if (recognition.status === 'rejected' && recognition.reason === 'unclear') {
       return (
         <View>

@@ -20,7 +20,7 @@ export const pl = {
     offlineNotice: 'Model i baza danych działają w 100% offline bez połączenia z siecią.',
     dataLicenseTitle: 'Licencje zdjęć treningowych',
     dataLicenseBody:
-      'Model, jeśli zostanie dołączony, wolno trenować tylko na zdjęciach CC0 albo CC-BY (bez NC i SA). Przy każdym zdjęciu zapisujemy autora, licencję i adres źródła w training/data/attributions.jsonl. Tego pliku nie wolno pominąć przy dystrybucji modelu.',
+      'Model, jeśli zostanie dołączony, wolno trenować tylko na zdjęciach CC0 albo CC-BY (bez NC i SA). Przy każdym zdjęciu zapisujemy autora, licencję i adres źródła. Eksport zapisuje je obok modelu w assets/models/attributions.jsonl.',
     about: 'O aplikacji',
     version: 'Wersja 1.0.0 (On-Device AI)',
     atlasScope:
@@ -113,6 +113,9 @@ export const pl = {
       'Zdjęcie nie zostało uznane za grzyba z zestawu klas albo leży poza rozkładem, którego model się nauczył. Gatunek nie został podany.',
     rejectedUnclear: 'Obraz jest zbyt niejednoznaczny, żeby podać gatunek.',
     rejectedVerify: 'Jeśli to jednak grzyb, oceń go u grzyboznawcy albo w Sanepidzie.',
+    unknownMushroomTitle: 'Nieznany grzyb',
+    unknownMushroomBody:
+      'To wygląda na grzyba, którego aplikacja nie zna. Nie zbieraj go ani nie jedz na podstawie skanu.',
     candidatesTitle: 'Kandydaci ze skanu',
     candidatesLead: 'Trzy najwyższe wskazania modelu. To nie jest oznaczenie gatunku do zbioru.',
     notEdibilityVerdict: 'Ten skan nie jest oceną jadalności.',
@@ -172,6 +175,7 @@ export const pl = {
     unavailableTitle: 'Rozpoznawanie niedostępne',
     unclearTitle: 'Niepewny wynik',
     notMushroomTitle: 'To nie jest grzyb z modelu',
+    unknownMushroomTitle: 'Nieznany grzyb',
     candidatesTitle: 'Kandydaci ze skanu',
     openCandidate: 'Karta kandydata w atlasie',
     openMap: 'Otwórz miejsce w mapach',

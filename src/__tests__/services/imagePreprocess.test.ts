@@ -8,6 +8,10 @@ const preprocessFixture = JSON.parse(
   fs.readFileSync(path.join(__dirname, '../../../training/fixtures/preprocess_2x2_to_4.json'), 'utf8'),
 ) as { width: number; height: number; size: number; rgb: number[]; expected: number[] };
 
+const areaFixture = JSON.parse(
+  fs.readFileSync(path.join(__dirname, '../../../training/fixtures/area_resize_6x4_to_2.json'), 'utf8'),
+) as { width: number; height: number; size: number; rgb: number[]; expected: number[] };
+
 describe('MobileNetV3 preprocessing', () => {
   test('a flat red image normalizes to (1, -1, -1) after resize', () => {
     const width = 5;
@@ -35,6 +39,19 @@ describe('MobileNetV3 preprocessing', () => {
     expect(output[5]).toBeCloseTo(-1, 5);
     expect(output[9]).toBeCloseTo(128 / 127.5 - 1, 5);
     expect(output[11]).toBeCloseTo(32 / 127.5 - 1, 5);
+  });
+
+  test('matches the Python antialiased downsample', () => {
+    const output = preprocessRgbToMobileNetV3(
+      Uint8Array.from(areaFixture.rgb),
+      areaFixture.width,
+      areaFixture.height,
+      areaFixture.size,
+    );
+    expect(output).toHaveLength(areaFixture.expected.length);
+    output.forEach((value, index) => {
+      expect(value).toBeCloseTo(areaFixture.expected[index], 4);
+    });
   });
 
   test('matches the Python bilinear fixture', () => {

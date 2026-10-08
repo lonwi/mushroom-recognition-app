@@ -20,6 +20,13 @@ const notAMushroom: ClassificationResult = {
   inferenceTimeMs: 9,
 };
 
+const unknownMushroom: ClassificationResult = {
+  status: 'rejected',
+  reason: 'unknown_mushroom',
+  processedImageUri: 'file://camera/other-fungus.jpg',
+  inferenceTimeMs: 14,
+};
+
 const bolete: ClassificationResult = {
   status: 'candidates',
   processedImageUri: 'content://media/mushroom.jpg',
@@ -91,6 +98,15 @@ describe('journal entries from a scan', () => {
 
     const reloaded = await storageService.getSightings();
     expect(reloaded).toEqual([saved.record]);
+  });
+
+  it('stores an unknown fungus without a species name or an edibility verdict', async () => {
+    const saved = await createJournalEntryFromScan(unknownMushroom, false);
+
+    expect(saved.record.recognition).toEqual({ status: 'rejected', reason: 'unknown_mushroom' });
+    expect(JSON.stringify(saved.record)).not.toMatch(/speciesId|confidence|Borowik|JADALNY|edibility/);
+    const reloaded = await storageService.getSightings();
+    expect(reloaded[0].recognition).toEqual({ status: 'rejected', reason: 'unknown_mushroom' });
   });
 
   it('does not name a species for a non-mushroom and does not invent coordinates when GPS is refused', async () => {
