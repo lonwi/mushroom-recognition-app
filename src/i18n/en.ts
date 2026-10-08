@@ -24,7 +24,7 @@ export const en: Translations = {
     dataLicenseBody:
       'A model, if one is shipped, may be trained only on CC0 or CC-BY photos (no NC or SA). The list includes training photos, test photos, and evaluation probes. Every photo keeps its author, license, and source URL. Export writes them next to the model in assets/models/attributions.jsonl.',
     photoCreditsOpen: 'Dataset photo credits',
-    photoCreditsClose: 'Hide photo credits',
+    photoCreditsLoading: 'Loading photo credits…',
     photoCreditsLead:
       'CC0 and CC-BY photos in the shipped model dataset: training, test, and evaluation probes.',
     photoCreditsEmpty:

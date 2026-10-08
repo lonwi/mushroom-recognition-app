@@ -3,7 +3,10 @@ import {
   readPhotoAsPngBytes,
   previewResizeWidths,
   NATIVE_PREVIEW_EDGE,
+  SKIP_PROCESSING_CAPTURE,
   uprightCaptureWidth,
+  uprightWidthFromExif,
+  widthForCapture,
 } from '../../services/photoPixels';
 
 type ContextRecord = { uri: string; widths: number[]; saved: boolean };
@@ -89,11 +92,54 @@ describe('readPhotoAsPngBytes', () => {
 
 describe('uprightCaptureWidth', () => {
   it('ignores photo.width when expo-camera skipped EXIF rotation', () => {
-    expect(uprightCaptureWidth(4032, { skipProcessing: true })).toBeUndefined();
+    expect(SKIP_PROCESSING_CAPTURE).toEqual({ skipProcessing: true });
+    expect(uprightCaptureWidth(4032, SKIP_PROCESSING_CAPTURE)).toBeUndefined();
   });
 
   it('keeps photo.width after the camera applied EXIF rotation', () => {
     expect(uprightCaptureWidth(3024, { skipProcessing: false })).toBe(3024);
     expect(uprightCaptureWidth(undefined, { skipProcessing: false })).toBeUndefined();
+  });
+});
+
+describe('uprightWidthFromExif', () => {
+  const stored = { PixelXDimension: 4032, PixelYDimension: 3024, ImageWidth: 4032, ImageLength: 3024 };
+
+  it('keeps the stored width for orientations 1–4', () => {
+    for (const orientation of [1, 2, 3, 4]) {
+      expect(uprightWidthFromExif({ ...stored, Orientation: orientation })).toBe(4032);
+    }
+  });
+
+  it('swaps width and height for orientations 5–8', () => {
+    for (const orientation of [5, 6, 7, 8]) {
+      expect(uprightWidthFromExif({ ...stored, Orientation: orientation })).toBe(3024);
+    }
+  });
+
+  it('reads Android ImageWidth and iOS PixelXDimension, including nested exif', () => {
+    expect(uprightWidthFromExif({ Orientation: 6, ImageWidth: 4032, ImageLength: 3024 })).toBe(3024);
+    expect(uprightWidthFromExif({ Orientation: 1, PixelXDimension: 800, PixelYDimension: 600 })).toBe(800);
+    expect(
+      uprightWidthFromExif({
+        '{Exif}': { Orientation: '8', PixelXDimension: '4032', PixelYDimension: '3024' },
+      }),
+    ).toBe(3024);
+  });
+
+  it('does not return an unswapped width when the stored height is missing', () => {
+    expect(uprightWidthFromExif({ Orientation: 6, ImageWidth: 4032 })).toBeUndefined();
+    expect(uprightWidthFromExif(null)).toBeUndefined();
+    expect(uprightWidthFromExif({})).toBeUndefined();
+  });
+
+  it('uses EXIF for a skipProcessing capture and the platform width otherwise', () => {
+    const portrait = {
+      width: 4032,
+      height: 3024,
+      exif: { Orientation: 6, PixelXDimension: 4032, PixelYDimension: 3024 },
+    };
+    expect(widthForCapture(portrait, SKIP_PROCESSING_CAPTURE)).toBe(3024);
+    expect(widthForCapture({ width: 3024, exif: portrait.exif }, { skipProcessing: false })).toBe(3024);
   });
 });

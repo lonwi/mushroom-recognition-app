@@ -11,7 +11,7 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { classifierService, ClassificationResult } from '../services/classifierService';
-import { uprightCaptureWidth } from '../services/photoPixels';
+import { SKIP_PROCESSING_CAPTURE, uprightCaptureWidth, widthForCapture } from '../services/photoPixels';
 import { ResultModal } from '../components/ResultModal';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -50,12 +50,14 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
         quality: 0.8,
         // Leave EXIF orientation on the file. readPhotoAsPngBytes bakes it,
         // then imagePreprocess area-resizes to match the training PNGs.
-        skipProcessing: true,
+        exif: true,
+        ...SKIP_PROCESSING_CAPTURE,
       });
 
       if (photo && photo.uri) {
-        // skipProcessing leaves Android photo.width as the pre-rotation pixel width.
-        const width = uprightCaptureWidth(photo.width, { skipProcessing: true });
+        // Stored EXIF pixels, swapped for orientations 5–8. Avoids a full
+        // decode just to read width on Android and on iOS.
+        const width = widthForCapture(photo, SKIP_PROCESSING_CAPTURE);
         await showCapturedPhoto(photo.uri, width);
       } else {
         Alert.alert(t('scanner.photoFailedTitle'), t('scanner.photoFailedBody'));

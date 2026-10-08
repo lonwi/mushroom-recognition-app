@@ -11,14 +11,96 @@ function base64ToBytes(value: string): Uint8Array {
 export const NATIVE_PREVIEW_EDGE = 448;
 
 /**
+ * One object for the shutter and the width reader.
+ * Android `skipProcessing` leaves the JPEG oriented and reports stored pixels.
+ * iOS ignores the flag, so the same capture still reads EXIF instead of decoding.
+ */
+export const SKIP_PROCESSING_CAPTURE = { skipProcessing: true } as const;
+
+const EXIF_WIDTH_KEYS = ['PixelXDimension', 'ImageWidth'] as const;
+const EXIF_HEIGHT_KEYS = ['PixelYDimension', 'ImageLength', 'ImageHeight'] as const;
+
+function positiveInteger(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isInteger(value) && value >= 1) {
+    return value;
+  }
+  if (typeof value === 'string' && /^[1-9]\d*$/.test(value)) {
+    const parsed = Number(value);
+    if (parsed >= 1) {
+      return parsed;
+    }
+  }
+  return undefined;
+}
+
+function readKeyedInteger(record: Record<string, unknown>, keys: readonly string[]): number | undefined {
+  for (const key of keys) {
+    const parsed = positiveInteger(record[key]);
+    if (parsed !== undefined) {
+      return parsed;
+    }
+  }
+  return undefined;
+}
+
+function exifRecords(exif: object): Record<string, unknown>[] {
+  const root = exif as Record<string, unknown>;
+  const records = [root];
+  for (const value of Object.values(root)) {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      records.push(value as Record<string, unknown>);
+    }
+  }
+  return records;
+}
+
+/**
+ * Upright pixel width from stored EXIF dimensions.
+ *
+ * `PixelXDimension` / `ImageWidth` are the JPEG's stored width, before the
+ * orientation tag is applied. Orientations 5–8 transpose the axes (90° and
+ * 270°, including the mirrored forms), so the upright width is the stored
+ * height. Orientations 1–4 keep the stored width. This matches Android
+ * `skipProcessing` (stored `TAG_IMAGE_WIDTH` plus the orientation tag) and
+ * iOS, which puts `PixelXDimension` and `Orientation` on the capture exif
+ * and does not implement `skipProcessing`.
+ */
+export function uprightWidthFromExif(exif: object | null | undefined): number | undefined {
+  if (!exif) {
+    return undefined;
+  }
+  let orientation: number | undefined;
+  let storedWidth: number | undefined;
+  let storedHeight: number | undefined;
+  for (const record of exifRecords(exif)) {
+    if (orientation === undefined) {
+      const parsed = readKeyedInteger(record, ['Orientation']);
+      if (parsed !== undefined && parsed >= 1 && parsed <= 8) {
+        orientation = parsed;
+      }
+    }
+    if (storedWidth === undefined) {
+      storedWidth = readKeyedInteger(record, EXIF_WIDTH_KEYS);
+    }
+    if (storedHeight === undefined) {
+      storedHeight = readKeyedInteger(record, EXIF_HEIGHT_KEYS);
+    }
+  }
+  const swapsAxes = orientation !== undefined && orientation >= 5 && orientation <= 8;
+  if (swapsAxes) {
+    return storedHeight;
+  }
+  return storedWidth;
+}
+
+/**
  * expo-camera 57 `photo.width` is the upright width only after orientation is applied.
  *
  * Android `ResolveTakenPicture` writes `bitmap.width` after `decodeAndRotateBitmap`
  * when `skipProcessing` is false. With `skipProcessing` it writes
  * `ExifInterface.TAG_IMAGE_WIDTH`, the stored pixel width before that rotation.
- * iOS `UIImage.size` is orientation-aware, and this SDK does not implement
- * `skipProcessing` there. A skipProcessing capture must not supply the resize
- * width. Gallery widths from expo-image-picker already swap 90° and 270° EXIF.
+ * A skipProcessing capture must use `uprightWidthFromExif` instead of this width.
+ * Gallery widths from expo-image-picker already swap 90° and 270° EXIF.
  */
 export function uprightCaptureWidth(
   width: number | undefined,
@@ -31,6 +113,17 @@ export function uprightCaptureWidth(
     return width;
   }
   return undefined;
+}
+
+/** Width passed to the resizer. skipProcessing reads EXIF; otherwise the platform width. */
+export function widthForCapture(
+  photo: { width?: number; exif?: object | null },
+  capture: { skipProcessing?: boolean },
+): number | undefined {
+  if (capture.skipProcessing) {
+    return uprightWidthFromExif(photo.exif);
+  }
+  return uprightCaptureWidth(photo.width, capture);
 }
 
 /**
