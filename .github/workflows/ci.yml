@@ -53,6 +53,38 @@ jobs:
       - name: Test
         run: pnpm test --ci --watchAll=false
 
+  # Separate from `check` so edits there do not overlap this job.
+  # Baselines are committed; the job fails only when a finding is new.
+  quality:
+    name: Code quality
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: ESLint
+        run: pnpm lint
+
+      - name: Copy-paste detection
+        run: pnpm duplication
+
+      - name: Unused files, exports, and dependencies
+        run: pnpm knip
+
+      - name: Dependency rules
+        run: pnpm depcruise
+
   python:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
