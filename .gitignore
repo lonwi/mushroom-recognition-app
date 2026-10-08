@@ -6,6 +6,10 @@ test-results
 playwright-report
 dist
 .DS_Store
+
+# Store-submit secrets belong on EAS credentials, not in git. See docs/RELEASE.md.
+google-service-account.json
+*.p8
 training/data/
 training/artifacts/
 __pycache__/

@@ -1,0 +1,208 @@
+name: Release
+
+# Tag push v* runs tests, then an EAS production build, then waits on the
+# GitHub environment "production" before submitting those exact build ids.
+# Owner setup: docs/RELEASE.md.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Typecheck and tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Tag commit must be on main
+        run: |
+          git fetch origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test --ci --watchAll=false
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build Storybook
+        run: pnpm build-storybook
+
+      - name: End-to-end tests
+        run: pnpm test:e2e
+
+      - name: Tag version matches expo.version and project is linked
+        run: node scripts/assert-eas-release-config.mjs --tag "$GITHUB_REF_NAME"
+
+  build:
+    name: EAS production build
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    environment: release-build
+    outputs:
+      android_id: ${{ steps.ids.outputs.android_id }}
+      ios_id: ${{ steps.ids.outputs.ios_id }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Require linked Expo project and submit fields
+        run: node scripts/assert-eas-release-config.mjs --tag "$GITHUB_REF_NAME"
+
+      - name: Require EXPO_TOKEN
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "Missing EXPO_TOKEN on the release-build environment. See docs/RELEASE.md."
+            exit 1
+          fi
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@eab7a230208c952974db8c3245cfd78402c7b385 # v9.0.0
+        with:
+          eas-version: 24.12.0
+          packager: npm
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build production binaries
+        run: eas build --profile production --platform all --non-interactive --json > builds.json
+
+      - name: Publish build ids from this run
+        id: ids
+        run: |
+          set -euo pipefail
+          read_id() {
+            jq -er --arg platform "$1" '
+              def rows:
+                if type == "array" then .
+                elif type == "object" and (.builds | type) == "array" then .builds
+                elif type == "object" then [.]
+                else error("expected a JSON array of builds") end;
+              [ rows[]
+                | select((.platform // "" | ascii_downcase) == $platform)
+                | .id
+                | select(type == "string" and length > 0)
+              ]
+              | if length == 1 then .[0] else error("expected exactly one \($platform) build id, got \(length)") end
+            ' builds.json
+          }
+          if ! android_id="$(read_id android)"; then
+            echo "Android build id is missing. EAS may still be building, but this workflow will not submit."
+            cat builds.json
+            exit 1
+          fi
+          if ! ios_id="$(read_id ios)"; then
+            echo "iOS build id is missing. EAS may still be building, but this workflow will not submit."
+            cat builds.json
+            exit 1
+          fi
+          uuid='^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+          if ! [[ "$android_id" =~ $uuid && "$ios_id" =~ $uuid ]]; then
+            echo "Build ids are not UUIDs, so submit is refused."
+            echo "android=${android_id}"
+            echo "ios=${ios_id}"
+            exit 1
+          fi
+          echo "android_id=${android_id}" >> "$GITHUB_OUTPUT"
+          echo "ios_id=${ios_id}" >> "$GITHUB_OUTPUT"
+
+  submit:
+    name: EAS submit
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Require linked Expo project and submit fields
+        run: node scripts/assert-eas-release-config.mjs --tag "$GITHUB_REF_NAME"
+
+      - name: Require build ids from this run
+        run: |
+          if [ -z "${{ needs.build.outputs.android_id }}" ] || [ -z "${{ needs.build.outputs.ios_id }}" ]; then
+            echo "Build ids from this run are empty, so submit is refused. A timed-out EAS build keeps running on Expo and is not submitted."
+            exit 1
+          fi
+
+      - name: Require EXPO_TOKEN
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "Missing EXPO_TOKEN on the production environment. See docs/RELEASE.md."
+            exit 1
+          fi
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@eab7a230208c952974db8c3245cfd78402c7b385 # v9.0.0
+        with:
+          eas-version: 24.12.0
+          packager: npm
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Submit the Android build from this run
+        run: eas submit --profile production --platform android --id "${{ needs.build.outputs.android_id }}" --non-interactive
+
+      - name: Submit the iOS build from this run
+        run: eas submit --profile production --platform ios --id "${{ needs.build.outputs.ios_id }}" --non-interactive
