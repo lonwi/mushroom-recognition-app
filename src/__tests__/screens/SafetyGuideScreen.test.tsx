@@ -21,8 +21,8 @@ describe('SafetyGuideScreen foraging rules', () => {
     expect(getByText(pl.safetyGuide.rules.rule_tubes_first.title)).toBeTruthy();
     expect(getByText(pl.safetyGuide.rules.rule_whole_mushroom.title)).toBeTruthy();
     expect(getByText(pl.safetyGuide.rules.rule_whole_mushroom.description)).toBeTruthy();
-    expect(getByText(pl.safetyGuide.rules.rule_larger_boletes.title)).toBeTruthy();
-    expect(getByText(pl.safetyGuide.rules.rule_larger_boletes.description)).toBeTruthy();
+    expect(getByText(pl.safetyGuide.rules.rule_tube_mushrooms_cut.title)).toBeTruthy();
+    expect(getByText(pl.safetyGuide.rules.rule_tube_mushrooms_cut.description)).toBeTruthy();
     expect(getByText(pl.safetyGuide.rules.rule_protect_forest_floor.title)).toBeTruthy();
     expect(getByText(pl.safetyGuide.rules.rule_protect_forest_floor.description)).toBeTruthy();
     expect(queryByText('Wykręcaj owocnik w całości z nasadą trzonu')).toBeNull();
@@ -40,7 +40,7 @@ describe('SafetyGuideScreen foraging rules', () => {
     );
 
     expect(await findByText(en.safetyGuide.rules.rule_whole_mushroom.title)).toBeTruthy();
-    expect(await findByText(en.safetyGuide.rules.rule_larger_boletes.description)).toBeTruthy();
+    expect(await findByText(en.safetyGuide.rules.rule_tube_mushrooms_cut.description)).toBeTruthy();
     expect(await findByText(en.safetyGuide.rules.rule_protect_forest_floor.description)).toBeTruthy();
     expect(await findByText(en.safetyGuide.rules.rule_tubes_first.title)).toBeTruthy();
     expect(queryByText(pl.safetyGuide.rules.rule_whole_mushroom.title)).toBeNull();

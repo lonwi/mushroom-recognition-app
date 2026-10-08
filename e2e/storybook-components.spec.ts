@@ -211,25 +211,24 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.getByTestId('species-use-neutral')).toHaveCount(0);
   });
 
-  test('Safety guide keeps gilled mushrooms whole and lets larger boletes be cut', async ({ page }) => {
+  test('Safety guide takes mushrooms whole and cuts only sure tube mushrooms', async ({ page }) => {
     await page.goto('/iframe.html?id=mushroom-safetyguidescreen--golden-rules');
     await expect(page.locator('body')).toContainText(
       'Dla początkujących: tylko grzyby z rurkami (z "gąbką")',
     );
     await expect(page.locator('body')).toContainText(
-      'Grzyby blaszkowe wyjmuj w całości, z podstawą trzonu',
+      'Wyjmuj grzyb w całości, z bulwą i pochwą u nasady',
     );
-    await expect(page.locator('body')).toContainText('muchomora sromotnikowego');
+    await expect(page.locator('body')).toContainText('kurkę, kolczaka i smardza');
+    await expect(page.locator('body')).toContainText('Takich grzybów nie ucinaj nad ziemią');
     await expect(page.locator('body')).toContainText(
-      'Większe owocniki, na przykład borowiki, można ścinać nisko',
+      'Tylko grzyby rurkowe (z "gąbką") możesz ścinać nisko nożem',
     );
-    await expect(page.locator('body')).toContainText('ściółką albo mchem');
-    await expect(page.locator('body')).toContainText(
-      'Nie rozgrzebuj ściółki i nie niszcz grzybów, których nie zabierasz',
-    );
-    await expect(page.locator('body')).not.toContainText(
-      'Wykręcaj owocnik w całości z nasadą trzonu',
-    );
+    await expect(page.locator('body')).toContainText('Grzybów z blaszkami nie ścinaj');
+    await expect(page.locator('body')).toContainText('grzyboznawcy');
+    await expect(page.locator('body')).toContainText('Gatunków chronionych nie zbieraj');
+    await expect(page.locator('body')).not.toContainText('resztki pierścienia');
+    await expect(page.locator('body')).not.toContainText('bezpodstawny');
   });
 
   test('PreparationGuide renders cleaning, cooking, and storing categories', async ({ page }) => {

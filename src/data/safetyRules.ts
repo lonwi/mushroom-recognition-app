@@ -32,27 +32,27 @@ export const GOLDEN_RULES: SafetyRule[] = [
     critical: true
   },
   {
+    id: 'rule_whole_mushroom',
+    title: 'Wyjmuj grzyb w całości, z bulwą i pochwą u nasady',
+    description: 'Każdy grzyb z blaszkami (także kanię, pieczarkę i gołąbka), a także kurkę, kolczaka i smardza wyjmij z ziemi cały. Podważ go nożem głęboko przy trzonie, bo luźna pochwa muchomora często zostaje w ziemi. Bulwa i pochwa przy nasadzie odróżniają muchomora sromotnikowego, jadowitego i plamistego od kani, czubajnika i pieczarki. Takich grzybów nie ucinaj nad ziemią. Jedyny wyjątek opisuje wskazówka poniżej: pewnie rozpoznane grzyby rurkowe.',
+    critical: true
+  },
+  {
+    id: 'rule_tube_mushrooms_cut',
+    title: 'Tylko grzyby rurkowe (z "gąbką") możesz ścinać nisko nożem',
+    description: 'Dotyczy to wyłącznie grzybów z rurkami pod kapeluszem, takich jak borowiki, podgrzybki, koźlarze i maślaki, i tylko gdy masz pewność gatunku. Utnij trzon jak najniżej, tuż nad ziemią, albo ostrożnie go wykręć. Leśnicy dopuszczają obie metody, byle nie rozgrzebywać ściółki. Odsłonięte miejsce przykryj ściółką lub mchem. Grzybów z blaszkami nie ścinaj, nawet dużych: kanię wyjmij z bulwą. Jeśli chcesz pokazać grzyb grzyboznawcy, wyjmij go w całości, bo do oceny przynosi się całe owocniki z trzonem.',
+    critical: false
+  },
+  {
     id: 'rule_no_plastic_bags',
     title: 'Zbieraj tylko do przewiewnych koszyków wiklinowych',
     description: 'W foliowych torebkach lub wiaderkach grzyby szybko ulegają zaparzeniu i gniciu. Białka rozkładają się, wytwarzając toksyczne związki bakteryjne (jad trupi / ptomainy), co prowadzi do ciężkich zatruć wtórnych nawet grzybami jadalnymi.',
     critical: false
   },
   {
-    id: 'rule_whole_mushroom',
-    title: 'Grzyby blaszkowe wyjmuj w całości, z podstawą trzonu',
-    description: 'Owocnik z blaszkami wyjmij z ziemi cały, razem z nasadą trzonu. Pochwa, bulwa albo resztki pierścienia przy podstawie pozwalają odróżnić gatunek jadalny od śmiertelnie trującego. Bez tej cechy nie odróżnisz kani ani pieczarki od muchomora sromotnikowego.',
-    critical: true
-  },
-  {
-    id: 'rule_larger_boletes',
-    title: 'Większe owocniki, na przykład borowiki, można ścinać nisko',
-    description: 'Przy większych grzybach trzon możesz uciąć nożem tuż nad ziemią, nie rozrywając ściółki dookoła. Ostrożne wykręcenie albo podważenie owocnika również nie uszkadza grzybni. Spór, czy lepszy jest nóż, czy wykręcanie, jest w praktyce bezpodstawny. Po zerwaniu przykryj odsłonięte miejsce ściółką albo mchem, żeby grzybnia nie wyschła.',
-    critical: false
-  },
-  {
     id: 'rule_protect_forest_floor',
     title: 'Nie rozgrzebuj ściółki i nie niszcz grzybów, których nie zabierasz',
-    description: 'Nie grab leśnej ściółki i nie przekopuj jej w poszukiwaniu owocników. Starych oraz niejadalnych grzybów nie niszcz — zostaw je w lesie. Do koszyka wkładaj wyłącznie okazy, co do których masz całkowitą pewność.',
+    description: 'Nie grab leśnej ściółki i nie przekopuj jej w poszukiwaniu owocników. Starych oraz niejadalnych grzybów nie niszcz — zostaw je w lesie. Gatunków chronionych nie zbieraj. Do koszyka wkładaj wyłącznie okazy, co do których masz całkowitą pewność.',
     critical: false
   }
 ];
