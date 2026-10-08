@@ -1,6 +1,6 @@
 import { pl } from '../i18n/pl';
 import { en } from '../i18n/en';
-import { translate } from '../contexts/LanguageContext';
+import { interpolate, translate } from '../contexts/LanguageContext';
 import { GOLDEN_RULES, POISON_SYNDROMES } from '../data/safetyRules';
 import { ATLAS_NO_VERDICT_NOTE, NOT_FOR_COLLECTION_NOTE } from '../data/mushrooms';
 
@@ -128,5 +128,20 @@ describe('Polish and English dictionaries', () => {
     expect(en.months.jun).toBe('Jun');
     expect(en.atlas.lookAlikeTag).toBe('☠ Look-alike!');
     expect(en.cards.photoMissing).toBe('No photo');
+  });
+
+  it('interpolates every placeholder, including a repeated one', () => {
+    expect(interpolate('a {x} b {x}', { x: 1 })).toBe('a 1 b 1');
+    expect(translate('pl', 'atlas.monthRange', { start: 6, end: 10 })).toBe('6 - 10 mies.');
+    expect(translate('pl', 'atlas.colloquial', { names: 'prawdziwek' })).toBe('Potocznie: prawdziwek');
+    expect(translate('en', 'atlas.colloquial', { names: 'penny bun' })).toBe('Commonly: penny bun');
+    expect(translate('pl', 'preparation.allTab')).toBe('Wszystkie');
+    expect(translate('en', 'preparation.allTab')).toBe('All');
+    expect(pl.preparation.rules.clean.title).toBe('Czyszczenie na sucho');
+    expect(pl.preparation.rules.cooking.description).toMatch(/borowiki ceglastopore/);
+    expect(en.preparation.rules.cooking.description).toMatch(/scarletina boletes/);
+    expect(en.preparation.rules.cooking.description).not.toMatch(/lurid/);
+    expect(pl.settings.onDeviceTitle).toBe('⚡ 100% On-Device AI');
+    expect(en.settings.onDeviceTitle).toBe('⚡ 100% On-Device AI');
   });
 });

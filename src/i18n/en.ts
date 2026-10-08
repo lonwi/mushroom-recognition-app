@@ -35,6 +35,7 @@ export const en: Translations = {
     photoCreditsNoMatches: 'No credits match that search.',
     about: 'About App',
     version: 'Version 1.0.0 (On-Device AI)',
+    onDeviceTitle: '⚡ 100% On-Device AI',
     atlasScope:
       'The atlas has {count} cards. It is not a complete key to the mushrooms of Poland and it does not replace a mycologist or a Sanepid mushroom inspection point.',
   },
@@ -61,6 +62,7 @@ export const en: Translations = {
     hymenophoreFolds: 'Folds',
     hymenophoreSpines: 'Spines',
     hymenophoreOther: 'Other underside',
+    colloquial: 'Commonly: {names}',
     lookAlikeTag: '☠ Look-alike!',
     monthRange: 'months {start}–{end}',
   },
@@ -381,5 +383,33 @@ export const en: Translations = {
     cleanTab: '1. Cleaning',
     cookTab: '2. Cooking',
     storeTab: '3. Storing',
+    allTab: 'All',
+    rules: {
+      clean: {
+        title: 'Dry cleaning',
+        description:
+          'Clean mushrooms in the forest with a knife and a brush. Do not wash them in water, because they soak it up like a sponge and lose their aroma. Wipe very dirty ones with a damp cloth.',
+      },
+      blanch: {
+        title: 'Blanching before freezing',
+        description:
+          'Most mushrooms (for example boletes and bay boletes) are worth blanching (a short boil) before freezing, so they keep a better texture and do not turn bitter (for example chanterelles).',
+      },
+      cooking: {
+        title: 'Cooking',
+        description:
+          'Many edible mushrooms (for example honey fungus and scarletina boletes) need thorough cooking (at least 15–20 minutes of boiling or frying) to neutralise substances that can be poisonous or hard to digest when raw.',
+      },
+      store: {
+        title: 'Storing fresh mushrooms',
+        description:
+          'Keep fresh mushrooms in the fridge, in a paper bag or an airy basket. Avoid plastic bags, in which mushrooms spoil and grow mould quickly.',
+      },
+      dry: {
+        title: 'Drying',
+        description:
+          'Boletes and bay boletes are the best for drying. Slice them and dry them in a dryer or a fan oven (40–50°C) until they are brittle.',
+      },
+    },
   },
 };

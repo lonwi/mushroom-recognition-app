@@ -1,3 +1,4 @@
+import type { ImageSourcePropType } from 'react-native';
 import boletusEdulis from '../../assets/mushrooms/boletus_edulis.jpg';
 import amanitaPhalloides from '../../assets/mushrooms/amanita_phalloides.jpg';
 import macrolepiotaProcera from '../../assets/mushrooms/macrolepiota_procera.jpg';
@@ -11,7 +12,7 @@ import lactariusDeliciosus from '../../assets/mushrooms/lactarius_deliciosus.jpg
 import gyromitraEsculenta from '../../assets/mushrooms/gyromitra_esculenta.jpg';
 import paxillusInvolutus from '../../assets/mushrooms/paxillus_involutus.jpg';
 
-export const MUSHROOM_IMAGES: Record<string, any> = {
+export const MUSHROOM_IMAGES: Record<string, ImageSourcePropType> = {
   boletus_edulis: boletusEdulis,
   amanita_phalloides: amanitaPhalloides,
   macrolepiota_procera: macrolepiotaProcera,
@@ -26,6 +27,6 @@ export const MUSHROOM_IMAGES: Record<string, any> = {
   paxillus_involutus: paxillusInvolutus,
 };
 
-export function getMushroomImage(speciesId: string): any | null {
+export function getMushroomImage(speciesId: string): ImageSourcePropType | null {
   return MUSHROOM_IMAGES[speciesId] ?? null;
 }

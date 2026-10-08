@@ -3,103 +3,100 @@ import { View, Text, StyleSheet } from 'react-native';
 import { EdibilityStatus } from '../types/mushroom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { pl } from '../i18n/pl';
+import { EDIBILITY_BADGE } from '../presentation/speciesMeta';
+import { colors, edibilityColors, radius, spacing, typography } from '../theme/tokens';
 
 interface Props {
   status: EdibilityStatus;
-  size?: 'small' | 'medium' | 'large';
+  size?: BadgeSize;
 }
 
 export const INCOMPLETE_CARD_LABEL = pl.edibility.incomplete;
 export const MISSING_CARD_LABEL = pl.edibility.missing;
 
-interface IncompleteProps {
-  size?: 'small' | 'medium' | 'large';
+type BadgeSize = 'small' | 'medium' | 'large';
+
+const BADGE_SIZE: Record<
+  BadgeSize,
+  { paddingVertical: number; paddingHorizontal: number; iconSize: number; labelSize: number }
+> = {
+  small: { paddingVertical: spacing.xxs, paddingHorizontal: 6, iconSize: typography.caption, labelSize: typography.caption },
+  medium: { paddingVertical: spacing.xs, paddingHorizontal: 10, iconSize: typography.small, labelSize: typography.small },
+  large: { paddingVertical: spacing.sm, paddingHorizontal: 14, iconSize: typography.title, labelSize: typography.body },
+};
+
+interface ChipProps {
+  label: string;
+  icon?: string;
+  backgroundColor: string;
+  borderColor: string;
+  color: string;
+  size: BadgeSize;
   testID?: string;
 }
 
-export const IncompleteCardBadge: React.FC<IncompleteProps> = ({ size = 'medium', testID }) => {
-  const { t } = useLanguage();
-  const isSmall = size === 'small';
-  const isLarge = size === 'large';
-
+function StatusChip({ label, icon, backgroundColor, borderColor, color, size, testID }: ChipProps) {
+  const metrics = BADGE_SIZE[size];
   return (
     <View
       testID={testID}
       style={[
         styles.badge,
-        styles.incompleteBadge,
         {
-          paddingVertical: isSmall ? 2 : isLarge ? 8 : 4,
-          paddingHorizontal: isSmall ? 6 : isLarge ? 14 : 10,
+          backgroundColor,
+          borderColor,
+          paddingVertical: metrics.paddingVertical,
+          paddingHorizontal: metrics.paddingHorizontal,
         },
       ]}
     >
-      <Text
-        style={[
-          styles.icon,
-          styles.incompleteText,
-          {
-            fontSize: isSmall ? 10 : isLarge ? 16 : 12,
-            marginRight: 4,
-          },
-        ]}
-      >
-        ◇
-      </Text>
-      <Text
-        style={[
-          styles.text,
-          styles.incompleteText,
-          {
-            fontSize: isSmall ? 10 : isLarge ? 14 : 12,
-            fontWeight: '700',
-          },
-        ]}
-      >
-        {t('edibility.incomplete')}
-      </Text>
+      {icon ? (
+        <Text style={[styles.icon, { color, fontSize: metrics.iconSize, marginRight: spacing.xs }]}>{icon}</Text>
+      ) : null}
+      <Text style={[styles.text, { color, fontSize: metrics.labelSize }]}>{label}</Text>
     </View>
+  );
+}
+
+interface IncompleteProps {
+  size?: BadgeSize;
+  testID?: string;
+}
+
+export const IncompleteCardBadge: React.FC<IncompleteProps> = ({ size = 'medium', testID }) => {
+  const { t } = useLanguage();
+  return (
+    <StatusChip
+      testID={testID}
+      size={size}
+      icon="◇"
+      label={t('edibility.incomplete')}
+      backgroundColor={colors.orange50}
+      borderColor={colors.orange700}
+      color={colors.orange800}
+    />
   );
 };
 
 /** A named look-alike with no atlas card. Not an edibility verdict. */
 export const MissingCardBadge: React.FC<IncompleteProps> = ({ size = 'medium', testID }) => {
   const { t } = useLanguage();
-  const isSmall = size === 'small';
-  const isLarge = size === 'large';
-
   return (
-    <View
+    <StatusChip
       testID={testID}
-      style={[
-        styles.badge,
-        styles.missingBadge,
-        {
-          paddingVertical: isSmall ? 2 : isLarge ? 8 : 4,
-          paddingHorizontal: isSmall ? 6 : isLarge ? 14 : 10,
-        },
-      ]}
-    >
-      <Text
-        style={[
-          styles.text,
-          styles.missingText,
-          {
-            fontSize: isSmall ? 10 : isLarge ? 14 : 12,
-            fontWeight: '700',
-          },
-        ]}
-      >
-        {t('edibility.missing')}
-      </Text>
-    </View>
+      size={size}
+      label={t('edibility.missing')}
+      backgroundColor={colors.surfaceVariant}
+      borderColor={colors.slate500}
+      color={colors.slate700}
+    />
   );
 };
 
 interface SpeciesStatusProps {
   status: EdibilityStatus;
   incompleteCard?: boolean;
-  size?: 'small' | 'medium' | 'large';
+  size?: BadgeSize;
   testID?: string;
 }
 
@@ -118,85 +115,17 @@ export const SpeciesStatusBadge: React.FC<SpeciesStatusProps> = ({
 
 export const EdibilityBadge: React.FC<Props> = ({ status, size = 'medium' }) => {
   const { t } = useLanguage();
-  const getBadgeConfig = () => {
-    switch (status) {
-      case 'EDIBLE':
-        return {
-          label: t('edibility.edible'),
-          bgColor: '#E8F5E9',
-          textColor: '#2E7D32',
-          borderColor: '#81C784',
-          icon: '✓',
-        };
-      case 'INEDIBLE':
-        return {
-          label: t('edibility.inedible'),
-          bgColor: '#FFF3E0',
-          textColor: '#E65100',
-          borderColor: '#FFB74D',
-          icon: '⚠',
-        };
-      case 'POISONOUS':
-        return {
-          label: t('edibility.poisonous'),
-          bgColor: '#FFEBEE',
-          textColor: '#C62828',
-          borderColor: '#EF5350',
-          icon: '✕',
-        };
-      case 'DEADLY_POISONOUS':
-        return {
-          label: t('edibility.deadly'),
-          bgColor: '#3E000C',
-          textColor: '#FF4560',
-          borderColor: '#FF1744',
-          icon: '☠',
-        };
-    }
-  };
-
-  const config = getBadgeConfig();
-
-  const isSmall = size === 'small';
-  const isLarge = size === 'large';
-
+  const copy = EDIBILITY_BADGE[status];
+  const tone = edibilityColors[status];
   return (
-    <View
-      style={[
-        styles.badge,
-        {
-          backgroundColor: config.bgColor,
-          borderColor: config.borderColor,
-          paddingVertical: isSmall ? 2 : isLarge ? 8 : 4,
-          paddingHorizontal: isSmall ? 6 : isLarge ? 14 : 10,
-        },
-      ]}
-    >
-      <Text
-        style={[
-          styles.icon,
-          {
-            color: config.textColor,
-            fontSize: isSmall ? 10 : isLarge ? 16 : 12,
-            marginRight: 4,
-          },
-        ]}
-      >
-        {config.icon}
-      </Text>
-      <Text
-        style={[
-          styles.text,
-          {
-            color: config.textColor,
-            fontSize: isSmall ? 10 : isLarge ? 14 : 12,
-            fontWeight: '700',
-          },
-        ]}
-      >
-        {config.label}
-      </Text>
-    </View>
+    <StatusChip
+      size={size}
+      icon={copy.icon}
+      label={t(copy.labelKey)}
+      backgroundColor={tone.background}
+      borderColor={tone.border}
+      color={tone.text}
+    />
   );
 };
 
@@ -204,7 +133,7 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: radius.sm,
     borderWidth: 1,
     alignSelf: 'flex-start',
   },
@@ -213,19 +142,6 @@ const styles = StyleSheet.create({
   },
   text: {
     letterSpacing: 0.5,
-  },
-  incompleteBadge: {
-    backgroundColor: '#FFF7ED',
-    borderColor: '#C2410C',
-  },
-  incompleteText: {
-    color: '#9A3412',
-  },
-  missingBadge: {
-    backgroundColor: '#F1F5F9',
-    borderColor: '#64748B',
-  },
-  missingText: {
-    color: '#334155',
+    fontWeight: '700',
   },
 });

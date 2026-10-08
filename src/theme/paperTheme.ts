@@ -1,44 +1,44 @@
-import { MD3LightTheme, MD3Theme } from 'react-native-paper';
+import { MD3LightTheme, type MD3Theme } from 'react-native-paper';
+import { colors } from './tokens';
 
+/** Paper palette. Values come from `colors` so badges and the provider cannot drift. */
 export const mushroomForestColors = {
-  // Leśna paleta główna
-  primary: '#1B3B22',       // Głęboka leśna zieleń (moss / pine)
-  onPrimary: '#FFFFFF',
-  primaryContainer: '#D1E7D5',
-  onPrimaryContainer: '#0B2613',
+  primary: colors.primary,
+  onPrimary: colors.onPrimary,
+  primaryContainer: colors.primaryContainer,
+  onPrimaryContainer: colors.onPrimaryContainer,
 
-  secondary: '#2C5E37',     // Średnia zieleń leśna
-  onSecondary: '#FFFFFF',
-  secondaryContainer: '#E8F5E9',
-  onSecondaryContainer: '#133519',
+  secondary: colors.secondary,
+  onSecondary: colors.onSecondary,
+  secondaryContainer: colors.secondaryContainer,
+  onSecondaryContainer: colors.onSecondaryContainer,
 
-  tertiary: '#8D5B28',      // Borowikowy brąz
-  onTertiary: '#FFFFFF',
-  tertiaryContainer: '#FCEFD8',
-  onTertiaryContainer: '#351C03',
+  tertiary: colors.tertiary,
+  onTertiary: colors.onTertiary,
+  tertiaryContainer: colors.tertiaryContainer,
+  onTertiaryContainer: colors.onTertiaryContainer,
 
-  // Statusy jadalności
-  edible: '#2E7D32',        // Jadalny - soczysty szmaragd
-  edibleBg: '#E8F5E9',
-  edibleBorder: '#81C784',
+  edible: colors.edible,
+  edibleBg: colors.edibleBg,
+  edibleBorder: colors.edibleBorder,
 
-  inedible: '#E65100',      // Niejadalny - pomarańcz ostrzegawczy
-  inedibleBg: '#FFF3E0',
-  inedibleBorder: '#FFB74D',
+  inedible: colors.inedible,
+  inedibleBg: colors.inedibleBg,
+  inedibleBorder: colors.inedibleBorder,
 
-  poisonous: '#C62828',     // Trujący - jaskrawa czerwień
-  poisonousBg: '#FFEBEE',
-  poisonousBorder: '#EF5350',
+  poisonous: colors.poisonous,
+  poisonousBg: colors.poisonousBg,
+  poisonousBorder: colors.poisonousBorder,
 
-  deadly: '#FF1744',        // Śmiertelnie trujący - purpura / neon czerwień
-  deadlyBg: '#2A080C',
-  deadlyBorder: '#D50000',
+  deadly: colors.deadly,
+  deadlyBg: colors.deadlyBg,
+  deadlyText: colors.deadlyText,
+  deadlyBorder: colors.deadlyBorder,
 
-  // Tła i powierzchnie
-  background: '#F8FAFC',
-  surface: '#FFFFFF',
-  surfaceVariant: '#F1F5F9',
-  outline: '#CBD5E1',
+  background: colors.background,
+  surface: colors.surface,
+  surfaceVariant: colors.surfaceVariant,
+  outline: colors.outline,
 };
 
 export const paperTheme: MD3Theme = {
