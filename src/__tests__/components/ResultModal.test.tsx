@@ -9,6 +9,9 @@ import { LanguageProvider } from '../../contexts/LanguageContext';
 import { ClassificationResult } from '../../services/classifierService';
 import { SpeciesCandidate } from '../../services/recognitionDecision';
 
+// The first Paper modal render on a cold CI worker can exceed Jest's 5s default.
+jest.setTimeout(15000);
+
 function flatText(children: unknown): string {
   if (Array.isArray(children)) {
     return children.map((part) => flatText(part)).join('');

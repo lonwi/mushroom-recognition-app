@@ -14,7 +14,6 @@
       "infoPlist": {
         "CFBundleAllowMixedLocalizations": true,
         "CFBundleDevelopmentRegion": "pl",
-        "NSCameraUsageDescription": "Aplikacja potrzebuje dostępu do aparatu, aby rozpoznawać gatunki grzybów w lesie.",
         "NSPhotoLibraryUsageDescription": "Aplikacja potrzebuje dostępu do zdjęć, aby analizować wcześniej wykonane fotografie grzybów.",
         "NSLocationWhenInUseUsageDescription": "Grzybobranie AI może zapisać miejsce znalezienia w dzienniku na tym urządzeniu, żeby łatwiej było tu wrócić."
       }
@@ -50,7 +49,6 @@
       "en": "./locales/en.json"
     },
     "plugins": [
-      "./plugins/withDefaultPermissionStrings.js",
       [
         "expo-splash-screen",
         {
@@ -64,7 +62,15 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Zezwól aplikacji Grzybobranie AI na używanie aparatu do rozpoznawania grzybów."
+          "cameraPermission": "Zezwól aplikacji Grzybobranie AI na używanie aparatu do rozpoznawania grzybów.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "microphonePermission": false
         }
       ],
       [
@@ -73,6 +79,7 @@
           "locationWhenInUsePermission": "Grzybobranie AI może zapisać miejsce znalezienia w dzienniku na tym urządzeniu, żeby łatwiej było tu wrócić.",
           "locationAlwaysAndWhenInUsePermission": false,
           "locationAlwaysPermission": false,
+          "motionUsagePermission": false,
           "isIosBackgroundLocationEnabled": false,
           "isAndroidBackgroundLocationEnabled": false
         }

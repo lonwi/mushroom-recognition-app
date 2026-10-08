@@ -11,16 +11,24 @@ jobs:
     # ubuntu-latest moves to Ubuntu 26 on 19 October 2026. Stay on 24.04.
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v5
+      - uses: pnpm/action-setup@v6
         with:
           version: 10
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
+
+      - name: Cache Jest
+        uses: actions/cache@v6
+        with:
+          path: .cache/jest
+          key: jest-${{ runner.os }}-node-22-${{ hashFiles('pnpm-lock.yaml', 'jest.config.js', 'jest.setup.js') }}
+          restore-keys: |
+            jest-${{ runner.os }}-node-22-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

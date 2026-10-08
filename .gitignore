@@ -1,5 +1,6 @@
 node_modules
 .expo
+.cache/
 storybook-static
 test-results
 playwright-report
