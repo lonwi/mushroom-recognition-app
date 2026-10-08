@@ -74,6 +74,16 @@ export const pl = {
     useLiterature: 'Znaczenie w literaturze',
     sourceLanguageNote:
       'Opisy, różnice sobowtórów i morfologia są tekstem źródłowym po polsku. Skróty miesięcy są w języku aplikacji.',
+    family: 'RODZINA',
+    otherNames: 'INNE NAZWY',
+    seasonPoland: 'SEZON WYSTĘPOWANIA W POLSCE',
+    morphologyHabitat: 'Morfologia i siedlisko',
+    occurrence: 'Występowanie',
+    cap: 'Kapelusz',
+    underside: 'Spód ({type})',
+    stemVeil: 'Trzon i osłona',
+    fleshTasteSmell: 'Miąższ, smak i zapach',
+    significanceUse: 'Znaczenie i zastosowanie',
   },
   scanner: {
     title: 'Skaner Grzybów AI',

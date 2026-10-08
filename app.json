@@ -12,6 +12,8 @@
       "bundleIdentifier": "com.grzybobranie.ai",
       "buildNumber": "1",
       "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true,
+        "CFBundleDevelopmentRegion": "pl",
         "NSCameraUsageDescription": "Aplikacja potrzebuje dostępu do aparatu, aby rozpoznawać gatunki grzybów w lesie.",
         "NSPhotoLibraryUsageDescription": "Aplikacja potrzebuje dostępu do zdjęć, aby analizować wcześniej wykonane fotografie grzybów.",
         "NSLocationWhenInUseUsageDescription": "Grzybobranie AI może zapisać miejsce znalezienia w dzienniku na tym urządzeniu, żeby łatwiej było tu wrócić."
@@ -43,7 +45,12 @@
         "backgroundColor": "#1B3B22"
       }
     },
+    "locales": {
+      "pl": "./locales/pl.json",
+      "en": "./locales/en.json"
+    },
     "plugins": [
+      "./plugins/withDefaultPermissionStrings.js",
       [
         "expo-splash-screen",
         {

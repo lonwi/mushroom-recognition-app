@@ -216,6 +216,22 @@ describe('SpeciesDetailScreen language', () => {
   it('keeps Polish section labels and month names and hides the source-language note', async () => {
     const edible = await renderSpecies('boletus_edulis');
     expect(edible.getByText('W kuchni')).toBeTruthy();
+    expect(edible.getByTestId('species-back-label').props.children).toBe(pl.nav.atlas);
+    expect(edible.getByTestId('species-hymenophore').props.children).toBe(pl.atlas.hymenophoreTubes);
+    expect(edible.getByTestId('species-family-label').props.children).toBe(pl.cards.family);
+    expect(edible.getByTestId('species-other-names-label').props.children).toBe(pl.cards.otherNames);
+    expect(edible.getByTestId('species-season-label').props.children).toBe(pl.cards.seasonPoland);
+    expect(edible.getByTestId('species-morphology-heading').props.children).toBe(pl.cards.morphologyHabitat);
+    expect(edible.getByTestId('species-occurrence-label').props.children).toBe(pl.cards.occurrence);
+    expect(edible.getByTestId('species-cap-label').props.children).toBe(pl.cards.cap);
+    expect(edible.getByTestId('species-underside-label').props.children).toBe('Spód (Rurki)');
+    expect(edible.getByTestId('species-stem-label').props.children).toBe(pl.cards.stemVeil);
+    expect(edible.getByTestId('species-flesh-label').props.children).toBe(pl.cards.fleshTasteSmell);
+    expect(edible.getByTestId('species-significance-heading').props.children).toBe(pl.cards.significanceUse);
+    expect(edible.queryByText('FAMILY')).toBeNull();
+    expect(edible.queryByText('Significance and use')).toBeNull();
+    expect(edible.queryByText('Tubes')).toBeNull();
+    expect(edible.queryByText('Morphology and habitat')).toBeNull();
     expect(edible.getByTestId('species-month-1').props.children).toBe('Sty');
     expect(edible.getByTestId('species-month-8').props.children).toBe('Sie');
     expect(edible.getByTestId('species-month-10').props.children).toBe('Paź');
@@ -249,6 +265,23 @@ describe('SpeciesDetailScreen language', () => {
     const edible = await renderSpecies('boletus_edulis');
     expect(await edible.findByText('In the kitchen')).toBeTruthy();
     expect(edible.queryByText('W kuchni')).toBeNull();
+    expect(edible.getByTestId('species-back-label').props.children).toBe(en.nav.atlas);
+    expect(edible.getByTestId('species-hymenophore').props.children).toBe(en.atlas.hymenophoreTubes);
+    expect(edible.getByTestId('species-family-label').props.children).toBe(en.cards.family);
+    expect(edible.getByTestId('species-other-names-label').props.children).toBe(en.cards.otherNames);
+    expect(edible.getByTestId('species-season-label').props.children).toBe(en.cards.seasonPoland);
+    expect(edible.getByTestId('species-morphology-heading').props.children).toBe(en.cards.morphologyHabitat);
+    expect(edible.getByTestId('species-occurrence-label').props.children).toBe(en.cards.occurrence);
+    expect(edible.getByTestId('species-cap-label').props.children).toBe(en.cards.cap);
+    expect(edible.getByTestId('species-underside-label').props.children).toBe('Underside (Tubes)');
+    expect(edible.getByTestId('species-stem-label').props.children).toBe(en.cards.stemVeil);
+    expect(edible.getByTestId('species-flesh-label').props.children).toBe(en.cards.fleshTasteSmell);
+    expect(edible.getByTestId('species-significance-heading').props.children).toBe(en.cards.significanceUse);
+    expect(edible.queryByText('RODZINA')).toBeNull();
+    expect(edible.queryByText('Znaczenie i zastosowanie')).toBeNull();
+    expect(edible.queryByText('Morfologia i siedlisko')).toBeNull();
+    expect(edible.queryByText('Rurki')).toBeNull();
+    expect(edible.queryByText('Kapelusz')).toBeNull();
     expect(edible.getByTestId('species-source-language-note').props.children).toBe(
       en.cards.sourceLanguageNote
     );
@@ -281,5 +314,46 @@ describe('SpeciesDetailScreen language', () => {
     expect(literature.getByTestId('species-photo-missing').props.children).toBe('No photo');
     expect(literature.getByText(/NIE JEDZ NA PODSTAWIE TEJ KARTY/)).toBeTruthy();
     expect(literature.getByTestId('species-source-language-note')).toBeTruthy();
+    expect(literature.getByTestId('species-significance-heading').props.children).toBe(
+      'Significance and use',
+    );
+    expect(literature.queryByText('Znaczenie i zastosowanie')).toBeNull();
+  });
+
+  it('names the cap underside with the atlas hymenophore labels in Polish and English', async () => {
+    const cases = [
+      ['boletus_edulis', 'hymenophoreTubes'],
+      ['amanita_phalloides', 'hymenophoreGills'],
+      ['cantharellus_cibarius', 'hymenophoreFolds'],
+      ['hydnum_repandum', 'hymenophoreSpines'],
+      ['morchella_esculenta', 'hymenophoreOther'],
+    ] as const;
+
+    for (const [id, key] of cases) {
+      const polish = await renderSpecies(id);
+      const polishName = pl.atlas[key];
+      expect(polish.getByTestId('species-hymenophore').props.children).toBe(polishName);
+      expect(polish.getByTestId('species-underside-label').props.children).toBe(`Spód (${polishName})`);
+      expect(polish.getByTestId('species-significance-heading').props.children).toBe(
+        'Znaczenie i zastosowanie',
+      );
+    }
+
+    await AsyncStorage.setItem('app_language', 'en');
+
+    for (const [id, key] of cases) {
+      const english = await renderSpecies(id);
+      const englishName = en.atlas[key];
+      expect(await english.findByText(englishName)).toBeTruthy();
+      expect(english.getByTestId('species-hymenophore').props.children).toBe(englishName);
+      expect(english.getByTestId('species-underside-label').props.children).toBe(
+        `Underside (${englishName})`,
+      );
+      expect(english.getByTestId('species-significance-heading').props.children).toBe(
+        'Significance and use',
+      );
+      expect(english.queryByText('Znaczenie i zastosowanie')).toBeNull();
+      expect(english.queryByText(`Spód (${pl.atlas[key]})`)).toBeNull();
+    }
   });
 });
