@@ -49,6 +49,14 @@ python training/fetch_gbif.py --dry-run --only boletus_edulis --max-per-class 2 
 python training/run_pipeline.py train -- --epochs-frozen 1 --epochs-finetune 0 --batch-size 8
 ```
 
+## Resuming a fetch
+
+`fetch_gbif.py` writes each photo to a temporary file and renames it into place. A later run skips a file that is already on disk, non-empty, and a readable image, and still records that row as downloaded with its byte size. `--no-resume` downloads it again. `--download-workers` (default 16) downloads one class or one toxic-probe taxon at a time. At most 4 transfers run against the same image host. `attributions.jsonl` and `fetch_report.json` stay in the original request order, with the same fields as an uninterrupted run.
+
+Transient transfer errors are retried three times: DNS failure, timeout, connection reset, HTTP 5xx, and SSL handshake. HTTP 429 waits for `Retry-After` (capped at 120 seconds), or uses exponential backoff when the header is missing. HTTP 403 and 404 are not retried. The per-URL `skip` line is printed once, after the retries are exhausted.
+
+GBIF occurrence search and species match stay one request at a time, with at least 0.2 seconds between calls. After every class and every toxic-probe taxon the script rewrites `training/data/attributions.jsonl` and `training/data/fetch_report.json`, and writes a checkpoint under `training/data/checkpoints/`. Accepted media lists are cached in `training/data/gbif_cache/`, keyed by the class or probe and the fetch arguments, so a restart does not page the API again. Delete that directory to query GBIF from scratch.
+
 Unit tests that do not need TensorFlow:
 
 ```bash
