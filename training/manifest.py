@@ -150,7 +150,35 @@ _VISUAL_GROUP_MINIMUMS = {
     "inocybe_muscarine": 80,
 }
 _STRICT_TOP1_GROUPS = ("lepiota_lookalikes", "conocybe_pholiotina")
-_REQUIRED_EXCEPTIONS = ("Lepiota brunneoincarnata", "Inosperma erubescens", "Conocybe filaris")
+# Membership is pinned. Moving a taxon into another group must fail validation.
+_VISUAL_GROUP_TAXA = {
+    "lepiota_lookalikes": (
+        "Lepiota brunneoincarnata",
+        "Lepiota subincarnata",
+        "Lepiota cristata",
+        "Lepiota castanea",
+    ),
+    "conocybe_pholiotina": ("Conocybe filaris", "Conocybe rugosa"),
+    "omphalotus": ("Omphalotus olearius",),
+    "inocybe_muscarine": ("Inosperma erubescens", "Inocybe geophylla"),
+}
+# Amatoxin, orellanine, gyromitrin, or muscarine. Lepiota cristata is not in this set.
+_DEADLY_HELDOUT = frozenset(
+    {
+        "Amanita verna",
+        "Inocybe geophylla",
+        "Inosperma erubescens",
+        "Clitocybe rivulosa",
+        "Gyromitra gigas",
+        "Lepiota brunneoincarnata",
+        "Lepiota subincarnata",
+        "Lepiota castanea",
+        "Conocybe filaris",
+        "Conocybe rugosa",
+    }
+)
+# Conocybe filaris has 78 licensed photos, so it is not an exception.
+_REQUIRED_EXCEPTIONS = ("Lepiota brunneoincarnata", "Inosperma erubescens")
 
 
 def validate_toxic_probes(manifest: dict) -> None:
@@ -226,6 +254,16 @@ def _validate_visual_groups(manifest: dict, probes: dict) -> None:
         seen_ids[group_id] = group
     if set(seen_ids) != set(_VISUAL_GROUP_MINIMUMS):
         raise ValueError("visual groups do not match the Lepiota, Conocybe, Omphalotus, and Inocybe quotas")
+    for group_id, expected in _VISUAL_GROUP_TAXA.items():
+        actual = tuple(str(name) for name in seen_ids[group_id].get("taxa") or [])
+        if actual != expected:
+            raise ValueError(f"{group_id} taxa must stay {', '.join(expected)}")
+    for name, taxon in known.items():
+        deadly = taxon.get("deadly") is True
+        if name in _DEADLY_HELDOUT and not deadly:
+            raise ValueError(f"{name} must stay deadly")
+        if name not in _DEADLY_HELDOUT and deadly:
+            raise ValueError(f"{name} is not a deadly held-out taxon")
     exceptions = probes.get("rare_taxon_exceptions")
     if not isinstance(exceptions, list):
         raise ValueError("toxic probes need rare_taxon_exceptions")

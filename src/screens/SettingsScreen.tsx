@@ -26,6 +26,10 @@ export const SettingsScreen: React.FC = () => {
     };
   }, [creditsOpen]);
 
+  if (creditsOpen) {
+    return <PhotoCredits credits={credits} onClose={() => setCreditsOpen(false)} />;
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -67,15 +71,12 @@ export const SettingsScreen: React.FC = () => {
             <Text style={styles.aboutTitle}>{t('settings.dataLicenseTitle')}</Text>
             <Text style={styles.aboutVersion}>{t('settings.dataLicenseBody')}</Text>
             <TouchableOpacity
-              onPress={() => setCreditsOpen((open) => !open)}
+              onPress={() => setCreditsOpen(true)}
               testID="btn-photo-credits"
               style={styles.creditsButton}
             >
-              <Text style={styles.creditsButtonText}>
-                {creditsOpen ? t('settings.photoCreditsClose') : t('settings.photoCreditsOpen')}
-              </Text>
+              <Text style={styles.creditsButtonText}>{t('settings.photoCreditsOpen')}</Text>
             </TouchableOpacity>
-            {creditsOpen ? <PhotoCredits credits={credits} /> : null}
           </View>
 
           <View style={styles.aboutCard} testID="atlas-coverage-notice">

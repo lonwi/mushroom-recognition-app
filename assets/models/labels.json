@@ -348,7 +348,7 @@
     {
       "index": 20,
       "id": "cortinarius_orellanus",
-      "name": "Zasłoniak rudy",
+      "name": "Zasłonak rudy",
       "name_latin": "Cortinarius orellanus",
       "genus": "Cortinarius",
       "gbif_names": [
@@ -362,7 +362,7 @@
     {
       "index": 21,
       "id": "cortinarius_rubellus",
-      "name": "Zasłoniak szpiczasty",
+      "name": "Zasłonak rudawy",
       "name_latin": "Cortinarius rubellus",
       "genus": "Cortinarius",
       "gbif_names": [
@@ -1651,14 +1651,6 @@
         "group_id": "lepiota_lookalikes"
       },
       {
-        "taxon": "Conocybe filaris",
-        "gbif_key": 2529789,
-        "reason": "The whole CC0/CC-BY set after the two-photos-per-occurrence cap was 78 on 2026-10-08. That licensed count is not under 50, so this closed-list entry does not lower the 50-photo floor. A drop to 33 after dedup compared average hashes across the whole unknown class, which is not a shortage of the licensed pool.",
-        "gbif_licensed_count": 78,
-        "date_checked": "2026-10-08",
-        "group_id": "conocybe_pholiotina"
-      },
-      {
         "taxon": "Inosperma erubescens",
         "gbif_key": 10776858,
         "reason": "Accepted name of Inocybe erubescens. The whole CC0/CC-BY set after the two-photos-per-occurrence cap was 44 on 2026-10-08, and near-duplicate removal left 44. It shares the Inocybe muscarine group with Inocybe geophylla. The 5-photo floor applies only when a fetch report shows accepted below the cap and a licensed count under 50.",
@@ -1712,7 +1704,7 @@
         "toxic": true,
         "held_out": true,
         "relation": "unknown_genus",
-        "note": "Species probe. The genus label Conocybe spp. is refused because GBIF matchType is HIGHERRANK. The licensed count is 78, so the rare-taxon entry does not lower the 50-photo floor.",
+        "note": "Species probe. The genus label Conocybe spp. is refused because GBIF matchType is HIGHERRANK. The licensed count is 78, above 50, so it is not a rare-taxon exception.",
         "deadly": true
       },
       {

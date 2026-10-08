@@ -22,7 +22,7 @@ from pathlib import Path
 from evaluate import DATA_DIR, assemble_report, preprocessed_batch, prediction_from_logits
 from manifest import LABELS_PATH, ROOT, load_manifest
 from recognition_math import HIGH_STAKES_IDS
-from ship_gates import assess_shippable, sha256_file
+from ship_gates import assess_shippable, fetch_report_file, sha256_file
 
 ARTIFACTS = ROOT / "training" / "artifacts"
 MODEL_DEST = ROOT / "assets" / "models" / "mushrooms_model.tflite"
@@ -271,9 +271,11 @@ def main() -> None:
             "high_risk_agreement_images": risk_images,
             "errors": errors,
         }
+        fetch_report = fetch_report_file(ARTIFACTS)
         metrics["artifacts"] = {
             "model_keras_sha256": sha256_file(keras_path),
             "tflite_sha256": sha256_file(tflite_path),
+            "fetch_report_sha256": sha256_file(fetch_report) if fetch_report is not None else None,
         }
     else:
         if tflite_path.is_file():
@@ -291,9 +293,11 @@ def main() -> None:
             "high_risk_agreement_images": risk_images,
             "errors": errors,
         }
+        fetch_report = fetch_report_file(ARTIFACTS)
         metrics["artifacts"] = {
             "model_keras_sha256": sha256_file(keras_path),
             "tflite_sha256": sha256_file(tflite_path) if tflite_path.is_file() else None,
+            "fetch_report_sha256": sha256_file(fetch_report) if fetch_report is not None else None,
         }
     shippable, reasons = assess_shippable(metrics)
     metrics["shippable"] = shippable

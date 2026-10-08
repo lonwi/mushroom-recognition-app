@@ -653,14 +653,19 @@ def _reject_rate(rows: list[dict], classes: list[dict], ood_config: dict) -> flo
     return rejected / len(rows)
 
 
-def attach_fetch_evidence(per_taxon: list, fetch_report: dict | None = None) -> list:
-    """Copy accepted and gbif_licensed_count from the fetch report onto taxon rows.
+def attach_fetch_evidence(
+    per_taxon: list,
+    fetch_report: dict | None = None,
+    report_path: Path | None = None,
+) -> list:
+    """Overwrite accepted and gbif_licensed_count from the fetch report.
 
-    A missing report leaves the rows unchanged, so a rare exception cannot
-    lower the 50-photo floor without that evidence.
+    A row value does not win over the report. A missing report leaves the
+    rows unchanged, so a rare exception cannot lower the 50-photo floor
+    without that evidence.
     """
     if fetch_report is None:
-        path = DATA_DIR / "fetch_report.json"
+        path = report_path if report_path is not None else DATA_DIR / "fetch_report.json"
         if not path.is_file():
             return per_taxon
         try:
@@ -685,7 +690,7 @@ def attach_fetch_evidence(per_taxon: list, fetch_report: dict | None = None) -> 
             continue
         copy = dict(row)
         for field in ("accepted", "gbif_licensed_count"):
-            if field not in copy and field in evidence:
+            if field in evidence:
                 copy[field] = evidence[field]
         merged.append(copy)
     return merged

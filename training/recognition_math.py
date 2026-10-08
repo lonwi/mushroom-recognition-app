@@ -79,6 +79,8 @@ DANGEROUS_PAIRS = (
     ("cantharellus_cibarius", "hygrophoropsis_aurantiaca"),
     ("macrolepiota_procera", "chlorophyllum_rhacodes"),
     ("cortinarius_orellanus", "cortinarius_rubellus"),
+    ("cortinarius_orellanus", "cantharellus_cibarius"),
+    ("cortinarius_rubellus", "cantharellus_cibarius"),
 )
 
 

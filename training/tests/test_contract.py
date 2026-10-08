@@ -334,14 +334,21 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertIn(("lactarius_torminosus", "lactarius_deliciosus"), DANGEROUS_PAIRS)
         self.assertIn(("hypholoma_fasciculare", "kuehneromyces_mutabilis"), DANGEROUS_PAIRS)
         self.assertIn(("hypholoma_fasciculare", "armillaria_mellea"), DANGEROUS_PAIRS)
+        self.assertIn(("cortinarius_orellanus", "cantharellus_cibarius"), DANGEROUS_PAIRS)
+        self.assertIn(("cortinarius_rubellus", "cantharellus_cibarius"), DANGEROUS_PAIRS)
         exceptions = {item["taxon"]: item for item in probes["rare_taxon_exceptions"]}
-        self.assertEqual(list(exceptions), ["Lepiota brunneoincarnata", "Conocybe filaris", "Inosperma erubescens"])
+        self.assertEqual(list(exceptions), ["Lepiota brunneoincarnata", "Inosperma erubescens"])
+        self.assertNotIn("Conocybe filaris", exceptions)
         self.assertEqual(exceptions["Lepiota brunneoincarnata"]["gbif_licensed_count"], 16)
         self.assertEqual(exceptions["Lepiota brunneoincarnata"]["date_checked"], "2026-10-08")
         self.assertEqual(exceptions["Lepiota brunneoincarnata"]["group_id"], "lepiota_lookalikes")
-        self.assertEqual(exceptions["Conocybe filaris"]["gbif_licensed_count"], 78)
+        filaris = next(item for item in probes["taxa"] if item["name"] == "Conocybe filaris")
+        self.assertIn("78", filaris["note"])
         self.assertEqual(exceptions["Inosperma erubescens"]["gbif_licensed_count"], 44)
         self.assertEqual(exceptions["Inosperma erubescens"]["group_id"], "inocybe_muscarine")
+        names = {item["id"]: item["name"] for item in manifest["classes"]}
+        self.assertEqual(names["cortinarius_orellanus"], "Zasłonak rudy")
+        self.assertEqual(names["cortinarius_rubellus"], "Zasłonak rudawy")
         deadly = deadly_probe_taxa(manifest)
         self.assertIn("Amanita verna", deadly)
         self.assertIn("Lepiota brunneoincarnata", deadly)
@@ -811,6 +818,57 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertTrue(any("closed exception list" in reason and "Amanita verna" in reason for reason in reasons))
         self.assertTrue(any("Amanita verna" in reason and "need 50" in reason for reason in reasons))
 
+    def test_moving_a_taxon_or_clearing_deadly_fails_validation(self):
+        import copy
+
+        from manifest import validate_toxic_probes
+
+        moved = copy.deepcopy(load_manifest())
+        groups = moved["toxic_probes"]["visual_groups"]
+        lepiota = next(group for group in groups if group["id"] == "lepiota_lookalikes")
+        omphalotus = next(group for group in groups if group["id"] == "omphalotus")
+        lepiota["taxa"].remove("Lepiota cristata")
+        omphalotus["taxa"].append("Lepiota cristata")
+        with self.assertRaises(ValueError) as moved_error:
+            validate_toxic_probes(moved)
+        self.assertIn("lepiota_lookalikes taxa must stay", str(moved_error.exception))
+
+        cleared = copy.deepcopy(load_manifest())
+        verna = next(
+            taxon
+            for item in cleared["classes"]
+            if item["id"] == "unknown_mushroom"
+            for taxon in item["sampling"]["taxa"]
+            if taxon["name"] == "Amanita verna"
+        )
+        verna["deadly"] = False
+        with self.assertRaises(ValueError) as cleared_error:
+            validate_toxic_probes(cleared)
+        self.assertIn("Amanita verna must stay deadly", str(cleared_error.exception))
+
+    def test_fetch_report_overwrites_row_counts_and_is_hashed(self):
+        from evaluate import attach_fetch_evidence
+
+        rows = [{"taxon": "Lepiota brunneoincarnata", "support": 16, "accepted": 80, "gbif_licensed_count": 80}]
+        merged = attach_fetch_evidence(
+            rows,
+            {"taxa": [{"taxon": "Lepiota brunneoincarnata", "accepted": 16, "gbif_licensed_count": 16}]},
+        )
+        self.assertEqual(merged[0]["accepted"], 16)
+        self.assertEqual(merged[0]["gbif_licensed_count"], 16)
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            payload = b'{"taxa":[]}\n'
+            (artifact_dir / "fetch_report.json").write_bytes(payload)
+            report["artifacts"]["fetch_report_sha256"] = hashlib.sha256(payload).hexdigest()
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertTrue(ok, reasons)
+            (artifact_dir / "fetch_report.json").write_bytes(b'{"taxa":[{"taxon":"Amanita verna"}]}\n')
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("fetch_report sha256" in reason for reason in reasons))
+
     def test_strict_top1_flag_is_required_on_lepiota_and_conocybe(self):
         import copy
 
@@ -994,17 +1052,19 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertIn('default="fp16"', source)
         self.assertNotIn('for quantization in ("int8", "fp16")', source)
 
-    def test_install_writes_jsonl_and_leaves_the_credit_module_typecheckable(self):
-        import subprocess
+    def _install_into_repo_copy(self):
+        import shutil
 
         import export_tflite
 
-        module = ROOT / "src" / "services" / "attributionPackage.ts"
-        model_module = ROOT / "src" / "services" / "modelPackage.ts"
-        jsonl_dest = ROOT / "assets" / "models" / "attributions.jsonl"
-        original_module = module.read_text(encoding="utf-8")
-        original_model = model_module.read_text(encoding="utf-8")
-        original_jsonl = jsonl_dest.read_text(encoding="utf-8")
+        real_module = ROOT / "src" / "services" / "attributionPackage.ts"
+        real_model = ROOT / "src" / "services" / "modelPackage.ts"
+        real_jsonl = ROOT / "assets" / "models" / "attributions.jsonl"
+        before = {
+            real_module: real_module.read_bytes(),
+            real_model: real_model.read_bytes(),
+            real_jsonl: real_jsonl.read_bytes(),
+        }
         saved = {
             "ARTIFACTS": export_tflite.ARTIFACTS,
             "MODEL_DEST": export_tflite.MODEL_DEST,
@@ -1012,71 +1072,85 @@ class ManifestAndShipGateTest(unittest.TestCase):
             "PACKAGE_MODULE": export_tflite.PACKAGE_MODULE,
             "ATTRIBUTION_DEST": export_tflite.ATTRIBUTION_DEST,
         }
+        copy_root = Path(tempfile.mkdtemp(prefix="install-copy-"))
         try:
-            with tempfile.TemporaryDirectory() as tmp:
-                tmp_path = Path(tmp)
-                artifacts = tmp_path / "artifacts"
-                artifacts.mkdir()
-                (artifacts / "attributions.jsonl").write_text(
-                    json.dumps(
-                        {
-                            "creator": "Ada L.",
-                            "license": "https://creativecommons.org/licenses/by/4.0/",
-                            "license_normalized": "cc-by-4.0",
-                            "image_url": "https://example.test/a.jpg",
-                            "source_url": "https://example.test/obs/1",
-                            "class_id": "boletus_edulis",
-                            "taxon_name": "Boletus edulis",
-                        }
-                    )
-                    + "\n",
-                    encoding="utf-8",
-                )
-                export_tflite.ARTIFACTS = artifacts
-                export_tflite.MODEL_DEST = tmp_path / "model.tflite"
-                export_tflite.LABELS_PATH = tmp_path / "labels.json"
-                export_tflite.PACKAGE_MODULE = tmp_path / "modelPackage.ts"
-                export_tflite.ATTRIBUTION_DEST = jsonl_dest
-                export_tflite.install_calibrated_model(
-                    b"tflite-bytes",
-                    "fp16",
+            module = copy_root / "src" / "services" / "attributionPackage.ts"
+            model_module = copy_root / "src" / "services" / "modelPackage.ts"
+            jsonl_dest = copy_root / "assets" / "models" / "attributions.jsonl"
+            module.parent.mkdir(parents=True)
+            jsonl_dest.parent.mkdir(parents=True)
+            shutil.copy2(real_module, module)
+            shutil.copy2(real_model, model_module)
+            original_module = module.read_text(encoding="utf-8")
+            artifacts = copy_root / "artifacts"
+            artifacts.mkdir()
+            (artifacts / "attributions.jsonl").write_text(
+                json.dumps(
                     {
-                        "ood": {
-                            "energy_threshold": -4.0,
-                            "temperature": 1,
-                            "min_softmax_for_accept": 0.4,
-                            "min_top1_softmax_for_high_confidence": 0.7,
-                            "min_margin": 0.15,
-                            "id_keep_rate_test": 0.96,
-                            "id_keep_rate_val": 0.97,
-                            "ood_reject_rate_test": 0.97,
-                            "softmax_above_0_5_still_rejected_rate": 0.95,
-                        }
-                    },
+                        "creator": "Ada L.",
+                        "license": "https://creativecommons.org/licenses/by/4.0/",
+                        "license_normalized": "cc-by-4.0",
+                        "image_url": "https://example.test/a.jpg",
+                        "source_url": "https://example.test/obs/1",
+                        "class_id": "boletus_edulis",
+                        "taxon_name": "Boletus edulis",
+                    }
                 )
-                packaged = (tmp_path / "modelPackage.ts").read_text(encoding="utf-8")
-            installed = module.read_text(encoding="utf-8")
-            self.assertEqual(installed, original_module)
-            self.assertEqual(model_module.read_text(encoding="utf-8"), original_model)
+                + "\n",
+                encoding="utf-8",
+            )
+            export_tflite.ARTIFACTS = artifacts
+            export_tflite.MODEL_DEST = copy_root / "assets" / "models" / "mushrooms_model.tflite"
+            export_tflite.LABELS_PATH = copy_root / "assets" / "models" / "labels.json"
+            export_tflite.PACKAGE_MODULE = model_module
+            export_tflite.ATTRIBUTION_DEST = jsonl_dest
+            export_tflite.install_calibrated_model(
+                b"tflite-bytes",
+                "fp16",
+                {
+                    "ood": {
+                        "energy_threshold": -4.0,
+                        "temperature": 1,
+                        "min_softmax_for_accept": 0.4,
+                        "min_top1_softmax_for_high_confidence": 0.7,
+                        "min_margin": 0.15,
+                        "id_keep_rate_test": 0.96,
+                        "id_keep_rate_val": 0.97,
+                        "ood_reject_rate_test": 0.97,
+                        "softmax_above_0_5_still_rejected_rate": 0.95,
+                    }
+                },
+            )
+            self.assertEqual(module.read_text(encoding="utf-8"), original_module)
+            packaged = model_module.read_text(encoding="utf-8")
             self.assertIn("mushrooms_model.tflite", packaged)
             for name in ("loadPhotoCredits", "creditsFromJsonl", "creditLicenseUrl"):
-                self.assertIn(name, installed)
-            self.assertNotIn("PACKAGED_PHOTO_CREDITS: PhotoCredit[] | null = [", installed)
+                self.assertIn(name, original_module)
+            self.assertNotIn("PACKAGED_PHOTO_CREDITS: PhotoCredit[] | null = [", original_module)
             self.assertIn("Ada L.", jsonl_dest.read_text(encoding="utf-8"))
-            proc = subprocess.run(
-                ["pnpm", "exec", "tsc", "--noEmit", "--pretty", "false"],
-                cwd=ROOT,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            self.assertEqual(proc.returncode, 0, proc.stdout + "\n" + proc.stderr)
+            for path, payload in before.items():
+                self.assertEqual(path.read_bytes(), payload)
         finally:
-            module.write_text(original_module, encoding="utf-8")
-            model_module.write_text(original_model, encoding="utf-8")
-            jsonl_dest.write_text(original_jsonl, encoding="utf-8")
             for key, value in saved.items():
                 setattr(export_tflite, key, value)
+            shutil.rmtree(copy_root, ignore_errors=True)
+
+    def test_install_writes_jsonl_on_a_repo_copy(self):
+        self._install_into_repo_copy()
+
+    @unittest.skipUnless(__import__("shutil").which("pnpm"), "pnpm is required to typecheck the credit module")
+    def test_install_writes_jsonl_and_leaves_the_credit_module_typecheckable(self):
+        import subprocess
+
+        self._install_into_repo_copy()
+        proc = subprocess.run(
+            ["pnpm", "exec", "tsc", "--noEmit", "--pretty", "false"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stdout + "\n" + proc.stderr)
 
 
 class StatsReferenceTest(unittest.TestCase):

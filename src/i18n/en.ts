@@ -30,6 +30,9 @@ export const en: Translations = {
     photoCreditsEmpty:
       'No model is installed, so there is no list of photo credits. Scan recognition stays off.',
     photoCreditsUnknownAuthor: 'Author not listed',
+    photoCreditsBack: 'Back to settings',
+    photoCreditsSearch: 'Search author or species',
+    photoCreditsNoMatches: 'No credits match that search.',
     about: 'About App',
     version: 'Version 1.0.0 (On-Device AI)',
     atlasScope:

@@ -28,6 +28,9 @@ export const pl = {
     photoCreditsEmpty:
       'Nie ma dołączonego modelu, więc nie ma listy autorów zdjęć. Rozpoznawanie ze skanu pozostaje wyłączone.',
     photoCreditsUnknownAuthor: 'Autor niepodany',
+    photoCreditsBack: 'Wróć do ustawień',
+    photoCreditsSearch: 'Szukaj autora lub gatunku',
+    photoCreditsNoMatches: 'Brak autorów pasujących do wyszukiwania.',
     about: 'O aplikacji',
     version: 'Wersja 1.0.0 (On-Device AI)',
     atlasScope:

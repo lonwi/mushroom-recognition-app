@@ -183,17 +183,19 @@ describe('LookAlikeAlert RTL Component Tests', () => {
       ['calocybe_gambosa', 'amanita_excelsa'].includes(risk.confusedWithId),
     );
 
-    const { getByTestId, queryByText } = await render(<LookAlikeAlert risks={risks} />);
+    const { getAllByTestId, queryByText } = await render(<LookAlikeAlert risks={risks} />);
 
-    expect(getByTestId('lookalike-unlinked-calocybe_gambosa')).toHaveTextContent(ATLAS_NO_VERDICT_NOTE, {
-      exact: false,
-    });
-    expect(getByTestId('lookalike-unlinked-amanita_excelsa')).toHaveTextContent(NOT_FOR_COLLECTION_NOTE, {
-      exact: false,
-    });
-    expect(getByTestId('lookalike-unlinked-calocybe_gambosa')).not.toHaveTextContent(NOT_FOR_COLLECTION_NOTE, {
-      exact: false,
-    });
+    const gambosa = getAllByTestId('lookalike-unlinked-calocybe_gambosa');
+    expect(gambosa.length).toBeGreaterThan(0);
+    for (const row of gambosa) {
+      expect(row).toHaveTextContent(ATLAS_NO_VERDICT_NOTE, { exact: false });
+      expect(row).not.toHaveTextContent(NOT_FOR_COLLECTION_NOTE, { exact: false });
+    }
+    const excelsa = getAllByTestId('lookalike-unlinked-amanita_excelsa');
+    expect(excelsa.length).toBeGreaterThan(1);
+    for (const row of excelsa) {
+      expect(row).toHaveTextContent(NOT_FOR_COLLECTION_NOTE, { exact: false });
+    }
     expect(queryByText('JADALNY')).toBeNull();
     expect(queryByText('NIEJADALNY')).toBeNull();
     expect(queryByText('TRUJĄCY')).toBeNull();

@@ -85,6 +85,7 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(Object.keys(LOOKALIKES_WITHOUT_CARD).sort()).toEqual([
       'amanita_excelsa',
       'calocybe_gambosa',
+      'craterellus_tubaeformis',
       'hypholoma_capnoides',
       'imperator_rhodopurpureus',
       'imperator_torosus',

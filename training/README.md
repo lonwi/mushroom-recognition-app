@@ -137,7 +137,7 @@ The flat 50-per-taxon probe floor is gone. The ship gate uses visual-group total
 
 The poisonous held-out total stays at least 300 (rule of three) and the confident-edible count on that set stays 0. Each poisonous taxon also records a Wilson upper bound and a seeded binomial-bootstrap upper bound on its confident-edible rate. A zero count makes the bootstrap upper bound collapse to 0; the Wilson bound is the one to read. Neither bound replaces the hard 0.
 
-`rare_taxon_exceptions` is a closed list: `Lepiota brunneoincarnata`, `Inosperma erubescens`, and `Conocybe filaris`. An extra name fails validation. Every exception must name the visual group that contains it. The 5-photo floor applies only when the fetch report shows the whole licensed pool was taken (`accepted` below the cap) and `gbif_licensed_count` is under 50 and equal to the audited count. Otherwise the 50-photo floor stands. The exception still needs 0 confident-edible outcomes, and its group must meet the group minimum. An exception does not lower the 300-image total. `Conocybe filaris` stays on the list with an audited count of 78, so it does not receive the 5-photo floor.
+`rare_taxon_exceptions` is a closed list of two names: `Lepiota brunneoincarnata` and `Inosperma erubescens`. An extra name fails validation. Every exception must name the visual group that contains it, and that group's taxon list is pinned: moving a taxon to another group, or clearing `deadly` on a poisonous held-out taxon that must stay deadly, fails validation. The 5-photo floor applies only when the fetch report shows the whole licensed pool was taken (`accepted` below the cap) and `gbif_licensed_count` is under 50 and equal to the audited count. Otherwise the 50-photo floor stands. The exception still needs 0 confident-edible outcomes, and its group must meet the group minimum. An exception does not lower the 300-image total. `Conocybe filaris` is not on the list. Its licensed count is 78, above 50, so the 50-photo floor stands and a closed-list entry would be dead. An exception needs a new GBIF licensed count when GBIF gains photos. A count recorded on 2026-10-08 does not stay valid after that.
 
 Counts below were measured on 2026-10-08. StillImage is before the license filter. Licensed counts use CC0/CC-BY and at most 2 photos per GBIF occurrence. After-dedup is a perceptual-hash pass on the photos actually downloaded, capped at 80 when the licensed set was larger.
 
@@ -148,7 +148,7 @@ Counts below were measured on 2026-10-08. StillImage is before the license filte
 | Lepiota cristata | 2535471 | 4232 | 80 of a larger set | 80 | group member, at least 50 |
 | Lepiota castanea | 2535310 | 768 | 80 of a larger set | 80 | group member, at least 50 |
 | Omphalotus olearius | 2538088 | 1563 | 80 of a larger set | 79 | group of 50 |
-| Conocybe filaris | 2529789 | 153 | 78 (whole set) | 33 was a cross-taxon hash bucket, not a licensed shortage | 50. The closed-list entry does not lower the floor |
+| Conocybe filaris | 2529789 | 153 | 78 (whole set) | 33 was a cross-taxon hash bucket, not a licensed shortage | 50. Not an exception: 78 is above 50 |
 | Conocybe rugosa | 2529907 | 575 | 80 of a larger set (at least 186 licensed) | 80 | group member, at least 50 |
 | Chlorophyllum molybdites | 5243168 | 17255 | 80 of a larger set | 77 | 50, not in a named group |
 | Tricholoma pardinum | 7242174 | — | about 137 estimated usable (2026-10-08 candidate scan, not a deduped download) | — | 50, not in a named group |
@@ -156,7 +156,7 @@ Counts below were measured on 2026-10-08. StillImage is before the license filte
 
 `Inosperma erubescens` (accepted name of `Inocybe erubescens`, key 10776858) is not a probe. It is a poisonous held-out taxon inside `unknown_mushroom`. The whole licensed set is 44 photos, all kept after dedup. It shares the Inocybe muscarine group with `Inocybe geophylla`. The 5-photo floor applies only when the fetch report shows that pool was exhausted.
 
-Near-duplicate removal compares 8×8 average hashes inside one species class, and inside one taxon for `unknown_mushroom`. The earlier filaris drop (78 licensed, 33 left) compared hashes across every unknown taxon. That is not evidence the licensed pool is under 50.
+Near-duplicate removal compares difference hashes (dHash, 8×9) and perceptual hashes (pHash, 8×8 DCT) inside one species class, and inside one taxon for `unknown_mushroom`. A photo is dropped when either Hamming distance is 2 or less. Records with neither hash are kept after the sha256 check. `prepare_data` writes `dropped_per_class` and `hash: dhash_or_phash_threshold_2` on the dedup report. The earlier filaris drop (78 licensed, 33 left) compared hashes across every unknown taxon. That is not evidence the licensed pool is under 50.
 
 On that same day the Lepiota group total from the table is 15+77+80+80 = 252, and the Conocybe group is 33+80 = 113. Both clear their minimums on this sample. One occurrence page took about 0.5–2.7 seconds, and the image downloads for these ten names finished in a few minutes on this machine. The crawl is part of `python training/run_pipeline.py fetch` and is not a full download in CI.
 
@@ -230,7 +230,7 @@ Low confidence (top softmax under 0.70 or top-1/top-2 margin under 0.15) still s
 | Deadly-probe strict top-1 | Lepiota look-alikes, Conocybe / Pholiotina, other strict groups, deadly held-out taxa such as `Amanita verna`, and photos of deadly classes. Top-1 is an edible species and the result is not low-confidence. A dangerous-genus banner does not clear this. | 0 |
 | Open-set safe outcome | Held-out fungi (`held_out_taxon`, class `unknown_mushroom`, including probes) whose `decide()` status is rejected, or candidates with low confidence or a dangerous-genus warning. Wilson 95% interval. | rate ≥ 0.90 and lower bound ≥ 0.85 |
 | Open-set confident edible | The same held-out photos that `decide()` would show as a confident edible. Wilson 95% interval. | rate ≤ 0.02 and upper bound ≤ 0.05 |
-| Poisonous held-out sample | Poisonous held-out photos, including every toxic probe and every toxic held-out unknown taxon, even when the count is 0. Confident edible among them must be 0. Per-taxon Wilson and bootstrap upper bounds are reported. | ≥ 300 images. Visual groups: Lepiota look-alikes ≥ 150, Conocybe / Pholiotina ≥ 100, Omphalotus ≥ 50, Inocybe muscarine ≥ 80. Every other taxon ≥ 50 unless it is one of the three closed `rare_taxon_exceptions`, the fetch report shows `accepted` below the cap and `gbif_licensed_count` under 50, and the group still meets its minimum. The exception then needs ≥ 5 images and 0 confident-edible outcomes. |
+| Poisonous held-out sample | Poisonous held-out photos, including every toxic probe and every toxic held-out unknown taxon, even when the count is 0. Confident edible among them must be 0. Per-taxon Wilson and bootstrap upper bounds are reported. | ≥ 300 images. Visual groups: Lepiota look-alikes ≥ 150, Conocybe / Pholiotina ≥ 100, Omphalotus ≥ 50, Inocybe muscarine ≥ 80. Every other taxon ≥ 50 unless it is one of the two closed `rare_taxon_exceptions`, the fetch report shows `accepted` below the cap and `gbif_licensed_count` under 50, and the group still meets its minimum. The exception then needs ≥ 5 images and 0 confident-edible outcomes. Re-audit the licensed count when GBIF gains photos. |
 | Unknown-fungus recall | Diagnostic only. Top-1 equals `unknown_mushroom` on held-out fungi. The ship gate does not use 0.50. It does require enough photos to compute the diagnostic, and it records a per-taxon bootstrap lower bound (target 0.40, not a ship floor) plus a split of unknown genus versus unknown species of a known genus. | ≥ 200 images and ≥ 10 taxa with ≥ 10 each |
 | Unknown-fungus steal | Known-species test photos that `decide()` rejects as `unknown_mushroom`. Energy rejects are not steals. | ≤ 0.10 |
 | High-stakes steal | The same steal rate for each high-stakes class. | ≤ 0.10 on ≥ 30 images |
@@ -242,7 +242,7 @@ Low confidence (top softmax under 0.70 or top-1/top-2 margin under 0.15) still s
 | TFLite agreement | Top-1 match between the interpreter and the float Keras model on **every** val and test photo. | ≥ 0.99 |
 | TFLite high-risk agreement | The same match, only on high-risk class photos, again the full val+test count. | ≥ 0.99 |
 | Attribution | `attributions.jsonl` beside the model has one complete row (creator, CC0 or CC-BY, image URL, source page) per train+val+test image. | complete |
-| Hashes | sha256 of `model.keras` and `mushrooms_model.tflite` match the files on disk. | exact |
+| Hashes | sha256 of `model.keras`, `mushrooms_model.tflite`, and `fetch_report.json` match the files on disk. The fetch-report hash covers the file `attach_fetch_evidence` reads, and that step overwrites `accepted` and `gbif_licensed_count` from the report. | exact |
 
 Export builds **fp16** weights with float32 input and output. `react-native-fast-tflite` runs XNNPACK, which executes that graph. A fully integer int8 graph is not the default: XNNPACK rejects MobileNetV3 ops from `TFLITE_BUILTINS_INT8` on device, while fp16 lands near 2 MB and keeps the float preprocess. `--quantization int8` is an experiment and is not what a ship build uses. There is no force flag.
 
@@ -250,7 +250,7 @@ Export builds **fp16** weights with float32 input and output. `react-native-fast
 
 - A trained checkpoint and the measured metrics above.
 - Enough CC-BY/CC0 photos of `Cortinarius orellanus`, `Amanita virosa`, and `Cortinarius rubellus`. Global fill is allowed, and it may still be short after dedup.
-- The poisonous held-out sample above. The closed exceptions stay `Lepiota brunneoincarnata` (16 licensed), `Conocybe filaris` (78 licensed, so the 50-photo floor still applies), and `Inosperma erubescens` (44 licensed, Inocybe group), all checked 2026-10-08. A new short taxon is not an exception. The list does not grow.
+- The poisonous held-out sample above. The closed exceptions stay `Lepiota brunneoincarnata` (16 licensed) and `Inosperma erubescens` (44 licensed, Inocybe group), both checked 2026-10-08. `Conocybe filaris` (78 licensed) is not an exception and keeps the 50-photo floor. Re-audit an exception when GBIF gains photos; a 2026-10-08 count does not stay valid. A new short taxon is not an exception. The list does not grow.
 - On-device measurement of accuracy, latency, and the reject rate on a phone. The exporter scores the interpreter on val/test photos on the training machine.
 - `Armillaria mellea` is a species complex. Photos labeled that way on GBIF are often sensu lato.
 - `Amanita verna` is not its own class. It is one of the held-out taxa inside `unknown_mushroom`.

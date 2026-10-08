@@ -16,7 +16,7 @@ import math
 import re
 from pathlib import Path
 
-from evaluate import attach_fetch_evidence, attributions_complete, poisonous_sample_reasons
+from evaluate import DATA_DIR, attach_fetch_evidence, attributions_complete, poisonous_sample_reasons
 from manifest import ROOT, load_manifest, poisonous_heldout_taxa
 from recognition_math import (
     BACKGROUND_CLASS_ID,
@@ -118,7 +118,24 @@ def _attribution_file_reasons(directory: Path, coverage: dict) -> list[str]:
     return reasons
 
 
-def _open_set_reasons(open_set: dict) -> list[str]:
+def fetch_report_file(directory: Path | None = None) -> Path | None:
+    """The fetch report whose hash the ship gate checks.
+
+    A caller-supplied artifact directory uses only the copy inside that
+    directory. The real artifacts directory may fall back to training/data.
+    """
+    folder = ARTIFACTS if directory is None else directory
+    bundled = folder / "fetch_report.json"
+    if bundled.is_file():
+        return bundled
+    if folder.resolve() == ARTIFACTS.resolve():
+        stored = DATA_DIR / "fetch_report.json"
+        if stored.is_file():
+            return stored
+    return None
+
+
+def _open_set_reasons(open_set: dict, fetch_file: Path | None = None) -> list[str]:
     """Gates on decide() outcomes for fungi the trainer never saw."""
     reasons = []
     support = _whole_count(open_set.get("held_out_support"))
@@ -146,9 +163,10 @@ def _open_set_reasons(open_set: dict) -> list[str]:
     if not isinstance(per_taxon, list) or not per_taxon:
         reasons.append("poisonous held-out per-taxon counts are missing")
         return reasons
+    evidenced = per_taxon if fetch_file is None else attach_fetch_evidence(per_taxon, report_path=fetch_file)
     reasons.extend(
         poisonous_sample_reasons(
-            attach_fetch_evidence(per_taxon),
+            evidenced,
             probes,
             expected_names=poisonous_heldout_taxa(manifest),
         )
@@ -187,6 +205,8 @@ def _open_set_reasons(open_set: dict) -> list[str]:
 
 def assess_shippable(report: dict, artifact_dir: Path | None = None) -> tuple[bool, list[str]]:
     reasons: list[str] = []
+    directory = ARTIFACTS if artifact_dir is None else artifact_dir
+    fetch_file = fetch_report_file(directory)
     class_ids = [item["id"] for item in load_manifest()["classes"]]
     per_class = report.get("per_class") or {}
     coverage = report.get("coverage") or {}
@@ -311,7 +331,7 @@ def assess_shippable(report: dict, artifact_dir: Path | None = None) -> tuple[bo
                 f"high-stakes class {species_id} predicted as unknown_mushroom at {rate} "
                 f"on support {support} (need <= {UNKNOWN_STEAL_MAX} and >= {HIGH_STAKES_STEAL_SUPPORT_MIN})"
             )
-    reasons.extend(_open_set_reasons(report.get("open_set") or {}))
+    reasons.extend(_open_set_reasons(report.get("open_set") or {}, fetch_file))
     toxic_as_edible = report.get("confident_toxic_as_edible")
     if not isinstance(toxic_as_edible, int) or isinstance(toxic_as_edible, bool) or toxic_as_edible != 0:
         reasons.append(
@@ -354,7 +374,6 @@ def assess_shippable(report: dict, artifact_dir: Path | None = None) -> tuple[bo
         )
     elif high_risk_agreement is None or high_risk_agreement < 0.99:
         reasons.append(f"TFLite vs float32 high-risk top-1 agreement {high_risk_agreement} is below 0.99")
-    directory = ARTIFACTS if artifact_dir is None else artifact_dir
     if not report.get("attributions_complete"):
         reasons.append("per-image attribution file is incomplete")
     reasons.extend(_attribution_file_reasons(directory, coverage))
@@ -370,5 +389,8 @@ def assess_shippable(report: dict, artifact_dir: Path | None = None) -> tuple[bo
         reasons.append("model.keras sha256 does not match the file that was evaluated")
     if tflite_hash != sha256_file(directory / "mushrooms_model.tflite"):
         reasons.append("tflite sha256 does not match the file that was evaluated")
+    fetch_hash = sha256_file(fetch_file) if fetch_file is not None else None
+    if recorded.get("fetch_report_sha256") != fetch_hash:
+        reasons.append("fetch_report sha256 does not match the file used for rare-taxon evidence")
 
     return (len(reasons) == 0, reasons)

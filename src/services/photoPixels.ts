@@ -11,6 +11,29 @@ function base64ToBytes(value: string): Uint8Array {
 export const NATIVE_PREVIEW_EDGE = 448;
 
 /**
+ * expo-camera 57 `photo.width` is the upright width only after orientation is applied.
+ *
+ * Android `ResolveTakenPicture` writes `bitmap.width` after `decodeAndRotateBitmap`
+ * when `skipProcessing` is false. With `skipProcessing` it writes
+ * `ExifInterface.TAG_IMAGE_WIDTH`, the stored pixel width before that rotation.
+ * iOS `UIImage.size` is orientation-aware, and this SDK does not implement
+ * `skipProcessing` there. A skipProcessing capture must not supply the resize
+ * width. Gallery widths from expo-image-picker already swap 90° and 270° EXIF.
+ */
+export function uprightCaptureWidth(
+  width: number | undefined,
+  options: { skipProcessing?: boolean },
+): number | undefined {
+  if (options.skipProcessing) {
+    return undefined;
+  }
+  if (typeof width === 'number' && Number.isFinite(width) && width >= 1) {
+    return width;
+  }
+  return undefined;
+}
+
+/**
  * Widths to request from the platform scaler, each step at most 2×.
  *
  * A single resize from a 12–50 MP photo to 448 is more than 2× and the

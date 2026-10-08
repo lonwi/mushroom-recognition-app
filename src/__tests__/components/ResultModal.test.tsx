@@ -98,7 +98,7 @@ const top3: SpeciesCandidate[] = [
   },
   {
     id: 'cortinarius_orellanus',
-    namePl: 'Zasłoniak rudy',
+    namePl: 'Zasłonak rudy',
     nameLatin: 'Cortinarius orellanus',
     genus: 'Cortinarius',
     confidence: 0.22,

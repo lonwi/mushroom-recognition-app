@@ -43,7 +43,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophore: 'GILLS',
     months: [7, 8, 9, 10],
     habitat: 'Głównie lasy liściaste, zwłaszcza dąbrowy i buczyny, także lasy mieszane.',
-    capDescription: 'Średnica 5-15 cm. Barwa oliwkowozielona, żółtawozielona, szarozielona, ku brzegom jaśniejsza. Powierzchnia gładka, w stanie wilgotnym lepka, rzadko z nielicznymi białymi łatkami.',
+    capDescription: 'Średnica 5-15 cm. Barwa oliwkowozielona, żółtawozielona, szarozielona, bladozielona albo prawie biała, ku brzegom jaśniejsza. Sam kolor nie rozstrzyga gatunku. Powierzchnia gładka, w stanie wilgotnym lepka, rzadko z nielicznymi białymi łatkami.',
     hymenophoreDescription: 'Blaszki ZAWSZE BIAŁE (u starych okazów lekko zielonkawe), gęste, wolne, nie dochodzą do trzonu. Nigdy nie różowieją ani nie brązowieją!',
     stemDescription: 'Wysokość do około 15 cm. Smukły, walcowaty, biały, oliwkowy lub lekko zielonawy, często z mniej lub bardziej wyraźnym zygzakowatym wzorem. U dołu bulwa w wyraźnej, luźnej, białej pochwie. Pod kapeluszem duży, przyrośnięty, zwieszający się, prążkowany pierścień.',
     fleshDescription: 'Biały, pod skórką kapelusza nieco zielonkawy, niezmienny po przełamaniu.',
@@ -87,9 +87,9 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         confusedWithName: 'Muchomor cytrynowy',
         confusedWithStatus: 'POISONOUS',
         keyDifferences: [
-          'Muchomor cytrynowy ma blady, cytrynowożółty kapelusz i bulwę z wyraźnym rąbkiem',
-          'Muchomor sromotnikowy jest oliwkowozielony i ma luźną, workowatą pochwę',
-          'Oba mają białe blaszki i pierścień. Żółty kapelusz nie czyni owocnika bezpiecznym'
+          'Kolor kapelusza nie rozstrzyga. Sromotnikowy bywa bladozielony albo biały, nie tylko oliwkowy',
+          'Rozstrzyga nasada: sromotnikowy ma bulwę w luźnej, workowatej pochwie. Cytrynowy ma bulwę z rąbkiem, bez workowatej pochwy',
+          'Oba mają białe blaszki i pierścień. Blady albo żółty kapelusz nie czyni owocnika bezpiecznym'
         ],
         fatal: false
       }
@@ -1167,12 +1167,12 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         keyDifferences: [
           'Podgrzybek brunatny ma ciemniejszy, lepki w deszczu kapelusz i wyraźnie siniejące pory',
           'Zamszowy jest matowy i oliwkowy, a pory ma jaskrawożółte',
-          'Pieprznik pieprzowy (Chalciporus piperatus) nie ma w atlasie: ma cynamonowe pory i piekący smak'
+          'Maślaczek pieprzowy (Chalciporus piperatus) nie ma w atlasie: ma cynamonowe pory i piekący smak'
         ],
         fatal: false
       }
     ],
-    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Brak zdjęcia. Pieprznik pieprzowy (Chalciporus piperatus) nie ma karty. Brak karty nie oznacza, że grzyb jest jadalny.'
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Brak zdjęcia. Maślaczek pieprzowy (Chalciporus piperatus) nie ma karty. Brak karty nie oznacza, że grzyb jest jadalny.'
   },
   {
     id: 'suillus_grevillei',
@@ -1439,7 +1439,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     months: [6, 7, 8, 9, 10],
     habitat: 'Lasy iglaste i liściaste, pod sosną, świerkiem, dębem i bukiem.',
     capDescription: 'Średnica 5–15 cm. Brudnoróżowy do brązowawego, z szarawymi łatkami, które deszcz może zmyć. Brzeg nie jest prążkowany.',
-    hymenophoreDescription: 'Blaszki białe, gęste, wolne. Nie różowieją.',
+    hymenophoreDescription: 'Blaszki białe, gęste, wolne. Z wiekiem i po uszkodzeniu pojawiają się na nich czerwonawe plamy.',
     stemDescription: 'Biały, z pierścieniem prążkowanym od góry. Nasada bulwiasta, bez workowatej pochwy.',
     fleshDescription: 'Biały. Uszkodzony miąższ różowieje albo czerwienieje, zwłaszcza w trzonie i przy bulwie. Surowe owocniki są trujące.',
     tasteAndSmell: 'Nie sprawdzaj smakiem. Czerwienienie nie jest dowodem, że grzyb jest jadalny.',
@@ -1450,14 +1450,25 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         confusedWithName: 'Muchomor plamisty',
         confusedWithStatus: 'POISONOUS',
         keyDifferences: [
-          'Plamisty ma pierścień gładki i nie czerwienieje. Czerwieniejący ma pierścień prążkowany, a miąższ różowieje',
-          'Bulwa plamistego ma odstający rąbek',
-          'Zmyte łatki nie rozstrzygają gatunku. Bez czerwienienia miąższu owocnik zostaw'
+          'Plamisty ma pierścień gładki i nie czerwienieje. Czerwieniejący ma pierścień prążkowany, a miąższ i blaszki różowieją po uszkodzeniu',
+          'Plamisty ma brzeg prążkowany i czysto białe łatki. Czerwieniejący ma brzeg gładki, a łatki szarawe',
+          'Bulwa plamistego ma odstający rąbek. Zmyte łatki nie rozstrzygają gatunku'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'amanita_excelsa',
+        confusedWithName: 'Muchomor twardawy',
+        confusedWithStatus: 'NO_ATLAS_VERDICT',
+        keyDifferences: [
+          'Twardawy nie czerwienieje na blaszkach ani w miąższu',
+          'Czerwieniejący różowieje po uszkodzeniu i ma brzeg gładki',
+          'Twardawy nie ma w tym atlasie karty. Brak karty nie oznacza, że grzyb jest jadalny'
         ],
         fatal: false
       }
     ],
-    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Surowy jest trujący. Muchomor plamisty nie czerwienieje i jest silnie trujący. Brak zdjęcia.'
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Surowy jest trujący. Blaszki z wiekiem i po uszkodzeniu dostają czerwonawych plam. Muchomor plamisty ma brzeg prążkowany i czysto białe łatki, a nie czerwienieje. Brak zdjęcia.'
   },
   {
     id: 'amanita_citrina',
@@ -1475,33 +1486,33 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     stemDescription: 'Biały albo żółtawy, z pierścieniem. Nasada bulwiasta, z rąbkiem, nie z luźną workowatą pochwą.',
     fleshDescription: 'Biały, pod skórką żółtawy. Zapach bywa surowy, ziemniaczany.',
     tasteAndSmell: 'Zapach surowych ziemniaków. Nie sprawdzaj smakiem.',
-    culinaryValue: 'Trujący. Nie jedz. Żółty kapelusz bywa brany za muchomora sromotnikowego, który jest śmiertelny.',
+    culinaryValue: 'Trujący. Nie jedz. Kolor kapelusza nie rozstrzyga: muchomor sromotnikowy bywa bladozielony albo biały i jest śmiertelny.',
     confusionRisks: [
       {
         confusedWithId: 'amanita_phalloides',
         confusedWithName: 'Muchomor sromotnikowy (zielonawy)',
         confusedWithStatus: 'DEADLY_POISONOUS',
         keyDifferences: [
-          'Sromotnikowy ma oliwkowozielony kapelusz i luźną, workowatą pochwę',
-          'Cytrynowy jest bladożółty i ma bulwę z rąbkiem, nie workowatą pochwę',
+          'Kolor kapelusza nie rozstrzyga. Sromotnikowy bywa bladozielony albo biały, nie tylko oliwkowy',
+          'Rozstrzyga nasada: sromotnikowy ma bulwę w luźnej, workowatej pochwie. Cytrynowy ma bulwę z rąbkiem',
           'Białe blaszki i pierścień mają oba. W razie wątpliwości nie zbieraj'
         ],
         fatal: true
       }
     ],
-    warningNotes: 'NIE JEDZ. Trujący. Muchomor sromotnikowy jest śmiertelnym sobowtórem. Brak zdjęcia.'
+    warningNotes: 'NIE JEDZ. Trujący. Muchomor sromotnikowy jest śmiertelnym sobowtórem. Rozstrzyga pochwa i bulwa, nie kolor kapelusza. Brak zdjęcia.'
   },
   {
     id: 'cortinarius_orellanus',
-    namePl: 'Zasłoniak rudy',
+    namePl: 'Zasłonak rudy',
     nameEn: 'Fool’s webcap',
     nameLatin: 'Cortinarius orellanus',
     commonNicknames: [],
     family: 'Zasłonakowate (Cortinariaceae)',
     status: 'DEADLY_POISONOUS',
     hymenophore: 'GILLS',
-    months: [8, 9, 10],
-    habitat: 'Lasy liściaste, pod dębem i bukiem, na cieplejszych stanowiskach.',
+    months: [8, 9, 10, 11],
+    habitat: 'Lasy liściaste, mieszane i bory sosnowe, pod dębem, bukiem i sosną. VIII–XI.',
     capDescription: 'Średnica 3–8 cm. Rudopomarańczowy, suchy, filcowaty. Brzeg nie jest prążkowany.',
     hymenophoreDescription: 'Blaszki rdzawe, dość rzadkie. U młodych owocników zasnówka pajęczynowata, nie pierścień.',
     stemDescription: 'Żółtawy do rdzawego, włóknisty, bez pierścienia i bez pochwy. Nasada zwężona.',
@@ -1511,24 +1522,46 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     confusionRisks: [
       {
         confusedWithId: 'cortinarius_rubellus',
-        confusedWithName: 'Zasłoniak szpiczasty',
+        confusedWithName: 'Zasłonak rudawy',
         confusedWithStatus: 'DEADLY_POISONOUS',
         keyDifferences: [
-          'Szpiczasty ma stożkowaty kapelusz i rośnie w borach świerkowych',
-          'Rudy ma bardziej rozpostarty, filcowaty kapelusz i rośnie pod dębem i bukiem',
+          'Rudawy (szpiczasty) ma stożkowaty kapelusz i rośnie w borach świerkowych',
+          'Rudy ma bardziej rozpostarty, filcowaty kapelusz i rośnie też pod sosną oraz w lesie mieszanym',
           'Oba są śmiertelnie trujące. Zasnówka pajęczynowata to powód, żeby owocnik zostawić'
         ],
         fatal: true
+      },
+      {
+        confusedWithId: 'cantharellus_cibarius',
+        confusedWithName: 'Pieprznik jadalny (Kurka)',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Kurka ma grube, zbiegające listewki, nie rdzawe blaszki i nie pajęczynowatą zasnówkę',
+          'Zasłonak rudy ma suche, filcowate, rudopomarańczowe owocniki i blaszki, nie żółte fałdy',
+          'Pomarańczowy kolor nie rozstrzyga. Zasnówka albo rdzawe blaszki: owocnik zostaw'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'craterellus_tubaeformis',
+        confusedWithName: 'Pieprznik trąbkowy',
+        confusedWithStatus: 'NO_ATLAS_VERDICT',
+        keyDifferences: [
+          'Pieprznik trąbkowy ma zbiegające listewki i lejkowaty, cieńszy owocnik',
+          'Zasłonak ma rdzawe blaszki i u młodych owocników pajęczynowatą zasnówkę',
+          'Pieprznik trąbkowy nie ma karty w tym atlasie. Brak karty nie oznacza, że grzyb jest jadalny'
+        ],
+        fatal: false
       }
     ],
     warningNotes: 'NIE JEDZ. Śmiertelnie trujący. Orellanina. Objawy bywają po wielu dniach. Brak zdjęcia.'
   },
   {
     id: 'cortinarius_rubellus',
-    namePl: 'Zasłoniak szpiczasty',
+    namePl: 'Zasłonak rudawy',
     nameEn: 'Deadly webcap',
     nameLatin: 'Cortinarius rubellus',
-    commonNicknames: ['Zasłoniak piękny'],
+    commonNicknames: ['Zasłonak szpiczasty'],
     family: 'Zasłonakowate (Cortinariaceae)',
     status: 'DEADLY_POISONOUS',
     hymenophore: 'GILLS',
@@ -1543,14 +1576,36 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     confusionRisks: [
       {
         confusedWithId: 'cortinarius_orellanus',
-        confusedWithName: 'Zasłoniak rudy',
+        confusedWithName: 'Zasłonak rudy',
         confusedWithStatus: 'DEADLY_POISONOUS',
         keyDifferences: [
-          'Rudy rośnie pod dębem i bukiem i ma bardziej filcowaty kapelusz',
-          'Szpiczasty rośnie w borze świerkowym i ma stożkowaty kapelusz',
+          'Rudy rośnie też pod sosną i w lesie mieszanym i ma bardziej filcowaty kapelusz',
+          'Rudawy (szpiczasty) rośnie w borze świerkowym i ma stożkowaty kapelusz',
           'Oba są śmiertelnie trujące. Siedlisko ich nie rozdziela na tyle, żeby któryś zebrać'
         ],
         fatal: true
+      },
+      {
+        confusedWithId: 'cantharellus_cibarius',
+        confusedWithName: 'Pieprznik jadalny (Kurka)',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Kurka ma grube, zbiegające listewki, nie rdzawe blaszki i nie pajęczynowatą zasnówkę',
+          'Zasłonak rudawy ma stożkowaty kapelusz i rdzawe blaszki',
+          'Pomarańczowy kolor nie rozstrzyga. Zasnówka albo rdzawe blaszki: owocnik zostaw'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'craterellus_tubaeformis',
+        confusedWithName: 'Pieprznik trąbkowy',
+        confusedWithStatus: 'NO_ATLAS_VERDICT',
+        keyDifferences: [
+          'Pieprznik trąbkowy ma zbiegające listewki i lejkowaty, cieńszy owocnik',
+          'Zasłonak ma rdzawe blaszki i u młodych owocników pajęczynowatą zasnówkę',
+          'Pieprznik trąbkowy nie ma karty w tym atlasie. Brak karty nie oznacza, że grzyb jest jadalny'
+        ],
+        fatal: false
       }
     ],
     warningNotes: 'NIE JEDZ. Śmiertelnie trujący. Orellanina. Brak zdjęcia. Nazwy Cortinarius speciosissimus i C. orellanoides są synonimami.'
@@ -1587,6 +1642,12 @@ export const LOOKALIKES_WITHOUT_CARD: Readonly<
     note: ATLAS_NO_VERDICT_NOTE,
     reason:
       'Borowik ponury (Suillellus luridus) is only the netted twin of the scarletina bolete. Literature calls it edible after cooking and poisonous raw. There is no finished card, so this atlas does not show that verdict.',
+  },
+  craterellus_tubaeformis: {
+    status: 'NO_ATLAS_VERDICT',
+    note: ATLAS_NO_VERDICT_NOTE,
+    reason:
+      'Pieprznik trąbkowy (Craterellus tubaeformis) is only the funnel-shaped twin of the deadly webcaps. There is no card, so this atlas does not show an edible verdict.',
   },
   hypholoma_capnoides: {
     status: 'NO_ATLAS_VERDICT',

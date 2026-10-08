@@ -8,7 +8,8 @@ decode the original JPEG, so EXIF orientation cannot be skipped. The sample
 list is shuffled before from_tensor_slices, and each epoch shuffles the full
 cached set again. The cache stores uint8 pixels. Normalization to [-1, 1]
 happens after the cache. Training then applies flip, a random area or bilinear
-upsample, an aliased nearest downsample, rotation, brightness, and contrast.
+upsample, an aliased nearest downsample on about 15% of samples, rotation,
+brightness, and contrast.
 Class weights are inverse frequency, capped at 10.
 """
 
@@ -130,10 +131,10 @@ def main() -> None:
 
     def augment(image, label):
         image = tf.image.random_flip_left_right(image)
-        # Upscale with area or bilinear, or downsample with nearest (aliased)
-        # and scale back. A scale of 1.0–1.25 alone never exercises a downsample
-        # kernel. Rotation is about +/- 15 degrees.
-        branch = tf.random.uniform([], 0, 3, dtype=tf.int32)
+        # About 15% of samples take an aliased nearest downsample at 0.7–0.95
+        # so fine scales (Lepiota) are not erased. The rest upscale 1.0–1.25
+        # with area or bilinear. Rotation is about +/- 15 degrees.
+        roll = tf.random.uniform([])
 
         def crop_side():
             scale = tf.random.uniform([], 1.0, 1.25)
@@ -149,17 +150,17 @@ def main() -> None:
             return tf.image.resize(image, [side, side], method="bilinear")
 
         def aliased_downsample():
-            shrink = tf.random.uniform([], 0.5, 0.85)
+            shrink = tf.random.uniform([], 0.7, 0.95)
             small = tf.cast(tf.round(float(args.image_size) * shrink), tf.int32)
             small = tf.maximum(small, 32)
             shrunk = tf.image.resize(image, [small, small], method="nearest", antialias=False)
             side = crop_side()
             return tf.image.resize(shrunk, [side, side], method="nearest", antialias=False)
 
-        image = tf.switch_case(
-            branch,
-            branch_fns={0: resize_area, 1: resize_bilinear, 2: aliased_downsample},
-        )
+        def upsample():
+            return tf.cond(tf.random.uniform([]) < 0.5, resize_area, resize_bilinear)
+
+        image = tf.cond(roll < 0.15, aliased_downsample, upsample)
         image = tf.image.random_crop(image, [args.image_size, args.image_size, 3])
         image = rotation(image[None, ...], training=True)[0]
         image = tf.image.random_brightness(image, 0.12)
@@ -231,7 +232,7 @@ def main() -> None:
                 "augmentation": [
                     "random_flip_left_right",
                     "random_scale_1.0_1.25_area_or_bilinear_then_crop",
-                    "aliased_nearest_downsample_then_crop",
+                    "aliased_nearest_downsample_0.7_0.95_about_15_percent",
                     "random_rotation_15deg",
                     "random_brightness_0.12",
                     "random_contrast_0.85_1.15",

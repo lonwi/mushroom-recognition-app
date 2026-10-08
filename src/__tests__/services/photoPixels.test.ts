@@ -1,5 +1,10 @@
 import * as ImageManipulator from 'expo-image-manipulator';
-import { readPhotoAsPngBytes, previewResizeWidths, NATIVE_PREVIEW_EDGE } from '../../services/photoPixels';
+import {
+  readPhotoAsPngBytes,
+  previewResizeWidths,
+  NATIVE_PREVIEW_EDGE,
+  uprightCaptureWidth,
+} from '../../services/photoPixels';
 
 type ContextRecord = { uri: string; widths: number[]; saved: boolean };
 
@@ -79,5 +84,16 @@ describe('readPhotoAsPngBytes', () => {
     expect(contexts[0].widths).toEqual([448]);
     expect(contexts[0].saved).toBe(true);
     expect(Array.from(bytes)).toEqual([9, 8, 7]);
+  });
+});
+
+describe('uprightCaptureWidth', () => {
+  it('ignores photo.width when expo-camera skipped EXIF rotation', () => {
+    expect(uprightCaptureWidth(4032, { skipProcessing: true })).toBeUndefined();
+  });
+
+  it('keeps photo.width after the camera applied EXIF rotation', () => {
+    expect(uprightCaptureWidth(3024, { skipProcessing: false })).toBe(3024);
+    expect(uprightCaptureWidth(undefined, { skipProcessing: false })).toBeUndefined();
   });
 });

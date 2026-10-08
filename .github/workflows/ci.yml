@@ -36,6 +36,18 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: training/requirements-dev.txt
+
+      - name: Install Python test dependencies
+        run: python -m pip install -r training/requirements-dev.txt
+
+      - name: Credit-module typecheck on a repo copy
+        run: python training/tests/test_contract.py ManifestAndShipGateTest.test_install_writes_jsonl_and_leaves_the_credit_module_typecheckable
+
       - name: Test
         run: pnpm test --ci --watchAll=false
 
