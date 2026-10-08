@@ -1,38 +1,65 @@
-// dependency-cruiser gate for the UI / services layer.
+// Adapter allowlist gate.
 //
-// The direct rule forbids every non-service module from importing storage
-// and platform packages. The reachable rule forbids a path from App.tsx,
-// index.ts, screens, components, contexts, or utils to those packages.
+// Only the files named in .dependency-cruiser.cjs may import storage and
+// platform packages. UI (App.tsx, index.ts, screens, components, contexts,
+// utils, stories) may not import those adapter files, directly or through
+// another module. A path that reaches a platform package is allowed only
+// when it enters an adapter or a direct import already in the baseline
+// (LanguageContext, the scanner). import type does not count.
 //
-// Cruiser reports a single path per pair, and that path is often the
-// legitimate one through src/services. This script walks every path. A path
-// is allowed when it enters src/services, or when it enters a module whose
-// direct import is already in the known-violations file (LanguageContext,
-// the scanner, the journal story). Any other path fails.
+// dependency-cruiser 18.5 needs Node ^22 || ^24. The check below uses
+// package.json `engines.node`, which is the same range.
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
+import { satisfiesNode } from './node-engine.mjs';
 
 const loadConfig = createRequire(import.meta.url);
 const cruiseConfig = loadConfig('../.dependency-cruiser.cjs');
+const packageJson = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+
+const nodeRange = packageJson.engines?.node;
+if (!nodeRange || !satisfiesNode(process.versions.node, nodeRange)) {
+  console.error(
+    `This repo needs Node ${nodeRange ?? '(missing engines.node)'}. Current process: ${process.versions.node}. dependency-cruiser 18.5 fails on Node 20.19.`,
+  );
+  process.exit(1);
+}
 
 const knownPath = path.resolve('.dependency-cruiser-known-violations.json');
 const update = process.argv.includes('--update');
 const shrink = process.argv.includes('--shrink');
-const reachableRule = 'ui-not-to-storage-or-platform-reachable';
-const directRule = 'ui-not-to-storage-or-platform';
-const directRuleConfig = cruiseConfig.forbidden.find((rule) => rule.name === directRule);
-const reachableRuleConfig = cruiseConfig.forbidden.find((rule) => rule.name === reachableRule);
+const platformRuleName = 'ui-not-to-storage-or-platform';
+const platformReachableName = 'ui-not-to-storage-or-platform-reachable';
+const adapterRuleName = 'ui-not-to-platform-adapter';
+const adapterReachableName = 'ui-not-to-platform-adapter-reachable';
 
-if (!directRuleConfig?.from?.pathNot?.includes('src/services/') || !reachableRuleConfig?.to?.path) {
-  console.error('Layer rules in .dependency-cruiser.cjs no longer exclude src/services or name a target.');
+function ruleByName(name) {
+  return cruiseConfig.forbidden.find((rule) => rule.name === name);
+}
+
+const platformRule = ruleByName(platformRuleName);
+const platformReachable = ruleByName(platformReachableName);
+const adapterRule = ruleByName(adapterRuleName);
+const adapterReachable = ruleByName(adapterReachableName);
+
+if (
+  !platformRule?.from?.pathNot?.includes('src/stories/') ||
+  !platformRule.from.pathNot.includes('keyValueStore') ||
+  !adapterRule?.to?.path?.includes('keyValueStore') ||
+  !platformReachable?.to?.path ||
+  !adapterReachable?.from?.path
+) {
+  console.error('Layer rules in .dependency-cruiser.cjs no longer exclude stories or name the adapter allowlist.');
   process.exit(1);
 }
 
-const platformRe = new RegExp(reachableRuleConfig.to.path);
-const uiRe = new RegExp(reachableRuleConfig.from.path);
-const serviceRe = /(?:^|\/)src\/services\//;
+const platformRe = new RegExp(platformReachable.to.path);
+const adapterRe = new RegExp(adapterRule.to.path);
+const platformUiRe = new RegExp(platformReachable.from.path);
+const platformUiNotRe = new RegExp(platformReachable.from.pathNot);
+const adapterUiRe = new RegExp(adapterReachable.from.path);
 const nodeModulesRe = /(?:^|\/)node_modules\//;
 
 function loadReport() {
@@ -66,7 +93,7 @@ function loadReport() {
   }
 
   if (!report?.summary || !Array.isArray(report.modules)) {
-    console.error(result.stderr);
+    console.error(result.stderr || 'dependency-cruiser returned no module graph');
     process.exit(result.status || 1);
   }
   return report;
@@ -84,15 +111,35 @@ function sameMembers(left, right) {
 
 function isSameViolation(left, right) {
   if (left.rule?.name !== right.rule?.name) return false;
+  if (left.type === 'reachability' && right.type === 'reachability') {
+    // One forbidden target per UI file. A second route to that same file
+    // is the same leak; only a new target (or a new UI file) fails.
+    return left.from === right.from && left.to === right.to;
+  }
   if (left.cycle && right.cycle) {
-    const leftNames = left.cycle.map((hop) => hop.name);
-    const rightNames = right.cycle.map((hop) => hop.name);
-    return sameMembers(leftNames, rightNames);
+    return sameMembers(
+      left.cycle.map((hop) => hop.name),
+      right.cycle.map((hop) => hop.name),
+    );
   }
   if (left.via && right.via) {
     return left.from === right.from && left.to === right.to && sameMembers(viaNames(left), viaNames(right));
   }
   return left.from === right.from && left.to === right.to;
+}
+
+function preferShorterVia(violations) {
+  const kept = [];
+  for (const violation of violations) {
+    if (violation.type !== 'reachability') {
+      kept.push(violation);
+      continue;
+    }
+    const index = kept.findIndex((item) => isSameViolation(item, violation));
+    if (index === -1) kept.push(violation);
+    else if ((violation.via?.length ?? 0) < (kept[index].via?.length ?? 0)) kept[index] = violation;
+  }
+  return kept;
 }
 
 function sortKey(violation) {
@@ -112,91 +159,133 @@ function readKnown() {
 function grandfatheredFrom(violations) {
   return new Set(
     violations
-      .filter((violation) => violation.type === 'dependency' && violation.rule?.name === directRule)
+      .filter((violation) => violation.type === 'dependency' && violation.rule?.name === platformRuleName)
       .map((violation) => violation.from),
   );
 }
 
-function hopsBeforePackage(violation) {
-  const via = viaNames(violation);
-  const intermediates = via.length > 0 ? via.slice(0, -1) : [];
-  return [violation.from, ...intermediates];
+function isTypeOnly(dependencyTypes) {
+  return (dependencyTypes ?? []).includes('type-only');
 }
 
-function allowedReach(violation, grandfathered) {
-  if (violation.rule?.name !== reachableRule) return false;
-  return hopsBeforePackage(violation).some((name) => serviceRe.test(name) || grandfathered.has(name));
+function platformReachAllowed(violation, grandfathered) {
+  const via = violation.via ?? [];
+  const last = via[via.length - 1];
+  if (last && isTypeOnly(last.dependencyTypes)) return true;
+  const beforePackage = [violation.from, ...via.slice(0, -1).map((hop) => hop.name)];
+  return beforePackage.some((name) => adapterRe.test(name) || grandfathered.has(name));
+}
+
+function keepCruiserViolation(violation, grandfathered) {
+  if (violation.rule?.name === platformReachableName) {
+    return !platformReachAllowed(violation, grandfathered);
+  }
+  if (violation.rule?.name === adapterReachableName && (violation.via ?? []).length <= 1) {
+    return false;
+  }
+  return true;
 }
 
 function graphFrom(modules) {
   const graph = new Map();
   for (const module of modules) {
-    const next = [];
+    const edges = [];
     for (const dependency of module.dependencies ?? []) {
-      if (dependency.resolved) next.push(dependency.resolved);
+      if (dependency.resolved) {
+        edges.push({ resolved: dependency.resolved, dependencyTypes: dependency.dependencyTypes ?? [] });
+      }
     }
-    graph.set(module.source, next);
+    graph.set(module.source, edges);
   }
   return graph;
 }
 
-function recordPlatform(found, source, current, next) {
+function byResolved(left, right) {
+  return left.resolved.localeCompare(right.resolved);
+}
+
+function pushReach(found, ruleName, source, current, next) {
   found.push({
     type: 'reachability',
     from: source,
-    to: next,
-    rule: { severity: 'error', name: reachableRule },
-    via: [...current.path, next].map((name) => ({ name })),
+    to: next.resolved,
+    rule: { severity: 'error', name: ruleName },
+    via: [...current.path, next].map((edge) => ({
+      name: edge.resolved,
+      dependencyTypes: edge.dependencyTypes,
+    })),
   });
 }
 
-function hopStops(next, seen, grandfathered) {
-  return nodeModulesRe.test(next) || serviceRe.test(next) || grandfathered.has(next) || seen.has(next);
+function blockedPlatform(edge, seen, grandfathered) {
+  return (
+    nodeModulesRe.test(edge.resolved) ||
+    adapterRe.test(edge.resolved) ||
+    grandfathered.has(edge.resolved) ||
+    seen.has(edge.resolved)
+  );
 }
 
-function pathsFrom(graph, source, grandfathered) {
+function walk(graph, source, ruleName, decide) {
   const found = [];
   const queue = [{ node: source, path: [] }];
   const seen = new Set([source]);
   while (queue.length > 0) {
     const current = queue.shift();
-    for (const next of [...(graph.get(current.node) ?? [])].sort()) {
-      if (platformRe.test(next)) {
-        recordPlatform(found, source, current, next);
-      } else if (!hopStops(next, seen, grandfathered)) {
-        seen.add(next);
-        queue.push({ node: next, path: [...current.path, next] });
+    for (const edge of [...(graph.get(current.node) ?? [])].sort(byResolved)) {
+      const action = decide(edge, seen);
+      if (action === 'hit') pushReach(found, ruleName, source, current, edge);
+      if (action === 'follow') {
+        seen.add(edge.resolved);
+        queue.push({ node: edge.resolved, path: [...current.path, edge] });
       }
     }
   }
   return found;
 }
 
-function bypasses(modules, grandfathered) {
+function platformPaths(graph, source, grandfathered) {
+  return walk(graph, source, platformReachableName, (edge, seen) => {
+    if (platformRe.test(edge.resolved)) return isTypeOnly(edge.dependencyTypes) ? 'skip' : 'hit';
+    return blockedPlatform(edge, seen, grandfathered) ? 'skip' : 'follow';
+  });
+}
+
+function adapterPaths(graph, source) {
+  return walk(graph, source, adapterReachableName, (edge, seen) => {
+    if (adapterRe.test(edge.resolved)) return 'hit';
+    if (nodeModulesRe.test(edge.resolved) || seen.has(edge.resolved)) return 'skip';
+    return 'follow';
+  });
+}
+
+function isPlatformUi(source) {
+  return platformUiRe.test(source) && !platformUiNotRe.test(source);
+}
+
+function walkedViolations(modules, grandfathered) {
   const graph = graphFrom(modules);
   const found = [];
   for (const source of [...graph.keys()].sort()) {
-    // A grandfathered file's own import is already a direct-rule violation.
-    if (uiRe.test(source) && !grandfathered.has(source)) {
-      found.push(...pathsFrom(graph, source, grandfathered));
+    if (isPlatformUi(source) && !grandfathered.has(source)) {
+      found.push(...platformPaths(graph, source, grandfathered));
     }
+    if (adapterUiRe.test(source)) found.push(...adapterPaths(graph, source));
   }
-  return found;
+  return found.filter((violation) => (violation.via ?? []).length > 1);
 }
 
 const known = readKnown();
-// On a rewrite, grandfather against the direct imports that exist now.
-// On a check, grandfather only against imports already written down, so a
-// new direct import is not silently treated as an old leak.
 const grandfathered = grandfatheredFrom(update ? report.summary.violations : known);
-
-const cruiserViolations = (report.summary.violations ?? []).filter(
-  (violation) => !allowedReach(violation, grandfathered),
+const cruiserViolations = (report.summary.violations ?? []).filter((violation) =>
+  keepCruiserViolation(violation, grandfathered),
 );
-const walked = bypasses(report.modules, grandfathered).filter(
+const walked = walkedViolations(report.modules, grandfathered).filter(
   (violation) => !cruiserViolations.some((existing) => isSameViolation(existing, violation)),
 );
-const current = [...cruiserViolations, ...walked].sort((left, right) => sortKey(left).localeCompare(sortKey(right)));
+const current = preferShorterVia([...cruiserViolations, ...walked]).sort((left, right) =>
+  sortKey(left).localeCompare(sortKey(right)),
+);
 
 function writeKnown(violations) {
   fs.writeFileSync(knownPath, `${JSON.stringify(violations, null, 2)}\n`);
@@ -211,8 +300,7 @@ if (update) {
 if (shrink) {
   const kept = known.filter((violation) => current.some((item) => isSameViolation(item, violation)));
   writeKnown(kept);
-  const dropped = known.length - kept.length;
-  console.log(`Dependency baseline shrink: kept ${kept.length}, dropped ${dropped} stale`);
+  console.log(`Dependency baseline shrink: kept ${kept.length}, dropped ${known.length - kept.length} stale`);
   process.exit(0);
 }
 

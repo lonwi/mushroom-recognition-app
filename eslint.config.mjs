@@ -22,6 +22,18 @@ import sonarjs from 'eslint-plugin-sonarjs';
 import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 
+const platformPackageSource =
+  '^(@react-native-async-storage\\/async-storage|expo-file-system|expo-location|expo-secure-store|expo-image-manipulator|expo-image-picker|expo-camera|react-native-fast-tflite|react-native-nitro-modules)(\\/|$)';
+const platformReexportMessage =
+  'Do not re-export a storage or platform package from src/services. Keep the import inside an adapter and export a narrowed API.';
+
+function banPlatformReexport(nodeType) {
+  return {
+    selector: `${nodeType}[source.value=/${platformPackageSource}/]`,
+    message: platformReexportMessage,
+  };
+}
+
 export default tseslint.config(
   {
     ignores: [
@@ -113,6 +125,20 @@ export default tseslint.config(
     ],
     rules: {
       'max-lines': 'off',
+    },
+  },
+  {
+    // Adapters may call platform packages. They must not re-export them, or a
+    // screen can `export { default } from '@react-native-async-storage/async-storage'`
+    // and skip the journal repository. keyValueStore.ts (PR #16) is the raw
+    // AsyncStorage adapter and is covered by the same pattern.
+    files: ['src/services/**/*.{ts,tsx,js,jsx}'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        banPlatformReexport('ExportAllDeclaration'),
+        banPlatformReexport('ExportNamedDeclaration'),
+      ],
     },
   },
   {

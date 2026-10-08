@@ -214,14 +214,14 @@ Profil `development` w `eas.json` zostaw w spokoju: wewnętrzne APK i build symu
 
 ## 7. Ruleset na `main`
 
-Job CI nazywa się `check` (`.github/workflows/ci.yml`). Ruleset ma wymagać pull requesta i tego statusu. To ustawienie jest w GitHubie, nie w YAML.
+Joby CI są w [`.github/workflows/ci.yml`](../.github/workflows/ci.yml). Ruleset ma wymagać pull requesta i dwóch statusów: `check` (id joba typechecku i testów) oraz `Code quality` (nazwa wyświetlana joba jakości, pole `name:`, nie id `quality`). To ustawienie jest w GitHubie, nie w YAML. Node w obu jobach bierze się z `.nvmrc` (`22`, zakres `engines.node`: `^22 || ^24`).
 
 1. Strona repozytorium → **Settings**.
 2. W lewym menu, w grupie **Code, planning, and automation**, kliknij **Rules**, a potem **Rulesets**. (Dokumentacja GitHuba nazywa ten sam węzeł od razu **Rulesets** → **Rulesets**.)
 3. **New ruleset** → **New branch ruleset**.
 4. **Ruleset name:** `main`.
 5. **Enforcement status:** nowe rulesety startują jako **Disabled**. Kliknij ten status i ustaw **Active**. Przy **Disabled** reguły nic nie blokują.
-6. **Bypass list.** Zostaw pustą, jeśli nikt nie ma omijać PR ani statusu `check`.
+6. **Bypass list.** Zostaw pustą, jeśli nikt nie ma omijać PR ani statusów `check` i `Code quality`.
    - **Add bypass** otwiera okno. Wyszukaj rolę (na przykład Repository admin), zespół albo aplikację, **Add Selected**.
    - Obok **Always allow** jest przełącznik. **Always allow** puszcza bezpośredni push na `main` z pominięciem PR i statusu `check`. **For pull requests only** i tak wymaga PR, ale pozwala tej osobie zmergować go bez spełnienia reguł. Do zwykłej pracy nie dodawaj siebie z **Always allow**.
 7. **Target branches** → **Add a target** → **Include default branch**. Domyślną gałęzią tego repozytorium jest `main`. Jeśli kiedyś nią nie będzie, dodaj drugi cel: **Include by pattern** i wzorzec `main`.
@@ -230,8 +230,9 @@ Job CI nazywa się `check` (`.github/workflows/ci.yml`). Ruleset ma wymagać pul
 9. Zaznacz **Require status checks to pass**.
    - W dodatkowym polu wpisz nazwę checka: `check`. To id joba, nie nazwa workflow (`CI`).
    - Zatwierdź dodanie (przycisk plusa obok pola). Samo wpisanie tekstu nie zapisuje wymagania.
-   - Jeśli lista podpowiedzi jest pusta, odpal raz workflow CI (push albo PR), wróć tutaj i wyszukaj `check`. Gdy GitHub pokazuje `CI / check`, to ten sam job.
-   - Zaznacz **Require branches to be up to date before merging**. GitHub stosuje to dopiero, gdy na liście jest co najmniej jeden check. Gałąź PR musi zawierać aktualny `main`, a `check` musi być zielony na tym właśnie SHA.
+   - Drugi check: `Code quality`. To nazwa wyświetlana joba (`name:` w workflow), nie id `quality`. Wpisz dokładnie `Code quality`, ze spacją i wielką literą, i zatwierdź plusem.
+   - Jeśli lista podpowiedzi jest pusta, odpal raz workflow CI (push albo PR), wróć tutaj i wyszukaj obie nazwy. Gdy GitHub pokazuje `CI / check` albo `CI / Code quality`, to te same joby.
+   - Zaznacz **Require branches to be up to date before merging**. GitHub stosuje to dopiero, gdy na liście jest co najmniej jeden check. Gałąź PR musi zawierać aktualny `main`, a `check` i `Code quality` muszą być zielone na tym właśnie SHA.
 10. **Create**.
 
 Nie dodawaj do bypass listy konta, którym merguje automat. Cloud agent i tak powinien iść przez PR. Pusta lista bypass jest tu odpowiednikiem odznaczonego „Allow administrators to bypass” przy środowisku: administrator nie omija PR ani statusu `check`.
@@ -263,7 +264,7 @@ npx eas-cli@24.12.0 build:version:set
 
 Osobno dla Androida i iOS. To nie jest krok przy każdym wydaniu.
 
-Gdy punkty 1–7 są zrobione, a `main` jest zmergowany i `check` jest zielony, taguj commit, który już jest na `main`. Workflow woła `git merge-base --is-ancestor` i odrzuca tag wskazujący commit spoza `main`.
+Gdy punkty 1–7 są zrobione, a `main` jest zmergowany i `check` oraz `Code quality` są zielone, taguj commit, który już jest na `main`. Workflow woła `git merge-base --is-ancestor` i odrzuca tag wskazujący commit spoza `main`.
 
 ```bash
 git checkout main
