@@ -103,6 +103,7 @@ class FetchCase(unittest.TestCase):
         fetch_gbif._VERIFIED.clear()
         fetch_gbif.MAX_DOWNLOADS_PER_HOST = 4
         fetch_gbif._KEY_CACHE.clear()
+        fetch_gbif._clear_load_cache()
 
 
 class DownloadRetryTest(FetchCase):
@@ -1030,8 +1031,9 @@ class ImageIntegrityTest(FetchCase):
             image.load()
         with self.assertRaises(fetch_gbif._RejectedImage):
             fetch_gbif._structural_image(tailed)
-        with self.assertRaises(fetch_gbif._TruncatedTransfer):
-            fetch_gbif._structural_image(raw + b" ")
+        fetch_gbif._structural_image(raw + b" ")
+        fetch_gbif._structural_image(raw + b"\x00" * 16)
+        fetch_gbif._structural_image(raw + b"\x00" * fetch_gbif._ZERO_TAIL_LIMIT)
         fetch_gbif._structural_image(raw)
 
         png_buffer = io.BytesIO()
@@ -1143,6 +1145,183 @@ class ImageIntegrityTest(FetchCase):
         for name in ("padded.jpg", "zeros.jpg", "cut.png", "bad.webp"):
             self.assertFalse((verify_root / "images" / "boletus_edulis" / name).exists())
             self.assertTrue((verify_root / "quarantine" / "boletus_edulis" / name).is_file())
+
+    def test_a_jpeg_trailer_after_the_real_eoi_is_accepted(self):
+        from PIL import Image
+
+        trailer = b"\x00\x00\x00\x18ftypmp42" + b"\x00\x00\x00\x00" + b"mdat-motion"
+        self.assertTrue(trailer.strip(b"\x00"))
+        tailed = self.jpeg + trailer
+        self.assertEqual(fetch_gbif._jpeg_payload_end(tailed), len(self.jpeg))
+        fetch_gbif._structural_image(tailed)
+        fetch_gbif._load_image_bytes(tailed)
+
+        progressive_buffer = io.BytesIO()
+        with Image.open(io.BytesIO(self.jpeg)) as image:
+            image.save(progressive_buffer, format="JPEG", progressive=True, quality=90)
+        progressive = progressive_buffer.getvalue()
+        self.assertGreaterEqual(progressive.count(b"\xff\xda"), 2)
+        self.assertGreaterEqual(len(progressive), 5_000)
+        progressive_tailed = progressive + trailer
+        self.assertEqual(fetch_gbif._jpeg_payload_end(progressive_tailed), len(progressive))
+        fetch_gbif._structural_image(progressive_tailed)
+        fetch_gbif._load_image_bytes(progressive_tailed)
+
+        png_buffer = io.BytesIO()
+        Image.new("RGB", (32, 32), (8, 90, 20)).save(png_buffer, format="PNG")
+        png = png_buffer.getvalue()
+        fetch_gbif._structural_image(png + b"after-iend")
+        with self.assertRaises(fetch_gbif._RejectedImage):
+            fetch_gbif._structural_image(png + b"\x00" * (fetch_gbif._ZERO_TAIL_LIMIT + 1))
+
+        species = {"classes": [{"id": "boletus_edulis", "gbif_names": ["Boletus edulis"], "safety_tag": "edible"}]}
+
+        def collect_one(url: str):
+            def collect(species, max_per_class, max_per_occurrence, max_pages):
+                return [
+                    {
+                        "occurrence_key": 81,
+                        "media_index": 0,
+                        "image_url": url,
+                        "license": "https://creativecommons.org/licenses/by/4.0/",
+                        "license_normalized": "cc-by-4.0",
+                        "class_id": "boletus_edulis",
+                        "taxon_name": "Boletus edulis",
+                        "queried_name": "Boletus edulis",
+                        "region_scope": "central_europe",
+                        "held_out_taxon": False,
+                        "toxic": False,
+                        "genus_relation": "",
+                    }
+                ]
+
+            return collect
+
+        def fetch_payload(root: Path, payload: bytes, url: str):
+            calls = {"n": 0}
+
+            def urlopen(request, timeout=40):
+                calls["n"] += 1
+                return _Response(payload)
+
+            with patch("fetch_gbif.collect_class_media", side_effect=collect_one(url)), patch(
+                "fetch_gbif.urllib.request.urlopen", side_effect=urlopen
+            ), patch("fetch_gbif.time.sleep"):
+                fetch_gbif.run_fetch(
+                    species,
+                    max_per_class=1,
+                    max_pages=1,
+                    only="boletus_edulis",
+                    download_workers=1,
+                    data_dir=root,
+                )
+            return calls["n"]
+
+        download_root = self._root / "motion-download"
+        self.assertEqual(fetch_payload(download_root, tailed, "https://images.example.test/motion.jpg"), 1)
+        stored = download_root / "images" / "boletus_edulis" / "81_0.jpg"
+        self.assertEqual(stored.read_bytes(), tailed)
+        downloaded = json.loads((download_root / "fetch_report.json").read_text(encoding="utf-8"))
+        self.assertEqual(downloaded["classes"]["boletus_edulis"]["accepted"], 1)
+        self.assertEqual(list((download_root / "quarantine").rglob("*")) if (download_root / "quarantine").exists() else [], [])
+
+        progressive_root = self._root / "progressive-download"
+        self.assertEqual(
+            fetch_payload(progressive_root, progressive_tailed, "https://images.example.test/progressive.jpg"),
+            1,
+        )
+        self.assertEqual(
+            (progressive_root / "images" / "boletus_edulis" / "81_0.jpg").read_bytes(),
+            progressive_tailed,
+        )
+
+        restore_root = self._root / "motion-restore"
+        parked = restore_root / "not_selected" / "boletus_edulis" / "81_0.jpg"
+        parked.parent.mkdir(parents=True)
+        parked.write_bytes(tailed)
+
+        def refuse(request, timeout=40):
+            raise AssertionError("urlopen should not run")
+
+        with patch("fetch_gbif.collect_class_media", side_effect=collect_one("https://images.example.test/motion.jpg")), patch(
+            "fetch_gbif.urllib.request.urlopen", side_effect=refuse
+        ), patch("fetch_gbif.time.sleep"):
+            fetch_gbif.run_fetch(
+                species,
+                max_per_class=1,
+                max_pages=1,
+                only="boletus_edulis",
+                download_workers=1,
+                data_dir=restore_root,
+            )
+        restored = restore_root / "images" / "boletus_edulis" / "81_0.jpg"
+        self.assertEqual(restored.read_bytes(), tailed)
+        self.assertFalse(parked.exists())
+        self.assertFalse((restore_root / "quarantine").exists())
+        restore_report = json.loads((restore_root / "fetch_report.json").read_text(encoding="utf-8"))
+        self.assertEqual(restore_report["classes"]["boletus_edulis"]["accepted"], 1)
+
+        verify_root = self._root / "motion-verify"
+        baseline = verify_root / "images" / "boletus_edulis" / "motion.jpg"
+        progressive_path = verify_root / "images" / "boletus_edulis" / "progressive.jpg"
+        for path, payload in ((baseline, tailed), (progressive_path, progressive_tailed)):
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(payload)
+        with patch("sys.stdout", io.StringIO()):
+            counts = fetch_gbif.verify_existing_images(verify_root, workers=2)
+        self.assertEqual(counts["boletus_edulis"]["ok"], 2)
+        self.assertEqual(counts["boletus_edulis"]["quarantined"], 0)
+        self.assertEqual(baseline.read_bytes(), tailed)
+        self.assertEqual(progressive_path.read_bytes(), progressive_tailed)
+
+    def test_a_file_outside_the_sidecar_is_decoded_once(self):
+        destination_name = "77_0.jpg"
+        image = self._root / "images" / "boletus_edulis" / destination_name
+        image.parent.mkdir(parents=True)
+        image.write_bytes(self.jpeg)
+        self.assertFalse((self._root / "checkpoints" / "verified.jsonl").exists())
+        calls = {"n": 0}
+        real_load = fetch_gbif._load_image_bytes
+
+        def counted(payload: bytes) -> None:
+            calls["n"] += 1
+            real_load(payload)
+
+        def collect(species, max_per_class, max_per_occurrence, max_pages):
+            return [
+                {
+                    "occurrence_key": 77,
+                    "media_index": 0,
+                    "image_url": "https://images.example.test/once.jpg",
+                    "license": "https://creativecommons.org/licenses/by/4.0/",
+                    "license_normalized": "cc-by-4.0",
+                    "class_id": "boletus_edulis",
+                    "taxon_name": "Boletus edulis",
+                    "queried_name": "Boletus edulis",
+                    "region_scope": "central_europe",
+                    "held_out_taxon": False,
+                    "toxic": False,
+                    "genus_relation": "",
+                }
+            ]
+
+        with patch("fetch_gbif._load_image_bytes", side_effect=counted), patch(
+            "fetch_gbif.collect_class_media", side_effect=collect
+        ), patch("fetch_gbif.urllib.request.urlopen", side_effect=AssertionError("network")), patch(
+            "fetch_gbif.time.sleep"
+        ):
+            fetch_gbif.run_fetch(
+                {"classes": [{"id": "boletus_edulis", "gbif_names": ["Boletus edulis"], "safety_tag": "edible"}]},
+                max_per_class=1,
+                max_pages=1,
+                only="boletus_edulis",
+                download_workers=1,
+                data_dir=self._root,
+            )
+        self.assertEqual(calls["n"], 1)
+        report = json.loads((self._root / "fetch_report.json").read_text(encoding="utf-8"))
+        self.assertEqual(report["classes"]["boletus_edulis"]["accepted"], 1)
+        self.assertEqual(image.read_bytes(), self.jpeg)
 
     def _write_bytes(self, name: str, payload: bytes) -> Path:
         path = self._root / name
@@ -2243,6 +2422,65 @@ class CandidatePoolTest(FetchCase):
             self.assertEqual(restored.read_bytes(), parked_bytes)
             self.assertFalse(parked.exists())
 
+    def test_a_budget_stop_then_a_rerun_writes_the_same_report(self):
+        import tempfile
+
+        cap = 5
+        budget = fetch_gbif._replacement_attempt_budget(cap)
+        self.assertEqual(budget, 25)
+        success_at = {0, 2, 4}
+        rows = [_candidate("boletus_edulis", index, 7000 + index, "Boletus edulis") for index in range(3 + budget + 1)]
+        success_urls = {rows[index]["image_url"] for index in success_at}
+        extra_url = rows[-1]["image_url"]
+        payloads = {rows[index]["image_url"]: _jpeg_bytes(index + 1) for index in success_at}
+
+        def run(root: Path, workers: int, opens: list[str]) -> None:
+            def collect(species, max_per_class, max_per_occurrence, max_pages):
+                return [dict(row) for row in rows]
+
+            def urlopen(request, timeout=40):
+                opens.append(request.full_url)
+                payload = payloads.get(request.full_url)
+                if payload is None:
+                    raise _http_error(404, "Not Found", url=request.full_url)
+                return _Response(payload)
+
+            with patch("fetch_gbif.collect_class_media", side_effect=collect), patch(
+                "fetch_gbif.urllib.request.urlopen", side_effect=urlopen
+            ), patch("fetch_gbif.time.sleep"), patch("fetch_gbif.random.uniform", return_value=0.0):
+                fetch_gbif.run_fetch(
+                    {"classes": [{"id": "boletus_edulis", "gbif_names": ["Boletus edulis"], "safety_tag": "edible"}]},
+                    max_per_class=cap,
+                    max_pages=1,
+                    only="boletus_edulis",
+                    download_workers=workers,
+                    data_dir=root,
+                )
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            opens: list[str] = []
+            run(root, 8, opens)
+            report, attributions, images = self._report_bytes(root)
+            parsed = json.loads(report.decode("utf-8"))["classes"]["boletus_edulis"]
+            self.assertEqual(parsed["accepted"], 3)
+            self.assertEqual(parsed["selected"], 3 + budget)
+            self.assertEqual(parsed["failed"], {"http_404": budget})
+            self.assertEqual(parsed["exhausted_reason"], "replacement_budget")
+            self.assertNotIn("gbif_licensed_count", parsed)
+            self.assertEqual(len(images), 3)
+            self.assertNotIn(extra_url, opens)
+            self.assertEqual(len(opens), 3 + budget)
+            fetch_gbif._VERIFIED.clear()
+            fetch_gbif._KEY_CACHE.clear()
+            fetch_gbif._HOST_SEMAPHORES.clear()
+            fetch_gbif._clear_load_cache()
+            again: list[str] = []
+            run(root, 1, again)
+            self.assertEqual(self._report_bytes(root), (report, attributions, images))
+            self.assertNotIn(extra_url, again)
+            self.assertEqual(len(again), budget)
+
 
 class IdempotentReportTest(FetchCase):
     def _rows(self, count: int) -> list[dict]:
@@ -2537,7 +2775,11 @@ class IdempotentReportTest(FetchCase):
             parked = root / "not_selected" / "boletus_edulis" / names[1]
             parked.parent.mkdir(parents=True)
             parked.write_bytes(_jpeg_bytes(6))
-            parked_bytes = parked.read_bytes()
+            stale_same = root / "not_selected" / "boletus_edulis" / names[0]
+            stale_same.write_bytes(_jpeg_bytes(5))
+            decoy = root / "not_selected" / "boletus_edulis" / "other.jpg"
+            decoy.write_bytes(_jpeg_bytes(4))
+            decoy_bytes = decoy.read_bytes()
             calls: list[str] = []
 
             def collect(species, max_per_class, max_per_occurrence, max_pages):
@@ -2562,7 +2804,9 @@ class IdempotentReportTest(FetchCase):
             self.assertCountEqual(calls, [row["image_url"] for row in rows])
             self.assertEqual(image.read_bytes(), downloaded)
             self.assertEqual((root / "images" / "boletus_edulis" / names[1]).read_bytes(), downloaded)
-            self.assertEqual(parked.read_bytes(), parked_bytes)
+            self.assertFalse(parked.exists())
+            self.assertFalse(stale_same.exists())
+            self.assertEqual(decoy.read_bytes(), decoy_bytes)
 
 
 if __name__ == "__main__":

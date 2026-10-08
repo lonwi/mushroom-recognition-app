@@ -11,7 +11,8 @@ check and decode with a full Pillow ``load()``, and ``LOAD_TRUNCATED_IMAGES``
 stays false. A file that fails is moved to quarantine/<class>/ and downloaded
 again. A new download is decoded in memory before it is written.
 ``--no-resume`` fetches from scratch: it does not restore ``not_selected/``
-and it does not accept a file already on disk.
+and it does not accept a file already on disk. A download that succeeds
+removes the same-name file from ``not_selected/<class>/``.
 ``--verify-existing`` scans data/images with no network. If the spawn process
 pool cannot start (``PermissionError``, ``OSError``, ``NotImplementedError``,
 or ``BrokenProcessPool``), that scan uses threads and prints a warning.
@@ -23,10 +24,10 @@ same ordered GBIF pool replaces it until the cap is full or GBIF has no further
 licensed page. The first query keeps a margin of twice the cap. Later pages are
 fetched only when those replacements run out, still in that same order, so one
 worker and sixteen workers write the same bytes. Each unit also stops after
-``cap + max(cap, 20)`` network downloads, or after 50 failures in a row.
+``cap + max(cap, 20)`` failed attempts, or after 50 failures in a row.
 ``exhausted_reason`` is then ``replacement_budget``, and ``gbif_licensed_count``
-is not written. A file already verified, and a restore from ``not_selected/``,
-does not use that budget. ``pool_exhausted`` and ``gbif_licensed_count`` (the
+is not written. A successful download does not use that budget, so a file
+already verified on a re-run does not let the unit walk further. ``pool_exhausted`` and ``gbif_licensed_count`` (the
 entire licensed pool) are set only when the query really ended: no more
 records, or ``--max-pages``. ``exhausted_reason`` says which. A margin that
 still has unused photos does not set either field. ``replacement_budget`` does
@@ -41,9 +42,12 @@ that directory was fetched in this run. ``--dry-run`` does not download, move,
 or write. Before a download, a file already in ``not_selected/<class>/`` is
 checked with the same size limit, structural end-of-file check, and full
 ``Image.open().load()`` as a new download, and ``LOAD_TRUNCATED_IMAGES`` stays
-false. A JPEG must end with ``FF D9`` after trailing zeros are removed, and a
-long zero tail is rejected. A PNG must end on an IEND chunk. A WebP RIFF size
-must match the file length. That check finishes before the file is remembered
+false. A JPEG is walked from SOI to the first real ``FF D9``, skipping stuffed
+``FF 00`` bytes and restart markers, so a Motion Photo trailer after that EOI
+is kept. A tail that is only zeros and longer than 1 KiB is rejected, as is a
+file with no EOI. A PNG must contain an IEND chunk; bytes after it are kept
+on the same rule. A WebP RIFF size must match the file length. That check
+finishes before the file is remembered
 or attributed. A photo that passes is moved back instead of fetched again. A
 photo that fails goes to quarantine and is not accepted. Quarantine is not a
 source. A later page request reuses the GBIF page already in hand.
@@ -109,10 +113,14 @@ GBIF_PAGE_SIZE = 300
 # First licensed batch is this many times the download cap. Further GBIF pages
 # are requested only after that margin has been used as replacements.
 POOL_MARGIN_FACTOR = 2
-# A unit stops replacing photos after this many network downloads, and after
-# this many failures in a row. Restores and files already verified do not count.
-# cap + max(cap, 20) is the attempt budget. Neither reason is a full GBIF pool.
+# A unit stops after this many failed attempts, and after this many failures in
+# a row. A success does not use the failure budget, so a re-run that skips
+# files already verified stops on the same candidates. cap + max(cap, 20) is
+# that budget. Neither stop is a full GBIF pool.
 REPLACEMENT_CONSECUTIVE_FAILURES = 50
+# Bytes after a real JPEG EOI or PNG IEND that are entirely zero and longer
+# than this are a padded cutoff, not a Motion Photo trailer.
+_ZERO_TAIL_LIMIT = 1024
 # Version 3 drops the download cap from the cache key and stores a GBIF cursor
 # beside the rows fetched so far. Version 1 stopped at the cap. Version 2 stored
 # an unbounded pool. Both miss this key. A fetch of that class or probe deletes
@@ -298,7 +306,7 @@ def iter_occurrences(taxon_key: int, country: str | None, max_pages: int):
 
 
 def _replacement_attempt_budget(cap: int) -> int:
-    """Network downloads one class, taxon, or probe may start before it stops."""
+    """Failed attempts one class, taxon, or probe may record before it stops."""
     cap = max(0, int(cap))
     return cap + max(cap, 20)
 
@@ -864,22 +872,58 @@ def _is_json_int(value: object) -> bool:
     return isinstance(value, int) and not isinstance(value, bool)
 
 
+_LOAD_CACHE: dict[tuple[str, int, int], bool] = {}
+_LOAD_CACHE_LOCK = threading.Lock()
+
+
+def _clear_load_cache() -> None:
+    """Drop per-run decode results. The next run checks files again."""
+    with _LOAD_CACHE_LOCK:
+        _LOAD_CACHE.clear()
+
+
+def _load_image_bytes(payload: bytes) -> None:
+    """Decode every pixel. ``LOAD_TRUNCATED_IMAGES`` stays false."""
+    _ensure_truncated_images_rejected()
+    from PIL import Image
+
+    with Image.open(io.BytesIO(payload)) as image:
+        image.load()
+
+
 def _full_load_ok(path_str: str) -> bool:
-    """True only when Pillow decodes every pixel. Header checks are not enough."""
+    """True only when Pillow decodes every pixel. Header checks are not enough.
+
+    One run decodes a file at most once. The key is the path, size, and
+    mtime. A later run starts with an empty cache.
+    """
     _ensure_truncated_images_rejected()
     path = Path(path_str)
     try:
-        if not path.is_file() or path.stat().st_size <= 0:
+        if not path.is_file():
             return False
+        stat = path.stat()
+        size = int(stat.st_size)
+        mtime = int(stat.st_mtime_ns)
+        if size <= 0:
+            return False
+        key = (str(path.resolve()), size, mtime)
+    except OSError:
+        return False
+    with _LOAD_CACHE_LOCK:
+        cached = _LOAD_CACHE.get(key)
+    if cached is not None:
+        return cached
+    try:
         payload = path.read_bytes()
         _structural_image(payload)
-        from PIL import Image
-
-        with Image.open(io.BytesIO(payload)) as image:
-            image.load()
-        return True
+        _load_image_bytes(payload)
+        ok = True
     except Exception:
-        return False
+        ok = False
+    with _LOAD_CACHE_LOCK:
+        _LOAD_CACHE[key] = ok
+    return ok
 
 
 def _is_complete_image(path: Path) -> bool:
@@ -1063,42 +1107,97 @@ class _TruncatedTransfer(OSError):
     """The body ended early. Retried once, as a dropped connection."""
 
 
-def _png_ends_with_iend(payload: bytes) -> bool:
-    """True when an IEND chunk is the last chunk in the file."""
+def _long_zero_tail(tail: bytes) -> bool:
+    """True when the trailer is only NULs and longer than 1 KiB."""
+    return len(tail) > _ZERO_TAIL_LIMIT and tail.strip(b"\x00") == b""
+
+
+def _jpeg_payload_end(payload: bytes) -> int | None:
+    """Index of the first byte after the real EOI, or None when the scan never ends.
+
+    Segments before the first SOS are skipped by their lengths. Inside a scan,
+    ``FF 00`` is stuffing and ``FF D0``–``FF D7`` are restart markers. Any other
+    marker, including a later DHT or SOS in a progressive file, is a segment
+    and the scan continues. The first ``FF D9`` found that way is the EOI.
+    """
+    if len(payload) < 4 or payload[0] != 0xFF or payload[1] != 0xD8:
+        return None
+    offset = 2
+    in_scan = False
+    limit = len(payload)
+    while offset < limit:
+        if in_scan and payload[offset] != 0xFF:
+            offset += 1
+            continue
+        if payload[offset] != 0xFF:
+            return None
+        offset += 1
+        while offset < limit and payload[offset] == 0xFF:
+            offset += 1
+        if offset >= limit:
+            return None
+        marker = payload[offset]
+        offset += 1
+        if marker == 0x00:
+            if in_scan:
+                continue
+            return None
+        if 0xD0 <= marker <= 0xD7:
+            continue
+        if marker == 0xD9:
+            return offset
+        if marker in (0x01, 0xD8):
+            continue
+        if offset + 2 > limit:
+            return None
+        length = int.from_bytes(payload[offset : offset + 2], "big")
+        if length < 2 or offset + length > limit:
+            return None
+        offset += length
+        if marker == 0xDA:
+            in_scan = True
+    return None
+
+
+def _png_after_iend(payload: bytes) -> int | None:
+    """Index of the first byte after a length-0 IEND chunk, if the chunks parse."""
     offset = 8
     limit = len(payload)
     while offset + 12 <= limit:
         length = int.from_bytes(payload[offset : offset + 4], "big")
         end = offset + 12 + length
         if length < 0 or end > limit:
-            return False
+            return None
         if payload[offset + 4 : offset + 8] == b"IEND":
-            return length == 0 and end == limit
+            if length != 0:
+                return None
+            return end
         offset = end
-    return False
+    return None
 
 
 def _structural_image(payload: bytes) -> None:
     """Reject containers Pillow can still decode after the file was cut off.
 
-    A JPEG must end with the EOI marker after trailing zeros are removed, and a
-    long zero tail is rejected on its own. A PNG must finish on an IEND chunk.
-    A WebP RIFF size must equal the file length. ``LOAD_TRUNCATED_IMAGES`` is
-    not involved and stays false.
+    A JPEG without an EOI is rejected. Bytes after the real EOI are a trailer
+    (Motion Photo, a Samsung trailer) and are kept, unless that trailer is
+    only zeros and longer than 1 KiB. A PNG must contain an IEND chunk and
+    follows the same trailer rule. A WebP RIFF size must equal the file
+    length. ``LOAD_TRUNCATED_IMAGES`` is not involved and stays false.
     """
     if payload.startswith(b"\xff\xd8"):
-        stripped = payload.rstrip(b"\x00")
-        zeros = len(payload) - len(stripped)
-        # A long zero tail is a padded cutoff. A short tail is allowed only when
-        # the bytes that remain end with the EOI marker. Whitespace does not count.
-        if zeros > 0 and zeros * 20 >= len(payload):
-            raise _RejectedImage("jpeg trailing zeros")
-        if len(stripped) < 4 or not stripped.endswith(b"\xff\xd9"):
+        end = _jpeg_payload_end(payload)
+        if end is None:
             raise _TruncatedTransfer("jpeg missing EOI")
+        if _long_zero_tail(payload[end:]):
+            raise _RejectedImage("jpeg trailing zeros")
         return
     if payload.startswith(b"\x89PNG\r\n\x1a\n"):
-        if not _png_ends_with_iend(payload):
+        end = _png_after_iend(payload)
+        if end is None:
             raise _RejectedImage("png missing IEND")
+        if _long_zero_tail(payload[end:]):
+            raise _RejectedImage("png trailing zeros")
         return
     if len(payload) >= 12 and payload.startswith(b"RIFF") and payload[8:12] == b"WEBP":
         size = int.from_bytes(payload[4:8], "little")
@@ -1109,11 +1208,8 @@ def _structural_image(payload: bytes) -> None:
 def _decode_image_bytes(payload: bytes) -> None:
     """Full-decode bytes before they are stored. Truncated JPEGs do not pass."""
     _ensure_truncated_images_rejected()
-    from PIL import Image
-
     try:
-        with Image.open(io.BytesIO(payload)) as image:
-            image.load()
+        _load_image_bytes(payload)
     except Exception as error:
         if "truncated" in str(error).lower():
             raise _TruncatedTransfer(str(error)) from error
@@ -1185,6 +1281,13 @@ def _quarantine_parked(data_dir: Path, source: Path, class_id: str) -> Path:
         index.entries.pop(f"images/{class_id}/{source.name}", None)
         index.entries.pop(f"not_selected/{class_id}/{source.name}", None)
     return target
+
+
+def _drop_stale_not_selected(data_dir: Path, destination: Path) -> None:
+    """Remove the parked copy after a fresh download wrote ``destination``."""
+    source = _not_selected_source(data_dir, destination)
+    if source is not None and source.is_file():
+        source.unlink(missing_ok=True)
 
 
 def _restore_not_selected(data_dir: Path, destination: Path, index: _VerifiedIndex) -> int | None:
@@ -1291,6 +1394,7 @@ def download_image(
             index.remember(destination)
         except OSError:
             pass
+        _drop_stale_not_selected(root, destination)
         return size
     assert last_error is not None
     raise last_error
@@ -1827,8 +1931,10 @@ def _fill_to_cap(
     download that window together, then the next window is chosen on this
     thread. The set of files does not depend on which transfer finishes first.
     A file that already verifies, and a photo restored from ``not_selected/``,
-    counts as accepted and does not use the budget. A failed candidate in the
-    prefix is tried again until the attempt budget or 50 failures in a row.
+    counts as accepted and does not use the budget. The budget counts failed
+    attempts, not successful downloads, so a re-run stops on the same
+    candidates. A failed candidate in the prefix is tried again until that
+    budget or 50 failures in a row.
     When the rows on hand run out, one more GBIF batch is fetched before the
     next window, and only while budget remains.
     """
@@ -1853,14 +1959,12 @@ def _fill_to_cap(
         if failure_room < 1:
             pool.budget_exhausted = True
             break
-        max_network = min(budget - attempts, failure_room)
-        if max_network < 0:
-            max_network = 0
+        remaining = budget - attempts
         if cursor >= len(media):
-            if max_network < 1:
+            if remaining < 1:
                 pool.budget_exhausted = True
                 break
-            added = pool.fetch_more(min(slots, max_network, failure_room))
+            added = pool.fetch_more(min(slots, remaining, failure_room))
             if added:
                 for row in media[len(media) - added :]:
                     _attach_file(row, folder)
@@ -1871,7 +1975,7 @@ def _fill_to_cap(
         while len(batch) < slots and len(batch) < failure_room and cursor < len(media):
             row = media[cursor]
             if not _row_skips_network(directory, row, resume):
-                if scheduled >= max_network:
+                if scheduled >= remaining:
                     break
                 scheduled += 1
             batch.append(row)
@@ -1888,12 +1992,11 @@ def _fill_to_cap(
         if network:
             _download_rows(network, directory=directory, resume=resume, workers=workers)
         for row in batch:
-            if id(row) not in local_ids:
-                attempts += 1
             if row.get("downloaded") is True:
                 kept.append(row)
                 streak = 0
             else:
+                attempts += 1
                 streak += 1
     return kept, attempted
 
@@ -1976,6 +2079,7 @@ def run_fetch(
 ) -> None:
     """Collect a licensed candidate pool and download until each cap is filled."""
     _ensure_truncated_images_rejected()
+    _clear_load_cache()
     if download_workers < 1:
         raise ValueError("download-workers must be at least 1")
     wanted = {item.strip() for item in only.split(",") if item.strip()}
@@ -2313,6 +2417,7 @@ def verify_existing_images(data_dir: Path, *, workers: int | None = None) -> dic
     on threads.
     """
     _ensure_truncated_images_rejected()
+    _clear_load_cache()
     root = data_dir.resolve()
     files = _iter_stored_images(root / "images")
     if workers is None:
@@ -2386,7 +2491,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--no-resume",
         action="store_true",
-        help="Fetch from scratch. Do not restore not_selected files or accept an image already on disk.",
+        help="Fetch from scratch. Do not restore not_selected files or accept an image already on disk. A successful download removes the same-name file from not_selected.",
     )
     parser.add_argument(
         "--verify-existing",
