@@ -15,15 +15,23 @@ import { SafetyGuideScreen } from './src/screens/SafetyGuideScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { PreparationGuideScreen } from './src/screens/PreparationGuideScreen';
 import { SafetyDisclaimerModal } from './src/components/SafetyDisclaimerModal';
-import { storageService } from './src/services/storageService';
+import { settingsStore } from './src/services/storage/settingsStore';
 import { MushroomSpecies } from './src/types/mushroom';
-import { MUSHROOMS_DATABASE } from './src/data/mushrooms';
+import { getSpecies } from './src/data/speciesCatalog';
 import { LanguageProvider, useLanguage } from './src/contexts/LanguageContext';
 
 import { PaperProvider } from 'react-native-paper';
 import { paperTheme } from './src/theme/paperTheme';
+import { colors, radius, spacing, typography } from './src/theme/tokens';
 
 type Tab = 'SCANNER' | 'ATLAS' | 'JOURNAL' | 'SAFETY' | 'PREPARATION' | 'SETTINGS';
+
+const TAB_BAR: ReadonlyArray<{ id: Tab; icon: string; labelKey: string; resetAtlas?: boolean }> = [
+  { id: 'SCANNER', icon: '📷', labelKey: 'nav.scanner' },
+  { id: 'ATLAS', icon: '📖', labelKey: 'nav.atlas', resetAtlas: true },
+  { id: 'JOURNAL', icon: '🧺', labelKey: 'nav.journal' },
+  { id: 'SAFETY', icon: '🛡', labelKey: 'nav.safety' },
+];
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState<Tab>('SCANNER');
@@ -34,7 +42,7 @@ function AppContent() {
 
   useEffect(() => {
     const checkDisclaimer = async () => {
-      const accepted = await storageService.hasAcceptedDisclaimer();
+      const accepted = await settingsStore.hasAcceptedDisclaimer();
       if (!accepted) {
         setDisclaimerVisible(true);
       }
@@ -43,12 +51,12 @@ function AppContent() {
   }, []);
 
   const handleAcceptDisclaimer = async () => {
-    await storageService.setAcceptedDisclaimer(true);
+    await settingsStore.setAcceptedDisclaimer(true);
     setDisclaimerVisible(false);
   };
 
   const handleOpenAtlasSpecies = (speciesId: string) => {
-    const match = MUSHROOMS_DATABASE.find((m) => m.id === speciesId);
+    const match = getSpecies(speciesId);
     if (match) {
       setSelectedSpecies(match);
       setActiveTab('ATLAS');
@@ -59,11 +67,42 @@ function AppContent() {
     setJournalRefreshKey((prev) => prev + 1);
   };
 
+  const screens: Record<Tab, React.ReactNode> = {
+    SCANNER: (
+      <ScannerScreen
+        onOpenAtlasSpecies={handleOpenAtlasSpecies}
+        onSavedToJournal={handleSavedToJournal}
+      />
+    ),
+    ATLAS: selectedSpecies ? (
+      <SpeciesDetailScreen
+        species={selectedSpecies}
+        onBack={() => setSelectedSpecies(null)}
+        onOpenLookAlike={handleOpenAtlasSpecies}
+      />
+    ) : (
+      <AtlasScreen onSelectSpecies={(species) => setSelectedSpecies(species)} />
+    ),
+    JOURNAL: (
+      <JournalScreen
+        key={journalRefreshKey}
+        onOpenAtlasSpecies={handleOpenAtlasSpecies}
+      />
+    ),
+    SAFETY: (
+      <SafetyGuideScreen
+        onShowDisclaimer={() => setDisclaimerVisible(true)}
+        onOpenPreparation={() => setActiveTab('PREPARATION')}
+      />
+    ),
+    PREPARATION: <PreparationGuideScreen />,
+    SETTINGS: <SettingsScreen />,
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1B3B22" />
+      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
 
-      {/* Górny Pasek Aplikacji */}
       <View style={styles.topHeader}>
         <View style={styles.brandRow}>
           <Text style={styles.brandIcon}>🍄</Text>
@@ -82,96 +121,28 @@ function AppContent() {
         </View>
       </View>
 
-      {/* Zawartość Aktywnej Zakładki */}
-      <View style={styles.content}>
-        {activeTab === 'SCANNER' && (
-          <ScannerScreen
-            onOpenAtlasSpecies={handleOpenAtlasSpecies}
-            onSavedToJournal={handleSavedToJournal}
-          />
-        )}
+      <View style={styles.content}>{screens[activeTab]}</View>
 
-        {activeTab === 'ATLAS' &&
-          (selectedSpecies ? (
-            <SpeciesDetailScreen
-              species={selectedSpecies}
-              onBack={() => setSelectedSpecies(null)}
-              onOpenLookAlike={handleOpenAtlasSpecies}
-            />
-          ) : (
-            <AtlasScreen onSelectSpecies={(species) => setSelectedSpecies(species)} />
-          ))}
-
-        {activeTab === 'JOURNAL' && (
-          <JournalScreen
-            key={journalRefreshKey}
-            onOpenAtlasSpecies={handleOpenAtlasSpecies}
-          />
-        )}
-
-        {activeTab === 'SAFETY' && (
-          <SafetyGuideScreen
-            onShowDisclaimer={() => setDisclaimerVisible(true)}
-            onOpenPreparation={() => setActiveTab('PREPARATION')}
-          />
-        )}
-
-        {activeTab === 'PREPARATION' && <PreparationGuideScreen />}
-        
-        {activeTab === 'SETTINGS' && <SettingsScreen />}
-      </View>
-
-      {/* Dolny Pasek Nawigacyjny */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity
-          style={[styles.navItem, activeTab === 'SCANNER' && styles.navItemActive]}
-          onPress={() => setActiveTab('SCANNER')}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.navIcon}>📷</Text>
-          <Text style={[styles.navText, activeTab === 'SCANNER' && styles.navTextActive]}>
-            {t('nav.scanner')}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.navItem, activeTab === 'ATLAS' && styles.navItemActive]}
-          onPress={() => {
-            setSelectedSpecies(null);
-            setActiveTab('ATLAS');
-          }}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.navIcon}>📖</Text>
-          <Text style={[styles.navText, activeTab === 'ATLAS' && styles.navTextActive]}>
-            {t('nav.atlas')}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.navItem, activeTab === 'JOURNAL' && styles.navItemActive]}
-          onPress={() => setActiveTab('JOURNAL')}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.navIcon}>🧺</Text>
-          <Text style={[styles.navText, activeTab === 'JOURNAL' && styles.navTextActive]}>
-            {t('nav.journal')}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.navItem, activeTab === 'SAFETY' && styles.navItemActive]}
-          onPress={() => setActiveTab('SAFETY')}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.navIcon}>🛡</Text>
-          <Text style={[styles.navText, activeTab === 'SAFETY' && styles.navTextActive]}>
-            {t('nav.safety')}
-          </Text>
-        </TouchableOpacity>
+        {TAB_BAR.map((tab) => {
+          const active = activeTab === tab.id;
+          return (
+            <TouchableOpacity
+              key={tab.id}
+              style={[styles.navItem, active && styles.navItemActive]}
+              onPress={() => {
+                if (tab.resetAtlas) setSelectedSpecies(null);
+                setActiveTab(tab.id);
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.navIcon}>{tab.icon}</Text>
+              <Text style={[styles.navText, active && styles.navTextActive]}>{t(tab.labelKey)}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
-      {/* Modal Zasad Bezpieczeństwa */}
       <SafetyDisclaimerModal
         visible={disclaimerVisible}
         onAccept={handleAcceptDisclaimer}
@@ -195,17 +166,17 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1B3B22',
+    backgroundColor: colors.primary,
   },
   topHeader: {
-    backgroundColor: '#1B3B22',
+    backgroundColor: colors.primary,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.lg,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#2C5E37',
+    borderBottomColor: colors.secondary,
   },
   brandRow: {
     flexDirection: 'row',
@@ -218,40 +189,40 @@ const styles = StyleSheet.create({
   brandTitle: {
     fontSize: 18,
     fontWeight: '900',
-    color: '#FFFFFF',
+    color: colors.white,
     letterSpacing: 0.3,
   },
   brandSubtitle: {
-    fontSize: 10,
-    color: '#A7F3D0',
+    fontSize: typography.caption,
+    color: colors.emerald200,
     fontWeight: '600',
   },
   offlinePill: {
-    backgroundColor: '#064E3B',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12,
+    backgroundColor: colors.emerald950,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: '#059669',
+    borderColor: colors.emerald600,
   },
   offlinePillText: {
-    color: '#6EE7B7',
+    color: colors.emerald300,
     fontSize: 10,
     fontWeight: '800',
   },
   content: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
   },
   bottomNav: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-    paddingVertical: 8,
-    paddingBottom: 12,
+    borderTopColor: colors.slate200,
+    paddingVertical: spacing.sm,
+    paddingBottom: spacing.md,
     justifyContent: 'space-around',
-    shadowColor: '#000',
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -259,12 +230,12 @@ const styles = StyleSheet.create({
   },
   navItem: {
     alignItems: 'center',
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.sm,
   },
   navItemActive: {
-    backgroundColor: '#E8F5E9',
+    backgroundColor: colors.edibleBg,
   },
   navIcon: {
     fontSize: 20,
@@ -273,10 +244,10 @@ const styles = StyleSheet.create({
   navText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#64748B',
+    color: colors.slate500,
   },
   navTextActive: {
-    color: '#1B3B22',
+    color: colors.primary,
     fontWeight: '800',
   },
 });

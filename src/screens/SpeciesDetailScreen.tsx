@@ -16,6 +16,8 @@ import { LookAlikeAlert } from '../components/LookAlikeAlert';
 import { getMushroomImage } from '../utils/mushroomImages';
 import { hasFatalLookAlikeRisk, MUSHROOM_IDS, showsKitchenSection } from '../data/mushrooms';
 import { useLanguage } from '../contexts/LanguageContext';
+import { HYMENOPHORE_META, MONTH_KEYS } from '../presentation/speciesMeta';
+import { colors } from '../theme/tokens';
 
 interface Props {
   species: MushroomSpecies;
@@ -25,47 +27,11 @@ interface Props {
 
 export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLookAlike }) => {
   const { t, language } = useLanguage();
-  const monthsNames = [
-    t('months.jan'),
-    t('months.feb'),
-    t('months.mar'),
-    t('months.apr'),
-    t('months.may'),
-    t('months.jun'),
-    t('months.jul'),
-    t('months.aug'),
-    t('months.sep'),
-    t('months.oct'),
-    t('months.nov'),
-    t('months.dec'),
-  ];
+  const monthsNames = MONTH_KEYS.map((month) => t(`months.${month}`));
   const photo = getMushroomImage(species.id);
   const fatalLookAlike = hasFatalLookAlikeRisk(species);
-
-  const getHymenophoreIcon = (type: string) => {
-    switch(type) {
-      case 'TUBES': return 'grid-outline';
-      case 'GILLS': return 'reorder-four-outline';
-      case 'FOLDS': return 'water-outline';
-      case 'SPINES': return 'pin-outline';
-      default: return 'help-circle-outline';
-    }
-  };
-
-  const getHymenophoreName = (type: string) => {
-    switch (type) {
-      case 'TUBES':
-        return t('atlas.hymenophoreTubes');
-      case 'GILLS':
-        return t('atlas.hymenophoreGills');
-      case 'FOLDS':
-        return t('atlas.hymenophoreFolds');
-      case 'SPINES':
-        return t('atlas.hymenophoreSpines');
-      default:
-        return t('atlas.hymenophoreOther');
-    }
-  };
+  const hymenophore = HYMENOPHORE_META[species.hymenophore];
+  const hymenophoreName = t(hymenophore.labelKey);
 
   const kitchen = showsKitchenSection(species);
   const isToxic = species.status === 'DEADLY_POISONOUS' || species.status === 'POISONOUS';
@@ -76,33 +42,33 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
       testId: 'species-use-edible',
       title: t('cards.useKitchen'),
       icon: 'check' as const,
-      titleColor: '#047857',
-      iconColor: '#059669',
-      iconBg: '#D1FAE5',
+      titleColor: colors.emerald700,
+      iconColor: colors.emerald600,
+      iconBg: colors.emerald100,
     },
     toxic: {
       testId: 'species-use-toxic',
       title: t('cards.useToxic'),
       icon: 'alert-triangle' as const,
-      titleColor: '#B91C1C',
-      iconColor: '#DC2626',
-      iconBg: '#FEE2E2',
+      titleColor: colors.red700,
+      iconColor: colors.red600,
+      iconBg: colors.red100,
     },
     inedible: {
       testId: 'species-use-inedible',
       title: t('cards.useInedible'),
       icon: 'slash' as const,
-      titleColor: '#9A3412',
-      iconColor: '#C2410C',
-      iconBg: '#FFEDD5',
+      titleColor: colors.orange800,
+      iconColor: colors.orange700,
+      iconBg: colors.orange100,
     },
     neutral: {
       testId: 'species-use-neutral',
       title: t('cards.useLiterature'),
       icon: 'book-open' as const,
-      titleColor: '#334155',
-      iconColor: '#475569',
-      iconBg: '#E2E8F0',
+      titleColor: colors.slate700,
+      iconColor: colors.slate600,
+      iconBg: colors.slate200,
     },
   }[useTone];
 
@@ -128,7 +94,7 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
               testID="species-back"
             >
               <View style={styles.backBtnCircle}>
-                <Ionicons name="chevron-back" size={22} color="#10B981" />
+                <Ionicons name="chevron-back" size={22} color={colors.emerald500} />
               </View>
               <Text style={styles.backBtnText} testID="species-back-label">{t('nav.atlas')}</Text>
             </TouchableOpacity>
@@ -160,8 +126,8 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
                testID="incomplete-card-badge"
              />
              <View style={styles.hymenophorePill}>
-                <Ionicons name={getHymenophoreIcon(species.hymenophore) as any} size={14} color="#047857" style={{marginRight: 4}} />
-                <Text style={styles.hymenophorePillText} testID="species-hymenophore">{getHymenophoreName(species.hymenophore)}</Text>
+                <Ionicons name={hymenophore.icon} size={14} color={colors.emerald700} style={{marginRight: 4}} />
+                <Text style={styles.hymenophorePillText} testID="species-hymenophore">{hymenophoreName}</Text>
              </View>
            </View>
         </View>
@@ -191,7 +157,7 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
 
         {species.warningNotes ? (
           <View style={styles.warningBox} testID="species-warning-notes">
-            <Feather name="info" size={18} color="#B45309" style={{ marginTop: 2 }} />
+            <Feather name="info" size={18} color={colors.amber700} style={{ marginTop: 2 }} />
             <Text style={styles.warningText}>{species.warningNotes}</Text>
           </View>
         ) : null}
@@ -254,7 +220,7 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
         {/* Botanical Details Card */}
         <View style={styles.detailCard}>
           <View style={styles.detailItem}>
-            <View style={styles.detailIconBox}><Feather name="map-pin" size={18} color="#059669" /></View>
+            <View style={styles.detailIconBox}><Feather name="map-pin" size={18} color={colors.emerald600} /></View>
             <View style={styles.detailTextContainer}>
               <Text style={styles.detailItemTitle} testID="species-occurrence-label">{t('cards.occurrence')}</Text>
               <Text style={styles.detailItemDesc}>{species.habitat}</Text>
@@ -262,7 +228,7 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
           </View>
 
           <View style={styles.detailItem}>
-            <View style={styles.detailIconBox}><Feather name="umbrella" size={18} color="#059669" /></View>
+            <View style={styles.detailIconBox}><Feather name="umbrella" size={18} color={colors.emerald600} /></View>
             <View style={styles.detailTextContainer}>
               <Text style={styles.detailItemTitle} testID="species-cap-label">{t('cards.cap')}</Text>
               <Text style={styles.detailItemDesc}>{species.capDescription}</Text>
@@ -270,15 +236,15 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
           </View>
 
           <View style={styles.detailItem}>
-            <View style={styles.detailIconBox}><Feather name="align-justify" size={18} color="#059669" /></View>
+            <View style={styles.detailIconBox}><Feather name="align-justify" size={18} color={colors.emerald600} /></View>
             <View style={styles.detailTextContainer}>
-              <Text style={styles.detailItemTitle} testID="species-underside-label">{t('cards.underside').replace('{type}', getHymenophoreName(species.hymenophore))}</Text>
+              <Text style={styles.detailItemTitle} testID="species-underside-label">{t('cards.underside', { type: hymenophoreName })}</Text>
               <Text style={styles.detailItemDesc}>{species.hymenophoreDescription}</Text>
             </View>
           </View>
 
           <View style={styles.detailItem}>
-            <View style={styles.detailIconBox}><Feather name="menu" size={18} color="#059669" style={{transform: [{rotate: '90deg'}]}} /></View>
+            <View style={styles.detailIconBox}><Feather name="menu" size={18} color={colors.emerald600} style={{transform: [{rotate: '90deg'}]}} /></View>
             <View style={styles.detailTextContainer}>
               <Text style={styles.detailItemTitle} testID="species-stem-label">{t('cards.stemVeil')}</Text>
               <Text style={styles.detailItemDesc}>{species.stemDescription}</Text>
@@ -286,7 +252,7 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
           </View>
 
           <View style={[styles.detailItem, { borderBottomWidth: 0, paddingBottom: 0 }]}>
-            <View style={styles.detailIconBox}><Feather name="droplet" size={18} color="#059669" /></View>
+            <View style={styles.detailIconBox}><Feather name="droplet" size={18} color={colors.emerald600} /></View>
             <View style={styles.detailTextContainer}>
               <Text style={styles.detailItemTitle} testID="species-flesh-label">{t('cards.fleshTasteSmell')}</Text>
               <Text style={styles.detailItemDesc}>{species.fleshDescription} {species.tasteAndSmell}</Text>
@@ -326,14 +292,14 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
   },
   heroSection: {
-    backgroundColor: '#064E3B', // Dark forest green
+    backgroundColor: colors.emerald950, // Dark forest green
     paddingBottom: 24,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
-    shadowColor: '#064E3B',
+    shadowColor: colors.emerald950,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
@@ -367,7 +333,7 @@ const styles = StyleSheet.create({
   backBtnText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#D1FAE5',
+    color: colors.emerald100,
   },
   heroContent: {
     paddingHorizontal: 24,
@@ -375,84 +341,84 @@ const styles = StyleSheet.create({
   },
   nameEn: {
     fontSize: 16,
-    color: '#D1FAE5',
+    color: colors.emerald100,
     fontWeight: '600',
     marginBottom: 4,
   },
   morelBanner: {
     marginBottom: 16,
-    backgroundColor: '#FFFBEB',
+    backgroundColor: colors.amber50,
     padding: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: colors.amber200,
   },
   morelBannerTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#92400E',
+    color: colors.amber800,
     marginBottom: 6,
   },
   morelBannerBody: {
     fontSize: 14,
     lineHeight: 21,
-    color: '#78350F',
+    color: colors.amber900,
   },
   namePl: {
     fontSize: 32,
     fontWeight: '900',
-    color: '#FFFFFF',
+    color: colors.white,
     letterSpacing: -0.5,
   },
   nameLatin: {
     fontSize: 18,
     fontStyle: 'italic',
-    color: '#A7F3D0',
+    color: colors.emerald200,
     marginTop: 4,
     fontWeight: '500',
   },
   photoMissingText: {
-    color: '#FDE68A',
+    color: colors.amber200,
     fontSize: 13,
     fontWeight: '700',
     marginTop: 8,
   },
   incompleteBanner: {
     marginTop: 12,
-    backgroundColor: '#FFF7ED',
+    backgroundColor: colors.orange50,
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#FDBA74',
+    borderColor: colors.orange300,
   },
   incompleteBannerTitle: {
-    color: '#9A3412',
+    color: colors.orange800,
     fontSize: 14,
     fontWeight: '800',
   },
   incompleteBannerBody: {
-    color: '#7C2D12',
+    color: colors.orange900,
     fontSize: 12,
     lineHeight: 18,
     marginTop: 2,
     fontWeight: '600',
   },
   fatalBanner: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: colors.red50,
     borderWidth: 2,
-    borderColor: '#DC2626',
+    borderColor: colors.red600,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
   },
   fatalBannerTitle: {
-    color: '#991B1B',
+    color: colors.red800,
     fontSize: 16,
     fontWeight: '800',
   },
   fatalBannerBody: {
-    color: '#7F1D1D',
+    color: colors.red900,
     fontSize: 13,
     lineHeight: 20,
     marginTop: 4,
@@ -468,7 +434,7 @@ const styles = StyleSheet.create({
   hymenophorePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#D1FAE5',
+    backgroundColor: colors.emerald100,
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 20,
@@ -476,7 +442,7 @@ const styles = StyleSheet.create({
   hymenophorePillText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#064E3B',
+    color: colors.emerald950,
   },
   scroll: {
     flex: 1,
@@ -487,11 +453,11 @@ const styles = StyleSheet.create({
     paddingBottom: 60,
   },
   mainCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     borderRadius: 24,
     padding: 20,
     marginBottom: 24,
-    shadowColor: '#64748B',
+    shadowColor: colors.slate500,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.06,
     shadowRadius: 16,
@@ -506,19 +472,19 @@ const styles = StyleSheet.create({
   infoLabel: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#94A3B8',
+    color: colors.slate400,
     letterSpacing: 1.2,
     marginBottom: 6,
   },
   infoValue: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#334155',
+    color: colors.slate700,
     lineHeight: 22,
   },
   divider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surfaceVariant,
     marginVertical: 16,
   },
   monthsGrid: {
@@ -531,16 +497,16 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 12,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.slate200,
   },
   monthBoxActive: {
-    backgroundColor: '#10B981',
-    borderColor: '#059669',
-    shadowColor: '#10B981',
+    backgroundColor: colors.emerald500,
+    borderColor: colors.emerald600,
+    shadowColor: colors.emerald500,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
@@ -548,11 +514,11 @@ const styles = StyleSheet.create({
   },
   monthText: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: colors.slate400,
     fontWeight: '600',
   },
   monthTextActive: {
-    color: '#FFFFFF',
+    color: colors.white,
     fontWeight: '800',
   },
   lookAlikeContainer: {
@@ -561,17 +527,17 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#1E293B',
+    color: colors.slate800,
     marginBottom: 16,
     marginLeft: 4,
     letterSpacing: -0.3,
   },
   detailCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     borderRadius: 24,
     padding: 20,
     marginBottom: 32,
-    shadowColor: '#64748B',
+    shadowColor: colors.slate500,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.06,
     shadowRadius: 16,
@@ -580,7 +546,7 @@ const styles = StyleSheet.create({
   detailItem: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: colors.surfaceVariant,
     paddingBottom: 16,
     marginBottom: 16,
   },
@@ -588,7 +554,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 12,
-    backgroundColor: '#ECFDF5',
+    backgroundColor: colors.emerald50,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -600,12 +566,12 @@ const styles = StyleSheet.create({
   detailItemTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#334155',
+    color: colors.slate700,
     marginBottom: 4,
   },
   detailItemDesc: {
     fontSize: 14,
-    color: '#475569',
+    color: colors.slate600,
     lineHeight: 22,
   },
   actionCard: {
@@ -618,28 +584,28 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   edibleCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: '#34D399',
-    shadowColor: '#059669',
+    borderColor: colors.emerald400,
+    shadowColor: colors.emerald600,
   },
   neutralCard: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
-    shadowColor: '#64748B',
+    borderColor: colors.outline,
+    shadowColor: colors.slate500,
   },
   inedibleCard: {
-    backgroundColor: '#FFF7ED',
+    backgroundColor: colors.orange50,
     borderWidth: 1,
-    borderColor: '#FDBA74',
-    shadowColor: '#C2410C',
+    borderColor: colors.orange300,
+    shadowColor: colors.orange700,
   },
   toxicCard: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: colors.red50,
     borderWidth: 1,
-    borderColor: '#FCA5A5',
-    shadowColor: '#DC2626',
+    borderColor: colors.red300,
+    shadowColor: colors.red600,
   },
   actionHeader: {
     flexDirection: 'row',
@@ -661,30 +627,30 @@ const styles = StyleSheet.create({
   },
   actionBody: {
     fontSize: 15,
-    color: '#334155',
+    color: colors.slate700,
     lineHeight: 24,
   },
   warningBox: {
     flexDirection: 'row',
     marginBottom: 16,
-    backgroundColor: '#FFFBEB',
+    backgroundColor: colors.amber50,
     padding: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: colors.amber200,
   },
   warningText: {
     flex: 1,
     fontSize: 13,
-    color: '#92400E',
+    color: colors.amber800,
     fontWeight: '600',
     marginLeft: 10,
     lineHeight: 20,
   },
   sourceLanguageNote: {
-    color: '#1E3A5F',
-    backgroundColor: '#EFF6FF',
-    borderColor: '#93C5FD',
+    color: colors.blueInk,
+    backgroundColor: colors.blue50,
+    borderColor: colors.blue300,
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 12,

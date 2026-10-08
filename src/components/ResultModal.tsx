@@ -11,13 +11,13 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MUSHROOMS_DATABASE } from '../data/mushrooms';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { ClassificationResult } from '../services/classifierService';
 import { createJournalEntryFromScan, type SavedJournalEntry } from '../services/journalEntry';
 import { JournalReadError } from '../services/storageService';
 import { isDisplayableCaptureUri } from '../services/journalPhotos';
-import { formatConfidencePercent } from '../services/recognitionDecision';
+import { modalRecognitionChrome, RecognitionSummary } from './RecognitionSummary';
+import { colors, radius, spacing } from '../theme/tokens';
 
 interface Props {
   visible: boolean;
@@ -47,7 +47,7 @@ export const ResultModal: React.FC<Props> = ({
   onOpenAtlasSpecies,
   onSavedToJournal,
 }) => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const [saving, setSaving] = useState(false);
   const saveLock = useRef(false);
   const persistStarted = useRef(false);
@@ -94,23 +94,9 @@ export const ResultModal: React.FC<Props> = ({
       { text: t('journal.withLocation'), onPress: () => persist(true) },
     ]);
   };
-  const unknownMushroom = result.status === 'rejected' && result.reason === 'unknown_mushroom';
-  const title =
-    result.status === 'unavailable'
-      ? t('scanner.recognitionUnavailableTitle')
-      : unknownMushroom
-        ? t('scanner.unknownMushroomTitle')
-        : result.status === 'rejected'
-          ? t('scanner.rejectedTitle')
-          : t('scanner.candidatesTitle');
-  const titleTestId =
-    result.status === 'unavailable'
-      ? 'recognition-unavailable-title'
-      : unknownMushroom
-        ? 'recognition-unknown-title'
-        : result.status === 'rejected'
-          ? 'recognition-rejected-title'
-          : 'recognition-candidates-title';
+  const chrome = modalRecognitionChrome(result);
+  const title = t(chrome.titleKey);
+  const titleTestId = chrome.testID;
 
   return (
     <Modal visible={visible} animationType="slide" transparent={false}>
@@ -138,100 +124,11 @@ export const ResultModal: React.FC<Props> = ({
               </View>
             ) : null}
 
-            {result.status === 'unavailable' ? (
-              <View style={styles.resultCard}>
-                <Text style={styles.heading} testID="recognition-unavailable-body">
-                  {t('scanner.recognitionUnavailableBody')}
-                </Text>
-                <Text style={styles.note}>{t('scanner.recognitionUnavailableNote')}</Text>
-              </View>
-            ) : null}
-
-            {result.status === 'rejected' && result.reason === 'unknown_mushroom' ? (
-              <View style={styles.resultCard}>
-                <Text style={styles.heading} testID="recognition-unknown-body">
-                  {t('scanner.unknownMushroomBody')}
-                </Text>
-                <Text style={styles.expertBody} testID="recognition-unknown-deadly">
-                  {t('scanner.unknownMushroomDeadly')}
-                </Text>
-                <Text style={styles.note} testID="recognition-unknown-verify">
-                  {t('scanner.rejectedVerify')}
-                </Text>
-              </View>
-            ) : null}
-
-            {result.status === 'rejected' && result.reason !== 'unknown_mushroom' ? (
-              <View style={styles.resultCard}>
-                <Text style={styles.heading} testID="recognition-rejected-body">
-                  {result.reason === 'unclear' ? t('scanner.rejectedUnclear') : t('scanner.rejectedNotMushroom')}
-                </Text>
-                <Text style={styles.note}>{t('scanner.rejectedVerify')}</Text>
-              </View>
-            ) : null}
-
-            {result.status === 'candidates' ? (
-              <View>
-                {result.expertVerificationRequired ? (
-                  <View style={styles.expertBanner} testID="expert-verification-banner">
-                    <Text style={styles.expertTitle}>{t('scanner.expertWarningTitle')}</Text>
-                    <Text style={styles.expertBody}>{t('scanner.expertWarningBody')}</Text>
-                    {result.warningReasons.includes('dangerous_genus') ? (
-                      <Text style={styles.expertDetail} testID="dangerous-genus-warning">
-                        {t('scanner.dangerousGenusWarning')}
-                      </Text>
-                    ) : null}
-                    {result.warningReasons.includes('low_confidence') ? (
-                      <Text style={styles.expertDetail} testID="low-confidence-warning">
-                        {t('scanner.lowConfidenceWarning')}
-                      </Text>
-                    ) : null}
-                  </View>
-                ) : null}
-
-                <View style={styles.resultCard}>
-                  <Text style={styles.heading}>{t('scanner.candidatesLead')}</Text>
-                  <Text style={styles.note} testID="not-edibility-verdict">
-                    {t('scanner.notEdibilityVerdict')}
-                  </Text>
-                  {result.top3.some((candidate) => candidate.id === 'morchella_esculenta') ? (
-                    <View style={styles.morelBanner} testID="morel-protection-notice">
-                      <Text style={styles.morelBannerTitle}>{t('cards.morelProtectionTitle')}</Text>
-                      <Text style={styles.morelBannerBody}>{t('cards.morelProtectionBody')}</Text>
-                    </View>
-                  ) : null}
-                  {result.top3.map((candidate) => {
-                    const card = MUSHROOMS_DATABASE.find((species) => species.id === candidate.id);
-                    const inAtlas = Boolean(card);
-                    return (
-                      <View key={`${candidate.rank}-${candidate.id}`} style={styles.candidate} testID={`candidate-rank-${candidate.rank}`}>
-                        <Text style={styles.candidateRank}>
-                          {candidate.rank}. {candidate.namePl}
-                        </Text>
-                        {language === 'en' && card?.nameEn ? (
-                          <Text style={styles.candidateLatin} testID={`candidate-name-en-${candidate.rank}`}>
-                            {card.nameEn}
-                          </Text>
-                        ) : null}
-                        <Text style={styles.candidateLatin}>{candidate.nameLatin}</Text>
-                        <Text style={styles.candidateConfidence} testID={`candidate-confidence-${candidate.rank}`}>
-                          {t('scanner.confidence')}: {formatConfidencePercent(candidate.confidence)}
-                        </Text>
-                        {inAtlas && onOpenAtlasSpecies ? (
-                          <TouchableOpacity
-                            onPress={() => onOpenAtlasSpecies(candidate.id)}
-                            style={styles.atlasBtn}
-                            testID={`open-atlas-${candidate.id}`}
-                          >
-                            <Text style={styles.atlasBtnText}>{t('scanner.openAtlas')}</Text>
-                          </TouchableOpacity>
-                        ) : null}
-                      </View>
-                    );
-                  })}
-                </View>
-              </View>
-            ) : null}
+            <RecognitionSummary
+              variant="modal"
+              recognition={result}
+              onOpenAtlasSpecies={onOpenAtlasSpecies}
+            />
 
             <TouchableOpacity
               style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
@@ -240,7 +137,7 @@ export const ResultModal: React.FC<Props> = ({
               testID="save-to-journal"
             >
               {saving ? (
-                <ActivityIndicator color="#FFFFFF" />
+                <ActivityIndicator color={colors.white} />
               ) : (
                 <Text style={styles.saveBtnText}>{t('journal.addToJournal')}</Text>
               )}
@@ -255,7 +152,7 @@ export const ResultModal: React.FC<Props> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F3F6F3',
+    backgroundColor: colors.canvas,
   },
   container: {
     flex: 1,
@@ -264,27 +161,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: colors.slate200,
   },
   backBtn: {
     paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: '#E2E8F0',
-    borderRadius: 8,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.slate200,
+    borderRadius: radius.sm,
   },
   backBtnText: {
     fontWeight: '700',
-    color: '#334155',
+    color: colors.slate700,
     fontSize: 13,
   },
   navTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1B3B22',
+    color: colors.primary,
     flex: 1,
     textAlign: 'center',
   },
@@ -292,133 +189,33 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
+    padding: spacing.lg,
     paddingBottom: 30,
   },
   imageContainer: {
     width: '100%',
     height: 220,
-    borderRadius: 14,
+    borderRadius: radius.lg,
     overflow: 'hidden',
-    backgroundColor: '#1E293B',
-    marginBottom: 16,
+    backgroundColor: colors.slate800,
+    marginBottom: spacing.lg,
   },
   image: {
     width: '100%',
     height: '100%',
   },
-  resultCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#1B3B22',
-  },
-  heading: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#0F172A',
-    lineHeight: 22,
-    marginBottom: 10,
-  },
-  note: {
-    fontSize: 14,
-    color: '#334155',
-    lineHeight: 20,
-  },
-  expertBanner: {
-    backgroundColor: '#FEF2F2',
-    borderWidth: 1,
-    borderColor: '#DC2626',
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 16,
-  },
-  expertTitle: {
-    color: '#991B1B',
-    fontSize: 16,
-    fontWeight: '800',
-    marginBottom: 6,
-  },
-  expertBody: {
-    color: '#7F1D1D',
-    fontSize: 15,
-    lineHeight: 21,
-    fontWeight: '700',
-  },
-  expertDetail: {
-    color: '#7F1D1D',
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: 8,
-  },
-  morelBanner: {
-    marginBottom: 12,
-    backgroundColor: '#FFFBEB',
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-  },
-  morelBannerTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#92400E',
-    marginBottom: 6,
-  },
-  morelBannerBody: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#78350F',
-  },
-  candidate: {
-    marginTop: 14,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-  },
-  candidateRank: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  candidateLatin: {
-    fontSize: 13,
-    fontStyle: 'italic',
-    color: '#475569',
-    marginTop: 2,
-  },
-  candidateConfidence: {
-    fontSize: 14,
-    color: '#1E293B',
-    marginTop: 4,
-  },
-  atlasBtn: {
-    alignSelf: 'flex-start',
-    marginTop: 8,
-    backgroundColor: '#E8F5E9',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  atlasBtnText: {
-    color: '#14532D',
-    fontWeight: '700',
-    fontSize: 13,
-  },
   saveBtn: {
-    backgroundColor: '#1B3B22',
-    borderRadius: 12,
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
     paddingVertical: 14,
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   saveBtnDisabled: {
     opacity: 0.7,
   },
   saveBtnText: {
-    color: '#FFFFFF',
+    color: colors.white,
     fontWeight: '800',
     fontSize: 15,
   },

@@ -12,9 +12,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { hasFatalLookAlikeRisk, MUSHROOMS_DATABASE } from '../data/mushrooms';
 import { countByStatus, filterAtlasSpecies, HymenophoreFilter, StatusFilter } from '../data/atlasQuery';
 import { MushroomSpecies } from '../types/mushroom';
+import { HYMENOPHORE_FILTERS, HYMENOPHORE_META } from '../presentation/speciesMeta';
 import { SpeciesStatusBadge } from '../components/EdibilityBadge';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getMushroomImage } from '../utils/mushroomImages';
+import { colors } from '../theme/tokens';
 
 interface Props {
   onSelectSpecies: (species: MushroomSpecies) => void;
@@ -36,20 +38,12 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
   }, [searchQuery, statusFilter, hymenophoreFilter]);
 
   const renderItem = ({ item }: { item: MushroomSpecies }) => {
-    const hymenophoreLabel =
-      item.hymenophore === 'TUBES'
-        ? t('atlas.hymenophoreTubes')
-        : item.hymenophore === 'GILLS'
-        ? t('atlas.hymenophoreGills')
-        : item.hymenophore === 'FOLDS'
-        ? t('atlas.hymenophoreFolds')
-        : item.hymenophore === 'SPINES'
-        ? t('atlas.hymenophoreSpines')
-        : t('atlas.hymenophoreOther');
+    const hymenophoreLabel = t(HYMENOPHORE_META[item.hymenophore].labelKey);
 
-    const monthsStr = t('atlas.monthRange')
-      .replace('{start}', String(item.months[0]))
-      .replace('{end}', String(item.months[item.months.length - 1]));
+    const monthsStr = t('atlas.monthRange', {
+      start: item.months[0],
+      end: item.months[item.months.length - 1],
+    });
 
     const photo = getMushroomImage(item.id);
 
@@ -89,7 +83,7 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
 
             {item.commonNicknames.length > 0 ? (
               <Text style={styles.nicknames} numberOfLines={1}>
-                Potocznie: {item.commonNicknames.join(', ')}
+                {t('atlas.colloquial', { names: item.commonNicknames.join(', ') })}
               </Text>
             ) : (
               <View style={styles.nicknamesSpacer} />
@@ -123,7 +117,7 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
           <TextInput
             style={styles.searchInput}
             placeholder={t('atlas.searchPlaceholder')}
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={colors.slate400}
             value={searchQuery}
             onChangeText={setSearchQuery}
             clearButtonMode="while-editing"
@@ -136,7 +130,7 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
         </View>
 
         <Text style={styles.scopeNotice} testID="atlas-scope-notice">
-          {t('atlas.scopeNotice').replace('{count}', String(MUSHROOMS_DATABASE.length))}
+          {t('atlas.scopeNotice', { count: MUSHROOMS_DATABASE.length })}
         </Text>
 
         {language === 'en' ? (
@@ -170,15 +164,9 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
         </View>
 
         <View style={styles.filtersRowSecondary}>
-          {(
-            [
-              ['TUBES', t('atlas.hymenophoreTubes')],
-              ['GILLS', t('atlas.hymenophoreGills')],
-              ['SPINES', t('atlas.hymenophoreSpines')],
-              ['FOLDS', t('atlas.hymenophoreFolds')],
-              ['OTHER', t('atlas.hymenophoreOther')],
-            ] as const
-          ).map(([type, label]) => (
+          {HYMENOPHORE_FILTERS.map((type) => {
+            const label = t(HYMENOPHORE_META[type].labelKey);
+            return (
             <TouchableOpacity
               key={type}
               testID={`filter-hymenophore-${type}`}
@@ -189,11 +177,12 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
                 {label}
               </Text>
             </TouchableOpacity>
-          ))}
+            );
+          })}
         </View>
 
         <Text style={styles.resultCount} testID="atlas-result-count">
-          {t('atlas.resultCount').replace('{count}', String(filteredMushrooms.length))}
+          {t('atlas.resultCount', { count: filteredMushrooms.length })}
         </Text>
 
         {filteredMushrooms.length === 0 ? (
@@ -223,7 +212,7 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
@@ -232,14 +221,14 @@ const styles = StyleSheet.create({
   searchBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     marginHorizontal: 16,
     marginBottom: 10,
     borderRadius: 12,
     paddingHorizontal: 12,
     height: 46,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.slate200,
   },
   searchIcon: {
     fontSize: 16,
@@ -248,19 +237,19 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: '#0F172A',
+    color: colors.slate900,
   },
   clearBtn: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: colors.slate400,
     padding: 6,
   },
   scopeNotice: {
     marginHorizontal: 16,
     marginBottom: 10,
-    color: '#7C2D12',
-    backgroundColor: '#FFF7ED',
-    borderColor: '#FDBA74',
+    color: colors.orange900,
+    backgroundColor: colors.orange50,
+    borderColor: colors.orange300,
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 12,
@@ -272,9 +261,9 @@ const styles = StyleSheet.create({
   sourceLanguageNote: {
     marginHorizontal: 16,
     marginBottom: 10,
-    color: '#1E3A5F',
-    backgroundColor: '#EFF6FF',
-    borderColor: '#93C5FD',
+    color: colors.blueInk,
+    backgroundColor: colors.blue50,
+    borderColor: colors.blue300,
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 12,
@@ -294,18 +283,18 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 20,
-    backgroundColor: '#EDF2F7',
+    backgroundColor: colors.gray100,
   },
   filterChipActive: {
-    backgroundColor: '#1B3B22',
+    backgroundColor: colors.primary,
   },
   filterText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#4A5568',
+    color: colors.gray600,
   },
   filterTextActive: {
-    color: '#FFFFFF',
+    color: colors.white,
   },
   filtersRowSecondary: {
     flexDirection: 'row',
@@ -319,27 +308,27 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontSize: 12,
     fontWeight: '700',
-    color: '#334155',
+    color: colors.slate700,
   },
   chipSecondary: {
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
-    backgroundColor: '#FFF',
+    borderColor: colors.outline,
+    backgroundColor: colors.white,
   },
   chipSecondaryActive: {
-    backgroundColor: '#2E7D32',
-    borderColor: '#2E7D32',
+    backgroundColor: colors.edible,
+    borderColor: colors.edible,
   },
   chipSecText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#64748B',
+    color: colors.slate500,
   },
   chipSecTextActive: {
-    color: '#FFF',
+    color: colors.white,
   },
   list: {
     flex: 1,
@@ -349,13 +338,13 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     borderRadius: 14,
     padding: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
+    borderColor: colors.slate200,
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
     shadowRadius: 3,
@@ -369,7 +358,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 12,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.slate200,
     marginRight: 12,
   },
   cardThumbnailMissing: {
@@ -380,7 +369,7 @@ const styles = StyleSheet.create({
   cardThumbnailMissingText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#64748B',
+    color: colors.slate500,
     textAlign: 'center',
   },
   cardDetails: {
@@ -395,22 +384,22 @@ const styles = StyleSheet.create({
   namePl: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#0F172A',
+    color: colors.slate900,
   },
   nameEn: {
     fontSize: 12,
-    color: '#475569',
+    color: colors.slate600,
     marginTop: 1,
   },
   nameLatin: {
     fontSize: 13,
     fontStyle: 'italic',
-    color: '#64748B',
+    color: colors.slate500,
     marginTop: 1,
   },
   nicknames: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: colors.slate400,
     marginBottom: 10,
   },
   nicknamesSpacer: {
@@ -423,21 +412,21 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   tag: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surfaceVariant,
     paddingVertical: 3,
     paddingHorizontal: 8,
     borderRadius: 6,
   },
   tagText: {
     fontSize: 11,
-    color: '#475569',
+    color: colors.slate600,
     fontWeight: '600',
   },
   tagDanger: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.red100,
   },
   tagDangerText: {
-    color: '#DC2626',
+    color: colors.red600,
     fontSize: 11,
     fontWeight: '700',
   },
@@ -452,11 +441,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#334155',
+    color: colors.slate700,
   },
   emptyDesc: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: colors.slate400,
     textAlign: 'center',
     marginTop: 4,
   },

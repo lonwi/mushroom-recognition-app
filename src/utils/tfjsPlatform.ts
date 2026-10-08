@@ -63,6 +63,3 @@ export function ensureTensorFlowPlatform(): void {
     // Platform may already be registered
   }
 }
-
-// Automatically ensure platform registration on import
-ensureTensorFlowPlatform();

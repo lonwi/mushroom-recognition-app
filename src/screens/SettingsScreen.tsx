@@ -5,6 +5,7 @@ import { PhotoCredits } from '../components/PhotoCredits';
 import { useLanguage } from '../contexts/LanguageContext';
 import { MUSHROOMS_DATABASE } from '../data/mushrooms';
 import { loadPhotoCredits, type PhotoCredit } from '../services/attributionPackage';
+import { colors } from '../theme/tokens';
 
 export const SettingsScreen: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
@@ -88,7 +89,7 @@ export const SettingsScreen: React.FC = () => {
           </View>
 
           <View style={styles.infoCard}>
-            <Text style={styles.infoCardTitle}>⚡ 100% On-Device AI</Text>
+            <Text style={styles.infoCardTitle}>{t('settings.onDeviceTitle')}</Text>
             <Text style={styles.infoCardText}>{t('settings.offlineNotice')}</Text>
           </View>
 
@@ -108,7 +109,7 @@ export const SettingsScreen: React.FC = () => {
             <Text style={styles.aboutTitle}>{t('settings.about')}</Text>
             <Text style={styles.aboutVersion}>{t('settings.version')}</Text>
             <Text style={styles.aboutBody}>
-              {t('settings.atlasScope').replace('{count}', String(MUSHROOMS_DATABASE.length))}
+              {t('settings.atlasScope', { count: MUSHROOMS_DATABASE.length })}
             </Text>
           </View>
         </ScrollView>
@@ -120,7 +121,7 @@ export const SettingsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
@@ -129,14 +130,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 14,
     paddingBottom: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: colors.slate200,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#1B3B22',
+    color: colors.primary,
   },
   content: {
     flex: 1,
@@ -149,14 +150,14 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   creditsButtonText: {
-    color: '#166534',
+    color: colors.green800,
     fontWeight: '700',
     fontSize: 14,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0F172A',
+    color: colors.slate900,
     marginBottom: 12,
   },
   languageOptions: {
@@ -165,66 +166,66 @@ const styles = StyleSheet.create({
   },
   langBtn: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.slate200,
   },
   langBtnActive: {
-    backgroundColor: '#E8F5E9',
-    borderColor: '#16A34A',
+    backgroundColor: colors.edibleBg,
+    borderColor: colors.green600,
   },
   langText: {
     fontSize: 15,
-    color: '#475569',
+    color: colors.slate600,
     fontWeight: '600',
   },
   langTextActive: {
-    color: '#16A34A',
+    color: colors.green600,
     fontWeight: '800',
   },
   infoCard: {
     marginTop: 20,
-    backgroundColor: '#ECFDF5',
+    backgroundColor: colors.emerald50,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: colors.emerald200,
     borderRadius: 10,
     padding: 14,
   },
   infoCardTitle: {
-    color: '#065F46',
+    color: colors.emerald900,
     fontWeight: '800',
     fontSize: 14,
     marginBottom: 4,
   },
   infoCardText: {
-    color: '#047857',
+    color: colors.emerald700,
     fontSize: 13,
     lineHeight: 18,
   },
   aboutCard: {
     marginTop: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.slate200,
     borderRadius: 10,
     padding: 14,
   },
   aboutTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1E293B',
+    color: colors.slate800,
     marginBottom: 2,
   },
   aboutVersion: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.slate500,
   },
   aboutBody: {
     fontSize: 13,
-    color: '#334155',
+    color: colors.slate700,
     lineHeight: 18,
     marginTop: 8,
   },
