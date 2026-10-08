@@ -49,6 +49,20 @@ python training/fetch_gbif.py --dry-run --only boletus_edulis --max-per-class 2 
 python training/run_pipeline.py train -- --epochs-frozen 1 --epochs-finetune 0 --batch-size 8
 ```
 
+## Resuming a fetch
+
+`fetch_gbif.py` writes each photo to a temporary file and renames it into place, but only after a full in-memory Pillow decode (`Image.open` on the bytes, then `load()`). `PIL.ImageFile.LOAD_TRUNCATED_IMAGES` is forced off. A body larger than 16 MB, or one that is not an image, is skipped and is not written, not added to `checkpoints/verified.jsonl`, and not counted in `attributions.jsonl` or `fetch_report.json`. A truncated body is retried once. A later run skips a file listed in `verified.jsonl` when the size and mtime still match. Any other existing file has to survive the same full decode. A file that fails is moved to `training/data/quarantine/<class>/` and downloaded again. `--no-resume` downloads again anyway. `--download-workers` (default 16) downloads one class or one toxic-probe taxon at a time. At most 4 transfers run against the same image host. `attributions.jsonl` and `fetch_report.json` stay in the original request order, with the same fields as an uninterrupted run. Progress is those two files. The script does not write per-class files under `checkpoints/` (nothing read them).
+
+```bash
+python training/fetch_gbif.py --verify-existing
+```
+
+That scan does not use the network. It full-decodes every file under `training/data/images` in a spawn process pool, one process per CPU, quarantines the broken ones, rewrites `verified.jsonl`, drops matching rows from `attributions.jsonl` without reordering the rest, and prints ok / quarantined counts per class plus how many attribution rows were dropped.
+
+Transient transfer errors are retried three times: DNS failure, timeout, connection reset, HTTP 5xx, and SSL handshake or a broken connection (EOF, wrong version). Each wait is the backoff plus a short random offset, so the 16 workers do not wake together. HTTP 429 waits for `Retry-After` (capped at 120 seconds) plus that same offset, or uses the jittered backoff when the header is missing. HTTP 403 and 404 are not retried. Certificate errors (`SSLCertVerificationError`, `CERTIFICATE_VERIFY_FAILED`, `certificate verify failed`) are not retried. The per-URL `skip` line is printed once, after the retries are exhausted.
+
+GBIF occurrence search and species match stay one request at a time, with at least 0.2 seconds between calls. After every class and every toxic-probe taxon the script rewrites `training/data/attributions.jsonl` and `training/data/fetch_report.json`. Accepted media lists are cached in `training/data/gbif_cache/`. The cache key is the class or probe, the fetch arguments, and a hash of `licenses.py` and `sampling.py`, so a change to either file misses the old files. Loading a cache still runs every row through `normalize_cc_license` and drops a licence that is no longer CC0 or CC-BY. Delete `training/data/gbif_cache/` when you want GBIF queried again even though the code and arguments are unchanged: a hand-edited cache, a corrupt file, or a fresh page of occurrences. A code change to the licence filter or the sampling rules does not need that delete.
+
 Unit tests that do not need TensorFlow:
 
 ```bash
