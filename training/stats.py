@@ -26,8 +26,7 @@ def wilson_interval(successes: int, total: int, z: float = _WILSON_Z) -> tuple[f
     return (max(0.0, center - margin), min(1.0, center + margin))
 
 
-def bootstrap_rate_lower(successes: int, total: int, *, seed: int = 0, draws: int = 1000) -> float:
-    """5th percentile of a binomial bootstrap of successes/total. The 95% lower bound."""
+def _bootstrap_rates(successes: int, total: int, *, seed: int, draws: int):
     if total < 1:
         raise ValueError("bootstrap needs at least one trial")
     if successes < 0 or successes > total:
@@ -37,5 +36,24 @@ def bootstrap_rate_lower(successes: int, total: int, *, seed: int = 0, draws: in
     import numpy as np
 
     proportion = successes / total
-    samples = np.random.default_rng(seed).binomial(total, proportion, size=draws) / total
-    return float(np.quantile(samples, 0.05))
+    return np.random.default_rng(seed).binomial(total, proportion, size=draws) / total
+
+
+def bootstrap_rate_lower(successes: int, total: int, *, seed: int = 0, draws: int = 1000) -> float:
+    """5th percentile of a binomial bootstrap of successes/total. The 95% lower bound."""
+    return float(np_quantile(_bootstrap_rates(successes, total, seed=seed, draws=draws), 0.05))
+
+
+def bootstrap_rate_upper(successes: int, total: int, *, seed: int = 0, draws: int = 1000) -> float:
+    """95th percentile of a binomial bootstrap of successes/total. The 95% upper bound.
+
+    A sample with zero successes collapses to 0. The Wilson upper bound is the
+    interval to quote for a zero count; this percentile is still reported.
+    """
+    return float(np_quantile(_bootstrap_rates(successes, total, seed=seed, draws=draws), 0.95))
+
+
+def np_quantile(samples, quantile: float) -> float:
+    import numpy as np
+
+    return float(np.quantile(samples, quantile))

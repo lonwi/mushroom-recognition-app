@@ -20,12 +20,13 @@ export const en: Translations = {
     pl: 'Polski',
     en: 'English',
     offlineNotice: 'Model and database run 100% offline without network connectivity.',
-    dataLicenseTitle: 'Training photo licenses',
+    dataLicenseTitle: 'Dataset photo licenses',
     dataLicenseBody:
-      'A model, if one is shipped, may be trained only on CC0 or CC-BY photos (no NC or SA). Every photo keeps its author, license, and source URL. Export writes them next to the model in assets/models/attributions.jsonl.',
-    photoCreditsOpen: 'Training photo credits',
+      'A model, if one is shipped, may be trained only on CC0 or CC-BY photos (no NC or SA). The list includes training photos, test photos, and evaluation probes. Every photo keeps its author, license, and source URL. Export writes them next to the model in assets/models/attributions.jsonl.',
+    photoCreditsOpen: 'Dataset photo credits',
     photoCreditsClose: 'Hide photo credits',
-    photoCreditsLead: 'CC0 and CC-BY photos used to train the shipped model.',
+    photoCreditsLead:
+      'CC0 and CC-BY photos in the shipped model dataset: training, test, and evaluation probes.',
     photoCreditsEmpty:
       'No model is installed, so there is no list of photo credits. Scan recognition stays off.',
     photoCreditsUnknownAuthor: 'Author not listed',

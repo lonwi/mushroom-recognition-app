@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, Linking } from 'react-native';
 import { useLanguage } from '../contexts/LanguageContext';
-import type { PhotoCredit } from '../services/attributionPackage';
+import { creditLicenseUrl, type PhotoCredit } from '../services/attributionPackage';
 
 export const PhotoCredits: React.FC<{ credits: PhotoCredit[] | null }> = ({ credits }) => {
   const { t } = useLanguage();
@@ -15,18 +15,40 @@ export const PhotoCredits: React.FC<{ credits: PhotoCredit[] | null }> = ({ cred
   return (
     <View testID="photo-credits-list">
       <Text style={styles.lead}>{t('settings.photoCreditsLead')}</Text>
-      {credits.map((credit, index) => (
-        <View key={`${credit.imageUrl}-${index}`} style={styles.row} testID={`photo-credit-${index}`}>
-          <Text style={styles.creator}>{credit.creator || t('settings.photoCreditsUnknownAuthor')}</Text>
-          <Text style={styles.license}>{credit.licenseNormalized || credit.license}</Text>
-          {credit.taxonName ? <Text style={styles.meta}>{credit.taxonName}</Text> : null}
-          {credit.sourceUrl ? (
-            <Text style={styles.url} testID={`photo-credit-source-${index}`}>
-              {credit.sourceUrl}
-            </Text>
-          ) : null}
-        </View>
-      ))}
+      <FlatList
+        data={credits}
+        keyExtractor={(credit, index) => `${credit.imageUrl}-${index}`}
+        scrollEnabled
+        nestedScrollEnabled
+        style={styles.list}
+        renderItem={({ item, index }) => {
+          const license = item.licenseNormalized || item.license;
+          const url = creditLicenseUrl(item);
+          return (
+            <View style={styles.row} testID={`photo-credit-${index}`}>
+              <Text style={styles.creator}>{item.creator || t('settings.photoCreditsUnknownAuthor')}</Text>
+              {url ? (
+                <Pressable
+                  onPress={() => {
+                    void Linking.openURL(url);
+                  }}
+                  testID={`photo-credit-license-${index}`}
+                >
+                  <Text style={styles.licenseLink}>{license}</Text>
+                </Pressable>
+              ) : (
+                <Text style={styles.license}>{license}</Text>
+              )}
+              {item.taxonName ? <Text style={styles.meta}>{item.taxonName}</Text> : null}
+              {item.sourceUrl ? (
+                <Text style={styles.url} testID={`photo-credit-source-${index}`}>
+                  {item.sourceUrl}
+                </Text>
+              ) : null}
+            </View>
+          );
+        }}
+      />
     </View>
   );
 };
@@ -43,6 +65,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     lineHeight: 18,
   },
+  list: {
+    maxHeight: 420,
+  },
   row: {
     paddingVertical: 8,
     borderTopWidth: 1,
@@ -57,6 +82,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#166534',
     marginTop: 2,
+  },
+  licenseLink: {
+    fontSize: 13,
+    color: '#1D4ED8',
+    marginTop: 2,
+    textDecorationLine: 'underline',
   },
   meta: {
     fontSize: 12,

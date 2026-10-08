@@ -13,7 +13,7 @@ from sampling import (
     taxon_fetch_plan,
     thin_class_report,
 )
-from split import collector_group_key, split_by_observation
+from split import collector_grid_key, collector_group_key, split_by_observation, split_key_summary
 
 
 def _accept(occurrence):
@@ -116,8 +116,8 @@ class SamplingTest(unittest.TestCase):
             100,
             80,
         )
-        self.assertEqual(plan["poison"], 50)
-        self.assertEqual(plan["safe"] + plan["other"], 50)
+        self.assertEqual(plan["poison"], 80)
+        self.assertEqual(plan["safe"] + plan["other"], 20)
 
     def test_collector_day_and_grid_stay_in_one_split(self):
         records = []
@@ -144,6 +144,28 @@ class SamplingTest(unittest.TestCase):
                 home.setdefault(row["decimal_latitude"], set()).add(name)
         for names in home.values():
             self.assertEqual(len(names), 1)
+
+    def test_grid_without_day_is_reported_beside_the_split_key(self):
+        records = []
+        for day in ("2024-09-01", "2024-09-02"):
+            records.append(
+                {
+                    "class_id": "boletus_edulis",
+                    "occurrence_key": day,
+                    "recorded_by": "Ada",
+                    "decimal_latitude": 52.0,
+                    "decimal_longitude": 21.01,
+                    "event_date": day,
+                    "taxon_name": "Boletus edulis",
+                }
+            )
+        self.assertNotEqual(collector_group_key(records[0]), collector_group_key(records[1]))
+        self.assertEqual(collector_grid_key(records[0]), collector_grid_key(records[1]))
+        summary = split_key_summary(records)
+        self.assertEqual(summary["collector_grid_day"], 2)
+        self.assertEqual(summary["collector_grid_day_groups"], 2)
+        self.assertEqual(summary["collector_grid"], 2)
+        self.assertEqual(summary["collector_grid_groups"], 1)
 
 
 if __name__ == "__main__":

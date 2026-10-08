@@ -24,6 +24,8 @@ export interface ModelManifest {
   model_packaged: boolean;
   recognition_available: boolean;
   dangerous_genera: string[];
+  /** 2nd/3rd-place dangerous genera warn only at or above this probability. Rank 1 always warns. */
+  dangerous_genus_min_probability?: number;
   ood: OodConfig;
   classes: ModelClass[];
   input: {

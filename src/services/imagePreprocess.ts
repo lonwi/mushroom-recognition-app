@@ -8,6 +8,8 @@
  *
  * Upsampling keeps bilinear sampling with half-pixel centers:
  *   src = (dst + 0.5) * inSize / outSize - 0.5
+ * The bilinear sample is rounded to uint8 with Math.round before normalize,
+ * the same half-up rule as the area resize.
  *
  * Normalize: (pixel / 127.5) - 1
  * Layout: NHWC RGB, no batch dimension, values in [-1, 1].
@@ -133,7 +135,8 @@ export function preprocessRgbToMobileNetV3(
       for (let channel = 0; channel < 3; channel += 1) {
         const top = rgb[i00 + channel] * (1 - tx) + rgb[i10 + channel] * tx;
         const bottom = rgb[i01 + channel] * (1 - tx) + rgb[i11 + channel] * tx;
-        out[base + channel] = (top * (1 - ty) + bottom * ty) / 127.5 - 1;
+        const pixel = Math.min(255, Math.max(0, Math.round(top * (1 - ty) + bottom * ty)));
+        out[base + channel] = pixel / 127.5 - 1;
       }
     }
   }

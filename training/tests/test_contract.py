@@ -14,12 +14,17 @@ from evaluate import (
     choose_threshold,
     confident_toxic_as_edible,
     image_counts,
+    open_set_metrics,
+    outcome_is_confident_edible,
+    outcome_is_strict_top1_edible,
+    poisonous_sample_reasons,
 )
 from export_tflite import DEFAULT_QUANTIZATIONS, representative_dataset
 from manifest import ROOT, load_manifest, poisonous_heldout_taxa
 from preprocess import ImageReadError, load_oriented_rgb, model_rgb_uint8, preprocess_rgb_uint8
 from recognition_math import (
     DANGEROUS_GENERA,
+    DANGEROUS_GENUS_MIN_PROBABILITY,
     DANGEROUS_PAIRS,
     EDIBLE_LOOKALIKE_IDS,
     HIGH_STAKES_IDS,
@@ -251,6 +256,29 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertIsNone(manifest["quantization"])
         self.assertFalse((ROOT / "assets" / "models" / "mushrooms_model.tflite").exists())
         self.assertEqual(set(DANGEROUS_GENERA), set(manifest["dangerous_genera"]))
+        self.assertEqual(manifest["dangerous_genus_min_probability"], DANGEROUS_GENUS_MIN_PROBABILITY)
+        probes = manifest["toxic_probes"]
+        self.assertEqual(probes["per_taxon_cap"], 80)
+        self.assertEqual(probes["minimum_poisonous_held_out_images"], 300)
+        self.assertNotIn("Galerina sulcipes", poisonous_heldout_taxa(manifest))
+        self.assertNotIn("Galerina sulciceps", poisonous_heldout_taxa(manifest))
+        self.assertIn("Conocybe rugosa", poisonous_heldout_taxa(manifest))
+        self.assertIn("Lepiota castanea", poisonous_heldout_taxa(manifest))
+        self.assertIn("Inosperma erubescens", poisonous_heldout_taxa(manifest))
+        bolete_names = unknown["gbif_names"]
+        bolete_at = bolete_names.index("Neoboletus luridiformis")
+        self.assertEqual(bolete_names[bolete_at + 1], "Neoboletus erythropus")
+        boletes = {taxon["name"]: taxon for taxon in unknown["sampling"]["taxa"]}
+        self.assertEqual(boletes["Neoboletus erythropus"]["gbif_key"], 9723190)
+        self.assertFalse(boletes["Neoboletus erythropus"]["held_out"])
+        self.assertEqual(boletes["Neoboletus erythropus"]["toxic"], boletes["Neoboletus luridiformis"]["toxic"])
+        self.assertNotIn("Neoboletus erythropus", unknown["sampling"]["held_out_gbif_names"])
+        exceptions = {item["taxon"]: item for item in probes["rare_taxon_exceptions"]}
+        self.assertEqual(exceptions["Lepiota brunneoincarnata"]["gbif_licensed_count"], 16)
+        self.assertEqual(exceptions["Lepiota brunneoincarnata"]["date_checked"], "2026-10-08")
+        self.assertEqual(exceptions["Conocybe filaris"]["gbif_licensed_count"], 78)
+        self.assertEqual(exceptions["Inosperma erubescens"]["gbif_licensed_count"], 44)
+        self.assertIsNone(exceptions["Inosperma erubescens"]["group_id"])
 
     def test_ship_gates_fail_closed_without_measurements(self):
         ok, reasons = assess_shippable({})
@@ -289,6 +317,7 @@ class ManifestAndShipGateTest(unittest.TestCase):
                 "confident_edible_count": 2,
                 "poisonous_held_out_support": 50 * len(poisonous_heldout_taxa()),
                 "poisonous_held_out_confident_edible": 0,
+                "deadly_probe_strict_top1_edible": 0,
                 "poisonous_per_taxon": [
                     {"taxon": name, "support": 50, "confident_edible": 0}
                     for name in poisonous_heldout_taxa()
@@ -583,22 +612,94 @@ class ManifestAndShipGateTest(unittest.TestCase):
             self.assertTrue(ok, reasons)
             short = self._passing_report(artifact_dir)
             short["open_set"]["poisonous_per_taxon"] = [
-                {"taxon": "Galerina sulcipes", "support": 0, "confident_edible": 0}
+                {"taxon": "Lepiota brunneoincarnata", "support": 0, "confident_edible": 0}
             ]
             short["open_set"]["poisonous_held_out_support"] = 0
+            short["open_set"]["deadly_probe_strict_top1_edible"] = 0
             ok, reasons = assess_shippable(short, artifact_dir)
             self.assertFalse(ok)
-            self.assertTrue(any("Galerina sulcipes" in reason for reason in reasons))
+            self.assertTrue(any("Lepiota brunneoincarnata" in reason for reason in reasons))
 
     def test_open_set_lists_a_poisonous_taxon_with_no_photos(self):
-        from evaluate import open_set_metrics
-
-        metrics = open_set_metrics([], [], {}, set(), ["Galerina sulcipes"])
+        metrics = open_set_metrics([], [], {}, set(), ["Lepiota brunneoincarnata"])
         self.assertEqual(
             metrics["poisonous_per_taxon"],
-            [{"taxon": "Galerina sulcipes", "support": 0, "confident_edible": 0}],
+            [
+                {
+                    "taxon": "Lepiota brunneoincarnata",
+                    "support": 0,
+                    "confident_edible": 0,
+                    "strict_top1_edible": 0,
+                    "confident_edible_wilson_high": None,
+                    "confident_edible_bootstrap_high": None,
+                }
+            ],
         )
-        self.assertIn("Galerina sulcipes", metrics["taxa_below_minimum"])
+        self.assertIn("Lepiota brunneoincarnata", metrics["taxa_below_minimum"])
+        self.assertEqual(metrics["deadly_probe_strict_top1_edible"], 0)
+
+    def _quota_rows(self, **overrides: dict) -> list[dict]:
+        rows = [
+            {"taxon": name, "support": 50, "confident_edible": 0}
+            for name in poisonous_heldout_taxa()
+        ]
+        for name, patch in overrides.items():
+            for row in rows:
+                if row["taxon"] == name:
+                    row.update(patch)
+        return rows
+
+    def test_rare_exception_below_five_fails(self):
+        probes = load_manifest()["toxic_probes"]
+        reasons = poisonous_sample_reasons(
+            self._quota_rows(**{"Lepiota brunneoincarnata": {"support": 4}}),
+            probes,
+            expected_names=poisonous_heldout_taxa(),
+        )
+        self.assertTrue(any("Lepiota brunneoincarnata" in reason and "at least 5" in reason for reason in reasons))
+
+    def test_rare_exception_with_a_confident_edible_fails(self):
+        probes = load_manifest()["toxic_probes"]
+        reasons = poisonous_sample_reasons(
+            self._quota_rows(**{"Inosperma erubescens": {"support": 44, "confident_edible": 1}}),
+            probes,
+            expected_names=poisonous_heldout_taxa(),
+        )
+        self.assertTrue(
+            any("Inosperma erubescens" in reason and "confident edible" in reason for reason in reasons)
+        )
+
+    def test_visual_group_below_minimum_fails(self):
+        probes = {
+            "other_taxon_minimum": 50,
+            "rare_exception_minimum": 5,
+            "minimum_poisonous_held_out_images": 60,
+            "visual_groups": [
+                {
+                    "id": "lepiota_amatoxin",
+                    "minimum_images": 200,
+                    "taxa": ["Lepiota brunneoincarnata", "Lepiota cristata"],
+                }
+            ],
+            "rare_taxon_exceptions": [
+                {
+                    "taxon": "Lepiota brunneoincarnata",
+                    "gbif_key": 2535390,
+                    "reason": "scarce on GBIF",
+                    "gbif_licensed_count": 16,
+                    "date_checked": "2026-10-08",
+                    "group_id": "lepiota_amatoxin",
+                }
+            ],
+        }
+        rows = [
+            {"taxon": "Lepiota brunneoincarnata", "support": 10, "confident_edible": 0},
+            {"taxon": "Lepiota cristata", "support": 50, "confident_edible": 0},
+        ]
+        reasons = poisonous_sample_reasons(rows, probes, expected_names=[row["taxon"] for row in rows])
+        self.assertTrue(any("visual group lepiota_amatoxin" in reason for reason in reasons))
+        self.assertFalse(any("need 50" in reason for reason in reasons))
+        self.assertFalse(any("at least 5" in reason for reason in reasons))
 
     def test_gbif_higher_rank_match_stops_the_fetch(self):
         import fetch_gbif
@@ -626,6 +727,53 @@ class ManifestAndShipGateTest(unittest.TestCase):
             fetch_gbif._KEY_CACHE.clear()
         self.assertIn("HIGHERRANK", str(raised.exception))
 
+    def test_safety_tag_matches_atlas_edibility(self):
+        import re
+
+        text = (ROOT / "src" / "data" / "mushrooms.ts").read_text(encoding="utf-8")
+        catalog = text.split("NO_ATLAS_VERDICT", 1)[0]
+        found = re.findall(r"id: '([a-z0-9_]+)'[\s\S]*?status: '(EDIBLE|INEDIBLE|POISONOUS|DEADLY_POISONOUS)'", catalog)
+        self.assertGreaterEqual(len(found), 18)
+        expected = {
+            "EDIBLE": "edible",
+            "INEDIBLE": "other",
+            "POISONOUS": "toxic",
+            "DEADLY_POISONOUS": "toxic",
+        }
+        tags = {item["id"]: item.get("safety_tag") for item in load_manifest()["classes"]}
+        checked = 0
+        for species_id, status in found:
+            if species_id not in tags:
+                continue
+            checked += 1
+            self.assertEqual(tags[species_id], expected[status], species_id)
+        self.assertGreaterEqual(checked, 18)
+
+    def test_small_third_place_dangerous_genus_does_not_clear_a_strict_edible(self):
+        classes = _classes(
+            ["macrolepiota_procera", "boletus_edulis", "amanita_phalloides", "not_a_mushroom"],
+            ["Macrolepiota", "Boletus", "Amanita", ""],
+        )
+        ood = {
+            "calibrated": True,
+            "background_class_id": "not_a_mushroom",
+            "temperature": 1,
+            "energy_threshold": -4.0,
+            "min_softmax_for_accept": 0.4,
+            "min_top1_softmax_for_high_confidence": 0.7,
+            "min_margin": 0.15,
+        }
+        below = decide([8.0, 5.0, 4.2, -2.0], classes, ood)
+        edible = {"macrolepiota_procera"}
+        self.assertFalse(below["dangerous_genus"])
+        self.assertFalse(below["low_confidence"])
+        self.assertTrue(outcome_is_confident_edible(below, edible))
+        self.assertTrue(outcome_is_strict_top1_edible(below, edible))
+        warned = decide([7.712318, 5.879736, 5.792725, 4.087977], classes, ood)
+        self.assertTrue(warned["dangerous_genus"])
+        self.assertFalse(outcome_is_confident_edible(warned, edible))
+        self.assertTrue(outcome_is_strict_top1_edible(warned, edible))
+
     def test_gbif_key_collision_is_rejected(self):
         from manifest import _claim_key
 
@@ -641,6 +789,24 @@ class ManifestAndShipGateTest(unittest.TestCase):
         source = (ROOT / "training" / "export_tflite.py").read_text(encoding="utf-8")
         self.assertIn('default="fp16"', source)
         self.assertNotIn('for quantization in ("int8", "fp16")', source)
+
+
+class StatsReferenceTest(unittest.TestCase):
+    def test_wilson_interval_matches_the_reference_values(self):
+        from stats import wilson_interval
+
+        low, high = wilson_interval(81, 100)
+        self.assertAlmostEqual(low, 0.7222115462093562, places=10)
+        self.assertAlmostEqual(high, 0.8748524849023126, places=10)
+        zero_low, zero_high = wilson_interval(0, 300)
+        self.assertEqual(zero_low, 0.0)
+        self.assertAlmostEqual(zero_high, 0.012642971224546036, places=10)
+
+    def test_bootstrap_quantiles_match_the_seeded_reference(self):
+        from stats import bootstrap_rate_lower, bootstrap_rate_upper
+
+        self.assertEqual(bootstrap_rate_lower(40, 50, seed=1, draws=2000), 0.7)
+        self.assertEqual(bootstrap_rate_upper(40, 50, seed=1, draws=2000), 0.88)
 
 
 if __name__ == "__main__":

@@ -20,7 +20,7 @@ from pathlib import Path
 import numpy as np
 
 from manifest import ROOT, load_manifest, poisonous_heldout_taxa, safety_catalog
-from stats import bootstrap_rate_lower, wilson_interval
+from stats import bootstrap_rate_lower, bootstrap_rate_upper, wilson_interval
 from preprocess import ImageReadError, load_oriented_rgb, preprocess_rgb_uint8
 from recognition_math import (
     BACKGROUND_CLASS_ID,
@@ -207,6 +207,138 @@ def outcome_is_confident_edible(decision: dict, edible_ids: set[str]) -> bool:
     return top3[0]["id"] in edible_ids
 
 
+def outcome_is_strict_top1_edible(decision: dict, edible_ids: set[str]) -> bool:
+    """Top-1 is an edible species and the result is not low-confidence.
+
+    A dangerous-genus banner does not clear this. Deadly probes use it so a
+    confident parasol stays a failure when Amanita is only a small later rank.
+    """
+    if decision.get("status") != "candidates":
+        return False
+    if decision.get("low_confidence"):
+        return False
+    top3 = decision.get("top3") or []
+    if not top3:
+        return False
+    return top3[0]["id"] in edible_ids
+
+
+def deadly_probe_taxa(manifest: dict) -> list[str]:
+    """Probe taxa whose strict top-1 edible count must be zero."""
+    names: list[str] = []
+    for group in (manifest.get("toxic_probes") or {}).get("visual_groups") or []:
+        if group.get("strict_top1_edible"):
+            names.extend(str(name) for name in group.get("taxa") or [])
+    return names
+
+
+def _whole(value: object) -> int | None:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        return None
+    return value
+
+
+def poisonous_sample_reasons(
+    per_taxon: list,
+    probes: dict | None,
+    *,
+    expected_names: list[str] | None = None,
+) -> list[str]:
+    """Floors for poisonous held-out photos.
+
+    Visual groups have a total. Every other taxon needs 50 images unless it is
+    on rare_taxon_exceptions, which needs 5 images, 0 confident-edible outcomes,
+    and a group that still meets its minimum when the taxon belongs to one.
+    The poisonous held-out total stays at least 300.
+    """
+    probes = probes or {}
+    other_min = int(probes.get("other_taxon_minimum") or 50)
+    rare_min = int(probes.get("rare_exception_minimum") or 5)
+    total_min = int(probes.get("minimum_poisonous_held_out_images") or 300)
+    exceptions = {
+        str(item.get("taxon")): item
+        for item in (probes.get("rare_taxon_exceptions") or [])
+        if isinstance(item, dict)
+    }
+    groups = [group for group in (probes.get("visual_groups") or []) if isinstance(group, dict)]
+    reasons: list[str] = []
+    rows: dict[str, dict] = {}
+    if not isinstance(per_taxon, list):
+        return ["poisonous held-out per-taxon counts are missing"]
+    for item in per_taxon:
+        if not isinstance(item, dict):
+            reasons.append("poisonous held-out per-taxon row is not an object")
+            continue
+        name = str(item.get("taxon") or "")
+        support = _whole(item.get("support"))
+        edible = _whole(item.get("confident_edible"))
+        if support is None:
+            reasons.append(f"{name or '?'} support is not a count")
+            continue
+        if edible is None:
+            reasons.append(f"{name or '?'} confident edible count is not a count")
+            continue
+        rows[name] = {"support": support, "confident_edible": edible}
+
+    if expected_names is not None:
+        missing = [name for name in expected_names if name not in rows]
+        if missing:
+            reasons.append(
+                "poisonous held-out taxa missing from the report (counted as below their floor): "
+                + ", ".join(missing)
+            )
+
+    total = 0
+    edible_total = 0
+    for name, item in rows.items():
+        support = item["support"]
+        edible = item["confident_edible"]
+        total += support
+        edible_total += edible
+        if name in exceptions:
+            if support < rare_min:
+                reasons.append(
+                    f"{name} is a rare-taxon exception with {support} photos; need at least {rare_min}"
+                )
+            if edible != 0:
+                reasons.append(
+                    f"{name} is a rare-taxon exception with {edible} confident edible outcomes; need 0"
+                )
+        elif support < other_min:
+            reasons.append(
+                f"{name} has {support} poisonous held-out photos; need {other_min} or a rare_taxon_exception"
+            )
+
+    for group in groups:
+        names = [str(name) for name in group.get("taxa") or []]
+        absent = [name for name in names if name not in rows]
+        if absent:
+            reasons.append(f"visual group {group.get('id')} is missing {', '.join(absent)}")
+            continue
+        group_total = sum(rows[name]["support"] for name in names)
+        minimum = int(group.get("minimum_images") or 0)
+        if group_total < minimum:
+            reasons.append(f"visual group {group.get('id')} has {group_total} images; need {minimum}")
+
+    for name, item in exceptions.items():
+        if expected_names is not None and name not in rows:
+            reasons.append(f"rare exception {name} is missing from the poisonous held-out report")
+        group_id = item.get("group_id")
+        if not group_id:
+            continue
+        group = next((candidate for candidate in groups if candidate.get("id") == group_id), None)
+        if group is None or name not in [str(taxon) for taxon in group.get("taxa") or []]:
+            reasons.append(f"rare exception {name} group {group_id} does not contain that taxon")
+
+    if total < total_min:
+        reasons.append(f"poisonous held-out support {total} is below {total_min}")
+    if edible_total != 0:
+        reasons.append(
+            f"poisonous held-out photos shown as a confident edible: {edible_total} (need 0)"
+        )
+    return reasons
+
+
 def annotate_safety(predictions: list[dict], manifest: dict) -> set[str]:
     """Mark each photo poisonous from the class or from its taxon. Returns edible class ids."""
     catalog = safety_catalog(manifest)
@@ -325,12 +457,38 @@ def _unknown_metrics(test_pred: list[dict], class_ids: list[str], classes: list[
     }
 
 
+def _empty_taxon_bucket(name: str) -> dict:
+    return {
+        "taxon": name,
+        "support": 0,
+        "confident_edible": 0,
+        "strict_top1_edible": 0,
+        "confident_edible_wilson_high": None,
+        "confident_edible_bootstrap_high": None,
+    }
+
+
+def _fill_taxon_bounds(bucket: dict) -> None:
+    support = bucket["support"]
+    if support < 1:
+        return
+    _low, high = wilson_interval(bucket["confident_edible"], support)
+    bucket["confident_edible_wilson_high"] = high
+    bucket["confident_edible_bootstrap_high"] = bootstrap_rate_upper(
+        bucket["confident_edible"],
+        support,
+        seed=zlib.adler32(str(bucket["taxon"]).encode("utf-8")) & 0xFFFFFFFF,
+    )
+
+
 def open_set_metrics(
     test_pred: list[dict],
     classes: list[dict],
     ood_config: dict,
     edible_ids: set[str],
     expected_poisonous_taxa: list[str] | None = None,
+    deadly_taxa: list[str] | None = None,
+    probes: dict | None = None,
 ) -> dict:
     """decide() outcomes on fungi held out of train and val, including toxic probes."""
     held = [
@@ -348,25 +506,43 @@ def open_set_metrics(
         if outcome_is_confident_edible(decision, edible_ids):
             confident += 1
     poisonous_confident = 0
+    strict_edible = 0
+    deadly = set(deadly_taxa or [])
     per_taxon: dict[str, dict] = {
-        name: {"taxon": name, "support": 0, "confident_edible": 0}
-        for name in (expected_poisonous_taxa or [])
+        name: _empty_taxon_bucket(name) for name in (expected_poisonous_taxa or [])
     }
     for row in poisonous:
         name = row.get("taxon_name") or ""
-        bucket = per_taxon.setdefault(name, {"taxon": name, "support": 0, "confident_edible": 0})
+        bucket = per_taxon.setdefault(name, _empty_taxon_bucket(name))
         bucket["support"] += 1
         decision = decide(row["logits"], classes, ood_config)
         if outcome_is_confident_edible(decision, edible_ids):
             poisonous_confident += 1
             bucket["confident_edible"] += 1
+        if name in deadly and outcome_is_strict_top1_edible(decision, edible_ids):
+            strict_edible += 1
+            bucket["strict_top1_edible"] += 1
+    for bucket in per_taxon.values():
+        _fill_taxon_bounds(bucket)
     support = len(held)
     safe_low = safe_high = None
     edible_low = edible_high = None
     if support:
         safe_low, safe_high = wilson_interval(safe, support)
         edible_low, edible_high = wilson_interval(confident, support)
-    below = [item["taxon"] for item in per_taxon.values() if item["support"] < 50]
+    probe_config = probes or {}
+    other_min = int(probe_config.get("other_taxon_minimum") or 50)
+    rare_min = int(probe_config.get("rare_exception_minimum") or 5)
+    exceptions = {
+        str(item.get("taxon"))
+        for item in (probe_config.get("rare_taxon_exceptions") or [])
+        if isinstance(item, dict)
+    }
+    below = [
+        item["taxon"]
+        for item in per_taxon.values()
+        if item["support"] < (rare_min if item["taxon"] in exceptions else other_min)
+    ]
     by_relation = {}
     for relation in ("unknown_genus", "unknown_species_of_known_genus"):
         rows = [row for row in held if row.get("genus_relation") == relation]
@@ -393,6 +569,13 @@ def open_set_metrics(
         "confident_edible_wilson_high": edible_high,
         "poisonous_held_out_support": len(poisonous),
         "poisonous_held_out_confident_edible": poisonous_confident,
+        "poisonous_held_out_confident_edible_wilson_high": (
+            wilson_interval(poisonous_confident, len(poisonous))[1] if poisonous else None
+        ),
+        "poisonous_held_out_confident_edible_bootstrap_high": (
+            bootstrap_rate_upper(poisonous_confident, len(poisonous), seed=0) if poisonous else None
+        ),
+        "deadly_probe_strict_top1_edible": strict_edible,
         "poisonous_per_taxon": sorted(per_taxon.values(), key=lambda item: item["taxon"]),
         "taxa_below_minimum": sorted(below),
         "by_relation": by_relation,
@@ -454,6 +637,8 @@ def assemble_report(manifest: dict, splits: dict, val_pred: list[dict], test_pre
             ood_config,
             edible_ids,
             poisonous_heldout_taxa(manifest),
+            deadly_probe_taxa(manifest),
+            manifest.get("toxic_probes") or {},
         ),
         "unknown_mushroom": _unknown_metrics(test_pred, class_ids, classes, ood_config),
         "coverage": {

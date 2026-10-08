@@ -7,7 +7,8 @@ is rounded to uint8 so it matches a 224 PNG.
 
 Upsampling keeps bilinear sampling with half-pixel centers:
     src = (dst + 0.5) * in_size / out_size - 0.5
-That path is only for images smaller than the model. The committed
+That path is only for images smaller than the model. The result is rounded
+to uint8 with the same half-up rule before normalization. The committed
 2x2 -> 4 fixture locks it.
 
 Normalization is Keras `mode='tf'`:
@@ -27,8 +28,8 @@ from pathlib import Path
 import numpy as np
 
 MODEL_INPUT_SIZE = 224
-# The phone's native decoder downscales the long side to this before the
-# shared 224 area filter, so a 12–50 MP JPEG is not decoded in JS.
+# The phone's native decoder downscales the width to this, in steps of at
+# most 2×, before the shared 224 area filter. It is not a longest-side cap.
 NATIVE_PREP_EDGE = MODEL_INPUT_SIZE * 2
 
 
@@ -119,10 +120,8 @@ def preprocess_rgb_uint8(rgb: np.ndarray, size: int = MODEL_INPUT_SIZE) -> np.nd
         raise ValueError("empty image")
     if size < 1:
         raise ValueError("size must be positive")
-    if height >= size and width >= size:
-        resized = model_rgb_uint8(image, size).astype(np.float64)
-    else:
-        resized = _resize_bilinear(image, size)
+    # Downsample and upsample both round to uint8 before the float normalize.
+    resized = model_rgb_uint8(image, size).astype(np.float64)
     return (resized / 127.5 - 1.0).astype(np.float32)
 
 

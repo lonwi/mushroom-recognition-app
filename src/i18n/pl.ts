@@ -18,12 +18,13 @@ export const pl = {
     pl: 'Polski',
     en: 'English',
     offlineNotice: 'Model i baza danych działają w 100% offline bez połączenia z siecią.',
-    dataLicenseTitle: 'Licencje zdjęć treningowych',
+    dataLicenseTitle: 'Licencje zdjęć zbioru',
     dataLicenseBody:
-      'Model, jeśli zostanie dołączony, wolno trenować tylko na zdjęciach CC0 albo CC-BY (bez NC i SA). Przy każdym zdjęciu zapisujemy autora, licencję i adres źródła. Eksport zapisuje je obok modelu w assets/models/attributions.jsonl.',
-    photoCreditsOpen: 'Autorzy zdjęć treningowych',
+      'Model, jeśli zostanie dołączony, wolno trenować tylko na zdjęciach CC0 albo CC-BY (bez NC i SA). Lista obejmuje zdjęcia treningowe, testowe i sondy oceniające. Przy każdym zapisujemy autora, licencję i adres źródła. Eksport zapisuje je obok modelu w assets/models/attributions.jsonl.',
+    photoCreditsOpen: 'Autorzy zdjęć zbioru',
     photoCreditsClose: 'Ukryj autorów zdjęć',
-    photoCreditsLead: 'Zdjęcia CC0 i CC-BY użyte do treningu dołączonego modelu.',
+    photoCreditsLead:
+      'Zdjęcia CC0 i CC-BY ze zbioru dołączonego modelu: trening, test i sondy oceniające.',
     photoCreditsEmpty:
       'Nie ma dołączonego modelu, więc nie ma listy autorów zdjęć. Rozpoznawanie ze skanu pozostaje wyłączone.',
     photoCreditsUnknownAuthor: 'Autor niepodany',

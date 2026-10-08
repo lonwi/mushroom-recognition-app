@@ -14,9 +14,10 @@ SPECIES_CLASS_CAP = 500
 MAX_PER_OCCURRENCE = 2
 AGGREGATE_CLASS_IDS = ("unknown_mushroom", "not_a_mushroom")
 THIN_CLASS_IDS = ("cortinarius_orellanus", "cortinarius_rubellus", "amanita_virosa")
-# Poisonous fungi held out of training. The ship gate requires this many
-# photos of each such taxon. The fetch asks for the same number first.
-TOXIC_HELDOUT_TARGET = 50
+# Photos to request for each poisonous held-out taxon. This is headroom above
+# the 50-image floor: near-duplicate removal often drops a 50-photo fetch
+# under the floor. The ship gate does not read this number.
+TOXIC_HELDOUT_FETCH = 80
 
 
 def spread_per_taxon(class_cap: int, taxon_count: int, configured_cap: int) -> int:
@@ -103,9 +104,10 @@ def fill_regional_then_global(
 def taxon_fetch_plan(taxa: list[dict], class_cap: int, per_taxon_cap: int) -> dict[str, int]:
     """How many photos to request from each aggregate taxon.
 
-    Poisonous held-out taxa are filled toward `TOXIC_HELDOUT_TARGET` before
+    Poisonous held-out taxa are filled toward `TOXIC_HELDOUT_FETCH` before
     the other names share what remains of the class cap. A smoke override
-    with a tiny class cap still stops at that cap.
+    with a tiny class cap still stops at that cap. The 50-image floor is a
+    ship gate, not this request size.
     """
     if class_cap < 1 or per_taxon_cap < 1:
         raise ValueError("caps must be positive")
@@ -116,7 +118,7 @@ def taxon_fetch_plan(taxa: list[dict], class_cap: int, per_taxon_cap: int) -> di
     for taxon in priority:
         if remaining < 1:
             break
-        ask = min(per_taxon_cap, TOXIC_HELDOUT_TARGET, remaining)
+        ask = min(per_taxon_cap, TOXIC_HELDOUT_FETCH, remaining)
         plan[str(taxon["name"])] = ask
         remaining -= ask
     if rest and remaining > 0:

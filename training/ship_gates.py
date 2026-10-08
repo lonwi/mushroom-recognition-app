@@ -16,7 +16,7 @@ import math
 import re
 from pathlib import Path
 
-from evaluate import attributions_complete
+from evaluate import attributions_complete, poisonous_sample_reasons
 from manifest import ROOT, load_manifest, poisonous_heldout_taxa
 from recognition_math import (
     BACKGROUND_CLASS_ID,
@@ -41,7 +41,6 @@ OPEN_SET_SAFE_WILSON_LOW_MIN = 0.85
 OPEN_SET_CONFIDENT_EDIBLE_MAX = 0.02
 OPEN_SET_CONFIDENT_EDIBLE_WILSON_HIGH_MAX = 0.05
 POISONOUS_HELDOUT_SUPPORT_MIN = 300
-POISONOUS_HELDOUT_PER_TAXON_MIN = 50
 
 
 def sha256_file(path: Path) -> str | None:
@@ -141,39 +140,44 @@ def _open_set_reasons(open_set: dict) -> list[str]:
             f"open-set confident edible rate {edible_rate:.3f} (95% upper bound {edible_high:.3f}) "
             f"on {support} held-out fungi (need <= {OPEN_SET_CONFIDENT_EDIBLE_MAX} and upper bound <= {OPEN_SET_CONFIDENT_EDIBLE_WILSON_HIGH_MAX})"
         )
-    poisonous_support = _whole_count(open_set.get("poisonous_held_out_support"))
-    poisonous_edible = open_set.get("poisonous_held_out_confident_edible")
     per_taxon = open_set.get("poisonous_per_taxon")
-    if poisonous_support is None or poisonous_support < POISONOUS_HELDOUT_SUPPORT_MIN:
-        reasons.append(
-            f"poisonous held-out support {open_set.get('poisonous_held_out_support')} "
-            f"is below {POISONOUS_HELDOUT_SUPPORT_MIN}"
-        )
-    if not isinstance(poisonous_edible, int) or isinstance(poisonous_edible, bool) or poisonous_edible != 0:
-        reasons.append(
-            f"poisonous held-out photos shown as a confident edible: {poisonous_edible} (need 0)"
-        )
+    manifest = load_manifest()
+    probes = manifest.get("toxic_probes") or {}
     if not isinstance(per_taxon, list) or not per_taxon:
         reasons.append("poisonous held-out per-taxon counts are missing")
-    else:
-        short = []
-        for item in per_taxon:
-            count = _whole_count(item.get("support")) if isinstance(item, dict) else None
-            if count is None or count < POISONOUS_HELDOUT_PER_TAXON_MIN:
-                label = item.get("taxon") if isinstance(item, dict) else "?"
-                short.append(f"{label}={count}")
-        if short:
-            reasons.append(
-                "poisonous held-out taxa below "
-                f"{POISONOUS_HELDOUT_PER_TAXON_MIN} images: {', '.join(short)}"
-            )
-        present = {item.get("taxon") for item in per_taxon if isinstance(item, dict)}
-        missing = [name for name in poisonous_heldout_taxa() if name not in present]
-        if missing:
-            reasons.append(
-                "poisonous held-out taxa missing from the report (counted as below "
-                f"{POISONOUS_HELDOUT_PER_TAXON_MIN}): {', '.join(missing)}"
-            )
+        return reasons
+    reasons.extend(
+        poisonous_sample_reasons(per_taxon, probes, expected_names=poisonous_heldout_taxa(manifest))
+    )
+    row_support = 0
+    row_edible = 0
+    for item in per_taxon:
+        if not isinstance(item, dict):
+            continue
+        support = _whole_count(item.get("support"))
+        edible = _whole_count(item.get("confident_edible"))
+        if support is None or edible is None:
+            continue
+        row_support += support
+        row_edible += edible
+    reported_support = _whole_count(open_set.get("poisonous_held_out_support"))
+    if reported_support is None or reported_support != row_support:
+        reasons.append(
+            f"poisonous held-out support {open_set.get('poisonous_held_out_support')} "
+            f"does not match the per-taxon total {row_support}"
+        )
+    reported_edible = open_set.get("poisonous_held_out_confident_edible")
+    if reported_edible != row_edible:
+        reasons.append(
+            f"poisonous held-out confident edible {reported_edible} "
+            f"does not match the per-taxon total {row_edible}"
+        )
+    strict = open_set.get("deadly_probe_strict_top1_edible")
+    if not isinstance(strict, int) or isinstance(strict, bool) or strict != 0:
+        reasons.append(
+            "deadly probe photos with an edible top-1 and no low-confidence warning: "
+            f"{strict} (need 0)"
+        )
     return reasons
 
 

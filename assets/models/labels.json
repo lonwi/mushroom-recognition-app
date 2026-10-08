@@ -18,8 +18,8 @@
     "color": "RGB",
     "preprocess": "mobilenet_v3",
     "formula": "(pixel / 127.5) - 1",
-    "resize": "area_antialias_downsample_uint8_round_half_up_else_bilinear_half_pixel_centers",
-    "native_long_edge": 448
+    "resize": "area_antialias_downsample_uint8_round_half_up_else_bilinear_half_pixel_centers_uint8",
+    "native_preview_width": 448
   },
   "output": {
     "type": "logits",
@@ -483,6 +483,7 @@
         "Schizophyllum commune",
         "Ganoderma applanatum",
         "Neoboletus luridiformis",
+        "Neoboletus erythropus",
         "Scleroderma citrinum",
         "Laccaria laccata",
         "Marasmius oreades",
@@ -511,7 +512,7 @@
         "Coprinopsis atramentaria",
         "Armillaria ostoyae",
         "Inocybe geophylla",
-        "Inocybe erubescens",
+        "Inosperma erubescens",
         "Entoloma sinuatum",
         "Helvella crispa (Scop.) Fr.",
         "Ramaria flava",
@@ -536,7 +537,7 @@
           "Coprinopsis atramentaria",
           "Armillaria ostoyae",
           "Inocybe geophylla",
-          "Inocybe erubescens",
+          "Inosperma erubescens",
           "Entoloma sinuatum",
           "Helvella crispa (Scop.) Fr.",
           "Ramaria flava",
@@ -779,6 +780,14 @@
             "relation": "unknown_genus"
           },
           {
+            "name": "Neoboletus erythropus",
+            "gbif_key": 9723190,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus",
+            "note": "Accepted GBIF species that holds most records of the Neoboletus luridiformis fungus. Fetched with that name, not held out."
+          },
+          {
             "name": "Scleroderma citrinum",
             "gbif_key": 5239982,
             "toxic": true,
@@ -975,7 +984,7 @@
             "relation": "unknown_genus"
           },
           {
-            "name": "Inocybe erubescens",
+            "name": "Inosperma erubescens",
             "gbif_key": 10776858,
             "toxic": true,
             "held_out": true,
@@ -1503,8 +1512,9 @@
   ],
   "toxic_probes": {
     "class_id": "unknown_mushroom",
-    "per_taxon_cap": 50,
-    "minimum_images_per_taxon": 50,
+    "per_taxon_cap": 80,
+    "other_taxon_minimum": 50,
+    "rare_exception_minimum": 5,
     "minimum_poisonous_held_out_images": 300,
     "known_class_not_probed": [
       "cortinarius_orellanus",
@@ -1512,6 +1522,70 @@
       "galerina_marginata"
     ],
     "known_class_reason": "These species are already model classes. Their test photos are the probe. Fetching them again as unknown_mushroom would give one fungus two labels.",
+    "visual_groups": [
+      {
+        "id": "lepiota_amatoxin",
+        "minimum_images": 150,
+        "strict_top1_edible": true,
+        "taxa": [
+          "Lepiota brunneoincarnata",
+          "Lepiota subincarnata",
+          "Lepiota cristata",
+          "Lepiota castanea"
+        ]
+      },
+      {
+        "id": "conocybe_pholiotina",
+        "minimum_images": 100,
+        "strict_top1_edible": true,
+        "taxa": [
+          "Conocybe filaris",
+          "Conocybe rugosa"
+        ]
+      },
+      {
+        "id": "omphalotus",
+        "minimum_images": 50,
+        "strict_top1_edible": false,
+        "taxa": [
+          "Omphalotus olearius"
+        ]
+      },
+      {
+        "id": "tricholoma_equestre",
+        "minimum_images": 50,
+        "strict_top1_edible": false,
+        "taxa": [
+          "Tricholoma equestre"
+        ]
+      }
+    ],
+    "rare_taxon_exceptions": [
+      {
+        "taxon": "Lepiota brunneoincarnata",
+        "gbif_key": 2535390,
+        "reason": "CC0/CC-BY still images after the two-photos-per-occurrence cap were 16 on 2026-10-08, the whole set. Near-duplicate removal left 15. Below the 50-image floor. The Lepiota amatoxin group must still reach 150, and this taxon needs at least 5 photos and 0 confident-edible outcomes.",
+        "gbif_licensed_count": 16,
+        "date_checked": "2026-10-08",
+        "group_id": "lepiota_amatoxin"
+      },
+      {
+        "taxon": "Conocybe filaris",
+        "gbif_key": 2529789,
+        "reason": "The whole CC0/CC-BY set after the two-photos-per-occurrence cap was 78 on 2026-10-08. Six downloads failed and near-duplicate removal left 33, under the 50-image floor. The Conocybe/Pholiotina group must still reach 100, and this taxon needs at least 5 photos and 0 confident-edible outcomes.",
+        "gbif_licensed_count": 78,
+        "date_checked": "2026-10-08",
+        "group_id": "conocybe_pholiotina"
+      },
+      {
+        "taxon": "Inosperma erubescens",
+        "gbif_key": 10776858,
+        "reason": "Accepted name of Inocybe erubescens. The whole CC0/CC-BY set after the two-photos-per-occurrence cap was 44 on 2026-10-08, and near-duplicate removal left 44. Below the 50-image floor. It is not in a visual group. The exception lowers only its own floor to 5, it needs 0 confident-edible outcomes, and the poisonous held-out total must still reach 300.",
+        "gbif_licensed_count": 44,
+        "date_checked": "2026-10-08",
+        "group_id": null
+      }
+    ],
     "taxa": [
       {
         "name": "Lepiota brunneoincarnata",
@@ -1535,6 +1609,13 @@
         "relation": "unknown_genus"
       },
       {
+        "name": "Lepiota castanea",
+        "gbif_key": 2535310,
+        "toxic": true,
+        "held_out": true,
+        "relation": "unknown_genus"
+      },
+      {
         "name": "Omphalotus olearius",
         "gbif_key": 2538088,
         "toxic": true,
@@ -1542,28 +1623,19 @@
         "relation": "unknown_genus"
       },
       {
-        "name": "Galerina sulcipes",
-        "gbif_key": 8003146,
-        "toxic": true,
-        "held_out": true,
-        "relation": "unknown_species_of_known_genus",
-        "note": "GBIF had 0 StillImage occurrences for this key on 2026-10-08. The 50-image floor is unchanged."
-      },
-      {
-        "name": "Galerina sulciceps",
-        "gbif_key": 8347930,
-        "toxic": true,
-        "held_out": true,
-        "relation": "unknown_species_of_known_genus",
-        "note": "GBIF spells the (Berk.) Boedijn fungus sulciceps and gives it a different key from sulcipes. StillImage count was 39, under the 50-image floor."
-      },
-      {
         "name": "Conocybe filaris",
         "gbif_key": 2529789,
         "toxic": true,
         "held_out": true,
         "relation": "unknown_genus",
-        "note": "Species probe. The genus label Conocybe spp. is refused because GBIF matchType is HIGHERRANK."
+        "note": "Species probe. The genus label Conocybe spp. is refused because GBIF matchType is HIGHERRANK. The full licensed set dedupes below 50 and is a rare_taxon_exception."
+      },
+      {
+        "name": "Conocybe rugosa",
+        "gbif_key": 2529907,
+        "toxic": true,
+        "held_out": true,
+        "relation": "unknown_genus"
       },
       {
         "name": "Tricholoma equestre",
@@ -1580,5 +1652,6 @@
         "relation": "unknown_species_of_known_genus"
       }
     ]
-  }
+  },
+  "dangerous_genus_min_probability": 0.1
 }

@@ -303,7 +303,7 @@ def main() -> None:
     fetch_probes = not wanted or "unknown_mushroom" in wanted or "toxic_probes" in wanted
     probe_report = []
     if fetch_probes:
-        cap = int(probes.get("per_taxon_cap") or 50)
+        cap = int(probes.get("per_taxon_cap") or 80)
         if args.max_per_class is not None:
             cap = min(cap, args.max_per_class)
         for taxon in probes.get("taxa") or []:

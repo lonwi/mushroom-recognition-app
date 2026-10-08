@@ -11,6 +11,9 @@ from __future__ import annotations
 import math
 
 DANGEROUS_GENERA = ("Amanita", "Cortinarius", "Galerina", "Gyromitra")
+# A dangerous genus in 2nd or 3rd place warns only at this probability or above.
+# Rank 1 always warns. A smaller third-place Amanita must not hide an edible top class.
+DANGEROUS_GENUS_MIN_PROBABILITY = 0.10
 
 # Policy floors written into the manifest only after an evaluation run.
 # They are not evidence that the energy gate works.
@@ -145,7 +148,13 @@ def decide(logits: list[float], classes: list[dict], ood: dict) -> dict:
     if min_margin is not None and margin < float(min_margin):
         low_confidence = True
 
-    dangerous = any(classes[index].get("genus") in DANGEROUS_GENERA for index in top3)
+    dangerous = False
+    for position, index in enumerate(top3):
+        genus = classes[index].get("genus")
+        probability = probabilities[index]
+        if genus in DANGEROUS_GENERA and (position == 0 or probability >= DANGEROUS_GENUS_MIN_PROBABILITY):
+            dangerous = True
+            break
     candidates = []
     for rank, index in enumerate(top3, start=1):
         species = classes[index]

@@ -6,6 +6,9 @@
 
 import type { ModelManifest } from './modelManifest';
 
+/** Matches training/recognition_math.py. Rank 1 always counts; later ranks need this probability. */
+export const DANGEROUS_GENUS_MIN_PROBABILITY = 0.1;
+
 export interface SpeciesCandidate {
   id: string;
   namePl: string;
@@ -131,7 +134,12 @@ export function decideFromLogits(logits: number[], manifest: ModelManifest): Rec
       rank: rank + 1,
     };
   });
-  const dangerous = top3.some((candidate) => manifest.dangerous_genera.includes(candidate.genus));
+  const genusFloor = manifest.dangerous_genus_min_probability ?? DANGEROUS_GENUS_MIN_PROBABILITY;
+  const dangerous = top3.some(
+    (candidate) =>
+      manifest.dangerous_genera.includes(candidate.genus) &&
+      (candidate.rank === 1 || candidate.confidence >= genusFloor),
+  );
   const warningReasons: Array<'dangerous_genus' | 'low_confidence'> = [];
   if (dangerous) {
     warningReasons.push('dangerous_genus');

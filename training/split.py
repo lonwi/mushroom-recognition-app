@@ -34,11 +34,41 @@ def collector_group_key(record: dict) -> str:
     return f"occurrence:{class_id}:{record.get('occurrence_key')}"
 
 
+def collector_grid_key(record: dict) -> str | None:
+    """Recorder + ~1 km grid, without the calendar day.
+
+    This is a leakage report, not the split key. Two days from the same person
+    in the same square stay one group here and two groups in `collector_group_key`.
+    """
+    recorded = " ".join(str(record.get("recorded_by") or "").casefold().split())
+    lat = record.get("decimal_latitude")
+    lon = record.get("decimal_longitude")
+    if not recorded or lat is None or lon is None:
+        return None
+    try:
+        lat_f = float(lat)
+        lon_f = float(lon)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(lat_f) or not math.isfinite(lon_f):
+        return None
+    lat_bin = round(lat_f / 0.01) * 0.01
+    lon_bin = round(lon_f / 0.01) * 0.01
+    class_id = record.get("class_id") or ""
+    taxon = str(record.get("taxon_name") or record.get("queried_name") or "")
+    return f"grid:{class_id}:{taxon}:{recorded}:{lat_bin:.2f}:{lon_bin:.2f}"
+
+
 def split_key_summary(records: list[dict]) -> dict[str, int]:
-    collector = sum(1 for record in records if collector_group_key(record).startswith("collector:"))
+    collector_keys = [collector_group_key(record) for record in records]
+    collector = sum(1 for key in collector_keys if key.startswith("collector:"))
+    grid_keys = [key for key in (collector_grid_key(record) for record in records) if key]
     return {
         "collector_grid_day": collector,
+        "collector_grid_day_groups": len({key for key in collector_keys if key.startswith("collector:")}),
         "occurrence_fallback": len(records) - collector,
+        "collector_grid": len(grid_keys),
+        "collector_grid_groups": len(set(grid_keys)),
     }
 
 

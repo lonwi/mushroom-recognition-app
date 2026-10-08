@@ -5,10 +5,11 @@ Apache-2.0. A CPU machine can run this. See training/README.md.
 
 Images are the oriented 224px PNGs from prepare_data.py. The loader does not
 decode the original JPEG, so EXIF orientation cannot be skipped. The sample
-list is shuffled before from_tensor_slices. Training then applies flip,
+list is shuffled before from_tensor_slices, and each epoch shuffles the full
+cached set again. Training then applies flip, a random area or bilinear
 scale-and-crop, rotation, brightness, and contrast. Class weights are
 inverse frequency, capped at 10. dataset.cache() sits on the deterministic
-decode, before augmentation.
+decode, before the epoch shuffle and augmentation.
 """
 
 from __future__ import annotations
@@ -71,9 +72,8 @@ def _dataset(split_name: str, class_index: dict[str, int], image_size: int):
         if row["class_id"] not in class_index:
             raise ValueError(f"split row class {row['class_id']} is not in labels.json")
         samples.append(row)
-    # The split file is grouped by class. Shuffle the whole list here so
-    # from_tensor_slices is not class-sorted. A later shuffle(1000) only
-    # mixes a window of that sorted order.
+    # The split file is grouped by class. Shuffle the whole list so the first
+    # cache fill is not class-sorted. The epoch shuffle below uses every row.
     random.Random(f"42:{split_name}").shuffle(samples)
     paths = [str(_image_path(row)) for row in samples]
     labels = [class_index[row["class_id"]] for row in samples]
@@ -93,6 +93,8 @@ def _dataset(split_name: str, class_index: dict[str, int], image_size: int):
     dataset = tf.data.Dataset.from_tensor_slices((paths, labels))
     dataset = dataset.map(load, num_parallel_calls=tf.data.AUTOTUNE)
     dataset = dataset.cache()
+    if samples:
+        dataset = dataset.shuffle(len(samples), reshuffle_each_iteration=True)
     return dataset, labels
 
 
@@ -123,9 +125,18 @@ def main() -> None:
     def augment(image, label):
         image = tf.image.random_flip_left_right(image)
         # Scale, then crop back to 224. Rotation is about +/- 15 degrees.
+        # Area and bilinear are both used so a phone bitmap scaler and the
+        # training box filter are not the only kernel the weights ever see.
         scale = tf.random.uniform([], 1.0, 1.25)
         side = tf.cast(tf.round(float(args.image_size) * scale), tf.int32)
-        image = tf.image.resize(image, [side, side])
+
+        def resize_area():
+            return tf.image.resize(image, [side, side], method="area")
+
+        def resize_bilinear():
+            return tf.image.resize(image, [side, side], method="bilinear")
+
+        image = tf.cond(tf.random.uniform([]) < 0.5, resize_area, resize_bilinear)
         image = tf.image.random_crop(image, [args.image_size, args.image_size, 3])
         image = rotation(image[None, ...], training=True)[0]
         image = tf.image.random_brightness(image, 0.12)

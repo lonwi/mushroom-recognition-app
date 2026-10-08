@@ -1,14 +1,30 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PhotoCredits } from '../components/PhotoCredits';
 import { useLanguage } from '../contexts/LanguageContext';
 import { MUSHROOMS_DATABASE } from '../data/mushrooms';
-import { PACKAGED_PHOTO_CREDITS } from '../services/attributionPackage';
+import { loadPhotoCredits, type PhotoCredit } from '../services/attributionPackage';
 
 export const SettingsScreen: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
   const [creditsOpen, setCreditsOpen] = useState(false);
+  const [credits, setCredits] = useState<PhotoCredit[] | null>(null);
+
+  useEffect(() => {
+    if (!creditsOpen) {
+      return undefined;
+    }
+    let cancelled = false;
+    loadPhotoCredits().then((rows) => {
+      if (!cancelled) {
+        setCredits(rows);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [creditsOpen]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -59,7 +75,7 @@ export const SettingsScreen: React.FC = () => {
                 {creditsOpen ? t('settings.photoCreditsClose') : t('settings.photoCreditsOpen')}
               </Text>
             </TouchableOpacity>
-            {creditsOpen ? <PhotoCredits credits={PACKAGED_PHOTO_CREDITS} /> : null}
+            {creditsOpen ? <PhotoCredits credits={credits} /> : null}
           </View>
 
           <View style={styles.aboutCard} testID="atlas-coverage-notice">

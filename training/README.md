@@ -62,8 +62,8 @@ Poland, Germany, Czechia, Slovakia, Austria, Hungary, Lithuania, Latvia, and Est
 Defaults:
 
 - known species: 500 photos (`--max-per-class` overrides this, including for the aggregate classes)
-- `unknown_mushroom` and `not_a_mushroom`: `class_cap` 2500 in `labels.json`, spread across every listed taxon (`per_taxon_cap` 80, reduced so the cap is shared). Poisonous held-out taxa inside `unknown_mushroom` are requested first, up to 50 photos each, before the rest of the cap is shared.
-- toxic probes: a separate test-only budget, 50 photos per taxon, not taken out of the 2500. See the probe list below.
+- `unknown_mushroom` and `not_a_mushroom`: `class_cap` 2500 in `labels.json`, spread across every listed taxon (`per_taxon_cap` 80, reduced so the cap is shared). Poisonous held-out taxa inside `unknown_mushroom` are requested first, up to 80 photos each, before the rest of the cap is shared. 80 is fetch headroom so near-duplicate removal can still leave 50. It is not the ship floor.
+- toxic probes: a separate test-only budget, 80 photos per taxon, not taken out of the 2500. See the probe list below.
 - at most 2 photos from one GBIF observation
 
 `Cortinarius orellanus`, `Cortinarius rubellus`, and `Amanita virosa` are thin in CC0/CC-BY. The fetch writes `training/data/fetch_report.json` with their counts and does not invent photos. The ship gate still requires 40 training images for a species, so a short class cannot ship.
@@ -73,18 +73,18 @@ Defaults:
 The phone and the trainer share the second resize and the rounding rule:
 
 1. EXIF orientation is applied by the platform image decoder. Pillow uses `ImageOps.exif_transpose` in prepare. On the phone, `readPhotoAsPngBytes` calls `expo-image-manipulator` with a width of 448 and no extra rotation. The camera uses `skipProcessing`, so the JPEG may still carry an orientation tag. ImageManipulator loads through UIImage / BitmapFactory on device, and through HTMLImageElement's default `image-orientation: from-image` on web. Those decoders bake the tag into upright pixels. The app does not rotate a second time.
-2. A photo whose both sides are at least 448 is reduced before the 224 model input. The phone's first step is that native resize to width 448, keeping aspect ratio, so a 12–50 megapixel JPEG is not pushed through base64 into JavaScript. Training's cached PNG uses an antialiased box filter to a 448 square and then to 224, and only when the model size is 224 and both sides start at or above 448. The native scaler and the box filter are not the same algorithm, so the first step is not bit-identical. A photo that is already 448px on both sides shares the second step with the phone.
+2. A photo whose width is above 448 is reduced before the 224 model input. The target is the width, keeping aspect ratio. It is not a longest-side cap. The phone does that native resize in steps of at most 2× (halve the width while the next half is still at least 448, then finish at 448) so a 12–50 megapixel JPEG is not pushed through base64 into JavaScript and is not scaled by more than 2× in one Android bitmap step. Training's cached PNG uses an antialiased box filter to a 448 square and then to 224, and only when the model size is 224 and both sides start at or above 448. The native scaler and the box filter are not the same algorithm, so the first step is not bit-identical. A photo that is already 448px on both sides shares the second step with the phone.
 3. The 224 box filter rounds each channel with half toward +infinity (`Math.round` in `imagePreprocess.ts`, `floor(x + 0.5)` in `training/preprocess.py`). `numpy.rint` is not used: it rounds half to even, and on a 448-to-224 area resize that disagrees on about 18,649 of 150,528 values. The fixture `training/fixtures/round_half_up_2x2_to_1.json` is a 2×2 image of 10 and 11, which averages to 10.5 and must become 11.
-4. Smaller images keep the bilinear half-pixel resize.
+4. Smaller images keep the bilinear half-pixel resize, then the same uint8 half-up rounding before normalization.
 5. Normalization is `(pixel / 127.5) - 1`.
 
 Training reads the cached PNG. It does not decode the original JPEG with `tf.io.decode_image`, which ignores EXIF. Corrupt files are skipped.
 
-The sample list is shuffled in full before `from_tensor_slices`. A windowed `dataset.shuffle(1000)` on a class-sorted list is not used. Augmentation, after `dataset.cache()` on the deterministic decode, is a horizontal flip, a random scale from 1.0 to 1.25 followed by a crop back to 224, a rotation of about ±15 degrees, brightness, and contrast. Class weights are inverse frequency with mean 1, then capped at 10.
+The sample list is shuffled in full before `from_tensor_slices`. After `dataset.cache()` the trainer shuffles the whole cached set again each epoch (`shuffle(N, reshuffle_each_iteration=True)`). Augmentation, after that shuffle, is a horizontal flip, a random scale from 1.0 to 1.25 using either an area kernel or a bilinear kernel, a crop back to 224, a rotation of about ±15 degrees, brightness, and contrast. Class weights are inverse frequency with mean 1, then capped at 10.
 
 ## Split
 
-`training/split.py` keeps one field outing in one split. When the photo has a recorder, a finite latitude and longitude, and a date, the group is `recordedBy` (case-folded) plus a 0.01-degree grid (about 1.1 km north–south) plus the calendar day, and the taxon name so two species from the same person on the same day stay separate. Otherwise the group is the GBIF occurrence. `prepare_data.py` writes the counts of each kind of key to `training/data/split_groups.json`.
+`training/split.py` keeps one field outing in one split. When the photo has a recorder, a finite latitude and longitude, and a date, the group is `recordedBy` (case-folded) plus a 0.01-degree grid (about 1.1 km north–south) plus the calendar day, and the taxon name so two species from the same person on the same day stay separate. Otherwise the group is the GBIF occurrence. The same file also reports a second grouping, recorder plus the 0.01-degree grid with the day left out, so a person who returns to the same square on another day is visible. That second grouping is not the split key. `prepare_data.py` writes both counts to `training/data/split_groups.json`.
 
 ## Backbone
 
@@ -107,7 +107,9 @@ The network reads floats already scaled with `(pixel / 127.5) - 1` and emits **l
 
 `unknown_mushroom` is the class immediately before `not_a_mushroom`. It means “this is a fungus, and it is not one of the species this model knows.” It is trained on CC0/CC-BY photos of other fungi that occur in Poland and nearby countries and that are **not** in the known species list (amanitas, boletes, russulas, milk-caps, brackets, and similar names in `labels.json`). Each taxon is capped. A fixed list of those taxa is `held_out_taxon` and is placed only in the test split.
 
-Every species class has `safety_tag` `toxic`, `edible`, or `other`. Every aggregate taxon has `toxic` true or false. Those flags are evaluation labels. The app must not show them as an edibility verdict. Poisonous taxa inside the training unknown class (for example `Hypholoma fasciculare`) and poisonous held-out taxa (for example `Amanita verna`, `Amanita porphyria`, `Inocybe erubescens`, `Inocybe geophylla`, `Entoloma sinuatum`, `Clitocybe rivulosa`, `Gyromitra gigas`, `Agaricus xanthodermus`) are tagged so a test photo of any of them counts when `decide()` would show a confident edible species.
+Every species class has `safety_tag` `toxic`, `edible`, or `other`. That tag matches the atlas card when the species has one: `EDIBLE` is `edible`, `INEDIBLE` is `other`, and `POISONOUS` or `DEADLY_POISONOUS` is `toxic`. Every aggregate taxon has `toxic` true or false. Those flags are evaluation labels. The app must not show them as an edibility verdict. Poisonous taxa inside the training unknown class (for example `Hypholoma fasciculare`) and poisonous held-out taxa (for example `Amanita verna`, `Amanita porphyria`, `Inosperma erubescens`, `Inocybe geophylla`, `Entoloma sinuatum`, `Clitocybe rivulosa`, `Gyromitra gigas`, `Agaricus xanthodermus`) are tagged so a test photo of any of them counts when `decide()` would show a confident edible species.
+
+`Neoboletus luridiformis` (GBIF key 8208185) is a thin name: about 68 records and about 28 usable photos. GBIF keeps most records of that fungus on the separate accepted species `Neoboletus erythropus` (usage key 9723190; the species match is EXACT). Both names are on the `unknown_mushroom` training list, next to each other, and neither is held out. Holding one out while training on the other would score a fungus the model had already seen.
 
 GBIF name matching is strict. `matchType` must be `EXACT` and the rank must be species, subspecies, variety, or form. A `HIGHERRANK` hit (a genus, a class, or the kingdom) stops the fetch with `SystemExit` before any download. That is why the bare strings `Helvella crispa` and `Boletus badius` are not in the manifest: GBIF maps them to a higher rank. The held-out name is `Helvella crispa (Scop.) Fr.`. `Imleria badia` keeps the synonym `Xerocomus badius`, which shares one accepted key. Collisions are checked on that accepted key. The same key may repeat only as synonyms of one class.
 
@@ -119,32 +121,41 @@ It also says the mushroom may be deadly poisonous, and it shows the existing lin
 
 ### Toxic probes
 
-These taxa are fetched only into the test split, labeled `unknown_mushroom`, target 50 CC0/CC-BY photos each. They are not a 30th class. Counts below are GBIF `StillImage` occurrences on 2026-10-08, before the license filter, so the licensed yield will be lower. The ship gate still requires 50 images of each poisonous held-out taxon, including a taxon that comes back with zero.
+These taxa are fetched only into the test split, labeled `unknown_mushroom`. They are not a 30th class. The fetch asks for 80 CC0/CC-BY photos each (70–80 is the headroom band) so near-duplicate removal can still leave a full floor. `Galerina sulcipes` and `Galerina sulciceps` are not probes: GBIF had 0 and 39 still images, and those names are not a substitute for the amatoxin look-alikes below.
 
-| Taxon | GBIF key | StillImage occurrences | Role |
-| --- | ---: | ---: | --- |
-| Lepiota brunneoincarnata | 2535390 | 188 | parasol look-alike |
-| Lepiota subincarnata | 2535445 | 596 | parasol look-alike |
-| Lepiota cristata | 2535471 | 4232 | parasol look-alike |
-| Omphalotus olearius | 2538088 | 1563 | chanterelle look-alike |
-| Galerina sulcipes | 8003146 | 0 | Galerina look-alike; the 50-image floor stays |
-| Galerina sulciceps | 8347930 | 39 | GBIF spelling of the (Berk.) Boedijn fungus; a different key from sulcipes; still under 50 |
-| Conocybe filaris | 2529789 | 153 | species probe. `Conocybe spp.` is `HIGHERRANK` and is not fetched |
-| Tricholoma equestre | 3324883 | 2135 | |
-| Chlorophyllum molybdites | 5243168 | 17255 | |
+The flat 50-per-taxon probe floor is gone. The ship gate uses visual-group totals, plus 50 for every poisonous held-out taxon that is not on `rare_taxon_exceptions`:
 
-`Cortinarius orellanus`, `Cortinarius rubellus`, and `Galerina marginata` are already model classes. Fetching them again as `unknown_mushroom` would give one fungus two labels, so they are not probes. Their own test photos are poisonous (`safety_tag` `toxic`) and count in `confident_toxic_as_edible`.
+| Group | Minimum images | Taxa |
+| --- | ---: | --- |
+| Lepiota amatoxin | 150 | `Lepiota brunneoincarnata`, `Lepiota subincarnata`, `Lepiota cristata`, `Lepiota castanea` |
+| Conocybe / Pholiotina | 100 | `Conocybe filaris`, `Conocybe rugosa` |
+| Omphalotus | 50 | `Omphalotus olearius` |
+| Tricholoma equestre | 50 | `Tricholoma equestre` |
+| Every other probe taxon, and every other poisonous held-out taxon | 50 each | `Chlorophyllum molybdites`, plus the poisonous names held out inside `unknown_mushroom` |
 
-The fetch also keeps at most 2 photos from one GBIF occurrence, so the licensed count is lower than the still-image count. Measured on 2026-10-08 with that cap, the whole GBIF still-image result for a taxon when it fit in one page:
+The poisonous held-out total stays at least 300 (rule of three) and the confident-edible count on that set stays 0. Each poisonous taxon also records a Wilson upper bound and a seeded binomial-bootstrap upper bound on its confident-edible rate. A zero count makes the bootstrap upper bound collapse to 0; the Wilson bound is the one to read. Neither bound replaces the hard 0.
 
-| Taxon | CC0/CC-BY photos after the 2-per-occurrence cap |
-| --- | ---: |
-| Lepiota brunneoincarnata | 16 (the whole set; under 50) |
-| Galerina sulcipes | 0 |
-| Galerina sulciceps | 8 (the whole set; under 50) |
-| Conocybe filaris | 78 (reaches 50) |
+A taxon under its floor is allowed only through `rare_taxon_exceptions` in `labels.json`. Each entry has the taxon, the GBIF key, a reason, the GBIF licensed count, and the date checked. The gate then requires at least 5 images, 0 confident-edible outcomes, and, when the taxon sits in a visual group, that group still meeting its minimum. An exception does not lower the 300-image total.
 
-`Lepiota subincarnata`, `Lepiota cristata`, `Omphalotus olearius`, `Tricholoma equestre`, and `Chlorophyllum molybdites` each had enough licensed photos in the first page or two to reach 50. One occurrence page (300 records) took about 0.5–2.7 seconds. Three original JPEGs from iNaturalist were about 2 MB and arrived in about 0.2 seconds each on this machine. The extra probe crawl is 9 name lookups, a pass through the Central European countries, then global pages until the cap, then about 320 downloads for the taxa that can reach 50 plus the short taxa above. That is on the order of a few minutes on this CPU box (roughly one minute of occurrence requests and about a minute of JPEG transfer at the measured rate), not a separate multi-hour job. It is part of `python training/run_pipeline.py fetch` and is not run as a full download in CI. The 50-image gate still fails for `Galerina sulcipes`, `Galerina sulciceps`, and `Lepiota brunneoincarnata` at these counts.
+Counts below were measured on 2026-10-08. StillImage is before the license filter. Licensed counts use CC0/CC-BY and at most 2 photos per GBIF occurrence. After-dedup is a perceptual-hash pass on the photos actually downloaded, capped at 80 when the licensed set was larger.
+
+| Taxon | GBIF key | StillImage | Licensed (cap 2) | After dedup | Floor |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Lepiota brunneoincarnata | 2535390 | 188 | 16 (whole set) | 15 | exception; group must still reach 150 |
+| Lepiota subincarnata | 2535445 | 596 | 80 (whole set) | 77 | group member, at least 50 |
+| Lepiota cristata | 2535471 | 4232 | 80 of a larger set | 80 | group member, at least 50 |
+| Lepiota castanea | 2535310 | 768 | 80 of a larger set | 80 | group member, at least 50 |
+| Omphalotus olearius | 2538088 | 1563 | 80 of a larger set | 79 | group of 50 |
+| Conocybe filaris | 2529789 | 153 | 78 (whole set) | 33 (6 downloads failed, 39 near-duplicates) | exception; group must still reach 100 |
+| Conocybe rugosa | 2529907 | 575 | 80 of a larger set (at least 186 licensed) | 80 | group member, at least 50 |
+| Tricholoma equestre | 3324883 | 2135 | 80 of a larger set | 79 | group of 50 |
+| Chlorophyllum molybdites | 5243168 | 17255 | 80 of a larger set | 77 | 50, not in a named group |
+
+`Inosperma erubescens` (accepted name of `Inocybe erubescens`, key 10776858) is not a probe. It is a poisonous held-out taxon inside `unknown_mushroom`. The whole licensed set is 44 photos, all kept after dedup, so it is the third exception. It has no visual group. The exception lowers only its own floor from 50 to 5.
+
+On that same day the Lepiota group total from the table is 15+77+80+80 = 252, and the Conocybe group is 33+80 = 113. Both clear their minimums on this sample. One occurrence page took about 0.5–2.7 seconds, and the image downloads for these ten names finished in a few minutes on this machine. The crawl is part of `python training/run_pipeline.py fetch` and is not a full download in CI.
+
+`Cortinarius orellanus`, `Cortinarius rubellus`, and `Galerina marginata` are already model classes. Fetching them again as `unknown_mushroom` would give one fungus two labels, so they are not probes. Their own test photos are poisonous (`safety_tag` `toxic`) and count in `confident_toxic_as_edible`. The Lepiota amatoxin group and the Conocybe / Pholiotina group are deadly probes: an edible top-1 that is not low-confidence fails the ship even if a dangerous genus appears lower in the list.
 
 Atlas species already in the app, kept so a future model lines up with the cards:
 
@@ -173,7 +184,7 @@ The threshold is the lowest validation energy that keeps at least 97% of in-dist
 
 `id_keep_rate_val` records that calibration. The ship gate reads `id_keep_rate_test`: the same threshold on the held-out test split. A photo is rejected, and no species is shown, when the background class wins, when energy is above the threshold, or when the top softmax is below 0.40. A confident `unknown_mushroom` (top class, softmax at least 0.40, energy inside the threshold) is also not a species result. If any logit is NaN or infinite, the result is `unavailable` / `output_mismatch`.
 
-Low confidence (top softmax under 0.70 or top-1/top-2 margin under 0.15) still shows the top three species, with a Sanepid / expert warning. `not_a_mushroom` and `unknown_mushroom` are omitted from that list. The same warning is mandatory when any displayed top-3 genus is Amanita, Cortinarius, Galerina, or Gyromitra.
+Low confidence (top softmax under 0.70 or top-1/top-2 margin under 0.15) still shows the top three species, with a Sanepid / expert warning. `not_a_mushroom` and `unknown_mushroom` are omitted from that list. The same warning is mandatory when a displayed candidate is Amanita, Cortinarius, Galerina, or Gyromitra and that candidate is rank 1, or its probability is at least 0.10. A smaller 2nd or 3rd place in one of those genera does not raise the banner and does not clear a confident edible top class. Deadly probes are also scored without that banner: an edible top-1 that is not low-confidence is a ship failure even when a dangerous genus sits lower in the list.
 
 ## Ship gates
 
@@ -187,10 +198,11 @@ Low confidence (top softmax under 0.70 or top-1/top-2 margin under 0.15) still s
 | Species volume | Training images after dedup, each known species. | ≥ 40 |
 | Aggregate volume | Training images for `not_a_mushroom` and for `unknown_mushroom`. | ≥ 100 |
 | Pair confusion | A high-stakes photo whose argmax is an edible look-alike, for the listed pairs, both directions. | ≤ 0.05 |
-| Confident toxic → edible | Every test photo tagged poisonous (known class, unknown-class taxon, or held-out probe) that `decide()` would show as a confident edible species. Edible means every class with `safety_tag` `edible`. Energy rejects, low confidence, and a dangerous-genus warning are not in this count. | 0 |
+| Confident toxic → edible | Every test photo tagged poisonous (known class, unknown-class taxon, or held-out probe) that `decide()` would show as a confident edible species. Edible means every class with `safety_tag` `edible`. Energy rejects, low confidence, and a dangerous-genus warning are not in this count. A dangerous genus warns only as rank 1 or at probability ≥ 0.10. | 0 |
+| Deadly-probe strict top-1 | Lepiota amatoxin and Conocybe / Pholiotina probe photos whose top-1 is an edible species and the result is not low-confidence. A dangerous-genus banner does not clear this. | 0 |
 | Open-set safe outcome | Held-out fungi (`held_out_taxon`, class `unknown_mushroom`, including probes) whose `decide()` status is rejected, or candidates with low confidence or a dangerous-genus warning. Wilson 95% interval. | rate ≥ 0.90 and lower bound ≥ 0.85 |
 | Open-set confident edible | The same held-out photos that `decide()` would show as a confident edible. Wilson 95% interval. | rate ≤ 0.02 and upper bound ≤ 0.05 |
-| Poisonous held-out sample | Poisonous held-out photos, including every toxic probe and every toxic held-out unknown taxon, even when the count is 0. Confident edible among them must be 0. | ≥ 300 images and ≥ 50 per taxon |
+| Poisonous held-out sample | Poisonous held-out photos, including every toxic probe and every toxic held-out unknown taxon, even when the count is 0. Confident edible among them must be 0. Per-taxon Wilson and bootstrap upper bounds are reported. | ≥ 300 images. Visual groups: Lepiota amatoxin ≥ 150, Conocybe / Pholiotina ≥ 100, Omphalotus ≥ 50, Tricholoma equestre ≥ 50. Every other taxon ≥ 50 unless it is a `rare_taxon_exception` (≥ 5, 0 confident-edible, and its group still meets the group minimum). |
 | Unknown-fungus recall | Diagnostic only. Top-1 equals `unknown_mushroom` on held-out fungi. The ship gate does not use 0.50. It does require enough photos to compute the diagnostic, and it records a per-taxon bootstrap lower bound (target 0.40, not a ship floor) plus a split of unknown genus versus unknown species of a known genus. | ≥ 200 images and ≥ 10 taxa with ≥ 10 each |
 | Unknown-fungus steal | Known-species test photos that `decide()` rejects as `unknown_mushroom`. Energy rejects are not steals. | ≤ 0.10 |
 | High-stakes steal | The same steal rate for each high-stakes class. | ≤ 0.10 on ≥ 30 images |
@@ -210,7 +222,7 @@ Export builds **fp16** weights with float32 input and output. `react-native-fast
 
 - A trained checkpoint and the measured metrics above.
 - Enough CC-BY/CC0 photos of `Cortinarius orellanus`, `Amanita virosa`, and `Cortinarius rubellus`. Global fill is allowed, and it may still be short after dedup.
-- Fifty licensed photos of every poisonous held-out taxon. `Galerina sulcipes` had 0 still images and `Galerina sulciceps` had 39 before the license filter, so that gate cannot pass on current GBIF counts. The floor stays 50.
+- The poisonous held-out sample above, including the three audited exceptions (`Lepiota brunneoincarnata` 16 licensed / 15 after dedup, `Conocybe filaris` 78 licensed / 33 after dedup, `Inosperma erubescens` 44 licensed / 44 after dedup, all checked 2026-10-08). A new short taxon is not an exception until it is written into `rare_taxon_exceptions` with a reason, a key, a count, and a date.
 - On-device measurement of accuracy, latency, and the reject rate on a phone. The exporter scores the interpreter on val/test photos on the training machine.
 - `Armillaria mellea` is a species complex. Photos labeled that way on GBIF are often sensu lato.
 - `Amanita verna` is not its own class. It is one of the held-out taxa inside `unknown_mushroom`.

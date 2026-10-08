@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -138,6 +139,15 @@ def _validate_aggregate(item: dict, owner_of: dict[int, str], known_genera: set[
         raise ValueError(f"{item['id']} cannot reach 1500 images at the per-taxon cap")
 
 
+_VISUAL_GROUP_MINIMUMS = {
+    "lepiota_amatoxin": 150,
+    "conocybe_pholiotina": 100,
+    "omphalotus": 50,
+    "tricholoma_equestre": 50,
+}
+_REQUIRED_EXCEPTIONS = ("Lepiota brunneoincarnata", "Inosperma erubescens", "Conocybe filaris")
+
+
 def validate_toxic_probes(manifest: dict) -> None:
     probes = manifest.get("toxic_probes")
     if not isinstance(probes, dict):
@@ -145,8 +155,16 @@ def validate_toxic_probes(manifest: dict) -> None:
     if probes.get("class_id") != UNKNOWN_CLASS_ID:
         raise ValueError("toxic probes are labeled unknown_mushroom and must not be their own class")
     cap = probes.get("per_taxon_cap")
-    if not isinstance(cap, int) or cap < 50:
-        raise ValueError("toxic probes need per_taxon_cap >= 50")
+    if not isinstance(cap, int) or cap < 70 or cap > 80:
+        raise ValueError("toxic probes fetch 70 to 80 photos per taxon so dedup can still meet the floor")
+    if probes.get("minimum_poisonous_held_out_images") != 300:
+        raise ValueError("poisonous held-out minimum stays 300")
+    if probes.get("other_taxon_minimum") != 50:
+        raise ValueError("taxa outside a rare-taxon exception need 50 images")
+    if probes.get("rare_exception_minimum") != 5:
+        raise ValueError("a rare-taxon exception needs at least 5 images")
+    if "minimum_images_per_taxon" in probes:
+        raise ValueError("the flat per-taxon probe floor was replaced by visual groups and rare_taxon_exceptions")
     taxa = probes.get("taxa")
     if not isinstance(taxa, list) or len(taxa) < 8:
         raise ValueError("toxic probes need the listed look-alike taxa")
@@ -173,6 +191,81 @@ def validate_toxic_probes(manifest: dict) -> None:
         if taxon.get("relation") != expected:
             raise ValueError(f"toxic probe {name} relation does not match genus {genus}")
         _claim_key(owner_of, _gbif_key(taxon.get("gbif_key"), name), f"probe:{name}")
+    _validate_visual_groups(manifest, probes, {str(taxon["name"]): taxon for taxon in taxa})
+
+
+def _validate_visual_groups(manifest: dict, probes: dict, probe_by_name: dict[str, dict]) -> None:
+    groups = probes.get("visual_groups")
+    if not isinstance(groups, list):
+        raise ValueError("toxic probes need visual_groups")
+    seen_ids: dict[str, dict] = {}
+    group_of: dict[str, str] = {}
+    for group in groups:
+        group_id = str(group.get("id") or "")
+        if group_id in seen_ids or group_id not in _VISUAL_GROUP_MINIMUMS:
+            raise ValueError(f"unexpected visual group {group_id}")
+        if group.get("minimum_images") != _VISUAL_GROUP_MINIMUMS[group_id]:
+            raise ValueError(f"{group_id} minimum must be {_VISUAL_GROUP_MINIMUMS[group_id]}")
+        names = group.get("taxa")
+        if not isinstance(names, list) or not names:
+            raise ValueError(f"{group_id} needs taxa")
+        for name in names:
+            if name not in probe_by_name:
+                raise ValueError(f"{group_id} taxon {name} is not a toxic probe")
+            if name in group_of:
+                raise ValueError(f"{name} is in more than one visual group")
+            group_of[str(name)] = group_id
+        seen_ids[group_id] = group
+    if set(seen_ids) != set(_VISUAL_GROUP_MINIMUMS):
+        raise ValueError("visual groups do not match the Lepiota, Conocybe, Omphalotus, and Tricholoma quotas")
+    exceptions = probes.get("rare_taxon_exceptions")
+    if not isinstance(exceptions, list):
+        raise ValueError("toxic probes need rare_taxon_exceptions")
+    known = _taxon_index(manifest)
+    seen_exceptions: set[str] = set()
+    for item in exceptions:
+        name = str(item.get("taxon") or "")
+        if not name or name in seen_exceptions:
+            raise ValueError(f"rare exception {name} is missing or repeated")
+        seen_exceptions.add(name)
+        if name not in known:
+            raise ValueError(f"rare exception {name} is not a poisonous held-out taxon")
+        key = _gbif_key(item.get("gbif_key"), name)
+        if key != int(known[name]["gbif_key"]):
+            raise ValueError(f"rare exception {name} GBIF key does not match the manifest")
+        reason = item.get("reason")
+        if not isinstance(reason, str) or len(reason.strip()) < 20:
+            raise ValueError(f"rare exception {name} needs a reason")
+        count = item.get("gbif_licensed_count")
+        if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+            raise ValueError(f"rare exception {name} needs a GBIF licensed count")
+        checked = str(item.get("date_checked") or "")
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", checked):
+            raise ValueError(f"rare exception {name} needs a date_checked of YYYY-MM-DD")
+        group_id = item.get("group_id")
+        if name in group_of:
+            if group_id != group_of[name]:
+                raise ValueError(f"rare exception {name} must name visual group {group_of[name]}")
+        elif group_id:
+            raise ValueError(f"rare exception {name} is not in visual group {group_id}")
+    missing = [name for name in _REQUIRED_EXCEPTIONS if name not in seen_exceptions]
+    if missing:
+        raise ValueError(f"rare_taxon_exceptions is missing {', '.join(missing)}")
+
+
+def _taxon_index(manifest: dict) -> dict[str, dict]:
+    """Poisonous held-out taxa by scientific name, probes included."""
+    found: dict[str, dict] = {}
+    for item in manifest["classes"]:
+        if item["id"] != UNKNOWN_CLASS_ID:
+            continue
+        for taxon in (item.get("sampling") or {}).get("taxa") or []:
+            if taxon.get("toxic") and taxon.get("held_out"):
+                found[str(taxon["name"])] = taxon
+    for taxon in (manifest.get("toxic_probes") or {}).get("taxa") or []:
+        if taxon.get("toxic") and taxon.get("held_out"):
+            found[str(taxon["name"])] = taxon
+    return found
 
 
 def poisonous_heldout_taxa(manifest: dict | None = None) -> list[str]:
