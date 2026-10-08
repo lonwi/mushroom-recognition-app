@@ -22,17 +22,110 @@ import sonarjs from 'eslint-plugin-sonarjs';
 import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 
-const platformPackageSource =
-  '^(@react-native-async-storage\\/async-storage|expo-file-system|expo-location|expo-secure-store|expo-image-manipulator|expo-image-picker|expo-camera|react-native-fast-tflite|react-native-nitro-modules)(\\/|$)';
-const platformReexportMessage =
-  'Do not re-export a storage or platform package from src/services. Keep the import inside an adapter and export a narrowed API.';
+const platformPackagePattern =
+  /^(?:@react-native-async-storage\/async-storage|expo-file-system|expo-location|expo-secure-store|expo-image-manipulator|expo-image-picker|expo-camera|react-native-fast-tflite|react-native-nitro-modules)(?:\/|$)/;
 
-function banPlatformReexport(nodeType) {
-  return {
-    selector: `${nodeType}[source.value=/${platformPackageSource}/]`,
-    message: platformReexportMessage,
-  };
+const UNWRAP_EXPRESSION = new Set([
+  'TSAsExpression',
+  'TSTypeAssertion',
+  'TSSatisfiesExpression',
+  'TSNonNullExpression',
+  'ChainExpression',
+  'ParenthesizedExpression',
+]);
+
+function unwrapExpression(node) {
+  let current = node;
+  while (current && UNWRAP_EXPRESSION.has(current.type)) current = current.expression;
+  return current;
 }
+
+function isPlatformRequire(node) {
+  if (node?.type !== 'CallExpression' || node.callee?.type !== 'Identifier' || node.callee.name !== 'require') {
+    return false;
+  }
+  const arg = node.arguments[0];
+  return Boolean(arg && arg.type === 'Literal' && typeof arg.value === 'string' && platformPackagePattern.test(arg.value));
+}
+
+function isPlatformValue(node, tainted) {
+  const current = unwrapExpression(node);
+  if (!current) return false;
+  if (current.type === 'Identifier') return tainted.has(current.name);
+  if (current.type === 'MemberExpression') return isPlatformValue(current.object, tainted);
+  return isPlatformRequire(current);
+}
+
+function collectPlatformImports(node, tainted) {
+  if (node.importKind === 'type') return;
+  if (typeof node.source?.value !== 'string' || !platformPackagePattern.test(node.source.value)) return;
+  for (const specifier of node.specifiers) {
+    if (specifier.importKind === 'type') continue;
+    tainted.add(specifier.local.name);
+  }
+}
+
+function taintAlias(node, tainted) {
+  if (node.id.type === 'Identifier' && isPlatformValue(node.init, tainted)) tainted.add(node.id.name);
+}
+
+function reportNamedExport(node, tainted, context) {
+  if (node.exportKind === 'type') return;
+  if (typeof node.source?.value === 'string' && platformPackagePattern.test(node.source.value)) {
+    context.report({ node, messageId: 'reexport' });
+    return;
+  }
+  if (node.declaration?.type === 'VariableDeclaration') {
+    for (const declarator of node.declaration.declarations) {
+      if (isPlatformValue(declarator.init, tainted)) context.report({ node: declarator, messageId: 'reexport' });
+    }
+  }
+  for (const specifier of node.specifiers) {
+    if (specifier.exportKind === 'type') continue;
+    if (tainted.has(specifier.local.name)) context.report({ node: specifier, messageId: 'reexport' });
+  }
+}
+
+function reportDefaultExport(node, tainted, context) {
+  if (isPlatformValue(node.declaration, tainted)) context.report({ node, messageId: 'reexport' });
+}
+
+function reportExportAll(node, context) {
+  if (typeof node.source?.value === 'string' && platformPackagePattern.test(node.source.value)) {
+    context.report({ node, messageId: 'reexport' });
+  }
+}
+
+const noPlatformReexport = {
+  meta: {
+    type: 'problem',
+    schema: [],
+    messages: {
+      reexport:
+        'Do not re-export a storage or platform package from src/services. Keep the import inside an adapter and export a narrowed API.',
+    },
+  },
+  create(context) {
+    const tainted = new Set();
+    return {
+      ImportDeclaration(node) {
+        collectPlatformImports(node, tainted);
+      },
+      VariableDeclarator(node) {
+        taintAlias(node, tainted);
+      },
+      ExportNamedDeclaration(node) {
+        reportNamedExport(node, tainted, context);
+      },
+      ExportDefaultDeclaration(node) {
+        reportDefaultExport(node, tainted, context);
+      },
+      ExportAllDeclaration(node) {
+        reportExportAll(node, context);
+      },
+    };
+  },
+};
 
 export default tseslint.config(
   {
@@ -101,6 +194,12 @@ export default tseslint.config(
     },
   },
   {
+    files: ['**/*.cjs'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+  {
     files: [
       '**/*.{test,spec}.{js,jsx,ts,tsx}',
       '**/__tests__/**/*.{js,jsx,ts,tsx}',
@@ -128,17 +227,22 @@ export default tseslint.config(
     },
   },
   {
-    // Adapters may call platform packages. They must not re-export them, or a
-    // screen can `export { default } from '@react-native-async-storage/async-storage'`
-    // and skip the journal repository. keyValueStore.ts (PR #16) is the raw
-    // AsyncStorage adapter and is covered by the same pattern.
+    // Adapters may call platform packages. They must not hand the imported
+    // binding out: `export const qaRaw = AsyncStorage`, `export default`,
+    // `export { AsyncStorage }`, `export { default } from`, or `export * from`.
+    // `import type` stays allowed. A narrowed wrapper
+    // (`export const store = { getItem: (key) => AsyncStorage.getItem(key) }`)
+    // stays allowed. keyValueStore.ts (PR #16, src/services/storage/) is covered.
     files: ['src/services/**/*.{ts,tsx,js,jsx}'],
+    plugins: {
+      grzybobranie: {
+        rules: {
+          'no-platform-reexport': noPlatformReexport,
+        },
+      },
+    },
     rules: {
-      'no-restricted-syntax': [
-        'error',
-        banPlatformReexport('ExportAllDeclaration'),
-        banPlatformReexport('ExportNamedDeclaration'),
-      ],
+      'grzybobranie/no-platform-reexport': 'error',
     },
   },
   {

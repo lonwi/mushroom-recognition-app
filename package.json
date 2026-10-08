@@ -19,7 +19,7 @@
     "duplication:update": "jscpd --no-colors --config .jscpd.json --baseline .jscpd-baseline.json --update-baseline",
     "knip": "node scripts/knip-baseline.mjs",
     "knip:update": "node scripts/knip-baseline.mjs --update",
-    "depcruise": "node scripts/depcruise-gate.mjs",
+    "depcruise": "node scripts/depcruise-gate.mjs && node --test scripts/quality-gates.test.mjs",
     "depcruise:tighten": "node scripts/depcruise-gate.mjs --shrink",
     "depcruise:baseline": "node scripts/depcruise-gate.mjs --update",
     "quality": "pnpm lint && pnpm duplication && pnpm knip && pnpm depcruise",
