@@ -4,6 +4,7 @@ import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { ScannerScreen } from '../../screens/ScannerScreen';
 import { classifierService } from '../../services/classifierService';
+import { SKIP_PROCESSING_CAPTURE } from '../../services/photoPixels';
 import { pl } from '../../i18n/pl';
 
 jest.mock('../../contexts/LanguageContext', () => {
@@ -133,10 +134,32 @@ describe('ScannerScreen does not invent a recognition result', () => {
     expect(await findByText(pl.scanner.recognitionUnavailableTitle)).toBeTruthy();
     await settle();
     expect(classifySpy).toHaveBeenCalledTimes(1);
+    expect(takePictureAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ ...SKIP_PROCESSING_CAPTURE, exif: true }),
+    );
     expect(classifySpy).toHaveBeenCalledWith('file://camera/real-capture.jpg', undefined);
     expect(queryByText(/Pewność/)).toBeNull();
     expect(queryByText(/TFLite/)).toBeNull();
     expect(queryByText(/Borowik szlachetny/)).toBeNull();
+  });
+
+  it('passes the upright EXIF width and does not use the stored photo.width', async () => {
+    takePictureAsync.mockResolvedValue({
+      uri: 'file://camera/portrait.jpg',
+      width: 4032,
+      height: 3024,
+      exif: { Orientation: 6, PixelXDimension: 4032, PixelYDimension: 3024 },
+    });
+    const { getByTestId } = await renderScanner();
+
+    await fireEvent.press(getByTestId('scanner-shutter'));
+
+    await waitFor(() => {
+      expect(classifySpy).toHaveBeenCalledWith('file://camera/portrait.jpg', 3024);
+    });
+    expect(takePictureAsync).toHaveBeenCalledWith(
+      expect.objectContaining(SKIP_PROCESSING_CAPTURE),
+    );
   });
 
   it('does not fall back to a stock photo when the gallery picker fails', async () => {

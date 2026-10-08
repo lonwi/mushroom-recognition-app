@@ -1,9 +1,12 @@
 import hashlib
 import json
 import math
+import os
+import shutil
 import sys
 import tempfile
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
 
 import numpy as np
@@ -856,6 +859,29 @@ class ManifestAndShipGateTest(unittest.TestCase):
         )
         self.assertEqual(merged[0]["accepted"], 16)
         self.assertEqual(merged[0]["gbif_licensed_count"], 16)
+        unrelated = {
+            "taxon": "Amanita verna",
+            "support": 5,
+            "accepted": 5,
+            "gbif_licensed_count": 5,
+        }
+        partial = attach_fetch_evidence(
+            [rows[0], unrelated],
+            {"taxa": [{"taxon": "Lepiota brunneoincarnata", "accepted": 16}]},
+        )
+        self.assertEqual(partial[0]["accepted"], 16)
+        self.assertNotIn("gbif_licensed_count", partial[0])
+        self.assertNotIn("accepted", partial[1])
+        self.assertNotIn("gbif_licensed_count", partial[1])
+        with tempfile.TemporaryDirectory() as tmp:
+            missing = attach_fetch_evidence(rows, report_path=Path(tmp) / "absent.json")
+            self.assertEqual(missing[0]["support"], 16)
+            self.assertNotIn("accepted", missing[0])
+            self.assertNotIn("gbif_licensed_count", missing[0])
+            broken = Path(tmp) / "fetch_report.json"
+            broken.write_text("{", encoding="utf-8")
+            unreadable = attach_fetch_evidence(rows, report_path=broken)
+            self.assertNotIn("accepted", unreadable[0])
         with tempfile.TemporaryDirectory() as tmp:
             artifact_dir = Path(tmp)
             report = self._passing_report(artifact_dir)
@@ -868,6 +894,41 @@ class ManifestAndShipGateTest(unittest.TestCase):
             ok, reasons = assess_shippable(report, artifact_dir)
             self.assertFalse(ok)
             self.assertTrue(any("fetch_report sha256" in reason for reason in reasons))
+
+    def test_missing_fetch_report_does_not_trust_metrics_license_counts(self):
+        rows = self._quota_rows(
+            **{"Lepiota brunneoincarnata": {"support": 16, "accepted": 16, "gbif_licensed_count": 16}}
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            report["open_set"]["poisonous_per_taxon"] = rows
+            report["open_set"]["poisonous_held_out_support"] = sum(row["support"] for row in rows)
+            report["open_set"]["poisonous_held_out_confident_edible"] = 0
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(
+                any("Lepiota brunneoincarnata" in reason and "need 50" in reason for reason in reasons),
+                reasons,
+            )
+            payload = json.dumps(
+                {
+                    "toxic_probes": [
+                        {
+                            "taxon": "Lepiota brunneoincarnata",
+                            "accepted": 16,
+                            "gbif_licensed_count": 16,
+                        }
+                    ]
+                }
+            ).encode()
+            (artifact_dir / "fetch_report.json").write_bytes(payload)
+            report["artifacts"]["fetch_report_sha256"] = hashlib.sha256(payload).hexdigest()
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertTrue(ok, reasons)
+            self.assertFalse(
+                any("Lepiota brunneoincarnata" in reason and "need 50" in reason for reason in reasons)
+            )
 
     def test_strict_top1_flag_is_required_on_lepiota_and_conocybe(self):
         import copy
@@ -1052,9 +1113,8 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertIn('default="fp16"', source)
         self.assertNotIn('for quantization in ("int8", "fp16")', source)
 
-    def _install_into_repo_copy(self):
-        import shutil
-
+    @contextmanager
+    def _installed_repo_copy(self):
         import export_tflite
 
         real_module = ROOT / "src" / "services" / "attributionPackage.ts"
@@ -1072,15 +1132,26 @@ class ManifestAndShipGateTest(unittest.TestCase):
             "PACKAGE_MODULE": export_tflite.PACKAGE_MODULE,
             "ATTRIBUTION_DEST": export_tflite.ATTRIBUTION_DEST,
         }
-        copy_root = Path(tempfile.mkdtemp(prefix="install-copy-"))
+        parent = Path(tempfile.mkdtemp(prefix="install-copy-"))
+        copy_root = parent / "app"
         try:
+            shutil.copytree(
+                ROOT,
+                copy_root,
+                symlinks=True,
+                ignore=shutil.ignore_patterns(
+                    "node_modules",
+                    ".git",
+                    "storybook-static",
+                    "dist",
+                    "coverage",
+                    ".cache",
+                ),
+            )
+            (copy_root / "node_modules").symlink_to(ROOT / "node_modules", target_is_directory=True)
             module = copy_root / "src" / "services" / "attributionPackage.ts"
             model_module = copy_root / "src" / "services" / "modelPackage.ts"
             jsonl_dest = copy_root / "assets" / "models" / "attributions.jsonl"
-            module.parent.mkdir(parents=True)
-            jsonl_dest.parent.mkdir(parents=True)
-            shutil.copy2(real_module, module)
-            shutil.copy2(real_model, model_module)
             original_module = module.read_text(encoding="utf-8")
             artifacts = copy_root / "artifacts"
             artifacts.mkdir()
@@ -1124,33 +1195,44 @@ class ManifestAndShipGateTest(unittest.TestCase):
             self.assertEqual(module.read_text(encoding="utf-8"), original_module)
             packaged = model_module.read_text(encoding="utf-8")
             self.assertIn("mushrooms_model.tflite", packaged)
+            self.assertIn("require('../../assets/models/mushrooms_model.tflite')", packaged)
             for name in ("loadPhotoCredits", "creditsFromJsonl", "creditLicenseUrl"):
                 self.assertIn(name, original_module)
             self.assertNotIn("PACKAGED_PHOTO_CREDITS: PhotoCredit[] | null = [", original_module)
             self.assertIn("Ada L.", jsonl_dest.read_text(encoding="utf-8"))
             for path, payload in before.items():
                 self.assertEqual(path.read_bytes(), payload)
+            yield copy_root
         finally:
             for key, value in saved.items():
                 setattr(export_tflite, key, value)
-            shutil.rmtree(copy_root, ignore_errors=True)
+            shutil.rmtree(parent, ignore_errors=True)
 
     def test_install_writes_jsonl_on_a_repo_copy(self):
-        self._install_into_repo_copy()
+        with self._installed_repo_copy():
+            pass
 
-    @unittest.skipUnless(__import__("shutil").which("pnpm"), "pnpm is required to typecheck the credit module")
+    @unittest.skipUnless(
+        os.environ.get("REQUIRE_PNPM") == "1" or shutil.which("pnpm"),
+        "pnpm is required to typecheck the credit module",
+    )
     def test_install_writes_jsonl_and_leaves_the_credit_module_typecheckable(self):
         import subprocess
 
-        self._install_into_repo_copy()
-        proc = subprocess.run(
-            ["pnpm", "exec", "tsc", "--noEmit", "--pretty", "false"],
-            cwd=ROOT,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        self.assertEqual(proc.returncode, 0, proc.stdout + "\n" + proc.stderr)
+        pnpm = shutil.which("pnpm")
+        if pnpm is None:
+            self.fail("REQUIRE_PNPM=1 but pnpm is not on PATH")
+        with self._installed_repo_copy() as copy_root:
+            generated = (copy_root / "src" / "services" / "modelPackage.ts").read_text(encoding="utf-8")
+            self.assertNotEqual(generated, (ROOT / "src" / "services" / "modelPackage.ts").read_text(encoding="utf-8"))
+            proc = subprocess.run(
+                [pnpm, "exec", "tsc", "--noEmit", "--pretty", "false"],
+                cwd=copy_root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stdout + "\n" + proc.stderr)
 
 
 class StatsReferenceTest(unittest.TestCase):

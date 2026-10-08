@@ -653,27 +653,52 @@ def _reject_rate(rows: list[dict], classes: list[dict], ood_config: dict) -> flo
     return rejected / len(rows)
 
 
+FETCH_COUNT_FIELDS = ("accepted", "gbif_licensed_count")
+
+
+def without_fetch_counts(per_taxon: list) -> list:
+    """Drop license counts that only a fetch report is allowed to supply."""
+    stripped = []
+    for row in per_taxon:
+        if not isinstance(row, dict):
+            stripped.append(row)
+            continue
+        stripped.append({key: value for key, value in row.items() if key not in FETCH_COUNT_FIELDS})
+    return stripped
+
+
+def _with_fetch_counts(row: dict, evidence: dict | None) -> dict:
+    copy = {key: value for key, value in row.items() if key not in FETCH_COUNT_FIELDS}
+    if evidence:
+        for field in FETCH_COUNT_FIELDS:
+            if field in evidence:
+                copy[field] = evidence[field]
+    return copy
+
+
 def attach_fetch_evidence(
     per_taxon: list,
     fetch_report: dict | None = None,
     report_path: Path | None = None,
 ) -> list:
-    """Overwrite accepted and gbif_licensed_count from the fetch report.
+    """Replace accepted and gbif_licensed_count from the fetch report.
 
-    A row value does not win over the report. A missing report leaves the
-    rows unchanged, so a rare exception cannot lower the 50-photo floor
-    without that evidence.
+    Metrics rows do not keep those counts. A missing, unreadable, or
+    incomplete report drops them, so a rare-taxon exception cannot lower
+    the 50-photo floor unless the report itself shows the pool was exhausted.
     """
+    if not isinstance(per_taxon, list):
+        return per_taxon
     if fetch_report is None:
         path = report_path if report_path is not None else DATA_DIR / "fetch_report.json"
         if not path.is_file():
-            return per_taxon
+            return without_fetch_counts(per_taxon)
         try:
             fetch_report = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
-            return per_taxon
-    if not isinstance(fetch_report, dict) or not isinstance(per_taxon, list):
-        return per_taxon
+            return without_fetch_counts(per_taxon)
+    if not isinstance(fetch_report, dict):
+        return without_fetch_counts(per_taxon)
     by_name: dict[str, dict] = {}
     for key in ("taxa", "toxic_probes"):
         for item in fetch_report.get(key) or []:
@@ -685,14 +710,7 @@ def attach_fetch_evidence(
             merged.append(row)
             continue
         evidence = by_name.get(str(row.get("taxon") or ""))
-        if not evidence:
-            merged.append(row)
-            continue
-        copy = dict(row)
-        for field in ("accepted", "gbif_licensed_count"):
-            if field in evidence:
-                copy[field] = evidence[field]
-        merged.append(copy)
+        merged.append(_with_fetch_counts(row, evidence))
     return merged
 
 

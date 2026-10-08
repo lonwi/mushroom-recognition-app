@@ -22,7 +22,7 @@ export const pl = {
     dataLicenseBody:
       'Model, jeśli zostanie dołączony, wolno trenować tylko na zdjęciach CC0 albo CC-BY (bez NC i SA). Lista obejmuje zdjęcia treningowe, testowe i sondy oceniające. Przy każdym zapisujemy autora, licencję i adres źródła. Eksport zapisuje je obok modelu w assets/models/attributions.jsonl.',
     photoCreditsOpen: 'Autorzy zdjęć zbioru',
-    photoCreditsClose: 'Ukryj autorów zdjęć',
+    photoCreditsLoading: 'Wczytywanie listy autorów…',
     photoCreditsLead:
       'Zdjęcia CC0 i CC-BY ze zbioru dołączonego modelu: trening, test i sondy oceniające.',
     photoCreditsEmpty:

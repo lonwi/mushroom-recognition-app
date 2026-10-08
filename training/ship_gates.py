@@ -16,7 +16,13 @@ import math
 import re
 from pathlib import Path
 
-from evaluate import DATA_DIR, attach_fetch_evidence, attributions_complete, poisonous_sample_reasons
+from evaluate import (
+    DATA_DIR,
+    attach_fetch_evidence,
+    attributions_complete,
+    poisonous_sample_reasons,
+    without_fetch_counts,
+)
 from manifest import ROOT, load_manifest, poisonous_heldout_taxa
 from recognition_math import (
     BACKGROUND_CLASS_ID,
@@ -163,7 +169,12 @@ def _open_set_reasons(open_set: dict, fetch_file: Path | None = None) -> list[st
     if not isinstance(per_taxon, list) or not per_taxon:
         reasons.append("poisonous held-out per-taxon counts are missing")
         return reasons
-    evidenced = per_taxon if fetch_file is None else attach_fetch_evidence(per_taxon, report_path=fetch_file)
+    # No fetch file: do not trust accepted / gbif_licensed_count written on the metrics row.
+    evidenced = (
+        without_fetch_counts(per_taxon)
+        if fetch_file is None
+        else attach_fetch_evidence(per_taxon, report_path=fetch_file)
+    )
     reasons.extend(
         poisonous_sample_reasons(
             evidenced,

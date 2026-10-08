@@ -1,5 +1,5 @@
 import React from 'react';
-import { Linking } from 'react-native';
+import { BackHandler, Linking, Platform } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 import { PhotoCredits } from '../../components/PhotoCredits';
 import { LanguageProvider } from '../../contexts/LanguageContext';
@@ -43,5 +43,44 @@ describe('PhotoCredits', () => {
     fireEvent.press(getByTestId('photo-credit-license-0'));
     expect(openURL).toHaveBeenCalledWith('https://creativecommons.org/licenses/by/4.0/');
     openURL.mockRestore();
+  });
+
+  it('shows a loading state instead of the empty-model message', async () => {
+    const { getByTestId, queryByTestId, getByText } = await render(
+      <LanguageProvider>
+        <PhotoCredits credits={null} loading onClose={() => undefined} />
+      </LanguageProvider>,
+    );
+    expect(getByTestId('photo-credits-loading')).toBeTruthy();
+    expect(getByText(/Wczytywanie listy autorów/)).toBeTruthy();
+    expect(queryByTestId('photo-credits-empty')).toBeNull();
+    expect(queryByTestId('photo-credits-list')).toBeNull();
+  });
+
+  it('closes on the Android hardware back button', async () => {
+    const previous = Platform.OS;
+    Platform.OS = 'android';
+    const onClose = jest.fn();
+    type HardwareBackPress = Parameters<typeof BackHandler.addEventListener>[1];
+    const handlers: HardwareBackPress[] = [];
+    const spy = jest.spyOn(BackHandler, 'addEventListener').mockImplementation((event, handler) => {
+      if (event === 'hardwareBackPress') {
+        handlers.push(handler);
+      }
+      return { remove: jest.fn() };
+    });
+    try {
+      await render(
+        <LanguageProvider>
+          <PhotoCredits credits={[credit]} onClose={onClose} />
+        </LanguageProvider>,
+      );
+      expect(handlers).toHaveLength(1);
+      expect(handlers[0](undefined as never)).toBe(true);
+      expect(onClose).toHaveBeenCalledTimes(1);
+    } finally {
+      spy.mockRestore();
+      Platform.OS = previous;
+    }
   });
 });

@@ -1,5 +1,16 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Linking, FlatList, TextInput } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  BackHandler,
+  FlatList,
+  Linking,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLanguage } from '../contexts/LanguageContext';
 import { creditLicenseUrl, type PhotoCredit } from '../services/attributionPackage';
@@ -10,11 +21,23 @@ import { creditLicenseUrl, type PhotoCredit } from '../services/attributionPacka
  */
 export const PhotoCredits: React.FC<{
   credits: PhotoCredit[] | null;
+  loading?: boolean;
   onClose?: () => void;
-}> = ({ credits, onClose }) => {
+}> = ({ credits, loading = false, onClose }) => {
   const { t } = useLanguage();
   const [query, setQuery] = useState('');
   const rows = credits ?? [];
+
+  useEffect(() => {
+    if (Platform.OS !== 'android' || !onClose) {
+      return undefined;
+    }
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      onClose();
+      return true;
+    });
+    return () => subscription.remove();
+  }, [onClose]);
   const filtered = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase();
     if (!needle) {
@@ -36,7 +59,12 @@ export const PhotoCredits: React.FC<{
         ) : null}
         <Text style={styles.title}>{t('settings.photoCreditsOpen')}</Text>
       </View>
-      {rows.length === 0 ? (
+      {loading ? (
+        <View style={styles.loading} testID="photo-credits-loading">
+          <ActivityIndicator size="large" color="#1B3B22" />
+          <Text style={styles.empty}>{t('settings.photoCreditsLoading')}</Text>
+        </View>
+      ) : rows.length === 0 ? (
         <Text style={styles.empty} testID="photo-credits-empty">
           {t('settings.photoCreditsEmpty')}
         </Text>
@@ -125,6 +153,10 @@ const styles = StyleSheet.create({
   },
   list: {
     flex: 1,
+  },
+  loading: {
+    paddingTop: 24,
+    alignItems: 'center',
   },
   empty: {
     fontSize: 14,

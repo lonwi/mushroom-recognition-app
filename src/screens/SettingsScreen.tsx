@@ -9,25 +9,50 @@ import { loadPhotoCredits, type PhotoCredit } from '../services/attributionPacka
 export const SettingsScreen: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
   const [creditsOpen, setCreditsOpen] = useState(false);
+  const [creditsLoading, setCreditsLoading] = useState(false);
   const [credits, setCredits] = useState<PhotoCredit[] | null>(null);
+
+  const openCredits = () => {
+    setCredits(null);
+    setCreditsLoading(true);
+    setCreditsOpen(true);
+  };
 
   useEffect(() => {
     if (!creditsOpen) {
       return undefined;
     }
     let cancelled = false;
-    loadPhotoCredits().then((rows) => {
-      if (!cancelled) {
-        setCredits(rows);
-      }
-    });
+    setCreditsLoading(true);
+    loadPhotoCredits()
+      .then((rows) => {
+        if (!cancelled) {
+          setCredits(rows);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCredits(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setCreditsLoading(false);
+        }
+      });
     return () => {
       cancelled = true;
     };
   }, [creditsOpen]);
 
   if (creditsOpen) {
-    return <PhotoCredits credits={credits} onClose={() => setCreditsOpen(false)} />;
+    return (
+      <PhotoCredits
+        credits={credits}
+        loading={creditsLoading}
+        onClose={() => setCreditsOpen(false)}
+      />
+    );
   }
 
   return (
@@ -71,7 +96,7 @@ export const SettingsScreen: React.FC = () => {
             <Text style={styles.aboutTitle}>{t('settings.dataLicenseTitle')}</Text>
             <Text style={styles.aboutVersion}>{t('settings.dataLicenseBody')}</Text>
             <TouchableOpacity
-              onPress={() => setCreditsOpen(true)}
+              onPress={openCredits}
               testID="btn-photo-credits"
               style={styles.creditsButton}
             >

@@ -331,6 +331,20 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(shaggy?.culinaryValue).toMatch(
       /^W części źródeł nadal opisywany jako jadalny; u części osób powoduje poważne dolegliwości żołądkowo-jelitowe; łatwo pomylić z trującymi czubajnikami/
     );
+
+    const webcap = MUSHROOMS_DATABASE.find((species) => species.id === 'cortinarius_rubellus');
+    expect(webcap?.commonNicknames).toContain('Zasłonak spiczasty');
+    expect(JSON.stringify(MUSHROOMS_DATABASE)).not.toMatch(/szpiczast/);
+    expect(JSON.stringify(MUSHROOMS_DATABASE)).toMatch(/Rudawy \(spiczasty\)/);
+
+    const blusher = MUSHROOMS_DATABASE.find((species) => species.id === 'amanita_rubescens');
+    const excelsa = blusher?.confusionRisks.find((risk) => risk.confusedWithId === 'amanita_excelsa');
+    const excelsaText = excelsa?.keyDifferences.join('\n') ?? '';
+    expect(excelsaText).toMatch(/nie czerwienieje/);
+    expect(excelsaText).toMatch(/różowieje/);
+    expect(excelsaText).toMatch(/Gładki brzeg nie rozstrzyga/);
+    expect(excelsaText).toMatch(/też ma brzeg gładki/);
+    expect(excelsaText).not.toMatch(/różowieje po uszkodzeniu i ma brzeg gładki/);
   });
 
   test('a zigzag on the stem is not treated as proof that the mushroom is a parasol', () => {

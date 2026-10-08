@@ -1462,7 +1462,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         confusedWithStatus: 'NO_ATLAS_VERDICT',
         keyDifferences: [
           'Twardawy nie czerwienieje na blaszkach ani w miąższu',
-          'Czerwieniejący różowieje po uszkodzeniu i ma brzeg gładki',
+          'Czerwieniejący różowieje po uszkodzeniu. Gładki brzeg nie rozstrzyga: twardawy też ma brzeg gładki',
           'Twardawy nie ma w tym atlasie karty. Brak karty nie oznacza, że grzyb jest jadalny'
         ],
         fatal: false
@@ -1525,7 +1525,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         confusedWithName: 'Zasłonak rudawy',
         confusedWithStatus: 'DEADLY_POISONOUS',
         keyDifferences: [
-          'Rudawy (szpiczasty) ma stożkowaty kapelusz i rośnie w borach świerkowych',
+          'Rudawy (spiczasty) ma stożkowaty kapelusz i rośnie w borach świerkowych',
           'Rudy ma bardziej rozpostarty, filcowaty kapelusz i rośnie też pod sosną oraz w lesie mieszanym',
           'Oba są śmiertelnie trujące. Zasnówka pajęczynowata to powód, żeby owocnik zostawić'
         ],
@@ -1561,7 +1561,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     namePl: 'Zasłonak rudawy',
     nameEn: 'Deadly webcap',
     nameLatin: 'Cortinarius rubellus',
-    commonNicknames: ['Zasłonak szpiczasty'],
+    commonNicknames: ['Zasłonak spiczasty'],
     family: 'Zasłonakowate (Cortinariaceae)',
     status: 'DEADLY_POISONOUS',
     hymenophore: 'GILLS',
@@ -1580,7 +1580,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         confusedWithStatus: 'DEADLY_POISONOUS',
         keyDifferences: [
           'Rudy rośnie też pod sosną i w lesie mieszanym i ma bardziej filcowaty kapelusz',
-          'Rudawy (szpiczasty) rośnie w borze świerkowym i ma stożkowaty kapelusz',
+          'Rudawy (spiczasty) rośnie w borze świerkowym i ma stożkowaty kapelusz',
           'Oba są śmiertelnie trujące. Siedlisko ich nie rozdziela na tyle, żeby któryś zebrać'
         ],
         fatal: true

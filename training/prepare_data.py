@@ -10,11 +10,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import sys
 from collections import Counter
 from pathlib import Path
 
-from dedup import dedup_records, difference_hash_bits, dropped_per_class, perceptual_hash_bits, write_jsonl
+import numpy as np
+
+from dedup import dedup_records, dropped_per_class, write_jsonl
 from manifest import ROOT, load_manifest
 from preprocess import MODEL_INPUT_SIZE, ImageReadError, load_oriented_rgb, write_model_png
 from split import split_by_observation, split_key_summary
@@ -22,18 +25,70 @@ from split import split_by_observation, split_key_summary
 DATA_DIR = ROOT / "training" / "data"
 
 
+_DCT32: np.ndarray | None = None
+
+
+def _dct32_matrix() -> np.ndarray:
+    """Same unnormalized DCT-II cosines as dedup._dct_1d, computed once."""
+    global _DCT32
+    if _DCT32 is None:
+        count = 32
+        matrix = np.empty((count, count), dtype=np.float64)
+        for freq in range(count):
+            scale = math.pi * freq / (2 * count)
+            for index in range(count):
+                matrix[freq, index] = math.cos(scale * (2 * index + 1))
+        _DCT32 = matrix
+    return _DCT32
+
+
+def _pack_bits(flags: np.ndarray) -> int:
+    flat = np.ascontiguousarray(flags, dtype=np.uint8).reshape(-1)
+    return int.from_bytes(np.packbits(flat).tobytes(), "big")
+
+
+def _dhash_from_gray8x9(gray: np.ndarray) -> int:
+    pixels = np.asarray(gray)
+    if pixels.shape != (8, 9):
+        raise ValueError("dHash expects an 8x9 gray grid")
+    return _pack_bits(pixels[:, :-1] > pixels[:, 1:])
+
+
+def _phash_from_gray32(gray: np.ndarray) -> int:
+    """Low-frequency pHash. Bits match dedup.perceptual_hash_bits.
+
+    Each coefficient is summed left to right, one input sample at a time,
+    in float64. That is the pure-Python order, so flat images do not flip
+    bits the way a BLAS dot can when values sit on the median.
+    """
+    pixels = np.asarray(gray, dtype=np.float64)
+    if pixels.shape != (32, 32):
+        raise ValueError("pHash expects a 32x32 gray grid")
+    matrix = _dct32_matrix()
+    rows = np.zeros((32, 32), dtype=np.float64)
+    for index in range(32):
+        rows += pixels[:, index][:, None] * matrix[:, index][None, :]
+    columns = np.zeros((32, 32), dtype=np.float64)
+    for y in range(32):
+        columns += matrix[:, y][:, None] * rows[y, :][None, :]
+    block = columns[:8, :8].reshape(-1)
+    median = np.sort(block)[(block.size - 1) // 2]
+    return _pack_bits(block > median)
+
+
 def _perceptual_hashes(rgb) -> tuple[int, int]:
+    """dHash and pHash. Bits match dedup.difference_hash_bits and perceptual_hash_bits.
+
+    The grayscale photo is resized once to 9×8 and once to 32×32. The previous
+    loop called resize inside the row slice, so a full-resolution photo was
+    resized eight times. Pillow's default resample is unchanged.
+    """
     from PIL import Image
 
     gray = Image.fromarray(rgb, mode="RGB").convert("L")
-    dhash_grid = [
-        [pixel for pixel in gray.resize((9, 8)).getdata()][offset : offset + 9] for offset in range(0, 72, 9)
-    ]
-    phash_image = gray.resize((32, 32))
-    phash_grid = [
-        [pixel for pixel in phash_image.getdata()][offset : offset + 32] for offset in range(0, 1024, 32)
-    ]
-    return difference_hash_bits(dhash_grid), perceptual_hash_bits(phash_grid)
+    dhash = _dhash_from_gray8x9(np.asarray(gray.resize((9, 8))))
+    phash = _phash_from_gray32(np.asarray(gray.resize((32, 32))))
+    return dhash, phash
 
 
 def _usable_records(source: Path) -> tuple[list[dict], list[dict]]:
