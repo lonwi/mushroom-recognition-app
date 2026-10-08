@@ -53,6 +53,27 @@ const STORED_JOURNAL = JSON.stringify([
     confidence: 95,
     photoUri: 'file:///old/ios/container/journal-photos/legacy_flat.jpg',
   },
+  {
+    id: 'stored-legacy',
+    timestamp: 20,
+    recognition: {
+      status: 'legacy',
+      speciesId: 'cantharellus_cibarius',
+      speciesNamePl: 'Kurka',
+      speciesNameLatin: 'Cantharellus cibarius',
+      confidence: 80,
+    },
+  },
+  {
+    id: 'stored-legacy-empty',
+    timestamp: 21,
+    recognition: { status: 'legacy' },
+  },
+  {
+    id: 'stored-unavailable',
+    timestamp: 22,
+    recognition: { status: 'unavailable' },
+  },
 ]);
 
 const LEGACY_BACKUP = '{"legacy":true}';
@@ -111,6 +132,27 @@ describe('stored journal format stays readable', () => {
           speciesNameLatin: 'Boletus edulis',
           confidence: 95,
         },
+      },
+      {
+        id: 'stored-legacy',
+        timestamp: 20,
+        recognition: {
+          status: 'legacy',
+          speciesId: 'cantharellus_cibarius',
+          speciesNamePl: 'Kurka',
+          speciesNameLatin: 'Cantharellus cibarius',
+          confidence: 80,
+        },
+      },
+      {
+        id: 'stored-legacy-empty',
+        timestamp: 21,
+        recognition: { status: 'legacy' },
+      },
+      {
+        id: 'stored-unavailable',
+        timestamp: 22,
+        recognition: { status: 'unavailable' },
       },
     ]);
 

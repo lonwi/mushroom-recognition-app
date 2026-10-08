@@ -295,11 +295,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   heroSection: {
-    backgroundColor: colors.emerald950, // Dark forest green
+    backgroundColor: colors.emerald900, // Dark forest green
     paddingBottom: 24,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
-    shadowColor: colors.emerald950,
+    shadowColor: colors.emerald900,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
@@ -442,7 +442,7 @@ const styles = StyleSheet.create({
   hymenophorePillText: {
     fontSize: 13,
     fontWeight: '700',
-    color: colors.emerald950,
+    color: colors.emerald900,
   },
   scroll: {
     flex: 1,

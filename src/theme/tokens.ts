@@ -1,8 +1,10 @@
 /**
  * Single source for colour, spacing, radius, and type size.
  * Screens import these tokens instead of hex literals.
- * Status colours match `paperTheme` — including deadly, which previously
- * drifted in EdibilityBadge (`#3E000C` / `#FF4560` / `#FF1744`).
+ * Status colours match `paperTheme`. The deadly badge keeps a lighter label
+ * than its border: `#FF4560` on `#2A080C` is 5.51:1 (the old chip was 5.18:1
+ * for `#FF4560` on `#3E000C`). Border `#FF1744` on the species header
+ * `#064E3B` is 2.53:1; `#D50000` there was only 1.77:1.
  */
 export const colors = {
   white: '#FFFFFF',
@@ -37,7 +39,10 @@ export const colors = {
 
   deadly: '#FF1744',
   deadlyBg: '#2A080C',
-  deadlyBorder: '#D50000',
+  /** Badge label. Lighter than `deadly` so text on `deadlyBg` stays above 5.18:1. */
+  deadlyText: '#FF4560',
+  /** Same red as `deadly`. Darker `#D50000` fails on the `#064E3B` species header. */
+  deadlyBorder: '#FF1744',
 
   background: '#F8FAFC',
   surface: '#FFFFFF',
@@ -60,8 +65,10 @@ export const colors = {
   emerald500: '#10B981',
   emerald600: '#059669',
   emerald700: '#047857',
-  emerald900: '#065F46',
-  emerald950: '#064E3B',
+  /** Tailwind emerald-800. */
+  emerald800: '#065F46',
+  /** Tailwind emerald-900. Species-card header. */
+  emerald900: '#064E3B',
 
   green400: '#4ADE80',
   green600: '#16A34A',
@@ -126,7 +133,8 @@ export const edibilityColors = {
   },
   INEDIBLE: {
     background: colors.inedibleBg,
-    text: colors.inedible,
+    // `#E65100` on `#FFF3E0` is 3.46:1. `orange700` on the same fill is 4.72:1.
+    text: colors.orange700,
     border: colors.inedibleBorder,
   },
   POISONOUS: {
@@ -136,7 +144,7 @@ export const edibilityColors = {
   },
   DEADLY_POISONOUS: {
     background: colors.deadlyBg,
-    text: colors.deadly,
+    text: colors.deadlyText,
     border: colors.deadlyBorder,
   },
 } as const;

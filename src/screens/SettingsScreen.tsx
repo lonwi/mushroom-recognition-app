@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   infoCardTitle: {
-    color: colors.emerald900,
+    color: colors.emerald800,
     fontWeight: '800',
     fontSize: 14,
     marginBottom: 4,

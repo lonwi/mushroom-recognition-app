@@ -398,7 +398,7 @@ export const en: Translations = {
       cooking: {
         title: 'Cooking',
         description:
-          'Many edible mushrooms (for example honey fungus and lurid boletes) need thorough cooking (at least 15–20 minutes of boiling or frying) to neutralise substances that can be poisonous or hard to digest when raw.',
+          'Many edible mushrooms (for example honey fungus and scarletina boletes) need thorough cooking (at least 15–20 minutes of boiling or frying) to neutralise substances that can be poisonous or hard to digest when raw.',
       },
       store: {
         title: 'Storing fresh mushrooms',

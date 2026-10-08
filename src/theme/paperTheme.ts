@@ -32,6 +32,7 @@ export const mushroomForestColors = {
 
   deadly: colors.deadly,
   deadlyBg: colors.deadlyBg,
+  deadlyText: colors.deadlyText,
   deadlyBorder: colors.deadlyBorder,
 
   background: colors.background,

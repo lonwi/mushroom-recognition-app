@@ -139,6 +139,8 @@ describe('Polish and English dictionaries', () => {
     expect(translate('en', 'preparation.allTab')).toBe('All');
     expect(pl.preparation.rules.clean.title).toBe('Czyszczenie na sucho');
     expect(pl.preparation.rules.cooking.description).toMatch(/borowiki ceglastopore/);
+    expect(en.preparation.rules.cooking.description).toMatch(/scarletina boletes/);
+    expect(en.preparation.rules.cooking.description).not.toMatch(/lurid/);
     expect(pl.settings.onDeviceTitle).toBe('⚡ 100% On-Device AI');
     expect(en.settings.onDeviceTitle).toBe('⚡ 100% On-Device AI');
   });

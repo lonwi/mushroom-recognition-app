@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getSpecies } from '../data/speciesCatalog';
 import { formatConfidencePercent } from '../services/recognitionDecision';
+import { journalActionStyles } from './journalActionStyles';
 import { colors, radius, spacing } from '../theme/tokens';
 
 type RejectedReason = 'not_a_mushroom' | 'unknown_mushroom' | 'unclear';
@@ -217,11 +218,11 @@ export const RecognitionSummary: React.FC<Props> = (props) => {
         ))}
         {primary && primaryCard && onOpenAtlasSpecies ? (
           <TouchableOpacity
-            style={journalStyles.actionBtn}
+            style={journalActionStyles.actionBtn}
             onPress={() => onOpenAtlasSpecies(primary.id)}
             testID={`journal-open-candidate-${entryId}`}
           >
-            <Text style={journalStyles.actionBtnText}>
+            <Text style={journalActionStyles.actionBtnText}>
               {t('journal.openCandidate')}: {primary.namePl}
             </Text>
           </TouchableOpacity>
@@ -430,18 +431,5 @@ const journalStyles = StyleSheet.create({
     fontSize: 12,
     color: colors.slate900,
     marginTop: spacing.xs,
-  },
-  actionBtn: {
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    backgroundColor: colors.surfaceVariant,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-    marginTop: spacing.sm,
-  },
-  actionBtnText: {
-    fontSize: 12,
-    color: colors.slate700,
-    fontWeight: '600',
   },
 });

@@ -18,6 +18,7 @@ import { resolveJournalPhotoUri } from '../services/journalPhotos';
 import { openSpotInMaps } from '../services/mapsLink';
 import { SightingRecord } from '../types/mushroom';
 import { useLanguage } from '../contexts/LanguageContext';
+import { journalActionStyles } from '../components/journalActionStyles';
 import { RecognitionSummary } from '../components/RecognitionSummary';
 import { colors } from '../theme/tokens';
 
@@ -196,13 +197,13 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
                 />
                 <View style={styles.notesActions}>
                   <TouchableOpacity
-                    style={styles.actionBtn}
+                    style={journalActionStyles.actionBtn}
                     onPress={() => {
                       setEditing(null);
                       setDraftNotes('');
                     }}
                   >
-                    <Text style={styles.actionBtnText}>{t('journal.cancel')}</Text>
+                    <Text style={journalActionStyles.actionBtnText}>{t('journal.cancel')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.mapBtn} onPress={saveNotes} testID="journal-notes-save">
                     <Text style={styles.mapBtnText}>{t('journal.notesSave')}</Text>
@@ -219,11 +220,11 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
 
         <View style={styles.cardActions}>
           <TouchableOpacity
-            style={styles.actionBtn}
+            style={journalActionStyles.actionBtn}
             onPress={() => openNotes(item)}
             testID={`journal-edit-notes-${item.id}`}
           >
-            <Text style={styles.actionBtnText}>{t('journal.editNotes')}</Text>
+            <Text style={journalActionStyles.actionBtnText}>{t('journal.editNotes')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.deleteBtn}
@@ -368,19 +369,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.surfaceVariant,
     gap: 10,
-  },
-  actionBtn: {
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    backgroundColor: colors.surfaceVariant,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-    marginTop: 8,
-  },
-  actionBtnText: {
-    fontSize: 12,
-    color: colors.slate700,
-    fontWeight: '600',
   },
   mapBtn: {
     paddingVertical: 6,

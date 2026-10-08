@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   offlinePill: {
-    backgroundColor: colors.emerald950,
+    backgroundColor: colors.emerald900,
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
     borderRadius: radius.pill,
