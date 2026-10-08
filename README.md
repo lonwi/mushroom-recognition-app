@@ -87,7 +87,7 @@ pnpm test:e2e
 
 ### Wydanie (EAS)
 
-Sklepy i tag `vX.Y.Z` opisuje [docs/RELEASE.md](docs/RELEASE.md): `eas init`, sekret `EXPO_TOKEN`, środowisko GitHub `production`, poświadczenia Play i App Store oraz ruleset na `main`.
+Sklepy i tag `vX.Y.Z` (równy `expo.version`) opisuje [docs/RELEASE.md](docs/RELEASE.md): `eas init`, sekret `EXPO_TOKEN` w środowiskach `release-build` i `production`, oraz rulesety na `main` i na tagi `v*`.
 
 ---
 

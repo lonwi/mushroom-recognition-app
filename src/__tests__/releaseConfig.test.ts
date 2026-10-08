@@ -15,12 +15,20 @@ function writeFixture(directory: string, name: string, value: unknown): string {
   return filePath;
 }
 
-function runChecker(appPath: string, easPath: string): { status: number; output: string } {
+function runChecker(
+  appPath: string,
+  easPath: string,
+  extraArgs: string[] = [],
+): { status: number; output: string } {
   try {
-    const output = execFileSync(process.execPath, [script, '--app', appPath, '--eas', easPath], {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
+    const output = execFileSync(
+      process.execPath,
+      [script, '--app', appPath, '--eas', easPath, ...extraArgs],
+      {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+      },
+    );
     return { status: 0, output };
   } catch (error) {
     const failure = error as { status?: number; stderr?: string; stdout?: string };
@@ -34,6 +42,7 @@ function runChecker(appPath: string, easPath: string): { status: number; output:
 const readyApp = {
   expo: {
     owner: 'grzybobranie',
+    version: '1.0.0',
     android: { package: 'com.grzybobranie.ai' },
     ios: { bundleIdentifier: 'com.grzybobranie.ai' },
     extra: { eas: { projectId: '123e4567-e89b-42d3-a456-426614174000' } },
@@ -103,46 +112,66 @@ describe('release config', () => {
 
   it('accepts a linked project and rejects placeholders before a tag build', () => {
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'eas-release-'));
-    const ready = runChecker(
-      writeFixture(directory, 'app.json', readyApp),
-      writeFixture(directory, 'eas.json', readyEas),
-    );
-    expect(ready.status).toBe(0);
+    try {
+      const appPath = writeFixture(directory, 'app.json', readyApp);
+      const easPath = writeFixture(directory, 'eas.json', readyEas);
+      const ready = runChecker(appPath, easPath);
+      expect(ready.status).toBe(0);
 
-    const placeholderApp = {
-      expo: {
-        ...readyApp.expo,
-        owner: 'REPLACE_WITH_EXPO_ACCOUNT_OWNER',
-        extra: { eas: { projectId: 'REPLACE_WITH_EAS_PROJECT_ID' } },
-      },
-    };
-    const blocked = runChecker(
-      writeFixture(directory, 'placeholder-app.json', placeholderApp),
-      writeFixture(directory, 'eas.json', readyEas),
-    );
-    expect(blocked.status).toBe(1);
-    expect(blocked.output).toContain('eas init');
-    expect(blocked.output).toContain('docs/RELEASE.md');
+      const matchedTag = runChecker(appPath, easPath, ['--tag', 'v1.0.0']);
+      expect(matchedTag.status).toBe(0);
 
-    const placeholderSubmit = {
-      ...readyEas,
-      submit: {
-        production: {
-          ...readyEas.submit.production,
-          ios: {
-            ...readyEas.submit.production.ios,
-            ascAppId: 'REPLACE_WITH_APP_STORE_CONNECT_APPLE_ID',
-            appleTeamId: 'REPLACE_WITH_APPLE_TEAM_ID',
+      const mismatchedTag = runChecker(appPath, easPath, ['--tag', 'v9.9.9']);
+      expect(mismatchedTag.status).toBe(1);
+      expect(mismatchedTag.output).toContain('expo.version');
+      expect(mismatchedTag.output).toContain('1.0.0');
+
+      const placeholderApp = {
+        expo: {
+          ...readyApp.expo,
+          owner: 'REPLACE_WITH_EXPO_ACCOUNT_OWNER',
+          extra: { eas: { projectId: 'REPLACE_WITH_EAS_PROJECT_ID' } },
+        },
+      };
+      const blocked = runChecker(
+        writeFixture(directory, 'placeholder-app.json', placeholderApp),
+        easPath,
+      );
+      expect(blocked.status).toBe(1);
+      expect(blocked.output).toContain('eas init');
+      expect(blocked.output).toContain('docs/RELEASE.md');
+
+      const placeholderSubmit = {
+        ...readyEas,
+        submit: {
+          production: {
+            ...readyEas.submit.production,
+            ios: {
+              ...readyEas.submit.production.ios,
+              ascAppId: 'REPLACE_WITH_APP_STORE_CONNECT_APPLE_ID',
+              appleTeamId: 'REPLACE_WITH_APPLE_TEAM_ID',
+            },
           },
         },
-      },
-    };
-    const storeBlocked = runChecker(
-      writeFixture(directory, 'app.json', readyApp),
-      writeFixture(directory, 'placeholder-eas.json', placeholderSubmit),
-    );
-    expect(storeBlocked.status).toBe(1);
-    expect(storeBlocked.output).toContain('ascAppId');
-    expect(storeBlocked.output).toContain('appleTeamId');
+      };
+      const storeBlocked = runChecker(
+        appPath,
+        writeFixture(directory, 'placeholder-eas.json', placeholderSubmit),
+      );
+      expect(storeBlocked.status).toBe(1);
+      expect(storeBlocked.output).toContain('ascAppId');
+      expect(storeBlocked.output).toContain('appleTeamId');
+    } finally {
+      fs.rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it('blocks the app.json and eas.json committed in this repo', () => {
+    const blocked = runChecker(path.join(root, 'app.json'), path.join(root, 'eas.json'));
+    expect(blocked.status).toBe(1);
+    expect(blocked.output).toContain('expo.owner');
+    expect(blocked.output).toContain('projectId');
+    expect(blocked.output).toContain('ascAppId');
+    expect(blocked.output).toContain('appleTeamId');
   });
 });

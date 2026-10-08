@@ -33,11 +33,21 @@ function isPlaceholder(value) {
 }
 
 /**
+ * Bash `${GITHUB_REF_NAME#v}` strips one leading v. `v1.0.0` becomes `1.0.0`.
+ * @param {string} tag
+ * @returns {string}
+ */
+export function versionFromTag(tag) {
+  return tag.startsWith('v') ? tag.slice(1) : tag;
+}
+
+/**
  * @param {unknown} appJson
  * @param {unknown} easJson
+ * @param {{ tag?: string }} [options]
  * @returns {string[]}
  */
-export function collectReleaseBlockers(appJson, easJson) {
+export function collectReleaseBlockers(appJson, easJson, options = {}) {
   const errors = [];
   const expo = appJson && typeof appJson === 'object' ? appJson.expo : undefined;
   if (!expo || typeof expo !== 'object') {
@@ -48,7 +58,7 @@ export function collectReleaseBlockers(appJson, easJson) {
   const owner = expo.owner;
   if (typeof owner !== 'string' || owner.trim() === '' || isPlaceholder(owner)) {
     errors.push(
-      'expo.owner is missing or still a placeholder. Delete expo.owner and expo.extra.eas, then run `npx eas-cli@latest login` and `npx eas-cli@latest init` on the Expo account that should own the app. Commit the owner and extra.eas.projectId that eas init writes. See docs/RELEASE.md.',
+      'expo.owner is missing or still a placeholder. Delete expo.owner and expo.extra.eas, then run `npx eas-cli@24.12.0 login` and `npx eas-cli@24.12.0 init` on the Expo account that should own the app. Commit the owner and extra.eas.projectId that eas init writes. See docs/RELEASE.md.',
     );
   }
 
@@ -59,9 +69,23 @@ export function collectReleaseBlockers(appJson, easJson) {
     );
   }
 
+  const pushTagMismatch = () => {
+    if (typeof options.tag !== 'string') {
+      return;
+    }
+    const taggedVersion = versionFromTag(options.tag);
+    const appVersion = typeof expo.version === 'string' ? expo.version : '';
+    if (!taggedVersion || taggedVersion !== appVersion) {
+      errors.push(
+        `Tag ${options.tag} must equal v plus expo.version (currently "${appVersion || 'missing'}"). Change expo.version in a pull request, merge it to main, then push that tag. See docs/RELEASE.md.`,
+      );
+    }
+  };
+
   const eas = easJson && typeof easJson === 'object' ? easJson : undefined;
   if (!eas) {
     errors.push('eas.json must be a JSON object.');
+    pushTagMismatch();
     return errors;
   }
 
@@ -94,54 +118,54 @@ export function collectReleaseBlockers(appJson, easJson) {
   const submit = eas.submit && eas.submit.production;
   if (!submit || !submit.android || !submit.ios) {
     errors.push('eas.json submit.production must include android and ios blocks.');
-    return errors;
+  } else {
+    if (!PLAY_TRACKS.has(submit.android.track)) {
+      errors.push('eas.json submit.production.android.track must be internal, alpha, beta, or production.');
+    }
+    if (
+      submit.android.releaseStatus !== undefined &&
+      !RELEASE_STATUSES.has(submit.android.releaseStatus)
+    ) {
+      errors.push(
+        'eas.json submit.production.android.releaseStatus must be completed, draft, halted, or inProgress.',
+      );
+    }
+    if (submit.android.applicationId !== expo.android?.package) {
+      errors.push(
+        'eas.json submit.production.android.applicationId must match expo.android.package (com.grzybobranie.ai).',
+      );
+    }
+
+    const ascAppId = submit.ios.ascAppId;
+    if (typeof ascAppId !== 'string' || isPlaceholder(ascAppId) || !ASC_APP_ID_PATTERN.test(ascAppId)) {
+      errors.push(
+        'eas.json submit.production.ios.ascAppId must be the numeric Apple ID from App Store Connect → your app → App Information → General Information. Replace REPLACE_WITH_APP_STORE_CONNECT_APPLE_ID. See docs/RELEASE.md.',
+      );
+    }
+
+    const appleTeamId = submit.ios.appleTeamId;
+    if (
+      typeof appleTeamId !== 'string' ||
+      isPlaceholder(appleTeamId) ||
+      !APPLE_TEAM_ID_PATTERN.test(appleTeamId)
+    ) {
+      errors.push(
+        'eas.json submit.production.ios.appleTeamId must be the 10-character Apple Team ID. Replace REPLACE_WITH_APPLE_TEAM_ID. See docs/RELEASE.md.',
+      );
+    }
+    if (submit.ios.bundleIdentifier !== expo.ios?.bundleIdentifier) {
+      errors.push(
+        'eas.json submit.production.ios.bundleIdentifier must match expo.ios.bundleIdentifier (com.grzybobranie.ai).',
+      );
+    }
   }
 
-  if (!PLAY_TRACKS.has(submit.android.track)) {
-    errors.push('eas.json submit.production.android.track must be internal, alpha, beta, or production.');
-  }
-  if (
-    submit.android.releaseStatus !== undefined &&
-    !RELEASE_STATUSES.has(submit.android.releaseStatus)
-  ) {
-    errors.push(
-      'eas.json submit.production.android.releaseStatus must be completed, draft, halted, or inProgress.',
-    );
-  }
-  if (submit.android.applicationId !== expo.android?.package) {
-    errors.push(
-      'eas.json submit.production.android.applicationId must match expo.android.package (com.grzybobranie.ai).',
-    );
-  }
-
-  const ascAppId = submit.ios.ascAppId;
-  if (typeof ascAppId !== 'string' || isPlaceholder(ascAppId) || !ASC_APP_ID_PATTERN.test(ascAppId)) {
-    errors.push(
-      'eas.json submit.production.ios.ascAppId must be the numeric Apple ID from App Store Connect → your app → App Information → General Information. Replace REPLACE_WITH_APP_STORE_CONNECT_APPLE_ID. See docs/RELEASE.md.',
-    );
-  }
-
-  const appleTeamId = submit.ios.appleTeamId;
-  if (
-    typeof appleTeamId !== 'string' ||
-    isPlaceholder(appleTeamId) ||
-    !APPLE_TEAM_ID_PATTERN.test(appleTeamId)
-  ) {
-    errors.push(
-      'eas.json submit.production.ios.appleTeamId must be the 10-character Apple Team ID. Replace REPLACE_WITH_APPLE_TEAM_ID. See docs/RELEASE.md.',
-    );
-  }
-  if (submit.ios.bundleIdentifier !== expo.ios?.bundleIdentifier) {
-    errors.push(
-      'eas.json submit.production.ios.bundleIdentifier must match expo.ios.bundleIdentifier (com.grzybobranie.ai).',
-    );
-  }
-
+  pushTagMismatch();
   return errors;
 }
 
 function parseArgs(argv) {
-  const args = { app: path.join(root, 'app.json'), eas: path.join(root, 'eas.json') };
+  const args = { app: path.join(root, 'app.json'), eas: path.join(root, 'eas.json'), tag: undefined };
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
     if (token === '--app') {
@@ -149,6 +173,13 @@ function parseArgs(argv) {
       index += 1;
     } else if (token === '--eas') {
       args.eas = path.resolve(argv[index + 1] ?? '');
+      index += 1;
+    } else if (token === '--tag') {
+      const tag = argv[index + 1];
+      if (!tag) {
+        throw new Error('--tag requires a value such as v1.0.0');
+      }
+      args.tag = tag;
       index += 1;
     } else {
       throw new Error(`Unknown argument: ${token}`);
@@ -159,7 +190,7 @@ function parseArgs(argv) {
 
 function main() {
   const args = parseArgs(process.argv.slice(2));
-  const errors = collectReleaseBlockers(readJson(args.app), readJson(args.eas));
+  const errors = collectReleaseBlockers(readJson(args.app), readJson(args.eas), { tag: args.tag });
   if (errors.length === 0) {
     process.stdout.write('EAS release config is ready.\n');
     return;

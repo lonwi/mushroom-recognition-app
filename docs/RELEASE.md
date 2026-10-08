@@ -1,10 +1,12 @@
 # Wydanie Grzybobranie AI
 
-Tag `vX.Y.Z` uruchamia [`.github/workflows/release.yml`](../.github/workflows/release.yml). Job `build` woła `eas build --profile production --platform all --non-interactive`. Job `submit` czeka na środowisko GitHub o nazwie `production` (tu włącza się ręczna akceptacja), a potem woła `eas submit --profile production --platform all --latest --non-interactive`.
+Tag `vX.Y.Z` uruchamia [`.github/workflows/release.yml`](../.github/workflows/release.yml). Najpierw job `verify` sprawdza, że commit tagu jest na `origin/main`, odpala typecheck, `pnpm test` i testy E2E, i wymaga, żeby napis tagu po `v` był równy `expo.version`. Potem job `build` (środowisko `release-build`) woła `eas build --profile production --platform all --non-interactive --json` i zapisuje id buildów Androida i iOS z tego biegu. Job `submit` czeka na środowisko `production` i wysyła te dwa id (`eas submit --id`), a nie najnowszy build w projekcie EAS.
 
-Ten plik jest listą rzeczy, których agent nie zrobi za Ciebie. Zrób je raz, zanim wypchniesz pierwszy tag. Kolejność poniżej jest istotna: środowisko `production` musi istnieć z recenzentami **zanim** poleci pierwszy tag, bo inaczej GitHub utworzy je puste, bez akceptacji.
+Workflow przypina akcje do commitów i instaluje `eas-cli` **24.12.0**. Lokalnie używaj tej samej wersji: `npx eas-cli@24.12.0`.
 
-Nie commituj tokenów, pliku JSON konta usługi Google ani klucza `.p8`. Te sekrety idą do sekretu repozytorium albo do poświadczeń EAS.
+Ten plik jest listą rzeczy, których agent nie zrobi za Ciebie. Zrób je raz, zanim wypchniesz pierwszy tag. Kolejność jest istotna: oba środowiska (`release-build` i `production`) muszą istnieć **zanim** poleci pierwszy tag. Inaczej GitHub utworzy je puste, bez sekretu i bez reguł, a pierwszy submit nie będzie na nic czekał.
+
+Nie commituj tokenów, pliku JSON konta usługi Google ani klucza `.p8`. Token Expo idzie do sekretów tych dwóch środowisk. Klucze sklepów idą do poświadczeń EAS.
 
 ## 1. Konto Expo i `eas init`
 
@@ -12,7 +14,7 @@ Nie commituj tokenów, pliku JSON konta usługi Google ani klucza `.p8`. Te sekr
 2. W katalogu repozytorium zainstaluj zależności (`pnpm install`) i zaloguj się:
 
    ```bash
-   npx eas-cli@latest login
+   npx eas-cli@24.12.0 login
    ```
 
 3. W `app.json` są teraz placeholdery, nie prawdziwy projekt:
@@ -31,7 +33,7 @@ Nie commituj tokenów, pliku JSON konta usługi Google ani klucza `.p8`. Te sekr
 4. Utwórz albo podepnij projekt. Slug jest już ustawiony na `mushroom-recognition-app`:
 
    ```bash
-   npx eas-cli@latest init
+   npx eas-cli@24.12.0 init
    ```
 
    CLI zapyta, które konto ma być właścicielem. Wybierz swoje konto (albo organizację). Potwierdź utworzenie `@twoje-konto/mushroom-recognition-app`, jeśli projektu jeszcze nie ma.
@@ -39,7 +41,7 @@ Nie commituj tokenów, pliku JSON konta usługi Google ani klucza `.p8`. Te sekr
    To samo bez pytań, gdy znasz nazwę konta:
 
    ```bash
-   npx eas-cli@latest init --account TWOJE_KONTO --force --non-interactive
+   npx eas-cli@24.12.0 init --account TWOJE_KONTO --force --non-interactive
    ```
 
    `--json` dopisuje na stdout status, `projectId`, `owner`, `slug` i adres pulpitu.
@@ -61,9 +63,9 @@ Nie commituj tokenów, pliku JSON konta usługi Google ani klucza `.p8`. Te sekr
 
 Pulpitu projektu szukaj potem pod `https://expo.dev/accounts/<owner>/projects/mushroom-recognition-app`.
 
-## 2. Token `EXPO_TOKEN` jako sekret repozytorium
+## 2. Token `EXPO_TOKEN` tylko w dwóch środowiskach
 
-Robot jest lepszy niż token osobisty: da się go unieważnić bez wylogowywania człowieka, i build nie przestaje działać, gdy ktoś odejdzie z konta. Token osobisty też zadziała.
+Robot jest lepszy niż token osobisty: da się go unieważnić bez wylogowywania człowieka, i build nie przestaje działać, gdy ktoś odejdzie z konta. Token osobisty też zadziała. Rola **Developer** umie i budować, i wołać `eas submit`. GitHub tego nie rozdzieli. Patrz ograniczenie na końcu sekcji 3.
 
 ### Robot (konto organizacji)
 
@@ -78,54 +80,70 @@ Na koncie osobistym robot bywa niedostępny. Wtedy:
 2. Kliknij **Create token**.
 3. Nazwij go, na przykład `github-actions-grzybobranie`, i skopiuj wartość.
 
-### Sekret w GitHubie
+### Sekret w GitHubie: dwa środowiska, zero sekretu repozytorium
 
-Token ma być **sekretem repozytorium**, nie sekretem środowiska. Job `build` nie jest w środowisku `production` i sekretu środowiskowego nie zobaczy.
+Nie twórz sekretu repozytorium o nazwie `EXPO_TOKEN`. Sekret repozytorium widzi każdy job, który go odczyta, także job bez środowiska. Jeśli taki sekret już dodałeś po starszej wersji tej instrukcji, usuń go: **Settings → Secrets and variables → Actions → Repository secrets → EXPO_TOKEN → Delete**.
 
-1. Strona repozytorium → **Settings**.
-2. W lewym menu **Secrets and variables** → **Actions**.
-3. Zakładka **Secrets**, sekcja **Repository secrets** → **New repository secret**.
-4. Name: `EXPO_TOKEN` (dokładnie tak, wielkie litery).
-5. Secret: wklejony token.
-6. **Add secret**.
+Ten sam token wklej jako sekret środowiska w `release-build` (job buildu) i drugi raz w `production` (job submitu). GitHub nie współdzieli sekretów między środowiskami. Job `verify` nie ma środowiska i tokenu nie dostaje.
 
-Workflow czyta go jako `secrets.EXPO_TOKEN` i podaje do `expo/expo-github-action@v9`. Akcja ustawia zmienną `EXPO_TOKEN` dla kolejnych kroków. Nie wypisuj tokenu w logach.
+Jak dodać sekret, gdy środowisko już jest (tworzenie środowisk jest w sekcji 3):
 
-Unieważnienie: ta sama strona Access tokens → usuń token.
+1. **Settings → Environments** → nazwa środowiska.
+2. **Environment secrets → Add secret**.
+3. Name: `EXPO_TOKEN`. Secret: wklejony token. **Add secret**.
+4. Powtórz dla drugiego środowiska.
 
-## 3. Środowisko GitHub `production` z recenzentem
+Workflow czyta `secrets.EXPO_TOKEN` dopiero w jobie, który ma dane środowisko, i podaje go do `expo/expo-github-action` przypiętego do commitu v9.0.0. Akcja ustawia zmienną na kolejne kroki. Nie wypisuj tokenu w logach.
 
-Zrób to **przed** pierwszym tagiem. Job `submit` ma `environment: production`. Jeśli środowiska nie ma, pierwsze uruchomienie utworzy je **bez** reguł i submit pójdzie od razu.
+Unieważnienie: ta sama strona Access tokens na Expo → usuń token, potem podmień obie kopie w GitHubie.
 
-Wymagani recenzenci na prywatnym repozytorium są dostępni na GitHub Pro, Team i Enterprise. Na planie Free działają dla repozytoriów publicznych.
+## 3. Dwa środowiska: `release-build` i `production`
 
-1. Strona repozytorium → **Settings**.
-2. W lewym menu kliknij **Environments**.
-3. **New environment**.
-4. Name: `production` (małe litery, dokładnie tak jak w workflow). **Configure environment**.
-5. Zaznacz **Required reviewers**.
-6. Wpisz siebie (i ewentualnie drugą osobę). Wystarczy akceptacja jednego z maksymalnie sześciu recenzentów.
-7. Opcjonalnie zaznacz **Prevent self-review**, jeśli tag wypycha ktoś inny niż recenzent. Przy jednej osobie zostaw to wyłączone, inaczej nie zatwierdzisz własnego tagu.
-8. **Save protection rules**.
+Zrób oba **przed** pierwszym tagiem. Job `build` ma `environment: release-build`. Job `submit` ma `environment: production`. Jeśli któregoś nie ma, pierwsze uruchomienie utworzy je bez reguł. Puste `production` puszcza submit od razu.
 
-Zalecane ograniczenie, co w ogóle może deployować:
+**Required reviewers** na prywatnym repozytorium działają tylko na GitHub Enterprise. Na planach Free, Pro i Team działają tylko dla repozytoriów publicznych. Na prywatnym repo bez Enterprise bramki recenzenta nie będzie i job `submit` nie zaczeka.
 
-1. Na tej samej stronie, **Deployment branches and tags**, wybierz **Selected branches and tags**.
-2. **Add deployment branch or tag rule**.
-3. W **Ref type** wybierz **Tag**.
-4. Name pattern: `v*`.
-5. **Add rule**.
+### `release-build` (build, bez recenzenta)
 
-Wzorzec dotyczy tagów osobno od gałęzi. `v*` puszcza `v1.2.3` i nie puszcza zwykłego pusha do `main`.
+1. Strona repozytorium → **Settings** → **Environments** → **New environment**.
+2. Name: `release-build`. **Configure environment**.
+3. Nie zaznaczaj **Required reviewers**. Ten job ma ruszyć sam, gdy tag przejdzie testy.
+4. **Deployment branches and tags** → **Selected branches and tags** → **Add deployment branch or tag rule**.
+5. **Ref type:** **Tag**. Name pattern: `v*`. **Add rule**.
+6. Dodaj sekret `EXPO_TOKEN` jak w sekcji 2.
 
-Po zbudowaniu binarek GitHub zatrzyma job `submit` na karcie Actions przy tym tagu. Recenzent klika **Review deployments** → zaznacza `production` → **Approve and deploy**. Dopiero wtedy leci `eas submit`.
+### `production` (submit, z recenzentem)
+
+1. **New environment**. Name: `production`. **Configure environment**.
+2. Zaznacz **Required reviewers**. Wpisz siebie (i ewentualnie drugą osobę). Wystarczy akceptacja jednego z maksymalnie sześciu.
+3. Opcjonalnie **Prevent self-review**, jeśli tag wypycha ktoś inny. Przy jednej osobie zostaw wyłączone, inaczej nie zatwierdzisz własnego tagu.
+4. Odznacz **Allow administrators to bypass configured protection rules**. Domyślnie jest włączone i administrator repozytorium omija recenzenta. **Save protection rules**.
+5. **Deployment branches and tags** → **Selected branches and tags** → **Add deployment branch or tag rule** → **Ref type: Tag** → `v*` → **Add rule**.
+6. Dodaj sekret `EXPO_TOKEN` jeszcze raz, w tym środowisku.
+
+Wzorzec `v*` dotyczy tagów osobno od gałęzi. Nie puszcza zwykłego pusha do `main`.
+
+Po buildzie GitHub zatrzyma job `submit`. Recenzent klika **Review deployments** → `production` → **Approve and deploy**. Dopiero wtedy lecą dwa `eas submit --id` dla id z tego biegu.
+
+### Czego ta bramka nie robi
+
+Token w roli Developer sam potrafi wywołać `eas submit` z dowolnego miejsca, które go ma. Recenzent GitHuba zatrzymuje tylko job `submit` w tym workflow. Nie odbiera tokenowi uprawnienia do wysyłki i nie rozdziela „tylko build” od „tylko submit”.
+
+Co realnie daje podział na środowiska:
+
+- Job `verify` i każdy inny job bez tych środowisk tokenu nie widzi.
+- Sekret nie jest sekretem repozytorium, więc nie wpada do dowolnego workflow, który napisze `secrets.EXPO_TOKEN`.
+- Reguła tagów `v*` blokuje użycie sekretu przez job z gałęzi albo z pull requesta.
+- Job `build` token dostaje bez kliknięcia. Tag `v*` na `main`, po zielonych testach, startuje podpisany build produkcyjny. Kto zmieni workflow na `main` (przez PR, który przejdzie `check`), może w tym jobie dopisać `eas submit`. Ruleset i review kodu są tu jedyną zaporą.
+
+Akceptacja `production` jest więc zgodą na wysyłkę w tym workflow, a nie technicznym ograniczeniem konta Expo.
 
 ## 4. Google Play: konto usługi, JSON tylko na EAS
 
 Paczka Androida to `com.grzybobranie.ai`. W `eas.json` profil `submit.production.android` ma `applicationId` równy tej paczce, `track: internal` i `releaseStatus: draft`. Ścieżki do pliku JSON w repozytorium nie ma celowo: runner jej nie posiada, a plik nie może trafić do gita (`.gitignore` odrzuca `google-service-account.json` i `*.p8`).
 
 1. Załóż konto Google Play Console i opłać rejestrację dewelopera.
-2. W Play Console kliknij **Create app**. Nazwa paczki przy pierwszym uploadzie musi być `com.grzybobranie.ai`. Aplikacja może zostać szkicem, dopóki nie uzupełnisz karty sklepu.
+2. W Play Console kliknij **Create app**. Nazwa paczki przy pierwszym uploadzie musi być `com.grzybobranie.ai`. Aplikacja może zostać szkicem, dopóki nie uzupełnisz karty sklepu. Ręczne wgranie pierwszego AAB nie jest potrzebne: `eas submit` sam tworzy pierwsze wydanie na ścieżce internal. Ręczny upload zostaw tylko wtedy, gdy chcesz przejść kreator Play bez EAS.
 3. Utwórz klucz konta usługi według [creating a Google service account](https://github.com/expo/fyi/blob/main/creating-google-service-account.md):
    1. W Google Cloud utwórz projekt (albo użyj istniejącego) i konto usługi.
    2. Z **Service accounts** skopiuj adres e-mail konta.
@@ -145,7 +163,7 @@ Paczka Androida to `com.grzybobranie.ai`. W `eas.json` profil `submit.production
    - Albo lokalnie, zalogowany jako właściciel (nie robot):
 
      ```bash
-     npx eas-cli@latest credentials --platform android
+     npx eas-cli@24.12.0 credentials --platform android
      ```
 
      Profil: **production**. Potem **Google Service Account** → **Upload a Google Service Account Key** i ścieżka do JSON.
@@ -173,7 +191,7 @@ Klucz API (sekret) trzymaj na EAS:
 3. Wgraj klucz na EAS, lokalnie jako właściciel:
 
    ```bash
-   npx eas-cli@latest credentials --platform ios
+   npx eas-cli@24.12.0 credentials --platform ios
    ```
 
    Profil: **production**. Zaloguj się do Apple, gdy CLI poprosi. Wybierz **App Store Connect: Manage your API Key**, potem **Set up your project to use an API Key for EAS Submit**, i wskaż `.p8`, Key ID oraz Issuer ID.
@@ -186,8 +204,8 @@ Klucz API (sekret) trzymaj na EAS:
 Pierwszy `eas build --non-interactive` nie przejdzie pytań o keystore Androida ani o Apple (2FA). Robot ich nie odpowie. Zanim wypchniesz tag, będąc zalogowanym jako właściciel (nie `EXPO_TOKEN` robota):
 
 ```bash
-npx eas-cli@latest credentials --platform android
-npx eas-cli@latest credentials --platform ios
+npx eas-cli@24.12.0 credentials --platform android
+npx eas-cli@24.12.0 credentials --platform ios
 ```
 
 Dla obu wybierz profil **production** i pozwól EAS wygenerować keystore Androida oraz certyfikat dystrybucyjny i profil provisioningowy iOS, jeśli ich jeszcze nie ma. Zostają na serwerach EAS. Kolejne buildy z GitHuba je tylko pobierają.
@@ -216,23 +234,36 @@ Job CI nazywa się `check` (`.github/workflows/ci.yml`). Ruleset ma wymagać pul
    - Zaznacz **Require branches to be up to date before merging**. GitHub stosuje to dopiero, gdy na liście jest co najmniej jeden check. Gałąź PR musi zawierać aktualny `main`, a `check` musi być zielony na tym właśnie SHA.
 10. **Create**.
 
-Nie dodawaj do bypass listy konta, którym merguje automat. Cloud agent i tak powinien iść przez PR.
+Nie dodawaj do bypass listy konta, którym merguje automat. Cloud agent i tak powinien iść przez PR. Pusta lista bypass jest tu odpowiednikiem odznaczonego „Allow administrators to bypass” przy środowisku: administrator nie omija PR ani statusu `check`.
+
+### Ruleset na tagi `v*`
+
+Osobny ruleset, też przed pierwszym tagiem. Bez niego tag da się przesunąć albo skasować, a workflow i tak wypuści to, co tag wskazuje (o ile commit jest na `main`).
+
+1. **Settings → Rules → Rulesets → New ruleset → New tag ruleset**.
+2. **Ruleset name:** `v-releases`.
+3. **Enforcement status:** **Active** (nowe startują jako **Disabled**).
+4. **Bypass list:** zostaw pustą. **Always allow** pozwoliłby przesunąć albo skasować tag wydania.
+5. **Target tags → Add a target → Include by pattern**. Wzorzec: `v*`.
+6. W **Tag protections** zaznacz **Restrict updates** (nie da się przesunąć istniejącego tagu) i **Restrict deletions**.
+7. Nie zaznaczaj **Restrict creations**. Inaczej nie wypchniesz nowego `v1.0.0`, chyba że jesteś na liście bypass.
+8. **Create**.
 
 ## 8. Cięcie wydania
 
-Numery buildów są zdalne. W `eas.json` jest `cli.appVersionSource: "remote"` i `build.production.autoIncrement: true`. EAS trzyma `android.versionCode` i `ios.buildNumber` u siebie i podbija je przy każdym buildzie produkcyjnym. Wartości w `app.json` (`versionCode`, `buildNumber`) są wtedy ignorowane. Nie edytuj ich przy wydaniu. Nie rób też commita „bump version” pod tag.
+Numery buildów są zdalne. W `eas.json` jest `cli.appVersionSource: "remote"` i `build.production.autoIncrement: true`. EAS trzyma `android.versionCode` i `ios.buildNumber` u siebie i podbija je przy każdym buildzie produkcyjnym. Nie edytuj tych dwóch pól przy wydaniu.
 
-`autoIncrement` nie podbija użytkownikiego `expo.version` (dziś `1.0.0`). To nazwa wersji widoczna w sklepie. Tag jej nie zmienia. Zostaw ją, dopóki świadomie nie zmienisz jej w osobnym PR.
+Nazwa widoczna w sklepie to `expo.version` w `app.json` (dziś `1.0.0`). `autoIncrement` jej nie rusza. Tag musi być dokładnie `v` plus ta wartość: przy `1.0.0` tag to `v1.0.0`. Inny tag workflow odrzuci w `scripts/assert-eas-release-config.mjs`. Nową nazwę wersji zmieniasz w zwykłym pull requeście, mergujesz na `main` i dopiero wtedy tagujesz ten commit.
 
-Pierwszy build produkcyjny startuje od lokalnego `versionCode` / `buildNumber` (`1`) i od razu robi z tego `2`, bo autoincrement jest włączony. Dla nowej aplikacji to jest w porządku. Jeśli musisz zacząć od konkretnego numeru (aplikacja już jest w sklepie), raz, przed tagiem:
+Pierwszy build produkcyjny startuje od lokalnego `versionCode` / `buildNumber` (`1`) i od razu robi z tego `2`, bo autoincrement jest włączony. Zostaw te pola w `app.json` do pierwszego udanego buildu produkcyjnego, żeby EAS miał z czego wziąć stan początkowy. Gdy ten build już jest na EAS, usuń `android.versionCode` i `ios.buildNumber` z `app.json` w osobnym PR. Od tej chwili lokalne liczby i tak są ignorowane, a zostawione wyglądają jak źródło prawdy. Jeśli musisz zacząć od konkretnego numeru (aplikacja już jest w sklepie), raz, przed tagiem:
 
 ```bash
-npx eas-cli@latest build:version:set
+npx eas-cli@24.12.0 build:version:set
 ```
 
 Osobno dla Androida i iOS. To nie jest krok przy każdym wydaniu.
 
-Gdy punkty 1–7 są zrobione, a `main` jest zmergowany i `check` jest zielony:
+Gdy punkty 1–7 są zrobione, a `main` jest zmergowany i `check` jest zielony, taguj commit, który już jest na `main`. Workflow woła `git merge-base --is-ancestor` i odrzuca tag wskazujący commit spoza `main`.
 
 ```bash
 git checkout main
@@ -241,18 +272,19 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-Tag musi wskazywać commit, który chcesz wydać (zwykle czubek `main`). Wzorzec workflow to `v*`, więc `v1.0.0` i `v1.2.3` wchodzą, a `1.0.0` bez `v` nie.
+`v1.0.0` wchodzi tylko wtedy, gdy `expo.version` na tym commicie to `1.0.0`. Samo `1.0.0` bez `v` workflow nie uruchamia.
 
 Potem:
 
-1. Actions uruchamia job **EAS production build**. Kończy się, gdy EAS skończy oba buildy (komenda bez `--no-wait`).
-2. Job **EAS submit** stoi na akceptacji środowiska `production`.
-3. Po **Approve and deploy** idzie submit najnowszych buildów tego projektu (`--latest`) na ścieżkę wewnętrzną Play (szkic) i do App Store Connect.
+1. Job **Typecheck and tests** (typecheck, testy jednostkowe, E2E) musi być zielony.
+2. Job **EAS production build** w środowisku `release-build` czeka, aż EAS skończy oba buildy (bez `--no-wait`), i zapisuje ich id. Limit tego joba to 180 minut. Jeśli GitHub ubije job po czasie, build na serwerach EAS **jedzie dalej**, ale id nie trafiają do outputów i job **EAS submit nie ruszy**. Ponowne odpalenie joba buildu startuje nowe buildy, nie podpina się pod te, które już lecą. Skończone id widać w pulpicie Expo; wysyłka ręczna to `eas submit --id <id>`, poza tym workflow.
+3. Job **EAS submit** stoi na akceptacji środowiska `production`.
+4. Po **Approve and deploy** idą dwa submitty: Android i iOS, każdy z `--id` buildu z tego biegu, na ścieżkę wewnętrzną Play (szkic) i do App Store Connect. Nie używamy `--latest`, bo to wziąłoby najnowszy build w projekcie, także z innego biegu.
 
-Nie wypychaj tego samego tagu drugi raz, dopóki poprzedni bieg nie jest skończony albo świadomie anulowany. Concurrency w workflow jest per tag (`release-<ref>`) i nie anuluje trwającego biegu.
+Concurrency jest jedno na całe wydanie (`group: release`) i nie anuluje trwającego biegu. Drugi tag czeka, aż pierwszy workflow, łącznie z oczekiwaniem na akceptację, się skończy.
 
 Profil `development` odpalasz ręcznie, gdy potrzebujesz binarki z natywnym modułem TFLite, nie tagiem:
 
 ```bash
-npx eas-cli@latest build --profile development --platform android
+npx eas-cli@24.12.0 build --profile development --platform android
 ```
