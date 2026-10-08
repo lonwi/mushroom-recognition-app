@@ -85,6 +85,10 @@ pnpm build-storybook
 pnpm test:e2e
 ```
 
+### Wydanie (EAS)
+
+Sklepy i tag `vX.Y.Z` opisuje [docs/RELEASE.md](docs/RELEASE.md): `eas init`, sekret `EXPO_TOKEN`, środowisko GitHub `production`, poświadczenia Play i App Store oraz ruleset na `main`.
+
 ---
 
 ## Model na urządzeniu
