@@ -242,14 +242,13 @@ def _integer(value: object) -> int | None:
 
 
 def rare_exception_applies(name: str, item: dict, row: dict, probes: dict, groups: list) -> bool:
-    """The 5-photo floor, only for a closed-list taxon whose licensed pool was exhausted.
+    """The 5-photo floor, only when every licensed photo was downloaded and verified.
 
-    ``accepted`` is the verified-file count from the fetch report. It is below
-    the cap when that candidate pool could not fill the cap, including when
-    some downloads failed and nothing remained to replace them. ``gbif_licensed_count``
-    is the size of that licensed pool, not the file count, and it must match
-    the audited exception and be under 50. A null group, an extra name, or a
-    full cap does not qualify.
+    Both must hold. ``gbif_licensed_count`` is the entire licensed GBIF pool
+    (the query ended, not a download margin) and it equals the audited count.
+    ``accepted`` equals that same count. A failed download leaves ``accepted``
+    short, and the 50-photo floor stays. The count is under 50, ``accepted``
+    is below the cap, the name is on the closed list, and its group is present.
     """
     if name not in _REQUIRED_EXCEPTIONS:
         return False
@@ -267,6 +266,8 @@ def rare_exception_applies(name: str, item: dict, row: dict, probes: dict, group
     if cap is None or accepted is None or licensed is None or audited is None:
         return False
     if audited >= 50 or licensed >= 50 or licensed != audited:
+        return False
+    if accepted != licensed:
         return False
     return accepted < cap
 
@@ -287,11 +288,12 @@ def poisonous_sample_reasons(
 
     Visual groups have a total. Every taxon needs 50 images unless it is one of
     the closed rare_taxon_exceptions AND the fetch row shows the whole licensed
-    pool was taken (accepted below the cap, licensed count under 50 and equal
-    to the audited count). That exception needs 5 images, 0 confident-edible
-    outcomes, and a group that still meets its minimum. A null group or an
-    extra name does not lower the floor. The poisonous held-out total stays
-    at least 300.
+    GBIF pool was downloaded: ``gbif_licensed_count`` under 50 and equal to the
+    audited count, and ``accepted`` equal to that count (below the cap). A
+    failed download leaves ``accepted`` short, and the 50-photo floor stays.
+    The exception needs 5 images, 0 confident-edible outcomes, and a group that
+    still meets its minimum. A null group or an extra name does not lower the
+    floor. The poisonous held-out total stays at least 300.
     """
     probes = probes or {}
     other_min = int(probes.get("other_taxon_minimum") or 50)

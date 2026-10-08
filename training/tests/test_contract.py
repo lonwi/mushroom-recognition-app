@@ -735,7 +735,7 @@ class ManifestAndShipGateTest(unittest.TestCase):
         probes = load_manifest()["toxic_probes"]
         reasons = poisonous_sample_reasons(
             self._quota_rows(
-                **{"Lepiota brunneoincarnata": {"support": 4, "accepted": 4, "gbif_licensed_count": 16}}
+                **{"Lepiota brunneoincarnata": {"support": 4, "accepted": 16, "gbif_licensed_count": 16}}
             ),
             probes,
             expected_names=poisonous_heldout_taxa(),
@@ -791,13 +791,12 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertFalse(any("Lepiota brunneoincarnata" in reason and "need 50" in reason for reason in exhausted))
         self.assertFalse(any("at least 5" in reason for reason in exhausted))
 
-    def test_verified_files_below_the_licensed_pool_still_match_the_audit(self):
-        """accepted is verified files. gbif_licensed_count stays the licensed pool.
+    def test_failed_download_does_not_apply_the_rare_taxon_exception(self):
+        """The audited pool was enumerated, and one licensed photo failed to download.
 
-        A failed download can leave accepted below that pool. The exception
-        still applies when the pool was exhausted and the licensed count
-        matches the audit. The gate copies both numbers from the fetch report,
-        replacing whatever the metrics row claimed.
+        gbif_licensed_count matches the audit. accepted is one short of that
+        count, so the 5-photo floor stays closed and the taxon still needs 50.
+        The gate copies both numbers from the fetch report.
         """
         from evaluate import attach_fetch_evidence
 
@@ -837,7 +836,7 @@ class ManifestAndShipGateTest(unittest.TestCase):
             probes,
             expected_names=poisonous_heldout_taxa(),
         )
-        self.assertFalse(any("Lepiota brunneoincarnata" in reason and "need 50" in reason for reason in reasons))
+        self.assertTrue(any("Lepiota brunneoincarnata" in reason and "need 50" in reason for reason in reasons))
         self.assertFalse(any("at least 5" in reason for reason in reasons))
 
     def test_verna_exception_without_a_group_fails_validation_and_the_gate(self):
@@ -1054,7 +1053,7 @@ class ManifestAndShipGateTest(unittest.TestCase):
                 "taxon": "Lepiota brunneoincarnata",
                 "support": 10,
                 "confident_edible": 0,
-                "accepted": 10,
+                "accepted": 16,
                 "gbif_licensed_count": 16,
             },
             {"taxon": "Lepiota cristata", "support": 50, "confident_edible": 0},
