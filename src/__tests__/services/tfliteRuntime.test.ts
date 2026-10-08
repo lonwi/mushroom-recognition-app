@@ -1,6 +1,10 @@
 /// <reference types="jest" />
 
 describe('tflite runtime when the packaged model is null', () => {
+  test('maps a .tflite require to null', () => {
+    expect(require('../../../assets/models/mushrooms_model.tflite')).toBeNull();
+  });
+
   test("does not require('react-native-fast-tflite')", async () => {
     const required: string[] = [];
     jest.resetModules();

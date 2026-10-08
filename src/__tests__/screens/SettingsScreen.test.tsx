@@ -24,4 +24,15 @@ describe('SettingsScreen RTL Tests', () => {
     // Verify AsyncStorage was updated
     expect(AsyncStorage.setItem).toHaveBeenCalledWith('app_language', 'en');
   });
+
+  it('opens an empty photo-credit list when no model is installed', async () => {
+    const { getByTestId, findByTestId } = await render(
+      <LanguageProvider>
+        <SettingsScreen />
+      </LanguageProvider>
+    );
+
+    fireEvent.press(getByTestId('btn-photo-credits'));
+    expect(await findByTestId('photo-credits-empty')).toHaveTextContent(/Nie ma dołączonego modelu/);
+  });
 });

@@ -20,9 +20,19 @@ export const en: Translations = {
     pl: 'Polski',
     en: 'English',
     offlineNotice: 'Model and database run 100% offline without network connectivity.',
-    dataLicenseTitle: 'Training photo licenses',
+    dataLicenseTitle: 'Dataset photo licenses',
     dataLicenseBody:
-      'A model, if one is shipped, may be trained only on CC0 or CC-BY photos (no NC or SA). Every photo keeps its author, license, and source URL in training/data/attributions.jsonl. That file has to ship with the model.',
+      'A model, if one is shipped, may be trained only on CC0 or CC-BY photos (no NC or SA). The list includes training photos, test photos, and evaluation probes. Every photo keeps its author, license, and source URL. Export writes them next to the model in assets/models/attributions.jsonl.',
+    photoCreditsOpen: 'Dataset photo credits',
+    photoCreditsClose: 'Hide photo credits',
+    photoCreditsLead:
+      'CC0 and CC-BY photos in the shipped model dataset: training, test, and evaluation probes.',
+    photoCreditsEmpty:
+      'No model is installed, so there is no list of photo credits. Scan recognition stays off.',
+    photoCreditsUnknownAuthor: 'Author not listed',
+    photoCreditsBack: 'Back to settings',
+    photoCreditsSearch: 'Search author or species',
+    photoCreditsNoMatches: 'No credits match that search.',
     about: 'About App',
     version: 'Version 1.0.0 (On-Device AI)',
     atlasScope:
@@ -74,6 +84,9 @@ export const en: Translations = {
     useToxic: 'Toxicity and symptoms',
     useInedible: 'Not for eating',
     useLiterature: 'Significance in the literature',
+    morelProtectionTitle: 'Partially protected in Poland',
+    morelProtectionBody:
+      'Do not collect wild-growing morels. Morels are partially protected in Poland. Collection requires a permit, except for specimens growing in gardens, horticultural plantings, forest nurseries, and green areas (Regulation of the Minister of the Environment of 9 October 2014, Journal of Laws 2014 item 1408). This notice is not a permit.',
     sourceLanguageNote:
       'Descriptions, look-alike differences, and morphology are source text in Polish. Month abbreviations follow the app language.',
     family: 'FAMILY',
@@ -113,6 +126,10 @@ export const en: Translations = {
       'The photo was not accepted as a mushroom from the class set, or it sits outside the distribution the model learned. No species was named.',
     rejectedUnclear: 'The picture is too ambiguous to name a species.',
     rejectedVerify: 'If this is still a mushroom, have a mycologist or a Sanepid station check it.',
+    unknownMushroomTitle: 'Unknown mushroom',
+    unknownMushroomBody:
+      'This looks like a mushroom the app does not know. Do not pick it or eat it based on the scan.',
+    unknownMushroomDeadly: 'This mushroom may be deadly poisonous.',
     candidatesTitle: 'Scan candidates',
     candidatesLead: 'The model’s three highest scores. This is not an identification you can forage on.',
     notEdibilityVerdict: 'This scan is not an edibility verdict.',
@@ -172,6 +189,7 @@ export const en: Translations = {
     unavailableTitle: 'Recognition unavailable',
     unclearTitle: 'Not sure',
     notMushroomTitle: 'Not a mushroom from the model',
+    unknownMushroomTitle: 'Unknown mushroom',
     candidatesTitle: 'Scan candidates',
     openCandidate: 'Candidate card in the atlas',
     openMap: 'Open this spot in maps',

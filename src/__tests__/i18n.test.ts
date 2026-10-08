@@ -21,6 +21,14 @@ describe('Polish and English dictionaries', () => {
     expect(translate('en', 'scanner.recognitionUnavailableTitle')).toBe('Recognition unavailable');
     expect(translate('pl', 'scanner.rejectedUnclear')).toMatch(/zbyt niejednoznaczny/);
     expect(translate('en', 'scanner.rejectedNotMushroom')).toMatch(/No species was named/);
+    expect(translate('pl', 'scanner.unknownMushroomBody')).toBe(
+      'To wygląda na grzyba, którego aplikacja nie zna. Nie zbieraj go ani nie jedz na podstawie skanu.',
+    );
+    expect(translate('en', 'scanner.unknownMushroomBody')).toMatch(/Do not pick it or eat it/);
+    expect(translate('pl', 'scanner.unknownMushroomDeadly')).toBe('Ten grzyb może być śmiertelnie trujący.');
+    expect(translate('en', 'scanner.unknownMushroomDeadly')).toBe('This mushroom may be deadly poisonous.');
+    expect(translate('pl', 'scanner.rejectedVerify')).toMatch(/grzyboznawcy/);
+    expect(translate('en', 'scanner.rejectedVerify')).toMatch(/Sanepid/);
   });
 
   it('keeps the Polish safety wording and does not soften the English warnings', () => {

@@ -29,6 +29,22 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.locator('body')).toContainText('112');
   });
 
+  test('ResultModal says an unknown fungus is not a species and not food', async ({ page }) => {
+    await page.goto('/iframe.html?id=mushroom-resultmodal--unknown-mushroom');
+    await expect(page.getByTestId('recognition-unknown-title')).toContainText('Nieznany grzyb');
+    await expect(page.getByTestId('recognition-unknown-body')).toContainText(
+      'To wygląda na grzyba, którego aplikacja nie zna. Nie zbieraj go ani nie jedz na podstawie skanu.',
+    );
+    await expect(page.getByTestId('recognition-unknown-deadly')).toContainText(
+      'Ten grzyb może być śmiertelnie trujący.',
+    );
+    await expect(page.getByTestId('recognition-unknown-verify')).toContainText('Sanepid');
+    await expect(page.locator('body')).not.toContainText('%');
+    await expect(page.locator('body')).not.toContainText('Borowik');
+    await expect(page.locator('body')).not.toContainText('JADALNY');
+    await expect(page.getByTestId('candidate-rank-1')).toHaveCount(0);
+  });
+
   test('ResultModal rejects a non-mushroom without naming a species', async ({ page }) => {
     await page.goto('/iframe.html?id=mushroom-resultmodal--not-a-mushroom');
     await expect(page.getByTestId('recognition-rejected-title')).toContainText('Nie rozpoznano grzyba');
@@ -112,11 +128,8 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.getByTestId('missing-card-badge-amanita_excelsa')).toContainText('Brak karty');
     await expect(page.getByTestId('missing-card-badge-amanita_excelsa')).not.toContainText('JADALNY');
     await expect(page.getByTestId('lookalike-unlinked-amanita_excelsa')).toContainText('Niezalecany do zbioru');
-    await expect(page.getByTestId('missing-card-badge-amanita_rubescens')).toContainText('Brak karty');
-    await expect(page.getByTestId('lookalike-unlinked-amanita_rubescens')).toContainText(
-      'Atlas nie wydaje werdyktu dla tego gatunku'
-    );
-    await expect(page.getByTestId('lookalike-unlinked-amanita_rubescens')).not.toContainText('Niezalecany do zbioru');
+    await expect(page.getByTestId('incomplete-card-badge-amanita_rubescens')).toContainText('KARTA NIEPEŁNA');
+    await expect(page.getByTestId('lookalike-status-amanita_rubescens')).not.toContainText('JADALNY');
     await expect(page.getByTestId('lookalike-status-macrolepiota_procera')).toContainText('JADALNY');
   });
 
@@ -150,6 +163,9 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
       'poza terenem ogrodów, upraw ogrodniczych, szkółek leśnych oraz poza terenami zieleni'
     );
     await expect(page.getByTestId('species-warning-notes')).toContainText('§ 6 ust. 2 pkt 4');
+    await expect(page.getByTestId('morel-protection-notice')).toContainText('Nie zbieraj dziko rosnących');
+    await expect(page.getByTestId('morel-protection-notice')).toContainText('Dz.U. 2014 poz. 1408');
+    await expect(page.getByTestId('morel-protection-notice')).toContainText('zezwoleniem');
   });
 
   test('Gołąbek zielonawy has no borrowed photo and a do-not-eat warning', async ({ page }) => {
@@ -189,10 +205,10 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.getByText('Gołąbek zielonawy')).toBeVisible();
     await expect(page.getByText('Kolczak obłączasty')).toBeVisible();
     await expect(page.getByText('Pieczarka polna')).toBeVisible();
-    await expect(page.getByTestId('atlas-result-count')).toContainText('Pasujące karty: 4');
+    await expect(page.getByTestId('atlas-result-count')).toContainText('Pasujące karty: 14');
     await expect(page.locator('body')).not.toContainText('JADALNY');
     await page.getByTestId('filter-status-EDIBLE').click();
-    await expect(page.getByText('Borowik szlachetny')).toBeVisible();
+    await expect(page.getByText('Prawdziwki')).toBeVisible();
     await expect(page.getByText('Gołąbek zielonawy')).toHaveCount(0);
 
     await page.getByTestId('filter-status-ALL').click();

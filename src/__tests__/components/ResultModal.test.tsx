@@ -98,7 +98,7 @@ const top3: SpeciesCandidate[] = [
   },
   {
     id: 'cortinarius_orellanus',
-    namePl: 'Zasłoniak rudy',
+    namePl: 'Zasłonak rudy',
     nameLatin: 'Cortinarius orellanus',
     genus: 'Cortinarius',
     confidence: 0.22,
@@ -202,6 +202,50 @@ describe('ResultModal recognition outcomes', () => {
     expect(queryByText(/Muchomor/)).toBeNull();
     expect(queryByText('JADALNY')).toBeNull();
     expect(queryByTestId('candidate-rank-1')).toBeNull();
+  });
+
+  it('says an unknown fungus is not a species and must not be eaten', async () => {
+    const { getByTestId, queryByText, queryByTestId } = await renderModal({
+      status: 'rejected',
+      reason: 'unknown_mushroom',
+      processedImageUri: 'file://camera/other-fungus.jpg',
+      inferenceTimeMs: 12,
+    });
+
+    expect(getByTestId('recognition-unknown-title').props.children).toBe('Nieznany grzyb');
+    expect(getByTestId('recognition-unknown-body').props.children).toBe(
+      'To wygląda na grzyba, którego aplikacja nie zna. Nie zbieraj go ani nie jedz na podstawie skanu.',
+    );
+    expect(getByTestId('recognition-unknown-deadly').props.children).toBe(
+      'Ten grzyb może być śmiertelnie trujący.',
+    );
+    expect(getByTestId('recognition-unknown-verify').props.children).toMatch(/grzyboznawcy/);
+    expect(queryByText(/%/)).toBeNull();
+    expect(queryByText(/Borowik/)).toBeNull();
+    expect(queryByText(/JADALNY/)).toBeNull();
+    expect(queryByTestId('candidate-rank-1')).toBeNull();
+    expect(queryByTestId('open-atlas-boletus_edulis')).toBeNull();
+  });
+
+  it('says the same in English without naming a species', async () => {
+    await AsyncStorage.setItem('app_language', 'en');
+    const { findByTestId, queryByText } = await renderModal({
+      status: 'rejected',
+      reason: 'unknown_mushroom',
+      processedImageUri: 'file://camera/other-fungus.jpg',
+      inferenceTimeMs: 12,
+    });
+
+    expect((await findByTestId('recognition-unknown-body')).props.children).toBe(
+      'This looks like a mushroom the app does not know. Do not pick it or eat it based on the scan.',
+    );
+    expect((await findByTestId('recognition-unknown-deadly')).props.children).toBe(
+      'This mushroom may be deadly poisonous.',
+    );
+    expect((await findByTestId('recognition-unknown-verify')).props.children).toMatch(/Sanepid/);
+    expect(queryByText(/%/)).toBeNull();
+    expect(queryByText(/Borowik/)).toBeNull();
+    expect(queryByText(/edible/i)).toBeNull();
   });
 
   it('names no species when the gate rejects the photo', async () => {
@@ -407,5 +451,58 @@ describe('ResultModal recognition outcomes', () => {
     await fireEvent.press(getByTestId('save-to-journal'));
 
     expect(Alert.alert).toHaveBeenCalledTimes(1);
+  });
+
+  it('states the Polish morel permit rule on a scan that names the morel', async () => {
+    const { getByTestId, getByText, queryByText } = await renderModal({
+      status: 'candidates',
+      processedImageUri: 'file://camera/morel.jpg',
+      inferenceTimeMs: 12,
+      expertVerificationRequired: false,
+      warningReasons: [],
+      top3: [
+        {
+          id: 'morchella_esculenta',
+          namePl: 'Smardz jadalny',
+          nameLatin: 'Morchella esculenta',
+          genus: 'Morchella',
+          confidence: 0.81,
+          rank: 1,
+        },
+      ],
+    });
+
+    expect(getByTestId('morel-protection-notice')).toBeTruthy();
+    expect(getByText('Ochrona częściowa w Polsce')).toBeTruthy();
+    expect(getByText(/Nie zbieraj dziko rosnących/)).toBeTruthy();
+    expect(getByText(/Dz\.U\. 2014 poz\. 1408/)).toBeTruthy();
+    expect(queryByText(/w lesie zakaz/i)).toBeNull();
+  });
+
+  it('states the same morel rule in English', async () => {
+    await AsyncStorage.setItem('app_language', 'en');
+    const { findByTestId, findByText, queryByText } = await renderModal({
+      status: 'candidates',
+      processedImageUri: 'file://camera/morel.jpg',
+      inferenceTimeMs: 12,
+      expertVerificationRequired: false,
+      warningReasons: [],
+      top3: [
+        {
+          id: 'morchella_esculenta',
+          namePl: 'Smardz jadalny',
+          nameLatin: 'Morchella esculenta',
+          genus: 'Morchella',
+          confidence: 0.81,
+          rank: 1,
+        },
+      ],
+    });
+
+    expect(await findByTestId('morel-protection-notice')).toBeTruthy();
+    expect(await findByText(/Do not collect wild-growing morels/)).toBeTruthy();
+    expect(await findByText(/Journal of Laws 2014 item 1408/)).toBeTruthy();
+    expect(queryByText(/permit/i)).toBeTruthy();
+    expect(queryByText(/gardens/)).toBeTruthy();
   });
 });

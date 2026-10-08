@@ -11,12 +11,20 @@ from __future__ import annotations
 import math
 
 DANGEROUS_GENERA = ("Amanita", "Cortinarius", "Galerina", "Gyromitra")
+# A dangerous genus in 2nd or 3rd place warns only at this probability or above.
+# Rank 1 always warns. A smaller third-place Amanita must not hide an edible top class.
+DANGEROUS_GENUS_MIN_PROBABILITY = 0.10
 
 # Policy floors written into the manifest only after an evaluation run.
 # They are not evidence that the energy gate works.
 POLICY_MIN_SOFTMAX_FOR_ACCEPT = 0.40
 POLICY_MIN_TOP1_FOR_HIGH_CONFIDENCE = 0.70
 POLICY_MIN_MARGIN = 0.15
+
+BACKGROUND_CLASS_ID = "not_a_mushroom"
+UNKNOWN_CLASS_ID = "unknown_mushroom"
+# Known species only. The two trailing classes are decisions, not taxa.
+NON_SPECIES_IDS = (UNKNOWN_CLASS_ID, BACKGROUND_CLASS_ID)
 
 HIGH_STAKES_IDS = (
     "amanita_phalloides",
@@ -28,10 +36,15 @@ HIGH_STAKES_IDS = (
     "cortinarius_rubellus",
     "galerina_marginata",
     "paxillus_involutus",
+    "tricholoma_equestre",
 )
 
 # Edible or commonly eaten look-alikes. A high-stakes photo predicted as one of
 # these is the safety failure the evaluation report must count.
+# Sulphur tuft and yellow knight are poisonous classes, so they are not in this
+# list. Yellow knight is high-stakes because of rhabdomyolysis. New boletes and
+# the extra Suillus species follow slippery jack: they are not the classic twins
+# of the deadly gilled species. Saffron milkcaps are, because of the brown roll-rim.
 EDIBLE_LOOKALIKE_IDS = (
     "macrolepiota_procera",
     "russula_virescens",
@@ -42,6 +55,7 @@ EDIBLE_LOOKALIKE_IDS = (
     "armillaria_mellea",
     "cantharellus_cibarius",
     "boletus_edulis",
+    "lactarius_deliciosus",
 )
 
 DANGEROUS_PAIRS = (
@@ -54,10 +68,19 @@ DANGEROUS_PAIRS = (
     ("gyromitra_esculenta", "morchella_esculenta"),
     ("galerina_marginata", "kuehneromyces_mutabilis"),
     ("galerina_marginata", "armillaria_mellea"),
+    ("agaricus_xanthodermus", "agaricus_campestris"),
+    ("lactarius_torminosus", "lactarius_deliciosus"),
+    ("hypholoma_fasciculare", "kuehneromyces_mutabilis"),
+    ("hypholoma_fasciculare", "armillaria_mellea"),
+    ("amanita_phalloides", "tricholoma_equestre"),
+    ("paxillus_involutus", "lactarius_deliciosus"),
     ("boletus_edulis", "tylopilus_felleus"),
+    ("neoboletus_luridiformis", "tylopilus_felleus"),
     ("cantharellus_cibarius", "hygrophoropsis_aurantiaca"),
     ("macrolepiota_procera", "chlorophyllum_rhacodes"),
     ("cortinarius_orellanus", "cortinarius_rubellus"),
+    ("cortinarius_orellanus", "cantharellus_cibarius"),
+    ("cortinarius_rubellus", "cantharellus_cibarius"),
 )
 
 
@@ -80,6 +103,15 @@ def energy_score(logits: list[float], temperature: float = 1.0) -> float:
         raise ValueError("temperature must be positive")
     scaled = [value / temperature for value in logits]
     return -temperature * logsumexp(scaled)
+
+
+def non_species_ids(ood: dict) -> set[str]:
+    """Classes that must never be shown as a species candidate."""
+    hidden = {
+        ood.get("background_class_id") or BACKGROUND_CLASS_ID,
+        ood.get("unknown_class_id") or UNKNOWN_CLASS_ID,
+    }
+    return {class_id for class_id in hidden if class_id}
 
 
 def decide(logits: list[float], classes: list[dict], ood: dict) -> dict:
@@ -106,16 +138,22 @@ def decide(logits: list[float], classes: list[dict], ood: dict) -> dict:
         "top_class_id": top_class["id"],
     }
 
-    if top_class["id"] == ood.get("background_class_id"):
+    hidden = non_species_ids(ood)
+    background_id = ood.get("background_class_id") or BACKGROUND_CLASS_ID
+    unknown_id = ood.get("unknown_class_id") or UNKNOWN_CLASS_ID
+    if top_class["id"] == background_id:
         return {**base, "status": "rejected", "reason": "not_a_mushroom"}
     if energy > float(ood["energy_threshold"]):
         return {**base, "status": "rejected", "reason": "not_a_mushroom"}
     accept_floor = ood.get("min_softmax_for_accept")
+    # A confident unknown-fungus top class is not a species and not an edibility call.
+    # Below the accept floor the picture is unclear instead of "a mushroom we don't know".
+    if top_class["id"] == unknown_id and (accept_floor is None or max_softmax >= float(accept_floor)):
+        return {**base, "status": "rejected", "reason": "unknown_mushroom"}
     if accept_floor is not None and max_softmax < float(accept_floor):
         return {**base, "status": "rejected", "reason": "unclear"}
 
-    background_id = ood.get("background_class_id")
-    species_order = [index for index in order if classes[index]["id"] != background_id]
+    species_order = [index for index in order if classes[index]["id"] not in hidden]
     top3 = species_order[:3]
     high_bar = ood.get("min_top1_softmax_for_high_confidence")
     min_margin = ood.get("min_margin")
@@ -125,7 +163,13 @@ def decide(logits: list[float], classes: list[dict], ood: dict) -> dict:
     if min_margin is not None and margin < float(min_margin):
         low_confidence = True
 
-    dangerous = any(classes[index].get("genus") in DANGEROUS_GENERA for index in top3)
+    dangerous = False
+    for position, index in enumerate(top3):
+        genus = classes[index].get("genus")
+        probability = probabilities[index]
+        if genus in DANGEROUS_GENERA and (position == 0 or probability >= DANGEROUS_GENUS_MIN_PROBABILITY):
+            dangerous = True
+            break
     candidates = []
     for rank, index in enumerate(top3, start=1):
         species = classes[index]

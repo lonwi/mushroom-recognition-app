@@ -2,6 +2,8 @@
 
 `training/fetch_gbif.py` writes one JSON object per accepted photo to `training/data/attributions.jsonl` (gitignored; created on the training machine).
 
+`training/export_tflite.py` writes the rows that actually entered train, val, and test to `training/artifacts/attributions.jsonl`. Installing a model that passed the ship gates copies that file to `assets/models/attributions.jsonl`. That is the file the app can show later. Each line has the creator, the license, the normalized license id, the image URL, and a source page.
+
 Required fields:
 
 | Field | Meaning |
@@ -17,4 +19,6 @@ Required fields:
 | `country` | ISO country when GBIF has one. |
 | `region_scope` | `central_europe` or `global_fill`. |
 
-The ship gate refuses to copy a model into the app if any training image is missing a creator, a CC0/CC-BY license, an image URL, or a source page. Ship the jsonl next to any released model. The settings screen names this file.
+The ship gate refuses to copy a model into the app if any training image is missing a creator, a CC0/CC-BY license, an image URL, or a source page. Ship the jsonl next to any released model.
+
+Installing a model that passed the ship gates rewrites `src/services/attributionPackage.ts` from that jsonl. Settings has a photo-credits control (`btn-photo-credits`) that lists creator, license, taxon, and source page. Until a model is installed the module stays `null` and the screen says there is no credit list. Polish is the default; English uses the same keys.

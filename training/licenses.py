@@ -81,6 +81,10 @@ def accepted_media_records(occurrence: dict) -> list[dict]:
                 "scientific_name": occurrence.get("scientificName") or "",
                 "country": occurrence.get("country") or "",
                 "dataset": occurrence.get("datasetName") or occurrence.get("datasetKey") or "",
+                "recorded_by": occurrence.get("recordedBy") or "",
+                "decimal_latitude": occurrence.get("decimalLatitude"),
+                "decimal_longitude": occurrence.get("decimalLongitude"),
+                "event_date": occurrence.get("eventDate") or "",
             }
         )
     return accepted

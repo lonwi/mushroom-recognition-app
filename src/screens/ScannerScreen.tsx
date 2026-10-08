@@ -11,6 +11,7 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { classifierService, ClassificationResult } from '../services/classifierService';
+import { uprightCaptureWidth } from '../services/photoPixels';
 import { ResultModal } from '../components/ResultModal';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -29,8 +30,8 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
 
   const cameraRef = useRef<any>(null);
 
-  const showCapturedPhoto = async (imageUri: string) => {
-    const res = await classifierService.classifyImage(imageUri);
+  const showCapturedPhoto = async (imageUri: string, knownWidth?: number) => {
+    const res = await classifierService.classifyImage(imageUri, knownWidth);
     setClassificationResult(res);
     setResultModalVisible(true);
   };
@@ -47,11 +48,15 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
       setIsAnalyzing(true);
       const photo = await camera.takePictureAsync({
         quality: 0.8,
+        // Leave EXIF orientation on the file. readPhotoAsPngBytes bakes it,
+        // then imagePreprocess area-resizes to match the training PNGs.
         skipProcessing: true,
       });
 
       if (photo && photo.uri) {
-        await showCapturedPhoto(photo.uri);
+        // skipProcessing leaves Android photo.width as the pre-rotation pixel width.
+        const width = uprightCaptureWidth(photo.width, { skipProcessing: true });
+        await showCapturedPhoto(photo.uri, width);
       } else {
         Alert.alert(t('scanner.photoFailedTitle'), t('scanner.photoFailedBody'));
       }
@@ -80,7 +85,9 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
 
       if (!result.canceled && result.assets && result.assets.length > 0 && result.assets[0].uri) {
         setIsAnalyzing(true);
-        await showCapturedPhoto(result.assets[0].uri);
+        // ImagePicker DimensionsExporter already swaps width for 90° and 270° EXIF.
+        const width = uprightCaptureWidth(result.assets[0].width, { skipProcessing: false });
+        await showCapturedPhoto(result.assets[0].uri, width);
       }
     } catch (err: any) {
       console.error('Gallery picker error:', err);

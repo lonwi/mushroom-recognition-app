@@ -36,6 +36,8 @@ export interface ConfusionRisk {
 export interface MushroomSpecies {
   id: string;
   namePl: string;
+  /** English display name. Species descriptions stay Polish. */
+  nameEn?: string;
   nameLatin: string;
   commonNicknames: string[];
   family: string;
@@ -85,7 +87,7 @@ export interface JournalCandidate {
  */
 export type JournalRecognition =
   | { status: 'unavailable' }
-  | { status: 'rejected'; reason: 'not_a_mushroom' | 'unclear' }
+  | { status: 'rejected'; reason: 'not_a_mushroom' | 'unknown_mushroom' | 'unclear' }
   | {
       status: 'candidates';
       top3: JournalCandidate[];

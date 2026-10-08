@@ -125,7 +125,7 @@ describe('ScannerScreen does not invent a recognition result', () => {
   });
 
   it('shows recognition unavailable for a real captured photo, without a confidence', async () => {
-    takePictureAsync.mockResolvedValue({ uri: 'file://camera/real-capture.jpg' });
+    takePictureAsync.mockResolvedValue({ uri: 'file://camera/real-capture.jpg', width: 4032 });
     const { getByTestId, findByText, queryByText } = await renderScanner();
 
     await fireEvent.press(getByTestId('scanner-shutter'));
@@ -133,7 +133,7 @@ describe('ScannerScreen does not invent a recognition result', () => {
     expect(await findByText(pl.scanner.recognitionUnavailableTitle)).toBeTruthy();
     await settle();
     expect(classifySpy).toHaveBeenCalledTimes(1);
-    expect(classifySpy).toHaveBeenCalledWith('file://camera/real-capture.jpg');
+    expect(classifySpy).toHaveBeenCalledWith('file://camera/real-capture.jpg', undefined);
     expect(queryByText(/Pewność/)).toBeNull();
     expect(queryByText(/TFLite/)).toBeNull();
     expect(queryByText(/Borowik szlachetny/)).toBeNull();
@@ -178,7 +178,7 @@ const dangerousTop3 = [
   },
   {
     id: 'cortinarius_orellanus',
-    namePl: 'Zasłoniak rudy',
+    namePl: 'Zasłonak rudy',
     nameLatin: 'Cortinarius orellanus',
     genus: 'Cortinarius',
     confidence: 0.22,
@@ -284,7 +284,7 @@ describe('ScannerScreen shows the real model outcome', () => {
       /Nie zbieraj tego do jedzenia na podstawie skanu/,
     );
     expect(getByTestId('candidate-rank-1')).toHaveTextContent(/Muchomor sromotnikowy/);
-    expect(getByTestId('candidate-rank-2')).toHaveTextContent(/Zasłoniak rudy/);
+    expect(getByTestId('candidate-rank-2')).toHaveTextContent(/Zasłonak rudy/);
     expect(getByTestId('candidate-rank-3')).toHaveTextContent(/Piestrzenica kasztanowata/);
     expect(getByTestId('candidate-confidence-1')).toHaveTextContent(/41\.0%/);
     expect(getByTestId('not-edibility-verdict')).toHaveTextContent(pl.scanner.notEdibilityVerdict);

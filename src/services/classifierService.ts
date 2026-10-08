@@ -39,7 +39,7 @@ export interface UnavailableClassification {
 
 export interface RejectedClassification {
   status: 'rejected';
-  reason: 'not_a_mushroom' | 'unclear';
+  reason: 'not_a_mushroom' | 'unknown_mushroom' | 'unclear';
   processedImageUri: string;
   inferenceTimeMs: number;
 }
@@ -61,7 +61,7 @@ export type ClassificationResult =
 export interface ClassifierDependencies {
   packagedModel: number | null;
   manifest: ModelManifest;
-  readPngBytes: (uri: string) => Promise<Uint8Array>;
+  readPngBytes: (uri: string, knownWidth?: number) => Promise<Uint8Array>;
   runLogits: (input: Float32Array) => Promise<Float32Array>;
 }
 
@@ -83,6 +83,7 @@ function unavailable(uri: string, reason: UnavailableReason): UnavailableClassif
 export async function classifyImageWithDeps(
   imageUri: string,
   deps: ClassifierDependencies,
+  knownWidth?: number,
 ): Promise<ClassificationResult> {
   if (!isModelPackaged(deps)) {
     return unavailable(imageUri, MODEL_MISSING_REASON);
@@ -94,7 +95,7 @@ export async function classifyImageWithDeps(
   const started = Date.now();
   let png: Uint8Array;
   try {
-    png = await deps.readPngBytes(imageUri);
+    png = await deps.readPngBytes(imageUri, knownWidth);
   } catch {
     return unavailable(imageUri, 'decode_failed');
   }
@@ -152,8 +153,8 @@ class MushroomClassifierService {
     );
   }
 
-  public classifyImage(imageUri: string): Promise<ClassificationResult> {
-    return classifyImageWithDeps(imageUri, defaultDependencies);
+  public classifyImage(imageUri: string, knownWidth?: number): Promise<ClassificationResult> {
+    return classifyImageWithDeps(imageUri, defaultDependencies, knownWidth);
   }
 }
 

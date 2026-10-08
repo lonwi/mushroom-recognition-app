@@ -2,7 +2,7 @@
 import fs from 'fs';
 import path from 'path';
 import { ModelManifest } from '../../services/modelManifest';
-import { decideFromLogits } from '../../services/recognitionDecision';
+import { decideFromLogits, energyScore } from '../../services/recognitionDecision';
 
 interface DecisionCase {
   name: string;
@@ -67,6 +67,7 @@ describe('recognition decision', () => {
         expect(candidate).not.toHaveProperty('status');
         expect(candidate).not.toHaveProperty('edibility');
         expect(candidate.id).not.toBe('not_a_mushroom');
+        expect(candidate.id).not.toBe('unknown_mushroom');
       }
       if (entry.expect.top3_ids) {
         expect(decision.top3.map((candidate) => candidate.id)).toEqual(entry.expect.top3_ids);
@@ -147,4 +148,36 @@ describe('recognition decision', () => {
       }
     },
   );
+
+  test('a confident unknown_mushroom top class is not a species and not edible', () => {
+    const manifest = manifestFor(fixture.cases[0]);
+    manifest.classes = [
+      { index: 0, id: 'boletus_edulis', name: 'Borowik szlachetny', name_latin: 'Boletus edulis', genus: 'Boletus' },
+      { index: 1, id: 'unknown_mushroom', name: 'Nieznany grzyb', name_latin: 'Unknown mushroom', genus: '' },
+      { index: 2, id: 'not_a_mushroom', name: 'To nie jest grzyb', name_latin: 'Not a mushroom', genus: '' },
+    ];
+    manifest.ood = {
+      ...manifest.ood,
+      calibrated: true,
+      background_class_id: 'not_a_mushroom',
+      unknown_class_id: 'unknown_mushroom',
+      energy_threshold: 0,
+      min_softmax_for_accept: 0.4,
+      min_top1_softmax_for_high_confidence: 0.7,
+      min_margin: 0.15,
+    };
+    const logits = [0, 8, -2];
+    expect(energyScore(logits)).toBeLessThan(0);
+    const decision = decideFromLogits(logits, manifest);
+    expect(decision).toMatchObject({ status: 'rejected', reason: 'unknown_mushroom', topClassId: 'unknown_mushroom' });
+    expect(decision).not.toHaveProperty('top3');
+    expect(JSON.stringify(decision)).not.toMatch(/edibility|JADALNY|Borowik/);
+
+    const species = decideFromLogits([6, 1, -2], manifest);
+    expect(species.status).toBe('candidates');
+    if (species.status === 'candidates') {
+      expect(species.top3.map((candidate) => candidate.id)).not.toContain('unknown_mushroom');
+      expect(species.top3.map((candidate) => candidate.id)).not.toContain('not_a_mushroom');
+    }
+  });
 });

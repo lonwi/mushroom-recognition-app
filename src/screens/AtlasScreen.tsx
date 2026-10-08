@@ -76,6 +76,7 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
             <View style={styles.cardHeader}>
               <View style={{ flex: 1, paddingRight: 6 }}>
                 <Text style={styles.namePl}>{item.namePl}</Text>
+                {item.nameEn ? <Text style={styles.nameEn}>{item.nameEn}</Text> : null}
                 <Text style={styles.nameLatin}>{item.nameLatin}</Text>
               </View>
               <SpeciesStatusBadge
@@ -395,6 +396,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     color: '#0F172A',
+  },
+  nameEn: {
+    fontSize: 12,
+    color: '#475569',
+    marginTop: 1,
   },
   nameLatin: {
     fontSize: 13,

@@ -51,10 +51,15 @@ describe('Mushroom Database & Safety Verification', () => {
             continue;
           }
           expect(risk.confusedWithStatus).toBe(allowed.status);
-          expect(allowed.status).toBe('NO_ATLAS_VERDICT');
-          expect(allowed.note).toBe(
-            risk.confusedWithId === 'amanita_excelsa' ? NOT_FOR_COLLECTION_NOTE : ATLAS_NO_VERDICT_NOTE,
-          );
+          if (allowed.status === 'NO_ATLAS_VERDICT') {
+            expect(allowed.note).toBe(
+              risk.confusedWithId === 'amanita_excelsa' ? NOT_FOR_COLLECTION_NOTE : ATLAS_NO_VERDICT_NOTE,
+            );
+          } else {
+            expect(allowed.status).toBe('POISONOUS');
+            expect(risk.fatal).toBe(false);
+            expect(allowed.note).toBe(ATLAS_NO_VERDICT_NOTE);
+          }
           expect(allowed.reason.trim().length).toBeGreaterThan(0);
           continue;
         }
@@ -79,28 +84,49 @@ describe('Mushroom Database & Safety Verification', () => {
     const normalStatuses = ['EDIBLE', 'INEDIBLE', 'POISONOUS', 'DEADLY_POISONOUS'];
     expect(Object.keys(LOOKALIKES_WITHOUT_CARD).sort()).toEqual([
       'amanita_excelsa',
-      'amanita_rubescens',
       'calocybe_gambosa',
+      'craterellus_tubaeformis',
+      'hypholoma_capnoides',
+      'imperator_rhodopurpureus',
+      'imperator_torosus',
+      'rubroboletus_other',
+      'rubroboletus_satanas',
+      'suillellus_luridus',
+    ]);
+
+    const poisonousWithoutCard = new Set([
+      'imperator_rhodopurpureus',
+      'imperator_torosus',
+      'rubroboletus_other',
+      'rubroboletus_satanas',
     ]);
 
     for (const [id, entry] of Object.entries(LOOKALIKES_WITHOUT_CARD)) {
-      expect(normalStatuses).not.toContain(entry.status);
-      expect(entry.status).toBe('NO_ATLAS_VERDICT');
       const mentions = MUSHROOMS_DATABASE.flatMap((species) =>
         species.confusionRisks.filter((risk) => risk.confusedWithId === id),
       );
       expect(mentions.length).toBeGreaterThan(0);
-      for (const risk of mentions) {
-        expect(normalStatuses).not.toContain(risk.confusedWithStatus);
-        expect(risk.confusedWithStatus).toBe('NO_ATLAS_VERDICT');
+      if (poisonousWithoutCard.has(id)) {
+        expect(entry.status).toBe('POISONOUS');
+        for (const risk of mentions) {
+          expect(risk.confusedWithStatus).toBe('POISONOUS');
+          expect(risk.fatal).toBe(false);
+        }
+      } else {
+        expect(normalStatuses).not.toContain(entry.status);
+        expect(entry.status).toBe('NO_ATLAS_VERDICT');
+        for (const risk of mentions) {
+          expect(normalStatuses).not.toContain(risk.confusedWithStatus);
+          expect(risk.confusedWithStatus).toBe('NO_ATLAS_VERDICT');
+        }
       }
     }
 
     expect(LOOKALIKES_WITHOUT_CARD.amanita_excelsa.note).toBe(NOT_FOR_COLLECTION_NOTE);
     expect(LOOKALIKES_WITHOUT_CARD.calocybe_gambosa.note).toBe(ATLAS_NO_VERDICT_NOTE);
-    expect(LOOKALIKES_WITHOUT_CARD.amanita_rubescens.note).toBe(ATLAS_NO_VERDICT_NOTE);
+    expect(LOOKALIKES_WITHOUT_CARD.rubroboletus_satanas.note).toBe(ATLAS_NO_VERDICT_NOTE);
     expect(LOOKALIKES_WITHOUT_CARD.calocybe_gambosa.note).not.toBe(NOT_FOR_COLLECTION_NOTE);
-    expect(LOOKALIKES_WITHOUT_CARD.amanita_rubescens.note).not.toBe(NOT_FOR_COLLECTION_NOTE);
+    expect(LOOKALIKES_WITHOUT_CARD.rubroboletus_satanas.status).toBe('POISONOUS');
   });
 
   test('fatal is set only when the named look-alike is deadly', () => {
@@ -113,10 +139,7 @@ describe('Mushroom Database & Safety Verification', () => {
 
   test('an empty look-alike list is not a sourced all-clear', () => {
     const empty = MUSHROOMS_DATABASE.filter((species) => species.confusionRisks.length === 0);
-    expect(empty.map((species) => species.id).sort()).toEqual([
-      'amanita_muscaria',
-      'suillus_luteus',
-    ]);
+    expect(empty.map((species) => species.id).sort()).toEqual(['amanita_muscaria']);
 
     for (const species of MUSHROOMS_DATABASE) {
       expect(species.noDangerousLookAlikes).toBeUndefined();
@@ -167,7 +190,22 @@ describe('Mushroom Database & Safety Verification', () => {
   });
 
   test('unfinished edible cards keep their stored status and are marked incomplete', () => {
-    for (const id of ['russula_virescens', 'agaricus_campestris', 'morchella_esculenta', 'hydnum_repandum']) {
+    for (const id of [
+      'russula_virescens',
+      'agaricus_campestris',
+      'amanita_rubescens',
+      'morchella_esculenta',
+      'hydnum_repandum',
+      'neoboletus_luridiformis',
+      'xerocomellus_chrysenteron',
+      'leccinum_aurantiacum',
+      'xerocomus_subtomentosus',
+      'suillus_grevillei',
+      'suillus_bovinus',
+      'suillus_variegatus',
+      'armillaria_mellea',
+      'kuehneromyces_mutabilis',
+    ]) {
       const card = MUSHROOMS_DATABASE.find((species) => species.id === id);
       expect(card?.status).toBe('EDIBLE');
       expect(card?.incompleteCard).toBe(true);
@@ -272,6 +310,17 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(JSON.stringify(hedgehog)).not.toMatch(/lekko truj/);
     expect(hedgehog?.fleshDescription).toMatch(/obróbce termicznej/);
     expect(hedgehog?.warningNotes).toMatch(/^NIE JEDZ NA PODSTAWIE TEJ KARTY\. W literaturze jadalny tylko po obróbce termicznej\./);
+
+    const yellowKnight = MUSHROOMS_DATABASE.find((species) => species.id === 'tricholoma_equestre');
+    expect(yellowKnight?.status).toBe('POISONOUS');
+    expect(yellowKnight?.nameEn).toBe('Yellow knight');
+    expect(`${yellowKnight?.culinaryValue} ${yellowKnight?.warningNotes}`).toMatch(/Dz\.U\. 2026 poz\. 258/);
+    expect(`${yellowKnight?.culinaryValue} ${yellowKnight?.warningNotes}`).toMatch(/rabdomioliz/i);
+    expect(yellowKnight?.confusionRisks.some((risk) => risk.confusedWithId === 'amanita_phalloides' && risk.fatal)).toBe(true);
+
+    const groups = ['boletus_edulis', 'lactarius_deliciosus', 'armillaria_mellea', 'suillus_luteus'] as const;
+    const groupNames = groups.map((id) => MUSHROOMS_DATABASE.find((species) => species.id === id)?.namePl);
+    expect(groupNames).toEqual(['Prawdziwki', 'Rydze', 'Opieńki', 'Maślak zwyczajny i ziarnisty']);
 
     expect(yellowStainer?.stemDescription).toMatch(/szerokim, wyraźnym/);
     expect(yellowStainer?.fleshDescription).toMatch(/potarciu/);

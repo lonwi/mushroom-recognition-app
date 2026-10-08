@@ -137,6 +137,9 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
         
         <View style={styles.heroContent}>
            <Text style={styles.namePl}>{species.namePl}</Text>
+           {species.nameEn ? (
+             <Text style={styles.nameEn} testID="species-name-en">{species.nameEn}</Text>
+           ) : null}
            <Text style={styles.nameLatin}>{species.nameLatin}</Text>
            {photo ? null : (
              <Text style={styles.photoMissingText} testID="species-photo-missing">{t('cards.photoMissing')}</Text>
@@ -176,6 +179,13 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
           <View style={styles.fatalBanner} testID="fatal-lookalike-banner">
             <Text style={styles.fatalBannerTitle}>{t('cardWarnings.fatalBannerTitle')}</Text>
             <Text style={styles.fatalBannerBody}>{t('cardWarnings.fatalBannerBody')}</Text>
+          </View>
+        ) : null}
+
+        {species.id === 'morchella_esculenta' ? (
+          <View style={styles.morelBanner} testID="morel-protection-notice">
+            <Text style={styles.morelBannerTitle}>{t('cards.morelProtectionTitle')}</Text>
+            <Text style={styles.morelBannerBody}>{t('cards.morelProtectionBody')}</Text>
           </View>
         ) : null}
 
@@ -362,6 +372,31 @@ const styles = StyleSheet.create({
   heroContent: {
     paddingHorizontal: 24,
     marginTop: 8,
+  },
+  nameEn: {
+    fontSize: 16,
+    color: '#D1FAE5',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  morelBanner: {
+    marginBottom: 16,
+    backgroundColor: '#FFFBEB',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  morelBannerTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#92400E',
+    marginBottom: 6,
+  },
+  morelBannerBody: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: '#78350F',
   },
   namePl: {
     fontSize: 32,

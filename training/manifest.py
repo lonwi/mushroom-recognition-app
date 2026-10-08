@@ -3,12 +3,18 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 LABELS_PATH = ROOT / "assets" / "models" / "labels.json"
 
+# Poland and the neighbours the regional fetch walks before the global fill.
 CENTRAL_EUROPE = ("PL", "DE", "CZ", "SK", "AT", "HU", "LT", "LV", "EE")
+
+BACKGROUND_CLASS_ID = "not_a_mushroom"
+UNKNOWN_CLASS_ID = "unknown_mushroom"
+AGGREGATE_CLASS_IDS = (UNKNOWN_CLASS_ID, BACKGROUND_CLASS_ID)
 
 
 def load_manifest(path: Path | None = None) -> dict:
@@ -24,8 +30,12 @@ def load_manifest(path: Path | None = None) -> dict:
             raise ValueError(f"class {item['id']} index {item['index']} != position {index}")
         if "status" in item or "edibility" in item:
             raise ValueError(f"class {item['id']} must not carry an edibility verdict")
-    if classes[-1]["id"] != "not_a_mushroom":
+    if len(classes) < 2 or classes[-1]["id"] != BACKGROUND_CLASS_ID:
         raise ValueError("the background class must be last so logit indexes stay stable")
+    if classes[-2]["id"] != UNKNOWN_CLASS_ID:
+        raise ValueError("unknown_mushroom must sit immediately before not_a_mushroom")
+    _validate_sampling(classes)
+    validate_toxic_probes(manifest)
     if manifest.get("model_packaged"):
         model_file = ROOT / "assets" / "models" / manifest["model_file"]
         if not model_file.is_file():
@@ -33,6 +43,348 @@ def load_manifest(path: Path | None = None) -> dict:
     return manifest
 
 
-def fungi_classes(manifest: dict | None = None) -> list[dict]:
+def _gbif_key(value: object, label: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise ValueError(f"{label} needs a positive GBIF usage key, not {value!r}")
+    return value
+
+
+def _claim_key(owner_of: dict[int, str], key: int, owner: str) -> None:
+    previous = owner_of.get(key)
+    if previous is not None and previous != owner:
+        raise ValueError(f"GBIF key {key} is used by both {previous} and {owner}")
+    owner_of[key] = owner
+
+
+def _validate_sampling(classes: list[dict]) -> None:
+    """Collisions are GBIF accepted keys. The same key may repeat only as synonyms of one class."""
+    owner_of: dict[int, str] = {}
+    known_genera: set[str] = set()
+    for item in classes:
+        if item["id"] in AGGREGATE_CLASS_IDS:
+            continue
+        if item.get("sampling"):
+            raise ValueError(f"{item['id']} is a species class and must not set aggregate sampling")
+        tag = item.get("safety_tag")
+        if tag not in ("toxic", "edible", "other"):
+            raise ValueError(f"{item['id']} needs safety_tag toxic, edible, or other")
+        names = [str(name) for name in item.get("gbif_names") or []]
+        keys = item.get("gbif_keys")
+        if not isinstance(keys, list) or len(keys) != len(names) or not names:
+            raise ValueError(f"{item['id']} needs one gbif_keys entry per gbif name")
+        if len(set(names)) != len(names):
+            raise ValueError(f"{item['id']} repeats a GBIF name")
+        genus = str(item.get("genus") or "")
+        if genus:
+            known_genera.add(genus)
+        for name, raw_key in zip(names, keys):
+            _claim_key(owner_of, _gbif_key(raw_key, f"{item['id']} {name}"), item["id"])
+    for item in classes:
+        if item["id"] not in AGGREGATE_CLASS_IDS:
+            continue
+        if item.get("safety_tag"):
+            raise ValueError(f"{item['id']} is not a species and must not carry safety_tag")
+        _validate_aggregate(item, owner_of, known_genera)
+
+
+def _validate_aggregate(item: dict, owner_of: dict[int, str], known_genera: set[str]) -> None:
+    sampling = item.get("sampling") or {}
+    taxa = sampling.get("taxa")
+    if not isinstance(taxa, list) or not taxa:
+        raise ValueError(f"{item['id']} needs sampling.taxa")
+    names = [str(name) for name in item.get("gbif_names") or []]
+    held = [str(name) for name in sampling.get("held_out_gbif_names") or []]
+    per_taxon = sampling.get("per_taxon_cap")
+    class_cap = sampling.get("class_cap")
+    if not isinstance(per_taxon, int) or not isinstance(class_cap, int):
+        raise ValueError(f"{item['id']} needs integer per_taxon_cap and class_cap")
+    if per_taxon < 1 or class_cap < 1:
+        raise ValueError(f"{item['id']} sampling caps must be positive")
+    if not 1500 <= class_cap <= 3000:
+        raise ValueError(f"{item['id']} class_cap must sit between 1500 and 3000 images")
+    if len(names) < 30:
+        raise ValueError(f"{item['id']} needs many taxa, not a handful of GBIF names")
+    if len(held) < 8:
+        raise ValueError(f"{item['id']} must hold taxa out for the test split")
+    if len(set(names)) != len(names) or len(set(held)) != len(held):
+        raise ValueError(f"{item['id']} repeats a GBIF name")
+    taxon_names = []
+    held_from_taxa = []
+    for taxon in taxa:
+        name = str(taxon.get("name") or "")
+        if not name:
+            raise ValueError(f"{item['id']} has a taxon without a name")
+        taxon_names.append(name)
+        if taxon.get("held_out"):
+            held_from_taxa.append(name)
+        relation = taxon.get("relation")
+        if item["id"] == UNKNOWN_CLASS_ID:
+            genus = name.split()[0]
+            expected = "unknown_species_of_known_genus" if genus in known_genera else "unknown_genus"
+            if relation != expected:
+                raise ValueError(f"{name} relation {relation} does not match genus {genus}")
+        elif relation:
+            raise ValueError(f"{item['id']} taxon {name} must not set a genus relation")
+        if not isinstance(taxon.get("toxic"), bool):
+            raise ValueError(f"{name} needs toxic true or false")
+        _claim_key(owner_of, _gbif_key(taxon.get("gbif_key"), name), f"{item['id']}:{name}")
+    if taxon_names != names:
+        raise ValueError(f"{item['id']} gbif_names and sampling.taxa are out of order")
+    if held_from_taxa != held:
+        raise ValueError(f"{item['id']} held_out_gbif_names does not match taxa marked held_out")
+    missing = [name for name in held if name not in names]
+    if missing:
+        raise ValueError(f"{item['id']} held-out names are not in gbif_names: {missing}")
+    if per_taxon * len(names) < 1500:
+        raise ValueError(f"{item['id']} cannot reach 1500 images at the per-taxon cap")
+
+
+_VISUAL_GROUP_MINIMUMS = {
+    # Lepiota cristata has no amatoxins, so this is not an amatoxin claim.
+    # The owner's floor stays 150.
+    "lepiota_lookalikes": 150,
+    "conocybe_pholiotina": 100,
+    "omphalotus": 50,
+    # Inocybe geophylla is about 60 licensed photos and Inosperma erubescens
+    # is 44. 80 still fails if the exception collapses erubescens to 5.
+    "inocybe_muscarine": 80,
+}
+_STRICT_TOP1_GROUPS = ("lepiota_lookalikes", "conocybe_pholiotina")
+# Membership is pinned. Moving a taxon into another group must fail validation.
+_VISUAL_GROUP_TAXA = {
+    "lepiota_lookalikes": (
+        "Lepiota brunneoincarnata",
+        "Lepiota subincarnata",
+        "Lepiota cristata",
+        "Lepiota castanea",
+    ),
+    "conocybe_pholiotina": ("Conocybe filaris", "Conocybe rugosa"),
+    "omphalotus": ("Omphalotus olearius",),
+    "inocybe_muscarine": ("Inosperma erubescens", "Inocybe geophylla"),
+}
+# Amatoxin, orellanine, gyromitrin, or muscarine. Lepiota cristata is not in this set.
+_DEADLY_HELDOUT = frozenset(
+    {
+        "Amanita verna",
+        "Inocybe geophylla",
+        "Inosperma erubescens",
+        "Clitocybe rivulosa",
+        "Gyromitra gigas",
+        "Lepiota brunneoincarnata",
+        "Lepiota subincarnata",
+        "Lepiota castanea",
+        "Conocybe filaris",
+        "Conocybe rugosa",
+    }
+)
+# Conocybe filaris has 78 licensed photos, so it is not an exception.
+_REQUIRED_EXCEPTIONS = ("Lepiota brunneoincarnata", "Inosperma erubescens")
+
+
+def validate_toxic_probes(manifest: dict) -> None:
+    probes = manifest.get("toxic_probes")
+    if not isinstance(probes, dict):
+        raise ValueError("labels.json needs a toxic_probes block")
+    if probes.get("class_id") != UNKNOWN_CLASS_ID:
+        raise ValueError("toxic probes are labeled unknown_mushroom and must not be their own class")
+    cap = probes.get("per_taxon_cap")
+    if not isinstance(cap, int) or cap < 70 or cap > 80:
+        raise ValueError("toxic probes fetch 70 to 80 photos per taxon so dedup can still meet the floor")
+    if probes.get("minimum_poisonous_held_out_images") != 300:
+        raise ValueError("poisonous held-out minimum stays 300")
+    if probes.get("other_taxon_minimum") != 50:
+        raise ValueError("taxa outside a rare-taxon exception need 50 images")
+    if probes.get("rare_exception_minimum") != 5:
+        raise ValueError("a rare-taxon exception needs at least 5 images")
+    if "minimum_images_per_taxon" in probes:
+        raise ValueError("the flat per-taxon probe floor was replaced by visual groups and rare_taxon_exceptions")
+    taxa = probes.get("taxa")
+    if not isinstance(taxa, list) or len(taxa) < 8:
+        raise ValueError("toxic probes need the listed look-alike taxa")
+    classes = manifest["classes"]
+    owner_of: dict[int, str] = {}
+    for item in classes:
+        if item["id"] in AGGREGATE_CLASS_IDS:
+            for taxon in (item.get("sampling") or {}).get("taxa") or []:
+                owner_of[int(taxon["gbif_key"])] = f"{item['id']}:{taxon['name']}"
+            continue
+        for key in item.get("gbif_keys") or []:
+            owner_of[int(key)] = item["id"]
+    known_genera = {str(item.get("genus") or "") for item in classes if item["id"] not in AGGREGATE_CLASS_IDS}
+    seen_names: set[str] = set()
+    for taxon in taxa:
+        name = str(taxon.get("name") or "")
+        if name in seen_names:
+            raise ValueError(f"toxic probe {name} is repeated")
+        seen_names.add(name)
+        if taxon.get("toxic") is not True or taxon.get("held_out") is not True:
+            raise ValueError(f"toxic probe {name} must be toxic and held out of train and val")
+        genus = name.split()[0] if name else ""
+        expected = "unknown_species_of_known_genus" if genus in known_genera else "unknown_genus"
+        if taxon.get("relation") != expected:
+            raise ValueError(f"toxic probe {name} relation does not match genus {genus}")
+        _claim_key(owner_of, _gbif_key(taxon.get("gbif_key"), name), f"probe:{name}")
+    _validate_visual_groups(manifest, probes)
+
+
+def _validate_visual_groups(manifest: dict, probes: dict) -> None:
+    groups = probes.get("visual_groups")
+    if not isinstance(groups, list):
+        raise ValueError("toxic probes need visual_groups")
+    known = _taxon_index(manifest)
+    seen_ids: dict[str, dict] = {}
+    group_of: dict[str, str] = {}
+    for group in groups:
+        group_id = str(group.get("id") or "")
+        if group_id in seen_ids or group_id not in _VISUAL_GROUP_MINIMUMS:
+            raise ValueError(f"unexpected visual group {group_id}")
+        if group.get("minimum_images") != _VISUAL_GROUP_MINIMUMS[group_id]:
+            raise ValueError(f"{group_id} minimum must be {_VISUAL_GROUP_MINIMUMS[group_id]}")
+        if group_id in _STRICT_TOP1_GROUPS and group.get("strict_top1_edible") is not True:
+            raise ValueError(f"{group_id} must set strict_top1_edible true")
+        names = group.get("taxa")
+        if not isinstance(names, list) or not names:
+            raise ValueError(f"{group_id} needs taxa")
+        for name in names:
+            if str(name) not in known:
+                raise ValueError(f"{group_id} taxon {name} is not a poisonous held-out taxon")
+            if name in group_of:
+                raise ValueError(f"{name} is in more than one visual group")
+            group_of[str(name)] = group_id
+        seen_ids[group_id] = group
+    if set(seen_ids) != set(_VISUAL_GROUP_MINIMUMS):
+        raise ValueError("visual groups do not match the Lepiota, Conocybe, Omphalotus, and Inocybe quotas")
+    for group_id, expected in _VISUAL_GROUP_TAXA.items():
+        actual = tuple(str(name) for name in seen_ids[group_id].get("taxa") or [])
+        if actual != expected:
+            raise ValueError(f"{group_id} taxa must stay {', '.join(expected)}")
+    for name, taxon in known.items():
+        deadly = taxon.get("deadly") is True
+        if name in _DEADLY_HELDOUT and not deadly:
+            raise ValueError(f"{name} must stay deadly")
+        if name not in _DEADLY_HELDOUT and deadly:
+            raise ValueError(f"{name} is not a deadly held-out taxon")
+    exceptions = probes.get("rare_taxon_exceptions")
+    if not isinstance(exceptions, list):
+        raise ValueError("toxic probes need rare_taxon_exceptions")
+    seen_exceptions: set[str] = set()
+    for item in exceptions:
+        name = str(item.get("taxon") or "")
+        if not name or name in seen_exceptions:
+            raise ValueError(f"rare exception {name} is missing or repeated")
+        seen_exceptions.add(name)
+        if name not in known:
+            raise ValueError(f"rare exception {name} is not a poisonous held-out taxon")
+        key = _gbif_key(item.get("gbif_key"), name)
+        if key != int(known[name]["gbif_key"]):
+            raise ValueError(f"rare exception {name} GBIF key does not match the manifest")
+        reason = item.get("reason")
+        if not isinstance(reason, str) or len(reason.strip()) < 20:
+            raise ValueError(f"rare exception {name} needs a reason")
+        count = item.get("gbif_licensed_count")
+        if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+            raise ValueError(f"rare exception {name} needs a GBIF licensed count")
+        checked = str(item.get("date_checked") or "")
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", checked):
+            raise ValueError(f"rare exception {name} needs a date_checked of YYYY-MM-DD")
+        group_id = item.get("group_id")
+        if not isinstance(group_id, str) or not group_id:
+            raise ValueError(f"rare exception {name} must belong to a visual group")
+        if name not in group_of or group_id != group_of[name]:
+            raise ValueError(f"rare exception {name} must name visual group {group_of.get(name) or group_id}")
+    extra = sorted(seen_exceptions.difference(_REQUIRED_EXCEPTIONS))
+    if extra:
+        raise ValueError("rare_taxon_exceptions has entries outside the closed list: " + ", ".join(extra))
+    missing = [name for name in _REQUIRED_EXCEPTIONS if name not in seen_exceptions]
+    if missing:
+        raise ValueError(f"rare_taxon_exceptions is missing {', '.join(missing)}")
+
+
+def _taxon_index(manifest: dict) -> dict[str, dict]:
+    """Poisonous held-out taxa by scientific name, probes included."""
+    found: dict[str, dict] = {}
+    for item in manifest["classes"]:
+        if item["id"] != UNKNOWN_CLASS_ID:
+            continue
+        for taxon in (item.get("sampling") or {}).get("taxa") or []:
+            if taxon.get("toxic") and taxon.get("held_out"):
+                found[str(taxon["name"])] = taxon
+    for taxon in (manifest.get("toxic_probes") or {}).get("taxa") or []:
+        if taxon.get("toxic") and taxon.get("held_out"):
+            found[str(taxon["name"])] = taxon
+    return found
+
+
+def deadly_heldout_taxa(manifest: dict | None = None) -> list[str]:
+    """Held-out names whose edible top-1 must be zero, plus strict visual groups.
+
+    A `deadly: true` flag marks amatoxin, orellanine, gyromitrin, or muscarine
+    taxa. Lepiota cristata is not in that set. Strict groups are included even
+    when a member is only a look-alike.
+    """
     manifest = manifest or load_manifest()
-    return [item for item in manifest["classes"] if item["id"] != "not_a_mushroom"]
+    names: list[str] = []
+    seen: set[str] = set()
+    for group in (manifest.get("toxic_probes") or {}).get("visual_groups") or []:
+        if group.get("strict_top1_edible") is not True:
+            continue
+        for name in group.get("taxa") or []:
+            text = str(name)
+            if text not in seen:
+                names.append(text)
+                seen.add(text)
+    for name, taxon in _taxon_index(manifest).items():
+        if taxon.get("deadly") is True and name not in seen:
+            names.append(name)
+            seen.add(name)
+    return names
+
+
+def poisonous_heldout_taxa(manifest: dict | None = None) -> list[str]:
+    """Poisonous taxa that never enter train or val, including toxic probes.
+
+    A taxon with no downloaded photos is still listed. The ship gate needs
+    that zero so a short GBIF name cannot vanish from the sample check.
+    """
+    manifest = manifest or load_manifest()
+    names: list[str] = []
+    for item in manifest["classes"]:
+        if item["id"] != UNKNOWN_CLASS_ID:
+            continue
+        for taxon in (item.get("sampling") or {}).get("taxa") or []:
+            if taxon.get("toxic") and taxon.get("held_out"):
+                names.append(str(taxon["name"]))
+    for taxon in (manifest.get("toxic_probes") or {}).get("taxa") or []:
+        if taxon.get("toxic") and taxon.get("held_out"):
+            names.append(str(taxon["name"]))
+    return names
+
+
+def safety_catalog(manifest: dict | None = None) -> dict:
+    """Edible class ids and poisonous taxa. This is an evaluation label, not a verdict to show."""
+    manifest = manifest or load_manifest()
+    edible: set[str] = set()
+    toxic_classes: set[str] = set()
+    taxa: dict[str, dict] = {}
+    for item in manifest["classes"]:
+        if item["id"] in AGGREGATE_CLASS_IDS:
+            for taxon in (item.get("sampling") or {}).get("taxa") or []:
+                taxa[str(taxon["name"])] = taxon
+            continue
+        if item.get("safety_tag") == "edible":
+            edible.add(item["id"])
+        elif item.get("safety_tag") == "toxic":
+            toxic_classes.add(item["id"])
+    for taxon in (manifest.get("toxic_probes") or {}).get("taxa") or []:
+        taxa[str(taxon["name"])] = taxon
+    return {"edible_ids": edible, "toxic_class_ids": toxic_classes, "taxa": taxa}
+
+
+def species_classes(manifest: dict | None = None) -> list[dict]:
+    """Known species. Excludes the unknown-fungus class and the background class."""
+    manifest = manifest or load_manifest()
+    return [item for item in manifest["classes"] if item["id"] not in AGGREGATE_CLASS_IDS]
+
+
+def fungi_classes(manifest: dict | None = None) -> list[dict]:
+    return species_classes(manifest)

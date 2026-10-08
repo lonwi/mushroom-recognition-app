@@ -32,9 +32,28 @@ jest.mock('expo-location', () => ({
 }));
 
 // The preset mock omits documentDirectory, so journal photos would look unsaved.
+jest.mock('expo-asset', () => {
+  class Asset {
+    localUri = 'file:///mock/attributions.jsonl';
+    uri = 'file:///mock/attributions.jsonl';
+    downloaded = true;
+    downloadAsync() {
+      return Promise.resolve();
+    }
+    static fromModule() {
+      return new Asset();
+    }
+    static fromURI() {
+      return new Asset();
+    }
+  }
+  return { Asset };
+});
+
 jest.mock('expo-file-system/legacy', () => ({
   documentDirectory: 'file:///mock/document/',
   cacheDirectory: 'file:///mock/cache/',
+  readAsStringAsync: jest.fn(() => Promise.resolve('')),
   copyAsync: jest.fn(() => Promise.resolve()),
   deleteAsync: jest.fn(() => Promise.resolve()),
   makeDirectoryAsync: jest.fn(() => Promise.resolve()),

@@ -1,12 +1,75 @@
-"""Train/val/test split grouped by GBIF occurrence.
+"""Train/val/test split grouped so near-duplicate field photos stay together.
 
-Photos from the same observation never land in two splits.
+The group is the recorder, a 0.01-degree grid (about 1.1 km north-south),
+and the calendar day, when those fields exist. Otherwise the group is the
+GBIF occurrence. Photos from one group never land in two splits.
 """
 
 from __future__ import annotations
 
+import math
 import random
 from collections import defaultdict
+
+
+def collector_group_key(record: dict) -> str:
+    """Recorder + ~1 km grid + day, or the occurrence when that is missing."""
+    recorded = " ".join(str(record.get("recorded_by") or "").casefold().split())
+    day = str(record.get("event_date") or "")[:10]
+    lat = record.get("decimal_latitude")
+    lon = record.get("decimal_longitude")
+    class_id = record.get("class_id") or ""
+    if recorded and len(day) == 10 and day[4] == "-" and day[7] == "-" and lat is not None and lon is not None:
+        try:
+            lat_f = float(lat)
+            lon_f = float(lon)
+        except (TypeError, ValueError):
+            lat_f = float("nan")
+            lon_f = float("nan")
+        if math.isfinite(lat_f) and math.isfinite(lon_f):
+            lat_bin = round(lat_f / 0.01) * 0.01
+            lon_bin = round(lon_f / 0.01) * 0.01
+            taxon = str(record.get("taxon_name") or record.get("queried_name") or "")
+            return f"collector:{class_id}:{taxon}:{recorded}:{lat_bin:.2f}:{lon_bin:.2f}:{day}"
+    return f"occurrence:{class_id}:{record.get('occurrence_key')}"
+
+
+def collector_grid_key(record: dict) -> str | None:
+    """Recorder + ~1 km grid, without the calendar day.
+
+    This is a leakage report, not the split key. Two days from the same person
+    in the same square stay one group here and two groups in `collector_group_key`.
+    """
+    recorded = " ".join(str(record.get("recorded_by") or "").casefold().split())
+    lat = record.get("decimal_latitude")
+    lon = record.get("decimal_longitude")
+    if not recorded or lat is None or lon is None:
+        return None
+    try:
+        lat_f = float(lat)
+        lon_f = float(lon)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(lat_f) or not math.isfinite(lon_f):
+        return None
+    lat_bin = round(lat_f / 0.01) * 0.01
+    lon_bin = round(lon_f / 0.01) * 0.01
+    class_id = record.get("class_id") or ""
+    taxon = str(record.get("taxon_name") or record.get("queried_name") or "")
+    return f"grid:{class_id}:{taxon}:{recorded}:{lat_bin:.2f}:{lon_bin:.2f}"
+
+
+def split_key_summary(records: list[dict]) -> dict[str, int]:
+    collector_keys = [collector_group_key(record) for record in records]
+    collector = sum(1 for key in collector_keys if key.startswith("collector:"))
+    grid_keys = [key for key in (collector_grid_key(record) for record in records) if key]
+    return {
+        "collector_grid_day": collector,
+        "collector_grid_day_groups": len({key for key in collector_keys if key.startswith("collector:")}),
+        "occurrence_fallback": len(records) - collector,
+        "collector_grid": len(grid_keys),
+        "collector_grid_groups": len(set(grid_keys)),
+    }
 
 
 def split_by_observation(
@@ -18,11 +81,11 @@ def split_by_observation(
     if val_ratio < 0 or test_ratio < 0 or val_ratio + test_ratio >= 1:
         raise ValueError("val and test ratios must leave a non-empty train share")
 
-    grouped: dict[str, dict[str, list[dict]]] = defaultdict(lambda: defaultdict(list))
+    held_out = [record for record in records if record.get("held_out_taxon")]
+    records = [record for record in records if not record.get("held_out_taxon")]
+    grouped = defaultdict(lambda: defaultdict(list))
     for record in records:
-        class_id = record["class_id"]
-        occurrence = str(record["occurrence_key"])
-        grouped[class_id][occurrence].append(record)
+        grouped[record["class_id"]][collector_group_key(record)].append(record)
 
     splits: dict[str, list[dict]] = {"train": [], "val": [], "test": []}
     for class_id in sorted(grouped):
@@ -51,16 +114,20 @@ def split_by_observation(
                 val_count += len(group)
             else:
                 splits["train"].extend(group)
+    # Taxa marked held_out_taxon never enter train or val. Their test score is
+    # generalization to fungi (or non-fungi) the model was not trained on.
+    for record in held_out:
+        splits["test"].append(record)
     _assert_occurrence_integrity(splits)
     return splits
 
 
 def _assert_occurrence_integrity(splits: dict[str, list[dict]]) -> None:
-    seen: dict[tuple[str, str], str] = {}
+    seen: dict[str, str] = {}
     for name, records in splits.items():
         for record in records:
-            key = (record["class_id"], str(record["occurrence_key"]))
+            key = collector_group_key(record)
             previous = seen.get(key)
             if previous is not None and previous != name:
-                raise RuntimeError(f"occurrence {key} leaked into both {previous} and {name}")
+                raise RuntimeError(f"photo group {key} leaked into both {previous} and {name}")
             seen[key] = name

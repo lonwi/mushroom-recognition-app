@@ -18,9 +18,19 @@ export const pl = {
     pl: 'Polski',
     en: 'English',
     offlineNotice: 'Model i baza danych działają w 100% offline bez połączenia z siecią.',
-    dataLicenseTitle: 'Licencje zdjęć treningowych',
+    dataLicenseTitle: 'Licencje zdjęć zbioru',
     dataLicenseBody:
-      'Model, jeśli zostanie dołączony, wolno trenować tylko na zdjęciach CC0 albo CC-BY (bez NC i SA). Przy każdym zdjęciu zapisujemy autora, licencję i adres źródła w training/data/attributions.jsonl. Tego pliku nie wolno pominąć przy dystrybucji modelu.',
+      'Model, jeśli zostanie dołączony, wolno trenować tylko na zdjęciach CC0 albo CC-BY (bez NC i SA). Lista obejmuje zdjęcia treningowe, testowe i sondy oceniające. Przy każdym zapisujemy autora, licencję i adres źródła. Eksport zapisuje je obok modelu w assets/models/attributions.jsonl.',
+    photoCreditsOpen: 'Autorzy zdjęć zbioru',
+    photoCreditsClose: 'Ukryj autorów zdjęć',
+    photoCreditsLead:
+      'Zdjęcia CC0 i CC-BY ze zbioru dołączonego modelu: trening, test i sondy oceniające.',
+    photoCreditsEmpty:
+      'Nie ma dołączonego modelu, więc nie ma listy autorów zdjęć. Rozpoznawanie ze skanu pozostaje wyłączone.',
+    photoCreditsUnknownAuthor: 'Autor niepodany',
+    photoCreditsBack: 'Wróć do ustawień',
+    photoCreditsSearch: 'Szukaj autora lub gatunku',
+    photoCreditsNoMatches: 'Brak autorów pasujących do wyszukiwania.',
     about: 'O aplikacji',
     version: 'Wersja 1.0.0 (On-Device AI)',
     atlasScope:
@@ -74,6 +84,9 @@ export const pl = {
     useLiterature: 'Znaczenie w literaturze',
     sourceLanguageNote:
       'Opisy, różnice sobowtórów i morfologia są tekstem źródłowym po polsku. Skróty miesięcy są w języku aplikacji.',
+    morelProtectionTitle: 'Ochrona częściowa w Polsce',
+    morelProtectionBody:
+      'Nie zbieraj dziko rosnących. Smardze są w Polsce objęte ochroną częściową. Zbiór tylko za zezwoleniem, z wyjątkiem okazów rosnących na terenie ogrodów, upraw ogrodniczych, szkółek leśnych oraz terenów zieleni (rozporządzenie Ministra Środowiska z 9 października 2014 r., Dz.U. 2014 poz. 1408). Ta informacja nie jest zezwoleniem.',
     family: 'RODZINA',
     otherNames: 'INNE NAZWY',
     seasonPoland: 'SEZON WYSTĘPOWANIA W POLSCE',
@@ -113,6 +126,10 @@ export const pl = {
       'Zdjęcie nie zostało uznane za grzyba z zestawu klas albo leży poza rozkładem, którego model się nauczył. Gatunek nie został podany.',
     rejectedUnclear: 'Obraz jest zbyt niejednoznaczny, żeby podać gatunek.',
     rejectedVerify: 'Jeśli to jednak grzyb, oceń go u grzyboznawcy albo w Sanepidzie.',
+    unknownMushroomTitle: 'Nieznany grzyb',
+    unknownMushroomBody:
+      'To wygląda na grzyba, którego aplikacja nie zna. Nie zbieraj go ani nie jedz na podstawie skanu.',
+    unknownMushroomDeadly: 'Ten grzyb może być śmiertelnie trujący.',
     candidatesTitle: 'Kandydaci ze skanu',
     candidatesLead: 'Trzy najwyższe wskazania modelu. To nie jest oznaczenie gatunku do zbioru.',
     notEdibilityVerdict: 'Ten skan nie jest oceną jadalności.',
@@ -172,6 +189,7 @@ export const pl = {
     unavailableTitle: 'Rozpoznawanie niedostępne',
     unclearTitle: 'Niepewny wynik',
     notMushroomTitle: 'To nie jest grzyb z modelu',
+    unknownMushroomTitle: 'Nieznany grzyb',
     candidatesTitle: 'Kandydaci ze skanu',
     openCandidate: 'Karta kandydata w atlasie',
     openMap: 'Otwórz miejsce w mapach',
