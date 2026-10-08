@@ -1,9 +1,16 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AtlasScreen } from '../../screens/AtlasScreen';
 import { LanguageProvider } from '../../contexts/LanguageContext';
+import { en } from '../../i18n/en';
+import { pl } from '../../i18n/pl';
 
 describe('AtlasScreen RTL Tests', () => {
+  beforeEach(async () => {
+    await AsyncStorage.clear();
+  });
+
   it('renders search input and mushroom list', async () => {
     const onSelect = jest.fn();
     const { getByPlaceholderText, getByText } = await render(
@@ -72,7 +79,7 @@ describe('AtlasScreen RTL Tests', () => {
 
   it('shows a no-photo state for look-alikes that have no picture', async () => {
     const onSelect = jest.fn();
-    const { getByPlaceholderText, getByTestId, queryByTestId, queryByText } = await render(
+    const { getByPlaceholderText, getByTestId, getByText, queryByTestId, queryByText } = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={onSelect} />
       </LanguageProvider>
@@ -85,6 +92,7 @@ describe('AtlasScreen RTL Tests', () => {
 
     await waitFor(() => {
       expect(getByTestId('atlas-photo-missing-russula_virescens')).toBeTruthy();
+      expect(getByText('Brak zdjęcia')).toBeTruthy();
       expect(queryByTestId('atlas-photo-russula_virescens')).toBeNull();
       expect(getByTestId('incomplete-card-badge-russula_virescens')).toBeTruthy();
       expect(queryByText('JADALNY')).toBeNull();
@@ -192,6 +200,63 @@ describe('AtlasScreen RTL Tests', () => {
     await waitFor(() => {
       expect(getByText('Muchomor jadowity')).toBeTruthy();
       expect(queryByText('Borowik szlachetny')).toBeNull();
+    });
+  });
+
+  it('keeps Polish list labels and does not show the source-language note', async () => {
+    const screen = await render(
+      <LanguageProvider>
+        <AtlasScreen onSelectSpecies={() => {}} />
+      </LanguageProvider>
+    );
+
+    expect(screen.getByText('Borowik szlachetny')).toBeTruthy();
+    expect(screen.getByTestId('atlas-months-boletus_edulis').props.children).toBe('📅 6 - 11 mies.');
+    expect(screen.queryByTestId('atlas-source-language-note')).toBeNull();
+    expect(screen.queryByText(en.cards.sourceLanguageNote)).toBeNull();
+    expect(pl.atlas.monthRange).toBe('{start} - {end} mies.');
+
+    await fireEvent.press(screen.getByTestId('filter-status-DEADLY_POISONOUS'));
+    await waitFor(() => {
+      expect(screen.getAllByText('☠ Sobowtór!').length).toBeGreaterThan(0);
+      expect(screen.queryByText('☠ Look-alike!')).toBeNull();
+      expect(screen.queryByTestId('atlas-source-language-note')).toBeNull();
+    });
+  });
+
+  it('shows English list labels, English months, and the Polish source-text note', async () => {
+    await AsyncStorage.setItem('app_language', 'en');
+    const screen = await render(
+      <LanguageProvider>
+        <AtlasScreen onSelectSpecies={() => {}} />
+      </LanguageProvider>
+    );
+
+    expect(await screen.findByTestId('atlas-source-language-note')).toBeTruthy();
+    expect(screen.getByText(en.cards.sourceLanguageNote)).toBeTruthy();
+    expect(screen.getByText(/source text in Polish/)).toBeTruthy();
+    expect(screen.getByText(/look-alike differences/)).toBeTruthy();
+    expect(screen.getByText(/morphology/)).toBeTruthy();
+    expect(screen.queryByText(pl.cards.sourceLanguageNote)).toBeNull();
+    expect(screen.getByTestId('atlas-months-boletus_edulis').props.children).toBe('📅 months 6–11');
+    expect(screen.queryByText(/mies\./)).toBeNull();
+    expect(screen.getByText('Borowik szlachetny')).toBeTruthy();
+
+    await fireEvent.changeText(
+      screen.getByPlaceholderText(en.atlas.searchPlaceholder),
+      'Gołąbek zielonawy'
+    );
+    await waitFor(() => {
+      expect(screen.getByText('No photo')).toBeTruthy();
+      expect(screen.queryByText('Brak zdjęcia')).toBeNull();
+    });
+
+    await fireEvent.changeText(screen.getByPlaceholderText(en.atlas.searchPlaceholder), '');
+    await fireEvent.press(screen.getByTestId('filter-status-DEADLY_POISONOUS'));
+    await waitFor(() => {
+      expect(screen.getAllByText('☠ Look-alike!').length).toBeGreaterThan(0);
+      expect(screen.queryByText('☠ Sobowtór!')).toBeNull();
+      expect(screen.getByTestId('atlas-source-language-note')).toBeTruthy();
     });
   });
 });

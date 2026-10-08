@@ -30,7 +30,7 @@ function hasGps(item: SightingRecord): item is SightingRecord & { latitude: numb
 }
 
 export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [sightings, setSightings] = useState<SightingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [journalDamaged, setJournalDamaged] = useState(false);
@@ -237,7 +237,7 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
   const renderItem = ({ item }: { item: SightingRecord }) => {
     const dateStr =
       item.timestamp > 0
-        ? new Date(item.timestamp).toLocaleDateString('pl-PL', {
+        ? new Date(item.timestamp).toLocaleDateString(language === 'en' ? 'en-GB' : 'pl-PL', {
             day: '2-digit',
             month: 'long',
             year: 'numeric',

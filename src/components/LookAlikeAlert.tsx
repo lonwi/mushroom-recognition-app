@@ -3,10 +3,14 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { ConfusionRisk, EdibilityStatus } from '../types/mushroom';
 import { MissingCardBadge, SpeciesStatusBadge } from './EdibilityBadge';
 import {
+  ATLAS_NO_VERDICT_NOTE,
   isIncompleteSpeciesCard,
   LOOKALIKES_WITHOUT_CARD,
   MUSHROOM_IDS,
+  NOT_FOR_COLLECTION_NOTE,
 } from '../data/mushrooms';
+import { useLanguage } from '../contexts/LanguageContext';
+import { pl } from '../i18n/pl';
 
 interface Props {
   risks: ConfusionRisk[];
@@ -22,9 +26,8 @@ interface Props {
   onOpenSpecies?: (speciesId: string) => void;
 }
 
-export const INCOMPLETE_LOOKALIKE_TITLE = 'Informacja o sobowtórach jest niepełna';
-export const INCOMPLETE_LOOKALIKE_BODY =
-  'Pusta lista nie oznacza braku groźnych sobowtórów. Nie traktuj jej jako zgody na zbiór. Oznaczenie potwierdź u grzyboznawcy lub w stacji Sanepid.';
+export const INCOMPLETE_LOOKALIKE_TITLE = pl.lookalike.incompleteTitle;
+export const INCOMPLETE_LOOKALIKE_BODY = pl.lookalike.incompleteBody;
 
 export const LookAlikeAlert: React.FC<Props> = ({
   risks,
@@ -33,17 +36,22 @@ export const LookAlikeAlert: React.FC<Props> = ({
   ownStatus,
   onOpenSpecies,
 }) => {
+  const { t } = useLanguage();
   const list = risks ?? [];
   const source = noDangerousLookAlikesSource?.trim() ?? '';
+  const noteFor = (note: string) => {
+    if (note === ATLAS_NO_VERDICT_NOTE) return t('lookalike.noVerdict');
+    if (note === NOT_FOR_COLLECTION_NOTE) return t('lookalike.notForCollection');
+    return note;
+  };
 
   if (list.length === 0) {
     if (source) {
       return (
         <View style={styles.sourcedContainer} testID="lookalike-sourced-clearance">
-          <Text style={styles.sourcedTitle}>W danych zapisano brak groźnych sobowtórów</Text>
+          <Text style={styles.sourcedTitle}>{t('lookalike.sourcedTitle')}</Text>
           <Text style={styles.sourcedDesc}>
-            To świadomy wpis ze źródłem, a nie wniosek z pustej listy. Źródło: {source}. Przed
-            spożyciem i tak potwierdź oznaczenie u grzyboznawcy.
+            {t('lookalike.sourcedBody').replace('{source}', source)}
           </Text>
         </View>
       );
@@ -51,8 +59,8 @@ export const LookAlikeAlert: React.FC<Props> = ({
 
     return (
       <View style={styles.incompleteContainer} testID="lookalike-incomplete">
-        <Text style={styles.incompleteTitle}>{INCOMPLETE_LOOKALIKE_TITLE}</Text>
-        <Text style={styles.incompleteDesc}>{INCOMPLETE_LOOKALIKE_BODY}</Text>
+        <Text style={styles.incompleteTitle}>{t('lookalike.incompleteTitle')}</Text>
+        <Text style={styles.incompleteDesc}>{t('lookalike.incompleteBody')}</Text>
       </View>
     );
   }
@@ -65,11 +73,9 @@ export const LookAlikeAlert: React.FC<Props> = ({
         <Text style={styles.headerIcon}>{hasFatal ? '☠' : '⚠'}</Text>
         <View style={styles.headerTextCol}>
           <Text style={[styles.headerTitle, hasFatal && styles.fatalTitle]}>
-            {hasFatal ? 'ŚMIERTELNIE GROŹNE SOBOWTÓRY!' : 'Uwaga na możliwe pomyłki'}
+            {hasFatal ? t('lookalike.fatalTitle') : t('lookalike.warningTitle')}
           </Text>
-          <Text style={styles.headerSubtitle}>
-            Przed zbiorem koniecznie sprawdź poniższe różnice morfologiczne:
-          </Text>
+          <Text style={styles.headerSubtitle}>{t('lookalike.subtitle')}</Text>
         </View>
       </View>
 
@@ -88,7 +94,9 @@ export const LookAlikeAlert: React.FC<Props> = ({
         return (
           <View key={`${risk.confusedWithId}-${idx}`} style={styles.riskCard}>
             <View style={styles.riskTop}>
-              <Text style={styles.riskName}>Można pomylić z: {risk.confusedWithName}</Text>
+              <Text style={styles.riskName}>
+                {t('lookalike.confusedWith').replace('{name}', risk.confusedWithName)}
+              </Text>
               <View testID={`lookalike-status-${risk.confusedWithId}`}>
                 {inCatalog && verdict !== 'NO_ATLAS_VERDICT' ? (
                   <SpeciesStatusBadge
@@ -109,17 +117,17 @@ export const LookAlikeAlert: React.FC<Props> = ({
                 accessibilityRole="button"
                 activeOpacity={0.7}
               >
-                <Text style={styles.linkText}>Zobacz kartę w atlasie</Text>
+                <Text style={styles.linkText}>{t('lookalike.openCard')}</Text>
               </TouchableOpacity>
             ) : null}
             {!inCatalog ? (
               <Text style={styles.unlinkedNote} testID={`lookalike-unlinked-${risk.confusedWithId}`}>
-                Brak karty w atlasie — nazwa tylko informacyjna, bez linku.
-                {withoutCard ? ` ${withoutCard.note}.` : ''}
+                {t('lookalike.unlinked')}
+                {withoutCard ? ` ${noteFor(withoutCard.note)}.` : ''}
               </Text>
             ) : null}
             <View style={styles.differencesBox}>
-              <Text style={styles.diffLabel}>Kluczowe różnice rozpoznawcze:</Text>
+              <Text style={styles.diffLabel}>{t('lookalike.differences')}</Text>
               {risk.keyDifferences.map((diff, dIdx) => (
                 <View key={dIdx} style={styles.bulletRow}>
                   <Text style={styles.bulletDot}>•</Text>

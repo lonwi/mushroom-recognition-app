@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GOLDEN_RULES, POISON_SYNDROMES, TOXICOLOGY_CENTERS } from '../data/safetyRules';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Props {
   onShowDisclaimer: () => void;
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export const SafetyGuideScreen = ({ onShowDisclaimer, onOpenPreparation }: Props) => {
+  const { t } = useLanguage();
   const handleCall = (phone: string) => {
     const cleanNumber = phone.replace(/\s+/g, '');
     Linking.openURL(`tel:${cleanNumber}`);
@@ -25,10 +27,8 @@ export const SafetyGuideScreen = ({ onShowDisclaimer, onOpenPreparation }: Props
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Poradnik Bezpieczeństwa & Pomoc</Text>
-          <Text style={styles.headerSubtitle}>
-            Zasady bezpiecznego grzybobrania i telefony ratunkowe
-          </Text>
+          <Text style={styles.headerTitle}>{t('safetyGuide.title')}</Text>
+          <Text style={styles.headerSubtitle}>{t('safetyGuide.subtitle')}</Text>
         </View>
 
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
@@ -40,48 +40,52 @@ export const SafetyGuideScreen = ({ onShowDisclaimer, onOpenPreparation }: Props
           >
             <Text style={styles.emergency112Icon}>🚨</Text>
             <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={styles.emergency112Title}>Zadzwoń pod numer alarmowy 112</Text>
-              <Text style={styles.emergency112Sub}>
-                W przypadku podejrzenia spożycia trującego grzyba
-              </Text>
+              <Text style={styles.emergency112Title}>{t('safetyGuide.call112Title')}</Text>
+              <Text style={styles.emergency112Sub}>{t('safetyGuide.call112Sub')}</Text>
             </View>
           </TouchableOpacity>
 
           {/* Złote zasady grzybiarza */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🌲 Złote Zasady Grzybiarza</Text>
+            <Text style={styles.sectionTitle}>{t('safetyGuide.goldenRulesTitle')}</Text>
             {GOLDEN_RULES.map((rule) => (
               <View
                 key={rule.id}
                 style={[styles.ruleCard, rule.critical && styles.ruleCardCritical]}
               >
                 <View style={styles.ruleTop}>
-                  <Text style={styles.ruleBadge}>{rule.critical ? '⚡ WAŻNE' : 'ℹ WSKAZÓWKA'}</Text>
-                  <Text style={styles.ruleTitle}>{rule.title}</Text>
+                  <Text style={styles.ruleBadge}>
+                    {rule.critical ? t('safetyGuide.badgeCritical') : t('safetyGuide.badgeTip')}
+                  </Text>
+                  <Text style={styles.ruleTitle}>{t(`safetyGuide.rules.${rule.id}.title`)}</Text>
                 </View>
-                <Text style={styles.ruleDesc}>{rule.description}</Text>
+                <Text style={styles.ruleDesc}>{t(`safetyGuide.rules.${rule.id}.description`)}</Text>
               </View>
             ))}
           </View>
 
           {/* Główne zespoły zatruć */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>☠ Rozpoznawanie Objawów Zatrucia</Text>
-            {POISON_SYNDROMES.map((syn, idx) => (
-              <View key={idx} style={styles.syndromeCard}>
-                <Text style={styles.synName}>{syn.name}</Text>
-                <Text style={styles.synSpecies}>Gatunki: {syn.species}</Text>
+            <Text style={styles.sectionTitle}>{t('safetyGuide.syndromesTitle')}</Text>
+            {POISON_SYNDROMES.map((syn) => (
+              <View key={syn.id} style={styles.syndromeCard}>
+                <Text style={styles.synName}>{t(`safetyGuide.syndromes.${syn.id}.name`)}</Text>
+                <Text style={styles.synSpecies}>
+                  {t('safetyGuide.speciesLabel')} {t(`safetyGuide.syndromes.${syn.id}.species`)}
+                </Text>
 
                 <View style={styles.latencyBox}>
-                  <Text style={styles.latencyLabel}>Czas ujawnienia objawów:</Text>
-                  <Text style={styles.latencyVal}>{syn.latency}</Text>
+                  <Text style={styles.latencyLabel}>{t('safetyGuide.latencyLabel')}</Text>
+                  <Text style={styles.latencyVal}>{t(`safetyGuide.syndromes.${syn.id}.latency`)}</Text>
                 </View>
 
-                <Text style={styles.synSymptomsLabel}>Objawy:</Text>
-                <Text style={styles.synSymptomsText}>{syn.symptoms}</Text>
+                <Text style={styles.synSymptomsLabel}>{t('safetyGuide.symptomsLabel')}</Text>
+                <Text style={styles.synSymptomsText}>{t(`safetyGuide.syndromes.${syn.id}.symptoms`)}</Text>
 
                 <View style={styles.synActionBox}>
-                  <Text style={styles.synActionText}>🚨 Postępowanie: {syn.action}</Text>
+                  <Text style={styles.synActionText}>
+                    {t('safetyGuide.actionLabel')} {t(`safetyGuide.syndromes.${syn.id}.action`)}
+                  </Text>
                 </View>
               </View>
             ))}
@@ -89,17 +93,18 @@ export const SafetyGuideScreen = ({ onShowDisclaimer, onOpenPreparation }: Props
 
           {/* Ośrodki Informacji Toksykologicznej w Polsce */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📞 Ośrodki Toksykologiczne w Polsce (24/7)</Text>
-            <Text style={styles.sectionSub}>
-              Dyżurni toksykolodzy udzielają natychmiastowych porad telefonicznych:
-            </Text>
+            <Text style={styles.sectionTitle}>{t('safetyGuide.centersTitle')}</Text>
+            <Text style={styles.sectionSub}>{t('safetyGuide.centersSub')}</Text>
 
             {TOXICOLOGY_CENTERS.map((center, idx) => (
               <View key={idx} style={styles.centerRow}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.centerCity}>{center.city}</Text>
                   <Text style={styles.centerAddress}>{center.address}</Text>
-                  <Text style={styles.centerHours}>Dostępność: {center.hours}</Text>
+                  <Text style={styles.centerHours}>
+                    {t('safetyGuide.availabilityLabel')}{' '}
+                    {center.hours === 'Całodobowo 24/7' ? t('safetyGuide.hours247') : center.hours}
+                  </Text>
                 </View>
 
                 <TouchableOpacity
@@ -121,10 +126,8 @@ export const SafetyGuideScreen = ({ onShowDisclaimer, onOpenPreparation }: Props
             >
               <Text style={styles.preparationIcon}>🍳</Text>
               <View style={{ flex: 1, marginLeft: 10 }}>
-                <Text style={styles.preparationTitle}>Jak przygotować grzyby?</Text>
-                <Text style={styles.preparationSub}>
-                  Poradnik czyszczenia, gotowania i przechowywania
-                </Text>
+                <Text style={styles.preparationTitle}>{t('safetyGuide.preparationTitle')}</Text>
+                <Text style={styles.preparationSub}>{t('safetyGuide.preparationSub')}</Text>
               </View>
             </TouchableOpacity>
           )}
@@ -135,9 +138,7 @@ export const SafetyGuideScreen = ({ onShowDisclaimer, onOpenPreparation }: Props
             onPress={onShowDisclaimer}
             activeOpacity={0.7}
           >
-            <Text style={styles.disclaimerReopenText}>
-              📄 Przeczytaj ponownie Regulamin i Ostrzeżenie AI
-            </Text>
+            <Text style={styles.disclaimerReopenText}>{t('safetyGuide.reopenDisclaimer')}</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
