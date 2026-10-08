@@ -53,5 +53,23 @@ describe('Polish and English dictionaries', () => {
     expect(en.safetyGuide.syndromes.amatoxin.action).toMatch(/IMMEDIATELY/);
     expect(en.safetyGuide.rules.rule_tubes_first.description).toMatch(/NO deadly poisonous/);
     expect(en.journal.legacyEdibility).toMatch(/^Do not eat/);
+
+    expect(pl.cards.useKitchen).toBe('W kuchni');
+    expect(pl.cards.useToxic).toBe('Toksyczność i objawy');
+    expect(pl.cards.useInedible).toBe('Nie do jedzenia');
+    expect(pl.cards.useLiterature).toBe('Znaczenie w literaturze');
+    expect(pl.cards.photoMissing).toBe('Brak zdjęcia');
+    expect(pl.atlas.lookAlikeTag).toBe('☠ Sobowtór!');
+    expect(pl.atlas.monthRange).toBe('{start} - {end} mies.');
+    expect(pl.months.jan).toBe('Sty');
+    expect(pl.months.dec).toBe('Gru');
+    expect(en.cards.sourceLanguageNote).toMatch(/source text in Polish/);
+    expect(en.cards.sourceLanguageNote).toMatch(/Descriptions/);
+    expect(en.cards.sourceLanguageNote).toMatch(/look-alike/);
+    expect(en.cards.sourceLanguageNote).toMatch(/morphology/);
+    expect(en.months.jan).toBe('Jan');
+    expect(en.months.jun).toBe('Jun');
+    expect(en.atlas.lookAlikeTag).toBe('☠ Look-alike!');
+    expect(en.cards.photoMissing).toBe('No photo');
   });
 });

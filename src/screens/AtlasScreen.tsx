@@ -21,7 +21,7 @@ interface Props {
 }
 
 export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
   const [hymenophoreFilter, setHymenophoreFilter] = useState<HymenophoreFilter>('ALL');
@@ -47,7 +47,9 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
         ? t('atlas.hymenophoreSpines')
         : t('atlas.hymenophoreOther');
 
-    const monthsStr = `${item.months[0]} - ${item.months[item.months.length - 1]} mies.`;
+    const monthsStr = t('atlas.monthRange')
+      .replace('{start}', String(item.months[0]))
+      .replace('{end}', String(item.months[item.months.length - 1]));
 
     const photo = getMushroomImage(item.id);
 
@@ -67,7 +69,7 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
             />
           ) : (
             <View style={[styles.cardThumbnail, styles.cardThumbnailMissing]} testID={`atlas-photo-missing-${item.id}`}>
-              <Text style={styles.cardThumbnailMissingText}>Brak zdjęcia</Text>
+              <Text style={styles.cardThumbnailMissingText}>{t('cards.photoMissing')}</Text>
             </View>
           )}
           <View style={styles.cardDetails}>
@@ -97,11 +99,11 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
                 <Text style={styles.tagText}>🍄 {hymenophoreLabel}</Text>
               </View>
               <View style={styles.tag}>
-                <Text style={styles.tagText}>📅 {monthsStr}</Text>
+                <Text style={styles.tagText} testID={`atlas-months-${item.id}`}>{`📅 ${monthsStr}`}</Text>
               </View>
               {hasFatalLookAlikeRisk(item) && (
                 <View style={[styles.tag, styles.tagDanger]}>
-                  <Text style={styles.tagDangerText}>☠ Sobowtór!</Text>
+                  <Text style={styles.tagDangerText}>{t('atlas.lookAlikeTag')}</Text>
                 </View>
               )}
             </View>
@@ -135,6 +137,12 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
         <Text style={styles.scopeNotice} testID="atlas-scope-notice">
           {t('atlas.scopeNotice').replace('{count}', String(MUSHROOMS_DATABASE.length))}
         </Text>
+
+        {language === 'en' ? (
+          <Text style={styles.sourceLanguageNote} testID="atlas-source-language-note">
+            {t('cards.sourceLanguageNote')}
+          </Text>
+        ) : null}
 
         <View style={styles.filtersRow}>
           {(
@@ -252,6 +260,20 @@ const styles = StyleSheet.create({
     color: '#7C2D12',
     backgroundColor: '#FFF7ED',
     borderColor: '#FDBA74',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '600',
+  },
+  sourceLanguageNote: {
+    marginHorizontal: 16,
+    marginBottom: 10,
+    color: '#1E3A5F',
+    backgroundColor: '#EFF6FF',
+    borderColor: '#93C5FD',
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 12,

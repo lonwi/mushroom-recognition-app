@@ -24,8 +24,21 @@ interface Props {
 }
 
 export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLookAlike }) => {
-  const { t } = useLanguage();
-  const monthsNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru'];
+  const { t, language } = useLanguage();
+  const monthsNames = [
+    t('months.jan'),
+    t('months.feb'),
+    t('months.mar'),
+    t('months.apr'),
+    t('months.may'),
+    t('months.jun'),
+    t('months.jul'),
+    t('months.aug'),
+    t('months.sep'),
+    t('months.oct'),
+    t('months.nov'),
+    t('months.dec'),
+  ];
   const photo = getMushroomImage(species.id);
   const fatalLookAlike = hasFatalLookAlikeRisk(species);
 
@@ -56,7 +69,7 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
   const useSection = {
     edible: {
       testId: 'species-use-edible',
-      title: 'W kuchni',
+      title: t('cards.useKitchen'),
       icon: 'check' as const,
       titleColor: '#047857',
       iconColor: '#059669',
@@ -64,7 +77,7 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
     },
     toxic: {
       testId: 'species-use-toxic',
-      title: 'Toksyczność i objawy',
+      title: t('cards.useToxic'),
       icon: 'alert-triangle' as const,
       titleColor: '#B91C1C',
       iconColor: '#DC2626',
@@ -72,7 +85,7 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
     },
     inedible: {
       testId: 'species-use-inedible',
-      title: 'Nie do jedzenia',
+      title: t('cards.useInedible'),
       icon: 'slash' as const,
       titleColor: '#9A3412',
       iconColor: '#C2410C',
@@ -80,7 +93,7 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
     },
     neutral: {
       testId: 'species-use-neutral',
-      title: 'Znaczenie w literaturze',
+      title: t('cards.useLiterature'),
       icon: 'book-open' as const,
       titleColor: '#334155',
       iconColor: '#475569',
@@ -116,7 +129,7 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
            <Text style={styles.namePl}>{species.namePl}</Text>
            <Text style={styles.nameLatin}>{species.nameLatin}</Text>
            {photo ? null : (
-             <Text style={styles.photoMissingText} testID="species-photo-missing">Brak zdjęcia</Text>
+             <Text style={styles.photoMissingText} testID="species-photo-missing">{t('cards.photoMissing')}</Text>
            )}
 
            {species.incompleteCard ? (
@@ -142,6 +155,12 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+
+        {language === 'en' ? (
+          <Text style={styles.sourceLanguageNote} testID="species-source-language-note">
+            {t('cards.sourceLanguageNote')}
+          </Text>
+        ) : null}
 
         {fatalLookAlike ? (
           <View style={styles.fatalBanner} testID="fatal-lookalike-banner">
@@ -187,7 +206,12 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
               const isActive = species.months.includes(monthNum);
               return (
                 <View key={monthNum} style={[styles.monthBox, isActive && styles.monthBoxActive]}>
-                  <Text style={[styles.monthText, isActive && styles.monthTextActive]}>{m}</Text>
+                  <Text
+                    testID={`species-month-${monthNum}`}
+                    style={[styles.monthText, isActive && styles.monthTextActive]}
+                  >
+                    {m}
+                  </Text>
                 </View>
               );
             })}
@@ -611,5 +635,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 10,
     lineHeight: 20,
+  },
+  sourceLanguageNote: {
+    color: '#1E3A5F',
+    backgroundColor: '#EFF6FF',
+    borderColor: '#93C5FD',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: '600',
+    marginBottom: 16,
   },
 });
