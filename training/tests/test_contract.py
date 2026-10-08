@@ -735,7 +735,14 @@ class ManifestAndShipGateTest(unittest.TestCase):
         probes = load_manifest()["toxic_probes"]
         reasons = poisonous_sample_reasons(
             self._quota_rows(
-                **{"Lepiota brunneoincarnata": {"support": 4, "accepted": 16, "gbif_licensed_count": 16}}
+                **{
+                    "Lepiota brunneoincarnata": {
+                        "support": 4,
+                        "accepted": 16,
+                        "gbif_licensed_count": 16,
+                        "exhausted_reason": "end_of_records",
+                    }
+                }
             ),
             probes,
             expected_names=poisonous_heldout_taxa(),
@@ -752,6 +759,7 @@ class ManifestAndShipGateTest(unittest.TestCase):
                         "confident_edible": 1,
                         "accepted": 44,
                         "gbif_licensed_count": 44,
+                        "exhausted_reason": "end_of_records",
                     }
                 }
             ),
@@ -783,7 +791,14 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertFalse(any("Conocybe filaris" in reason and "at least 5" in reason for reason in filaris))
         exhausted = poisonous_sample_reasons(
             self._quota_rows(
-                **{"Lepiota brunneoincarnata": {"support": 15, "accepted": 16, "gbif_licensed_count": 16}}
+                **{
+                    "Lepiota brunneoincarnata": {
+                        "support": 15,
+                        "accepted": 16,
+                        "gbif_licensed_count": 16,
+                        "exhausted_reason": "end_of_records",
+                    }
+                }
             ),
             probes,
             expected_names=poisonous_heldout_taxa(),
@@ -830,6 +845,25 @@ class ManifestAndShipGateTest(unittest.TestCase):
                         "support": 15,
                         "accepted": merged[0]["accepted"],
                         "gbif_licensed_count": merged[0]["gbif_licensed_count"],
+                    }
+                }
+            ),
+            probes,
+            expected_names=poisonous_heldout_taxa(),
+        )
+        self.assertTrue(any("Lepiota brunneoincarnata" in reason and "need 50" in reason for reason in reasons))
+        self.assertFalse(any("at least 5" in reason for reason in reasons))
+
+    def test_max_pages_does_not_apply_the_rare_taxon_exception(self):
+        probes = load_manifest()["toxic_probes"]
+        reasons = poisonous_sample_reasons(
+            self._quota_rows(
+                **{
+                    "Lepiota brunneoincarnata": {
+                        "support": 16,
+                        "accepted": 16,
+                        "gbif_licensed_count": 16,
+                        "exhausted_reason": "max_pages",
                     }
                 }
             ),
@@ -900,13 +934,31 @@ class ManifestAndShipGateTest(unittest.TestCase):
     def test_fetch_report_overwrites_row_counts_and_is_hashed(self):
         from evaluate import attach_fetch_evidence
 
-        rows = [{"taxon": "Lepiota brunneoincarnata", "support": 16, "accepted": 80, "gbif_licensed_count": 80}]
+        rows = [
+            {
+                "taxon": "Lepiota brunneoincarnata",
+                "support": 16,
+                "accepted": 80,
+                "gbif_licensed_count": 80,
+                "exhausted_reason": "max_pages",
+            }
+        ]
         merged = attach_fetch_evidence(
             rows,
-            {"taxa": [{"taxon": "Lepiota brunneoincarnata", "accepted": 16, "gbif_licensed_count": 16}]},
+            {
+                "taxa": [
+                    {
+                        "taxon": "Lepiota brunneoincarnata",
+                        "accepted": 16,
+                        "gbif_licensed_count": 16,
+                        "exhausted_reason": "end_of_records",
+                    }
+                ]
+            },
         )
         self.assertEqual(merged[0]["accepted"], 16)
         self.assertEqual(merged[0]["gbif_licensed_count"], 16)
+        self.assertEqual(merged[0]["exhausted_reason"], "end_of_records")
         unrelated = {
             "taxon": "Amanita verna",
             "support": 5,
@@ -966,6 +1018,7 @@ class ManifestAndShipGateTest(unittest.TestCase):
                             "taxon": "Lepiota brunneoincarnata",
                             "accepted": 16,
                             "gbif_licensed_count": 16,
+                            "exhausted_reason": "end_of_records",
                         }
                     ]
                 }
@@ -1055,6 +1108,7 @@ class ManifestAndShipGateTest(unittest.TestCase):
                 "confident_edible": 0,
                 "accepted": 16,
                 "gbif_licensed_count": 16,
+                "exhausted_reason": "end_of_records",
             },
             {"taxon": "Lepiota cristata", "support": 50, "confident_edible": 0},
         ]

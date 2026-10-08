@@ -1219,6 +1219,10 @@ class ImageIntegrityTest(FetchCase):
         cache.write_text(json.dumps({"key": key, "rows": [bad, good]}), encoding="utf-8")
         stale = cache.with_name("class-boletus_edulis-v1-old-cache.json")
         stale.write_text("{}", encoding="utf-8")
+        decoy = cache.with_name("class-boletus_edulis-extra-v1-0123456789abcdef0123.json")
+        decoy.write_text("{}", encoding="utf-8")
+        longer = cache.with_name("class-boletus_edulis_pinicola-v2-abcdef0123456789abcd.json")
+        longer.write_text("{}", encoding="utf-8")
 
         def collect(*args, **kwargs):
             raise AssertionError("GBIF was queried")
@@ -1248,6 +1252,26 @@ class ImageIntegrityTest(FetchCase):
         self.assertFalse((self._root / "images" / "boletus_edulis" / "1_0.jpg").exists())
         self.assertTrue((self._root / "images" / "boletus_edulis" / "2_0.jpg").is_file())
         self.assertFalse(stale.exists())
+        self.assertTrue(decoy.is_file())
+        self.assertTrue(longer.is_file())
+
+    def test_cache_deletion_matches_the_exact_identity(self):
+        folder = self._root / "gbif_cache"
+        folder.mkdir()
+        keep = fetch_gbif._cache_file(self._root, "class", "bole", "a" * 64)
+        keep.write_text("{}", encoding="utf-8")
+        own_old = folder / "class-bole-v1-0123456789abcdef0123.json"
+        own_legacy = folder / "class-bole-0123456789abcdef0123.json"
+        other = folder / "class-bole-extra-v1-0123456789abcdef0123.json"
+        other_legacy = folder / "class-bole-extra-fedcba9876543210abcd.json"
+        for path in (own_old, own_legacy, other, other_legacy):
+            path.write_text("{}", encoding="utf-8")
+        fetch_gbif._drop_stale_cache_files(self._root, "class", "bole", keep)
+        self.assertTrue(keep.is_file())
+        self.assertFalse(own_old.exists())
+        self.assertFalse(own_legacy.exists())
+        self.assertTrue(other.is_file())
+        self.assertTrue(other_legacy.is_file())
 
     def test_verify_existing_drops_quarantined_attribution_rows(self):
         good_a = self._root / "images" / "boletus_edulis" / "1_0.jpg"
@@ -1760,6 +1784,60 @@ class CandidatePoolTest(FetchCase):
             self.assertFalse(block["any_taxon_pool_exhausted"])
             self.assertNotIn("gbif_licensed_count", block)
 
+    def test_top_up_reuses_the_page_already_fetched(self):
+        searches: list[int] = []
+
+        def get_json(url, timeout=60, attempts=4):
+            parsed = urllib.parse.urlparse(url)
+            query = urllib.parse.parse_qs(parsed.query)
+            if "species/match" in url:
+                return {
+                    "matchType": "EXACT",
+                    "rank": "SPECIES",
+                    "usageKey": 1,
+                    "acceptedUsageKey": 1,
+                    "scientificName": "Boletus edulis",
+                }
+            if "occurrence/search" in url:
+                offset = int(query.get("offset", ["0"])[0])
+                searches.append(offset)
+                if offset != 0:
+                    raise AssertionError(f"GBIF page fetched again at offset {offset}")
+                results = [self._occurrence(8000 + index) for index in range(10)]
+                return {"results": results, "endOfRecords": False, "count": 1000, "offset": offset}
+            raise AssertionError(url)
+
+        def urlopen(request, timeout=40):
+            name = request.full_url.rsplit("/", 1)[-1]
+            key = int(name.split("_", 1)[0])
+            if 8000 <= key <= 8003:
+                raise _http_error(404, "Not Found", url=request.full_url)
+            return _Response(self.jpeg)
+
+        species = {"id": "boletus_edulis", "gbif_names": ["Boletus edulis"], "safety_tag": "edible"}
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with patch("fetch_gbif._get_json", side_effect=get_json), patch(
+                "fetch_gbif.urllib.request.urlopen", side_effect=urlopen
+            ), patch("fetch_gbif.time.sleep"):
+                fetch_gbif.run_fetch(
+                    {"classes": [species]},
+                    max_per_class=2,
+                    max_pages=40,
+                    only="boletus_edulis",
+                    download_workers=1,
+                    data_dir=root,
+                )
+            report = json.loads((root / "fetch_report.json").read_text(encoding="utf-8"))
+            block = report["classes"]["boletus_edulis"]
+            self.assertEqual(searches, [0])
+            self.assertEqual(block["accepted"], 2)
+            self.assertEqual(block["pool"], 6)
+            stored = sorted(path.name for path in (root / "images" / "boletus_edulis").glob("*.jpg"))
+            self.assertEqual(stored, ["8004_0.jpg", "8005_0.jpg"])
+
     def test_max_pages_is_named_when_the_page_budget_ends_the_pool(self):
         serial = {"n": 8000}
 
@@ -1811,13 +1889,25 @@ class IdempotentReportTest(FetchCase):
     def _rows(self, count: int) -> list[dict]:
         return [_candidate("boletus_edulis", index, 9000 + index, "Boletus edulis") for index in range(count)]
 
-    def _run(self, root: Path, rows: list[dict], failures: dict[str, str], *, workers: int = 2, cap: int = 6):
+    def _run(
+        self,
+        root: Path,
+        rows: list[dict],
+        failures: dict[str, str],
+        *,
+        workers: int = 2,
+        cap: int = 6,
+        dry_run: bool = False,
+        calls: dict | None = None,
+    ):
         payloads = {row["image_url"]: _jpeg_bytes(index + 3) for index, row in enumerate(rows)}
 
         def collect(species, max_per_class, max_per_occurrence, max_pages):
             return [dict(row) for row in rows]
 
         def urlopen(request, timeout=40):
+            if calls is not None:
+                calls["urls"].append(request.full_url)
             kind = failures.get(request.full_url)
             if kind == "404":
                 raise _http_error(404, "Not Found", url=request.full_url)
@@ -1836,6 +1926,7 @@ class IdempotentReportTest(FetchCase):
                 max_pages=1,
                 only="boletus_edulis",
                 download_workers=workers,
+                dry_run=dry_run,
                 data_dir=root,
             )
 
@@ -1845,6 +1936,15 @@ class IdempotentReportTest(FetchCase):
         if not folder.is_dir():
             return found
         for path in sorted(folder.rglob("*")):
+            if path.is_file():
+                found[path.relative_to(root).as_posix()] = path.read_bytes()
+        return found
+
+    def _tree(self, root: Path) -> dict[str, bytes]:
+        found = {}
+        if not root.is_dir():
+            return found
+        for path in sorted(root.rglob("*")):
             if path.is_file():
                 found[path.relative_to(root).as_posix()] = path.read_bytes()
         return found
@@ -1897,6 +1997,136 @@ class IdempotentReportTest(FetchCase):
             self.assertNotIn(f"{rows[2]['occurrence_key']}_0.jpg", stored)
             moved = list((root / "not_selected" / "boletus_edulis").glob("*.jpg"))
             self.assertEqual([path.name for path in moved], [f"{rows[2]['occurrence_key']}_0.jpg"])
+
+    def test_dry_run_does_not_change_the_disk(self):
+        import tempfile
+
+        rows = self._rows(8)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._run(root, rows, {}, cap=5)
+            before = self._tree(root)
+            self.assertEqual(len(before), len(self._tree(root)))
+            self.assertEqual(len(list((root / "images").rglob("*.jpg"))), 5)
+            fetch_gbif._VERIFIED.clear()
+            self._run(root, rows, {}, cap=3, dry_run=True)
+            self.assertEqual(self._tree(root), before)
+            self.assertFalse((root / "not_selected").exists())
+
+    def test_cap_five_then_three_then_five_restores_without_the_network(self):
+        import tempfile
+
+        rows = self._rows(8)
+        with tempfile.TemporaryDirectory() as varied_dir, tempfile.TemporaryDirectory() as plain_dir:
+            varied = Path(varied_dir)
+            plain = Path(plain_dir)
+            calls = {"urls": []}
+            self._run(varied, rows, {}, cap=5, workers=1, calls=calls)
+            self.assertEqual(len(calls["urls"]), 5)
+            report = (varied / "fetch_report.json").read_bytes()
+            attributions = (varied / "attributions.jsonl").read_bytes()
+            images = self._images(varied)
+            calls["urls"].clear()
+            fetch_gbif._VERIFIED.clear()
+            self._run(varied, rows, {}, cap=3, workers=1, calls=calls)
+            self.assertEqual(calls["urls"], [])
+            self.assertEqual(len(list((varied / "images" / "boletus_edulis").glob("*.jpg"))), 3)
+            self.assertEqual(len(list((varied / "not_selected" / "boletus_edulis").glob("*.jpg"))), 2)
+            calls["urls"].clear()
+            fetch_gbif._VERIFIED.clear()
+            self._run(varied, rows, {}, cap=5, workers=16, calls=calls)
+            self.assertEqual(calls["urls"], [])
+            self.assertEqual((varied / "fetch_report.json").read_bytes(), report)
+            self.assertEqual((varied / "attributions.jsonl").read_bytes(), attributions)
+            self.assertEqual(self._images(varied), images)
+            self.assertEqual(list((varied / "not_selected").rglob("*.jpg")), [])
+            self.assertFalse((varied / "quarantine").exists())
+            calls["urls"].clear()
+            self._run(plain, rows, {}, cap=5, workers=1, calls=calls)
+            self.assertEqual(len(calls["urls"]), 5)
+            self.assertEqual((plain / "fetch_report.json").read_bytes(), report)
+            self.assertEqual((plain / "attributions.jsonl").read_bytes(), attributions)
+            self.assertEqual(self._images(plain), images)
+
+    def test_quarantine_is_not_a_source_for_the_next_download(self):
+        import tempfile
+
+        rows = self._rows(1)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            calls = {"urls": []}
+            self._run(root, rows, {}, cap=1, workers=1, calls=calls)
+            image = root / "images" / "boletus_edulis" / f"{rows[0]['occurrence_key']}_0.jpg"
+            quarantine = root / "quarantine" / "boletus_edulis" / image.name
+            quarantine.parent.mkdir(parents=True)
+            os.replace(image, quarantine)
+            fetch_gbif._VERIFIED.clear()
+            calls["urls"].clear()
+            self._run(root, rows, {}, cap=1, workers=1, calls=calls)
+            self.assertEqual(calls["urls"], [rows[0]["image_url"]])
+            self.assertTrue(image.is_file())
+            self.assertTrue(quarantine.is_file())
+
+    def test_only_toxic_probes_does_not_move_unknown_mushroom_files(self):
+        import tempfile
+
+        preexisting = _jpeg_bytes(9)
+        manifest = {
+            "classes": [
+                {
+                    "id": "unknown_mushroom",
+                    "gbif_names": ["Agaricus bisporus"],
+                    "safety_tag": "unknown",
+                },
+                {
+                    "id": "boletus_edulis",
+                    "gbif_names": ["Boletus edulis"],
+                    "safety_tag": "edible",
+                },
+            ],
+            "toxic_probes": {
+                "class_id": "unknown_mushroom",
+                "per_taxon_cap": 1,
+                "taxa": [{"name": "Amanita phalloides", "gbif_key": 1, "relation": "lookalike"}],
+            },
+        }
+
+        def pull(names, limit, max_per_occurrence, max_pages, seen):
+            row = _candidate("unknown_mushroom", 0, 4242, "Amanita phalloides")
+            pooled = fetch_gbif._PoolList([row])
+            pooled.cursor = {"exhausted": True, "exhausted_reason": "end_of_records", "seen": []}
+            pooled.fetch = {"max_per_occurrence": max_per_occurrence, "max_pages": max_pages}
+            return pooled
+
+        def collect(*args, **kwargs):
+            raise AssertionError("the unknown_mushroom class was fetched")
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            class_photo = root / "images" / "unknown_mushroom" / "class_photo.jpg"
+            other = root / "images" / "boletus_edulis" / "kept.jpg"
+            class_photo.parent.mkdir(parents=True)
+            other.parent.mkdir(parents=True)
+            class_photo.write_bytes(preexisting)
+            other.write_bytes(preexisting)
+            with patch("fetch_gbif._pull_names", side_effect=pull), patch(
+                "fetch_gbif.collect_class_media", side_effect=collect
+            ), patch(
+                "fetch_gbif.urllib.request.urlopen",
+                side_effect=lambda request, timeout=40: _Response(self.jpeg),
+            ), patch("fetch_gbif.time.sleep"):
+                fetch_gbif.run_fetch(
+                    manifest,
+                    max_per_class=1,
+                    max_pages=1,
+                    only="toxic_probes",
+                    download_workers=2,
+                    data_dir=root,
+                )
+            self.assertEqual(class_photo.read_bytes(), preexisting)
+            self.assertEqual(other.read_bytes(), preexisting)
+            self.assertFalse((root / "not_selected" / "unknown_mushroom" / "class_photo.jpg").exists())
+            self.assertTrue((root / "images" / "unknown_mushroom" / "4242_0.jpg").is_file())
 
 
 if __name__ == "__main__":

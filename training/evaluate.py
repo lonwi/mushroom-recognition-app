@@ -244,12 +244,16 @@ def _integer(value: object) -> int | None:
 def rare_exception_applies(name: str, item: dict, row: dict, probes: dict, groups: list) -> bool:
     """The 5-photo floor, only when every licensed photo was downloaded and verified.
 
-    Both must hold. ``gbif_licensed_count`` is the entire licensed GBIF pool
-    (the query ended, not a download margin) and it equals the audited count.
-    ``accepted`` equals that same count. A failed download leaves ``accepted``
-    short, and the 50-photo floor stays. The count is under 50, ``accepted``
-    is below the cap, the name is on the closed list, and its group is present.
+    The query must have ended because GBIF had no further record
+    (``exhausted_reason`` is ``end_of_records``). Stopping at ``--max-pages``
+    does not qualify. ``gbif_licensed_count`` is that entire licensed pool and
+    it equals the audited count. ``accepted`` equals that same count. A failed
+    download leaves ``accepted`` short, and the 50-photo floor stays. The count
+    is under 50, ``accepted`` is below the cap, the name is on the closed list,
+    and its group is present.
     """
+    if row.get("exhausted_reason") != "end_of_records":
+        return False
     if name not in _REQUIRED_EXCEPTIONS:
         return False
     group_id = item.get("group_id")
@@ -288,9 +292,10 @@ def poisonous_sample_reasons(
 
     Visual groups have a total. Every taxon needs 50 images unless it is one of
     the closed rare_taxon_exceptions AND the fetch row shows the whole licensed
-    GBIF pool was downloaded: ``gbif_licensed_count`` under 50 and equal to the
-    audited count, and ``accepted`` equal to that count (below the cap). A
-    failed download leaves ``accepted`` short, and the 50-photo floor stays.
+    GBIF pool was downloaded: ``exhausted_reason`` is ``end_of_records`` (not
+    ``max_pages``), ``gbif_licensed_count`` under 50 and equal to the audited
+    count, and ``accepted`` equal to that count (below the cap). A failed
+    download leaves ``accepted`` short, and the 50-photo floor stays.
     The exception needs 5 images, 0 confident-edible outcomes, and a group that
     still meets its minimum. A null group or an extra name does not lower the
     floor. The poisonous held-out total stays at least 300.
@@ -327,6 +332,7 @@ def poisonous_sample_reasons(
             "confident_edible": edible,
             "accepted": item.get("accepted"),
             "gbif_licensed_count": item.get("gbif_licensed_count"),
+            "exhausted_reason": item.get("exhausted_reason"),
         }
 
     if expected_names is not None:
@@ -658,11 +664,11 @@ def _reject_rate(rows: list[dict], classes: list[dict], ood_config: dict) -> flo
     return rejected / len(rows)
 
 
-FETCH_COUNT_FIELDS = ("accepted", "gbif_licensed_count")
+FETCH_COUNT_FIELDS = ("accepted", "gbif_licensed_count", "exhausted_reason")
 
 
 def without_fetch_counts(per_taxon: list) -> list:
-    """Drop license counts that only a fetch report is allowed to supply."""
+    """Drop fetch-report fields that a metrics row is not allowed to supply."""
     stripped = []
     for row in per_taxon:
         if not isinstance(row, dict):
@@ -686,11 +692,12 @@ def attach_fetch_evidence(
     fetch_report: dict | None = None,
     report_path: Path | None = None,
 ) -> list:
-    """Replace accepted and gbif_licensed_count from the fetch report.
+    """Replace accepted, gbif_licensed_count, and exhausted_reason from the fetch report.
 
-    Metrics rows do not keep those counts. A missing, unreadable, or
+    Metrics rows do not keep those fields. A missing, unreadable, or
     incomplete report drops them, so a rare-taxon exception cannot lower
-    the 50-photo floor unless the report itself shows the pool was exhausted.
+    the 50-photo floor unless the report itself shows the pool ended on
+    ``end_of_records`` and every licensed photo was accepted.
     """
     if not isinstance(per_taxon, list):
         return per_taxon

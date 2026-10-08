@@ -29,7 +29,11 @@ Every run walks that pool from the first candidate. A file that already
 verifies counts as accepted and is not downloaded again. A failed candidate in
 that prefix is tried again, so a second run on an unchanged network rewrites
 the same ``fetch_report.json``. A photo that is no longer in the selection is
-moved to ``not_selected/<class>/``.
+moved to ``not_selected/<class>/`` only when every class and probe that writes
+that directory was fetched in this run. ``--dry-run`` does not download, move,
+or write. Before a download, a file already in ``not_selected/<class>/`` that
+still decodes is moved back instead of fetched again. Quarantine is not a
+source. A later page request reuses the GBIF page already in hand.
 
 ``--download-workers`` (default 16) fetches one class or probe at a time, with at
 most 4 transfers per image host. GBIF API calls stay one at a time. Images and
@@ -303,6 +307,7 @@ def _blank_cursor(names: list[str], seen: set) -> dict:
         "hit_max_pages": False,
         "exhausted": False,
         "exhausted_reason": None,
+        "pending_page": None,
     }
 
 
@@ -317,11 +322,65 @@ def _advance_name(cursor: dict, name_count: int, pass_count: int) -> None:
     cursor["pages_used"] = 0
     cursor["media_skip"] = 0
     cursor["partial_key"] = None
+    cursor["pending_page"] = None
     if cursor["name_index"] >= name_count:
         cursor["pass_index"] = int(cursor["pass_index"]) + 1
         cursor["name_index"] = 0
         if cursor["pass_index"] >= pass_count:
             _mark_exhausted(cursor)
+
+
+def _pending_page(cursor: dict, taxon_key: int) -> dict | None:
+    """The GBIF page already fetched, when the next photo is still on it."""
+    pending = cursor.get("pending_page")
+    if not isinstance(pending, dict):
+        return None
+    results = pending.get("results")
+    if not isinstance(results, list):
+        return None
+    try:
+        next_index = int(pending.get("next_index") or 0)
+        page_start = int(pending.get("page_start") or 0)
+    except (TypeError, ValueError):
+        return None
+    if next_index < 0 or next_index >= len(results):
+        return None
+    if pending.get("pass_index") != int(cursor["pass_index"]):
+        return None
+    if pending.get("name_index") != int(cursor["name_index"]):
+        return None
+    if int(pending.get("taxon_key") or -1) != int(taxon_key):
+        return None
+    page_base = (int(cursor["offset"]) // GBIF_PAGE_SIZE) * GBIF_PAGE_SIZE
+    if page_start != page_base:
+        return None
+    return pending
+
+
+def _store_pending_page(
+    cursor: dict,
+    taxon_key: int,
+    page_start: int,
+    results: list,
+    count: int,
+    end: bool,
+    next_index: int,
+) -> None:
+    """Keep the unused tail of this page. The next top-up must not request it again."""
+    if next_index >= len(results):
+        cursor["pending_page"] = None
+        cursor["offset"] = page_start + len(results)
+        return
+    cursor["pending_page"] = {
+        "pass_index": int(cursor["pass_index"]),
+        "name_index": int(cursor["name_index"]),
+        "taxon_key": int(taxon_key),
+        "page_start": int(page_start),
+        "next_index": int(next_index),
+        "results": results,
+        "count": int(count),
+        "end": bool(end),
+    }
 
 
 def _fetch_occurrence_page(taxon_key: int, country: str | None, offset: int) -> dict:
@@ -413,25 +472,40 @@ def _fetch_licensed(
             continue
         country, scope = passes[int(cursor["pass_index"])]
         taxon_key, queried_name = cursor["keys"][int(cursor["name_index"])]
-        page_start = int(cursor["offset"])
-        if int(cursor["pages_used"]) > 0:
-            time.sleep(GBIF_PAGE_DELAY)
-        payload = _fetch_occurrence_page(int(taxon_key), country, page_start)
-        cursor["pages_used"] = page_index + 1
-        results = payload.get("results") or []
-        count = int(payload.get("count") or 0)
-        reached_count = count > 0 and page_start + len(results) >= count
-        end = (not results) or bool(payload.get("endOfRecords")) or reached_count or count == 0
+        pending = _pending_page(cursor, int(taxon_key))
+        if pending is None:
+            page_start = int(cursor["offset"])
+            if int(cursor["pages_used"]) > 0:
+                time.sleep(GBIF_PAGE_DELAY)
+            payload = _fetch_occurrence_page(int(taxon_key), country, page_start)
+            cursor["pages_used"] = page_index + 1
+            results = list(payload.get("results") or [])
+            count = int(payload.get("count") or 0)
+            reached_count = count > 0 and page_start + len(results) >= count
+            end = (not results) or bool(payload.get("endOfRecords")) or reached_count or count == 0
+            start_index = 0
+            cursor["pending_page"] = None
+        else:
+            page_start = int(pending["page_start"])
+            results = list(pending["results"])
+            count = int(pending.get("count") or 0)
+            end = bool(pending.get("end"))
+            start_index = int(pending.get("next_index") or 0)
         stopped_early = False
+        next_index = start_index
         for index, record in enumerate(results):
+            if index < start_index:
+                continue
             if len(rows) >= want:
                 cursor["offset"] = page_start + index
                 cursor["media_skip"] = 0
                 cursor["partial_key"] = None
+                next_index = index
                 stopped_early = True
                 break
-            resume_skip = int(cursor.get("media_skip") or 0) if index == 0 else 0
-            resume_key = cursor.get("partial_key") if index == 0 else None
+            first = index == start_index
+            resume_skip = int(cursor.get("media_skip") or 0) if first else 0
+            resume_key = cursor.get("partial_key") if first else None
             got, media_skip, partial_key, status = _take_from_occurrence(
                 record,
                 seen=seen,
@@ -450,19 +524,24 @@ def _fetch_licensed(
                 cursor["offset"] = page_start + index
                 cursor["media_skip"] = media_skip
                 cursor["partial_key"] = partial_key
+                next_index = index
                 stopped_early = True
                 break
-            if index == 0:
+            if first:
                 cursor["media_skip"] = 0
                 cursor["partial_key"] = None
             if len(rows) >= want:
                 cursor["offset"] = page_start + index + 1
                 cursor["media_skip"] = 0
                 cursor["partial_key"] = None
+                next_index = index + 1
                 stopped_early = True
                 break
+            next_index = index + 1
         if stopped_early:
+            _store_pending_page(cursor, int(taxon_key), page_start, results, count, end, next_index)
             break
+        cursor["pending_page"] = None
         cursor["offset"] = page_start + len(results)
         cursor["media_skip"] = 0
         cursor["partial_key"] = None
@@ -993,6 +1072,37 @@ def _download_once(url: str, destination: Path, timeout: int) -> int:
     return len(payload)
 
 
+def _not_selected_source(data_dir: Path, destination: Path) -> Path | None:
+    """``images/<class>/<file>`` has a sibling at ``not_selected/<class>/<file>``.
+
+    Quarantine is not a source. A file that only lives there is downloaded again.
+    """
+    try:
+        rel = destination.resolve().relative_to(data_dir.resolve()).as_posix()
+    except ValueError:
+        return None
+    parts = rel.split("/")
+    if len(parts) != 3 or parts[0] != "images" or not parts[1] or not parts[2]:
+        return None
+    return data_dir / "not_selected" / parts[1] / parts[2]
+
+
+def _restore_not_selected(data_dir: Path, destination: Path, index: _VerifiedIndex) -> int | None:
+    """Move a still-decodable photo back. Returns its size, or None to download."""
+    source = _not_selected_source(data_dir, destination)
+    if source is None or not source.is_file():
+        return None
+    if not _full_load_ok(str(source)):
+        return None
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    os.replace(source, destination)
+    try:
+        index.remember(destination)
+    except OSError:
+        pass
+    return destination.stat().st_size
+
+
 def download_image(
     url: str,
     destination: Path,
@@ -1008,7 +1118,8 @@ def download_image(
     place. The bytes are decoded in memory first. HTTP 429 honors Retry-After
     plus a short random offset. Other transient errors use exponential backoff
     with the same offset. HTTP 403, 404, certificate errors, and undecodable
-    bodies are not retried. A truncated body is retried once.
+    bodies are not retried. A truncated body is retried once. A file already
+    in ``not_selected/`` that still decodes is moved back instead of downloaded.
     """
     destination.parent.mkdir(parents=True, exist_ok=True)
     root = _data_dir_for(destination, data_dir)
@@ -1023,6 +1134,10 @@ def download_image(
             partial.unlink(missing_ok=True)
             return destination.stat().st_size
         _quarantine_file(root, destination)
+    restored = _restore_not_selected(root, destination, index)
+    if restored is not None:
+        partial.unlink(missing_ok=True)
+        return restored
     if attempts < 1:
         raise ValueError("attempts must be positive")
     delay = DOWNLOAD_BACKOFF_SECONDS
@@ -1160,9 +1275,15 @@ def _row_license_allowed(row: dict) -> bool:
     return True
 
 
-def _cache_file(directory: Path, kind: str, identity: str, key: str) -> Path:
+def _cache_token(kind: str, identity: str) -> str:
+    """Full class or probe identity. A shorter name must not be a prefix of this."""
     safe = re.sub(r"[^A-Za-z0-9._-]+", "_", identity).strip("._") or "item"
-    return directory / "gbif_cache" / f"{kind}-{safe[:60]}-{key[:20]}.json"
+    return f"{kind}-{safe}"
+
+
+def _cache_file(directory: Path, kind: str, identity: str, key: str) -> Path:
+    token = _cache_token(kind, identity)
+    return directory / "gbif_cache" / f"{token}-v{_QUERY_CACHE_VERSION}-{key[:20]}.json"
 
 
 def _query_cache_key(kind: str, identity: str, parameters: dict) -> str:
@@ -1177,21 +1298,27 @@ def _query_cache_key(kind: str, identity: str, parameters: dict) -> str:
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
 
-def _cache_identity_prefix(kind: str, identity: str) -> str:
-    safe = re.sub(r"[^A-Za-z0-9._-]+", "_", identity).strip("._") or "item"
-    return f"{kind}-{safe[:60]}-"
-
-
 def _drop_stale_cache_files(directory: Path, kind: str, identity: str, keep: Path) -> None:
-    """Delete other cache files for this class or probe, including version 1 and 2."""
+    """Delete other cache files for this exact class or probe, including older versions.
+
+    The identity is the whole token, then ``-v<version>-``. A name that only
+    starts with this class (``bole`` versus ``bole-extra``) is left alone.
+    """
     folder = directory / "gbif_cache"
     if not folder.is_dir():
         return
-    prefix = _cache_identity_prefix(kind, identity)
-    keep_resolved = keep.resolve()
-    for path in folder.glob(prefix + "*.json"):
+    token = _cache_token(kind, identity)
+    versioned = re.compile(rf"^{re.escape(token)}-v\d+-.*\.json$")
+    legacy = re.compile(rf"^{re.escape(token)}-[0-9a-f]{{20}}\.json$")
+    try:
+        keep_resolved = keep.resolve() if keep.exists() else None
+    except OSError:
+        keep_resolved = None
+    for path in folder.glob("*.json"):
+        if not (versioned.fullmatch(path.name) or legacy.fullmatch(path.name)):
+            continue
         try:
-            if path.resolve() == keep_resolved:
+            if keep_resolved is not None and path.resolve() == keep_resolved:
                 continue
             path.unlink(missing_ok=True)
         except OSError:
@@ -1263,19 +1390,33 @@ def _bundle_from_produced(produced, split_finite) -> _Bundle:
     return split_finite(list(produced))
 
 
-def _cached_media(directory: Path, kind: str, identity: str, parameters: dict, produce, split_finite) -> _Bundle:
-    """Reuse GBIF rows and, for a live query, the cursor. Download fields are not stored."""
+def _cached_media(
+    directory: Path,
+    kind: str,
+    identity: str,
+    parameters: dict,
+    produce,
+    split_finite,
+    *,
+    persist: bool = True,
+) -> _Bundle:
+    """Reuse GBIF rows and, for a live query, the cursor. Download fields are not stored.
+
+    ``persist`` is false for a dry run, which must not write or delete a cache file.
+    """
     key = _query_cache_key(kind, identity, parameters)
     path = _cache_file(directory, kind, identity, key)
-    loaded = _read_bundle(path, key)
+    loaded = _read_bundle(path, key) if path.is_file() else None
     if loaded is not None:
         loaded.attach_cache(path, key)
-        _drop_stale_cache_files(directory, kind, identity, path)
+        if persist:
+            _drop_stale_cache_files(directory, kind, identity, path)
         return loaded
     bundle = _bundle_from_produced(produce(), split_finite)
     bundle.attach_cache(path, key)
-    bundle.save()
-    _drop_stale_cache_files(directory, kind, identity, path)
+    if persist:
+        bundle.save()
+        _drop_stale_cache_files(directory, kind, identity, path)
     return bundle
 
 
@@ -1613,18 +1754,17 @@ def run_fetch(
         raise ValueError("download-workers must be at least 1")
     wanted = {item.strip() for item in only.split(",") if item.strip()}
     directory = data_dir or DATA_DIR
-    directory.mkdir(parents=True, exist_ok=True)
+    if not dry_run:
+        directory.mkdir(parents=True, exist_ok=True)
     rows: list[dict] = []
     per_class: dict[str, dict] = {}
     taxon_report: list[dict] = []
     probe_report: list[dict] = []
 
-    touched_folders: set[str] = set()
     for species in manifest["classes"]:
         if wanted and species["id"] not in wanted:
             continue
         cap = class_fetch_cap(species, max_per_class)
-        touched_folders.add(str(species["id"]))
         print(f"fetch {species['id']} (cap {cap}, {max_per_occurrence} photos/occurrence)")
         bundle = _cached_media(
             directory,
@@ -1639,6 +1779,7 @@ def run_fetch(
             },
             lambda species=species, cap=cap: collect_class_media(species, cap, max_per_occurrence, max_pages),
             lambda rows, species=species, cap=cap: _finite_bundle(rows, _download_targets(species, rows, cap)),
+            persist=not dry_run,
         )
         part_caps = _part_caps(species, cap)
         kept_parts: list[dict] = []
@@ -1684,20 +1825,20 @@ def run_fetch(
             f"taxa {entry['taxa_with_photos']}, shortfall {entry['shortfall']})"
         )
         rows.extend(kept)
-        _write_outputs(
-            directory,
-            rows,
-            per_class,
-            probe_report,
-            taxon_report,
-            max_per_occurrence,
-        )
+        if not dry_run:
+            _write_outputs(
+                directory,
+                rows,
+                per_class,
+                probe_report,
+                taxon_report,
+                max_per_occurrence,
+            )
 
     probes = manifest.get("toxic_probes") or {}
     fetch_probes = not wanted or "unknown_mushroom" in wanted or "toxic_probes" in wanted
     probe_folder = str(probes.get("class_id") or "unknown_mushroom")
     if fetch_probes:
-        touched_folders.add(probe_folder)
         cap = int(probes.get("per_taxon_cap") or 80)
         if max_per_class is not None:
             cap = min(cap, max_per_class)
@@ -1731,6 +1872,7 @@ def run_fetch(
                     set(),
                 ),
                 lambda rows: _finite_bundle(rows, [("", 0, list(rows))]),
+                persist=not dry_run,
             )
             pool = bundle.pools[0] if bundle.pools else _Pool("", [], None, None, {}, finite=True)
             pool.stamp(probe_meta)
@@ -1749,20 +1891,25 @@ def run_fetch(
             probe_report.append(probe_row)
             taxon_report.append(probe_row)
             print(f"  accepted probe media: {stats['accepted']} (shortfall {stats['shortfall']})")
-            _write_outputs(
-                directory,
-                rows,
-                per_class,
-                probe_report,
-                taxon_report,
-                max_per_occurrence,
-            )
+            if not dry_run:
+                _write_outputs(
+                    directory,
+                    rows,
+                    per_class,
+                    probe_report,
+                    taxon_report,
+                    max_per_occurrence,
+                )
 
-    report = _write_outputs(directory, rows, per_class, probe_report, taxon_report, max_per_occurrence)
-    kept_files = {str(row["file"]).replace("\\", "/") for row in rows if isinstance(row.get("file"), str)}
-    _move_unselected_images(directory, kept_files, touched_folders)
-    attribution_path = directory / "attributions.jsonl"
-    print(f"wrote {len(rows)} rows to {attribution_path}")
+    if dry_run:
+        report = _report_payload(per_class, probe_report, taxon_report, max_per_occurrence)
+        print(f"dry-run: {len(rows)} rows, no files written")
+    else:
+        report = _write_outputs(directory, rows, per_class, probe_report, taxon_report, max_per_occurrence)
+        kept_files = {str(row["file"]).replace("\\", "/") for row in rows if isinstance(row.get("file"), str)}
+        _move_unselected_images(directory, kept_files, _folders_ready_to_sweep(manifest, wanted))
+        attribution_path = directory / "attributions.jsonl"
+        print(f"wrote {len(rows)} rows to {attribution_path}")
     for item in report["thin_classes"]:
         print(f"  thin {item['class_id']}: {item['accepted']} accepted", file=sys.stderr)
 
@@ -1778,9 +1925,60 @@ def _probe_existing(path_str: str) -> tuple[str, bool, int, int]:
         return path_str, False, 0, 0
 
 
-def _move_unselected_images(directory: Path, kept_files: set[str], folders: set[str]) -> None:
-    """Move photos in this run's class folders that have no attribution row.
+def _image_folders(manifest: dict) -> dict[str, set[tuple[str, str]]]:
+    """Image directory to every class and probe that writes files there."""
+    owners: dict[str, set[tuple[str, str]]] = {}
+    for species in manifest.get("classes") or []:
+        if not isinstance(species, dict):
+            continue
+        folder = str(species.get("id") or "")
+        if folder:
+            owners.setdefault(folder, set()).add(("class", folder))
+    probes = manifest.get("toxic_probes") or {}
+    if isinstance(probes, dict):
+        folder = str(probes.get("class_id") or "unknown_mushroom")
+        for taxon in probes.get("taxa") or []:
+            if isinstance(taxon, dict) and taxon.get("name"):
+                owners.setdefault(folder, set()).add(("probe", str(taxon["name"])))
+    return owners
 
+
+def _units_fetched(manifest: dict, wanted: set[str]) -> set[tuple[str, str]]:
+    fetched: set[tuple[str, str]] = set()
+    for species in manifest.get("classes") or []:
+        if not isinstance(species, dict):
+            continue
+        species_id = str(species.get("id") or "")
+        if species_id and (not wanted or species_id in wanted):
+            fetched.add(("class", species_id))
+    probes = manifest.get("toxic_probes") or {}
+    fetch_probes = not wanted or "unknown_mushroom" in wanted or "toxic_probes" in wanted
+    if fetch_probes and isinstance(probes, dict):
+        for taxon in probes.get("taxa") or []:
+            if isinstance(taxon, dict) and taxon.get("name"):
+                fetched.add(("probe", str(taxon["name"])))
+    return fetched
+
+
+def _folders_ready_to_sweep(manifest: dict, wanted: set[str]) -> set[str]:
+    """Directories whose every class and probe was fetched in this run.
+
+    ``unknown_mushroom`` class photos and toxic probes share one directory.
+    ``--only toxic_probes`` fetches the probes and skips the class, so that
+    directory is left untouched.
+    """
+    fetched = _units_fetched(manifest, wanted)
+    ready = set()
+    for folder, units in _image_folders(manifest).items():
+        if units and units <= fetched:
+            ready.add(folder)
+    return ready
+
+
+def _move_unselected_images(directory: Path, kept_files: set[str], folders: set[str]) -> None:
+    """Move photos in finished directories that have no attribution row.
+
+    ``folders`` is only directories whose every writer was fetched this run.
     Quarantine is unchanged. These files are previous selections that a later
     successful retry pushed past the cap. ``images/<class>/`` then matches the
     attribution rows for that class.
@@ -1948,7 +2146,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-per-occurrence", type=int, default=MAX_PER_OCCURRENCE)
     parser.add_argument("--max-pages", type=int, default=40)
     parser.add_argument("--only", default="", help="Comma-separated class ids")
-    parser.add_argument("--dry-run", action="store_true", help="Write attributions but do not download bytes")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the plan. Do not download, move, or write files.",
+    )
     parser.add_argument(
         "--download-workers",
         type=int,
