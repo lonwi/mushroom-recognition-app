@@ -400,6 +400,12 @@ def assess_shippable(report: dict, artifact_dir: Path | None = None) -> tuple[bo
         reasons.append("model.keras sha256 does not match the file that was evaluated")
     if tflite_hash != sha256_file(directory / "mushrooms_model.tflite"):
         reasons.append("tflite sha256 does not match the file that was evaluated")
+    # The hash is the file bytes. A report that counts verified files, records
+    # replacements, and sets gbif_licensed_count only for a fully enumerated
+    # pool will not match a hash exported from an older report until export
+    # runs again. The rare-taxon floor stays 50 unless the query ended on
+    # end_of_records and accepted equals that entire licensed count and the
+    # audited count. max_pages and replacement_budget do not open the 5-photo floor.
     fetch_hash = sha256_file(fetch_file) if fetch_file is not None else None
     if recorded.get("fetch_report_sha256") != fetch_hash:
         reasons.append("fetch_report sha256 does not match the file used for rare-taxon evidence")

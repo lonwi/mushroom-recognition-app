@@ -6,11 +6,52 @@ Usage (from the repo root):
     python training/fetch_gbif.py --only amanita_phalloides --max-per-class 20
 
 A file already listed in checkpoints/verified.jsonl with the same size and
-mtime is skipped. Any other existing file must decode with a full Pillow
-``load()``, and ``LOAD_TRUNCATED_IMAGES`` stays false. A file that fails is
-moved to quarantine/<class>/ and downloaded again. A new download is decoded
-in memory before it is written. ``--no-resume`` downloads again anyway.
-``--verify-existing`` scans data/images with no network.
+mtime is skipped. Any other existing file must pass a structural end-of-file
+check and decode with a full Pillow ``load()``, and ``LOAD_TRUNCATED_IMAGES``
+stays false. A file that fails is moved to quarantine/<class>/ and downloaded
+again. A new download is decoded in memory before it is written.
+``--no-resume`` fetches from scratch: it does not restore ``not_selected/``
+and it does not accept a file already on disk. A download that succeeds
+removes the same-name file from ``not_selected/<class>/``.
+``--verify-existing`` scans data/images with no network. If the spawn process
+pool cannot start (``PermissionError``, ``OSError``, ``NotImplementedError``,
+or ``BrokenProcessPool``), that scan uses threads and prints a warning.
+
+``accepted`` in fetch_report.json is the number of files written and verified.
+That is also the number of rows in attributions.jsonl for that class or probe.
+A candidate that fails after retries is not accepted. The next photo in the
+same ordered GBIF pool replaces it until the cap is full or GBIF has no further
+licensed page. The first query keeps a margin of twice the cap. Later pages are
+fetched only when those replacements run out, still in that same order, so one
+worker and sixteen workers write the same bytes. Each unit also stops after
+``cap + max(cap, 20)`` failed attempts, or after 50 failures in a row.
+``exhausted_reason`` is then ``replacement_budget``, and ``gbif_licensed_count``
+is not written. A successful download does not use that budget, so a file
+already verified on a re-run does not let the unit walk further. ``pool_exhausted`` and ``gbif_licensed_count`` (the
+entire licensed pool) are set only when the query really ended: no more
+records, or ``--max-pages``. ``exhausted_reason`` says which. A margin that
+still has unused photos does not set either field. ``replacement_budget`` does
+not open the rare-taxon 5-photo floor.
+
+Every run walks that pool from the first candidate. A file that already
+verifies counts as accepted and is not downloaded again. A failed candidate in
+that prefix is tried again, so a second run on an unchanged network rewrites
+the same ``fetch_report.json``. A photo that is no longer in the selection is
+moved to ``not_selected/<class>/`` only when every class and probe that writes
+that directory was fetched in this run. ``--dry-run`` does not download, move,
+or write. Before a download, a file already in ``not_selected/<class>/`` is
+checked with the same size limit, structural end-of-file check, and full
+``Image.open().load()`` as a new download, and ``LOAD_TRUNCATED_IMAGES`` stays
+false. A JPEG is walked from SOI to the first real ``FF D9``, skipping stuffed
+``FF 00`` bytes and restart markers, so a Motion Photo trailer after that EOI
+is kept. A tail that is only zeros and longer than ``MAX_ZERO_TAIL_BYTES``
+is rejected, as is a file with no EOI. A PNG must contain an IEND chunk; bytes
+after it are kept
+on the same rule. A WebP RIFF size must match the file length. That check
+finishes before the file is remembered
+or attributed. A photo that passes is moved back instead of fetched again. A
+photo that fails goes to quarantine and is not accepted. Quarantine is not a
+source. A later page request reuses the GBIF page already in hand.
 
 ``--download-workers`` (default 16) fetches one class or probe at a time, with at
 most 4 transfers per image host. GBIF API calls stay one at a time. Images and
@@ -21,6 +62,7 @@ keeps finished classes in attributions.jsonl and fetch_report.json.
 from __future__ import annotations
 
 import argparse
+import copy
 import errno
 import hashlib
 import http.client
@@ -39,6 +81,7 @@ import urllib.parse
 import urllib.request
 from collections import Counter
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from concurrent.futures.process import BrokenProcessPool
 from datetime import timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
@@ -48,7 +91,6 @@ from manifest import CENTRAL_EUROPE, LABELS_PATH, ROOT, load_manifest
 from sampling import (
     MAX_PER_OCCURRENCE,
     class_fetch_cap,
-    collect_licensed_media,
     taxon_fetch_plan,
     thin_class_report,
 )
@@ -68,7 +110,36 @@ DOWNLOAD_BACKOFF_SECONDS = 0.5
 DOWNLOAD_JITTER_SECONDS = 0.5
 MAX_RETRY_AFTER_SECONDS = 120.0
 MAX_IMAGE_BYTES = 16_000_000
-_QUERY_CACHE_VERSION = 1
+GBIF_PAGE_SIZE = 300
+# First licensed batch is this many times the download cap. Further GBIF pages
+# are requested only after that margin has been used as replacements.
+POOL_MARGIN_FACTOR = 2
+# A unit stops after this many failed attempts, and after this many failures in
+# a row. A success does not use the failure budget, so a re-run that skips
+# files already verified stops on the same candidates. cap + max(cap, 20) is
+# that budget. Neither stop is a full GBIF pool.
+REPLACEMENT_CONSECUTIVE_FAILURES = 50
+# Bytes after a real JPEG EOI or PNG IEND. A Motion Photo or Samsung trailer
+# contains non-zero container bytes (ftyp, mdat), so it is not this case.
+# A truncated scan padded out with NULs is a long run of only zeros. 1 KiB is
+# past ordinary block padding and far shorter than an embedded video, so a
+# pure-zero trailer longer than this is quarantined. A tail of exactly this
+# length is kept.
+MAX_ZERO_TAIL_BYTES = 1024
+# Version 3 drops the download cap from the cache key and stores a GBIF cursor
+# beside the rows fetched so far. Version 1 stopped at the cap. Version 2 stored
+# an unbounded pool. Both miss this key. A fetch of that class or probe deletes
+# the stale siblings. Delete training/data/gbif_cache/ to drop them without fetching.
+_QUERY_CACHE_VERSION = 3
+_CACHE_DOWNLOAD_FIELDS = (
+    "file",
+    "source",
+    "downloaded",
+    "bytes",
+    "download_error",
+    "_failure_reason",
+    "_image_rejected",
+)
 
 _GBIF_API_LOCK = threading.Lock()
 _last_gbif_api_at: float | None = None
@@ -224,7 +295,7 @@ def iter_occurrences(taxon_key: int, country: str | None, max_pages: int):
         params = {
             "taxonKey": str(taxon_key),
             "mediaType": "StillImage",
-            "limit": "300",
+            "limit": str(GBIF_PAGE_SIZE),
             "offset": str(offset),
         }
         if country:
@@ -239,45 +310,406 @@ def iter_occurrences(taxon_key: int, country: str | None, max_pages: int):
         time.sleep(GBIF_PAGE_DELAY)
 
 
-def _pull_names(
-    names: list[str],
-    cap: int,
+def _replacement_attempt_budget(cap: int) -> int:
+    """Failed attempts one class, taxon, or probe may record before it stops."""
+    cap = max(0, int(cap))
+    return cap + max(cap, 20)
+
+
+def _margin_limit(cap: int) -> int:
+    """Licensed photos to collect before the first download.
+
+    Twice the cap leaves replacements on hand. A later page is fetched only
+    when a download window still needs a candidate and this list is used up.
+    """
+    return max(0, int(cap)) * POOL_MARGIN_FACTOR
+
+
+def _search_passes() -> list[tuple[str | None, str]]:
+    return [(country, "central_europe") for country in CENTRAL_EUROPE] + [(None, "global_fill")]
+
+
+def _blank_cursor(names: list[str], seen: set) -> dict:
+    return {
+        "names": list(names),
+        "keys": None,
+        "seen": [key for key in seen],
+        "pass_index": 0,
+        "name_index": 0,
+        "offset": 0,
+        "pages_used": 0,
+        "media_skip": 0,
+        "partial_key": None,
+        "hit_max_pages": False,
+        "exhausted": False,
+        "exhausted_reason": None,
+        "pending_page": None,
+    }
+
+
+def _mark_exhausted(cursor: dict) -> None:
+    cursor["exhausted"] = True
+    cursor["exhausted_reason"] = "max_pages" if cursor.get("hit_max_pages") else "end_of_records"
+
+
+def _advance_name(cursor: dict, name_count: int, pass_count: int) -> None:
+    cursor["name_index"] = int(cursor["name_index"]) + 1
+    cursor["offset"] = 0
+    cursor["pages_used"] = 0
+    cursor["media_skip"] = 0
+    cursor["partial_key"] = None
+    cursor["pending_page"] = None
+    if cursor["name_index"] >= name_count:
+        cursor["pass_index"] = int(cursor["pass_index"]) + 1
+        cursor["name_index"] = 0
+        if cursor["pass_index"] >= pass_count:
+            _mark_exhausted(cursor)
+
+
+def _pending_page(cursor: dict, taxon_key: int) -> dict | None:
+    """The GBIF page already fetched, when the next photo is still on it."""
+    pending = cursor.get("pending_page")
+    if not isinstance(pending, dict):
+        return None
+    results = pending.get("results")
+    if not isinstance(results, list):
+        return None
+    try:
+        next_index = int(pending.get("next_index") or 0)
+        page_start = int(pending.get("page_start") or 0)
+    except (TypeError, ValueError):
+        return None
+    if next_index < 0 or next_index >= len(results):
+        return None
+    if pending.get("pass_index") != int(cursor["pass_index"]):
+        return None
+    if pending.get("name_index") != int(cursor["name_index"]):
+        return None
+    if int(pending.get("taxon_key") or -1) != int(taxon_key):
+        return None
+    page_base = (int(cursor["offset"]) // GBIF_PAGE_SIZE) * GBIF_PAGE_SIZE
+    if page_start != page_base:
+        return None
+    return pending
+
+
+def _store_pending_page(
+    cursor: dict,
+    taxon_key: int,
+    page_start: int,
+    results: list,
+    count: int,
+    end: bool,
+    next_index: int,
+) -> None:
+    """Keep the unused tail of this page. The next top-up must not request it again."""
+    if next_index >= len(results):
+        cursor["pending_page"] = None
+        cursor["offset"] = page_start + len(results)
+        return
+    cursor["pending_page"] = {
+        "pass_index": int(cursor["pass_index"]),
+        "name_index": int(cursor["name_index"]),
+        "taxon_key": int(taxon_key),
+        "page_start": int(page_start),
+        "next_index": int(next_index),
+        "results": results,
+        "count": int(count),
+        "end": bool(end),
+    }
+
+
+def _fetch_occurrence_page(taxon_key: int, country: str | None, offset: int) -> dict:
+    params = {
+        "taxonKey": str(taxon_key),
+        "mediaType": "StillImage",
+        "limit": str(GBIF_PAGE_SIZE),
+        "offset": str(offset),
+    }
+    if country:
+        params["country"] = country
+    return _get_json(f"{GBIF_SEARCH}?{urllib.parse.urlencode(params)}")
+
+
+def _take_from_occurrence(
+    record: dict,
+    *,
+    seen: set,
+    seen_list: list,
+    max_per_occurrence: int,
+    media_skip: int,
+    partial_key,
+    room: int,
+) -> tuple[list[dict], int, object, str]:
+    """Take the next licensed photos from one occurrence.
+
+    Returns rows, the next media offset, the occurrence key when a photo
+    remains, and ``full``, ``partial``, or ``skip``.
+    """
+    key = record.get("key")
+    if key in seen and key != partial_key:
+        return [], 0, None, "skip"
+    licensed = accepted_media_records(record)
+    if not licensed or max_per_occurrence < 1 or room < 1:
+        return [], 0, None, "skip"
+    takeable = licensed[:max_per_occurrence]
+    start = media_skip if key == partial_key else 0
+    if start < 0:
+        start = 0
+    got = takeable[start : start + room]
+    consumed = start + len(got)
+    if consumed >= len(takeable):
+        if key not in seen:
+            seen.add(key)
+            seen_list.append(key)
+        return got, 0, None, "full"
+    return got, consumed, key, "partial"
+
+
+def _fetch_licensed(
+    cursor: dict,
+    want: int,
     max_per_occurrence: int,
     max_pages: int,
-    seen: set,
-) -> list[dict]:
-    """Regional countries first, then a country-less search until `cap`."""
-    keys = resolve_accepted_keys(names)
-    if not keys:
-        return []
-    accepted: list[dict] = []
+) -> tuple[list[dict], dict]:
+    """Append up to ``want`` licensed photos. Stop before the next GBIF page once ``want`` is met."""
+    cursor = copy.deepcopy(cursor)
+    if want < 1 or cursor.get("exhausted"):
+        return [], cursor
+    if max_per_occurrence < 1:
+        _mark_exhausted(cursor)
+        return [], cursor
+    if cursor.get("keys") is None:
+        resolved = resolve_accepted_keys(list(cursor.get("names") or []))
+        cursor["keys"] = [[key, name] for key, name in resolved.items()]
+    passes = _search_passes()
+    seen_list = list(cursor.get("seen") or [])
+    seen = set(seen_list)
+    name_count = len(cursor["keys"])
+    pass_count = len(passes)
+    page_budget = max(1, int(max_pages))
+    rows: list[dict] = []
+    if name_count == 0 or pass_count == 0:
+        _mark_exhausted(cursor)
+        cursor["seen"] = seen_list
+        return [], cursor
 
-    def pull(country: str | None, scope: str) -> None:
-        if len(accepted) >= cap:
-            return
-        for taxon_key, queried_name in keys.items():
-            if len(accepted) >= cap:
-                return
-            batch = collect_licensed_media(
-                iter_occurrences(taxon_key, country, max_pages),
-                max_items=cap - len(accepted),
-                max_per_occurrence=max_per_occurrence,
+    while len(rows) < want and not cursor.get("exhausted"):
+        if int(cursor["pass_index"]) >= pass_count:
+            _mark_exhausted(cursor)
+            break
+        if int(cursor["name_index"]) >= name_count:
+            _advance_name(cursor, name_count, pass_count)
+            continue
+        page_index = int(cursor["offset"]) // GBIF_PAGE_SIZE
+        if page_index >= page_budget:
+            cursor["hit_max_pages"] = True
+            _advance_name(cursor, name_count, pass_count)
+            continue
+        country, scope = passes[int(cursor["pass_index"])]
+        taxon_key, queried_name = cursor["keys"][int(cursor["name_index"])]
+        pending = _pending_page(cursor, int(taxon_key))
+        if pending is None:
+            page_start = int(cursor["offset"])
+            if int(cursor["pages_used"]) > 0:
+                time.sleep(GBIF_PAGE_DELAY)
+            payload = _fetch_occurrence_page(int(taxon_key), country, page_start)
+            cursor["pages_used"] = page_index + 1
+            results = list(payload.get("results") or [])
+            count = int(payload.get("count") or 0)
+            reached_count = count > 0 and page_start + len(results) >= count
+            end = (not results) or bool(payload.get("endOfRecords")) or reached_count or count == 0
+            start_index = 0
+            cursor["pending_page"] = None
+        else:
+            page_start = int(pending["page_start"])
+            results = list(pending["results"])
+            count = int(pending.get("count") or 0)
+            end = bool(pending.get("end"))
+            start_index = int(pending.get("next_index") or 0)
+        stopped_early = False
+        next_index = start_index
+        for index, record in enumerate(results):
+            if index < start_index:
+                continue
+            if len(rows) >= want:
+                cursor["offset"] = page_start + index
+                cursor["media_skip"] = 0
+                cursor["partial_key"] = None
+                next_index = index
+                stopped_early = True
+                break
+            first = index == start_index
+            resume_skip = int(cursor.get("media_skip") or 0) if first else 0
+            resume_key = cursor.get("partial_key") if first else None
+            got, media_skip, partial_key, status = _take_from_occurrence(
+                record,
                 seen=seen,
-                accept_media=accepted_media_records,
+                seen_list=seen_list,
+                max_per_occurrence=max_per_occurrence,
+                media_skip=resume_skip,
+                partial_key=resume_key,
+                room=want - len(rows),
             )
-            for row in batch:
+            for row in got:
                 row["region_scope"] = scope
                 row["queried_name"] = queried_name
                 row["taxon_name"] = queried_name
-            accepted.extend(batch)
-
-    for country in CENTRAL_EUROPE:
-        pull(country, "central_europe")
-        if len(accepted) >= cap:
+            rows.extend(got)
+            if status == "partial":
+                cursor["offset"] = page_start + index
+                cursor["media_skip"] = media_skip
+                cursor["partial_key"] = partial_key
+                next_index = index
+                stopped_early = True
+                break
+            if first:
+                cursor["media_skip"] = 0
+                cursor["partial_key"] = None
+            if len(rows) >= want:
+                cursor["offset"] = page_start + index + 1
+                cursor["media_skip"] = 0
+                cursor["partial_key"] = None
+                next_index = index + 1
+                stopped_early = True
+                break
+            next_index = index + 1
+        if stopped_early:
+            _store_pending_page(cursor, int(taxon_key), page_start, results, count, end, next_index)
             break
-    if len(accepted) < cap:
-        pull(None, "global_fill")
-    return accepted
+        cursor["pending_page"] = None
+        cursor["offset"] = page_start + len(results)
+        cursor["media_skip"] = 0
+        cursor["partial_key"] = None
+        if end:
+            _advance_name(cursor, name_count, pass_count)
+    cursor["seen"] = seen_list
+    return rows, cursor
+
+
+class _PoolList(list):
+    """Rows plus the per-taxon pools a live GBIF query can extend."""
+
+    pools: list | None = None
+
+
+class _Pool:
+    """One ordered licensed list. ``finite`` means nothing further will be queried."""
+
+    def __init__(self, name: str, rows: list[dict], cursor: dict | None, fetch: dict | None, meta: dict, finite: bool):
+        self.name = name
+        self.rows = rows
+        self.cursor = cursor
+        self.fetch = fetch
+        self.meta = dict(meta)
+        self.finite = finite
+        self.bundle: _Bundle | None = None
+        self.budget_exhausted = False
+
+    def pages_ended(self) -> bool:
+        if self.finite or not isinstance(self.cursor, dict):
+            return True
+        return bool(self.cursor.get("exhausted"))
+
+    def end_reason(self) -> str | None:
+        if not self.pages_ended():
+            return None
+        if isinstance(self.cursor, dict) and self.cursor.get("exhausted_reason"):
+            return str(self.cursor["exhausted_reason"])
+        return "end_of_records"
+
+    def stamp(self, meta: dict) -> None:
+        self.meta.update(meta)
+        for row in self.rows:
+            row.update(self.meta)
+
+    def fetch_more(self, count: int) -> int:
+        """Append licensed photos. Returns how many were added. One thread, between download windows."""
+        if count < 1 or self.finite or not isinstance(self.cursor, dict) or self.cursor.get("exhausted"):
+            return 0
+        if not isinstance(self.fetch, dict):
+            self.cursor["exhausted"] = True
+            self.cursor["exhausted_reason"] = self.cursor.get("exhausted_reason") or "end_of_records"
+            return 0
+        batch, new_cursor = _fetch_licensed(
+            self.cursor,
+            count,
+            int(self.fetch["max_per_occurrence"]),
+            int(self.fetch["max_pages"]),
+        )
+        self.cursor = new_cursor
+        if not batch and not self.cursor.get("exhausted"):
+            self.cursor["exhausted"] = True
+            self.cursor["exhausted_reason"] = self.cursor.get("exhausted_reason") or "end_of_records"
+        for row in batch:
+            row.update(self.meta)
+        self.rows.extend(batch)
+        if self.bundle is not None:
+            self.bundle.save()
+        return len(batch)
+
+
+class _Bundle:
+    def __init__(self, pools: list[_Pool]):
+        self.pools = pools
+        self.path: Path | None = None
+        self.key: str | None = None
+        for pool in pools:
+            pool.bundle = self
+
+    def attach_cache(self, path: Path, key: str) -> None:
+        self.path = path
+        self.key = key
+
+    def save(self) -> None:
+        if self.path is None or self.key is None:
+            return
+        payload = {"key": self.key, "pools": [_pool_cache_entry(pool) for pool in self.pools]}
+        _atomic_write_text(self.path, json.dumps(payload, ensure_ascii=False))
+
+
+def _pool_cache_entry(pool: _Pool) -> dict:
+    return {
+        "name": pool.name,
+        "rows": [_cache_row(row) for row in pool.rows],
+        "cursor": pool.cursor if isinstance(pool.cursor, dict) else None,
+        "fetch": pool.fetch if isinstance(pool.fetch, dict) else None,
+        "meta": pool.meta,
+        "finite": bool(pool.finite),
+    }
+
+
+def _cache_row(row: dict) -> dict:
+    return {key: value for key, value in row.items() if key not in _CACHE_DOWNLOAD_FIELDS}
+
+
+def _pull_names(
+    names: list[str],
+    limit: int,
+    max_per_occurrence: int,
+    max_pages: int,
+    seen: set,
+) -> _PoolList:
+    """Regional countries first, then a country-less search, up to ``limit`` photos.
+
+    ``limit`` is the first margin, not the download cap. The cursor on the
+    returned list continues at the next occurrence when a later window needs
+    more replacements.
+    """
+    cursor = _blank_cursor(names, seen)
+    fetch = {"max_per_occurrence": int(max_per_occurrence), "max_pages": int(max_pages)}
+    rows, cursor = _fetch_licensed(cursor, int(limit), int(max_per_occurrence), int(max_pages))
+    pooled = _PoolList(rows)
+    pooled.cursor = cursor
+    pooled.fetch = fetch
+    return pooled
+
+
+def _live_pool(name: str, rows: list[dict], cursor: dict, fetch: dict, meta: dict) -> _Pool:
+    pool = _Pool(name, rows, cursor, fetch, meta, finite=False)
+    for row in rows:
+        row.update(meta)
+    return pool
 
 
 def collect_class_media(
@@ -286,19 +718,34 @@ def collect_class_media(
     max_per_occurrence: int,
     max_pages: int,
 ) -> list[dict]:
-    """CC0/CC-BY photos for one label, capped per observation and per taxon."""
+    """CC0/CC-BY candidate pool for one label, capped at twice each download cap.
+
+    Photos are still capped per observation. The download cap is how many
+    verified files to keep. A later candidate replaces one that fails, and a
+    further GBIF page is fetched only when that margin runs out. Taxon caps
+    still decide which names are queried. A name with a zero cap is not queried.
+    The returned list's ``pools`` attribute is what a live fetch extends.
+    """
+    pooled = _PoolList()
+    pools: list[_Pool] = []
+    pooled.pools = pools
+    if max_per_class < 1:
+        return pooled
     class_id = species["id"]
     sampling = species.get("sampling") or None
     if not sampling:
-        seen: set = set()
-        rows = _pull_names(list(species["gbif_names"]), max_per_class, max_per_occurrence, max_pages, seen)
-        toxic = species.get("safety_tag") == "toxic"
-        for row in rows:
-            row["class_id"] = class_id
-            row["held_out_taxon"] = False
-            row["toxic"] = toxic
-            row["genus_relation"] = ""
-        return rows
+        names = list(species["gbif_names"])
+        pulled = _pull_names(names, _margin_limit(max_per_class), max_per_occurrence, max_pages, set())
+        meta = {
+            "class_id": class_id,
+            "held_out_taxon": False,
+            "toxic": species.get("safety_tag") == "toxic",
+            "genus_relation": "",
+        }
+        pool = _live_pool("", list(pulled), pulled.cursor, pulled.fetch, meta)
+        pools.append(pool)
+        pooled.extend(pool.rows)
+        return pooled
 
     taxa = list(sampling.get("taxa") or [])
     if not taxa:
@@ -310,26 +757,23 @@ def collect_class_media(
     configured = int(sampling["per_taxon_cap"])
     plan = taxon_fetch_plan(taxa, max_per_class, configured)
     by_name = {str(taxon["name"]): taxon for taxon in taxa}
-    buckets: dict[str, list[dict]] = {name: [] for name in by_name}
-    seen_by_name = {name: set() for name in by_name}
-
-    def pull(name: str, cap: int) -> None:
-        have = len(buckets[name])
-        if have >= cap or cap < 1:
-            return
-        taxon = by_name[name]
-        rows = _pull_names([name], cap - have, max_per_occurrence, max_pages, seen_by_name[name])
-        for row in rows:
-            row["class_id"] = class_id
-            row["taxon_name"] = name
-            row["held_out_taxon"] = bool(taxon.get("held_out"))
-            row["toxic"] = bool(taxon.get("toxic"))
-            row["genus_relation"] = taxon.get("relation") or ""
-        buckets[name].extend(rows)
-
     for name, cap in plan.items():
-        pull(name, cap)
-    return [row for name in by_name for row in buckets[name]]
+        taxon = by_name[name]
+        meta = {
+            "class_id": class_id,
+            "taxon_name": name,
+            "held_out_taxon": bool(taxon.get("held_out")),
+            "toxic": bool(taxon.get("toxic")),
+            "genus_relation": taxon.get("relation") or "",
+        }
+        if cap < 1:
+            pools.append(_Pool(name, [], None, None, meta, finite=True))
+            continue
+        pulled = _pull_names([name], _margin_limit(cap), max_per_occurrence, max_pages, set())
+        pool = _live_pool(name, list(pulled), pulled.cursor, pulled.fetch, meta)
+        pools.append(pool)
+        pooled.extend(pool.rows)
+    return pooled
 
 
 def _mentions_certificate_failure(value: object) -> bool:
@@ -433,20 +877,58 @@ def _is_json_int(value: object) -> bool:
     return isinstance(value, int) and not isinstance(value, bool)
 
 
+_LOAD_CACHE: dict[tuple[str, int, int], bool] = {}
+_LOAD_CACHE_LOCK = threading.Lock()
+
+
+def _clear_load_cache() -> None:
+    """Drop per-run decode results. The next run checks files again."""
+    with _LOAD_CACHE_LOCK:
+        _LOAD_CACHE.clear()
+
+
+def _load_image_bytes(payload: bytes) -> None:
+    """Decode every pixel. ``LOAD_TRUNCATED_IMAGES`` stays false."""
+    _ensure_truncated_images_rejected()
+    from PIL import Image
+
+    with Image.open(io.BytesIO(payload)) as image:
+        image.load()
+
+
 def _full_load_ok(path_str: str) -> bool:
-    """True only when Pillow decodes every pixel. Header checks are not enough."""
+    """True only when Pillow decodes every pixel. Header checks are not enough.
+
+    One run decodes a file at most once. The key is the path, size, and
+    mtime. A later run starts with an empty cache.
+    """
     _ensure_truncated_images_rejected()
     path = Path(path_str)
     try:
-        if not path.is_file() or path.stat().st_size <= 0:
+        if not path.is_file():
             return False
-        from PIL import Image
-
-        with Image.open(path) as image:
-            image.load()
-        return True
-    except Exception:
+        stat = path.stat()
+        size = int(stat.st_size)
+        mtime = int(stat.st_mtime_ns)
+        if size <= 0:
+            return False
+        key = (str(path.resolve()), size, mtime)
+    except OSError:
         return False
+    with _LOAD_CACHE_LOCK:
+        cached = _LOAD_CACHE.get(key)
+    if cached is not None:
+        return cached
+    try:
+        payload = path.read_bytes()
+        _structural_image(payload)
+        _load_image_bytes(payload)
+        ok = True
+    except Exception:
+        ok = False
+    with _LOAD_CACHE_LOCK:
+        _LOAD_CACHE[key] = ok
+    return ok
 
 
 def _is_complete_image(path: Path) -> bool:
@@ -630,18 +1112,128 @@ class _TruncatedTransfer(OSError):
     """The body ended early. Retried once, as a dropped connection."""
 
 
+def _long_zero_tail(tail: bytes) -> bool:
+    """True when the trailer is only NULs and longer than ``MAX_ZERO_TAIL_BYTES``."""
+    return len(tail) > MAX_ZERO_TAIL_BYTES and tail.strip(b"\x00") == b""
+
+
+def _jpeg_payload_end(payload: bytes) -> int | None:
+    """Index of the first byte after the real EOI, or None when the scan never ends.
+
+    Segments before the first SOS are skipped by their lengths. Inside a scan,
+    ``FF 00`` is stuffing and ``FF D0``–``FF D7`` are restart markers. Any other
+    marker, including a later DHT or SOS in a progressive file, is a segment
+    and the scan continues. The first ``FF D9`` found that way is the EOI.
+    """
+    if len(payload) < 4 or payload[0] != 0xFF or payload[1] != 0xD8:
+        return None
+    offset = 2
+    in_scan = False
+    limit = len(payload)
+    while offset < limit:
+        if in_scan and payload[offset] != 0xFF:
+            offset += 1
+            continue
+        if payload[offset] != 0xFF:
+            return None
+        offset += 1
+        while offset < limit and payload[offset] == 0xFF:
+            offset += 1
+        if offset >= limit:
+            return None
+        marker = payload[offset]
+        offset += 1
+        if marker == 0x00:
+            if in_scan:
+                continue
+            return None
+        if 0xD0 <= marker <= 0xD7:
+            continue
+        if marker == 0xD9:
+            return offset
+        if marker in (0x01, 0xD8):
+            continue
+        if offset + 2 > limit:
+            return None
+        length = int.from_bytes(payload[offset : offset + 2], "big")
+        if length < 2 or offset + length > limit:
+            return None
+        offset += length
+        if marker == 0xDA:
+            in_scan = True
+    return None
+
+
+def _png_after_iend(payload: bytes) -> int | None:
+    """Index of the first byte after a length-0 IEND chunk, if the chunks parse."""
+    offset = 8
+    limit = len(payload)
+    while offset + 12 <= limit:
+        length = int.from_bytes(payload[offset : offset + 4], "big")
+        end = offset + 12 + length
+        if length < 0 or end > limit:
+            return None
+        if payload[offset + 4 : offset + 8] == b"IEND":
+            if length != 0:
+                return None
+            return end
+        offset = end
+    return None
+
+
+def _structural_image(payload: bytes) -> None:
+    """Reject containers Pillow can still decode after the file was cut off.
+
+    A JPEG without an EOI is rejected. Bytes after the real EOI are a trailer
+    (Motion Photo, a Samsung trailer) and are kept, unless that trailer is
+    only zeros and longer than ``MAX_ZERO_TAIL_BYTES``. A PNG must contain an
+    IEND chunk and follows the same trailer rule. A WebP RIFF size must equal
+    the file length. ``LOAD_TRUNCATED_IMAGES`` is not involved and stays false.
+    """
+    if payload.startswith(b"\xff\xd8"):
+        end = _jpeg_payload_end(payload)
+        if end is None:
+            raise _TruncatedTransfer("jpeg missing EOI")
+        if _long_zero_tail(payload[end:]):
+            raise _RejectedImage("jpeg trailing zeros")
+        return
+    if payload.startswith(b"\x89PNG\r\n\x1a\n"):
+        end = _png_after_iend(payload)
+        if end is None:
+            raise _RejectedImage("png missing IEND")
+        if _long_zero_tail(payload[end:]):
+            raise _RejectedImage("png trailing zeros")
+        return
+    if len(payload) >= 12 and payload.startswith(b"RIFF") and payload[8:12] == b"WEBP":
+        size = int.from_bytes(payload[4:8], "little")
+        if size + 8 != len(payload):
+            raise _RejectedImage("webp riff size does not match the file")
+
+
 def _decode_image_bytes(payload: bytes) -> None:
     """Full-decode bytes before they are stored. Truncated JPEGs do not pass."""
     _ensure_truncated_images_rejected()
-    from PIL import Image
-
     try:
-        with Image.open(io.BytesIO(payload)) as image:
-            image.load()
+        _load_image_bytes(payload)
     except Exception as error:
         if "truncated" in str(error).lower():
             raise _TruncatedTransfer(str(error)) from error
         raise _RejectedImage(f"image did not decode ({error})") from error
+
+
+def _verified_image_payload(payload: bytes) -> None:
+    """Size and full-decode checks for a download and for a restored file.
+
+    This runs before the bytes are stored and before ``verified.jsonl`` is
+    updated. ``LOAD_TRUNCATED_IMAGES`` stays false.
+    """
+    _ensure_truncated_images_rejected()
+    if len(payload) < 5_000:
+        raise RuntimeError(f"image too small ({len(payload)} bytes)")
+    if len(payload) > MAX_IMAGE_BYTES:
+        raise _RejectedImage(f"image too large ({len(payload)} bytes)")
+    _structural_image(payload)
+    _decode_image_bytes(payload)
 
 
 def _download_once(url: str, destination: Path, timeout: int) -> int:
@@ -656,13 +1248,82 @@ def _download_once(url: str, destination: Path, timeout: int) -> int:
             payload = response.read(MAX_IMAGE_BYTES + 1)
     finally:
         semaphore.release()
-    if len(payload) < 5_000:
-        raise RuntimeError(f"image too small ({len(payload)} bytes)")
-    if len(payload) > MAX_IMAGE_BYTES:
-        raise _RejectedImage(f"image too large ({len(payload)} bytes)")
-    _decode_image_bytes(payload)
+    _verified_image_payload(payload)
     _atomic_write_bytes(destination, payload)
     return len(payload)
+
+
+def _not_selected_source(data_dir: Path, destination: Path) -> Path | None:
+    """``images/<class>/<file>`` has a sibling at ``not_selected/<class>/<file>``.
+
+    Quarantine is not a source. A file that only lives there is downloaded again.
+    """
+    try:
+        rel = destination.resolve().relative_to(data_dir.resolve()).as_posix()
+    except ValueError:
+        return None
+    parts = rel.split("/")
+    if len(parts) != 3 or parts[0] != "images" or not parts[1] or not parts[2]:
+        return None
+    return data_dir / "not_selected" / parts[1] / parts[2]
+
+
+def _quarantine_parked(data_dir: Path, source: Path, class_id: str) -> Path:
+    """Move a not_selected file that failed the download checks.
+
+    Nothing is written to ``verified.jsonl``. Quarantine is not read back as a
+    source.
+    """
+    folder = data_dir / "quarantine" / class_id
+    folder.mkdir(parents=True, exist_ok=True)
+    target = folder / source.name
+    if target.exists():
+        stamp = time.time_ns()
+        target = folder / f"{source.stem}-{stamp}{source.suffix}"
+    os.replace(source, target)
+    index = _verified_index(data_dir)
+    with index._lock:
+        index.entries.pop(f"images/{class_id}/{source.name}", None)
+        index.entries.pop(f"not_selected/{class_id}/{source.name}", None)
+    return target
+
+
+def _drop_stale_not_selected(data_dir: Path, destination: Path) -> None:
+    """Remove the parked copy after a fresh download wrote ``destination``."""
+    source = _not_selected_source(data_dir, destination)
+    if source is not None and source.is_file():
+        source.unlink(missing_ok=True)
+
+
+def _restore_not_selected(data_dir: Path, destination: Path, index: _VerifiedIndex) -> int | None:
+    """Move a parked photo back only after the download checks pass.
+
+    Returns the file size, or None when there is nothing parked. A file that
+    fails the size or full-decode check is quarantined and the error is
+    raised, so it is not remembered and not accepted. ``remember`` runs only
+    after those checks, the same point as after a fresh download.
+    """
+    source = _not_selected_source(data_dir, destination)
+    if source is None or not source.is_file():
+        return None
+    class_id = source.parent.name
+    try:
+        payload = source.read_bytes()
+        _verified_image_payload(payload)
+    except Exception:
+        if source.is_file():
+            try:
+                _quarantine_parked(data_dir, source, class_id)
+            except OSError:
+                pass
+        raise
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    os.replace(source, destination)
+    try:
+        index.remember(destination)
+    except OSError:
+        pass
+    return destination.stat().st_size
 
 
 def download_image(
@@ -680,7 +1341,10 @@ def download_image(
     place. The bytes are decoded in memory first. HTTP 429 honors Retry-After
     plus a short random offset. Other transient errors use exponential backoff
     with the same offset. HTTP 403, 404, certificate errors, and undecodable
-    bodies are not retried. A truncated body is retried once.
+    bodies are not retried. A truncated body is retried once. A file already
+    in ``not_selected/`` is accepted only after the same size and full-decode
+    checks as a new download. Those checks finish before it is remembered. A
+    file that fails them is quarantined and is not accepted.
     """
     destination.parent.mkdir(parents=True, exist_ok=True)
     root = _data_dir_for(destination, data_dir)
@@ -695,6 +1359,13 @@ def download_image(
             partial.unlink(missing_ok=True)
             return destination.stat().st_size
         _quarantine_file(root, destination)
+    if resume:
+        restored = _restore_not_selected(root, destination, index)
+    else:
+        restored = None
+    if restored is not None:
+        partial.unlink(missing_ok=True)
+        return restored
     if attempts < 1:
         raise ValueError("attempts must be positive")
     delay = DOWNLOAD_BACKOFF_SECONDS
@@ -728,24 +1399,35 @@ def download_image(
             index.remember(destination)
         except OSError:
             pass
+        _drop_stale_not_selected(root, destination)
         return size
     assert last_error is not None
     raise last_error
 
 
-def taxon_acceptance_rows(names_and_caps: list[tuple[str, int]], media: list[dict], class_id: str, keys: dict[str, object]) -> list[dict]:
-    """One fetch-report row per taxon. Licensed count is set only when accepted < cap."""
-    counts = Counter(str(row.get("taxon_name") or "") for row in media)
-    report = []
-    for name, cap in names_and_caps:
-        accepted = int(counts.get(name) or 0)
-        item = {"taxon": name, "accepted": accepted, "cap": cap, "class_id": class_id}
-        if name in keys and keys[name] is not None:
-            item["gbif_key"] = keys[name]
-        if accepted < cap:
-            item["gbif_licensed_count"] = accepted
-        report.append(item)
-    return report
+def _taxon_report_row(name: str, cap: int, stats: dict, class_id: str, gbif_key: object) -> dict:
+    """One fetch-report row. ``accepted`` is verified files, not licensed URLs.
+
+    ``gbif_licensed_count`` is the entire licensed GBIF pool. It is written
+    only when that query really ended (no more records, or ``--max-pages``)
+    and ``accepted`` is still below the cap. ``exhausted_reason`` says which.
+    A download failure leaves ``accepted`` below that count. ``selected`` =
+    ``accepted`` + the failed-reason counts. ``pool_exhausted`` on this row
+    is this taxon's query, not a sibling taxon's.
+    """
+    item = {"taxon": name, "accepted": stats["accepted"], "cap": cap, "class_id": class_id}
+    if gbif_key is not None:
+        item["gbif_key"] = gbif_key
+    item["selected"] = stats["selected"]
+    item["failed"] = stats["failed"]
+    item["pool"] = stats["pool"]
+    item["shortfall"] = stats["shortfall"]
+    item["pool_exhausted"] = stats["pool_exhausted"]
+    if stats.get("exhausted_reason"):
+        item["exhausted_reason"] = stats["exhausted_reason"]
+    if stats.get("gbif_licensed_count") is not None:
+        item["gbif_licensed_count"] = stats["gbif_licensed_count"]
+    return item
 
 
 def suffix_for(url: str) -> str:
@@ -822,9 +1504,57 @@ def _row_license_allowed(row: dict) -> bool:
     return True
 
 
+def _sanitize_cache_identity(identity: str) -> str:
+    return re.sub(r"[^A-Za-z0-9._-]+", "_", identity).strip("._") or "item"
+
+
+def _escape_cache_identity(identity: str) -> str:
+    """Escape so ``-v2`` inside a class name cannot look like a version marker."""
+    return (
+        identity.replace("%", "%25")
+        .replace("-", "%2D")
+        .replace("_", "%5F")
+        .replace(".", "%2E")
+    )
+
+
+def _unescape_cache_identity(text: str) -> str:
+    return (
+        text.replace("%2E", ".")
+        .replace("%5F", "_")
+        .replace("%2D", "-")
+        .replace("%25", "%")
+    )
+
+
 def _cache_file(directory: Path, kind: str, identity: str, key: str) -> Path:
-    safe = re.sub(r"[^A-Za-z0-9._-]+", "_", identity).strip("._") or "item"
-    return directory / "gbif_cache" / f"{kind}-{safe[:60]}-{key[:20]}.json"
+    escaped = _escape_cache_identity(identity)
+    name = f"{kind}={escaped}__v{_QUERY_CACHE_VERSION}__{key[:20]}.json"
+    return directory / "gbif_cache" / name
+
+
+def _cache_name_identity(name: str) -> tuple[str, str] | None:
+    """Kind and identity parsed from a cache filename. The identity is exact.
+
+    The current name escapes ``-`` so ``aa-v2`` cannot look like a version.
+    An older ``kind-identity-vN-rest`` name takes the last ``-vN-`` suffix, so
+    ``class-aa-v2-v3-<hash>`` is identity ``aa-v2``, not ``aa``.
+    """
+    current = re.fullmatch(r"([A-Za-z0-9]+)=(.*)__v(\d+)__([0-9a-f]{20})\.json", name)
+    if current:
+        return current.group(1), _unescape_cache_identity(current.group(2))
+    if not name.endswith(".json"):
+        return None
+    stem = name[: -len(".json")]
+    # Greedy identity, then the last "-vN-" suffix. "class-aa-v2-v3-<hash>" is
+    # aa-v2 at version 3, and "class-aa-v2-v1-old-cache" is aa-v2 as well.
+    versioned = re.fullmatch(r"([A-Za-z0-9]+)-(.+)-v(\d+)-(.+)", stem)
+    if versioned:
+        return versioned.group(1), versioned.group(2)
+    hashed = re.fullmatch(r"([A-Za-z0-9]+)-(.+)-([0-9a-f]{20})", stem)
+    if hashed is None:
+        return None
+    return hashed.group(1), hashed.group(2)
 
 
 def _query_cache_key(kind: str, identity: str, parameters: dict) -> str:
@@ -839,7 +1569,47 @@ def _query_cache_key(kind: str, identity: str, parameters: dict) -> str:
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
 
-def _read_query_cache(path: Path, key: str) -> list[dict] | None:
+def _drop_stale_cache_files(directory: Path, kind: str, identity: str, keep: Path) -> None:
+    """Delete other cache files for this exact class or probe, including older versions.
+
+    The filename is parsed and the identity is compared whole. ``aa`` does not
+    match ``aa-v2``, and ``bole`` does not match ``bole-extra``.
+    """
+    folder = directory / "gbif_cache"
+    if not folder.is_dir():
+        return
+    sanitized = _sanitize_cache_identity(identity)
+    try:
+        keep_resolved = keep.resolve() if keep.exists() else None
+    except OSError:
+        keep_resolved = None
+    for path in folder.glob("*.json"):
+        parsed = _cache_name_identity(path.name)
+        if parsed is None or parsed[0] != kind:
+            continue
+        if parsed[1] != identity and parsed[1] != sanitized:
+            continue
+        try:
+            if keep_resolved is not None and path.resolve() == keep_resolved:
+                continue
+            path.unlink(missing_ok=True)
+        except OSError:
+            continue
+
+
+def _pool_from_cache_entry(item: dict) -> _Pool | None:
+    rows = item.get("rows")
+    if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
+        return None
+    kept = [row for row in rows if _row_license_allowed(row)]
+    cursor = item.get("cursor") if isinstance(item.get("cursor"), dict) else None
+    fetch = item.get("fetch") if isinstance(item.get("fetch"), dict) else None
+    meta = item.get("meta") if isinstance(item.get("meta"), dict) else {}
+    finite = bool(item.get("finite")) or cursor is None
+    return _Pool(str(item.get("name") or ""), kept, cursor, fetch, meta, finite)
+
+
+def _read_bundle(path: Path, key: str) -> _Bundle | None:
     if not path.is_file():
         return None
     try:
@@ -850,22 +1620,76 @@ def _read_query_cache(path: Path, key: str) -> list[dict] | None:
         return None
     if not isinstance(payload, dict) or payload.get("key") != key:
         return None
+    pools_payload = payload.get("pools")
+    if isinstance(pools_payload, list):
+        pools = []
+        for item in pools_payload:
+            if not isinstance(item, dict):
+                return None
+            pool = _pool_from_cache_entry(item)
+            if pool is None:
+                return None
+            pools.append(pool)
+        return _Bundle(pools)
     rows = payload.get("rows")
     if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
         return None
-    return rows
+    pool = _pool_from_cache_entry({"name": "", "rows": rows, "finite": True, "meta": {}})
+    if pool is None:
+        return None
+    return _Bundle([pool])
 
 
-def _cached_media(directory: Path, kind: str, identity: str, parameters: dict, produce) -> list[dict]:
-    """Reuse a finished GBIF media list. The file is written before download fields are added."""
+def _finite_bundle(rows: list[dict], targets: list[tuple[str, int, list[dict]]]) -> _Bundle:
+    """A mocked or hand-written list is the whole pool: nothing further is queried."""
+    pools = [
+        _Pool(name, list(group), None, None, {}, finite=True) for name, _cap, group in targets
+    ]
+    if not pools:
+        pools = [_Pool("", [row for row in rows if isinstance(row, dict)], None, None, {}, finite=True)]
+    return _Bundle(pools)
+
+
+def _bundle_from_produced(produced, split_finite) -> _Bundle:
+    pools = getattr(produced, "pools", None)
+    if pools:
+        return _Bundle(list(pools))
+    cursor = getattr(produced, "cursor", None)
+    fetch = getattr(produced, "fetch", None)
+    if isinstance(cursor, dict) and isinstance(fetch, dict):
+        pool = _Pool("", list(produced), cursor, fetch, {}, finite=False)
+        return _Bundle([pool])
+    return split_finite(list(produced))
+
+
+def _cached_media(
+    directory: Path,
+    kind: str,
+    identity: str,
+    parameters: dict,
+    produce,
+    split_finite,
+    *,
+    persist: bool = True,
+) -> _Bundle:
+    """Reuse GBIF rows and, for a live query, the cursor. Download fields are not stored.
+
+    ``persist`` is false for a dry run, which must not write or delete a cache file.
+    """
     key = _query_cache_key(kind, identity, parameters)
     path = _cache_file(directory, kind, identity, key)
-    loaded = _read_query_cache(path, key)
+    loaded = _read_bundle(path, key) if path.is_file() else None
     if loaded is not None:
-        return [row for row in loaded if _row_license_allowed(row)]
-    rows = produce()
-    _atomic_write_text(path, json.dumps({"key": key, "rows": rows}, ensure_ascii=False))
-    return rows
+        loaded.attach_cache(path, key)
+        if persist:
+            _drop_stale_cache_files(directory, kind, identity, path)
+        return loaded
+    bundle = _bundle_from_produced(produce(), split_finite)
+    bundle.attach_cache(path, key)
+    if persist:
+        bundle.save()
+        _drop_stale_cache_files(directory, kind, identity, path)
+    return bundle
 
 
 def _destination_for(directory: Path, relative: str) -> Path:
@@ -881,20 +1705,60 @@ def _attach_file(row: dict, folder: str) -> Path:
     return relative
 
 
+def _failure_reason(error: BaseException) -> str:
+    """Stable bucket for one candidate that will not be retried."""
+    if isinstance(error, _RejectedImage):
+        text = str(error).lower()
+        if "too large" in text:
+            return "too_large"
+        return "undecodable"
+    if isinstance(error, _TruncatedTransfer):
+        return "truncated"
+    if isinstance(error, urllib.error.HTTPError):
+        return f"http_{int(error.code)}"
+    if _is_certificate_failure(error):
+        return "ssl_certificate"
+    text = str(error).lower()
+    if "too large" in text:
+        return "too_large"
+    if "too small" in text or "not an image" in text:
+        return "undecodable"
+    reason = getattr(error, "reason", None)
+    blob = f"{error} {reason}".lower()
+    if "timed out" in blob or "timeout" in blob:
+        return "timeout"
+    if isinstance(reason, ssl.SSLError) or "ssl" in blob:
+        return "ssl"
+    if isinstance(reason, socket.gaierror) or "name resolution" in blob or "getaddrinfo" in blob:
+        return "dns"
+    return "other"
+
+
+def _accept_row(row: dict, size: int) -> None:
+    row["bytes"] = int(size)
+    row["downloaded"] = True
+    row.pop("download_error", None)
+    row.pop("_failure_reason", None)
+    row.pop("_image_rejected", None)
+
+
 def _download_rows(media: list[dict], *, directory: Path, resume: bool, workers: int) -> None:
     """Download in place. Completion order does not change `media` order."""
 
     def fetch(row: dict) -> None:
         destination = _destination_for(directory, row["file"])
         try:
-            row["bytes"] = download_image(row["image_url"], destination, resume=resume, data_dir=directory)
-            row["downloaded"] = True
+            size = download_image(row["image_url"], destination, resume=resume, data_dir=directory)
         except Exception as error:  # noqa: BLE001 — keep the crawl going
             if isinstance(error, (_RejectedImage, _TruncatedTransfer)):
                 row["_image_rejected"] = True
+            row["_failure_reason"] = _failure_reason(error)
             row["download_error"] = str(error)
+            row["downloaded"] = False
             with _PRINT_LOCK:
                 print(f"  skip {row['image_url']}: {error}", file=sys.stderr)
+            return
+        _accept_row(row, size)
 
     if workers <= 1 or len(media) <= 1:
         for row in media:
@@ -906,9 +1770,240 @@ def _download_rows(media: list[dict], *, directory: Path, resume: bool, workers:
             future.result()
 
 
-def _countable_media(media: list[dict]) -> list[dict]:
-    """Licensed rows that were not rejected as an undecodable or oversized body."""
-    return [row for row in media if not row.get("_image_rejected")]
+def _existing_verified(directory: Path, row: dict) -> bool:
+    """True when this candidate's file is already on disk and decodes."""
+    destination = _destination_for(directory, row["file"])
+    if not destination.is_file():
+        return False
+    index = _verified_index(directory)
+    if index.matches(destination):
+        return True
+    if _full_load_ok(str(destination)):
+        try:
+            index.remember(destination)
+        except OSError:
+            pass
+        return True
+    return False
+
+
+def _outcome_stats(
+    kept: list[dict],
+    attempted: list[dict],
+    pool_len: int,
+    cap: int,
+    *,
+    dry_run: bool,
+    no_more_pages: bool,
+    exhausted_reason: str | None,
+    budget_stop: bool = False,
+) -> dict:
+    """Counts that add up: selected = accepted + failed reasons.
+
+    ``accepted`` is verified files (or, in a dry run, the candidates that would
+    be written). ``shortfall``, ``pool_exhausted``, and ``gbif_licensed_count``
+    are set only when the GBIF query has really ended below the cap.
+    ``replacement_budget`` stops the unit without writing ``gbif_licensed_count``.
+    """
+    if dry_run:
+        accepted = len(kept)
+        failed: dict[str, int] = {}
+        selected = len(attempted)
+    else:
+        failed_counts: Counter[str] = Counter()
+        accepted = 0
+        for row in attempted:
+            if row.get("downloaded") is True:
+                accepted += 1
+                continue
+            failed_counts[str(row.get("_failure_reason") or "other")] += 1
+        failed = {key: failed_counts[key] for key in sorted(failed_counts)}
+        selected = len(attempted)
+    if selected != accepted + sum(failed.values()):
+        raise RuntimeError(
+            f"fetch counts do not add up: selected {selected}, accepted {accepted}, failed {failed}"
+        )
+    if budget_stop and accepted < cap:
+        exhausted = True
+        reason = "replacement_budget"
+        licensed = None
+    else:
+        exhausted = bool(no_more_pages) and accepted < cap
+        reason = (exhausted_reason or "end_of_records") if exhausted else None
+        licensed = pool_len if exhausted else None
+    return {
+        "accepted": accepted,
+        "selected": selected,
+        "failed": failed,
+        "pool": pool_len,
+        "shortfall": (cap - accepted) if exhausted else 0,
+        "pool_exhausted": exhausted,
+        "exhausted_reason": reason,
+        "gbif_licensed_count": licensed,
+    }
+
+
+def _combine_stats(parts: list[dict]) -> dict:
+    failed: Counter[str] = Counter()
+    for part in parts:
+        failed.update(part["failed"])
+    accepted = sum(int(part["accepted"]) for part in parts)
+    selected = sum(int(part["selected"]) for part in parts)
+    combined_failed = {key: failed[key] for key in sorted(failed)}
+    if selected != accepted + sum(combined_failed.values()):
+        raise RuntimeError(
+            f"fetch counts do not add up: selected {selected}, accepted {accepted}, failed {combined_failed}"
+        )
+    shortfall = sum(int(part["shortfall"]) for part in parts)
+    reasons = [str(part["exhausted_reason"]) for part in parts if part.get("pool_exhausted") and part.get("exhausted_reason")]
+    if any(reason == "replacement_budget" for reason in reasons):
+        reason = "replacement_budget"
+    elif any(reason == "max_pages" for reason in reasons):
+        reason = "max_pages"
+    elif reasons:
+        reason = "end_of_records"
+    else:
+        reason = None
+    return {
+        "accepted": accepted,
+        "selected": selected,
+        "failed": combined_failed,
+        "pool": sum(int(part["pool"]) for part in parts),
+        "shortfall": shortfall,
+        "any_taxon_pool_exhausted": any(bool(part["pool_exhausted"]) for part in parts),
+        "exhausted_reason": reason,
+    }
+
+
+def _download_targets(species: dict, media: list[dict], class_cap: int) -> list[tuple[str, int, list[dict]]]:
+    """Per-taxon pools and download caps. A species class is one pool."""
+    sampling = species.get("sampling") or {}
+    planned = list(sampling.get("taxa") or [])
+    if not planned:
+        return [("", class_cap, media)]
+    plan = taxon_fetch_plan(planned, class_cap, int(sampling["per_taxon_cap"]))
+    grouped: dict[str, list[dict]] = {name: [] for name in plan}
+    for row in media:
+        name = str(row.get("taxon_name") or row.get("queried_name") or "")
+        if name in grouped:
+            grouped[name].append(row)
+    return [(name, plan[name], grouped[name]) for name in plan]
+
+
+def _row_skips_network(directory: Path, row: dict, resume: bool) -> bool:
+    """Verified files and parked not_selected photos are not download attempts."""
+    if not resume:
+        return False
+    destination = _destination_for(directory, row["file"])
+    if destination.is_file():
+        index = _verified_index(directory)
+        if index.matches(destination) or _full_load_ok(str(destination)):
+            return True
+    source = _not_selected_source(directory, destination)
+    return source is not None and source.is_file()
+
+
+def _settle_without_network(directory: Path, row: dict) -> None:
+    """Accept a local file, or record a parked file that failed the download checks."""
+    destination = _destination_for(directory, row["file"])
+    if _existing_verified(directory, row):
+        _accept_row(row, destination.stat().st_size)
+        return
+    try:
+        size = download_image(row["image_url"], destination, resume=True, data_dir=directory)
+    except Exception as error:  # noqa: BLE001 — same buckets as a failed download
+        row["_failure_reason"] = _failure_reason(error)
+        row["download_error"] = str(error)
+        row["downloaded"] = False
+        return
+    _accept_row(row, size)
+
+
+def _fill_to_cap(
+    pool: _Pool,
+    cap: int,
+    *,
+    folder: str,
+    directory: Path,
+    dry_run: bool,
+    resume: bool,
+    workers: int,
+) -> tuple[list[dict], list[dict]]:
+    """Keep the first `cap` successes in pool order.
+
+    Every run starts at the first candidate. A window is exactly the number of
+    slots still open, and no wider than the remaining download budget. Workers
+    download that window together, then the next window is chosen on this
+    thread. The set of files does not depend on which transfer finishes first.
+    A file that already verifies, and a photo restored from ``not_selected/``,
+    counts as accepted and does not use the budget. The budget counts failed
+    attempts, not successful downloads, so a re-run stops on the same
+    candidates. A failed candidate in the prefix is tried again until that
+    budget or 50 failures in a row.
+    When the rows on hand run out, one more GBIF batch is fetched before the
+    next window, and only while budget remains.
+    """
+    media = pool.rows
+    for row in media:
+        _attach_file(row, folder)
+    if cap < 1:
+        return [], []
+    if dry_run:
+        kept = list(media[:cap])
+        return kept, list(kept)
+
+    kept: list[dict] = []
+    attempted: list[dict] = []
+    cursor = 0
+    attempts = 0
+    streak = 0
+    budget = _replacement_attempt_budget(cap)
+    while len(kept) < cap:
+        slots = cap - len(kept)
+        failure_room = REPLACEMENT_CONSECUTIVE_FAILURES - streak
+        if failure_room < 1:
+            pool.budget_exhausted = True
+            break
+        remaining = budget - attempts
+        if cursor >= len(media):
+            if remaining < 1:
+                pool.budget_exhausted = True
+                break
+            added = pool.fetch_more(min(slots, remaining, failure_room))
+            if added:
+                for row in media[len(media) - added :]:
+                    _attach_file(row, folder)
+            if cursor >= len(media):
+                break
+        batch: list[dict] = []
+        scheduled = 0
+        while len(batch) < slots and len(batch) < failure_room and cursor < len(media):
+            row = media[cursor]
+            if not _row_skips_network(directory, row, resume):
+                if scheduled >= remaining:
+                    break
+                scheduled += 1
+            batch.append(row)
+            cursor += 1
+        if not batch:
+            pool.budget_exhausted = True
+            break
+        attempted.extend(batch)
+        local_ids = {id(row) for row in batch if _row_skips_network(directory, row, resume)}
+        for row in batch:
+            if id(row) in local_ids:
+                _settle_without_network(directory, row)
+        network = [row for row in batch if id(row) not in local_ids]
+        if network:
+            _download_rows(network, directory=directory, resume=resume, workers=workers)
+        for row in batch:
+            if row.get("downloaded") is True:
+                kept.append(row)
+                streak = 0
+            else:
+                attempts += 1
+                streak += 1
+    return kept, attempted
 
 
 def _store_media(
@@ -928,6 +2023,52 @@ def _store_media(
     return [row for row in media if row.get("downloaded") is True]
 
 
+def _part_caps(species: dict, class_cap: int) -> dict[str, int]:
+    sampling = species.get("sampling") or {}
+    planned = list(sampling.get("taxa") or [])
+    if not planned:
+        return {"": class_cap}
+    return taxon_fetch_plan(planned, class_cap, int(sampling["per_taxon_cap"]))
+
+
+def _stats_for(pool: _Pool, kept: list[dict], attempted: list[dict], cap: int, *, dry_run: bool) -> dict:
+    ran_out = len(kept) < cap
+    budget = bool(pool.budget_exhausted) and ran_out
+    return _outcome_stats(
+        kept,
+        attempted,
+        len(pool.rows),
+        cap,
+        dry_run=dry_run,
+        no_more_pages=ran_out and not budget,
+        budget_stop=budget,
+        exhausted_reason=None if budget else (pool.end_reason() if ran_out else None),
+    )
+
+
+def _class_report_entry(kept: list[dict], stats: dict, cap: int, min_before_global: int) -> dict:
+    regional = sum(1 for row in kept if row.get("region_scope") == "central_europe")
+    taxa = sorted({str(row.get("taxon_name") or row.get("queried_name") or "") for row in kept})
+    accepted = int(stats["accepted"])
+    entry = {
+        "accepted": accepted,
+        "regional": regional,
+        "global_fill": accepted - regional,
+        "cap": cap,
+        "taxa_with_photos": len([name for name in taxa if name]),
+        "held_out_photos": sum(1 for row in kept if row.get("held_out_taxon")),
+        "below_regional_minimum": regional < min_before_global,
+        "selected": stats["selected"],
+        "failed": stats["failed"],
+        "pool": stats["pool"],
+        "shortfall": stats["shortfall"],
+        "any_taxon_pool_exhausted": bool(stats["any_taxon_pool_exhausted"]),
+    }
+    if stats.get("exhausted_reason"):
+        entry["exhausted_reason"] = stats["exhausted_reason"]
+    return entry
+
+
 def run_fetch(
     manifest: dict,
     *,
@@ -941,13 +2082,15 @@ def run_fetch(
     download_workers: int = 16,
     data_dir: Path | None = None,
 ) -> None:
-    """Collect licensed media and download it. Selection rules are unchanged."""
+    """Collect a licensed candidate pool and download until each cap is filled."""
     _ensure_truncated_images_rejected()
+    _clear_load_cache()
     if download_workers < 1:
         raise ValueError("download-workers must be at least 1")
     wanted = {item.strip() for item in only.split(",") if item.strip()}
     directory = data_dir or DATA_DIR
-    directory.mkdir(parents=True, exist_ok=True)
+    if not dry_run:
+        directory.mkdir(parents=True, exist_ok=True)
     rows: list[dict] = []
     per_class: dict[str, dict] = {}
     taxon_report: list[dict] = []
@@ -958,12 +2101,11 @@ def run_fetch(
             continue
         cap = class_fetch_cap(species, max_per_class)
         print(f"fetch {species['id']} (cap {cap}, {max_per_occurrence} photos/occurrence)")
-        media = _cached_media(
+        bundle = _cached_media(
             directory,
             "class",
             str(species["id"]),
             {
-                "cap": cap,
                 "max_per_occurrence": max_per_occurrence,
                 "max_pages": max_pages,
                 "gbif_names": list(species.get("gbif_names") or []),
@@ -971,99 +2113,54 @@ def run_fetch(
                 "safety_tag": species.get("safety_tag"),
             },
             lambda species=species, cap=cap: collect_class_media(species, cap, max_per_occurrence, max_pages),
+            lambda rows, species=species, cap=cap: _finite_bundle(rows, _download_targets(species, rows, cap)),
+            persist=not dry_run,
         )
-        kept = _store_media(
-            media,
-            folder=species["id"],
-            directory=directory,
-            dry_run=dry_run,
-            resume=resume,
-            workers=download_workers,
-        )
-        counted = _countable_media(media)
-        regional = sum(1 for row in counted if row.get("region_scope") == "central_europe")
-        taxa = sorted({row.get("taxon_name") or row.get("queried_name") or "" for row in counted})
-        per_class[species["id"]] = {
-            "accepted": len(counted),
-            "regional": regional,
-            "global_fill": len(counted) - regional,
-            "cap": cap,
-            "taxa_with_photos": len([name for name in taxa if name]),
-            "held_out_photos": sum(1 for row in counted if row.get("held_out_taxon")),
-            "below_regional_minimum": regional < min_before_global,
-        }
-        print(
-            f"  accepted media: {len(counted)} "
-            f"(regional {regional}, global {len(counted) - regional}, taxa {per_class[species['id']]['taxa_with_photos']})"
-        )
-        sampling = species.get("sampling") or {}
-        planned = list(sampling.get("taxa") or [])
-        if planned:
-            plan = taxon_fetch_plan(planned, cap, int(sampling["per_taxon_cap"]))
-            taxon_report.extend(
-                taxon_acceptance_rows(
-                    list(plan.items()),
-                    counted,
-                    species["id"],
-                    {str(taxon["name"]): taxon.get("gbif_key") for taxon in planned},
-                )
-            )
-        rows.extend(kept)
-        _write_outputs(
-            directory,
-            rows,
-            per_class,
-            probe_report,
-            taxon_report,
-            max_per_occurrence,
-        )
-
-    probes = manifest.get("toxic_probes") or {}
-    fetch_probes = not wanted or "unknown_mushroom" in wanted or "toxic_probes" in wanted
-    if fetch_probes:
-        cap = int(probes.get("per_taxon_cap") or 80)
-        if max_per_class is not None:
-            cap = min(cap, max_per_class)
-        for taxon in probes.get("taxa") or []:
-            name = str(taxon["name"])
-            print(f"fetch toxic probe {name} (cap {cap}, test only)")
-            media = _cached_media(
-                directory,
-                "probe",
-                name,
-                {
-                    "cap": cap,
-                    "max_per_occurrence": max_per_occurrence,
-                    "max_pages": max_pages,
-                    "name": name,
-                    "gbif_key": taxon.get("gbif_key"),
-                    "relation": taxon.get("relation") or "",
-                },
-                lambda name=name, cap=cap: _pull_names([name], cap, max_per_occurrence, max_pages, set()),
-            )
-            for row in media:
-                row["class_id"] = probes.get("class_id") or "unknown_mushroom"
-                row["taxon_name"] = name
-                row["held_out_taxon"] = True
-                row["toxic"] = True
-                row["genus_relation"] = taxon.get("relation") or ""
-                row["probe"] = True
-            kept = _store_media(
-                media,
-                folder="unknown_mushroom",
+        part_caps = _part_caps(species, cap)
+        kept_parts: list[dict] = []
+        part_stats: list[dict] = []
+        for pool in bundle.pools:
+            part_cap = part_caps.get(pool.name, 0)
+            kept, attempted = _fill_to_cap(
+                pool,
+                part_cap,
+                folder=species["id"],
                 directory=directory,
                 dry_run=dry_run,
                 resume=resume,
                 workers=download_workers,
             )
-            counted = _countable_media(media)
-            rows.extend(kept)
-            probe_row = {"taxon": name, "accepted": len(counted), "cap": cap, "gbif_key": taxon.get("gbif_key")}
-            if len(counted) < cap:
-                probe_row["gbif_licensed_count"] = len(counted)
-            probe_report.append(probe_row)
-            taxon_report.append(probe_row)
-            print(f"  accepted probe media: {len(counted)}")
+            stats = _stats_for(pool, kept, attempted, part_cap, dry_run=dry_run)
+            kept_parts.extend(kept)
+            part_stats.append(stats)
+            if pool.name:
+                sampling = species.get("sampling") or {}
+                planned = list(sampling.get("taxa") or [])
+                keys = {str(taxon["name"]): taxon.get("gbif_key") for taxon in planned}
+                taxon_report.append(_taxon_report_row(pool.name, part_cap, stats, species["id"], keys.get(pool.name)))
+        kept = kept_parts
+        if part_stats:
+            class_stats = _combine_stats(part_stats)
+        else:
+            class_stats = _outcome_stats(
+                [],
+                [],
+                0,
+                cap,
+                dry_run=dry_run,
+                no_more_pages=True,
+                exhausted_reason="end_of_records",
+            )
+            class_stats["any_taxon_pool_exhausted"] = bool(class_stats["pool_exhausted"])
+        per_class[species["id"]] = _class_report_entry(kept, class_stats, cap, min_before_global)
+        entry = per_class[species["id"]]
+        print(
+            f"  accepted media: {entry['accepted']} "
+            f"(regional {entry['regional']}, global {entry['global_fill']}, "
+            f"taxa {entry['taxa_with_photos']}, shortfall {entry['shortfall']})"
+        )
+        rows.extend(kept)
+        if not dry_run:
             _write_outputs(
                 directory,
                 rows,
@@ -1073,9 +2170,81 @@ def run_fetch(
                 max_per_occurrence,
             )
 
-    report = _write_outputs(directory, rows, per_class, probe_report, taxon_report, max_per_occurrence)
-    attribution_path = directory / "attributions.jsonl"
-    print(f"wrote {len(rows)} rows to {attribution_path}")
+    probes = manifest.get("toxic_probes") or {}
+    fetch_probes = not wanted or "unknown_mushroom" in wanted or "toxic_probes" in wanted
+    probe_folder = str(probes.get("class_id") or "unknown_mushroom")
+    if fetch_probes:
+        cap = int(probes.get("per_taxon_cap") or 80)
+        if max_per_class is not None:
+            cap = min(cap, max_per_class)
+        for taxon in probes.get("taxa") or []:
+            name = str(taxon["name"])
+            print(f"fetch toxic probe {name} (cap {cap}, test only)")
+            probe_meta = {
+                "class_id": probe_folder,
+                "taxon_name": name,
+                "held_out_taxon": True,
+                "toxic": True,
+                "genus_relation": taxon.get("relation") or "",
+                "probe": True,
+            }
+            bundle = _cached_media(
+                directory,
+                "probe",
+                name,
+                {
+                    "max_per_occurrence": max_per_occurrence,
+                    "max_pages": max_pages,
+                    "name": name,
+                    "gbif_key": taxon.get("gbif_key"),
+                    "relation": taxon.get("relation") or "",
+                },
+                lambda name=name: _pull_names(
+                    [name],
+                    _margin_limit(cap),
+                    max_per_occurrence,
+                    max_pages,
+                    set(),
+                ),
+                lambda rows: _finite_bundle(rows, [("", 0, list(rows))]),
+                persist=not dry_run,
+            )
+            pool = bundle.pools[0] if bundle.pools else _Pool("", [], None, None, {}, finite=True)
+            pool.stamp(probe_meta)
+            kept, attempted = _fill_to_cap(
+                pool,
+                cap,
+                folder=probe_folder,
+                directory=directory,
+                dry_run=dry_run,
+                resume=resume,
+                workers=download_workers,
+            )
+            stats = _stats_for(pool, kept, attempted, cap, dry_run=dry_run)
+            rows.extend(kept)
+            probe_row = _taxon_report_row(name, cap, stats, probe_folder, taxon.get("gbif_key"))
+            probe_report.append(probe_row)
+            taxon_report.append(probe_row)
+            print(f"  accepted probe media: {stats['accepted']} (shortfall {stats['shortfall']})")
+            if not dry_run:
+                _write_outputs(
+                    directory,
+                    rows,
+                    per_class,
+                    probe_report,
+                    taxon_report,
+                    max_per_occurrence,
+                )
+
+    if dry_run:
+        report = _report_payload(per_class, probe_report, taxon_report, max_per_occurrence)
+        print(f"dry-run: {len(rows)} rows, no files written")
+    else:
+        report = _write_outputs(directory, rows, per_class, probe_report, taxon_report, max_per_occurrence)
+        kept_files = {str(row["file"]).replace("\\", "/") for row in rows if isinstance(row.get("file"), str)}
+        _move_unselected_images(directory, kept_files, _folders_ready_to_sweep(manifest, wanted))
+        attribution_path = directory / "attributions.jsonl"
+        print(f"wrote {len(rows)} rows to {attribution_path}")
     for item in report["thin_classes"]:
         print(f"  thin {item['class_id']}: {item['accepted']} accepted", file=sys.stderr)
 
@@ -1089,6 +2258,95 @@ def _probe_existing(path_str: str) -> tuple[str, bool, int, int]:
         return path_str, ok, int(stat.st_size), int(stat.st_mtime_ns)
     except Exception:
         return path_str, False, 0, 0
+
+
+def _image_folders(manifest: dict) -> dict[str, set[tuple[str, str]]]:
+    """Image directory to every class and probe that writes files there."""
+    owners: dict[str, set[tuple[str, str]]] = {}
+    for species in manifest.get("classes") or []:
+        if not isinstance(species, dict):
+            continue
+        folder = str(species.get("id") or "")
+        if folder:
+            owners.setdefault(folder, set()).add(("class", folder))
+    probes = manifest.get("toxic_probes") or {}
+    if isinstance(probes, dict):
+        folder = str(probes.get("class_id") or "unknown_mushroom")
+        for taxon in probes.get("taxa") or []:
+            if isinstance(taxon, dict) and taxon.get("name"):
+                owners.setdefault(folder, set()).add(("probe", str(taxon["name"])))
+    return owners
+
+
+def _units_fetched(manifest: dict, wanted: set[str]) -> set[tuple[str, str]]:
+    fetched: set[tuple[str, str]] = set()
+    for species in manifest.get("classes") or []:
+        if not isinstance(species, dict):
+            continue
+        species_id = str(species.get("id") or "")
+        if species_id and (not wanted or species_id in wanted):
+            fetched.add(("class", species_id))
+    probes = manifest.get("toxic_probes") or {}
+    fetch_probes = not wanted or "unknown_mushroom" in wanted or "toxic_probes" in wanted
+    if fetch_probes and isinstance(probes, dict):
+        for taxon in probes.get("taxa") or []:
+            if isinstance(taxon, dict) and taxon.get("name"):
+                fetched.add(("probe", str(taxon["name"])))
+    return fetched
+
+
+def _folders_ready_to_sweep(manifest: dict, wanted: set[str]) -> set[str]:
+    """Directories whose every class and probe was fetched in this run.
+
+    ``unknown_mushroom`` class photos and toxic probes share one directory.
+    ``--only toxic_probes`` fetches the probes and skips the class, so that
+    directory is left untouched.
+    """
+    fetched = _units_fetched(manifest, wanted)
+    ready = set()
+    for folder, units in _image_folders(manifest).items():
+        if units and units <= fetched:
+            ready.add(folder)
+    return ready
+
+
+def _move_unselected_images(directory: Path, kept_files: set[str], folders: set[str]) -> None:
+    """Move photos in finished directories that have no attribution row.
+
+    ``folders`` is only directories whose every writer was fetched this run.
+    Quarantine is unchanged. These files are previous selections that a later
+    successful retry pushed past the cap. ``images/<class>/`` then matches the
+    attribution rows for that class.
+    """
+    images = directory / "images"
+    if not images.is_dir() or not folders:
+        return
+    index = _verified_index(directory)
+    moved: list[str] = []
+    for path in _iter_stored_images(images):
+        try:
+            rel = path.resolve().relative_to(directory.resolve()).as_posix()
+        except ValueError:
+            continue
+        parts = rel.split("/")
+        class_id = parts[1] if len(parts) >= 3 and parts[0] == "images" else ""
+        if class_id not in folders or rel in kept_files:
+            continue
+        destination_dir = directory / "not_selected" / class_id
+        destination_dir.mkdir(parents=True, exist_ok=True)
+        target = destination_dir / path.name
+        if target.exists():
+            stamp = time.time_ns()
+            target = destination_dir / f"{path.stem}-{stamp}{path.suffix}"
+        os.replace(path, target)
+        moved.append(rel)
+    if not moved:
+        return
+    with index._lock:
+        for rel in moved:
+            index.entries.pop(rel, None)
+        snapshot = [(rel, size, mtime) for rel, (size, mtime) in index.entries.items()]
+    index.replace_all(snapshot)
 
 
 def _iter_stored_images(images_root: Path) -> list[Path]:
@@ -1108,11 +2366,19 @@ def _iter_stored_images(images_root: Path) -> list[Path]:
 def _map_image_probes(paths: list[str], workers: int) -> list[tuple[str, bool, int, int]]:
     if workers <= 1 or len(paths) <= 1:
         return [_probe_existing(path) for path in paths]
-    import multiprocessing
+    try:
+        import multiprocessing
 
-    context = multiprocessing.get_context("spawn")
-    with ProcessPoolExecutor(max_workers=workers, mp_context=context) as pool:
-        return list(pool.map(_probe_existing, paths))
+        context = multiprocessing.get_context("spawn")
+        with ProcessPoolExecutor(max_workers=workers, mp_context=context) as pool:
+            return list(pool.map(_probe_existing, paths))
+    except (PermissionError, OSError, NotImplementedError, BrokenProcessPool) as error:
+        print(
+            f"warning: process pool unavailable ({error}); verifying images with threads",
+            file=sys.stderr,
+        )
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            return list(pool.map(_probe_existing, paths))
 
 
 def _drop_quarantined_attributions(data_dir: Path, quarantined: set[str]) -> int:
@@ -1151,9 +2417,12 @@ def verify_existing_images(data_dir: Path, *, workers: int | None = None) -> dic
 
     No network. Counts are ``ok`` and ``quarantined`` per class directory under
     ``images/``. Attribution rows for quarantined files are removed in their
-    original order.
+    original order. A spawn process pool does the decode. If that pool cannot
+    start, or a worker breaks it (``BrokenProcessPool``), the same work runs
+    on threads.
     """
     _ensure_truncated_images_rejected()
+    _clear_load_cache()
     root = data_dir.resolve()
     files = _iter_stored_images(root / "images")
     if workers is None:
@@ -1213,7 +2482,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-per-occurrence", type=int, default=MAX_PER_OCCURRENCE)
     parser.add_argument("--max-pages", type=int, default=40)
     parser.add_argument("--only", default="", help="Comma-separated class ids")
-    parser.add_argument("--dry-run", action="store_true", help="Write attributions but do not download bytes")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the plan. Do not download, move, or write files.",
+    )
     parser.add_argument(
         "--download-workers",
         type=int,
@@ -1223,7 +2496,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--no-resume",
         action="store_true",
-        help="Download again even when a complete image is already on disk.",
+        help="Fetch from scratch. Do not restore not_selected files or accept an image already on disk. A successful download removes the same-name file from not_selected.",
     )
     parser.add_argument(
         "--verify-existing",
