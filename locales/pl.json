@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Zezwól aplikacji Grzybobranie AI na używanie aparatu do rozpoznawania grzybów.",
+    "NSPhotoLibraryUsageDescription": "Aplikacja potrzebuje dostępu do zdjęć, aby analizować wcześniej wykonane fotografie grzybów.",
+    "NSLocationWhenInUseUsageDescription": "Grzybobranie AI może zapisać miejsce znalezienia w dzienniku na tym urządzeniu, żeby łatwiej było tu wrócić."
+  },
+  "android": {
+    "camera_permission": "Zezwól aplikacji Grzybobranie AI na używanie aparatu do rozpoznawania grzybów.",
+    "photo_library_permission": "Aplikacja potrzebuje dostępu do zdjęć, aby analizować wcześniej wykonane fotografie grzybów.",
+    "location_permission": "Grzybobranie AI może zapisać miejsce znalezienia w dzienniku na tym urządzeniu, żeby łatwiej było tu wrócić."
+  }
+}

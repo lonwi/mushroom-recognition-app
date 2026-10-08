@@ -53,12 +53,17 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
   };
 
   const getHymenophoreName = (type: string) => {
-    switch(type) {
-      case 'TUBES': return 'Rurki';
-      case 'GILLS': return 'Blaszki';
-      case 'FOLDS': return 'Listewki';
-      case 'SPINES': return 'Kolce';
-      default: return 'Inny';
+    switch (type) {
+      case 'TUBES':
+        return t('atlas.hymenophoreTubes');
+      case 'GILLS':
+        return t('atlas.hymenophoreGills');
+      case 'FOLDS':
+        return t('atlas.hymenophoreFolds');
+      case 'SPINES':
+        return t('atlas.hymenophoreSpines');
+      default:
+        return t('atlas.hymenophoreOther');
     }
   };
 
@@ -116,11 +121,16 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
         <View style={styles.heroOverlay} />
         <SafeAreaView>
           <View style={styles.navBar}>
-            <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.8}>
+            <TouchableOpacity
+              onPress={onBack}
+              style={styles.backBtn}
+              activeOpacity={0.8}
+              testID="species-back"
+            >
               <View style={styles.backBtnCircle}>
                 <Ionicons name="chevron-back" size={22} color="#10B981" />
               </View>
-              <Text style={styles.backBtnText}>Atlas</Text>
+              <Text style={styles.backBtnText} testID="species-back-label">{t('nav.atlas')}</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -148,7 +158,7 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
              />
              <View style={styles.hymenophorePill}>
                 <Ionicons name={getHymenophoreIcon(species.hymenophore) as any} size={14} color="#047857" style={{marginRight: 4}} />
-                <Text style={styles.hymenophorePillText}>{getHymenophoreName(species.hymenophore)}</Text>
+                <Text style={styles.hymenophorePillText} testID="species-hymenophore">{getHymenophoreName(species.hymenophore)}</Text>
              </View>
            </View>
         </View>
@@ -180,7 +190,7 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
         <View style={styles.mainCard}>
           <View style={styles.infoRow}>
             <View style={styles.infoCol}>
-              <Text style={styles.infoLabel}>RODZINA</Text>
+              <Text style={styles.infoLabel} testID="species-family-label">{t('cards.family')}</Text>
               <Text style={styles.infoValue}>{species.family}</Text>
             </View>
           </View>
@@ -190,7 +200,7 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
               <View style={styles.divider} />
               <View style={styles.infoRow}>
                 <View style={styles.infoCol}>
-                  <Text style={styles.infoLabel}>INNE NAZWY</Text>
+                  <Text style={styles.infoLabel} testID="species-other-names-label">{t('cards.otherNames')}</Text>
                   <Text style={styles.infoValue}>{species.commonNicknames.join(' • ')}</Text>
                 </View>
               </View>
@@ -199,7 +209,7 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
 
           <View style={styles.divider} />
           
-          <Text style={styles.infoLabel}>SEZON WYSTĘPOWANIA W POLSCE</Text>
+          <Text style={styles.infoLabel} testID="species-season-label">{t('cards.seasonPoland')}</Text>
           <View style={styles.monthsGrid}>
             {monthsNames.map((m, index) => {
               const monthNum = index + 1;
@@ -229,14 +239,14 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
           />
         </View>
 
-        <Text style={styles.sectionTitle}>Morfologia i siedlisko</Text>
+        <Text style={styles.sectionTitle} testID="species-morphology-heading">{t('cards.morphologyHabitat')}</Text>
         
         {/* Botanical Details Card */}
         <View style={styles.detailCard}>
           <View style={styles.detailItem}>
             <View style={styles.detailIconBox}><Feather name="map-pin" size={18} color="#059669" /></View>
             <View style={styles.detailTextContainer}>
-              <Text style={styles.detailItemTitle}>Występowanie</Text>
+              <Text style={styles.detailItemTitle} testID="species-occurrence-label">{t('cards.occurrence')}</Text>
               <Text style={styles.detailItemDesc}>{species.habitat}</Text>
             </View>
           </View>
@@ -244,7 +254,7 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
           <View style={styles.detailItem}>
             <View style={styles.detailIconBox}><Feather name="umbrella" size={18} color="#059669" /></View>
             <View style={styles.detailTextContainer}>
-              <Text style={styles.detailItemTitle}>Kapelusz</Text>
+              <Text style={styles.detailItemTitle} testID="species-cap-label">{t('cards.cap')}</Text>
               <Text style={styles.detailItemDesc}>{species.capDescription}</Text>
             </View>
           </View>
@@ -252,7 +262,7 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
           <View style={styles.detailItem}>
             <View style={styles.detailIconBox}><Feather name="align-justify" size={18} color="#059669" /></View>
             <View style={styles.detailTextContainer}>
-              <Text style={styles.detailItemTitle}>Spód ({getHymenophoreName(species.hymenophore)})</Text>
+              <Text style={styles.detailItemTitle} testID="species-underside-label">{t('cards.underside').replace('{type}', getHymenophoreName(species.hymenophore))}</Text>
               <Text style={styles.detailItemDesc}>{species.hymenophoreDescription}</Text>
             </View>
           </View>
@@ -260,7 +270,7 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
           <View style={styles.detailItem}>
             <View style={styles.detailIconBox}><Feather name="menu" size={18} color="#059669" style={{transform: [{rotate: '90deg'}]}} /></View>
             <View style={styles.detailTextContainer}>
-              <Text style={styles.detailItemTitle}>Trzon i osłona</Text>
+              <Text style={styles.detailItemTitle} testID="species-stem-label">{t('cards.stemVeil')}</Text>
               <Text style={styles.detailItemDesc}>{species.stemDescription}</Text>
             </View>
           </View>
@@ -268,13 +278,13 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
           <View style={[styles.detailItem, { borderBottomWidth: 0, paddingBottom: 0 }]}>
             <View style={styles.detailIconBox}><Feather name="droplet" size={18} color="#059669" /></View>
             <View style={styles.detailTextContainer}>
-              <Text style={styles.detailItemTitle}>Miąższ, smak i zapach</Text>
+              <Text style={styles.detailItemTitle} testID="species-flesh-label">{t('cards.fleshTasteSmell')}</Text>
               <Text style={styles.detailItemDesc}>{species.fleshDescription} {species.tasteAndSmell}</Text>
             </View>
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Znaczenie i zastosowanie</Text>
+        <Text style={styles.sectionTitle} testID="species-significance-heading">{t('cards.significanceUse')}</Text>
 
         <View
           testID={useSection.testId}

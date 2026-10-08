@@ -76,6 +76,16 @@ export const en: Translations = {
     useLiterature: 'Significance in the literature',
     sourceLanguageNote:
       'Descriptions, look-alike differences, and morphology are source text in Polish. Month abbreviations follow the app language.',
+    family: 'FAMILY',
+    otherNames: 'OTHER NAMES',
+    seasonPoland: 'SEASON IN POLAND',
+    morphologyHabitat: 'Morphology and habitat',
+    occurrence: 'Occurrence',
+    cap: 'Cap',
+    underside: 'Underside ({type})',
+    stemVeil: 'Stem and veil',
+    fleshTasteSmell: 'Flesh, taste and smell',
+    significanceUse: 'Significance and use',
   },
   scanner: {
     title: 'AI Mushroom Scanner',
