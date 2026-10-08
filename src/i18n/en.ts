@@ -313,9 +313,19 @@ export const en: Translations = {
           'In plastic bags or buckets mushrooms quickly sweat and rot. Proteins break down and produce toxic bacterial compounds (ptomaines), which leads to severe secondary poisoning even from edible mushrooms.',
       },
       rule_whole_mushroom: {
-        title: 'Twist out the whole fruiting body, including the stem base',
+        title: 'Take gilled mushrooms whole, including the stem base',
         description:
-          'The base of the stem (a bulb, a volva, or the lack of one) is the key feature that separates a parasol and a field mushroom from the deadly death cap.',
+          'Lift a gilled fruiting body out of the ground intact, together with the base of the stem. A volva, a bulb, or the remains of a ring at that base is how you tell an edible species from a deadly one. Without that feature you cannot tell a parasol or a field mushroom from the death cap (Amanita phalloides).',
+      },
+      rule_larger_boletes: {
+        title: 'Larger fruiting bodies, such as boletes, may be cut low',
+        description:
+          'On a larger mushroom you can cut the stem with a knife just above the soil, without tearing the litter around it. Carefully twisting or levering the fruiting body out does not damage the mycelium either. The dispute over whether a knife or a twist is better is, in practice, baseless. After you pick, cover the exposed spot with litter or moss so the mycelium does not dry out.',
+      },
+      rule_protect_forest_floor: {
+        title: 'Do not rake the litter or destroy mushrooms you are not taking',
+        description:
+          'Do not rake the forest litter or dig through it looking for fruiting bodies. Do not destroy old or inedible mushrooms — leave them in the woods. Put in the basket only specimens you are completely sure about.',
       },
     },
     syndromes: {

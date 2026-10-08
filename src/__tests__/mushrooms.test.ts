@@ -301,6 +301,33 @@ describe('Mushroom Database & Safety Verification', () => {
     const warsaw = TOXICOLOGY_CENTERS.find((c) => c.city === 'Warszawa');
     expect(warsaw).toBeDefined();
     expect(warsaw?.phone).toContain('22');
+
+    const byId = Object.fromEntries(GOLDEN_RULES.map((rule) => [rule.id, rule]));
+    expect(byId.rule_tubes_first?.critical).toBe(true);
+    expect(byId.rule_tubes_first?.title).toMatch(/początkujących/);
+    expect(byId.rule_tubes_first?.description).toMatch(/rurkami/);
+    expect(byId.rule_tubes_first?.description).toMatch(/blaszki/);
+
+    expect(byId.rule_whole_mushroom?.critical).toBe(true);
+    expect(byId.rule_whole_mushroom?.title).toMatch(/blaszkowe/);
+    expect(byId.rule_whole_mushroom?.description).toMatch(/nasadą trzonu/);
+    expect(byId.rule_whole_mushroom?.description).toMatch(/pochwa/i);
+    expect(byId.rule_whole_mushroom?.description).toMatch(/muchomora sromotnikowego/);
+    expect(byId.rule_whole_mushroom?.description).toMatch(/kani/);
+    expect(byId.rule_whole_mushroom?.description).toMatch(/pieczarki/);
+    expect(byId.rule_whole_mushroom?.description).not.toMatch(/borowik/i);
+
+    expect(byId.rule_larger_boletes?.critical).toBe(false);
+    expect(byId.rule_larger_boletes?.description).toMatch(/nożem/);
+    expect(byId.rule_larger_boletes?.description).toMatch(/grzybni/);
+    expect(byId.rule_larger_boletes?.description).toMatch(/ściółką albo mchem/);
+    expect(byId.rule_larger_boletes?.description).toMatch(/bezpodstawny/);
+    expect(byId.rule_larger_boletes?.title).not.toMatch(/początkuj/);
+
+    expect(byId.rule_protect_forest_floor?.critical).toBe(false);
+    expect(byId.rule_protect_forest_floor?.description).toMatch(/Nie grab leśnej ściółki/);
+    expect(byId.rule_protect_forest_floor?.description).toMatch(/niejadalnych/);
+    expect(byId.rule_protect_forest_floor?.description).toMatch(/całkowitą pewność/);
   });
 });
 

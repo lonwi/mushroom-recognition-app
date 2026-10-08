@@ -313,9 +313,19 @@ export const pl = {
           'W foliowych torebkach lub wiaderkach grzyby szybko ulegają zaparzeniu i gniciu. Białka rozkładają się, wytwarzając toksyczne związki bakteryjne (jad trupi / ptomainy), co prowadzi do ciężkich zatruć wtórnych nawet grzybami jadalnymi.',
       },
       rule_whole_mushroom: {
-        title: 'Wykręcaj owocnik w całości z nasadą trzonu',
+        title: 'Grzyby blaszkowe wyjmuj w całości, z podstawą trzonu',
         description:
-          'Podstawa trzonu (obecność bulwy, pochewki lub jej brak) to kluczowa cecha pozwalająca odróżnić kanię i pieczarkę od zabójczego muchomora sromotnikowego.',
+          'Owocnik z blaszkami wyjmij z ziemi cały, razem z nasadą trzonu. Pochwa, bulwa albo resztki pierścienia przy podstawie pozwalają odróżnić gatunek jadalny od śmiertelnie trującego. Bez tej cechy nie odróżnisz kani ani pieczarki od muchomora sromotnikowego.',
+      },
+      rule_larger_boletes: {
+        title: 'Większe owocniki, na przykład borowiki, można ścinać nisko',
+        description:
+          'Przy większych grzybach trzon możesz uciąć nożem tuż nad ziemią, nie rozrywając ściółki dookoła. Ostrożne wykręcenie albo podważenie owocnika również nie uszkadza grzybni. Spór, czy lepszy jest nóż, czy wykręcanie, jest w praktyce bezpodstawny. Po zerwaniu przykryj odsłonięte miejsce ściółką albo mchem, żeby grzybnia nie wyschła.',
+      },
+      rule_protect_forest_floor: {
+        title: 'Nie rozgrzebuj ściółki i nie niszcz grzybów, których nie zabierasz',
+        description:
+          'Nie grab leśnej ściółki i nie przekopuj jej w poszukiwaniu owocników. Starych oraz niejadalnych grzybów nie niszcz — zostaw je w lesie. Do koszyka wkładaj wyłącznie okazy, co do których masz całkowitą pewność.',
       },
     },
     syndromes: {

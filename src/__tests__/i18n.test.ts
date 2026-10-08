@@ -51,7 +51,22 @@ describe('Polish and English dictionaries', () => {
     expect(en.scanner.expertWarningBody).toMatch(/^Do not collect/);
     expect(en.lookalike.incompleteBody).toMatch(/does not mean there are no dangerous look-alikes/);
     expect(en.safetyGuide.syndromes.amatoxin.action).toMatch(/IMMEDIATELY/);
+    expect(en.safetyGuide.rules.rule_tubes_first.title).toMatch(/beginners/i);
     expect(en.safetyGuide.rules.rule_tubes_first.description).toMatch(/NO deadly poisonous/);
+    expect(en.safetyGuide.rules.rule_whole_mushroom.title).toMatch(/[Gg]illed/);
+    expect(en.safetyGuide.rules.rule_whole_mushroom.description).toMatch(/death cap/);
+    expect(en.safetyGuide.rules.rule_whole_mushroom.description).toMatch(/parasol/);
+    expect(en.safetyGuide.rules.rule_whole_mushroom.description).toMatch(/field mushroom/);
+    expect(en.safetyGuide.rules.rule_whole_mushroom.description).toMatch(/volva/);
+    expect(en.safetyGuide.rules.rule_larger_boletes.description).toMatch(/knife/);
+    expect(en.safetyGuide.rules.rule_larger_boletes.description).toMatch(/mycelium/);
+    expect(en.safetyGuide.rules.rule_larger_boletes.description).toMatch(/litter or moss/);
+    expect(en.safetyGuide.rules.rule_larger_boletes.description).toMatch(/baseless/);
+    expect(en.safetyGuide.rules.rule_protect_forest_floor.description).toMatch(/completely sure/);
+    expect(en.safetyGuide.rules.rule_protect_forest_floor.description).toMatch(/inedible/);
+    expect(pl.safetyGuide.rules.rule_whole_mushroom.description).toMatch(/muchomora sromotnikowego/);
+    expect(pl.safetyGuide.rules.rule_whole_mushroom.description).toMatch(/kani/);
+    expect(pl.safetyGuide.rules.rule_tubes_first.title).toMatch(/początkujących/);
     expect(en.journal.legacyEdibility).toMatch(/^Do not eat/);
 
     expect(pl.cards.useKitchen).toBe('W kuchni');

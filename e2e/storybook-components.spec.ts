@@ -211,6 +211,27 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.getByTestId('species-use-neutral')).toHaveCount(0);
   });
 
+  test('Safety guide keeps gilled mushrooms whole and lets larger boletes be cut', async ({ page }) => {
+    await page.goto('/iframe.html?id=mushroom-safetyguidescreen--golden-rules');
+    await expect(page.locator('body')).toContainText(
+      'Dla początkujących: tylko grzyby z rurkami (z "gąbką")',
+    );
+    await expect(page.locator('body')).toContainText(
+      'Grzyby blaszkowe wyjmuj w całości, z podstawą trzonu',
+    );
+    await expect(page.locator('body')).toContainText('muchomora sromotnikowego');
+    await expect(page.locator('body')).toContainText(
+      'Większe owocniki, na przykład borowiki, można ścinać nisko',
+    );
+    await expect(page.locator('body')).toContainText('ściółką albo mchem');
+    await expect(page.locator('body')).toContainText(
+      'Nie rozgrzebuj ściółki i nie niszcz grzybów, których nie zabierasz',
+    );
+    await expect(page.locator('body')).not.toContainText(
+      'Wykręcaj owocnik w całości z nasadą trzonu',
+    );
+  });
+
   test('PreparationGuide renders cleaning, cooking, and storing categories', async ({ page }) => {
     await page.goto('/iframe.html?id=mushroom-preparationguidescreen--default-view');
     await expect(page.locator('body')).toContainText('Poradnik Przygotowania');
