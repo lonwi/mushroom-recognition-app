@@ -1,5 +1,5 @@
 {
-  "note": "Grandfathered Knip issues. A new dependency fails immediately. Up to 12 new files, exports, or types are allowed so a split can move symbols; lower EXPORT_SLACK in scripts/knip-baseline.mjs to 0 after that. pnpm knip:update rewrites this list from the current tree.",
+  "note": "Grandfathered Knip issues. A new dependency, unlisted import, or unresolved import (including require) fails immediately. Up to 12 new files, exports, or types are allowed so a split can move symbols; lower EXPORT_SLACK in scripts/knip-baseline.mjs to 0 after that. pnpm knip:update rewrites this list from the current tree.",
   "issues": [
     "dependencies\tpackage.json\texpo-status-bar",
     "devDependencies\tpackage.json\t@testing-library/jest-native",

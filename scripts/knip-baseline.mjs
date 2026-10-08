@@ -7,7 +7,9 @@
 //
 // knip.json `ignoreDependencies` is only for false positives: @babel/core
 // (installed peer), expo-updates and expo-system-ui (Knip's Expo heuristics),
-// and @resvg/resvg-js (optional `pnpm dlx` tool). Real unused packages belong
+// and @resvg/resvg-js (optional `pnpm dlx` tool). dependency-cruiser is
+// spawned by file path from scripts/depcruise-gate.mjs, so Knip does not
+// see the package name in an npm script. Real unused packages belong
 // in quality/knip-baseline.json, not in that ignore list.
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -72,7 +74,7 @@ const current = identities(report);
 if (update) {
   fs.mkdirSync(path.dirname(baselinePath), { recursive: true });
   const document = {
-    note: 'Grandfathered Knip issues. A new dependency fails immediately. Up to 12 new files, exports, or types are allowed so a split can move symbols; lower EXPORT_SLACK in scripts/knip-baseline.mjs to 0 after that. pnpm knip:update rewrites this list from the current tree.',
+    note: 'Grandfathered Knip issues. A new dependency, unlisted import, or unresolved import (including require) fails immediately. Up to 12 new files, exports, or types are allowed so a split can move symbols; lower EXPORT_SLACK in scripts/knip-baseline.mjs to 0 after that. pnpm knip:update rewrites this list from the current tree.',
     issues: current,
   };
   fs.writeFileSync(baselinePath, `${JSON.stringify(document, null, 2)}\n`);
@@ -87,7 +89,8 @@ if (!fs.existsSync(baselinePath)) {
 
 // Exports, types, and files move when code is split. A few new identities of
 // those kinds are allowed so the in-flight refactor can land beside this gate.
-// A new dependency or unlisted import is never inside that slack.
+// A new dependency, unlisted import, or unresolved import (JS import or
+// require of a missing module) is never inside that slack.
 // TODO: set EXPORT_SLACK to 0 once that refactor is merged and the baseline is refreshed.
 const EXPORT_SLACK = 12;
 const SLACK_TYPES = new Set([
@@ -99,7 +102,6 @@ const SLACK_TYPES = new Set([
   'duplicates',
   'enumMembers',
   'namespaceMembers',
-  'unresolved',
 ]);
 
 const baseline = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
@@ -119,7 +121,7 @@ const byType = (ids) => {
 };
 
 console.log(
-  `Knip baseline: ${known.size} grandfathered, ${current.length} current, ${fresh.length} new (${freshHard.length} dependencies, ${freshSoft.length} movable, slack ${EXPORT_SLACK}), ${stale.length} stale`,
+  `Knip baseline: ${known.size} grandfathered, ${current.length} current, ${fresh.length} new (${freshHard.length} hard, ${freshSoft.length} movable, slack ${EXPORT_SLACK}), ${stale.length} stale`,
 );
 console.log(`Current by type: ${JSON.stringify(byType(current))}`);
 

@@ -9,6 +9,7 @@
     "@babel/core",
     "expo-updates",
     "expo-system-ui",
-    "@resvg/resvg-js"
+    "@resvg/resvg-js",
+    "dependency-cruiser"
   ]
 }
