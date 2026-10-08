@@ -13,6 +13,7 @@ import argparse
 import json
 import sys
 import time
+from collections import Counter
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -226,6 +227,21 @@ def download_image(url: str, destination: Path, timeout: int = 40) -> int:
     return len(payload)
 
 
+def taxon_acceptance_rows(names_and_caps: list[tuple[str, int]], media: list[dict], class_id: str, keys: dict[str, object]) -> list[dict]:
+    """One fetch-report row per taxon. Licensed count is set only when accepted < cap."""
+    counts = Counter(str(row.get("taxon_name") or "") for row in media)
+    report = []
+    for name, cap in names_and_caps:
+        accepted = int(counts.get(name) or 0)
+        item = {"taxon": name, "accepted": accepted, "cap": cap, "class_id": class_id}
+        if name in keys and keys[name] is not None:
+            item["gbif_key"] = keys[name]
+        if accepted < cap:
+            item["gbif_licensed_count"] = accepted
+        report.append(item)
+    return report
+
+
 def suffix_for(url: str) -> str:
     path = urllib.parse.urlparse(url).path.lower()
     for suffix in (".jpg", ".jpeg", ".png", ".webp"):
@@ -260,6 +276,7 @@ def main() -> None:
     attribution_path = DATA_DIR / "attributions.jsonl"
     rows: list[dict] = []
     per_class: dict[str, dict] = {}
+    taxon_report: list[dict] = []
 
     for species in manifest["classes"]:
         if wanted and species["id"] not in wanted:
@@ -282,6 +299,18 @@ def main() -> None:
             f"  accepted media: {len(media)} "
             f"(regional {regional}, global {len(media) - regional}, taxa {per_class[species['id']]['taxa_with_photos']})"
         )
+        sampling = species.get("sampling") or {}
+        planned = list(sampling.get("taxa") or [])
+        if planned:
+            plan = taxon_fetch_plan(planned, cap, int(sampling["per_taxon_cap"]))
+            taxon_report.extend(
+                taxon_acceptance_rows(
+                    list(plan.items()),
+                    media,
+                    species["id"],
+                    {str(taxon["name"]): taxon.get("gbif_key") for taxon in planned},
+                )
+            )
         for row in media:
             filename = f"{row['occurrence_key']}_{row['media_index']}{suffix_for(row['image_url'])}"
             relative = Path("images") / species["id"] / filename
@@ -332,7 +361,11 @@ def main() -> None:
                         print(f"  skip {row['image_url']}: {error}", file=sys.stderr)
                         continue
                 rows.append(row)
-            probe_report.append({"taxon": name, "accepted": len(media), "cap": cap, "gbif_key": taxon.get("gbif_key")})
+            probe_row = {"taxon": name, "accepted": len(media), "cap": cap, "gbif_key": taxon.get("gbif_key")}
+            if len(media) < cap:
+                probe_row["gbif_licensed_count"] = len(media)
+            probe_report.append(probe_row)
+            taxon_report.append(probe_row)
             print(f"  accepted probe media: {len(media)}")
 
     with attribution_path.open("w", encoding="utf-8") as handle:
@@ -342,6 +375,7 @@ def main() -> None:
         "classes": per_class,
         "thin_classes": thin_class_report(per_class),
         "toxic_probes": probe_report,
+        "taxa": taxon_report,
         "max_per_occurrence": args.max_per_occurrence,
         "note": (
             "Global fill runs after the Central European countries until the class cap. "

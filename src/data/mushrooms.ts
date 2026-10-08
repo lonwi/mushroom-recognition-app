@@ -81,6 +81,17 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
           'Pieczarka nie posiada pochwy u dołu trzonu'
         ],
         fatal: false
+      },
+      {
+        confusedWithId: 'amanita_citrina',
+        confusedWithName: 'Muchomor cytrynowy',
+        confusedWithStatus: 'POISONOUS',
+        keyDifferences: [
+          'Muchomor cytrynowy ma blady, cytrynowożółty kapelusz i bulwę z wyraźnym rąbkiem',
+          'Muchomor sromotnikowy jest oliwkowozielony i ma luźną, workowatą pochwę',
+          'Oba mają białe blaszki i pierścień. Żółty kapelusz nie czyni owocnika bezpiecznym'
+        ],
+        fatal: false
       }
     ],
     warningNotes: 'Najgroźniejszy muchomor polskich lasów. Objawy zwykle po 6–24 h, czasem później; nie czekaj na objawy, dzwoń 112 lub do ośrodka toksykologii. Chwilowa poprawa nie oznacza, że wątroba jest bezpieczna. Nie zbieraj młodych, zamkniętych owocników „na oko”.'
@@ -707,7 +718,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
       {
         confusedWithId: 'amanita_rubescens',
         confusedWithName: 'Muchomor czerwieniejący',
-        confusedWithStatus: 'NO_ATLAS_VERDICT',
+        confusedWithStatus: 'EDIBLE',
         keyDifferences: [
           'Muchomor plamisty ma pierścień gładki, nie prążkowany. Czerwieniejący ma pierścień z prążkami',
           'Miąższ plamistego nie czerwienieje. U czerwieniejącego uszkodzony miąższ różowieje albo czerwienieje',
@@ -918,9 +929,20 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
           'Hełmówka jadowita jest śmiertelnie trująca. W razie wątpliwości nie zbieraj'
         ],
         fatal: true
+      },
+      {
+        confusedWithId: 'hypholoma_capnoides',
+        confusedWithName: 'Maślanka łagodna',
+        confusedWithStatus: 'NO_ATLAS_VERDICT',
+        keyDifferences: [
+          'Maślanka łagodna ma blaszki szare, nie siarkowożółte ani zielonkawe',
+          'Rośnie na drewnie iglastym. Maślanka wiązkowa bywa na liściastym i iglastym',
+          'Brak karty nie oznacza, że żółte blaszki są łagodną maślanką'
+        ],
+        fatal: false
       }
     ],
-    warningNotes: 'NIE JEDZ. Trująca. Rośnie na pniakach razem z opieńkami i łuskwiakiem, a hełmówka jadowita bywa na tym samym drewnie. Brak zdjęcia.'
+    warningNotes: 'NIE JEDZ. Trująca. Rośnie na pniakach razem z opieńkami i łuskwiakiem, a hełmówka jadowita bywa na tym samym drewnie. Maślanka łagodna (Hypholoma capnoides) ma szare blaszki i nie ma karty. Brak zdjęcia.'
   },
   {
     id: 'tricholoma_equestre',
@@ -998,16 +1020,49 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
       {
         confusedWithId: 'rubroboletus_satanas',
         confusedWithName: 'Borowik szatański',
-        confusedWithStatus: 'NO_ATLAS_VERDICT',
+        confusedWithStatus: 'POISONOUS',
         keyDifferences: [
           'Borowik szatański ma jasny kapelusz i trzon z wyraźną czerwoną siatką',
           'Jest trujący i w Polsce ściśle chroniony. Nie zbieraj go',
           'Czerwone pory nie rozstrzygają, czy to ceglastopory. Brak karty nie oznacza, że grzyb jest jadalny'
         ],
         fatal: false
+      },
+      {
+        confusedWithId: 'imperator_rhodopurpureus',
+        confusedWithName: 'Borowik purpurowy',
+        confusedWithStatus: 'POISONOUS',
+        keyDifferences: [
+          'Imperator rhodopurpureus ma kapelusz z różowopurpurowym odcieniem i trzon z czerwoną siatką',
+          'Ceglastopory ma ciemnobrązowy kapelusz i trzon w czerwonych punkcikach, bez siatki',
+          'Oba silnie sinieją. Purpurowy odcień kapelusza to powód, żeby owocnik zostawić'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'imperator_torosus',
+        confusedWithName: 'Borowik żółtopory',
+        confusedWithStatus: 'POISONOUS',
+        keyDifferences: [
+          'Imperator torosus ma żółte pory, które z wiekiem czerwienieją, i trzon z siatką',
+          'Ceglastopory ma pory ceglastoczerwone od młodości i trzon w punkcikach',
+          'Żółte pory, które sinieją, nie są ceglastoporym'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'rubroboletus_other',
+        confusedWithName: 'Inne borowiki z rodzaju Rubroboletus',
+        confusedWithStatus: 'POISONOUS',
+        keyDifferences: [
+          'Rubroboletus legaliae, R. rhodoxanthus i pokrewne mają czerwone pory i często siatkę na trzonie',
+          'Są trujące. Czerwone pory nie rozstrzygają gatunku',
+          'Ceglastopory nie ma wyraźnej siatki. Siatka na trzonie to powód, żeby owocnik zostawić'
+        ],
+        fatal: false
       }
     ],
-    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. W literaturze jadalny tylko po obróbce termicznej. Surowy jest trujący. Borowik szatański (Rubroboletus satanas) jest trujący, ściśle chroniony i nie ma własnej karty. Brak zdjęcia.'
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. W literaturze jadalny tylko po obróbce termicznej. Surowy jest trujący. Borowik szatański (Rubroboletus satanas) jest trujący i ściśle chroniony. Imperator rhodopurpureus, Imperator torosus i inne Rubroboletus też są trujące i nie mają kart. Brak zdjęcia.'
   },
   {
     id: 'xerocomellus_chrysenteron',
@@ -1040,7 +1095,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         fatal: false
       }
     ],
-    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Brak zdjęcia. Pękający kapelusz z różem w szczelinach odróżnia go od podgrzybka brunatnego tylko razem z resztą owocnika.'
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Stare, spleśniałe albo rozmiękłe owocniki zostaw. Pleśń i rozkład nie są cechą gatunku. Brak zdjęcia. Pękający kapelusz z różem w szczelinach odróżnia go od podgrzybka brunatnego tylko razem z resztą owocnika.'
   },
   {
     id: 'leccinum_aurantiacum',
@@ -1059,7 +1114,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     stemDescription: 'Wysoki, pokryty czarniawymi albo rudymi kosmkami. Bez siateczki i bez pierścienia.',
     fleshDescription: 'Biały, po przekrojeniu szarzeje, fioletowieje albo czernieje. Koźlarz babka po przekrojeniu barwy nie zmienia.',
     tasteAndSmell: 'Nie sprawdzaj smakiem.',
-    culinaryValue: 'W literaturze jadalne i dopuszczone do obrotu. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia. Przed jedzeniem zeskrob kosmki z trzonu.',
+    culinaryValue: 'W literaturze jadalne tylko po obróbce termicznej. Surowe i niedogotowane powodują dolegliwości żołądkowo-jelitowe. Koźlarz pomarańczowożółty (Leccinum versipelle) nie jest dopuszczony do obrotu. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia. Przed jedzeniem zeskrob kosmki z trzonu.',
     confusionRisks: [
       {
         confusedWithId: 'leccinum_scabrum',
@@ -1084,7 +1139,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         fatal: false
       }
     ],
-    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Brak zdjęcia. Karta łączy koźlarza czerwonego i pomarańczowożółtego, bo zdjęcie ich nie rozdziela. Koźlarz grabowy, który czernieje pod grabem, nie jest na tej karcie.'
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Surowe i niedogotowane owocniki powodują dolegliwości żołądkowo-jelitowe. Koźlarz pomarańczowożółty nie jest dopuszczony do obrotu. Brak zdjęcia. Karta łączy koźlarza czerwonego i pomarańczowożółtego, bo zdjęcie ich nie rozdziela. Koźlarz grabowy, który czernieje pod grabem, nie jest na tej karcie.'
   },
   {
     id: 'xerocomus_subtomentosus',
@@ -1112,12 +1167,12 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         keyDifferences: [
           'Podgrzybek brunatny ma ciemniejszy, lepki w deszczu kapelusz i wyraźnie siniejące pory',
           'Zamszowy jest matowy i oliwkowy, a pory ma jaskrawożółte',
-          'Pieprzowca (Chalciporus piperatus) nie ma w atlasie: ma cynamonowe pory i piekący smak'
+          'Pieprznik pieprzowy (Chalciporus piperatus) nie ma w atlasie: ma cynamonowe pory i piekący smak'
         ],
         fatal: false
       }
     ],
-    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Brak zdjęcia. Pieprzowiec nie ma karty. Brak karty nie oznacza, że grzyb jest jadalny.'
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Brak zdjęcia. Pieprznik pieprzowy (Chalciporus piperatus) nie ma karty. Brak karty nie oznacza, że grzyb jest jadalny.'
   },
   {
     id: 'suillus_grevillei',
@@ -1301,7 +1356,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     stemDescription: 'Pod pierścieniem łuseczkowaty, nad pierścieniem gładki. Pierścień jest wyraźny. Nie ma pochwy.',
     fleshDescription: 'Cienki, bladobrązowy. Surowe owocniki nie są do jedzenia.',
     tasteAndSmell: 'Nie sprawdzaj smakiem. Zapach bywa przyjemny.',
-    culinaryValue: 'W literaturze jadalny po obróbce termicznej. Łatwo pomylić ze śmiertelną hełmówką jadowitą. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    culinaryValue: 'Na wykazie grzybów dopuszczonych do obrotu (rozporządzenie MZ) tylko owocniki z uprawy. Dziko rosnące nie są na tym wykazie. W literaturze jadalny po obróbce termicznej, ale łatwo pomylić ze śmiertelną hełmówką jadowitą. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'galerina_marginata',
@@ -1326,7 +1381,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         fatal: false
       }
     ],
-    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Hełmówka jadowita jest śmiertelnym sobowtórem na tym samym drewnie. Brak zdjęcia.'
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Na wykazie Ministerstwa Zdrowia tylko z uprawy, nie dziko rosnący. Hełmówka jadowita jest śmiertelnym sobowtórem na tym samym drewnie. Brak zdjęcia.'
   },
   {
     id: 'galerina_marginata',
@@ -1370,6 +1425,135 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
       }
     ],
     warningNotes: 'NIE JEDZ. Śmiertelnie trująca. Małe brązowe owocniki na drewnie zostaw. Brak zdjęcia.'
+  },
+  {
+    id: 'amanita_rubescens',
+    namePl: 'Muchomor czerwieniejący',
+    nameEn: 'Blusher',
+    nameLatin: 'Amanita rubescens',
+    commonNicknames: ['Muchomor czerwonawy'],
+    family: 'Muchomorowate (Amanitaceae)',
+    status: 'EDIBLE',
+    incompleteCard: true,
+    hymenophore: 'GILLS',
+    months: [6, 7, 8, 9, 10],
+    habitat: 'Lasy iglaste i liściaste, pod sosną, świerkiem, dębem i bukiem.',
+    capDescription: 'Średnica 5–15 cm. Brudnoróżowy do brązowawego, z szarawymi łatkami, które deszcz może zmyć. Brzeg nie jest prążkowany.',
+    hymenophoreDescription: 'Blaszki białe, gęste, wolne. Nie różowieją.',
+    stemDescription: 'Biały, z pierścieniem prążkowanym od góry. Nasada bulwiasta, bez workowatej pochwy.',
+    fleshDescription: 'Biały. Uszkodzony miąższ różowieje albo czerwienieje, zwłaszcza w trzonie i przy bulwie. Surowe owocniki są trujące.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem. Czerwienienie nie jest dowodem, że grzyb jest jadalny.',
+    culinaryValue: 'W literaturze jadalny tylko po obróbce termicznej. Surowy jest trujący. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    confusionRisks: [
+      {
+        confusedWithId: 'amanita_pantherina',
+        confusedWithName: 'Muchomor plamisty',
+        confusedWithStatus: 'POISONOUS',
+        keyDifferences: [
+          'Plamisty ma pierścień gładki i nie czerwienieje. Czerwieniejący ma pierścień prążkowany, a miąższ różowieje',
+          'Bulwa plamistego ma odstający rąbek',
+          'Zmyte łatki nie rozstrzygają gatunku. Bez czerwienienia miąższu owocnik zostaw'
+        ],
+        fatal: false
+      }
+    ],
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Surowy jest trujący. Muchomor plamisty nie czerwienieje i jest silnie trujący. Brak zdjęcia.'
+  },
+  {
+    id: 'amanita_citrina',
+    namePl: 'Muchomor cytrynowy',
+    nameEn: 'False death cap',
+    nameLatin: 'Amanita citrina',
+    commonNicknames: ['Muchomor cytrynowy'],
+    family: 'Muchomorowate (Amanitaceae)',
+    status: 'POISONOUS',
+    hymenophore: 'GILLS',
+    months: [8, 9, 10, 11],
+    habitat: 'Lasy iglaste i liściaste, często na kwaśnej glebie, pod sosną, świerkiem i bukiem.',
+    capDescription: 'Średnica 4–10 cm. Blady, cytrynowożółty albo prawie biały, z płatami osłony. Brzeg gładki.',
+    hymenophoreDescription: 'Blaszki białe albo blade, gęste, wolne. Nie różowieją.',
+    stemDescription: 'Biały albo żółtawy, z pierścieniem. Nasada bulwiasta, z rąbkiem, nie z luźną workowatą pochwą.',
+    fleshDescription: 'Biały, pod skórką żółtawy. Zapach bywa surowy, ziemniaczany.',
+    tasteAndSmell: 'Zapach surowych ziemniaków. Nie sprawdzaj smakiem.',
+    culinaryValue: 'Trujący. Nie jedz. Żółty kapelusz bywa brany za muchomora sromotnikowego, który jest śmiertelny.',
+    confusionRisks: [
+      {
+        confusedWithId: 'amanita_phalloides',
+        confusedWithName: 'Muchomor sromotnikowy (zielonawy)',
+        confusedWithStatus: 'DEADLY_POISONOUS',
+        keyDifferences: [
+          'Sromotnikowy ma oliwkowozielony kapelusz i luźną, workowatą pochwę',
+          'Cytrynowy jest bladożółty i ma bulwę z rąbkiem, nie workowatą pochwę',
+          'Białe blaszki i pierścień mają oba. W razie wątpliwości nie zbieraj'
+        ],
+        fatal: true
+      }
+    ],
+    warningNotes: 'NIE JEDZ. Trujący. Muchomor sromotnikowy jest śmiertelnym sobowtórem. Brak zdjęcia.'
+  },
+  {
+    id: 'cortinarius_orellanus',
+    namePl: 'Zasłoniak rudy',
+    nameEn: 'Fool’s webcap',
+    nameLatin: 'Cortinarius orellanus',
+    commonNicknames: [],
+    family: 'Zasłonakowate (Cortinariaceae)',
+    status: 'DEADLY_POISONOUS',
+    hymenophore: 'GILLS',
+    months: [8, 9, 10],
+    habitat: 'Lasy liściaste, pod dębem i bukiem, na cieplejszych stanowiskach.',
+    capDescription: 'Średnica 3–8 cm. Rudopomarańczowy, suchy, filcowaty. Brzeg nie jest prążkowany.',
+    hymenophoreDescription: 'Blaszki rdzawe, dość rzadkie. U młodych owocników zasnówka pajęczynowata, nie pierścień.',
+    stemDescription: 'Żółtawy do rdzawego, włóknisty, bez pierścienia i bez pochwy. Nasada zwężona.',
+    fleshDescription: 'Żółtawy. Zawiera orellaninę. Objawy mogą przyjść po kilku dniach albo tygodniach.',
+    tasteAndSmell: 'Zapach bywa rzodkiewkowy. Nie sprawdzaj smakiem.',
+    culinaryValue: 'Śmiertelnie trujący. Uszkodzenie nerek. Objawy późne; nie czekaj na objawy, dzwoń 112 lub do ośrodka toksykologii.',
+    confusionRisks: [
+      {
+        confusedWithId: 'cortinarius_rubellus',
+        confusedWithName: 'Zasłoniak szpiczasty',
+        confusedWithStatus: 'DEADLY_POISONOUS',
+        keyDifferences: [
+          'Szpiczasty ma stożkowaty kapelusz i rośnie w borach świerkowych',
+          'Rudy ma bardziej rozpostarty, filcowaty kapelusz i rośnie pod dębem i bukiem',
+          'Oba są śmiertelnie trujące. Zasnówka pajęczynowata to powód, żeby owocnik zostawić'
+        ],
+        fatal: true
+      }
+    ],
+    warningNotes: 'NIE JEDZ. Śmiertelnie trujący. Orellanina. Objawy bywają po wielu dniach. Brak zdjęcia.'
+  },
+  {
+    id: 'cortinarius_rubellus',
+    namePl: 'Zasłoniak szpiczasty',
+    nameEn: 'Deadly webcap',
+    nameLatin: 'Cortinarius rubellus',
+    commonNicknames: ['Zasłoniak piękny'],
+    family: 'Zasłonakowate (Cortinariaceae)',
+    status: 'DEADLY_POISONOUS',
+    hymenophore: 'GILLS',
+    months: [8, 9, 10],
+    habitat: 'Wilgotne bory świerkowe, w mchu.',
+    capDescription: 'Średnica 3–8 cm. Pomarańczowordzawy, stożkowaty albo z garbkiem, suchy.',
+    hymenophoreDescription: 'Blaszki rdzawe. Młode owocniki łączy z trzonem żółtawa zasnówka, nie pierścień.',
+    stemDescription: 'Żółtopomarańczowy, z jaśniejszymi włókienkami, bez pierścienia i bez pochwy.',
+    fleshDescription: 'Żółtawy. Zawiera orellaninę. Uszkodzenie nerek może ujawnić się po tygodniach.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem. Łagodny smak nie oznacza bezpieczeństwa.',
+    culinaryValue: 'Śmiertelnie trujący. Objawy późne; nie czekaj na objawy, dzwoń 112 lub do ośrodka toksykologii.',
+    confusionRisks: [
+      {
+        confusedWithId: 'cortinarius_orellanus',
+        confusedWithName: 'Zasłoniak rudy',
+        confusedWithStatus: 'DEADLY_POISONOUS',
+        keyDifferences: [
+          'Rudy rośnie pod dębem i bukiem i ma bardziej filcowaty kapelusz',
+          'Szpiczasty rośnie w borze świerkowym i ma stożkowaty kapelusz',
+          'Oba są śmiertelnie trujące. Siedlisko ich nie rozdziela na tyle, żeby któryś zebrać'
+        ],
+        fatal: true
+      }
+    ],
+    warningNotes: 'NIE JEDZ. Śmiertelnie trujący. Orellanina. Brak zdjęcia. Nazwy Cortinarius speciosissimus i C. orellanoides są synonimami.'
   }
 ];
 
@@ -1384,19 +1568,13 @@ export const NOT_FOR_COLLECTION_NOTE = 'Niezalecany do zbioru';
 export const ATLAS_NO_VERDICT_NOTE = 'Atlas nie wydaje werdyktu dla tego gatunku';
 
 export const LOOKALIKES_WITHOUT_CARD: Readonly<
-  Record<string, { status: 'NO_ATLAS_VERDICT'; reason: string; note: string }>
+  Record<string, { status: 'NO_ATLAS_VERDICT' | 'POISONOUS'; reason: string; note: string }>
 > = {
   calocybe_gambosa: {
     status: 'NO_ATLAS_VERDICT',
     note: ATLAS_NO_VERDICT_NOTE,
     reason:
       'Gęśnica wiosenna (majówka) is only the spring twin of the deadly fibrecap. Literature may still call it edible. There is no finished card, so this atlas does not show an edible verdict.',
-  },
-  amanita_rubescens: {
-    status: 'NO_ATLAS_VERDICT',
-    note: ATLAS_NO_VERDICT_NOTE,
-    reason:
-      'Muchomor czerwieniejący is a model class without an atlas card. Literature calls it edible only after cooking. This row does not show that verdict.',
   },
   amanita_excelsa: {
     status: 'NO_ATLAS_VERDICT',
@@ -1410,11 +1588,35 @@ export const LOOKALIKES_WITHOUT_CARD: Readonly<
     reason:
       'Borowik ponury (Suillellus luridus) is only the netted twin of the scarletina bolete. Literature calls it edible after cooking and poisonous raw. There is no finished card, so this atlas does not show that verdict.',
   },
-  rubroboletus_satanas: {
+  hypholoma_capnoides: {
     status: 'NO_ATLAS_VERDICT',
     note: ATLAS_NO_VERDICT_NOTE,
     reason:
-      'Borowik szatański (Rubroboletus satanas) is strictly protected in Poland and poisonous. It is a test-only probe, not a model class and not an atlas card. This row does not show an edibility badge.',
+      'Maślanka łagodna (Hypholoma capnoides) is the mild twin of the sulphur tuft. There is no card, so this atlas does not show an edible verdict.',
+  },
+  rubroboletus_satanas: {
+    status: 'POISONOUS',
+    note: ATLAS_NO_VERDICT_NOTE,
+    reason:
+      'Borowik szatański (Rubroboletus satanas) is strictly protected in Poland and poisonous. It is a test-only probe, not a model class and not an atlas card. The look-alike row says poisonous.',
+  },
+  imperator_rhodopurpureus: {
+    status: 'POISONOUS',
+    note: ATLAS_NO_VERDICT_NOTE,
+    reason:
+      'Imperator rhodopurpureus is a poisonous twin of the scarletina bolete. There is no atlas card. The look-alike row says poisonous.',
+  },
+  imperator_torosus: {
+    status: 'POISONOUS',
+    note: ATLAS_NO_VERDICT_NOTE,
+    reason:
+      'Imperator torosus is a poisonous twin of the scarletina bolete. There is no atlas card. The look-alike row says poisonous.',
+  },
+  rubroboletus_other: {
+    status: 'POISONOUS',
+    note: ATLAS_NO_VERDICT_NOTE,
+    reason:
+      'Other Rubroboletus species (R. legaliae, R. rhodoxanthus and kin) are poisonous twins of the scarletina bolete. There is no atlas card. The look-alike row says poisonous.',
   },
 };
 

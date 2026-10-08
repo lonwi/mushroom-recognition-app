@@ -381,22 +381,22 @@ const styles = StyleSheet.create({
   },
   morelBanner: {
     marginBottom: 16,
-    backgroundColor: '#ECFDF5',
+    backgroundColor: '#FFFBEB',
     padding: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#6EE7B7',
+    borderColor: '#FDE68A',
   },
   morelBannerTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#065F46',
+    color: '#92400E',
     marginBottom: 6,
   },
   morelBannerBody: {
     fontSize: 14,
     lineHeight: 21,
-    color: '#064E3B',
+    color: '#78350F',
   },
   namePl: {
     fontSize: 32,

@@ -1018,7 +1018,8 @@
             "gbif_key": 5240320,
             "toxic": true,
             "held_out": true,
-            "relation": "unknown_species_of_known_genus"
+            "relation": "unknown_species_of_known_genus",
+            "deadly": true
           },
           {
             "name": "Leccinum pseudoscabrum",
@@ -1053,14 +1054,16 @@
             "gbif_key": 3330851,
             "toxic": true,
             "held_out": true,
-            "relation": "unknown_genus"
+            "relation": "unknown_genus",
+            "deadly": true
           },
           {
             "name": "Inosperma erubescens",
             "gbif_key": 10776858,
             "toxic": true,
             "held_out": true,
-            "relation": "unknown_genus"
+            "relation": "unknown_genus",
+            "deadly": true
           },
           {
             "name": "Entoloma sinuatum",
@@ -1102,14 +1105,16 @@
             "gbif_key": 2531052,
             "toxic": true,
             "held_out": true,
-            "relation": "unknown_genus"
+            "relation": "unknown_genus",
+            "deadly": true
           },
           {
             "name": "Gyromitra gigas",
             "gbif_key": 12197740,
             "toxic": true,
             "held_out": true,
-            "relation": "unknown_species_of_known_genus"
+            "relation": "unknown_species_of_known_genus",
+            "deadly": true
           },
           {
             "name": "Agaricus moelleri",
@@ -1597,9 +1602,10 @@
     "known_class_reason": "These species are already model classes. Their test photos are the probe. Fetching them again as unknown_mushroom would give one fungus two labels.",
     "visual_groups": [
       {
-        "id": "lepiota_amatoxin",
+        "id": "lepiota_lookalikes",
         "minimum_images": 150,
         "strict_top1_edible": true,
+        "note": "Lepiota cristata has no amatoxins, so this group is the parasol look-alikes rather than an amatoxin claim. The minimum stays 150.",
         "taxa": [
           "Lepiota brunneoincarnata",
           "Lepiota subincarnata",
@@ -1623,21 +1629,31 @@
         "taxa": [
           "Omphalotus olearius"
         ]
+      },
+      {
+        "id": "inocybe_muscarine",
+        "minimum_images": 80,
+        "strict_top1_edible": true,
+        "note": "Inosperma erubescens with Inocybe geophylla (about 60 licensed photos). The minimum is 80 so a 5-photo exception cannot carry the group.",
+        "taxa": [
+          "Inosperma erubescens",
+          "Inocybe geophylla"
+        ]
       }
     ],
     "rare_taxon_exceptions": [
       {
         "taxon": "Lepiota brunneoincarnata",
         "gbif_key": 2535390,
-        "reason": "CC0/CC-BY still images after the two-photos-per-occurrence cap were 16 on 2026-10-08, the whole set. Near-duplicate removal left 15. Below the 50-image floor. The Lepiota amatoxin group must still reach 150, and this taxon needs at least 5 photos and 0 confident-edible outcomes.",
+        "reason": "CC0/CC-BY still images after the two-photos-per-occurrence cap were 16 on 2026-10-08, the whole set. Near-duplicate removal left 15. The 5-photo floor applies only when a fetch report shows accepted below the cap and gbif_licensed_count under 50. The Lepiota look-alike group must still reach 150.",
         "gbif_licensed_count": 16,
         "date_checked": "2026-10-08",
-        "group_id": "lepiota_amatoxin"
+        "group_id": "lepiota_lookalikes"
       },
       {
         "taxon": "Conocybe filaris",
         "gbif_key": 2529789,
-        "reason": "The whole CC0/CC-BY set after the two-photos-per-occurrence cap was 78 on 2026-10-08. Six downloads failed and near-duplicate removal left 33, under the 50-image floor. The Conocybe/Pholiotina group must still reach 100, and this taxon needs at least 5 photos and 0 confident-edible outcomes.",
+        "reason": "The whole CC0/CC-BY set after the two-photos-per-occurrence cap was 78 on 2026-10-08. That licensed count is not under 50, so this closed-list entry does not lower the 50-photo floor. A drop to 33 after dedup compared average hashes across the whole unknown class, which is not a shortage of the licensed pool.",
         "gbif_licensed_count": 78,
         "date_checked": "2026-10-08",
         "group_id": "conocybe_pholiotina"
@@ -1645,10 +1661,10 @@
       {
         "taxon": "Inosperma erubescens",
         "gbif_key": 10776858,
-        "reason": "Accepted name of Inocybe erubescens. The whole CC0/CC-BY set after the two-photos-per-occurrence cap was 44 on 2026-10-08, and near-duplicate removal left 44. Below the 50-image floor. It is not in a visual group. The exception lowers only its own floor to 5, it needs 0 confident-edible outcomes, and the poisonous held-out total must still reach 300.",
+        "reason": "Accepted name of Inocybe erubescens. The whole CC0/CC-BY set after the two-photos-per-occurrence cap was 44 on 2026-10-08, and near-duplicate removal left 44. It shares the Inocybe muscarine group with Inocybe geophylla. The 5-photo floor applies only when a fetch report shows accepted below the cap and a licensed count under 50.",
         "gbif_licensed_count": 44,
         "date_checked": "2026-10-08",
-        "group_id": null
+        "group_id": "inocybe_muscarine"
       }
     ],
     "taxa": [
@@ -1657,14 +1673,16 @@
         "gbif_key": 2535390,
         "toxic": true,
         "held_out": true,
-        "relation": "unknown_genus"
+        "relation": "unknown_genus",
+        "deadly": true
       },
       {
         "name": "Lepiota subincarnata",
         "gbif_key": 2535445,
         "toxic": true,
         "held_out": true,
-        "relation": "unknown_genus"
+        "relation": "unknown_genus",
+        "deadly": true
       },
       {
         "name": "Lepiota cristata",
@@ -1678,7 +1696,8 @@
         "gbif_key": 2535310,
         "toxic": true,
         "held_out": true,
-        "relation": "unknown_genus"
+        "relation": "unknown_genus",
+        "deadly": true
       },
       {
         "name": "Omphalotus olearius",
@@ -1693,14 +1712,16 @@
         "toxic": true,
         "held_out": true,
         "relation": "unknown_genus",
-        "note": "Species probe. The genus label Conocybe spp. is refused because GBIF matchType is HIGHERRANK. The full licensed set dedupes below 50 and is a rare_taxon_exception."
+        "note": "Species probe. The genus label Conocybe spp. is refused because GBIF matchType is HIGHERRANK. The licensed count is 78, so the rare-taxon entry does not lower the 50-photo floor.",
+        "deadly": true
       },
       {
         "name": "Conocybe rugosa",
         "gbif_key": 2529907,
         "toxic": true,
         "held_out": true,
-        "relation": "unknown_genus"
+        "relation": "unknown_genus",
+        "deadly": true
       },
       {
         "name": "Chlorophyllum molybdites",

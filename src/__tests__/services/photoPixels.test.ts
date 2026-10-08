@@ -1,19 +1,45 @@
 import * as ImageManipulator from 'expo-image-manipulator';
 import { readPhotoAsPngBytes, previewResizeWidths, NATIVE_PREVIEW_EDGE } from '../../services/photoPixels';
 
+type ContextRecord = { uri: string; widths: number[]; saved: boolean };
+
+const contexts: ContextRecord[] = [];
+
 jest.mock('expo-image-manipulator', () => ({
   SaveFormat: { PNG: 'png' },
-  manipulateAsync: jest.fn(async (_uri: string, actions: Array<{ resize?: { width: number } }>) => {
-    if (!actions.length) {
-      return { uri: 'file://upright.png', width: 4032, height: 3024 };
-    }
-    return {
-      uri: 'file://preview.png',
-      width: 448,
-      height: 336,
-      base64: Buffer.from([9, 8, 7]).toString('base64'),
-    };
-  }),
+  ImageManipulator: {
+    manipulate: jest.fn((uri: string) => {
+      const record: ContextRecord = { uri, widths: [], saved: false };
+      contexts.push(record);
+      const api = {
+        resize(action: { width: number }) {
+          record.widths.push(action.width);
+          return api;
+        },
+        async renderAsync() {
+          if (record.widths.length === 0) {
+            return {
+              width: 4032,
+              height: 3024,
+              saveAsync: jest.fn(async () => {
+                record.saved = true;
+                return { base64: Buffer.from([1]).toString('base64') };
+              }),
+            };
+          }
+          return {
+            width: record.widths[record.widths.length - 1],
+            height: 336,
+            saveAsync: jest.fn(async () => {
+              record.saved = true;
+              return { base64: Buffer.from([9, 8, 7]).toString('base64') };
+            }),
+          };
+        },
+      };
+      return api;
+    }),
+  },
 }));
 
 describe('previewResizeWidths', () => {
@@ -31,29 +57,27 @@ describe('previewResizeWidths', () => {
 
 describe('readPhotoAsPngBytes', () => {
   beforeEach(() => {
-    (ImageManipulator.manipulateAsync as jest.Mock).mockClear();
+    contexts.length = 0;
+    (ImageManipulator.ImageManipulator.manipulate as jest.Mock).mockClear();
   });
 
-  it('probes upright width, then resizes in steps of at most 2×', async () => {
+  it('reads width with renderAsync and encodes only the resized preview', async () => {
     const bytes = await readPhotoAsPngBytes('file://camera/capture.jpg');
 
-    expect(ImageManipulator.manipulateAsync).toHaveBeenNthCalledWith(
-      1,
-      'file://camera/capture.jpg',
-      [],
-      { compress: 1, format: 'png', base64: false },
-    );
-    expect(ImageManipulator.manipulateAsync).toHaveBeenNthCalledWith(
-      2,
-      'file://upright.png',
-      [
-        { resize: { width: 2016 } },
-        { resize: { width: 1008 } },
-        { resize: { width: 504 } },
-        { resize: { width: 448 } },
-      ],
-      { compress: 1, format: 'png', base64: true },
-    );
+    expect(contexts).toHaveLength(2);
+    expect(contexts[0].widths).toEqual([]);
+    expect(contexts[0].saved).toBe(false);
+    expect(contexts[1].widths).toEqual([2016, 1008, 504, 448]);
+    expect(contexts[1].saved).toBe(true);
+    expect(Array.from(bytes)).toEqual([9, 8, 7]);
+  });
+
+  it('uses the camera width and does not render the original just to measure it', async () => {
+    const bytes = await readPhotoAsPngBytes('file://camera/capture.jpg', 800);
+
+    expect(contexts).toHaveLength(1);
+    expect(contexts[0].widths).toEqual([448]);
+    expect(contexts[0].saved).toBe(true);
     expect(Array.from(bytes)).toEqual([9, 8, 7]);
   });
 });

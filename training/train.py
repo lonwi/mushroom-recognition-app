@@ -6,10 +6,10 @@ Apache-2.0. A CPU machine can run this. See training/README.md.
 Images are the oriented 224px PNGs from prepare_data.py. The loader does not
 decode the original JPEG, so EXIF orientation cannot be skipped. The sample
 list is shuffled before from_tensor_slices, and each epoch shuffles the full
-cached set again. Training then applies flip, a random area or bilinear
-scale-and-crop, rotation, brightness, and contrast. Class weights are
-inverse frequency, capped at 10. dataset.cache() sits on the deterministic
-decode, before the epoch shuffle and augmentation.
+cached set again. The cache stores uint8 pixels. Normalization to [-1, 1]
+happens after the cache. Training then applies flip, a random area or bilinear
+upsample, an aliased nearest downsample, rotation, brightness, and contrast.
+Class weights are inverse frequency, capped at 10.
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ import random
 from pathlib import Path
 
 from manifest import ROOT, load_manifest
-from preprocess import load_oriented_rgb, preprocess_rgb_uint8
+from preprocess import load_oriented_rgb, model_rgb_uint8
 
 DATA_DIR = ROOT / "training" / "data"
 ARTIFACTS = ROOT / "training" / "artifacts"
@@ -84,17 +84,23 @@ def _dataset(split_name: str, class_index: dict[str, int], image_size: int):
                 path_bytes = path_bytes.item()
             text = path_bytes.decode("utf-8") if not isinstance(path_bytes, str) else path_bytes
             rgb = load_oriented_rgb(Path(text))
-            return preprocess_rgb_uint8(rgb, image_size)
+            return model_rgb_uint8(rgb, image_size)
 
-        image = tf.numpy_function(_read, [path], tf.float32)
+        image = tf.numpy_function(_read, [path], tf.uint8)
         image.set_shape([image_size, image_size, 3])
         return image, label
 
+    def normalize(image, label):
+        pixels = tf.cast(image, tf.float32)
+        return pixels / 127.5 - 1.0, label
+
     dataset = tf.data.Dataset.from_tensor_slices((paths, labels))
     dataset = dataset.map(load, num_parallel_calls=tf.data.AUTOTUNE)
+    # uint8 cache is about a quarter of the float32 cache.
     dataset = dataset.cache()
     if samples:
         dataset = dataset.shuffle(len(samples), reshuffle_each_iteration=True)
+    dataset = dataset.map(normalize, num_parallel_calls=tf.data.AUTOTUNE)
     return dataset, labels
 
 
@@ -124,19 +130,36 @@ def main() -> None:
 
     def augment(image, label):
         image = tf.image.random_flip_left_right(image)
-        # Scale, then crop back to 224. Rotation is about +/- 15 degrees.
-        # Area and bilinear are both used so a phone bitmap scaler and the
-        # training box filter are not the only kernel the weights ever see.
-        scale = tf.random.uniform([], 1.0, 1.25)
-        side = tf.cast(tf.round(float(args.image_size) * scale), tf.int32)
+        # Upscale with area or bilinear, or downsample with nearest (aliased)
+        # and scale back. A scale of 1.0–1.25 alone never exercises a downsample
+        # kernel. Rotation is about +/- 15 degrees.
+        branch = tf.random.uniform([], 0, 3, dtype=tf.int32)
+
+        def crop_side():
+            scale = tf.random.uniform([], 1.0, 1.25)
+            side = tf.cast(tf.round(float(args.image_size) * scale), tf.int32)
+            return tf.maximum(side, args.image_size)
 
         def resize_area():
+            side = crop_side()
             return tf.image.resize(image, [side, side], method="area")
 
         def resize_bilinear():
+            side = crop_side()
             return tf.image.resize(image, [side, side], method="bilinear")
 
-        image = tf.cond(tf.random.uniform([]) < 0.5, resize_area, resize_bilinear)
+        def aliased_downsample():
+            shrink = tf.random.uniform([], 0.5, 0.85)
+            small = tf.cast(tf.round(float(args.image_size) * shrink), tf.int32)
+            small = tf.maximum(small, 32)
+            shrunk = tf.image.resize(image, [small, small], method="nearest", antialias=False)
+            side = crop_side()
+            return tf.image.resize(shrunk, [side, side], method="nearest", antialias=False)
+
+        image = tf.switch_case(
+            branch,
+            branch_fns={0: resize_area, 1: resize_bilinear, 2: aliased_downsample},
+        )
         image = tf.image.random_crop(image, [args.image_size, args.image_size, 3])
         image = rotation(image[None, ...], training=True)[0]
         image = tf.image.random_brightness(image, 0.12)
@@ -207,7 +230,8 @@ def main() -> None:
                 "class_weight": {str(index): weight for index, weight in class_weight.items()},
                 "augmentation": [
                     "random_flip_left_right",
-                    "random_scale_1.0_1.25_then_crop",
+                    "random_scale_1.0_1.25_area_or_bilinear_then_crop",
+                    "aliased_nearest_downsample_then_crop",
                     "random_rotation_15deg",
                     "random_brightness_0.12",
                     "random_contrast_0.85_1.15",

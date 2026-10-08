@@ -474,6 +474,7 @@ describe('ResultModal recognition outcomes', () => {
 
     expect(getByTestId('morel-protection-notice')).toBeTruthy();
     expect(getByText('Ochrona częściowa w Polsce')).toBeTruthy();
+    expect(getByText(/Nie zbieraj dziko rosnących/)).toBeTruthy();
     expect(getByText(/Dz\.U\. 2014 poz\. 1408/)).toBeTruthy();
     expect(queryByText(/w lesie zakaz/i)).toBeNull();
   });
@@ -499,6 +500,7 @@ describe('ResultModal recognition outcomes', () => {
     });
 
     expect(await findByTestId('morel-protection-notice')).toBeTruthy();
+    expect(await findByText(/Do not collect wild-growing morels/)).toBeTruthy();
     expect(await findByText(/Journal of Laws 2014 item 1408/)).toBeTruthy();
     expect(queryByText(/permit/i)).toBeTruthy();
     expect(queryByText(/gardens/)).toBeTruthy();

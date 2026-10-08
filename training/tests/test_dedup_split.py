@@ -26,6 +26,35 @@ class DedupAndSplitTest(unittest.TestCase):
         self.assertEqual(len(dropped), 1)
         self.assertEqual(dropped[0]["drop_reason"], "perceptual_near_duplicate")
 
+    def test_unknown_near_duplicates_do_not_cross_taxa(self):
+        records = [
+            {
+                "class_id": "unknown_mushroom",
+                "taxon_name": "Conocybe filaris",
+                "sha256": "a",
+                "bytes": 10,
+                "average_hash": 1,
+            },
+            {
+                "class_id": "unknown_mushroom",
+                "taxon_name": "Amanita verna",
+                "sha256": "b",
+                "bytes": 10,
+                "average_hash": 1,
+            },
+            {
+                "class_id": "unknown_mushroom",
+                "taxon_name": "Conocybe filaris",
+                "sha256": "c",
+                "bytes": 9,
+                "average_hash": 1,
+            },
+        ]
+        kept, dropped = dedup_records(records, hash_distance=4)
+        self.assertEqual(sorted(row["taxon_name"] for row in kept), ["Amanita verna", "Conocybe filaris"])
+        self.assertEqual(len(dropped), 1)
+        self.assertEqual(dropped[0]["taxon_name"], "Conocybe filaris")
+
     def test_split_keeps_an_observation_together(self):
         records = []
         for occurrence in range(12):

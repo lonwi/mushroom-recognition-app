@@ -83,7 +83,7 @@ export const en: Translations = {
     useLiterature: 'Significance in the literature',
     morelProtectionTitle: 'Partially protected in Poland',
     morelProtectionBody:
-      'Morels are partially protected in Poland. Collection requires a permit, except for specimens growing in gardens, horticultural plantings, forest nurseries, and green areas (Regulation of the Minister of the Environment of 9 October 2014, Journal of Laws 2014 item 1408). This notice is not a permit.',
+      'Do not collect wild-growing morels. Morels are partially protected in Poland. Collection requires a permit, except for specimens growing in gardens, horticultural plantings, forest nurseries, and green areas (Regulation of the Minister of the Environment of 9 October 2014, Journal of Laws 2014 item 1408). This notice is not a permit.',
     sourceLanguageNote:
       'Descriptions, look-alike differences, and morphology are source text in Polish. Month abbreviations follow the app language.',
     family: 'FAMILY',

@@ -5,6 +5,10 @@ photo and every cached training PNG) uses an antialiased box filter: each
 output pixel is the average of the source rectangle it covers. The result
 is rounded to uint8 so it matches a 224 PNG.
 
+Photos wider than 448 first take an area resize to width 448, keeping the
+aspect ratio. That matches the phone, which resizes width and does not
+square the bitmap at 448. The shared 224 step is what makes the square.
+
 Upsampling keeps bilinear sampling with half-pixel centers:
     src = (dst + 0.5) * in_size / out_size - 0.5
 That path is only for images smaller than the model. The result is rounded
@@ -71,6 +75,24 @@ def resize_area(image: np.ndarray, size: int) -> np.ndarray:
     return _resize_axis(resized, size, axis=1)
 
 
+def resize_to_width(image: np.ndarray, target_width: int) -> np.ndarray:
+    """Antialiased resize that keeps aspect ratio. Float pixels, not yet rounded."""
+    src = np.asarray(image, dtype=np.float64)
+    if src.ndim != 3 or src.shape[2] != 3:
+        raise ValueError("RGB HxWx3 array required")
+    if target_width < 1:
+        raise ValueError("width must be positive")
+    height = int(src.shape[0])
+    width = int(src.shape[1])
+    if height < 1 or width < 1:
+        raise ValueError("empty image")
+    if width == target_width:
+        return src
+    target_height = max(1, int(math.floor(height * target_width / width + 0.5)))
+    resized = _resize_axis(src, target_height, axis=0)
+    return _resize_axis(resized, target_width, axis=1)
+
+
 def round_half_up(values: np.ndarray) -> np.ndarray:
     """Match JavaScript `Math.round` for finite values: halves go toward +infinity.
 
@@ -84,16 +106,11 @@ def round_half_up(values: np.ndarray) -> np.ndarray:
 def model_rgb_uint8(rgb: np.ndarray, size: int = MODEL_INPUT_SIZE) -> np.ndarray:
     """Oriented RGB pixels as a size x size uint8 image (the cached PNG)."""
     image = np.asarray(rgb)
-    # Large photos take the same two scales as the phone: a 448 edge, then 224.
-    # The phone's first scale is the platform bitmap scaler (EXIF already
-    # applied). This step is the area filter so a training PNG and a phone
-    # photo that is already 448px share the second resize.
-    if (
-        size == MODEL_INPUT_SIZE
-        and int(image.shape[0]) >= NATIVE_PREP_EDGE
-        and int(image.shape[1]) >= NATIVE_PREP_EDGE
-    ):
-        image = resize_area(image, NATIVE_PREP_EDGE)
+    # The phone's first scale is the width, in steps of at most 2×, keeping
+    # aspect ratio. This area resize is the same geometry: width 448, height
+    # proportional, not a square. The square is the shared 224 step below.
+    if size == MODEL_INPUT_SIZE and int(image.shape[1]) > NATIVE_PREP_EDGE:
+        image = resize_to_width(image, NATIVE_PREP_EDGE)
     height = int(image.shape[0])
     width = int(image.shape[1])
     if height >= size and width >= size:

@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from evaluate import (
     choose_threshold,
     confident_toxic_as_edible,
+    deadly_probe_taxa,
     image_counts,
     open_set_metrics,
     outcome_is_confident_edible,
@@ -21,7 +22,7 @@ from evaluate import (
 )
 from export_tflite import DEFAULT_QUANTIZATIONS, representative_dataset
 from manifest import ROOT, load_manifest, poisonous_heldout_taxa
-from preprocess import ImageReadError, load_oriented_rgb, model_rgb_uint8, preprocess_rgb_uint8
+from preprocess import ImageReadError, load_oriented_rgb, model_rgb_uint8, preprocess_rgb_uint8, resize_to_width
 from recognition_math import (
     DANGEROUS_GENERA,
     DANGEROUS_GENUS_MIN_PROBABILITY,
@@ -66,6 +67,13 @@ class PreprocessTest(unittest.TestCase):
         output = preprocess_rgb_uint8(rgb, 2)
         expected = rgb.astype(np.float64) / 127.5 - 1.0
         self.assertTrue(np.allclose(output, expected, atol=1e-6))
+
+    def test_preview_width_keeps_aspect_ratio(self):
+        portrait = np.zeros((24, 16, 3), dtype=np.uint8)
+        portrait[:, :8] = 255
+        preview = resize_to_width(portrait, 8)
+        self.assertEqual(preview.shape, (12, 8, 3))
+        self.assertGreater(preview.shape[0], preview.shape[1])
 
     def test_half_pixel_rounds_like_javascript(self):
         """10.5 and 2.5 must become 11 and 3. numpy.rint would emit 10 and 2."""
@@ -311,15 +319,38 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertIn("Rubroboletus satanas", probe_names)
         self.assertEqual(
             [group["id"] for group in probes["visual_groups"]],
-            ["lepiota_amatoxin", "conocybe_pholiotina", "omphalotus"],
+            ["lepiota_lookalikes", "conocybe_pholiotina", "omphalotus", "inocybe_muscarine"],
         )
+        for group in probes["visual_groups"]:
+            if group["id"] in ("lepiota_lookalikes", "conocybe_pholiotina"):
+                self.assertIs(group["strict_top1_edible"], True)
+        inocybe = next(group for group in probes["visual_groups"] if group["id"] == "inocybe_muscarine")
+        self.assertEqual(inocybe["minimum_images"], 80)
+        self.assertEqual(inocybe["taxa"], ["Inosperma erubescens", "Inocybe geophylla"])
         self.assertIn("tricholoma_equestre", probes["known_class_not_probed"])
+        self.assertIn("tricholoma_equestre", HIGH_STAKES_IDS)
+        self.assertNotIn(("galerina_marginata", "hypholoma_fasciculare"), DANGEROUS_PAIRS)
+        self.assertIn(("agaricus_xanthodermus", "agaricus_campestris"), DANGEROUS_PAIRS)
+        self.assertIn(("lactarius_torminosus", "lactarius_deliciosus"), DANGEROUS_PAIRS)
+        self.assertIn(("hypholoma_fasciculare", "kuehneromyces_mutabilis"), DANGEROUS_PAIRS)
+        self.assertIn(("hypholoma_fasciculare", "armillaria_mellea"), DANGEROUS_PAIRS)
         exceptions = {item["taxon"]: item for item in probes["rare_taxon_exceptions"]}
+        self.assertEqual(list(exceptions), ["Lepiota brunneoincarnata", "Conocybe filaris", "Inosperma erubescens"])
         self.assertEqual(exceptions["Lepiota brunneoincarnata"]["gbif_licensed_count"], 16)
         self.assertEqual(exceptions["Lepiota brunneoincarnata"]["date_checked"], "2026-10-08")
+        self.assertEqual(exceptions["Lepiota brunneoincarnata"]["group_id"], "lepiota_lookalikes")
         self.assertEqual(exceptions["Conocybe filaris"]["gbif_licensed_count"], 78)
         self.assertEqual(exceptions["Inosperma erubescens"]["gbif_licensed_count"], 44)
-        self.assertIsNone(exceptions["Inosperma erubescens"]["group_id"])
+        self.assertEqual(exceptions["Inosperma erubescens"]["group_id"], "inocybe_muscarine")
+        deadly = deadly_probe_taxa(manifest)
+        self.assertIn("Amanita verna", deadly)
+        self.assertIn("Lepiota brunneoincarnata", deadly)
+        # Cristata has no amatoxin flag. It stays in the strict set because the
+        # Lepiota look-alike group requires strict_top1_edible.
+        self.assertIn("Lepiota cristata", deadly)
+        cristata = next(item for item in probes["taxa"] if item["name"] == "Lepiota cristata")
+        self.assertNotIn("deadly", cristata)
+        self.assertNotIn("Omphalotus olearius", deadly)
 
     def test_ship_gates_fail_closed_without_measurements(self):
         ok, reasons = assess_shippable({})
@@ -693,7 +724,9 @@ class ManifestAndShipGateTest(unittest.TestCase):
     def test_rare_exception_below_five_fails(self):
         probes = load_manifest()["toxic_probes"]
         reasons = poisonous_sample_reasons(
-            self._quota_rows(**{"Lepiota brunneoincarnata": {"support": 4}}),
+            self._quota_rows(
+                **{"Lepiota brunneoincarnata": {"support": 4, "accepted": 4, "gbif_licensed_count": 16}}
+            ),
             probes,
             expected_names=poisonous_heldout_taxa(),
         )
@@ -702,7 +735,16 @@ class ManifestAndShipGateTest(unittest.TestCase):
     def test_rare_exception_with_a_confident_edible_fails(self):
         probes = load_manifest()["toxic_probes"]
         reasons = poisonous_sample_reasons(
-            self._quota_rows(**{"Inosperma erubescens": {"support": 44, "confident_edible": 1}}),
+            self._quota_rows(
+                **{
+                    "Inosperma erubescens": {
+                        "support": 44,
+                        "confident_edible": 1,
+                        "accepted": 44,
+                        "gbif_licensed_count": 44,
+                    }
+                }
+            ),
             probes,
             expected_names=poisonous_heldout_taxa(),
         )
@@ -710,14 +752,120 @@ class ManifestAndShipGateTest(unittest.TestCase):
             any("Inosperma erubescens" in reason and "confident edible" in reason for reason in reasons)
         )
 
+    def test_exception_without_an_exhausted_pool_keeps_the_fifty_floor(self):
+        probes = load_manifest()["toxic_probes"]
+        capped = poisonous_sample_reasons(
+            self._quota_rows(
+                **{"Lepiota brunneoincarnata": {"support": 15, "accepted": 80, "gbif_licensed_count": 16}}
+            ),
+            probes,
+            expected_names=poisonous_heldout_taxa(),
+        )
+        self.assertTrue(any("Lepiota brunneoincarnata" in reason and "need 50" in reason for reason in capped))
+        filaris = poisonous_sample_reasons(
+            self._quota_rows(
+                **{"Conocybe filaris": {"support": 33, "accepted": 72, "gbif_licensed_count": 78}}
+            ),
+            probes,
+            expected_names=poisonous_heldout_taxa(),
+        )
+        self.assertTrue(any("Conocybe filaris" in reason and "need 50" in reason for reason in filaris))
+        self.assertFalse(any("Conocybe filaris" in reason and "at least 5" in reason for reason in filaris))
+        exhausted = poisonous_sample_reasons(
+            self._quota_rows(
+                **{"Lepiota brunneoincarnata": {"support": 15, "accepted": 16, "gbif_licensed_count": 16}}
+            ),
+            probes,
+            expected_names=poisonous_heldout_taxa(),
+        )
+        self.assertFalse(any("Lepiota brunneoincarnata" in reason and "need 50" in reason for reason in exhausted))
+        self.assertFalse(any("at least 5" in reason for reason in exhausted))
+
+    def test_verna_exception_without_a_group_fails_validation_and_the_gate(self):
+        import copy
+
+        from manifest import validate_toxic_probes
+
+        manifest = copy.deepcopy(load_manifest())
+        manifest["toxic_probes"]["rare_taxon_exceptions"].append(
+            {
+                "taxon": "Amanita verna",
+                "gbif_key": 5240320,
+                "reason": "Reviewer regression: five photos and a null group must not pass.",
+                "gbif_licensed_count": 5,
+                "date_checked": "2026-10-08",
+                "group_id": None,
+            }
+        )
+        with self.assertRaises(ValueError) as raised:
+            validate_toxic_probes(manifest)
+        self.assertIn("must belong to a visual group", str(raised.exception))
+        rows = self._quota_rows(
+            **{"Amanita verna": {"support": 5, "accepted": 5, "gbif_licensed_count": 5}}
+        )
+        reasons = poisonous_sample_reasons(
+            rows,
+            manifest["toxic_probes"],
+            expected_names=poisonous_heldout_taxa(),
+        )
+        self.assertTrue(any("closed exception list" in reason and "Amanita verna" in reason for reason in reasons))
+        self.assertTrue(any("Amanita verna" in reason and "need 50" in reason for reason in reasons))
+
+    def test_strict_top1_flag_is_required_on_lepiota_and_conocybe(self):
+        import copy
+
+        from manifest import validate_toxic_probes
+
+        manifest = copy.deepcopy(load_manifest())
+        for group in manifest["toxic_probes"]["visual_groups"]:
+            if group["id"] == "lepiota_lookalikes":
+                group["strict_top1_edible"] = False
+        with self.assertRaises(ValueError) as raised:
+            validate_toxic_probes(manifest)
+        self.assertIn("strict_top1_edible", str(raised.exception))
+
+    def test_strict_edible_counts_deadly_class_photos_and_held_out_verna(self):
+        classes = _classes(
+            ["amanita_phalloides", "macrolepiota_procera", "unknown_mushroom", "not_a_mushroom"],
+            ["Amanita", "Macrolepiota", "", ""],
+        )
+        ood = {
+            "calibrated": True,
+            "background_class_id": "not_a_mushroom",
+            "unknown_class_id": "unknown_mushroom",
+            "temperature": 1,
+            "energy_threshold": -1.0,
+            "min_softmax_for_accept": 0.4,
+            "min_top1_softmax_for_high_confidence": 0.7,
+            "min_margin": 0.15,
+        }
+        edible = {"macrolepiota_procera"}
+        death_cap = {
+            "class_id": "amanita_phalloides",
+            "logits": [1.0, 8.0, -3.0, -3.0],
+            "toxic": True,
+        }
+        metrics = open_set_metrics([death_cap], classes, ood, edible, [], [])
+        self.assertEqual(metrics["deadly_probe_strict_top1_edible"], 1)
+        verna = {
+            "class_id": "unknown_mushroom",
+            "taxon_name": "Amanita verna",
+            "held_out_taxon": True,
+            "toxic": True,
+            "logits": [1.0, 8.0, 2.0, -3.0],
+        }
+        metrics = open_set_metrics([verna], classes, ood, edible, ["Amanita verna"], ["Amanita verna"])
+        self.assertEqual(metrics["deadly_probe_strict_top1_edible"], 1)
+
     def test_visual_group_below_minimum_fails(self):
         probes = {
             "other_taxon_minimum": 50,
             "rare_exception_minimum": 5,
             "minimum_poisonous_held_out_images": 60,
+            "per_taxon_cap": 80,
             "visual_groups": [
                 {
-                    "id": "lepiota_amatoxin",
+                    "id": "lepiota_lookalikes",
                     "minimum_images": 200,
                     "taxa": ["Lepiota brunneoincarnata", "Lepiota cristata"],
                 }
@@ -729,16 +877,22 @@ class ManifestAndShipGateTest(unittest.TestCase):
                     "reason": "scarce on GBIF",
                     "gbif_licensed_count": 16,
                     "date_checked": "2026-10-08",
-                    "group_id": "lepiota_amatoxin",
+                    "group_id": "lepiota_lookalikes",
                 }
             ],
         }
         rows = [
-            {"taxon": "Lepiota brunneoincarnata", "support": 10, "confident_edible": 0},
+            {
+                "taxon": "Lepiota brunneoincarnata",
+                "support": 10,
+                "confident_edible": 0,
+                "accepted": 10,
+                "gbif_licensed_count": 16,
+            },
             {"taxon": "Lepiota cristata", "support": 50, "confident_edible": 0},
         ]
         reasons = poisonous_sample_reasons(rows, probes, expected_names=[row["taxon"] for row in rows])
-        self.assertTrue(any("visual group lepiota_amatoxin" in reason for reason in reasons))
+        self.assertTrue(any("visual group lepiota_lookalikes" in reason for reason in reasons))
         self.assertFalse(any("need 50" in reason for reason in reasons))
         self.assertFalse(any("at least 5" in reason for reason in reasons))
 
@@ -772,8 +926,10 @@ class ManifestAndShipGateTest(unittest.TestCase):
         import re
 
         text = (ROOT / "src" / "data" / "mushrooms.ts").read_text(encoding="utf-8")
-        catalog = text.split("NO_ATLAS_VERDICT", 1)[0]
-        found = re.findall(r"id: '([a-z0-9_]+)'[\s\S]*?status: '(EDIBLE|INEDIBLE|POISONOUS|DEADLY_POISONOUS)'", catalog)
+        found = re.findall(
+            r"id: '([a-z0-9_]+)'[\s\S]*?status: '(EDIBLE|INEDIBLE|POISONOUS|DEADLY_POISONOUS)'",
+            text,
+        )
         self.assertGreaterEqual(len(found), 18)
         expected = {
             "EDIBLE": "edible",
@@ -782,13 +938,20 @@ class ManifestAndShipGateTest(unittest.TestCase):
             "DEADLY_POISONOUS": "toxic",
         }
         tags = {item["id"]: item.get("safety_tag") for item in load_manifest()["classes"]}
-        checked = 0
+        checked_ids = []
         for species_id, status in found:
             if species_id not in tags:
                 continue
-            checked += 1
+            checked_ids.append(species_id)
             self.assertEqual(tags[species_id], expected[status], species_id)
-        self.assertGreaterEqual(checked, 18)
+        self.assertGreaterEqual(len(checked_ids), 18)
+        for species_id in (
+            "amanita_rubescens",
+            "amanita_citrina",
+            "cortinarius_orellanus",
+            "cortinarius_rubellus",
+        ):
+            self.assertIn(species_id, checked_ids)
 
     def test_small_third_place_dangerous_genus_does_not_clear_a_strict_edible(self):
         classes = _classes(
@@ -830,6 +993,90 @@ class ManifestAndShipGateTest(unittest.TestCase):
         source = (ROOT / "training" / "export_tflite.py").read_text(encoding="utf-8")
         self.assertIn('default="fp16"', source)
         self.assertNotIn('for quantization in ("int8", "fp16")', source)
+
+    def test_install_writes_jsonl_and_leaves_the_credit_module_typecheckable(self):
+        import subprocess
+
+        import export_tflite
+
+        module = ROOT / "src" / "services" / "attributionPackage.ts"
+        model_module = ROOT / "src" / "services" / "modelPackage.ts"
+        jsonl_dest = ROOT / "assets" / "models" / "attributions.jsonl"
+        original_module = module.read_text(encoding="utf-8")
+        original_model = model_module.read_text(encoding="utf-8")
+        original_jsonl = jsonl_dest.read_text(encoding="utf-8")
+        saved = {
+            "ARTIFACTS": export_tflite.ARTIFACTS,
+            "MODEL_DEST": export_tflite.MODEL_DEST,
+            "LABELS_PATH": export_tflite.LABELS_PATH,
+            "PACKAGE_MODULE": export_tflite.PACKAGE_MODULE,
+            "ATTRIBUTION_DEST": export_tflite.ATTRIBUTION_DEST,
+        }
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                tmp_path = Path(tmp)
+                artifacts = tmp_path / "artifacts"
+                artifacts.mkdir()
+                (artifacts / "attributions.jsonl").write_text(
+                    json.dumps(
+                        {
+                            "creator": "Ada L.",
+                            "license": "https://creativecommons.org/licenses/by/4.0/",
+                            "license_normalized": "cc-by-4.0",
+                            "image_url": "https://example.test/a.jpg",
+                            "source_url": "https://example.test/obs/1",
+                            "class_id": "boletus_edulis",
+                            "taxon_name": "Boletus edulis",
+                        }
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                )
+                export_tflite.ARTIFACTS = artifacts
+                export_tflite.MODEL_DEST = tmp_path / "model.tflite"
+                export_tflite.LABELS_PATH = tmp_path / "labels.json"
+                export_tflite.PACKAGE_MODULE = tmp_path / "modelPackage.ts"
+                export_tflite.ATTRIBUTION_DEST = jsonl_dest
+                export_tflite.install_calibrated_model(
+                    b"tflite-bytes",
+                    "fp16",
+                    {
+                        "ood": {
+                            "energy_threshold": -4.0,
+                            "temperature": 1,
+                            "min_softmax_for_accept": 0.4,
+                            "min_top1_softmax_for_high_confidence": 0.7,
+                            "min_margin": 0.15,
+                            "id_keep_rate_test": 0.96,
+                            "id_keep_rate_val": 0.97,
+                            "ood_reject_rate_test": 0.97,
+                            "softmax_above_0_5_still_rejected_rate": 0.95,
+                        }
+                    },
+                )
+                packaged = (tmp_path / "modelPackage.ts").read_text(encoding="utf-8")
+            installed = module.read_text(encoding="utf-8")
+            self.assertEqual(installed, original_module)
+            self.assertEqual(model_module.read_text(encoding="utf-8"), original_model)
+            self.assertIn("mushrooms_model.tflite", packaged)
+            for name in ("loadPhotoCredits", "creditsFromJsonl", "creditLicenseUrl"):
+                self.assertIn(name, installed)
+            self.assertNotIn("PACKAGED_PHOTO_CREDITS: PhotoCredit[] | null = [", installed)
+            self.assertIn("Ada L.", jsonl_dest.read_text(encoding="utf-8"))
+            proc = subprocess.run(
+                ["pnpm", "exec", "tsc", "--noEmit", "--pretty", "false"],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stdout + "\n" + proc.stderr)
+        finally:
+            module.write_text(original_module, encoding="utf-8")
+            model_module.write_text(original_model, encoding="utf-8")
+            jsonl_dest.write_text(original_jsonl, encoding="utf-8")
+            for key, value in saved.items():
+                setattr(export_tflite, key, value)
 
 
 class StatsReferenceTest(unittest.TestCase):

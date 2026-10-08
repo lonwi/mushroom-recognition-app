@@ -140,10 +140,16 @@ def _validate_aggregate(item: dict, owner_of: dict[int, str], known_genera: set[
 
 
 _VISUAL_GROUP_MINIMUMS = {
-    "lepiota_amatoxin": 150,
+    # Lepiota cristata has no amatoxins, so this is not an amatoxin claim.
+    # The owner's floor stays 150.
+    "lepiota_lookalikes": 150,
     "conocybe_pholiotina": 100,
     "omphalotus": 50,
+    # Inocybe geophylla is about 60 licensed photos and Inosperma erubescens
+    # is 44. 80 still fails if the exception collapses erubescens to 5.
+    "inocybe_muscarine": 80,
 }
+_STRICT_TOP1_GROUPS = ("lepiota_lookalikes", "conocybe_pholiotina")
 _REQUIRED_EXCEPTIONS = ("Lepiota brunneoincarnata", "Inosperma erubescens", "Conocybe filaris")
 
 
@@ -190,13 +196,14 @@ def validate_toxic_probes(manifest: dict) -> None:
         if taxon.get("relation") != expected:
             raise ValueError(f"toxic probe {name} relation does not match genus {genus}")
         _claim_key(owner_of, _gbif_key(taxon.get("gbif_key"), name), f"probe:{name}")
-    _validate_visual_groups(manifest, probes, {str(taxon["name"]): taxon for taxon in taxa})
+    _validate_visual_groups(manifest, probes)
 
 
-def _validate_visual_groups(manifest: dict, probes: dict, probe_by_name: dict[str, dict]) -> None:
+def _validate_visual_groups(manifest: dict, probes: dict) -> None:
     groups = probes.get("visual_groups")
     if not isinstance(groups, list):
         raise ValueError("toxic probes need visual_groups")
+    known = _taxon_index(manifest)
     seen_ids: dict[str, dict] = {}
     group_of: dict[str, str] = {}
     for group in groups:
@@ -205,22 +212,23 @@ def _validate_visual_groups(manifest: dict, probes: dict, probe_by_name: dict[st
             raise ValueError(f"unexpected visual group {group_id}")
         if group.get("minimum_images") != _VISUAL_GROUP_MINIMUMS[group_id]:
             raise ValueError(f"{group_id} minimum must be {_VISUAL_GROUP_MINIMUMS[group_id]}")
+        if group_id in _STRICT_TOP1_GROUPS and group.get("strict_top1_edible") is not True:
+            raise ValueError(f"{group_id} must set strict_top1_edible true")
         names = group.get("taxa")
         if not isinstance(names, list) or not names:
             raise ValueError(f"{group_id} needs taxa")
         for name in names:
-            if name not in probe_by_name:
-                raise ValueError(f"{group_id} taxon {name} is not a toxic probe")
+            if str(name) not in known:
+                raise ValueError(f"{group_id} taxon {name} is not a poisonous held-out taxon")
             if name in group_of:
                 raise ValueError(f"{name} is in more than one visual group")
             group_of[str(name)] = group_id
         seen_ids[group_id] = group
     if set(seen_ids) != set(_VISUAL_GROUP_MINIMUMS):
-        raise ValueError("visual groups do not match the Lepiota, Conocybe, and Omphalotus quotas")
+        raise ValueError("visual groups do not match the Lepiota, Conocybe, Omphalotus, and Inocybe quotas")
     exceptions = probes.get("rare_taxon_exceptions")
     if not isinstance(exceptions, list):
         raise ValueError("toxic probes need rare_taxon_exceptions")
-    known = _taxon_index(manifest)
     seen_exceptions: set[str] = set()
     for item in exceptions:
         name = str(item.get("taxon") or "")
@@ -242,11 +250,13 @@ def _validate_visual_groups(manifest: dict, probes: dict, probe_by_name: dict[st
         if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", checked):
             raise ValueError(f"rare exception {name} needs a date_checked of YYYY-MM-DD")
         group_id = item.get("group_id")
-        if name in group_of:
-            if group_id != group_of[name]:
-                raise ValueError(f"rare exception {name} must name visual group {group_of[name]}")
-        elif group_id:
-            raise ValueError(f"rare exception {name} is not in visual group {group_id}")
+        if not isinstance(group_id, str) or not group_id:
+            raise ValueError(f"rare exception {name} must belong to a visual group")
+        if name not in group_of or group_id != group_of[name]:
+            raise ValueError(f"rare exception {name} must name visual group {group_of.get(name) or group_id}")
+    extra = sorted(seen_exceptions.difference(_REQUIRED_EXCEPTIONS))
+    if extra:
+        raise ValueError("rare_taxon_exceptions has entries outside the closed list: " + ", ".join(extra))
     missing = [name for name in _REQUIRED_EXCEPTIONS if name not in seen_exceptions]
     if missing:
         raise ValueError(f"rare_taxon_exceptions is missing {', '.join(missing)}")
@@ -265,6 +275,31 @@ def _taxon_index(manifest: dict) -> dict[str, dict]:
         if taxon.get("toxic") and taxon.get("held_out"):
             found[str(taxon["name"])] = taxon
     return found
+
+
+def deadly_heldout_taxa(manifest: dict | None = None) -> list[str]:
+    """Held-out names whose edible top-1 must be zero, plus strict visual groups.
+
+    A `deadly: true` flag marks amatoxin, orellanine, gyromitrin, or muscarine
+    taxa. Lepiota cristata is not in that set. Strict groups are included even
+    when a member is only a look-alike.
+    """
+    manifest = manifest or load_manifest()
+    names: list[str] = []
+    seen: set[str] = set()
+    for group in (manifest.get("toxic_probes") or {}).get("visual_groups") or []:
+        if group.get("strict_top1_edible") is not True:
+            continue
+        for name in group.get("taxa") or []:
+            text = str(name)
+            if text not in seen:
+                names.append(text)
+                seen.add(text)
+    for name, taxon in _taxon_index(manifest).items():
+        if taxon.get("deadly") is True and name not in seen:
+            names.append(name)
+            seen.add(name)
+    return names
 
 
 def poisonous_heldout_taxa(manifest: dict | None = None) -> list[str]:

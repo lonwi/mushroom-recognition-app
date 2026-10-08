@@ -19,7 +19,14 @@ from pathlib import Path
 
 import numpy as np
 
-from manifest import ROOT, load_manifest, poisonous_heldout_taxa, safety_catalog
+from manifest import (
+    ROOT,
+    _REQUIRED_EXCEPTIONS,
+    deadly_heldout_taxa,
+    load_manifest,
+    poisonous_heldout_taxa,
+    safety_catalog,
+)
 from stats import bootstrap_rate_lower, bootstrap_rate_upper, wilson_interval
 from preprocess import ImageReadError, load_oriented_rgb, preprocess_rgb_uint8
 from recognition_math import (
@@ -224,12 +231,41 @@ def outcome_is_strict_top1_edible(decision: dict, edible_ids: set[str]) -> bool:
 
 
 def deadly_probe_taxa(manifest: dict) -> list[str]:
-    """Probe taxa whose strict top-1 edible count must be zero."""
-    names: list[str] = []
-    for group in (manifest.get("toxic_probes") or {}).get("visual_groups") or []:
-        if group.get("strict_top1_edible"):
-            names.extend(str(name) for name in group.get("taxa") or [])
-    return names
+    """Strict visual groups, deadly held-out taxa, used by the zero edible-top-1 gate."""
+    return deadly_heldout_taxa(manifest)
+
+
+def _integer(value: object) -> int | None:
+    if isinstance(value, bool) or not isinstance(value, int):
+        return None
+    return value
+
+
+def rare_exception_applies(name: str, item: dict, row: dict, probes: dict, groups: list) -> bool:
+    """The 5-photo floor, only for a closed-list taxon whose licensed pool was exhausted.
+
+    The fetch row must show accepted below the probe cap and the same licensed
+    count as the audited exception, and that count must be under 50. A null
+    group, an extra name, or a full cap does not qualify.
+    """
+    if name not in _REQUIRED_EXCEPTIONS:
+        return False
+    group_id = item.get("group_id")
+    if not isinstance(group_id, str) or not group_id:
+        return False
+    group = next((candidate for candidate in groups if candidate.get("id") == group_id), None)
+    taxa = [str(taxon) for taxon in (group or {}).get("taxa") or []]
+    if group is None or name not in taxa:
+        return False
+    cap = _integer(probes.get("per_taxon_cap"))
+    accepted = _integer(row.get("accepted"))
+    licensed = _integer(row.get("gbif_licensed_count"))
+    audited = _integer(item.get("gbif_licensed_count"))
+    if cap is None or accepted is None or licensed is None or audited is None:
+        return False
+    if audited >= 50 or licensed >= 50 or licensed != audited:
+        return False
+    return accepted < cap
 
 
 def _whole(value: object) -> int | None:
@@ -246,10 +282,13 @@ def poisonous_sample_reasons(
 ) -> list[str]:
     """Floors for poisonous held-out photos.
 
-    Visual groups have a total. Every other taxon needs 50 images unless it is
-    on rare_taxon_exceptions, which needs 5 images, 0 confident-edible outcomes,
-    and a group that still meets its minimum when the taxon belongs to one.
-    The poisonous held-out total stays at least 300.
+    Visual groups have a total. Every taxon needs 50 images unless it is one of
+    the closed rare_taxon_exceptions AND the fetch row shows the whole licensed
+    pool was taken (accepted below the cap, licensed count under 50 and equal
+    to the audited count). That exception needs 5 images, 0 confident-edible
+    outcomes, and a group that still meets its minimum. A null group or an
+    extra name does not lower the floor. The poisonous held-out total stays
+    at least 300.
     """
     probes = probes or {}
     other_min = int(probes.get("other_taxon_minimum") or 50)
@@ -278,7 +317,12 @@ def poisonous_sample_reasons(
         if edible is None:
             reasons.append(f"{name or '?'} confident edible count is not a count")
             continue
-        rows[name] = {"support": support, "confident_edible": edible}
+        rows[name] = {
+            "support": support,
+            "confident_edible": edible,
+            "accepted": item.get("accepted"),
+            "gbif_licensed_count": item.get("gbif_licensed_count"),
+        }
 
     if expected_names is not None:
         missing = [name for name in expected_names if name not in rows]
@@ -295,7 +339,7 @@ def poisonous_sample_reasons(
         edible = item["confident_edible"]
         total += support
         edible_total += edible
-        if name in exceptions:
+        if name in exceptions and rare_exception_applies(name, exceptions[name], item, probes, groups):
             if support < rare_min:
                 reasons.append(
                     f"{name} is a rare-taxon exception with {support} photos; need at least {rare_min}"
@@ -321,10 +365,14 @@ def poisonous_sample_reasons(
             reasons.append(f"visual group {group.get('id')} has {group_total} images; need {minimum}")
 
     for name, item in exceptions.items():
+        if name not in _REQUIRED_EXCEPTIONS:
+            reasons.append(f"rare exception {name} is not in the closed exception list")
+            continue
         if expected_names is not None and name not in rows:
             reasons.append(f"rare exception {name} is missing from the poisonous held-out report")
         group_id = item.get("group_id")
-        if not group_id:
+        if not isinstance(group_id, str) or not group_id:
+            reasons.append(f"rare exception {name} must belong to a visual group")
             continue
         group = next((candidate for candidate in groups if candidate.get("id") == group_id), None)
         if group is None or name not in [str(taxon) for taxon in group.get("taxa") or []]:
@@ -522,6 +570,12 @@ def open_set_metrics(
         if name in deadly and outcome_is_strict_top1_edible(decision, edible_ids):
             strict_edible += 1
             bucket["strict_top1_edible"] += 1
+    for row in test_pred:
+        if row.get("class_id") not in HIGH_STAKES_IDS:
+            continue
+        decision = decide(row["logits"], classes, ood_config)
+        if outcome_is_strict_top1_edible(decision, edible_ids):
+            strict_edible += 1
     for bucket in per_taxon.values():
         _fill_taxon_bounds(bucket)
     support = len(held)
@@ -533,16 +587,22 @@ def open_set_metrics(
     probe_config = probes or {}
     other_min = int(probe_config.get("other_taxon_minimum") or 50)
     rare_min = int(probe_config.get("rare_exception_minimum") or 5)
-    exceptions = {
-        str(item.get("taxon"))
+    groups = [group for group in (probe_config.get("visual_groups") or []) if isinstance(group, dict)]
+    exception_rows = {
+        str(item.get("taxon")): item
         for item in (probe_config.get("rare_taxon_exceptions") or [])
         if isinstance(item, dict)
     }
-    below = [
-        item["taxon"]
-        for item in per_taxon.values()
-        if item["support"] < (rare_min if item["taxon"] in exceptions else other_min)
-    ]
+    below = []
+    for item in per_taxon.values():
+        exception = exception_rows.get(item["taxon"])
+        floor = (
+            rare_min
+            if exception and rare_exception_applies(item["taxon"], exception, item, probe_config, groups)
+            else other_min
+        )
+        if item["support"] < floor:
+            below.append(item["taxon"])
     by_relation = {}
     for relation in ("unknown_genus", "unknown_species_of_known_genus"):
         rows = [row for row in held if row.get("genus_relation") == relation]
@@ -591,6 +651,44 @@ def _reject_rate(rows: list[dict], classes: list[dict], ood_config: dict) -> flo
         if decision["status"] == "rejected":
             rejected += 1
     return rejected / len(rows)
+
+
+def attach_fetch_evidence(per_taxon: list, fetch_report: dict | None = None) -> list:
+    """Copy accepted and gbif_licensed_count from the fetch report onto taxon rows.
+
+    A missing report leaves the rows unchanged, so a rare exception cannot
+    lower the 50-photo floor without that evidence.
+    """
+    if fetch_report is None:
+        path = DATA_DIR / "fetch_report.json"
+        if not path.is_file():
+            return per_taxon
+        try:
+            fetch_report = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return per_taxon
+    if not isinstance(fetch_report, dict) or not isinstance(per_taxon, list):
+        return per_taxon
+    by_name: dict[str, dict] = {}
+    for key in ("taxa", "toxic_probes"):
+        for item in fetch_report.get(key) or []:
+            if isinstance(item, dict) and item.get("taxon") and str(item["taxon"]) not in by_name:
+                by_name[str(item["taxon"])] = item
+    merged = []
+    for row in per_taxon:
+        if not isinstance(row, dict):
+            merged.append(row)
+            continue
+        evidence = by_name.get(str(row.get("taxon") or ""))
+        if not evidence:
+            merged.append(row)
+            continue
+        copy = dict(row)
+        for field in ("accepted", "gbif_licensed_count"):
+            if field not in copy and field in evidence:
+                copy[field] = evidence[field]
+        merged.append(copy)
+    return merged
 
 
 def assemble_report(manifest: dict, splits: dict, val_pred: list[dict], test_pred: list[dict]) -> dict:

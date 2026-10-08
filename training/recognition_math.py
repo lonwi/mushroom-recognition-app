@@ -36,14 +36,15 @@ HIGH_STAKES_IDS = (
     "cortinarius_rubellus",
     "galerina_marginata",
     "paxillus_involutus",
+    "tricholoma_equestre",
 )
 
 # Edible or commonly eaten look-alikes. A high-stakes photo predicted as one of
 # these is the safety failure the evaluation report must count.
 # Sulphur tuft and yellow knight are poisonous classes, so they are not in this
-# list. New boletes and the extra Suillus species follow slippery jack: they are
-# not the classic twins of the deadly gilled species. Saffron milkcaps are,
-# because of the brown roll-rim.
+# list. Yellow knight is high-stakes because of rhabdomyolysis. New boletes and
+# the extra Suillus species follow slippery jack: they are not the classic twins
+# of the deadly gilled species. Saffron milkcaps are, because of the brown roll-rim.
 EDIBLE_LOOKALIKE_IDS = (
     "macrolepiota_procera",
     "russula_virescens",
@@ -67,7 +68,10 @@ DANGEROUS_PAIRS = (
     ("gyromitra_esculenta", "morchella_esculenta"),
     ("galerina_marginata", "kuehneromyces_mutabilis"),
     ("galerina_marginata", "armillaria_mellea"),
-    ("galerina_marginata", "hypholoma_fasciculare"),
+    ("agaricus_xanthodermus", "agaricus_campestris"),
+    ("lactarius_torminosus", "lactarius_deliciosus"),
+    ("hypholoma_fasciculare", "kuehneromyces_mutabilis"),
+    ("hypholoma_fasciculare", "armillaria_mellea"),
     ("amanita_phalloides", "tricholoma_equestre"),
     ("paxillus_involutus", "lactarius_deliciosus"),
     ("boletus_edulis", "tylopilus_felleus"),

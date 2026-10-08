@@ -97,6 +97,7 @@ describe('atlas filters', () => {
   test('the edible filter skips unfinished cards and the incomplete chip lists them', () => {
     const unfinishedIds = [
       'agaricus_campestris',
+      'amanita_rubescens',
       'armillaria_mellea',
       'hydnum_repandum',
       'kuehneromyces_mutabilis',

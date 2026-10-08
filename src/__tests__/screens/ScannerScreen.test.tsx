@@ -125,7 +125,7 @@ describe('ScannerScreen does not invent a recognition result', () => {
   });
 
   it('shows recognition unavailable for a real captured photo, without a confidence', async () => {
-    takePictureAsync.mockResolvedValue({ uri: 'file://camera/real-capture.jpg' });
+    takePictureAsync.mockResolvedValue({ uri: 'file://camera/real-capture.jpg', width: 4032 });
     const { getByTestId, findByText, queryByText } = await renderScanner();
 
     await fireEvent.press(getByTestId('scanner-shutter'));
@@ -133,7 +133,7 @@ describe('ScannerScreen does not invent a recognition result', () => {
     expect(await findByText(pl.scanner.recognitionUnavailableTitle)).toBeTruthy();
     await settle();
     expect(classifySpy).toHaveBeenCalledTimes(1);
-    expect(classifySpy).toHaveBeenCalledWith('file://camera/real-capture.jpg');
+    expect(classifySpy).toHaveBeenCalledWith('file://camera/real-capture.jpg', 4032);
     expect(queryByText(/Pewność/)).toBeNull();
     expect(queryByText(/TFLite/)).toBeNull();
     expect(queryByText(/Borowik szlachetny/)).toBeNull();

@@ -128,11 +128,8 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.getByTestId('missing-card-badge-amanita_excelsa')).toContainText('Brak karty');
     await expect(page.getByTestId('missing-card-badge-amanita_excelsa')).not.toContainText('JADALNY');
     await expect(page.getByTestId('lookalike-unlinked-amanita_excelsa')).toContainText('Niezalecany do zbioru');
-    await expect(page.getByTestId('missing-card-badge-amanita_rubescens')).toContainText('Brak karty');
-    await expect(page.getByTestId('lookalike-unlinked-amanita_rubescens')).toContainText(
-      'Atlas nie wydaje werdyktu dla tego gatunku'
-    );
-    await expect(page.getByTestId('lookalike-unlinked-amanita_rubescens')).not.toContainText('Niezalecany do zbioru');
+    await expect(page.getByTestId('incomplete-card-badge-amanita_rubescens')).toContainText('KARTA NIEPEŁNA');
+    await expect(page.getByTestId('lookalike-status-amanita_rubescens')).not.toContainText('JADALNY');
     await expect(page.getByTestId('lookalike-status-macrolepiota_procera')).toContainText('JADALNY');
   });
 
@@ -166,6 +163,7 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
       'poza terenem ogrodów, upraw ogrodniczych, szkółek leśnych oraz poza terenami zieleni'
     );
     await expect(page.getByTestId('species-warning-notes')).toContainText('§ 6 ust. 2 pkt 4');
+    await expect(page.getByTestId('morel-protection-notice')).toContainText('Nie zbieraj dziko rosnących');
     await expect(page.getByTestId('morel-protection-notice')).toContainText('Dz.U. 2014 poz. 1408');
     await expect(page.getByTestId('morel-protection-notice')).toContainText('zezwoleniem');
   });
@@ -207,7 +205,7 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.getByText('Gołąbek zielonawy')).toBeVisible();
     await expect(page.getByText('Kolczak obłączasty')).toBeVisible();
     await expect(page.getByText('Pieczarka polna')).toBeVisible();
-    await expect(page.getByTestId('atlas-result-count')).toContainText('Pasujące karty: 13');
+    await expect(page.getByTestId('atlas-result-count')).toContainText('Pasujące karty: 14');
     await expect(page.locator('body')).not.toContainText('JADALNY');
     await page.getByTestId('filter-status-EDIBLE').click();
     await expect(page.getByText('Prawdziwki')).toBeVisible();

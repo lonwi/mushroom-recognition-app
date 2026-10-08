@@ -91,6 +91,9 @@ export const LookAlikeAlert: React.FC<Props> = ({
           isIncompleteSpeciesCard(risk.confusedWithId);
         const withoutCard = LOOKALIKES_WITHOUT_CARD[risk.confusedWithId];
         const verdict = risk.confusedWithStatus;
+        const showStatus =
+          verdict !== 'NO_ATLAS_VERDICT' &&
+          (inCatalog || (withoutCard != null && withoutCard.status !== 'NO_ATLAS_VERDICT'));
         return (
           <View key={`${risk.confusedWithId}-${idx}`} style={styles.riskCard}>
             <View style={styles.riskTop}>
@@ -98,7 +101,7 @@ export const LookAlikeAlert: React.FC<Props> = ({
                 {t('lookalike.confusedWith').replace('{name}', risk.confusedWithName)}
               </Text>
               <View testID={`lookalike-status-${risk.confusedWithId}`}>
-                {inCatalog && verdict !== 'NO_ATLAS_VERDICT' ? (
+                {showStatus ? (
                   <SpeciesStatusBadge
                     status={verdict}
                     incompleteCard={unfinishedEdible}

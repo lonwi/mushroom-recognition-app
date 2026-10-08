@@ -29,8 +29,8 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
 
   const cameraRef = useRef<any>(null);
 
-  const showCapturedPhoto = async (imageUri: string) => {
-    const res = await classifierService.classifyImage(imageUri);
+  const showCapturedPhoto = async (imageUri: string, knownWidth?: number) => {
+    const res = await classifierService.classifyImage(imageUri, knownWidth);
     setClassificationResult(res);
     setResultModalVisible(true);
   };
@@ -53,7 +53,8 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
       });
 
       if (photo && photo.uri) {
-        await showCapturedPhoto(photo.uri);
+        const width = typeof photo.width === 'number' ? photo.width : undefined;
+        await showCapturedPhoto(photo.uri, width);
       } else {
         Alert.alert(t('scanner.photoFailedTitle'), t('scanner.photoFailedBody'));
       }
@@ -82,7 +83,8 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
 
       if (!result.canceled && result.assets && result.assets.length > 0 && result.assets[0].uri) {
         setIsAnalyzing(true);
-        await showCapturedPhoto(result.assets[0].uri);
+        const width = typeof result.assets[0].width === 'number' ? result.assets[0].width : undefined;
+        await showCapturedPhoto(result.assets[0].uri, width);
       }
     } catch (err: any) {
       console.error('Gallery picker error:', err);

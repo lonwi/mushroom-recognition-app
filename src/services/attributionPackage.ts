@@ -1,9 +1,11 @@
 /**
  * Training-photo credits bundled with a shipped model.
- * training/export_tflite.py rewrites PACKAGED_PHOTO_CREDITS from attributions.jsonl on install.
- * The settings screen also reads assets/models/attributions.jsonl when that file is in the bundle.
+ * Install writes assets/models/attributions.jsonl only. This module stays in source
+ * control so the loader is not replaced by an inlined credit array.
  * Null means no model is installed, so there is nothing to credit.
  */
+import { Asset } from 'expo-asset';
+import * as FileSystem from 'expo-file-system/legacy';
 export interface PhotoCredit {
   creator: string;
   license: string;
@@ -64,8 +66,6 @@ async function bundledAttributionText(): Promise<string | null> {
       return loaded;
     }
     if (typeof loaded === 'number') {
-      const { Asset } = require('expo-asset') as { Asset: { fromModule: (id: number) => { downloadAsync: () => Promise<void>; localUri?: string; uri: string } } };
-      const FileSystem = require('expo-file-system') as { readAsStringAsync: (uri: string) => Promise<string> };
       const asset = Asset.fromModule(loaded);
       await asset.downloadAsync();
       const uri = asset.localUri || asset.uri;

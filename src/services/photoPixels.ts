@@ -49,27 +49,45 @@ export function previewResizeWidths(sourceWidth: number): number[] {
  * side. A wide photo and a tall photo both end at 448px across when they
  * started wider than that. Steps stay at most 2×.
  */
-export async function readPhotoAsPngBytes(uri: string): Promise<Uint8Array> {
+type ManipulatorContext = {
+  resize: (action: { width: number }) => ManipulatorContext;
+  renderAsync: () => Promise<{
+    width: number;
+    height: number;
+    saveAsync: (options: { compress: number; format: string; base64: boolean }) => Promise<{ base64?: string }>;
+  }>;
+};
+
+/**
+ * Width comes from the camera result when the caller has it. Otherwise one
+ * renderAsync reads the decoded bitmap size. That path does not PNG-encode
+ * the 12–50 MP original. The encode happens once, after the width steps.
+ */
+export async function readPhotoAsPngBytes(uri: string, knownWidth?: number): Promise<Uint8Array> {
   const manipulator = require('expo-image-manipulator') as {
-    manipulateAsync: (
-      uri: string,
-      actions: Array<{ resize: { width: number } }>,
-      save: { compress: number; format: string; base64: boolean },
-    ) => Promise<{ base64?: string; uri?: string; width?: number }>;
+    ImageManipulator: { manipulate: (uri: string) => ManipulatorContext };
     SaveFormat: { PNG: string };
   };
-  const save = { compress: 1, format: manipulator.SaveFormat.PNG, base64: false };
-  const probed = await manipulator.manipulateAsync(uri, [], save);
-  if (!probed.width) {
+  let width = knownWidth;
+  if (!width || !Number.isFinite(width) || width < 1) {
+    const probed = await manipulator.ImageManipulator.manipulate(uri).renderAsync();
+    width = probed.width;
+  }
+  if (!width) {
     throw new Error('photo_width_missing');
   }
-  const actions = previewResizeWidths(probed.width).map((width) => ({ resize: { width } }));
-  const rendered = await manipulator.manipulateAsync(probed.uri || uri, actions, {
-    ...save,
+  const chain = manipulator.ImageManipulator.manipulate(uri);
+  for (const step of previewResizeWidths(width)) {
+    chain.resize({ width: step });
+  }
+  const rendered = await chain.renderAsync();
+  const saved = await rendered.saveAsync({
+    compress: 1,
+    format: manipulator.SaveFormat.PNG,
     base64: true,
   });
-  if (!rendered.base64) {
+  if (!saved.base64) {
     throw new Error('photo_bytes_missing');
   }
-  return base64ToBytes(rendered.base64);
+  return base64ToBytes(saved.base64);
 }

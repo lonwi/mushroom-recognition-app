@@ -27,11 +27,27 @@ def hamming(left: int, right: int) -> int:
     return (left ^ right).bit_count()
 
 
+def _hash_bucket(record: dict) -> str:
+    """Near-duplicates of unknown_mushroom are per taxon, not per class.
+
+    Every probe and every held-out name shares class_id unknown_mushroom.
+    Comparing 8x8 hashes across that whole class drops distinct species whose
+    caps hash within a few bits, which is what cut Conocybe filaris from 78
+    licensed photos to 33. Species classes still share one bucket, including
+    synonym GBIF names of the same label.
+    """
+    class_id = str(record["class_id"])
+    taxon = str(record.get("taxon_name") or "")
+    if class_id == "unknown_mushroom" and taxon:
+        return f"{class_id}\n{taxon}"
+    return class_id
+
+
 def dedup_records(records: list[dict], hash_distance: int = 4) -> tuple[list[dict], list[dict]]:
     """Keep the largest file when sha256 matches, then drop near-duplicates.
 
     `average_hash` may be absent. Records without it are kept after the sha256 pass.
-    Near-duplicate comparison is only inside the same class_id.
+    Near-duplicate comparison uses `_hash_bucket`.
     """
     by_hash: dict[tuple[str, str], dict] = {}
     for record in records:
@@ -49,21 +65,21 @@ def dedup_records(records: list[dict], hash_distance: int = 4) -> tuple[list[dic
     seen_hashes: dict[str, list[int]] = {}
     ordered = sorted(unique, key=lambda item: int(item.get("bytes") or 0), reverse=True)
     for record in ordered:
-        class_id = record["class_id"]
+        bucket = _hash_bucket(record)
         photo_hash = record.get("average_hash")
         if photo_hash is None:
             kept.append(record)
             continue
         photo_hash = int(photo_hash)
         too_close = False
-        for previous in seen_hashes.get(class_id, []):
+        for previous in seen_hashes.get(bucket, []):
             if hamming(photo_hash, previous) <= hash_distance:
                 too_close = True
                 break
         if too_close:
             dropped.append({**record, "drop_reason": "perceptual_near_duplicate"})
             continue
-        seen_hashes.setdefault(class_id, []).append(photo_hash)
+        seen_hashes.setdefault(bucket, []).append(photo_hash)
         kept.append(record)
     return kept, dropped
 

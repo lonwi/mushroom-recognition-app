@@ -361,12 +361,14 @@ describe('SpeciesDetailScreen language', () => {
     const polish = await renderSpecies('morchella_esculenta');
     expect(polish.getByTestId('morel-protection-notice')).toBeTruthy();
     expect(polish.getByText('Ochrona częściowa w Polsce')).toBeTruthy();
+    expect(polish.getByText(/Nie zbieraj dziko rosnących/)).toBeTruthy();
     expect(polish.getByText(/Dz\.U\. 2014 poz\. 1408/)).toBeTruthy();
     expect(polish.getByTestId('species-name-en').props.children).toBe('Common morel');
 
     await AsyncStorage.setItem('app_language', 'en');
     const english = await renderSpecies('morchella_esculenta');
     expect(await english.findByTestId('morel-protection-notice')).toBeTruthy();
+    expect(await english.findByText(/Do not collect wild-growing morels/)).toBeTruthy();
     expect(await english.findByText(/Journal of Laws 2014 item 1408/)).toBeTruthy();
     expect(english.getByText(/green areas/)).toBeTruthy();
     expect(english.getByTestId('species-warning-notes')).toBeTruthy();

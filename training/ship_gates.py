@@ -16,7 +16,7 @@ import math
 import re
 from pathlib import Path
 
-from evaluate import attributions_complete, poisonous_sample_reasons
+from evaluate import attach_fetch_evidence, attributions_complete, poisonous_sample_reasons
 from manifest import ROOT, load_manifest, poisonous_heldout_taxa
 from recognition_math import (
     BACKGROUND_CLASS_ID,
@@ -147,7 +147,11 @@ def _open_set_reasons(open_set: dict) -> list[str]:
         reasons.append("poisonous held-out per-taxon counts are missing")
         return reasons
     reasons.extend(
-        poisonous_sample_reasons(per_taxon, probes, expected_names=poisonous_heldout_taxa(manifest))
+        poisonous_sample_reasons(
+            attach_fetch_evidence(per_taxon),
+            probes,
+            expected_names=poisonous_heldout_taxa(manifest),
+        )
     )
     row_support = 0
     row_edible = 0

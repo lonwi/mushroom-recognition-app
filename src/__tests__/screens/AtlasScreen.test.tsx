@@ -164,7 +164,7 @@ describe('AtlasScreen RTL Tests', () => {
       </LanguageProvider>
     );
 
-    expect(screen.getByText(/Karta niepełna \(13\)/)).toBeTruthy();
+    expect(screen.getByText(/Karta niepełna \(14\)/)).toBeTruthy();
     await fireEvent.press(screen.getByTestId('filter-status-EDIBLE'));
     await waitFor(() => {
       expect(screen.getByText('Prawdziwki')).toBeTruthy();
@@ -181,7 +181,7 @@ describe('AtlasScreen RTL Tests', () => {
       expect(screen.getByText('Pieczarka polna')).toBeTruthy();
       expect(screen.queryByText('Prawdziwki')).toBeNull();
       expect(screen.queryAllByText('JADALNY')).toHaveLength(0);
-      expect(screen.getByTestId('atlas-result-count').props.children).toBe('Pasujące karty: 13');
+      expect(screen.getByTestId('atlas-result-count').props.children).toBe('Pasujące karty: 14');
     });
   });
 
