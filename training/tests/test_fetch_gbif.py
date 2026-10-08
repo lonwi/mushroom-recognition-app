@@ -2048,6 +2048,42 @@ class IdempotentReportTest(FetchCase):
             self.assertEqual((plain / "attributions.jsonl").read_bytes(), attributions)
             self.assertEqual(self._images(plain), images)
 
+    def test_a_truncated_file_in_not_selected_is_not_restored_or_counted(self):
+        import tempfile
+
+        from PIL import ImageFile
+
+        rows = self._rows(1)
+        truncated = _jpeg_bytes(4)[:-32]
+        self.assertGreater(len(truncated), 5_000)
+        ImageFile.LOAD_TRUNCATED_IMAGES = True
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            name = f"{rows[0]['occurrence_key']}_0.jpg"
+            parked = root / "not_selected" / "boletus_edulis" / name
+            parked.parent.mkdir(parents=True)
+            parked.write_bytes(truncated)
+            calls = {"urls": []}
+            self._run(root, rows, {}, cap=1, workers=1, calls=calls)
+            self.assertEqual(calls["urls"], [])
+            self.assertFalse(ImageFile.LOAD_TRUNCATED_IMAGES)
+            self.assertFalse((root / "images" / "boletus_edulis" / name).exists())
+            self.assertFalse(parked.exists())
+            quarantined = root / "quarantine" / "boletus_edulis" / name
+            self.assertEqual(quarantined.read_bytes(), truncated)
+            attributions = (root / "attributions.jsonl").read_text(encoding="utf-8")
+            self.assertNotIn(name, attributions)
+            self.assertEqual(attributions.strip(), "")
+            report = json.loads((root / "fetch_report.json").read_text(encoding="utf-8"))
+            block = report["classes"]["boletus_edulis"]
+            self.assertEqual(block["accepted"], 0)
+            self.assertEqual(block["selected"], 1)
+            self.assertEqual(block["failed"], {"truncated": 1})
+            verified = root / "checkpoints" / "verified.jsonl"
+            if verified.is_file():
+                self.assertNotIn(name, verified.read_text(encoding="utf-8"))
+        ImageFile.LOAD_TRUNCATED_IMAGES = False
+
     def test_quarantine_is_not_a_source_for_the_next_download(self):
         import tempfile
 

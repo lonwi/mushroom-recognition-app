@@ -31,9 +31,13 @@ that prefix is tried again, so a second run on an unchanged network rewrites
 the same ``fetch_report.json``. A photo that is no longer in the selection is
 moved to ``not_selected/<class>/`` only when every class and probe that writes
 that directory was fetched in this run. ``--dry-run`` does not download, move,
-or write. Before a download, a file already in ``not_selected/<class>/`` that
-still decodes is moved back instead of fetched again. Quarantine is not a
-source. A later page request reuses the GBIF page already in hand.
+or write. Before a download, a file already in ``not_selected/<class>/`` is
+checked with the same size limit and full ``Image.open().load()`` as a new
+download, and ``LOAD_TRUNCATED_IMAGES`` stays false. That check finishes
+before the file is remembered or attributed. A photo that passes is moved
+back instead of fetched again. A photo that fails goes to quarantine and is
+not accepted. Quarantine is not a source. A later page request reuses the
+GBIF page already in hand.
 
 ``--download-workers`` (default 16) fetches one class or probe at a time, with at
 most 4 transfers per image host. GBIF API calls stay one at a time. Images and
@@ -1051,6 +1055,20 @@ def _decode_image_bytes(payload: bytes) -> None:
         raise _RejectedImage(f"image did not decode ({error})") from error
 
 
+def _verified_image_payload(payload: bytes) -> None:
+    """Size and full-decode checks for a download and for a restored file.
+
+    This runs before the bytes are stored and before ``verified.jsonl`` is
+    updated. ``LOAD_TRUNCATED_IMAGES`` stays false.
+    """
+    _ensure_truncated_images_rejected()
+    if len(payload) < 5_000:
+        raise RuntimeError(f"image too small ({len(payload)} bytes)")
+    if len(payload) > MAX_IMAGE_BYTES:
+        raise _RejectedImage(f"image too large ({len(payload)} bytes)")
+    _decode_image_bytes(payload)
+
+
 def _download_once(url: str, destination: Path, timeout: int) -> int:
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     semaphore = _semaphore_for_host(url)
@@ -1063,11 +1081,7 @@ def _download_once(url: str, destination: Path, timeout: int) -> int:
             payload = response.read(MAX_IMAGE_BYTES + 1)
     finally:
         semaphore.release()
-    if len(payload) < 5_000:
-        raise RuntimeError(f"image too small ({len(payload)} bytes)")
-    if len(payload) > MAX_IMAGE_BYTES:
-        raise _RejectedImage(f"image too large ({len(payload)} bytes)")
-    _decode_image_bytes(payload)
+    _verified_image_payload(payload)
     _atomic_write_bytes(destination, payload)
     return len(payload)
 
@@ -1087,13 +1101,48 @@ def _not_selected_source(data_dir: Path, destination: Path) -> Path | None:
     return data_dir / "not_selected" / parts[1] / parts[2]
 
 
+def _quarantine_parked(data_dir: Path, source: Path, class_id: str) -> Path:
+    """Move a not_selected file that failed the download checks.
+
+    Nothing is written to ``verified.jsonl``. Quarantine is not read back as a
+    source.
+    """
+    folder = data_dir / "quarantine" / class_id
+    folder.mkdir(parents=True, exist_ok=True)
+    target = folder / source.name
+    if target.exists():
+        stamp = time.time_ns()
+        target = folder / f"{source.stem}-{stamp}{source.suffix}"
+    os.replace(source, target)
+    index = _verified_index(data_dir)
+    with index._lock:
+        index.entries.pop(f"images/{class_id}/{source.name}", None)
+        index.entries.pop(f"not_selected/{class_id}/{source.name}", None)
+    return target
+
+
 def _restore_not_selected(data_dir: Path, destination: Path, index: _VerifiedIndex) -> int | None:
-    """Move a still-decodable photo back. Returns its size, or None to download."""
+    """Move a parked photo back only after the download checks pass.
+
+    Returns the file size, or None when there is nothing parked. A file that
+    fails the size or full-decode check is quarantined and the error is
+    raised, so it is not remembered and not accepted. ``remember`` runs only
+    after those checks, the same point as after a fresh download.
+    """
     source = _not_selected_source(data_dir, destination)
     if source is None or not source.is_file():
         return None
-    if not _full_load_ok(str(source)):
-        return None
+    class_id = source.parent.name
+    try:
+        payload = source.read_bytes()
+        _verified_image_payload(payload)
+    except Exception:
+        if source.is_file():
+            try:
+                _quarantine_parked(data_dir, source, class_id)
+            except OSError:
+                pass
+        raise
     destination.parent.mkdir(parents=True, exist_ok=True)
     os.replace(source, destination)
     try:
@@ -1119,7 +1168,9 @@ def download_image(
     plus a short random offset. Other transient errors use exponential backoff
     with the same offset. HTTP 403, 404, certificate errors, and undecodable
     bodies are not retried. A truncated body is retried once. A file already
-    in ``not_selected/`` that still decodes is moved back instead of downloaded.
+    in ``not_selected/`` is accepted only after the same size and full-decode
+    checks as a new download. Those checks finish before it is remembered. A
+    file that fails them is quarantined and is not accepted.
     """
     destination.parent.mkdir(parents=True, exist_ok=True)
     root = _data_dir_for(destination, data_dir)
