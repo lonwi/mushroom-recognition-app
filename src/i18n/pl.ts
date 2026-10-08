@@ -81,6 +81,9 @@ export const pl = {
     useLiterature: 'Znaczenie w literaturze',
     sourceLanguageNote:
       'Opisy, różnice sobowtórów i morfologia są tekstem źródłowym po polsku. Skróty miesięcy są w języku aplikacji.',
+    morelProtectionTitle: 'Ochrona częściowa w Polsce',
+    morelProtectionBody:
+      'Smardze są w Polsce objęte ochroną częściową. Zbiór tylko za zezwoleniem, z wyjątkiem okazów rosnących na terenie ogrodów, upraw ogrodniczych, szkółek leśnych oraz terenów zieleni (rozporządzenie Ministra Środowiska z 9 października 2014 r., Dz.U. 2014 poz. 1408). Ta informacja nie jest zezwoleniem.',
     family: 'RODZINA',
     otherNames: 'INNE NAZWY',
     seasonPoland: 'SEZON WYSTĘPOWANIA W POLSCE',

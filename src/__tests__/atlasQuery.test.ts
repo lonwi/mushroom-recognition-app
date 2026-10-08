@@ -97,9 +97,18 @@ describe('atlas filters', () => {
   test('the edible filter skips unfinished cards and the incomplete chip lists them', () => {
     const unfinishedIds = [
       'agaricus_campestris',
+      'armillaria_mellea',
       'hydnum_repandum',
+      'kuehneromyces_mutabilis',
+      'leccinum_aurantiacum',
       'morchella_esculenta',
+      'neoboletus_luridiformis',
       'russula_virescens',
+      'suillus_bovinus',
+      'suillus_grevillei',
+      'suillus_variegatus',
+      'xerocomellus_chrysenteron',
+      'xerocomus_subtomentosus',
     ];
     const unfinished = MUSHROOMS_DATABASE.filter((species) => species.incompleteCard === true)
       .map((species) => species.id)

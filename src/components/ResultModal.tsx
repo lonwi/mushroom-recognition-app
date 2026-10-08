@@ -47,7 +47,7 @@ export const ResultModal: React.FC<Props> = ({
   onOpenAtlasSpecies,
   onSavedToJournal,
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [saving, setSaving] = useState(false);
   const saveLock = useRef(false);
   const persistStarted = useRef(false);
@@ -194,13 +194,25 @@ export const ResultModal: React.FC<Props> = ({
                   <Text style={styles.note} testID="not-edibility-verdict">
                     {t('scanner.notEdibilityVerdict')}
                   </Text>
+                  {result.top3.some((candidate) => candidate.id === 'morchella_esculenta') ? (
+                    <View style={styles.morelBanner} testID="morel-protection-notice">
+                      <Text style={styles.morelBannerTitle}>{t('cards.morelProtectionTitle')}</Text>
+                      <Text style={styles.morelBannerBody}>{t('cards.morelProtectionBody')}</Text>
+                    </View>
+                  ) : null}
                   {result.top3.map((candidate) => {
-                    const inAtlas = MUSHROOMS_DATABASE.some((species) => species.id === candidate.id);
+                    const card = MUSHROOMS_DATABASE.find((species) => species.id === candidate.id);
+                    const inAtlas = Boolean(card);
                     return (
                       <View key={`${candidate.rank}-${candidate.id}`} style={styles.candidate} testID={`candidate-rank-${candidate.rank}`}>
                         <Text style={styles.candidateRank}>
                           {candidate.rank}. {candidate.namePl}
                         </Text>
+                        {language === 'en' && card?.nameEn ? (
+                          <Text style={styles.candidateLatin} testID={`candidate-name-en-${candidate.rank}`}>
+                            {card.nameEn}
+                          </Text>
+                        ) : null}
                         <Text style={styles.candidateLatin}>{candidate.nameLatin}</Text>
                         <Text style={styles.candidateConfidence} testID={`candidate-confidence-${candidate.rank}`}>
                           {t('scanner.confidence')}: {formatConfidencePercent(candidate.confidence)}
@@ -340,6 +352,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     marginTop: 8,
+  },
+  morelBanner: {
+    marginBottom: 12,
+    backgroundColor: '#ECFDF5',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#6EE7B7',
+  },
+  morelBannerTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#065F46',
+    marginBottom: 6,
+  },
+  morelBannerBody: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#064E3B',
   },
   candidate: {
     marginTop: 14,

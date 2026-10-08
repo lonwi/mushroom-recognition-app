@@ -20,7 +20,7 @@ describe('AtlasScreen RTL Tests', () => {
     );
 
     expect(getByPlaceholderText('Szukaj grzyba (np. borowik, kania, kurka)...')).toBeTruthy();
-    expect(getByText('Borowik szlachetny')).toBeTruthy();
+    expect(getByText('Prawdziwki')).toBeTruthy();
   });
 
   it('filters species by search query', async () => {
@@ -35,7 +35,7 @@ describe('AtlasScreen RTL Tests', () => {
     await fireEvent.changeText(input, 'Prawdziwek');
 
     await waitFor(() => {
-      expect(getByText('Borowik szlachetny')).toBeTruthy();
+      expect(getByText('Prawdziwki')).toBeTruthy();
       expect(queryByText('Muchomor sromotnikowy (zielonawy)')).toBeNull();
     });
   });
@@ -52,7 +52,7 @@ describe('AtlasScreen RTL Tests', () => {
 
     await waitFor(() => {
       expect(getByText('Muchomor sromotnikowy (zielonawy)')).toBeTruthy();
-      expect(queryByText('Borowik szlachetny')).toBeNull();
+      expect(queryByText('Prawdziwki')).toBeNull();
       expect(getAllByText('☠ Sobowtór!').length).toBeGreaterThan(0);
     });
   });
@@ -127,7 +127,7 @@ describe('AtlasScreen RTL Tests', () => {
     await waitFor(() => {
       expect(screen.getByText('Goryczak żółciowy')).toBeTruthy();
       expect(screen.queryByText('Czubajnik czerwieniejący')).toBeNull();
-      expect(screen.queryByText('Borowik szlachetny')).toBeNull();
+      expect(screen.queryByText('Prawdziwki')).toBeNull();
       expect(screen.queryByText('W kuchni')).toBeNull();
     });
 
@@ -143,7 +143,7 @@ describe('AtlasScreen RTL Tests', () => {
     await fireEvent.press(screen.getByTestId('filter-hymenophore-SPINES'));
     await waitFor(() => {
       expect(screen.getByText('Kolczak obłączasty')).toBeTruthy();
-      expect(screen.queryByText('Borowik szlachetny')).toBeNull();
+      expect(screen.queryByText('Prawdziwki')).toBeNull();
       expect(screen.getByTestId('atlas-result-count').props.children).toBe('Pasujące karty: 1');
     });
 
@@ -164,10 +164,10 @@ describe('AtlasScreen RTL Tests', () => {
       </LanguageProvider>
     );
 
-    expect(screen.getByText(/Karta niepełna \(4\)/)).toBeTruthy();
+    expect(screen.getByText(/Karta niepełna \(13\)/)).toBeTruthy();
     await fireEvent.press(screen.getByTestId('filter-status-EDIBLE'));
     await waitFor(() => {
-      expect(screen.getByText('Borowik szlachetny')).toBeTruthy();
+      expect(screen.getByText('Prawdziwki')).toBeTruthy();
       expect(screen.queryByText('Gołąbek zielonawy')).toBeNull();
       expect(screen.queryByText('Kolczak obłączasty')).toBeNull();
       expect(screen.getAllByText('JADALNY').length).toBeGreaterThan(0);
@@ -179,9 +179,9 @@ describe('AtlasScreen RTL Tests', () => {
       expect(screen.getByText('Kolczak obłączasty')).toBeTruthy();
       expect(screen.getByText('Smardz jadalny')).toBeTruthy();
       expect(screen.getByText('Pieczarka polna')).toBeTruthy();
-      expect(screen.queryByText('Borowik szlachetny')).toBeNull();
+      expect(screen.queryByText('Prawdziwki')).toBeNull();
       expect(screen.queryAllByText('JADALNY')).toHaveLength(0);
-      expect(screen.getByTestId('atlas-result-count').props.children).toBe('Pasujące karty: 4');
+      expect(screen.getByTestId('atlas-result-count').props.children).toBe('Pasujące karty: 13');
     });
   });
 
@@ -199,7 +199,7 @@ describe('AtlasScreen RTL Tests', () => {
 
     await waitFor(() => {
       expect(getByText('Muchomor jadowity')).toBeTruthy();
-      expect(queryByText('Borowik szlachetny')).toBeNull();
+      expect(queryByText('Prawdziwki')).toBeNull();
     });
   });
 
@@ -210,7 +210,7 @@ describe('AtlasScreen RTL Tests', () => {
       </LanguageProvider>
     );
 
-    expect(screen.getByText('Borowik szlachetny')).toBeTruthy();
+    expect(screen.getByText('Prawdziwki')).toBeTruthy();
     expect(screen.getByTestId('atlas-months-boletus_edulis').props.children).toBe('📅 6 - 11 mies.');
     expect(screen.queryByTestId('atlas-source-language-note')).toBeNull();
     expect(screen.queryByText(en.cards.sourceLanguageNote)).toBeNull();
@@ -240,7 +240,7 @@ describe('AtlasScreen RTL Tests', () => {
     expect(screen.queryByText(pl.cards.sourceLanguageNote)).toBeNull();
     expect(screen.getByTestId('atlas-months-boletus_edulis').props.children).toBe('📅 months 6–11');
     expect(screen.queryByText(/mies\./)).toBeNull();
-    expect(screen.getByText('Borowik szlachetny')).toBeTruthy();
+    expect(screen.getByText('Prawdziwki')).toBeTruthy();
 
     await fireEvent.changeText(
       screen.getByPlaceholderText(en.atlas.searchPlaceholder),

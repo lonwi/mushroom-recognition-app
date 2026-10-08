@@ -52,14 +52,18 @@
     {
       "index": 0,
       "id": "boletus_edulis",
-      "name": "Borowik szlachetny",
-      "name_latin": "Boletus edulis",
+      "name": "Prawdziwki",
+      "name_latin": "Boletus edulis, Boletus reticulatus, Boletus pinophilus",
       "genus": "Boletus",
       "gbif_names": [
-        "Boletus edulis"
+        "Boletus edulis",
+        "Boletus reticulatus",
+        "Boletus pinophilus"
       ],
       "gbif_keys": [
-        5954958
+        5954958,
+        5954691,
+        5954949
       ],
       "safety_tag": "edible"
     },
@@ -124,14 +128,16 @@
     {
       "index": 5,
       "id": "suillus_luteus",
-      "name": "Maślak zwyczajny",
-      "name_latin": "Suillus luteus",
+      "name": "Maślak zwyczajny i ziarnisty",
+      "name_latin": "Suillus luteus, Suillus granulatus",
       "genus": "Suillus",
       "gbif_names": [
-        "Suillus luteus"
+        "Suillus luteus",
+        "Suillus granulatus"
       ],
       "gbif_keys": [
-        7777157
+        7777157,
+        8146046
       ],
       "safety_tag": "edible"
     },
@@ -180,14 +186,16 @@
     {
       "index": 9,
       "id": "lactarius_deliciosus",
-      "name": "Mleczaj rydz",
-      "name_latin": "Lactarius deliciosus",
+      "name": "Rydze",
+      "name_latin": "Lactarius deliciosus, Lactarius deterrimus",
       "genus": "Lactarius",
       "gbif_names": [
-        "Lactarius deliciosus"
+        "Lactarius deliciosus",
+        "Lactarius deterrimus"
       ],
       "gbif_keys": [
-        5248629
+        5248629,
+        7925734
       ],
       "safety_tag": "edible"
     },
@@ -404,14 +412,18 @@
     {
       "index": 24,
       "id": "armillaria_mellea",
-      "name": "Opieńka miodowa",
-      "name_latin": "Armillaria mellea",
+      "name": "Opieńki",
+      "name_latin": "Armillaria mellea, Armillaria ostoyae, Armillaria gallica",
       "genus": "Armillaria",
       "gbif_names": [
-        "Armillaria mellea"
+        "Armillaria mellea",
+        "Armillaria ostoyae",
+        "Armillaria gallica"
       ],
       "gbif_keys": [
-        2536891
+        2536891,
+        2536899,
+        2536847
       ],
       "safety_tag": "edible"
     },
@@ -445,6 +457,150 @@
     },
     {
       "index": 27,
+      "id": "hypholoma_fasciculare",
+      "name": "Maślanka wiązkowa",
+      "name_latin": "Hypholoma fasciculare",
+      "genus": "Hypholoma",
+      "gbif_names": [
+        "Hypholoma fasciculare"
+      ],
+      "gbif_keys": [
+        3293632
+      ],
+      "safety_tag": "toxic"
+    },
+    {
+      "index": 28,
+      "id": "tricholoma_equestre",
+      "name": "Gąska zielonka",
+      "name_latin": "Tricholoma equestre",
+      "genus": "Tricholoma",
+      "gbif_names": [
+        "Tricholoma equestre"
+      ],
+      "gbif_keys": [
+        3324883
+      ],
+      "safety_tag": "toxic"
+    },
+    {
+      "index": 29,
+      "id": "agaricus_xanthodermus",
+      "name": "Pieczarka żółtawa",
+      "name_latin": "Agaricus xanthodermus",
+      "genus": "Agaricus",
+      "gbif_names": [
+        "Agaricus xanthodermus"
+      ],
+      "gbif_keys": [
+        5243412
+      ],
+      "safety_tag": "toxic"
+    },
+    {
+      "index": 30,
+      "id": "neoboletus_luridiformis",
+      "name": "Borowik ceglastopory",
+      "name_latin": "Neoboletus luridiformis, Neoboletus erythropus",
+      "genus": "Neoboletus",
+      "gbif_names": [
+        "Neoboletus luridiformis",
+        "Neoboletus erythropus"
+      ],
+      "gbif_keys": [
+        8208185,
+        9723190
+      ],
+      "safety_tag": "edible"
+    },
+    {
+      "index": 31,
+      "id": "xerocomellus_chrysenteron",
+      "name": "Podgrzybek złotawy",
+      "name_latin": "Xerocomellus chrysenteron",
+      "genus": "Xerocomellus",
+      "gbif_names": [
+        "Xerocomellus chrysenteron"
+      ],
+      "gbif_keys": [
+        2519413
+      ],
+      "safety_tag": "edible"
+    },
+    {
+      "index": 32,
+      "id": "leccinum_aurantiacum",
+      "name": "Koźlarze czerwone",
+      "name_latin": "Leccinum aurantiacum, Leccinum versipelle",
+      "genus": "Leccinum",
+      "gbif_names": [
+        "Leccinum aurantiacum",
+        "Leccinum versipelle"
+      ],
+      "gbif_keys": [
+        2524513,
+        2524490
+      ],
+      "safety_tag": "edible"
+    },
+    {
+      "index": 33,
+      "id": "xerocomus_subtomentosus",
+      "name": "Podgrzybek zamszowy",
+      "name_latin": "Xerocomus subtomentosus",
+      "genus": "Xerocomus",
+      "gbif_names": [
+        "Xerocomus subtomentosus"
+      ],
+      "gbif_keys": [
+        2519457
+      ],
+      "safety_tag": "edible"
+    },
+    {
+      "index": 34,
+      "id": "suillus_grevillei",
+      "name": "Maślak żółty",
+      "name_latin": "Suillus grevillei",
+      "genus": "Suillus",
+      "gbif_names": [
+        "Suillus grevillei"
+      ],
+      "gbif_keys": [
+        5239864
+      ],
+      "safety_tag": "edible"
+    },
+    {
+      "index": 35,
+      "id": "suillus_bovinus",
+      "name": "Maślak sitarz",
+      "name_latin": "Suillus bovinus",
+      "genus": "Suillus",
+      "gbif_names": [
+        "Suillus bovinus"
+      ],
+      "gbif_keys": [
+        7623986
+      ],
+      "safety_tag": "edible"
+    },
+    {
+      "index": 36,
+      "id": "suillus_variegatus",
+      "name": "Maślak pstry",
+      "name_latin": "Suillus variegatus",
+      "genus": "Suillus",
+      "gbif_names": [
+        "Suillus variegatus"
+      ],
+      "gbif_keys": [
+        9043861
+      ],
+      "safety_tag": "edible"
+    },
+    {
+      "index": 37,
       "id": "unknown_mushroom",
       "name": "Nieznany grzyb",
       "name_latin": "Unknown mushroom",
@@ -453,14 +609,6 @@
         "Amanita fulva",
         "Amanita vaginata",
         "Amanita excelsa",
-        "Boletus reticulatus",
-        "Xerocomellus chrysenteron",
-        "Xerocomus subtomentosus",
-        "Leccinum versipelle",
-        "Leccinum aurantiacum",
-        "Suillus granulatus",
-        "Suillus bovinus",
-        "Suillus grevillei",
         "Russula ochroleuca",
         "Russula cyanoxantha",
         "Russula emetica",
@@ -478,12 +626,9 @@
         "Lepista nuda",
         "Clitocybe nebularis",
         "Flammulina velutipes",
-        "Hypholoma fasciculare",
         "Pluteus cervinus",
         "Schizophyllum commune",
         "Ganoderma applanatum",
-        "Neoboletus luridiformis",
-        "Neoboletus erythropus",
         "Scleroderma citrinum",
         "Laccaria laccata",
         "Marasmius oreades",
@@ -501,16 +646,17 @@
         "Tremella mesenterica",
         "Clitopilus prunulus",
         "Laccaria amethystina",
+        "Hypholoma capnoides",
+        "Pholiota squarrosa",
+        "Amanita regalis",
+        "Amanita gemmata",
         "Amanita crocea",
         "Amanita porphyria",
         "Amanita verna",
-        "Boletus pinophilus",
         "Leccinum pseudoscabrum",
         "Russula vesca",
         "Lactarius vellereus",
-        "Lactarius deterrimus",
         "Coprinopsis atramentaria",
-        "Armillaria ostoyae",
         "Inocybe geophylla",
         "Inosperma erubescens",
         "Entoloma sinuatum",
@@ -520,7 +666,7 @@
         "Macrolepiota mastoidea",
         "Clitocybe rivulosa",
         "Gyromitra gigas",
-        "Agaricus xanthodermus"
+        "Agaricus moelleri"
       ],
       "sampling": {
         "per_taxon_cap": 80,
@@ -529,13 +675,10 @@
           "Amanita crocea",
           "Amanita porphyria",
           "Amanita verna",
-          "Boletus pinophilus",
           "Leccinum pseudoscabrum",
           "Russula vesca",
           "Lactarius vellereus",
-          "Lactarius deterrimus",
           "Coprinopsis atramentaria",
-          "Armillaria ostoyae",
           "Inocybe geophylla",
           "Inosperma erubescens",
           "Entoloma sinuatum",
@@ -545,7 +688,7 @@
           "Macrolepiota mastoidea",
           "Clitocybe rivulosa",
           "Gyromitra gigas",
-          "Agaricus xanthodermus"
+          "Agaricus moelleri"
         ],
         "taxa": [
           {
@@ -565,62 +708,6 @@
           {
             "name": "Amanita excelsa",
             "gbif_key": 8935018,
-            "toxic": false,
-            "held_out": false,
-            "relation": "unknown_species_of_known_genus"
-          },
-          {
-            "name": "Boletus reticulatus",
-            "gbif_key": 5954691,
-            "toxic": false,
-            "held_out": false,
-            "relation": "unknown_species_of_known_genus"
-          },
-          {
-            "name": "Xerocomellus chrysenteron",
-            "gbif_key": 2519413,
-            "toxic": false,
-            "held_out": false,
-            "relation": "unknown_genus"
-          },
-          {
-            "name": "Xerocomus subtomentosus",
-            "gbif_key": 2519457,
-            "toxic": false,
-            "held_out": false,
-            "relation": "unknown_genus"
-          },
-          {
-            "name": "Leccinum versipelle",
-            "gbif_key": 2524490,
-            "toxic": false,
-            "held_out": false,
-            "relation": "unknown_species_of_known_genus"
-          },
-          {
-            "name": "Leccinum aurantiacum",
-            "gbif_key": 2524513,
-            "toxic": false,
-            "held_out": false,
-            "relation": "unknown_species_of_known_genus"
-          },
-          {
-            "name": "Suillus granulatus",
-            "gbif_key": 8146046,
-            "toxic": false,
-            "held_out": false,
-            "relation": "unknown_species_of_known_genus"
-          },
-          {
-            "name": "Suillus bovinus",
-            "gbif_key": 7623986,
-            "toxic": false,
-            "held_out": false,
-            "relation": "unknown_species_of_known_genus"
-          },
-          {
-            "name": "Suillus grevillei",
-            "gbif_key": 5239864,
             "toxic": false,
             "held_out": false,
             "relation": "unknown_species_of_known_genus"
@@ -745,13 +832,6 @@
             "relation": "unknown_genus"
           },
           {
-            "name": "Hypholoma fasciculare",
-            "gbif_key": 3293632,
-            "toxic": true,
-            "held_out": false,
-            "relation": "unknown_genus"
-          },
-          {
             "name": "Pluteus cervinus",
             "gbif_key": 7446067,
             "toxic": false,
@@ -771,21 +851,6 @@
             "toxic": false,
             "held_out": false,
             "relation": "unknown_genus"
-          },
-          {
-            "name": "Neoboletus luridiformis",
-            "gbif_key": 8208185,
-            "toxic": false,
-            "held_out": false,
-            "relation": "unknown_genus"
-          },
-          {
-            "name": "Neoboletus erythropus",
-            "gbif_key": 9723190,
-            "toxic": false,
-            "held_out": false,
-            "relation": "unknown_genus",
-            "note": "Accepted GBIF species that holds most records of the Neoboletus luridiformis fungus. Fetched with that name, not held out."
           },
           {
             "name": "Scleroderma citrinum",
@@ -841,7 +906,7 @@
             "gbif_key": 5241860,
             "toxic": false,
             "held_out": false,
-            "relation": "unknown_genus"
+            "relation": "unknown_species_of_known_genus"
           },
           {
             "name": "Agaricus arvensis",
@@ -907,6 +972,34 @@
             "relation": "unknown_genus"
           },
           {
+            "name": "Hypholoma capnoides",
+            "gbif_key": 2533439,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Pholiota squarrosa",
+            "gbif_key": 2534205,
+            "toxic": false,
+            "held_out": false,
+            "relation": "unknown_genus"
+          },
+          {
+            "name": "Amanita regalis",
+            "gbif_key": 5240248,
+            "toxic": true,
+            "held_out": false,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
+            "name": "Amanita gemmata",
+            "gbif_key": 5240292,
+            "toxic": true,
+            "held_out": false,
+            "relation": "unknown_species_of_known_genus"
+          },
+          {
             "name": "Amanita crocea",
             "gbif_key": 5240282,
             "toxic": false,
@@ -924,13 +1017,6 @@
             "name": "Amanita verna",
             "gbif_key": 5240320,
             "toxic": true,
-            "held_out": true,
-            "relation": "unknown_species_of_known_genus"
-          },
-          {
-            "name": "Boletus pinophilus",
-            "gbif_key": 5954949,
-            "toxic": false,
             "held_out": true,
             "relation": "unknown_species_of_known_genus"
           },
@@ -956,25 +1042,11 @@
             "relation": "unknown_species_of_known_genus"
           },
           {
-            "name": "Lactarius deterrimus",
-            "gbif_key": 7925734,
-            "toxic": false,
-            "held_out": true,
-            "relation": "unknown_species_of_known_genus"
-          },
-          {
             "name": "Coprinopsis atramentaria",
             "gbif_key": 5242740,
             "toxic": true,
             "held_out": true,
             "relation": "unknown_genus"
-          },
-          {
-            "name": "Armillaria ostoyae",
-            "gbif_key": 2536899,
-            "toxic": false,
-            "held_out": true,
-            "relation": "unknown_species_of_known_genus"
           },
           {
             "name": "Inocybe geophylla",
@@ -1040,8 +1112,8 @@
             "relation": "unknown_species_of_known_genus"
           },
           {
-            "name": "Agaricus xanthodermus",
-            "gbif_key": 5243412,
+            "name": "Agaricus moelleri",
+            "gbif_key": 5243496,
             "toxic": true,
             "held_out": true,
             "relation": "unknown_species_of_known_genus"
@@ -1050,7 +1122,7 @@
       }
     },
     {
-      "index": 28,
+      "index": 38,
       "id": "not_a_mushroom",
       "name": "To nie jest grzyb",
       "name_latin": "Not a mushroom",
@@ -1519,7 +1591,8 @@
     "known_class_not_probed": [
       "cortinarius_orellanus",
       "cortinarius_rubellus",
-      "galerina_marginata"
+      "galerina_marginata",
+      "tricholoma_equestre"
     ],
     "known_class_reason": "These species are already model classes. Their test photos are the probe. Fetching them again as unknown_mushroom would give one fungus two labels.",
     "visual_groups": [
@@ -1549,14 +1622,6 @@
         "strict_top1_edible": false,
         "taxa": [
           "Omphalotus olearius"
-        ]
-      },
-      {
-        "id": "tricholoma_equestre",
-        "minimum_images": 50,
-        "strict_top1_edible": false,
-        "taxa": [
-          "Tricholoma equestre"
         ]
       }
     ],
@@ -1638,18 +1703,27 @@
         "relation": "unknown_genus"
       },
       {
-        "name": "Tricholoma equestre",
-        "gbif_key": 3324883,
-        "toxic": true,
-        "held_out": true,
-        "relation": "unknown_genus"
-      },
-      {
         "name": "Chlorophyllum molybdites",
         "gbif_key": 5243168,
         "toxic": true,
         "held_out": true,
         "relation": "unknown_species_of_known_genus"
+      },
+      {
+        "name": "Tricholoma pardinum",
+        "gbif_key": 7242174,
+        "toxic": true,
+        "held_out": true,
+        "relation": "unknown_species_of_known_genus",
+        "note": "Test-only probe replacing Tricholoma equestre, which is now a class. Tiger tricholoma."
+      },
+      {
+        "name": "Rubroboletus satanas",
+        "gbif_key": 7722553,
+        "toxic": true,
+        "held_out": true,
+        "relation": "unknown_genus",
+        "note": "Strictly protected in Poland. Test-only probe and a look-alike of the scarletina bolete. Not a model class and not a foraging target."
       }
     ]
   },

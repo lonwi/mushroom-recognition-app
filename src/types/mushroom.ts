@@ -36,6 +36,8 @@ export interface ConfusionRisk {
 export interface MushroomSpecies {
   id: string;
   namePl: string;
+  /** English display name. Species descriptions stay Polish. */
+  nameEn?: string;
   nameLatin: string;
   commonNicknames: string[];
   family: string;

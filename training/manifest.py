@@ -143,7 +143,6 @@ _VISUAL_GROUP_MINIMUMS = {
     "lepiota_amatoxin": 150,
     "conocybe_pholiotina": 100,
     "omphalotus": 50,
-    "tricholoma_equestre": 50,
 }
 _REQUIRED_EXCEPTIONS = ("Lepiota brunneoincarnata", "Inosperma erubescens", "Conocybe filaris")
 
@@ -217,7 +216,7 @@ def _validate_visual_groups(manifest: dict, probes: dict, probe_by_name: dict[st
             group_of[str(name)] = group_id
         seen_ids[group_id] = group
     if set(seen_ids) != set(_VISUAL_GROUP_MINIMUMS):
-        raise ValueError("visual groups do not match the Lepiota, Conocybe, Omphalotus, and Tricholoma quotas")
+        raise ValueError("visual groups do not match the Lepiota, Conocybe, and Omphalotus quotas")
     exceptions = probes.get("rare_taxon_exceptions")
     if not isinstance(exceptions, list):
         raise ValueError("toxic probes need rare_taxon_exceptions")

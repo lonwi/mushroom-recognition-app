@@ -103,13 +103,13 @@ The network reads floats already scaled with `(pixel / 127.5) - 1` and emits **l
 
 ## Class list
 
-29 outputs. The contract is `assets/models/labels.json` (indexes are the logit order). Edibility is absent from that file. A scan is not allowed to print a verdict.
+39 outputs (37 species classes, then `unknown_mushroom`, then `not_a_mushroom`). The contract is `assets/models/labels.json` (indexes are the logit order). Edibility is absent from that file. A scan is not allowed to print a verdict.
 
 `unknown_mushroom` is the class immediately before `not_a_mushroom`. It means “this is a fungus, and it is not one of the species this model knows.” It is trained on CC0/CC-BY photos of other fungi that occur in Poland and nearby countries and that are **not** in the known species list (amanitas, boletes, russulas, milk-caps, brackets, and similar names in `labels.json`). Each taxon is capped. A fixed list of those taxa is `held_out_taxon` and is placed only in the test split.
 
-Every species class has `safety_tag` `toxic`, `edible`, or `other`. That tag matches the atlas card when the species has one: `EDIBLE` is `edible`, `INEDIBLE` is `other`, and `POISONOUS` or `DEADLY_POISONOUS` is `toxic`. Every aggregate taxon has `toxic` true or false. Those flags are evaluation labels. The app must not show them as an edibility verdict. Poisonous taxa inside the training unknown class (for example `Hypholoma fasciculare`) and poisonous held-out taxa (for example `Amanita verna`, `Amanita porphyria`, `Inosperma erubescens`, `Inocybe geophylla`, `Entoloma sinuatum`, `Clitocybe rivulosa`, `Gyromitra gigas`, `Agaricus xanthodermus`) are tagged so a test photo of any of them counts when `decide()` would show a confident edible species.
+Every species class has `safety_tag` `toxic`, `edible`, or `other`. That tag matches the atlas card when the species has one: `EDIBLE` is `edible`, `INEDIBLE` is `other`, and `POISONOUS` or `DEADLY_POISONOUS` is `toxic`. Every aggregate taxon has `toxic` true or false. Those flags are evaluation labels. The app must not show them as an edibility verdict. Poisonous taxa inside the training unknown class (for example `Amanita regalis`, `Amanita gemmata`, `Scleroderma citrinum`) and poisonous held-out taxa (for example `Amanita verna`, `Amanita porphyria`, `Inosperma erubescens`, `Inocybe geophylla`, `Entoloma sinuatum`, `Clitocybe rivulosa`, `Gyromitra gigas`, `Agaricus moelleri`) are tagged so a test photo of any of them counts when `decide()` would show a confident edible species.
 
-`Neoboletus luridiformis` (GBIF key 8208185) is a thin name: about 68 records and about 28 usable photos. GBIF keeps most records of that fungus on the separate accepted species `Neoboletus erythropus` (usage key 9723190; the species match is EXACT). Both names are on the `unknown_mushroom` training list, next to each other, and neither is held out. Holding one out while training on the other would score a fungus the model had already seen.
+`Neoboletus luridiformis` (GBIF key 8208185) is a thin name on its own: about 28 usable photos. GBIF keeps most records on the separate accepted species `Neoboletus erythropus` (usage key 9723190). Both names are one edible class, `neoboletus_luridiformis`, and neither stays on the unknown list. Holding one out while training on the other would score a fungus the model had already seen. The class is edible in the atlas only as an unfinished card: literature says cook it, and the card does not authorize eating.
 
 GBIF name matching is strict. `matchType` must be `EXACT` and the rank must be species, subspecies, variety, or form. A `HIGHERRANK` hit (a genus, a class, or the kingdom) stops the fetch with `SystemExit` before any download. That is why the bare strings `Helvella crispa` and `Boletus badius` are not in the manifest: GBIF maps them to a higher rank. The held-out name is `Helvella crispa (Scop.) Fr.`. `Imleria badia` keeps the synonym `Xerocomus badius`, which shares one accepted key. Collisions are checked on that accepted key. The same key may repeat only as synonyms of one class.
 
@@ -121,7 +121,7 @@ It also says the mushroom may be deadly poisonous, and it shows the existing lin
 
 ### Toxic probes
 
-These taxa are fetched only into the test split, labeled `unknown_mushroom`. They are not a 30th class. The fetch asks for 80 CC0/CC-BY photos each (70–80 is the headroom band) so near-duplicate removal can still leave a full floor. `Galerina sulcipes` and `Galerina sulciceps` are not probes: GBIF had 0 and 39 still images, and those names are not a substitute for the amatoxin look-alikes below.
+These taxa are fetched only into the test split, labeled `unknown_mushroom`. They are not their own class. The fetch asks for 80 CC0/CC-BY photos each (70–80 is the headroom band) so near-duplicate removal can still leave a full floor. `Galerina sulcipes` and `Galerina sulciceps` are not probes: GBIF had 0 and 39 still images, and those names are not a substitute for the amatoxin look-alikes below.
 
 The flat 50-per-taxon probe floor is gone. The ship gate uses visual-group totals, plus 50 for every poisonous held-out taxon that is not on `rare_taxon_exceptions`:
 
@@ -130,8 +130,7 @@ The flat 50-per-taxon probe floor is gone. The ship gate uses visual-group total
 | Lepiota amatoxin | 150 | `Lepiota brunneoincarnata`, `Lepiota subincarnata`, `Lepiota cristata`, `Lepiota castanea` |
 | Conocybe / Pholiotina | 100 | `Conocybe filaris`, `Conocybe rugosa` |
 | Omphalotus | 50 | `Omphalotus olearius` |
-| Tricholoma equestre | 50 | `Tricholoma equestre` |
-| Every other probe taxon, and every other poisonous held-out taxon | 50 each | `Chlorophyllum molybdites`, plus the poisonous names held out inside `unknown_mushroom` |
+| Every other probe taxon, and every other poisonous held-out taxon | 50 each | `Chlorophyllum molybdites`, `Tricholoma pardinum`, `Rubroboletus satanas`, plus the poisonous names held out inside `unknown_mushroom` |
 
 The poisonous held-out total stays at least 300 (rule of three) and the confident-edible count on that set stays 0. Each poisonous taxon also records a Wilson upper bound and a seeded binomial-bootstrap upper bound on its confident-edible rate. A zero count makes the bootstrap upper bound collapse to 0; the Wilson bound is the one to read. Neither bound replaces the hard 0.
 
@@ -148,14 +147,17 @@ Counts below were measured on 2026-10-08. StillImage is before the license filte
 | Omphalotus olearius | 2538088 | 1563 | 80 of a larger set | 79 | group of 50 |
 | Conocybe filaris | 2529789 | 153 | 78 (whole set) | 33 (6 downloads failed, 39 near-duplicates) | exception; group must still reach 100 |
 | Conocybe rugosa | 2529907 | 575 | 80 of a larger set (at least 186 licensed) | 80 | group member, at least 50 |
-| Tricholoma equestre | 3324883 | 2135 | 80 of a larger set | 79 | group of 50 |
 | Chlorophyllum molybdites | 5243168 | 17255 | 80 of a larger set | 77 | 50, not in a named group |
+| Tricholoma pardinum | 7242174 | — | about 137 estimated usable (2026-10-08 candidate scan, not a deduped download) | — | 50, not in a named group |
+| Rubroboletus satanas | 7722553 | — | about 221 estimated usable (same scan). Strictly protected. Test only, not a class | — | 50, not in a named group |
 
 `Inosperma erubescens` (accepted name of `Inocybe erubescens`, key 10776858) is not a probe. It is a poisonous held-out taxon inside `unknown_mushroom`. The whole licensed set is 44 photos, all kept after dedup, so it is the third exception. It has no visual group. The exception lowers only its own floor from 50 to 5.
 
 On that same day the Lepiota group total from the table is 15+77+80+80 = 252, and the Conocybe group is 33+80 = 113. Both clear their minimums on this sample. One occurrence page took about 0.5–2.7 seconds, and the image downloads for these ten names finished in a few minutes on this machine. The crawl is part of `python training/run_pipeline.py fetch` and is not a full download in CI.
 
-`Cortinarius orellanus`, `Cortinarius rubellus`, and `Galerina marginata` are already model classes. Fetching them again as `unknown_mushroom` would give one fungus two labels, so they are not probes. Their own test photos are poisonous (`safety_tag` `toxic`) and count in `confident_toxic_as_edible`. The Lepiota amatoxin group and the Conocybe / Pholiotina group are deadly probes: an edible top-1 that is not low-confidence fails the ship even if a dangerous genus appears lower in the list.
+`Cortinarius orellanus`, `Cortinarius rubellus`, `Galerina marginata`, and `Tricholoma equestre` are already model classes. Fetching them again as `unknown_mushroom` would give one fungus two labels, so they are not probes. Yellow knight left the probe list when it became a class. `Tricholoma pardinum` and `Rubroboletus satanas` replace it. Satan’s bolete stays a probe: it is strictly protected, and it is not a model class. Their own test photos of the poisonous classes are poisonous (`safety_tag` `toxic`) and count in `confident_toxic_as_edible`. The Lepiota amatoxin group and the Conocybe / Pholiotina group are deadly probes: an edible top-1 that is not low-confidence fails the ship even if a dangerous genus appears lower in the list.
+
+`Agaricus xanthodermus` moved from the unknown test set onto its own class. `Agaricus moelleri` (key 5243496, about 268 estimated usable photos) is the held-out replacement. Hard negatives added to unknown training, because the 2026-10-08 scan found hundreds of usable CC0/CC-BY photos: `Hypholoma capnoides`, `Pholiota squarrosa`, `Amanita regalis`, and `Amanita gemmata`. The two Amanitas are tagged toxic. Capnoides and squarrosa are not.
 
 Atlas species already in the app, kept so a future model lines up with the cards:
 
@@ -170,9 +172,30 @@ Deadly or seriously poisonous Polish species that were not all in the atlas:
 
 Look-alikes added so those deadly species have somewhere else to go:
 
-- `Kuehneromyces mutabilis` and `Armillaria mellea` — the wood-growing mushrooms people confuse with `Galerina marginata`
+- `Kuehneromyces mutabilis` and `Armillaria mellea` — the wood-growing mushrooms people confuse with `Galerina marginata`. The honey-fungus class is the group opieńki: `Armillaria mellea`, `A. ostoyae`, and `A. gallica`.
 - `Amanita rubescens` — the blushing Amanita confused with `A. pantherina`
 - `Amanita citrina` — the citron Amanita confused with pale `A. phalloides`
+
+First-batch classes added before the first full training (2026-10-08). Estimated usable photos are from that day’s candidate scan: CC0/CC-BY, at most 2 photos per occurrence. They are not a deduped download. A species class still shares one cap of 500, including every GBIF name on a group class. Thin means the estimate is under that cap. The ship floor of 40 training images after dedup is unchanged. `Tricholoma equestre` is the thin new class.
+
+| Class | Polish name in the app | safety_tag | Estimated usable photos |
+| --- | --- | --- | ---: |
+| `hypholoma_fasciculare` | Maślanka wiązkowa | toxic | 8723, capped at 500 |
+| `tricholoma_equestre` | Gąska zielonka | toxic | about 430, thin |
+| `agaricus_xanthodermus` | Pieczarka żółtawa | toxic | 1292, capped at 500 |
+| `neoboletus_luridiformis` | Borowik ceglastopory | edible | 28 + 1073 = about 1101, capped at 500 |
+| `xerocomellus_chrysenteron` | Podgrzybek złotawy | edible | 1415, capped at 500 |
+| `leccinum_aurantiacum` | Koźlarze czerwone | edible | 699 + 1210 = about 1909, capped at 500 |
+| `xerocomus_subtomentosus` | Podgrzybek zamszowy | edible | 985, capped at 500 |
+| `suillus_grevillei` | Maślak żółty | edible | 2701, capped at 500 |
+| `suillus_bovinus` | Maślak sitarz | edible | 1476, capped at 500 |
+| `suillus_variegatus` | Maślak pstry | edible | 1116, capped at 500 |
+| `lactarius_deliciosus` | Rydze | edible | adds `Lactarius deterrimus`, about 1498, on top of the existing rydz name; cap 500 |
+| `armillaria_mellea` | Opieńki | edible | adds `A. ostoyae` about 419 and `A. gallica` about 575; cap 500. Wide `A. mellea` includes non-European look-alikes under the same name |
+| `boletus_edulis` | Prawdziwki | edible | adds `B. reticulatus` about 1016 and `B. pinophilus` about 396; cap 500 |
+| `suillus_luteus` | Maślak zwyczajny i ziarnisty | edible | adds `S. granulatus` about 1752; cap 500. Some world photos under that name are a North American group |
+
+The earlier species classes were not re-counted in that scan. Their fetch cap stays 500. New edible cards have no photo and are marked incomplete, so the atlas does not lead with a green edible badge. Yellow knight is `POISONOUS` in the app: it is still on the Polish legal sale list (Dz.U. 2026 poz. 258) and the card says so, together with the rhabdomyolysis reports. Morels stay one class. The species card and a scan that names `morchella_esculenta` state the 2014 partial protection in Polish and in English (permit, except gardens, horticultural plantings, forest nurseries, and green areas; Dz.U. 2014 poz. 1408).
 
 `not_a_mushroom` is a real training class, not a softmax leftover. Its GBIF names are animals, plants, and other non-fungi, with a per-taxon cap and a held-out taxon list so the test is not only the taxa the model trained on.
 
@@ -202,7 +225,7 @@ Low confidence (top softmax under 0.70 or top-1/top-2 margin under 0.15) still s
 | Deadly-probe strict top-1 | Lepiota amatoxin and Conocybe / Pholiotina probe photos whose top-1 is an edible species and the result is not low-confidence. A dangerous-genus banner does not clear this. | 0 |
 | Open-set safe outcome | Held-out fungi (`held_out_taxon`, class `unknown_mushroom`, including probes) whose `decide()` status is rejected, or candidates with low confidence or a dangerous-genus warning. Wilson 95% interval. | rate ≥ 0.90 and lower bound ≥ 0.85 |
 | Open-set confident edible | The same held-out photos that `decide()` would show as a confident edible. Wilson 95% interval. | rate ≤ 0.02 and upper bound ≤ 0.05 |
-| Poisonous held-out sample | Poisonous held-out photos, including every toxic probe and every toxic held-out unknown taxon, even when the count is 0. Confident edible among them must be 0. Per-taxon Wilson and bootstrap upper bounds are reported. | ≥ 300 images. Visual groups: Lepiota amatoxin ≥ 150, Conocybe / Pholiotina ≥ 100, Omphalotus ≥ 50, Tricholoma equestre ≥ 50. Every other taxon ≥ 50 unless it is a `rare_taxon_exception` (≥ 5, 0 confident-edible, and its group still meets the group minimum). |
+| Poisonous held-out sample | Poisonous held-out photos, including every toxic probe and every toxic held-out unknown taxon, even when the count is 0. Confident edible among them must be 0. Per-taxon Wilson and bootstrap upper bounds are reported. | ≥ 300 images. Visual groups: Lepiota amatoxin ≥ 150, Conocybe / Pholiotina ≥ 100, Omphalotus ≥ 50. Every other taxon ≥ 50 unless it is a `rare_taxon_exception` (≥ 5, 0 confident-edible, and its group still meets the group minimum). |
 | Unknown-fungus recall | Diagnostic only. Top-1 equals `unknown_mushroom` on held-out fungi. The ship gate does not use 0.50. It does require enough photos to compute the diagnostic, and it records a per-taxon bootstrap lower bound (target 0.40, not a ship floor) plus a split of unknown genus versus unknown species of a known genus. | ≥ 200 images and ≥ 10 taxa with ≥ 10 each |
 | Unknown-fungus steal | Known-species test photos that `decide()` rejects as `unknown_mushroom`. Energy rejects are not steals. | ≤ 0.10 |
 | High-stakes steal | The same steal rate for each high-stakes class. | ≤ 0.10 on ≥ 30 images |

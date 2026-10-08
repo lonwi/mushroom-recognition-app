@@ -3,14 +3,15 @@ import { type MushroomSpecies } from '../types/mushroom';
 export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
   {
     id: 'boletus_edulis',
-    namePl: 'Borowik szlachetny',
-    nameLatin: 'Boletus edulis',
-    commonNicknames: ['Prawdziwek', 'Borowik jadalny', 'Biały grzyb'],
+    namePl: 'Prawdziwki',
+    nameEn: 'Penny bun group',
+    nameLatin: 'Boletus edulis, Boletus reticulatus, Boletus pinophilus',
+    commonNicknames: ['Borowik szlachetny', 'Prawdziwek', 'Borowik usiatkowany', 'Borowik sosnowy'],
     family: 'Borowikowate (Boletaceae)',
     status: 'EDIBLE',
     hymenophore: 'TUBES',
     months: [6, 7, 8, 9, 10, 11],
-    habitat: 'Najczęściej lasy iglaste pod świerkiem i sosną, także pod brzozą. Podobne borowiki spod dębu i buka ta karta nie rozdziela.',
+    habitat: 'Grupa prawdziwków: borowik szlachetny najczęściej w lasach iglastych pod świerkiem i sosną, także pod brzozą; borowik usiatkowany pod dębem i bukiem; borowik sosnowy pod sosną. Zdjęcie nie rozdziela tych trzech gatunków.',
     capDescription: 'Średnica 6-25 cm. Za młodu półkulisty, potem wypukły do rozpostartego. Kolor od jasnobrązowego, przez orzechowy po ciemnokasztanowy. Brzeg gładki, często z wąską białą obwódką.',
     hymenophoreDescription: 'Rurki drobne, łatwo oddzielające się od miąższu. Początkowo białawe, z wiekiem żółtawozielone do oliwkowych. Po uciśnięciu NIE sinieją.',
     stemDescription: 'Wysokość 5-20 cm, grubość 2-6 cm. Masywny, u dołu pękaty, z wiekiem maczugowaty lub walcowaty. Na jasnobrązowym tle pokryty delikatną, białą siateczką (głównie w górnej części).',
@@ -30,7 +31,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         fatal: false
       }
     ],
-    warningNotes: 'Zwracaj uwagę na barwę rurek i siateczkę na trzonie, by nie pomylić z gorzkim goryczakiem. Borowik szatański (Rubroboletus satanas) to inny gatunek i nie ma go w tym atlasie.'
+    warningNotes: 'Ta karta obejmuje prawdziwki: borowika szlachetnego, usiatkowanego i sosnowego. Rozporządzenie MZ wymienia borowika szlachetnego jako wszystkie odmiany. Zwracaj uwagę na barwę rurek i siateczkę na trzonie, by nie pomylić z gorzkim goryczakiem. Borowik szatański (Rubroboletus satanas) to inny gatunek i nie ma go w tym atlasie.'
   },
   {
     id: 'amanita_phalloides',
@@ -220,9 +221,10 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
   },
   {
     id: 'suillus_luteus',
-    namePl: 'Maślak zwyczajny',
-    nameLatin: 'Suillus luteus',
-    commonNicknames: ['Maślak', 'Maślarz'],
+    namePl: 'Maślak zwyczajny i ziarnisty',
+    nameEn: 'Slippery jack and granulated bolete',
+    nameLatin: 'Suillus luteus, Suillus granulatus',
+    commonNicknames: ['Maślak', 'Maślak ziarnisty', 'Maślarz'],
     family: 'Maślakowate (Suillaceae)',
     status: 'EDIBLE',
     hymenophore: 'TUBES',
@@ -230,12 +232,24 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     habitat: 'Wyłącznie pod sosnami (mikoryza z sosną dwuigielną), na glebach piaszczystych, młodnikach.',
     capDescription: 'Średnica 4-12 cm. Ciemnobrązowy, czekoladowy. Pokryty grubą, bardzo śliską, lepką skórką, którą łatwo zdjąć palcami.',
     hymenophoreDescription: 'Rurki drobne, za młodu cytrynowożółte, zakryte białawą błoną łączącą brzeg kapelusza z trzonem, później oliwkowożółte.',
-    stemDescription: 'Wysokość do około 11 cm, walcowaty. U młodych owocników rurki zakrywa biała błona, czasem z fioletowym odcieniem. Zostaje z niej pierścień, najpierw białawy, później brunatny. Nad pierścieniem trzon bywa żółty i ziarnisty.',
+    stemDescription: 'Wysokość do około 11 cm, walcowaty. Maślak zwyczajny ma u młodych owocników białą błonę, czasem z fioletowym odcieniem, a potem pierścień. Maślak ziarnisty pierścienia nie ma, a górę trzonu pokrywają kropelki i ziarenka. Na zdjęciu z góry tych dwóch nie rozdzielisz.',
     fleshDescription: 'Miękki, białożółtawy, niezmienny, w kapeluszu wodnisty.',
     tasteAndSmell: 'Łagodny, kwaskowaty smak i słaby grzybowy zapach.',
     culinaryValue: 'Smaczny do duszenia, zup i marynat. Śliską skórkę warto zdjąć: jest kwaśna, a bez niej łatwiej usunąć piasek. Suszenie się nie sprawdza. U części osób, zwłaszcza przy pierwszym razie, opisywano biegunkę i wymioty.',
-    confusionRisks: [],
-    warningNotes: 'Podobnego maślaka ziarnistego, bez pierścienia, ta karta nie opisuje. Pusta lista sobowtórów nie jest zgodą na zbiór.'
+    confusionRisks: [
+      {
+        confusedWithId: 'suillus_grevillei',
+        confusedWithName: 'Maślak żółty',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Maślak żółty rośnie pod modrzewiem i ma złocisty, lepki kapelusz',
+          'Maślak zwyczajny i ziarnisty rosną pod sosną',
+          'Samo zdjęcie kapelusza z góry nie rozdziela maślaka zwyczajnego od ziarnistego'
+        ],
+        fatal: false
+      }
+    ],
+    warningNotes: 'Ta karta łączy maślaka zwyczajnego (z pierścieniem) i ziarnistego (bez pierścienia). Zdjęcie z góry ich nie rozdziela. Pusta lista sobowtórów nie jest zgodą na zbiór, a ta lista też nie jest.'
   },
   {
     id: 'leccinum_scabrum',
@@ -286,7 +300,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     confusionRisks: [
       {
         confusedWithId: 'boletus_edulis',
-        confusedWithName: 'Borowik szlachetny',
+        confusedWithName: 'Prawdziwki',
         confusedWithStatus: 'EDIBLE',
         keyDifferences: [
           'Rurki goryczaka są różowe u rozwiniętych okazów (borowik ma żółtooliwkowe)',
@@ -318,18 +332,19 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
   },
   {
     id: 'lactarius_deliciosus',
-    namePl: 'Mleczaj rydz',
-    nameLatin: 'Lactarius deliciosus',
-    commonNicknames: ['Rydz', 'Ryżyk'],
+    namePl: 'Rydze',
+    nameEn: 'Saffron milkcaps',
+    nameLatin: 'Lactarius deliciosus, Lactarius deterrimus',
+    commonNicknames: ['Rydz', 'Rydz świerkowy', 'Ryżyk'],
     family: 'Gołąbkowate (Russulaceae)',
     status: 'EDIBLE',
     hymenophore: 'GILLS',
     months: [8, 9, 10, 11],
-    habitat: 'Głównie pod sosnami na glebach piaszczystych, obrzeżach lasów.',
+    habitat: 'Rydz (Lactarius deliciosus) głównie pod sosnami na glebach piaszczystych. Rydz świerkowy (Lactarius deterrimus) pod świerkiem. Zdjęcie prawie ich nie rozdziela, dlatego to jedna karta.',
     capDescription: 'Średnica 4-12 cm. Pomarańczowo-rudy z ciemniejszymi, koncentrycznymi kręgami. Z wiekiem zieleniejący.',
     hymenophoreDescription: 'Blaszki pomarańczowożółte, gęste, lekko zbiegające na trzon. Po uszkodzeniu powoli zielenieją.',
     stemDescription: 'Wysokość 3-7 cm, cylindryczny, pomarańczowy z ciemniejszymi jamkami.',
-    fleshDescription: 'Kruchy, bladopomarańczowy. Wydziela pomarańczowe mleczko, które w zetknięciu z powietrzem nie zmienia barwy. Uszkodzone blaszki mogą zielenieć. Podobne mleczaje spod świerka, jodły i modrzewia ta karta nie rozdziela.',
+    fleshDescription: 'Kruchy, bladopomarańczowy. Wydziela pomarańczowe albo marchewkowe mleczko. U rydza świerkowego mleczko po czasie czerwienieje, a uszkodzone miejsca mocniej zielenieją. Ta karta nie rozdziela rydza jodłowego ani modrzewiowego.',
     tasteAndSmell: 'Przyjemny, żywiczny zapach i łagodny, lekko pikantny smak.',
     culinaryValue: 'Wybitny grzyb kulinarny: smażony na maśle, kiszony lub marynowany.',
     confusionRisks: [
@@ -356,7 +371,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         fatal: true
       }
     ],
-    warningNotes: 'Zbieraj tylko owocniki spod sosny, z pomarańczowym mleczkiem. Przy modrzewiu i przy białym mleczku to nie jest ta karta. Podobnych mleczajów atlas nie rozdziela.'
+    warningNotes: 'Ta karta to rydze: sosnowy i świerkowy. Groźnym sobowtórem zostaje wełnianka, z białym mleczkiem i wełnistym brzegiem, pod brzozą. Przy modrzewiu i przy białym mleczku to nie jest ta karta.'
   },
   {
     id: 'gyromitra_esculenta',
@@ -408,7 +423,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     confusionRisks: [
       {
         confusedWithId: 'lactarius_deliciosus',
-        confusedWithName: 'Mleczaj rydz',
+        confusedWithName: 'Rydze',
         confusedWithStatus: 'EDIBLE',
         keyDifferences: [
           'Rydz po uszkodzeniu wydziela pomarańczowe mleczko. Krowiak mleczka nie ma',
@@ -595,7 +610,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     confusionRisks: [
       {
         confusedWithId: 'lactarius_deliciosus',
-        confusedWithName: 'Mleczaj rydz',
+        confusedWithName: 'Rydze',
         confusedWithStatus: 'EDIBLE',
         keyDifferences: [
           'Wełnianka ma wełnisty brzeg kapelusza i białe, piekące mleczko',
@@ -610,6 +625,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
   {
     id: 'morchella_esculenta',
     namePl: 'Smardz jadalny',
+    nameEn: 'Common morel',
     nameLatin: 'Morchella esculenta',
     commonNicknames: [],
     family: 'Smardzowate (Morchellaceae)',
@@ -770,6 +786,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
   {
     id: 'agaricus_xanthodermus',
     namePl: 'Pieczarka żółtawa',
+    nameEn: 'Yellow stainer',
     nameLatin: 'Agaricus xanthodermus',
     commonNicknames: ['Pieczarka karbolowa', 'Pieczarka cuchnąca'],
     family: 'Pieczarkowate (Agaricaceae)',
@@ -850,6 +867,509 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
       }
     ],
     warningNotes: 'NIE JEDZ. Śmiertelnie trujący. Młode owocniki bywają brane za gęśnicę wiosenną (majówkę) i za kurki. Brak zdjęcia. Gęśnicy wiosennej i płachetki zwyczajnej nie ma w tym atlasie.'
+  },
+  {
+    id: 'hypholoma_fasciculare',
+    namePl: 'Maślanka wiązkowa',
+    nameEn: 'Sulphur tuft',
+    nameLatin: 'Hypholoma fasciculare',
+    commonNicknames: ['Maślanka trująca'],
+    family: 'Pierścieniakowate (Strophariaceae)',
+    status: 'POISONOUS',
+    hymenophore: 'GILLS',
+    months: [4, 5, 6, 7, 8, 9, 10, 11],
+    habitat: 'Kępami na pniakach i martwym drewnie drzew liściastych i iglastych, często obok opieńek i łuskwiaka zmiennego.',
+    capDescription: 'Średnica 2–7 cm. Siarkowożółty, na środku często pomarańczowobrązowy. Brzeg za młodu podwinięty, z resztkami osłony.',
+    hymenophoreDescription: 'Blaszki gęste, najpierw siarkowożółte, potem zielonkawe, na końcu ciemnobrązowe od zarodników. Nie są cynamonowobrązowe jak u hełmówki.',
+    stemDescription: 'Cienki, siarkowożółty, bez trwałego pierścienia. Owocniki zrastają się trzonami w wiązkę.',
+    fleshDescription: 'Cienki, żółty. Smak jest opisywany jako gorzki. Nie sprawdzaj smakiem.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem. Gorycz nie jest dowodem, że to ten gatunek, i nie chroni przed pomyłką z hełmówką.',
+    culinaryValue: 'Trująca. Powoduje dolegliwości żołądkowo-jelitowe. Nie jedz i nie traktuj goryczy jako próby gatunku.',
+    confusionRisks: [
+      {
+        confusedWithId: 'armillaria_mellea',
+        confusedWithName: 'Opieńki',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Opieńki mają wyraźniejszy pierścień i kapelusz miodowy, nie siarkowożółty',
+          'Maślanka wiązkowa ma blaszki zielonkawożółte, potem ciemne',
+          'Na jednym pniaku mogą rosnąć obok siebie. Żółte blaszki to powód, żeby wiązkę zostawić'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'kuehneromyces_mutabilis',
+        confusedWithName: 'Łuskwiak zmienny',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Łuskwiak zmienny ma cynamonowobrązowe blaszki i wyraźny pierścień',
+          'Maślanka wiązkowa jest siarkowożółta i nie ma trwałego pierścienia',
+          'Młode wiązki na pniaku zostaw, jeśli nie widzisz blaszek'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'galerina_marginata',
+        confusedWithName: 'Hełmówka jadowita',
+        confusedWithStatus: 'DEADLY_POISONOUS',
+        keyDifferences: [
+          'Hełmówka ma cynamonowobrązowe blaszki i często cienki pierścień',
+          'Maślanka wiązkowa ma blaszki żółtozielonkawe',
+          'Hełmówka jadowita jest śmiertelnie trująca. W razie wątpliwości nie zbieraj'
+        ],
+        fatal: true
+      }
+    ],
+    warningNotes: 'NIE JEDZ. Trująca. Rośnie na pniakach razem z opieńkami i łuskwiakiem, a hełmówka jadowita bywa na tym samym drewnie. Brak zdjęcia.'
+  },
+  {
+    id: 'tricholoma_equestre',
+    namePl: 'Gąska zielonka',
+    nameEn: 'Yellow knight',
+    nameLatin: 'Tricholoma equestre (syn. T. flavovirens, T. auratum)',
+    commonNicknames: ['Zielonka', 'Gąska zielona'],
+    family: 'Gąskowate (Tricholomataceae)',
+    status: 'POISONOUS',
+    hymenophore: 'GILLS',
+    months: [9, 10, 11],
+    habitat: 'Piaszczyste bory sosnowe, często częściowo zagrzebana w mchu i piasku.',
+    capDescription: 'Średnica 5–12 cm. Żółtozielony, oliwkowy, na środku brązowawy. Skórka lepka, z wrośniętymi włókienkami.',
+    hymenophoreDescription: 'Blaszki siarkowożółte, gęste, wycięte ząbkiem. Nie są białe jak u muchomora.',
+    stemDescription: 'Żółty, pełny, bez pierścienia i bez pochwy. Nasada nie ma bulwy w pochwie.',
+    fleshDescription: 'Biały albo żółtawy, pod skórką kapelusza żółty.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem. Łagodny smak nie oznacza bezpieczeństwa.',
+    culinaryValue: 'W tej aplikacji trująca. Opisywano rabdomiolizę po wielokrotnym spożyciu. Francja zakazała sprzedaży w 2005 r. W Polsce gatunek jest wciąż na wykazie grzybów dopuszczonych do obrotu (rozporządzenie MZ, tekst jednolity Dz.U. 2026 poz. 258). Ta karta nie jest zgodą na zbiór ani sprzedaż.',
+    confusionRisks: [
+      {
+        confusedWithId: 'amanita_phalloides',
+        confusedWithName: 'Muchomor sromotnikowy (zielonawy)',
+        confusedWithStatus: 'DEADLY_POISONOUS',
+        keyDifferences: [
+          'Muchomor sromotnikowy ma białe blaszki, pierścień i pochwę u nasady',
+          'Gąska zielonka ma żółte blaszki i nie ma pochwy ani pierścienia',
+          'Zielonkawy kapelusz bez obejrzenia blaszek i nasady trzonu nie rozstrzyga gatunku'
+        ],
+        fatal: true
+      }
+    ],
+    warningNotes: 'NIE JEDZ. Aplikacja traktuje gąskę zielonkę jako trującą z powodu ryzyka rabdomiolizy, mimo że rozporządzenie MZ nadal dopuszcza ją do obrotu. Muchomor sromotnikowy bywa z nią mylony. Brak zdjęcia. Gąski siarkowej nie ma na osobnej karcie.'
+  },
+  {
+    id: 'neoboletus_luridiformis',
+    namePl: 'Borowik ceglastopory',
+    nameEn: 'Scarletina bolete',
+    nameLatin: 'Neoboletus luridiformis, Neoboletus erythropus',
+    commonNicknames: ['Borowik ceglasty'],
+    family: 'Borowikowate (Boletaceae)',
+    status: 'EDIBLE',
+    incompleteCard: true,
+    hymenophore: 'TUBES',
+    months: [6, 7, 8, 9, 10],
+    habitat: 'Lasy iglaste i liściaste, pod świerkiem, bukiem i dębem. Dwie nazwy GBIF opisują ten sam grzyb w praktyce zbioru: zdjęcie ich nie rozdziela.',
+    capDescription: 'Średnica do około 20 cm. Ciemnobrązowy, filcowaty, suchy. Po uciśnięciu miąższ i pory szybko sinieją.',
+    hymenophoreDescription: 'Rurki i pory ceglastoczerwone albo pomarańczowoczerwone. Po dotknięciu natychmiast sinieją. To nie są różowe rurki goryczaka.',
+    stemDescription: 'Żółty do czerwonawego, pokryty drobnymi czerwonymi punkcikami, bez wyraźnej siateczki. Po uszkodzeniu sinieje.',
+    fleshDescription: 'Żółty, po przekrojeniu szybko niebiesko-czarny. Surowe owocniki są trujące.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem. Surowe owocniki powodują dolegliwości żołądkowo-jelitowe.',
+    culinaryValue: 'W literaturze jadalny tylko po dokładnej obróbce termicznej. Surowy i niedogotowany jest trujący. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    confusionRisks: [
+      {
+        confusedWithId: 'tylopilus_felleus',
+        confusedWithName: 'Goryczak żółciowy',
+        confusedWithStatus: 'INEDIBLE',
+        keyDifferences: [
+          'Goryczak ma brudnoróżowe rurki i ciemną, wypukłą siatkę na trzonie',
+          'Ceglastopory ma czerwone pory i trzon w czerwonych punkcikach, a miąższ sinieje',
+          'Goryczak nie sinieje na niebiesko'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'suillellus_luridus',
+        confusedWithName: 'Borowik ponury',
+        confusedWithStatus: 'NO_ATLAS_VERDICT',
+        keyDifferences: [
+          'Borowik ponury ma na trzonie siateczkę, ceglastopory ma czerwone punkciki',
+          'Oba sinieją i oba są surowe trujące',
+          'Tej karty nie używaj do oddzielenia ponurego od ceglastoporego'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'rubroboletus_satanas',
+        confusedWithName: 'Borowik szatański',
+        confusedWithStatus: 'NO_ATLAS_VERDICT',
+        keyDifferences: [
+          'Borowik szatański ma jasny kapelusz i trzon z wyraźną czerwoną siatką',
+          'Jest trujący i w Polsce ściśle chroniony. Nie zbieraj go',
+          'Czerwone pory nie rozstrzygają, czy to ceglastopory. Brak karty nie oznacza, że grzyb jest jadalny'
+        ],
+        fatal: false
+      }
+    ],
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. W literaturze jadalny tylko po obróbce termicznej. Surowy jest trujący. Borowik szatański (Rubroboletus satanas) jest trujący, ściśle chroniony i nie ma własnej karty. Brak zdjęcia.'
+  },
+  {
+    id: 'xerocomellus_chrysenteron',
+    namePl: 'Podgrzybek złotawy',
+    nameEn: 'Red cracking bolete',
+    nameLatin: 'Xerocomellus chrysenteron',
+    commonNicknames: ['Podgrzybek złotopory'],
+    family: 'Borowikowate (Boletaceae)',
+    status: 'EDIBLE',
+    incompleteCard: true,
+    hymenophore: 'TUBES',
+    months: [6, 7, 8, 9, 10],
+    habitat: 'Lasy liściaste i mieszane, często pod bukiem, dębem i świerkiem.',
+    capDescription: 'Średnica 4–10 cm. Brązowawy, suchy, pękający na poletka, w pęknięciach różowawy albo czerwonawy.',
+    hymenophoreDescription: 'Rurki żółte, potem oliwkowe, szerokie. Po uciśnięciu powoli sinieją.',
+    stemDescription: 'Smukły, żółtawy, często z czerwonawym nalotem, bez pierścienia i bez siateczki.',
+    fleshDescription: 'Miękki, żółtawy, w kapeluszu po przekrojeniu słabo sinieje.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem. Łagodny smak nie rozstrzyga gatunku.',
+    culinaryValue: 'W literaturze jadalny i dopuszczony do obrotu. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    confusionRisks: [
+      {
+        confusedWithId: 'imleria_badia',
+        confusedWithName: 'Podgrzybek brunatny',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Podgrzybek brunatny ma ciemniejszy, niepękający kapelusz i mocniej siniejące pory',
+          'Złotawy pęka na różowawe poletka',
+          'Żaden z tych opisów nie zastępuje obejrzenia całego owocnika'
+        ],
+        fatal: false
+      }
+    ],
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Brak zdjęcia. Pękający kapelusz z różem w szczelinach odróżnia go od podgrzybka brunatnego tylko razem z resztą owocnika.'
+  },
+  {
+    id: 'leccinum_aurantiacum',
+    namePl: 'Koźlarze czerwone',
+    nameEn: 'Orange-capped scaber stalks',
+    nameLatin: 'Leccinum aurantiacum, Leccinum versipelle',
+    commonNicknames: ['Koźlarz czerwony', 'Koźlarz pomarańczowożółty', 'Kozak'],
+    family: 'Borowikowate (Boletaceae)',
+    status: 'EDIBLE',
+    incompleteCard: true,
+    hymenophore: 'TUBES',
+    months: [6, 7, 8, 9, 10],
+    habitat: 'Koźlarz czerwony pod osiką i innymi topolami, także pod dębem. Koźlarz pomarańczowożółty pod brzozą. Drzewo-gospodarz rozdziela je pewniej niż zdjęcie, dlatego to jedna karta.',
+    capDescription: 'Średnica 6–20 cm. Ceglastopomarańczowy, rudy albo pomarańczowożółty. Skórka sucha, filcowata, zwisa z brzegu kapelusza.',
+    hymenophoreDescription: 'Rurki drobne, białawe, z wiekiem szarobrązowe. Nie są różowe.',
+    stemDescription: 'Wysoki, pokryty czarniawymi albo rudymi kosmkami. Bez siateczki i bez pierścienia.',
+    fleshDescription: 'Biały, po przekrojeniu szarzeje, fioletowieje albo czernieje. Koźlarz babka po przekrojeniu barwy nie zmienia.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem.',
+    culinaryValue: 'W literaturze jadalne i dopuszczone do obrotu. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia. Przed jedzeniem zeskrob kosmki z trzonu.',
+    confusionRisks: [
+      {
+        confusedWithId: 'leccinum_scabrum',
+        confusedWithName: 'Koźlarz babka',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Babka ma kapelusz szarobrązowy, nie ceglastopomarańczowy',
+          'Miąższ babki po przekrojeniu nie zmienia barwy. Koźlarze czerwone ciemnieją',
+          'Czerwony kapelusz pod brzozą to nie babka'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'tylopilus_felleus',
+        confusedWithName: 'Goryczak żółciowy',
+        confusedWithStatus: 'INEDIBLE',
+        keyDifferences: [
+          'Goryczak ma ciemną siatkę na trzonie i różowiejące rurki',
+          'Koźlarz ma kosmki na trzonie, nie siatkę',
+          'Gorzki smak goryczaka psuje potrawę, ale smaku nie używaj do oznaczania'
+        ],
+        fatal: false
+      }
+    ],
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Brak zdjęcia. Karta łączy koźlarza czerwonego i pomarańczowożółtego, bo zdjęcie ich nie rozdziela. Koźlarz grabowy, który czernieje pod grabem, nie jest na tej karcie.'
+  },
+  {
+    id: 'xerocomus_subtomentosus',
+    namePl: 'Podgrzybek zamszowy',
+    nameEn: 'Suede bolete',
+    nameLatin: 'Xerocomus subtomentosus',
+    commonNicknames: ['Zajączek', 'Podgrzybek zajączek'],
+    family: 'Borowikowate (Boletaceae)',
+    status: 'EDIBLE',
+    incompleteCard: true,
+    hymenophore: 'TUBES',
+    months: [6, 7, 8, 9, 10],
+    habitat: 'Lasy liściaste i iglaste, przy drogach i na obrzeżach, pod dębem, bukiem, świerkiem i sosną.',
+    capDescription: 'Średnica 4–12 cm. Oliwkowobrązowy, zamszowy, matowy. Pęknięcia nie pokazują różowego miąższu.',
+    hymenophoreDescription: 'Rurki żółte, szerokie, kanciaste. Po uciśnięciu słabo sinieją albo nie sinieją.',
+    stemDescription: 'Smukły, żółtawy, czasem z podłużnymi żeberkami, bez pierścienia.',
+    fleshDescription: 'Białożółty, w kapeluszu miękki. Po przekrojeniu prawie nie sinieje.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem.',
+    culinaryValue: 'W literaturze jadalny i dopuszczony do obrotu. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    confusionRisks: [
+      {
+        confusedWithId: 'imleria_badia',
+        confusedWithName: 'Podgrzybek brunatny',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Podgrzybek brunatny ma ciemniejszy, lepki w deszczu kapelusz i wyraźnie siniejące pory',
+          'Zamszowy jest matowy i oliwkowy, a pory ma jaskrawożółte',
+          'Pieprzowca (Chalciporus piperatus) nie ma w atlasie: ma cynamonowe pory i piekący smak'
+        ],
+        fatal: false
+      }
+    ],
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Brak zdjęcia. Pieprzowiec nie ma karty. Brak karty nie oznacza, że grzyb jest jadalny.'
+  },
+  {
+    id: 'suillus_grevillei',
+    namePl: 'Maślak żółty',
+    nameEn: 'Larch bolete',
+    nameLatin: 'Suillus grevillei',
+    commonNicknames: ['Maślak modrzewiowy'],
+    family: 'Maślakowate (Suillaceae)',
+    status: 'EDIBLE',
+    incompleteCard: true,
+    hymenophore: 'TUBES',
+    months: [6, 7, 8, 9, 10],
+    habitat: 'Wyłącznie pod modrzewiem, w parkach i w lesie.',
+    capDescription: 'Średnica 4–12 cm. Złocistożółty do pomarańczowego, bardzo lepki. Skórka ściąga się łatwo.',
+    hymenophoreDescription: 'Rurki żółte, zakryte u młodych białożółtą błoną. Po uciśnięciu brązowieją.',
+    stemDescription: 'Żółty, z pierścieniem, który u starszych owocników przywiera do trzonu. Nad pierścieniem często jest siateczkowaty.',
+    fleshDescription: 'Żółty, w kapeluszu miękki. Po przekrojeniu słabo różowieje albo nie zmienia barwy.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem.',
+    culinaryValue: 'W literaturze jadalny i dopuszczony do obrotu. Śliską skórkę zdejmuje się przed gotowaniem. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    confusionRisks: [
+      {
+        confusedWithId: 'suillus_luteus',
+        confusedWithName: 'Maślak zwyczajny i ziarnisty',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Maślak żółty rośnie pod modrzewiem i ma złocisty kapelusz',
+          'Maślak zwyczajny rośnie pod sosną i ma czekoladowy kapelusz',
+          'Drzewo obok owocnika jest tu ważniejsze niż odcień kapelusza na zdjęciu'
+        ],
+        fatal: false
+      }
+    ],
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Brak zdjęcia. Rośnie pod modrzewiem. Bez modrzewia to nie jest ta karta.'
+  },
+  {
+    id: 'suillus_bovinus',
+    namePl: 'Maślak sitarz',
+    nameEn: 'Jersey cow bolete',
+    nameLatin: 'Suillus bovinus',
+    commonNicknames: ['Sitarz'],
+    family: 'Maślakowate (Suillaceae)',
+    status: 'EDIBLE',
+    incompleteCard: true,
+    hymenophore: 'TUBES',
+    months: [7, 8, 9, 10, 11],
+    habitat: 'Pod sosnami, na ubogich, piaszczystych glebach, często gromadnie.',
+    capDescription: 'Średnica 3–10 cm. Żółtobrązowy, cielisty, lepki, z falistym brzegiem.',
+    hymenophoreDescription: 'Rurki szerokie, kanciaste, oliwkowożółte, zbiegające na trzon. Wyglądają jak sitko. Nie ma błony ani pierścienia.',
+    stemDescription: 'Krótki, barwy kapelusza, bez pierścienia, często zwężony u nasady.',
+    fleshDescription: 'Miękki, żółtawy albo różowawy. Elastyczny, nie kruchy.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem. Smak bywa kwaskowaty.',
+    culinaryValue: 'W literaturze jadalny i dopuszczony do obrotu, gorszy od maślaka zwyczajnego. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    confusionRisks: [
+      {
+        confusedWithId: 'suillus_luteus',
+        confusedWithName: 'Maślak zwyczajny i ziarnisty',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Sitarz nie ma pierścienia, a rurki ma szerokie, jak sitko',
+          'Maślak zwyczajny ma pierścień i drobne rurki',
+          'Maślak ziarnisty też nie ma pierścienia, ale rurki ma drobniejsze i trzon ziarnisty'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'imleria_badia',
+        confusedWithName: 'Podgrzybek brunatny',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Podgrzybek brunatny ma ciemniejszy kapelusz i pory, które sinieją',
+          'Sitarz jest cielistożółty, lepki i nie sinieje',
+          'Szerokie, zbiegające rurki wskazują na sitarza'
+        ],
+        fatal: false
+      }
+    ],
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Brak zdjęcia. Szerokie rurki jak sitko i brak pierścienia odróżniają go od maślaka zwyczajnego.'
+  },
+  {
+    id: 'suillus_variegatus',
+    namePl: 'Maślak pstry',
+    nameEn: 'Variegated bolete',
+    nameLatin: 'Suillus variegatus',
+    commonNicknames: ['Bagniak', 'Maślak piaskowy'],
+    family: 'Maślakowate (Suillaceae)',
+    status: 'EDIBLE',
+    incompleteCard: true,
+    hymenophore: 'TUBES',
+    months: [7, 8, 9, 10],
+    habitat: 'Bory sosnowe, często na piasku i w wilgotnym mchu. Nie jest tak lepki jak inne maślaki.',
+    capDescription: 'Średnica 6–15 cm. Żółtobrązowy, pokryty drobnymi, przylegającymi łuseczkami. W deszczu tylko słabo lepki.',
+    hymenophoreDescription: 'Rurki drobne, oliwkowobrązowe. Po uciśnięciu sinieją albo brązowieją.',
+    stemDescription: 'Walcowaty, żółtawy, bez pierścienia, gładki albo drobno kosmkowaty.',
+    fleshDescription: 'Żółtawy, po przekrojeniu słabo niebieskieje, zwłaszcza w trzonie. Zapach bywa chlorowy albo kwaskowaty.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem. Zapach bywa ostry, chemiczny.',
+    culinaryValue: 'W literaturze jadalny i dopuszczony do obrotu. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    confusionRisks: [
+      {
+        confusedWithId: 'imleria_badia',
+        confusedWithName: 'Podgrzybek brunatny',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Maślak pstry ma łuseczkowaty, piaskowy kapelusz i często chemiczny zapach',
+          'Podgrzybek brunatny ma gładki, kasztanowy kapelusz',
+          'Oba mogą sinieć. Łuseczki na kapeluszu wskazują na maślaka pstrego'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'suillus_luteus',
+        confusedWithName: 'Maślak zwyczajny i ziarnisty',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Maślak zwyczajny jest bardzo lepki i ma pierścień',
+          'Maślak pstry jest matowy, łuseczkowaty i pierścienia nie ma',
+          'Kapelusz maślaka pstrego nie ściąga się tak łatwo jak u zwyczajnego'
+        ],
+        fatal: false
+      }
+    ],
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Brak zdjęcia. Matowy, łuseczkowaty kapelusz odróżnia go od lepkiego maślaka zwyczajnego.'
+  },
+  {
+    id: 'armillaria_mellea',
+    namePl: 'Opieńki',
+    nameEn: 'Honey fungi',
+    nameLatin: 'Armillaria mellea, Armillaria ostoyae, Armillaria gallica',
+    commonNicknames: ['Opieńka miodowa', 'Opieńka ciemna', 'Opieńka żółtawa', 'Podpienka'],
+    family: 'Obrzękowcowate (Physalacriaceae)',
+    status: 'EDIBLE',
+    incompleteCard: true,
+    hymenophore: 'GILLS',
+    months: [8, 9, 10, 11],
+    habitat: 'Kępami na pniakach i u podstawy żywych drzew, liściastych i iglastych. Grzybiarze nie rozdzielają opieńki miodowej, ciemnej i żółtawej na zdjęciu, dlatego to jedna karta.',
+    capDescription: 'Średnica 3–12 cm. Miodowożółty, brązowy albo oliwkowy, z drobnymi, ciemniejszymi łuseczkami, które deszcz zmywa. Brzeg prążkowany u starszych owocników.',
+    hymenophoreDescription: 'Blaszki białawe, potem kremowe z brązowymi plamkami. Nie są siarkowożółte ani zielonkawe.',
+    stemDescription: 'Włóknisty, z błoniastym pierścieniem. U opieńki żółtawej pierścień bywa delikatniejszy. Nie ma pochwy.',
+    fleshDescription: 'Biały, w trzonie łykowaty. Surowe i niedogotowane owocniki powodują dolegliwości żołądkowo-jelitowe.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem. Zapach bywa przyjemny, grzybowy.',
+    culinaryValue: 'W literaturze jadalne tylko po dokładnym obgotowaniu albo duszeniu. Surowe i niedogotowane są trujące. Kapelusze młodych owocników; trzony bywają łykowate. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    confusionRisks: [
+      {
+        confusedWithId: 'hypholoma_fasciculare',
+        confusedWithName: 'Maślanka wiązkowa',
+        confusedWithStatus: 'POISONOUS',
+        keyDifferences: [
+          'Maślanka wiązkowa ma siarkowożółte, potem zielonkawe blaszki i nie ma trwałego pierścienia',
+          'Opieńki mają jaśniejsze blaszki i pierścień',
+          'Żółte blaszki na pniaku to powód, żeby wiązkę zostawić'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'galerina_marginata',
+        confusedWithName: 'Hełmówka jadowita',
+        confusedWithStatus: 'DEADLY_POISONOUS',
+        keyDifferences: [
+          'Hełmówka jest mniejsza, ma cynamonowobrązowe blaszki i cienki pierścień',
+          'Opieńki rosną w większych kępach i mają jaśniejsze blaszki',
+          'Hełmówka jadowita jest śmiertelnie trująca. W razie wątpliwości nie zbieraj'
+        ],
+        fatal: true
+      }
+    ],
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Jadalne tylko po obróbce termicznej. Surowe są trujące. Hełmówka jadowita rośnie na tym samym drewnie i jest śmiertelnie trująca. Brak zdjęcia. Armillaria mellea w szerokim sensie obejmuje też owocniki spoza Europy, których ta karta nie rozdziela.'
+  },
+  {
+    id: 'kuehneromyces_mutabilis',
+    namePl: 'Łuskwiak zmienny',
+    nameEn: 'Sheathed woodtuft',
+    nameLatin: 'Kuehneromyces mutabilis',
+    commonNicknames: ['Łuszczak zmienny'],
+    family: 'Pierścieniakowate (Strophariaceae)',
+    status: 'EDIBLE',
+    incompleteCard: true,
+    hymenophore: 'GILLS',
+    months: [5, 6, 7, 8, 9, 10, 11],
+    habitat: 'Gęstymi kępami na pniakach drzew liściastych, rzadziej iglastych.',
+    capDescription: 'Średnica 3–8 cm. Dwubarwny: środek cynamonowy, brzeg jaśniejszy, gdy kapelusz jest wilgotny. Z wiekiem wyrównuje barwę.',
+    hymenophoreDescription: 'Blaszki jasne, potem cynamonowobrązowe. Nie są siarkowożółte.',
+    stemDescription: 'Pod pierścieniem łuseczkowaty, nad pierścieniem gładki. Pierścień jest wyraźny. Nie ma pochwy.',
+    fleshDescription: 'Cienki, bladobrązowy. Surowe owocniki nie są do jedzenia.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem. Zapach bywa przyjemny.',
+    culinaryValue: 'W literaturze jadalny po obróbce termicznej. Łatwo pomylić ze śmiertelną hełmówką jadowitą. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    confusionRisks: [
+      {
+        confusedWithId: 'galerina_marginata',
+        confusedWithName: 'Hełmówka jadowita',
+        confusedWithStatus: 'DEADLY_POISONOUS',
+        keyDifferences: [
+          'Hełmówka ma trzon pod pierścieniem włóknisty, bez odstających łuseczek',
+          'Łuskwiak zmienny ma pod pierścieniem łuseczkowaty trzon',
+          'Hełmówka jadowita jest śmiertelnie trująca. W razie wątpliwości nie zbieraj'
+        ],
+        fatal: true
+      },
+      {
+        confusedWithId: 'hypholoma_fasciculare',
+        confusedWithName: 'Maślanka wiązkowa',
+        confusedWithStatus: 'POISONOUS',
+        keyDifferences: [
+          'Maślanka wiązkowa jest siarkowożółta i nie ma trwałego pierścienia',
+          'Łuskwiak ma cynamonowe blaszki i pierścień',
+          'Żółte blaszki wykluczają łuskwiaka'
+        ],
+        fatal: false
+      }
+    ],
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Hełmówka jadowita jest śmiertelnym sobowtórem na tym samym drewnie. Brak zdjęcia.'
+  },
+  {
+    id: 'galerina_marginata',
+    namePl: 'Hełmówka jadowita',
+    nameEn: 'Funeral bell',
+    nameLatin: 'Galerina marginata',
+    commonNicknames: ['Hełmówka obrzeżona'],
+    family: 'Podziemniczkowate (Hymenogastraceae)',
+    status: 'DEADLY_POISONOUS',
+    hymenophore: 'GILLS',
+    months: [5, 6, 7, 8, 9, 10, 11],
+    habitat: 'Na martwym drewnie iglastym i liściastym, pojedynczo albo w małych grupkach, także tam, gdzie rosną opieńki i łuskwiak.',
+    capDescription: 'Średnica 1–6 cm. Miodowobrązowy, higrofaniczny, z prążkowanym brzegiem, gdy jest wilgotny.',
+    hymenophoreDescription: 'Blaszki cynamonowobrązowe, dość rzadkie.',
+    stemDescription: 'Cienki, z wąskim, często zanikającym pierścieniem. Pod pierścieniem włóknisty, bez odstających łuseczek. Nie ma pochwy.',
+    fleshDescription: 'Cienki, brązowy. Zawiera amatoksyny, jak muchomor sromotnikowy.',
+    tasteAndSmell: 'Zapach bywa mączny. Nie sprawdzaj smakiem. Łagodny smak nie oznacza bezpieczeństwa.',
+    culinaryValue: 'Śmiertelnie trująca. Objawy zwykle po 6–24 h, czasem później; nie czekaj na objawy, dzwoń 112 lub do ośrodka toksykologii. Nie ma kuchennego sposobu, żeby ją „odtruć”.',
+    confusionRisks: [
+      {
+        confusedWithId: 'kuehneromyces_mutabilis',
+        confusedWithName: 'Łuskwiak zmienny',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Łuskwiak zmienny ma pod pierścieniem odstające łuseczki',
+          'Hełmówka ma trzon włóknisty',
+          'Na pniaku zostaw owocnik, jeśli łuseczek nie widzisz'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'armillaria_mellea',
+        confusedWithName: 'Opieńki',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Opieńki rosną w dużych kępach i mają jaśniejsze blaszki',
+          'Hełmówka jest mniejsza, a blaszki ma cynamonowe',
+          'Wspólne drewno nie czyni opieńki bezpieczną, jeśli owocnik jest mały i brązowy'
+        ],
+        fatal: false
+      }
+    ],
+    warningNotes: 'NIE JEDZ. Śmiertelnie trująca. Małe brązowe owocniki na drewnie zostaw. Brak zdjęcia.'
   }
 ];
 
@@ -883,6 +1403,18 @@ export const LOOKALIKES_WITHOUT_CARD: Readonly<
     note: NOT_FOR_COLLECTION_NOTE,
     reason:
       'Muchomor twardawy (Amanita excelsa, syn. A. spissa) has no card. Authors disagree, and it is too close to the panther cap to present as edible.',
+  },
+  suillellus_luridus: {
+    status: 'NO_ATLAS_VERDICT',
+    note: ATLAS_NO_VERDICT_NOTE,
+    reason:
+      'Borowik ponury (Suillellus luridus) is only the netted twin of the scarletina bolete. Literature calls it edible after cooking and poisonous raw. There is no finished card, so this atlas does not show that verdict.',
+  },
+  rubroboletus_satanas: {
+    status: 'NO_ATLAS_VERDICT',
+    note: ATLAS_NO_VERDICT_NOTE,
+    reason:
+      'Borowik szatański (Rubroboletus satanas) is strictly protected in Poland and poisonous. It is a test-only probe, not a model class and not an atlas card. This row does not show an edibility badge.',
   },
 };
 

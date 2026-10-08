@@ -210,7 +210,6 @@ class ManifestAndShipGateTest(unittest.TestCase):
         # added here with a reason. labels.json is not the place to hide the gap.
         cards_without_model_class = {
             "hydnum_repandum": "Unfinished hedgehog card. The class contract does not include it.",
-            "agaricus_xanthodermus": "Yellow stainer is an atlas look-alike card, not a model class.",
             "inocybe_erubescens": "Deadly fibrecap is an atlas look-alike card, not a model class.",
         }
         unexpected = [
@@ -265,14 +264,56 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertIn("Conocybe rugosa", poisonous_heldout_taxa(manifest))
         self.assertIn("Lepiota castanea", poisonous_heldout_taxa(manifest))
         self.assertIn("Inosperma erubescens", poisonous_heldout_taxa(manifest))
-        bolete_names = unknown["gbif_names"]
-        bolete_at = bolete_names.index("Neoboletus luridiformis")
-        self.assertEqual(bolete_names[bolete_at + 1], "Neoboletus erythropus")
-        boletes = {taxon["name"]: taxon for taxon in unknown["sampling"]["taxa"]}
-        self.assertEqual(boletes["Neoboletus erythropus"]["gbif_key"], 9723190)
-        self.assertFalse(boletes["Neoboletus erythropus"]["held_out"])
-        self.assertEqual(boletes["Neoboletus erythropus"]["toxic"], boletes["Neoboletus luridiformis"]["toxic"])
-        self.assertNotIn("Neoboletus erythropus", unknown["sampling"]["held_out_gbif_names"])
+        promoted = {
+            "Hypholoma fasciculare",
+            "Tricholoma equestre",
+            "Agaricus xanthodermus",
+            "Neoboletus luridiformis",
+            "Neoboletus erythropus",
+            "Xerocomellus chrysenteron",
+            "Leccinum aurantiacum",
+            "Leccinum versipelle",
+            "Lactarius deterrimus",
+            "Armillaria ostoyae",
+            "Armillaria gallica",
+            "Boletus reticulatus",
+            "Boletus pinophilus",
+            "Xerocomus subtomentosus",
+            "Suillus grevillei",
+            "Suillus bovinus",
+            "Suillus variegatus",
+            "Suillus granulatus",
+        }
+        self.assertTrue(promoted.isdisjoint(unknown["gbif_names"]))
+        self.assertTrue(promoted.isdisjoint(unknown["sampling"]["held_out_gbif_names"]))
+        scarletina = next(item for item in manifest["classes"] if item["id"] == "neoboletus_luridiformis")
+        self.assertEqual(
+            scarletina["gbif_names"],
+            ["Neoboletus luridiformis", "Neoboletus erythropus"],
+        )
+        self.assertEqual(scarletina["gbif_keys"], [8208185, 9723190])
+        self.assertEqual(scarletina["safety_tag"], "edible")
+        held = {taxon["name"]: taxon for taxon in unknown["sampling"]["taxa"]}
+        self.assertTrue(held["Agaricus moelleri"]["held_out"])
+        self.assertTrue(held["Agaricus moelleri"]["toxic"])
+        self.assertEqual(held["Agaricus moelleri"]["gbif_key"], 5243496)
+        self.assertEqual(held["Agaricus moelleri"]["relation"], "unknown_species_of_known_genus")
+        for name in ("Hypholoma capnoides", "Pholiota squarrosa", "Amanita regalis", "Amanita gemmata"):
+            self.assertIn(name, unknown["gbif_names"])
+            self.assertFalse(held[name]["held_out"])
+        self.assertTrue(held["Amanita regalis"]["toxic"])
+        self.assertTrue(held["Amanita gemmata"]["toxic"])
+        self.assertFalse(held["Hypholoma capnoides"]["toxic"])
+        self.assertEqual(held["Tricholoma portentosum"]["relation"], "unknown_species_of_known_genus")
+        probe_names = [taxon["name"] for taxon in probes["taxa"]]
+        self.assertNotIn("Tricholoma equestre", probe_names)
+        self.assertIn("Tricholoma pardinum", probe_names)
+        self.assertIn("Rubroboletus satanas", probe_names)
+        self.assertEqual(
+            [group["id"] for group in probes["visual_groups"]],
+            ["lepiota_amatoxin", "conocybe_pholiotina", "omphalotus"],
+        )
+        self.assertIn("tricholoma_equestre", probes["known_class_not_probed"])
         exceptions = {item["taxon"]: item for item in probes["rare_taxon_exceptions"]}
         self.assertEqual(exceptions["Lepiota brunneoincarnata"]["gbif_licensed_count"], 16)
         self.assertEqual(exceptions["Lepiota brunneoincarnata"]["date_checked"], "2026-10-08")

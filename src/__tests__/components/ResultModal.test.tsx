@@ -452,4 +452,55 @@ describe('ResultModal recognition outcomes', () => {
 
     expect(Alert.alert).toHaveBeenCalledTimes(1);
   });
+
+  it('states the Polish morel permit rule on a scan that names the morel', async () => {
+    const { getByTestId, getByText, queryByText } = await renderModal({
+      status: 'candidates',
+      processedImageUri: 'file://camera/morel.jpg',
+      inferenceTimeMs: 12,
+      expertVerificationRequired: false,
+      warningReasons: [],
+      top3: [
+        {
+          id: 'morchella_esculenta',
+          namePl: 'Smardz jadalny',
+          nameLatin: 'Morchella esculenta',
+          genus: 'Morchella',
+          confidence: 0.81,
+          rank: 1,
+        },
+      ],
+    });
+
+    expect(getByTestId('morel-protection-notice')).toBeTruthy();
+    expect(getByText('Ochrona częściowa w Polsce')).toBeTruthy();
+    expect(getByText(/Dz\.U\. 2014 poz\. 1408/)).toBeTruthy();
+    expect(queryByText(/w lesie zakaz/i)).toBeNull();
+  });
+
+  it('states the same morel rule in English', async () => {
+    await AsyncStorage.setItem('app_language', 'en');
+    const { findByTestId, findByText, queryByText } = await renderModal({
+      status: 'candidates',
+      processedImageUri: 'file://camera/morel.jpg',
+      inferenceTimeMs: 12,
+      expertVerificationRequired: false,
+      warningReasons: [],
+      top3: [
+        {
+          id: 'morchella_esculenta',
+          namePl: 'Smardz jadalny',
+          nameLatin: 'Morchella esculenta',
+          genus: 'Morchella',
+          confidence: 0.81,
+          rank: 1,
+        },
+      ],
+    });
+
+    expect(await findByTestId('morel-protection-notice')).toBeTruthy();
+    expect(await findByText(/Journal of Laws 2014 item 1408/)).toBeTruthy();
+    expect(queryByText(/permit/i)).toBeTruthy();
+    expect(queryByText(/gardens/)).toBeTruthy();
+  });
 });

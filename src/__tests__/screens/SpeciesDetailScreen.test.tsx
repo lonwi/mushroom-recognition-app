@@ -291,7 +291,7 @@ describe('SpeciesDetailScreen language', () => {
     expect(edible.getByTestId('species-month-12').props.children).toBe('Dec');
     expect(edible.queryByText('Sty')).toBeNull();
     expect(edible.queryByText('Gru')).toBeNull();
-    expect(edible.getByText(/Najczęściej lasy iglaste/)).toBeTruthy();
+    expect(edible.getByText(/Grupa prawdziwków/)).toBeTruthy();
 
     const toxic = await renderSpecies('amanita_phalloides');
     expect(await toxic.findByText('Toxicity and symptoms')).toBeTruthy();
@@ -355,5 +355,20 @@ describe('SpeciesDetailScreen language', () => {
       expect(english.queryByText('Znaczenie i zastosowanie')).toBeNull();
       expect(english.queryByText(`Spód (${pl.atlas[key]})`)).toBeNull();
     }
+  });
+
+  it('shows the morel protection notice in Polish and in English', async () => {
+    const polish = await renderSpecies('morchella_esculenta');
+    expect(polish.getByTestId('morel-protection-notice')).toBeTruthy();
+    expect(polish.getByText('Ochrona częściowa w Polsce')).toBeTruthy();
+    expect(polish.getByText(/Dz\.U\. 2014 poz\. 1408/)).toBeTruthy();
+    expect(polish.getByTestId('species-name-en').props.children).toBe('Common morel');
+
+    await AsyncStorage.setItem('app_language', 'en');
+    const english = await renderSpecies('morchella_esculenta');
+    expect(await english.findByTestId('morel-protection-notice')).toBeTruthy();
+    expect(await english.findByText(/Journal of Laws 2014 item 1408/)).toBeTruthy();
+    expect(english.getByText(/green areas/)).toBeTruthy();
+    expect(english.getByTestId('species-warning-notes')).toBeTruthy();
   });
 });
