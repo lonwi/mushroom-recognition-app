@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import io
 import json
+import os
+import re
 import socket
 import ssl
 import sys
@@ -98,6 +100,7 @@ class FetchCase(unittest.TestCase):
     def setUp(self):
         fetch_gbif._last_gbif_api_at = None
         fetch_gbif._HOST_SEMAPHORES.clear()
+        fetch_gbif._VERIFIED.clear()
         fetch_gbif.MAX_DOWNLOADS_PER_HOST = 4
         fetch_gbif._KEY_CACHE.clear()
 
@@ -901,6 +904,151 @@ class CliFlagTest(FetchCase):
         self.assertEqual(run_fetch.call_args.kwargs["only"], "boletus_edulis")
         with patch("sys.stderr", io.StringIO()), self.assertRaises(SystemExit):
             fetch_gbif.main(["--download-workers", "0"])
+
+
+class ImageIntegrityTest(FetchCase):
+    def setUp(self):
+        super().setUp()
+        import tempfile
+
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self._root = Path(self._tmp.name)
+        self._url = "https://images.example.test/boletus/9.jpg"
+
+    def _truncated(self) -> bytes:
+        payload = self.jpeg[:-32]
+        self.assertGreater(len(payload), 32)
+        path = self._root / "_probe.jpg"
+        path.write_bytes(payload)
+        from PIL import Image
+
+        with Image.open(path) as image:
+            image.verify()
+        path.unlink()
+        return payload
+
+    def test_truncated_jpeg_is_quarantined_on_resume_and_by_verify_existing(self):
+        truncated = self._truncated()
+        destination = self._root / "images" / "boletus_edulis" / "9_0.jpg"
+        destination.parent.mkdir(parents=True)
+        destination.write_bytes(truncated)
+        calls = {"n": 0}
+
+        def urlopen(request, timeout=40):
+            calls["n"] += 1
+            return _Response(self.jpeg)
+
+        with patch("fetch_gbif.urllib.request.urlopen", side_effect=urlopen):
+            size = fetch_gbif.download_image(self._url, destination, resume=True, data_dir=self._root)
+        self.assertEqual(calls["n"], 1)
+        self.assertEqual(size, len(self.jpeg))
+        self.assertEqual(destination.read_bytes(), self.jpeg)
+        quarantined = self._root / "quarantine" / "boletus_edulis" / "9_0.jpg"
+        self.assertEqual(quarantined.read_bytes(), truncated)
+        self.assertFalse(fetch_gbif._full_load_ok(str(quarantined)))
+
+        other = self._root / "images" / "amanita_virosa" / "1_0.jpg"
+        other.parent.mkdir(parents=True)
+        other.write_bytes(self.jpeg)
+        broken = self._root / "images" / "amanita_virosa" / "2_0.jpg"
+        broken.write_bytes(truncated)
+        partial = self._root / "images" / "amanita_virosa" / "3_0.jpg.partial"
+        partial.write_bytes(truncated)
+        stdout = io.StringIO()
+        with patch("fetch_gbif.urllib.request.urlopen", side_effect=AssertionError("network")), patch("sys.stdout", stdout):
+            counts = fetch_gbif.verify_existing_images(self._root, workers=2)
+        self.assertEqual(counts["boletus_edulis"]["ok"], 1)
+        self.assertEqual(counts["amanita_virosa"]["ok"], 1)
+        self.assertEqual(counts["amanita_virosa"]["quarantined"], 1)
+        self.assertEqual(other.read_bytes(), self.jpeg)
+        self.assertFalse(broken.exists())
+        moved = self._root / "quarantine" / "amanita_virosa" / "2_0.jpg"
+        self.assertEqual(moved.read_bytes(), truncated)
+        self.assertTrue(partial.is_file())
+        sidecar = (self._root / "checkpoints" / "verified.jsonl").read_text(encoding="utf-8")
+        self.assertIn("images/boletus_edulis/9_0.jpg", sidecar)
+        self.assertIn("images/amanita_virosa/1_0.jpg", sidecar)
+        self.assertNotIn("2_0.jpg", sidecar)
+        self.assertIn("amanita_virosa: ok 1, quarantined 1", stdout.getvalue())
+        self.assertIn("boletus_edulis: ok 1, quarantined 0", stdout.getvalue())
+
+    def test_sidecar_skips_decode_until_size_or_mtime_changes(self):
+        destination = self._root / "images" / "boletus_edulis" / "4_0.jpg"
+        destination.parent.mkdir(parents=True)
+        destination.write_bytes(self.jpeg)
+        fetch_gbif._verified_index(self._root).remember(destination)
+        from PIL import Image
+
+        real_open = Image.open
+
+        def fail_open(*args, **kwargs):
+            raise AssertionError("image opened")
+
+        with patch("PIL.Image.open", side_effect=fail_open), patch(
+            "fetch_gbif.urllib.request.urlopen", side_effect=AssertionError("network")
+        ):
+            size = fetch_gbif.download_image(self._url, destination, resume=True, data_dir=self._root)
+        self.assertEqual(size, destination.stat().st_size)
+
+        stat = destination.stat()
+        os.utime(destination, ns=(stat.st_atime_ns, stat.st_mtime_ns + 2_000_000_000))
+        opened = {"n": 0}
+
+        def spy_open(*args, **kwargs):
+            opened["n"] += 1
+            return real_open(*args, **kwargs)
+
+        with patch("PIL.Image.open", side_effect=spy_open), patch(
+            "fetch_gbif.urllib.request.urlopen", side_effect=AssertionError("network")
+        ):
+            fetch_gbif.download_image(self._url, destination, resume=True, data_dir=self._root)
+        self.assertGreaterEqual(opened["n"], 1)
+        self.assertEqual(destination.read_bytes(), self.jpeg)
+
+        truncated = self._truncated()
+        destination.write_bytes(truncated)
+        calls = {"n": 0}
+
+        def urlopen(request, timeout=40):
+            calls["n"] += 1
+            return _Response(self.jpeg)
+
+        with patch("fetch_gbif.urllib.request.urlopen", side_effect=urlopen):
+            fetch_gbif.download_image(self._url, destination, resume=True, data_dir=self._root)
+        self.assertEqual(calls["n"], 1)
+        self.assertEqual(destination.read_bytes(), self.jpeg)
+        self.assertTrue((self._root / "quarantine" / "boletus_edulis" / "4_0.jpg").is_file())
+
+    def test_verify_existing_cli_does_not_fetch(self):
+        destination = self._root / "images" / "boletus_edulis" / "1_0.jpg"
+        destination.parent.mkdir(parents=True)
+        destination.write_bytes(self.jpeg)
+        with patch.object(fetch_gbif, "DATA_DIR", self._root), patch(
+            "fetch_gbif.collect_class_media", side_effect=AssertionError("fetched")
+        ), patch("sys.stdout", io.StringIO()):
+            fetch_gbif.main(["--verify-existing"])
+        self.assertTrue(destination.is_file())
+        self.assertIn("images/boletus_edulis/1_0.jpg", (self._root / "checkpoints" / "verified.jsonl").read_text(encoding="utf-8"))
+
+    def test_truncated_image_flag_stays_false(self):
+        from PIL import ImageFile
+
+        ImageFile.LOAD_TRUNCATED_IMAGES = True
+        fetch_gbif._ensure_truncated_images_rejected()
+        self.assertIs(ImageFile.LOAD_TRUNCATED_IMAGES, False)
+        destination = self._root / "images" / "boletus_edulis" / "cut.jpg"
+        destination.parent.mkdir(parents=True)
+        destination.write_bytes(self._truncated())
+        ImageFile.LOAD_TRUNCATED_IMAGES = True
+        self.assertFalse(fetch_gbif._full_load_ok(str(destination)))
+        self.assertIs(ImageFile.LOAD_TRUNCATED_IMAGES, False)
+        training = Path(fetch_gbif.__file__).resolve().parent
+        for path in training.rglob("*.py"):
+            if "tests" in path.parts:
+                continue
+            text = path.read_text(encoding="utf-8")
+            self.assertIsNone(re.search(r"LOAD_TRUNCATED_IMAGES\s*=\s*True", text), path)
 
 
 if __name__ == "__main__":

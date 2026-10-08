@@ -51,7 +51,13 @@ python training/run_pipeline.py train -- --epochs-frozen 1 --epochs-finetune 0 -
 
 ## Resuming a fetch
 
-`fetch_gbif.py` writes each photo to a temporary file and renames it into place. A later run skips a file that is already on disk, non-empty, and a readable image, and still records that row as downloaded with its byte size. `--no-resume` downloads it again. `--download-workers` (default 16) downloads one class or one toxic-probe taxon at a time. At most 4 transfers run against the same image host. `attributions.jsonl` and `fetch_report.json` stay in the original request order, with the same fields as an uninterrupted run.
+`fetch_gbif.py` writes each photo to a temporary file and renames it into place. A later run skips a file listed in `training/data/checkpoints/verified.jsonl` when the size and mtime still match, and records that row as downloaded with its byte size. Any other existing file has to survive a full Pillow decode (`Image.load()`). `PIL.ImageFile.LOAD_TRUNCATED_IMAGES` is forced off, so a JPEG with a valid header and a cut-off body is not kept. That file is moved to `training/data/quarantine/<class>/` and downloaded again. `--no-resume` downloads again anyway. `--download-workers` (default 16) downloads one class or one toxic-probe taxon at a time. At most 4 transfers run against the same image host. `attributions.jsonl` and `fetch_report.json` stay in the original request order, with the same fields as an uninterrupted run.
+
+```bash
+python training/fetch_gbif.py --verify-existing
+```
+
+That scan does not use the network. It full-decodes every file under `training/data/images`, one process per CPU, quarantines the broken ones, rewrites `verified.jsonl`, and prints ok / quarantined counts per class.
 
 Transient transfer errors are retried three times: DNS failure, timeout, connection reset, HTTP 5xx, and SSL handshake. HTTP 429 waits for `Retry-After` (capped at 120 seconds), or uses exponential backoff when the header is missing. HTTP 403 and 404 are not retried. The per-URL `skip` line is printed once, after the retries are exhausted.
 

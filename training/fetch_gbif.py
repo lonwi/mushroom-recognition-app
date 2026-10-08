@@ -5,7 +5,12 @@ Usage (from the repo root):
     python training/fetch_gbif.py --dry-run --only amanita_phalloides --max-per-class 5
     python training/fetch_gbif.py --only amanita_phalloides --max-per-class 20
 
-A file that is already a complete image is skipped unless ``--no-resume`` is set.
+A file already listed in checkpoints/verified.jsonl with the same size and
+mtime is skipped. Any other existing file must decode with a full Pillow
+``load()``, and ``LOAD_TRUNCATED_IMAGES`` stays false. A file that fails is
+moved to quarantine/<class>/ and downloaded again. ``--no-resume`` downloads
+again anyway. ``--verify-existing`` scans data/images with no network.
+
 ``--download-workers`` (default 16) fetches one class or probe at a time, with at
 most 4 transfers per image host. GBIF API calls stay one at a time. Images and
 attributions land in training/data/, which is gitignored. An interrupted run
@@ -30,7 +35,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from collections import Counter
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from datetime import timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
@@ -375,38 +380,173 @@ def _is_transient_download_error(error: BaseException) -> bool:
     return _reason_is_transient(error)
 
 
-def _has_image_magic(path: Path) -> bool:
-    try:
-        with path.open("rb") as handle:
-            header = handle.read(16)
-    except OSError:
-        return False
-    if header.startswith((b"\xff\xd8", b"\x89PNG\r\n\x1a\n", b"GIF87a", b"GIF89a")):
-        return True
-    return len(header) >= 12 and header[:4] == b"RIFF" and header[8:12] == b"WEBP"
+def _ensure_truncated_images_rejected() -> None:
+    """Pillow must not accept a JPEG whose scan was cut off.
 
-
-def _is_complete_image(path: Path) -> bool:
-    """True when the file is a non-empty image Pillow can verify.
-
-    A sibling ``*.partial`` file is not this path, so an interrupted write
-    cannot be resumed as a finished photo. Truncated bytes fail verify.
+    ``Image.verify()`` can succeed on a file that still fails ``load()``.
+    Nothing in this pipeline turns the truncated-image flag on. Force it off
+    before every decode so a resumed file is a real image.
     """
+    from PIL import ImageFile
+
+    ImageFile.LOAD_TRUNCATED_IMAGES = False
+    assert ImageFile.LOAD_TRUNCATED_IMAGES is False
+
+
+def _is_json_int(value: object) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _full_load_ok(path_str: str) -> bool:
+    """True only when Pillow decodes every pixel. Header checks are not enough."""
+    _ensure_truncated_images_rejected()
+    path = Path(path_str)
     try:
         if not path.is_file() or path.stat().st_size <= 0:
             return False
-    except OSError:
-        return False
-    try:
         from PIL import Image
-    except ImportError:
-        return _has_image_magic(path)
-    try:
+
         with Image.open(path) as image:
-            image.verify()
+            image.load()
         return True
     except Exception:
         return False
+
+
+def _is_complete_image(path: Path) -> bool:
+    """True when a non-empty file survives a full decode.
+
+    A sibling ``*.partial`` file is not this path, so an interrupted write
+    cannot be resumed as a finished photo.
+    """
+    return _full_load_ok(str(path))
+
+
+def _data_dir_for(destination: Path, data_dir: Path | None) -> Path:
+    if data_dir is not None:
+        return data_dir.resolve()
+    resolved = destination.resolve()
+    parts = resolved.parts
+    if "images" in parts:
+        index = parts.index("images")
+        if index > 0:
+            return Path(*parts[:index])
+    return resolved.parent
+
+
+class _VerifiedIndex:
+    """Size and mtime of files that already survived a full decode."""
+
+    def __init__(self, data_dir: Path):
+        self.data_dir = data_dir.resolve()
+        self.path = self.data_dir / "checkpoints" / "verified.jsonl"
+        self.entries: dict[str, tuple[int, int]] = {}
+        self._lock = threading.Lock()
+        self._load()
+
+    def _load(self) -> None:
+        if not self.path.is_file():
+            return
+        try:
+            text = self.path.read_text(encoding="utf-8")
+        except OSError:
+            return
+        for line in text.splitlines():
+            if not line.strip():
+                continue
+            try:
+                item = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(item, dict):
+                continue
+            rel = item.get("path")
+            size = item.get("size")
+            mtime = item.get("mtime_ns")
+            if isinstance(rel, str) and _is_json_int(size) and _is_json_int(mtime) and size >= 0 and mtime >= 0:
+                self.entries[rel] = (int(size), int(mtime))
+
+    def relative(self, destination: Path) -> str:
+        return destination.resolve().relative_to(self.data_dir).as_posix()
+
+    def matches(self, destination: Path) -> bool:
+        try:
+            stat = destination.stat()
+        except OSError:
+            return False
+        if stat.st_size <= 0:
+            return False
+        try:
+            rel = self.relative(destination)
+        except ValueError:
+            return False
+        with self._lock:
+            return self.entries.get(rel) == (stat.st_size, stat.st_mtime_ns)
+
+    def remember(self, destination: Path) -> None:
+        stat = destination.stat()
+        rel = self.relative(destination)
+        line = json.dumps(
+            {"path": rel, "size": stat.st_size, "mtime_ns": stat.st_mtime_ns},
+            ensure_ascii=False,
+        ) + "\n"
+        with self._lock:
+            self.entries[rel] = (stat.st_size, stat.st_mtime_ns)
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            with self.path.open("a", encoding="utf-8", newline="\n") as handle:
+                handle.write(line)
+                handle.flush()
+                os.fsync(handle.fileno())
+
+    def replace_all(self, rows: list[tuple[str, int, int]]) -> None:
+        lines = [
+            json.dumps({"path": rel, "size": size, "mtime_ns": mtime}, ensure_ascii=False)
+            for rel, size, mtime in sorted(rows)
+        ]
+        text = ("\n".join(lines) + "\n") if lines else ""
+        with self._lock:
+            _atomic_write_text(self.path, text)
+            self.entries = {rel: (size, mtime) for rel, size, mtime in rows}
+
+
+_VERIFIED: dict[str, _VerifiedIndex] = {}
+_VERIFIED_LOCK = threading.Lock()
+
+
+def _verified_index(data_dir: Path) -> _VerifiedIndex:
+    key = str(data_dir.resolve())
+    with _VERIFIED_LOCK:
+        index = _VERIFIED.get(key)
+        if index is None:
+            index = _VerifiedIndex(data_dir)
+            _VERIFIED[key] = index
+        return index
+
+
+def _quarantine_file(data_dir: Path, destination: Path) -> Path:
+    """Move a file that failed a full decode. The bytes are kept."""
+    index = _verified_index(data_dir)
+    try:
+        rel = index.relative(destination)
+    except ValueError:
+        rel = destination.name
+    parts = rel.split("/")
+    if len(parts) >= 3 and parts[0] == "images":
+        class_id = parts[1]
+        name = parts[-1]
+    else:
+        class_id = "_loose"
+        name = destination.name
+    folder = data_dir / "quarantine" / class_id
+    folder.mkdir(parents=True, exist_ok=True)
+    target = folder / name
+    if target.exists():
+        stamp = time.time_ns()
+        target = folder / f"{Path(name).stem}-{stamp}{Path(name).suffix}"
+    os.replace(destination, target)
+    with index._lock:
+        index.entries.pop(rel, None)
+    return target
 
 
 def _semaphore_for_host(url: str) -> threading.BoundedSemaphore:
@@ -471,25 +611,34 @@ def download_image(
     *,
     resume: bool = True,
     attempts: int = DOWNLOAD_ATTEMPTS,
+    data_dir: Path | None = None,
 ) -> int:
-    """Download one photo. A complete image already at `destination` is skipped.
+    """Download one photo. A verified image already at `destination` is skipped.
 
     Bytes land in a temporary file in the same directory and are renamed into
     place. HTTP 429 honors Retry-After. Other transient errors use a short
     exponential backoff. HTTP 403 and 404 are not retried.
     """
     destination.parent.mkdir(parents=True, exist_ok=True)
+    root = _data_dir_for(destination, data_dir)
+    index = _verified_index(root)
     partial = destination.with_name(destination.name + ".partial")
-    if resume and _is_complete_image(destination):
-        partial.unlink(missing_ok=True)
-        return destination.stat().st_size
+    if resume and destination.is_file():
+        if index.matches(destination):
+            partial.unlink(missing_ok=True)
+            return destination.stat().st_size
+        if _full_load_ok(str(destination)):
+            index.remember(destination)
+            partial.unlink(missing_ok=True)
+            return destination.stat().st_size
+        _quarantine_file(root, destination)
     if attempts < 1:
         raise ValueError("attempts must be positive")
     delay = DOWNLOAD_BACKOFF_SECONDS
     last_error: Exception | None = None
     for attempt in range(attempts):
         try:
-            return _download_once(url, destination, timeout)
+            size = _download_once(url, destination, timeout)
         except Exception as error:
             last_error = error
             retry_after = None
@@ -501,6 +650,12 @@ def download_image(
                 raise
             time.sleep(delay if retry_after is None else retry_after)
             delay *= 2
+            continue
+        try:
+            index.remember(destination)
+        except OSError:
+            pass
+        return size
     assert last_error is not None
     raise last_error
 
@@ -640,7 +795,7 @@ def _download_rows(media: list[dict], *, directory: Path, resume: bool, workers:
     def fetch(row: dict) -> None:
         destination = _destination_for(directory, row["file"])
         try:
-            row["bytes"] = download_image(row["image_url"], destination, resume=resume)
+            row["bytes"] = download_image(row["image_url"], destination, resume=resume, data_dir=directory)
             row["downloaded"] = True
         except Exception as error:  # noqa: BLE001 — keep the crawl going
             row["download_error"] = str(error)
@@ -688,6 +843,7 @@ def run_fetch(
     data_dir: Path | None = None,
 ) -> None:
     """Collect licensed media and download it. Selection rules are unchanged."""
+    _ensure_truncated_images_rejected()
     if download_workers < 1:
         raise ValueError("download-workers must be at least 1")
     wanted = {item.strip() for item in only.split(",") if item.strip()}
@@ -827,6 +983,93 @@ def run_fetch(
         print(f"  thin {item['class_id']}: {item['accepted']} accepted", file=sys.stderr)
 
 
+def _probe_existing(path_str: str) -> tuple[str, bool, int, int]:
+    """Full-decode one file. Used by the process pool, so it stays picklable."""
+    try:
+        path = Path(path_str)
+        stat = path.stat()
+        ok = _full_load_ok(path_str)
+        return path_str, ok, int(stat.st_size), int(stat.st_mtime_ns)
+    except Exception:
+        return path_str, False, 0, 0
+
+
+def _iter_stored_images(images_root: Path) -> list[Path]:
+    if not images_root.is_dir():
+        return []
+    found: list[Path] = []
+    for path in images_root.rglob("*"):
+        if not path.is_file() or path.name.startswith("."):
+            continue
+        if path.name.endswith((".partial", ".tmp")):
+            continue
+        found.append(path)
+    found.sort()
+    return found
+
+
+def _map_image_probes(paths: list[str], workers: int) -> list[tuple[str, bool, int, int]]:
+    if workers <= 1 or len(paths) <= 1:
+        return [_probe_existing(path) for path in paths]
+    import multiprocessing
+
+    try:
+        context = multiprocessing.get_context("fork")
+        with ProcessPoolExecutor(max_workers=workers, mp_context=context) as pool:
+            return list(pool.map(_probe_existing, paths))
+    except (OSError, ValueError):
+        # fork is unavailable (or the pool cannot start). Threads still decode
+        # in parallel, and each worker forces the truncated-image flag off.
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            return list(pool.map(_probe_existing, paths))
+
+
+def verify_existing_images(data_dir: Path, *, workers: int | None = None) -> dict[str, dict[str, int]]:
+    """Full-load every stored photo, quarantine failures, and rewrite the sidecar.
+
+    No network. Counts are ``ok`` and ``quarantined`` per class directory under
+    ``images/``.
+    """
+    _ensure_truncated_images_rejected()
+    root = data_dir.resolve()
+    files = _iter_stored_images(root / "images")
+    if workers is None:
+        worker_count = os.cpu_count() or 1
+    else:
+        worker_count = workers
+    worker_count = max(1, worker_count)
+    if files:
+        worker_count = min(worker_count, len(files))
+    results = _map_image_probes([str(path) for path in files], worker_count)
+    index = _verified_index(root)
+    counts: dict[str, dict[str, int]] = {}
+    verified_rows: list[tuple[str, int, int]] = []
+    for path_str, ok, size, mtime in results:
+        path = Path(path_str)
+        try:
+            rel = index.relative(path)
+        except ValueError:
+            rel = path.name
+        parts = rel.split("/")
+        class_id = parts[1] if len(parts) >= 3 and parts[0] == "images" else "_loose"
+        slot = counts.setdefault(class_id, {"ok": 0, "quarantined": 0})
+        if ok and path.is_file():
+            slot["ok"] += 1
+            verified_rows.append((rel, size, mtime))
+            continue
+        slot["quarantined"] += 1
+        if path.is_file():
+            _quarantine_file(root, path)
+    index.replace_all(verified_rows)
+    for class_id in sorted(counts):
+        item = counts[class_id]
+        print(f"{class_id}: ok {item['ok']}, quarantined {item['quarantined']}")
+    ok_total = sum(item["ok"] for item in counts.values())
+    bad_total = sum(item["quarantined"] for item in counts.values())
+    print(f"verified {ok_total}, quarantined {bad_total}")
+    return counts
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Fetch CC0/CC-BY mushroom photos from GBIF")
     parser.add_argument(
@@ -856,6 +1099,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Download again even when a complete image is already on disk.",
     )
+    parser.add_argument(
+        "--verify-existing",
+        action="store_true",
+        help="Full-decode training/data/images with no network, quarantine broken files, and rewrite checkpoints/verified.jsonl.",
+    )
     return parser
 
 
@@ -864,6 +1112,9 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
     if args.download_workers < 1:
         parser.error("--download-workers must be at least 1")
+    if args.verify_existing:
+        verify_existing_images(DATA_DIR)
+        return
     manifest = load_manifest(LABELS_PATH)
     run_fetch(
         manifest,
