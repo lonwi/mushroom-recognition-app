@@ -19,6 +19,7 @@ function runChecker(appPath: string, easPath: string): { status: number; output:
   try {
     const output = execFileSync(process.execPath, [script, '--app', appPath, '--eas', easPath], {
       encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
     });
     return { status: 0, output };
   } catch (error) {
