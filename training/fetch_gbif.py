@@ -8,8 +8,9 @@ Usage (from the repo root):
 A file already listed in checkpoints/verified.jsonl with the same size and
 mtime is skipped. Any other existing file must decode with a full Pillow
 ``load()``, and ``LOAD_TRUNCATED_IMAGES`` stays false. A file that fails is
-moved to quarantine/<class>/ and downloaded again. ``--no-resume`` downloads
-again anyway. ``--verify-existing`` scans data/images with no network.
+moved to quarantine/<class>/ and downloaded again. A new download is decoded
+in memory before it is written. ``--no-resume`` downloads again anyway.
+``--verify-existing`` scans data/images with no network.
 
 ``--download-workers`` (default 16) fetches one class or probe at a time, with at
 most 4 transfers per image host. GBIF API calls stay one at a time. Images and
@@ -23,8 +24,10 @@ import argparse
 import errno
 import hashlib
 import http.client
+import io
 import json
 import os
+import random
 import re
 import socket
 import ssl
@@ -40,7 +43,7 @@ from datetime import timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 
-from licenses import accepted_media_records
+from licenses import accepted_media_records, normalize_cc_license
 from manifest import CENTRAL_EUROPE, LABELS_PATH, ROOT, load_manifest
 from sampling import (
     MAX_PER_OCCURRENCE,
@@ -61,7 +64,10 @@ GBIF_PAGE_DELAY = 0.25
 MAX_DOWNLOADS_PER_HOST = 4
 DOWNLOAD_ATTEMPTS = 3
 DOWNLOAD_BACKOFF_SECONDS = 0.5
+# Added on top of backoff and Retry-After so 16 workers do not wake together.
+DOWNLOAD_JITTER_SECONDS = 0.5
 MAX_RETRY_AFTER_SECONDS = 120.0
+MAX_IMAGE_BYTES = 16_000_000
 _QUERY_CACHE_VERSION = 1
 
 _GBIF_API_LOCK = threading.Lock()
@@ -326,7 +332,28 @@ def collect_class_media(
     return [row for name in by_name for row in buckets[name]]
 
 
+def _mentions_certificate_failure(value: object) -> bool:
+    lowered = str(value).lower()
+    return "certificate_verify_failed" in lowered or "certificate verify failed" in lowered
+
+
+def _is_certificate_failure(error: BaseException) -> bool:
+    """Certificate failures are not transient. Other SSL errors still are."""
+    if isinstance(error, ssl.SSLCertVerificationError):
+        return True
+    if _mentions_certificate_failure(error):
+        return True
+    reason = getattr(error, "reason", None)
+    if reason is None:
+        return False
+    if isinstance(reason, ssl.SSLCertVerificationError):
+        return True
+    return _mentions_certificate_failure(reason)
+
+
 def _text_is_transient(text: str) -> bool:
+    if _mentions_certificate_failure(text):
+        return False
     lowered = text.lower()
     markers = (
         "timed out",
@@ -351,6 +378,8 @@ def _text_is_transient(text: str) -> bool:
 def _reason_is_transient(reason: object) -> bool:
     if reason is None:
         return False
+    if isinstance(reason, ssl.SSLCertVerificationError) or _mentions_certificate_failure(reason):
+        return False
     if isinstance(reason, str):
         return _text_is_transient(reason)
     if isinstance(
@@ -372,12 +401,19 @@ def _reason_is_transient(reason: object) -> bool:
 
 
 def _is_transient_download_error(error: BaseException) -> bool:
-    """DNS, timeout, reset, HTTP 429/5xx, and SSL handshake. Not 403 or 404."""
+    """DNS, timeout, reset, HTTP 429/5xx, and SSL handshake. Not 403, 404, or a bad certificate."""
+    if _is_certificate_failure(error):
+        return False
     if isinstance(error, urllib.error.HTTPError):
         return error.code == 429 or 500 <= int(error.code) <= 599
     if isinstance(error, urllib.error.URLError):
         return _reason_is_transient(error.reason)
     return _reason_is_transient(error)
+
+
+def _with_retry_jitter(base: float) -> float:
+    """Backoff or Retry-After, plus a short random offset for the download pool."""
+    return base + random.uniform(0.0, DOWNLOAD_JITTER_SECONDS)
 
 
 def _ensure_truncated_images_rejected() -> None:
@@ -586,6 +622,28 @@ def _atomic_write_text(path: Path, text: str) -> None:
         raise
 
 
+class _RejectedImage(RuntimeError):
+    """A finished response that is not a usable photo. Not retried."""
+
+
+class _TruncatedTransfer(OSError):
+    """The body ended early. Retried once, as a dropped connection."""
+
+
+def _decode_image_bytes(payload: bytes) -> None:
+    """Full-decode bytes before they are stored. Truncated JPEGs do not pass."""
+    _ensure_truncated_images_rejected()
+    from PIL import Image
+
+    try:
+        with Image.open(io.BytesIO(payload)) as image:
+            image.load()
+    except Exception as error:
+        if "truncated" in str(error).lower():
+            raise _TruncatedTransfer(str(error)) from error
+        raise _RejectedImage(f"image did not decode ({error})") from error
+
+
 def _download_once(url: str, destination: Path, timeout: int) -> int:
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     semaphore = _semaphore_for_host(url)
@@ -595,11 +653,14 @@ def _download_once(url: str, destination: Path, timeout: int) -> int:
             content_type = (response.headers.get("Content-Type") or "").lower()
             if content_type and not content_type.startswith("image/"):
                 raise RuntimeError(f"not an image ({content_type})")
-            payload = response.read(16_000_000)
+            payload = response.read(MAX_IMAGE_BYTES + 1)
     finally:
         semaphore.release()
     if len(payload) < 5_000:
         raise RuntimeError(f"image too small ({len(payload)} bytes)")
+    if len(payload) > MAX_IMAGE_BYTES:
+        raise _RejectedImage(f"image too large ({len(payload)} bytes)")
+    _decode_image_bytes(payload)
     _atomic_write_bytes(destination, payload)
     return len(payload)
 
@@ -616,8 +677,10 @@ def download_image(
     """Download one photo. A verified image already at `destination` is skipped.
 
     Bytes land in a temporary file in the same directory and are renamed into
-    place. HTTP 429 honors Retry-After. Other transient errors use a short
-    exponential backoff. HTTP 403 and 404 are not retried.
+    place. The bytes are decoded in memory first. HTTP 429 honors Retry-After
+    plus a short random offset. Other transient errors use exponential backoff
+    with the same offset. HTTP 403, 404, certificate errors, and undecodable
+    bodies are not retried. A truncated body is retried once.
     """
     destination.parent.mkdir(parents=True, exist_ok=True)
     root = _data_dir_for(destination, data_dir)
@@ -636,9 +699,18 @@ def download_image(
         raise ValueError("attempts must be positive")
     delay = DOWNLOAD_BACKOFF_SECONDS
     last_error: Exception | None = None
+    truncated_retries = 0
     for attempt in range(attempts):
         try:
             size = _download_once(url, destination, timeout)
+        except _TruncatedTransfer as error:
+            last_error = error
+            if truncated_retries >= 1 or attempt + 1 >= attempts:
+                raise
+            truncated_retries += 1
+            time.sleep(_with_retry_jitter(delay))
+            delay *= 2
+            continue
         except Exception as error:
             last_error = error
             retry_after = None
@@ -648,7 +720,8 @@ def download_image(
                 _close_http_error(error)
             if attempt + 1 >= attempts or not _is_transient_download_error(error):
                 raise
-            time.sleep(delay if retry_after is None else retry_after)
+            base = delay if retry_after is None else retry_after
+            time.sleep(_with_retry_jitter(base))
             delay *= 2
             continue
         try:
@@ -707,11 +780,6 @@ def _report_text(report: dict) -> str:
     return json.dumps(report, indent=2, ensure_ascii=False) + "\n"
 
 
-def _checkpoint_name(label: str) -> str:
-    safe = re.sub(r"[^A-Za-z0-9._-]+", "_", label).strip("._") or "item"
-    return safe[:80]
-
-
 def _write_outputs(
     directory: Path,
     rows: list[dict],
@@ -719,21 +787,39 @@ def _write_outputs(
     probe_report: list[dict],
     taxon_report: list[dict],
     max_per_occurrence: int,
-    *,
-    unit: str | None = None,
-    unit_rows: list[dict] | None = None,
 ) -> dict:
     """Rewrite the attribution and report files in request order.
 
     The same bytes are written after each class and again at the end of a
     finished run. Nothing in either file depends on which download finished first.
+    Per-class checkpoint files are not written: nothing read them.
     """
     report = _report_payload(per_class, probe_report, taxon_report, max_per_occurrence)
-    if unit is not None:
-        _atomic_write_text(directory / "checkpoints" / f"{unit}.jsonl", _jsonl(unit_rows or []))
     _atomic_write_text(directory / "attributions.jsonl", _jsonl(rows))
     _atomic_write_text(directory / "fetch_report.json", _report_text(report))
     return report
+
+
+def _policy_hash() -> str:
+    """Hash the licence filter and the sampling rules that choose rows."""
+    digest = hashlib.sha256()
+    root = Path(__file__).resolve().parent
+    for name in ("licenses.py", "sampling.py"):
+        digest.update(name.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update((root / name).read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def _row_license_allowed(row: dict) -> bool:
+    """Re-apply the current CC0/CC-BY filter to one cached media row."""
+    raw = row.get("license")
+    normalized = normalize_cc_license(raw if isinstance(raw, str) else None)
+    if normalized is None:
+        return False
+    row["license_normalized"] = normalized
+    return True
 
 
 def _cache_file(directory: Path, kind: str, identity: str, key: str) -> Path:
@@ -742,7 +828,13 @@ def _cache_file(directory: Path, kind: str, identity: str, key: str) -> Path:
 
 
 def _query_cache_key(kind: str, identity: str, parameters: dict) -> str:
-    payload = {"v": _QUERY_CACHE_VERSION, "kind": kind, "identity": identity, "parameters": parameters}
+    payload = {
+        "v": _QUERY_CACHE_VERSION,
+        "kind": kind,
+        "identity": identity,
+        "parameters": parameters,
+        "policy": _policy_hash(),
+    }
     blob = json.dumps(payload, sort_keys=True, ensure_ascii=False, default=str)
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
@@ -770,7 +862,7 @@ def _cached_media(directory: Path, kind: str, identity: str, parameters: dict, p
     path = _cache_file(directory, kind, identity, key)
     loaded = _read_query_cache(path, key)
     if loaded is not None:
-        return loaded
+        return [row for row in loaded if _row_license_allowed(row)]
     rows = produce()
     _atomic_write_text(path, json.dumps({"key": key, "rows": rows}, ensure_ascii=False))
     return rows
@@ -798,6 +890,8 @@ def _download_rows(media: list[dict], *, directory: Path, resume: bool, workers:
             row["bytes"] = download_image(row["image_url"], destination, resume=resume, data_dir=directory)
             row["downloaded"] = True
         except Exception as error:  # noqa: BLE001 — keep the crawl going
+            if isinstance(error, (_RejectedImage, _TruncatedTransfer)):
+                row["_image_rejected"] = True
             row["download_error"] = str(error)
             with _PRINT_LOCK:
                 print(f"  skip {row['image_url']}: {error}", file=sys.stderr)
@@ -810,6 +904,11 @@ def _download_rows(media: list[dict], *, directory: Path, resume: bool, workers:
         futures = [pool.submit(fetch, row) for row in media]
         for future in futures:
             future.result()
+
+
+def _countable_media(media: list[dict]) -> list[dict]:
+    """Licensed rows that were not rejected as an undecodable or oversized body."""
+    return [row for row in media if not row.get("_image_rejected")]
 
 
 def _store_media(
@@ -873,33 +972,6 @@ def run_fetch(
             },
             lambda species=species, cap=cap: collect_class_media(species, cap, max_per_occurrence, max_pages),
         )
-        regional = sum(1 for row in media if row.get("region_scope") == "central_europe")
-        taxa = sorted({row.get("taxon_name") or row.get("queried_name") or "" for row in media})
-        per_class[species["id"]] = {
-            "accepted": len(media),
-            "regional": regional,
-            "global_fill": len(media) - regional,
-            "cap": cap,
-            "taxa_with_photos": len([name for name in taxa if name]),
-            "held_out_photos": sum(1 for row in media if row.get("held_out_taxon")),
-            "below_regional_minimum": regional < min_before_global,
-        }
-        print(
-            f"  accepted media: {len(media)} "
-            f"(regional {regional}, global {len(media) - regional}, taxa {per_class[species['id']]['taxa_with_photos']})"
-        )
-        sampling = species.get("sampling") or {}
-        planned = list(sampling.get("taxa") or [])
-        if planned:
-            plan = taxon_fetch_plan(planned, cap, int(sampling["per_taxon_cap"]))
-            taxon_report.extend(
-                taxon_acceptance_rows(
-                    list(plan.items()),
-                    media,
-                    species["id"],
-                    {str(taxon["name"]): taxon.get("gbif_key") for taxon in planned},
-                )
-            )
         kept = _store_media(
             media,
             folder=species["id"],
@@ -908,6 +980,34 @@ def run_fetch(
             resume=resume,
             workers=download_workers,
         )
+        counted = _countable_media(media)
+        regional = sum(1 for row in counted if row.get("region_scope") == "central_europe")
+        taxa = sorted({row.get("taxon_name") or row.get("queried_name") or "" for row in counted})
+        per_class[species["id"]] = {
+            "accepted": len(counted),
+            "regional": regional,
+            "global_fill": len(counted) - regional,
+            "cap": cap,
+            "taxa_with_photos": len([name for name in taxa if name]),
+            "held_out_photos": sum(1 for row in counted if row.get("held_out_taxon")),
+            "below_regional_minimum": regional < min_before_global,
+        }
+        print(
+            f"  accepted media: {len(counted)} "
+            f"(regional {regional}, global {len(counted) - regional}, taxa {per_class[species['id']]['taxa_with_photos']})"
+        )
+        sampling = species.get("sampling") or {}
+        planned = list(sampling.get("taxa") or [])
+        if planned:
+            plan = taxon_fetch_plan(planned, cap, int(sampling["per_taxon_cap"]))
+            taxon_report.extend(
+                taxon_acceptance_rows(
+                    list(plan.items()),
+                    counted,
+                    species["id"],
+                    {str(taxon["name"]): taxon.get("gbif_key") for taxon in planned},
+                )
+            )
         rows.extend(kept)
         _write_outputs(
             directory,
@@ -916,8 +1016,6 @@ def run_fetch(
             probe_report,
             taxon_report,
             max_per_occurrence,
-            unit=_checkpoint_name(str(species["id"])),
-            unit_rows=kept,
         )
 
     probes = manifest.get("toxic_probes") or {}
@@ -958,13 +1056,14 @@ def run_fetch(
                 resume=resume,
                 workers=download_workers,
             )
+            counted = _countable_media(media)
             rows.extend(kept)
-            probe_row = {"taxon": name, "accepted": len(media), "cap": cap, "gbif_key": taxon.get("gbif_key")}
-            if len(media) < cap:
-                probe_row["gbif_licensed_count"] = len(media)
+            probe_row = {"taxon": name, "accepted": len(counted), "cap": cap, "gbif_key": taxon.get("gbif_key")}
+            if len(counted) < cap:
+                probe_row["gbif_licensed_count"] = len(counted)
             probe_report.append(probe_row)
             taxon_report.append(probe_row)
-            print(f"  accepted probe media: {len(media)}")
+            print(f"  accepted probe media: {len(counted)}")
             _write_outputs(
                 directory,
                 rows,
@@ -972,8 +1071,6 @@ def run_fetch(
                 probe_report,
                 taxon_report,
                 max_per_occurrence,
-                unit=_checkpoint_name(f"probe-{name}"),
-                unit_rows=kept,
             )
 
     report = _write_outputs(directory, rows, per_class, probe_report, taxon_report, max_per_occurrence)
@@ -1013,22 +1110,48 @@ def _map_image_probes(paths: list[str], workers: int) -> list[tuple[str, bool, i
         return [_probe_existing(path) for path in paths]
     import multiprocessing
 
-    try:
-        context = multiprocessing.get_context("fork")
-        with ProcessPoolExecutor(max_workers=workers, mp_context=context) as pool:
-            return list(pool.map(_probe_existing, paths))
-    except (OSError, ValueError):
-        # fork is unavailable (or the pool cannot start). Threads still decode
-        # in parallel, and each worker forces the truncated-image flag off.
-        with ThreadPoolExecutor(max_workers=workers) as pool:
-            return list(pool.map(_probe_existing, paths))
+    context = multiprocessing.get_context("spawn")
+    with ProcessPoolExecutor(max_workers=workers, mp_context=context) as pool:
+        return list(pool.map(_probe_existing, paths))
+
+
+def _drop_quarantined_attributions(data_dir: Path, quarantined: set[str]) -> int:
+    """Remove attribution rows whose file was quarantined. Order of the rest stays."""
+    path = data_dir / "attributions.jsonl"
+    if not path.is_file():
+        print("dropped 0 attribution rows")
+        return 0
+    original = path.read_text(encoding="utf-8")
+    kept: list[str] = []
+    dropped = 0
+    for line in original.splitlines():
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            kept.append(line)
+            continue
+        file_name = ""
+        if isinstance(row, dict) and isinstance(row.get("file"), str):
+            file_name = row["file"].replace("\\", "/")
+        if file_name and file_name in quarantined:
+            dropped += 1
+            continue
+        kept.append(line)
+    if dropped:
+        text = ("\n".join(kept) + "\n") if kept else ""
+        _atomic_write_text(path, text)
+    print(f"dropped {dropped} attribution rows")
+    return dropped
 
 
 def verify_existing_images(data_dir: Path, *, workers: int | None = None) -> dict[str, dict[str, int]]:
     """Full-load every stored photo, quarantine failures, and rewrite the sidecar.
 
     No network. Counts are ``ok`` and ``quarantined`` per class directory under
-    ``images/``.
+    ``images/``. Attribution rows for quarantined files are removed in their
+    original order.
     """
     _ensure_truncated_images_rejected()
     root = data_dir.resolve()
@@ -1044,6 +1167,7 @@ def verify_existing_images(data_dir: Path, *, workers: int | None = None) -> dic
     index = _verified_index(root)
     counts: dict[str, dict[str, int]] = {}
     verified_rows: list[tuple[str, int, int]] = []
+    quarantined: set[str] = set()
     for path_str, ok, size, mtime in results:
         path = Path(path_str)
         try:
@@ -1058,6 +1182,7 @@ def verify_existing_images(data_dir: Path, *, workers: int | None = None) -> dic
             verified_rows.append((rel, size, mtime))
             continue
         slot["quarantined"] += 1
+        quarantined.add(rel)
         if path.is_file():
             _quarantine_file(root, path)
     index.replace_all(verified_rows)
@@ -1067,6 +1192,7 @@ def verify_existing_images(data_dir: Path, *, workers: int | None = None) -> dic
     ok_total = sum(item["ok"] for item in counts.values())
     bad_total = sum(item["quarantined"] for item in counts.values())
     print(f"verified {ok_total}, quarantined {bad_total}")
+    _drop_quarantined_attributions(root, quarantined)
     return counts
 
 

@@ -127,12 +127,14 @@ class DownloadRetryTest(FetchCase):
             return urlopen
 
         sleeps: list[float] = []
-        with patch("fetch_gbif.time.sleep", side_effect=lambda seconds: sleeps.append(seconds)):
+        with patch("fetch_gbif.random.uniform", return_value=0.25), patch(
+            "fetch_gbif.time.sleep", side_effect=lambda seconds: sleeps.append(seconds)
+        ):
             with patch("fetch_gbif.urllib.request.urlopen", side_effect=fail(500, "500")):
                 with self.assertRaises(urllib.error.HTTPError):
                     fetch_gbif.download_image(self._url, self._dest)
             self.assertEqual(calls["500"], 3)
-            self.assertEqual(sleeps, [0.5, 1.0])
+            self.assertEqual(sleeps, [0.75, 1.25])
             self.assertFalse(self._dest.exists())
             self.assertFalse(self._dest.with_name(self._dest.name + ".partial").exists())
 
@@ -160,11 +162,11 @@ class DownloadRetryTest(FetchCase):
 
         sleeps: list[float] = []
         with patch("fetch_gbif.urllib.request.urlopen", side_effect=urlopen_with_header), patch(
-            "fetch_gbif.time.sleep", side_effect=lambda seconds: sleeps.append(seconds)
-        ):
+            "fetch_gbif.random.uniform", return_value=0.25
+        ), patch("fetch_gbif.time.sleep", side_effect=lambda seconds: sleeps.append(seconds)):
             size = fetch_gbif.download_image(self._url, self._dest)
         self.assertEqual(calls["n"], 2)
-        self.assertEqual(sleeps, [4.0])
+        self.assertEqual(sleeps, [4.25])
         self.assertEqual(size, len(self.jpeg))
 
         calls["n"] = 0
@@ -178,11 +180,11 @@ class DownloadRetryTest(FetchCase):
 
         sleeps.clear()
         with patch("fetch_gbif.urllib.request.urlopen", side_effect=urlopen_without_header), patch(
-            "fetch_gbif.time.sleep", side_effect=lambda seconds: sleeps.append(seconds)
-        ):
+            "fetch_gbif.random.uniform", return_value=0.25
+        ), patch("fetch_gbif.time.sleep", side_effect=lambda seconds: sleeps.append(seconds)):
             fetch_gbif.download_image(self._url, self._dest)
         self.assertEqual(calls["n"], 2)
-        self.assertEqual(sleeps, [fetch_gbif.DOWNLOAD_BACKOFF_SECONDS])
+        self.assertEqual(sleeps, [fetch_gbif.DOWNLOAD_BACKOFF_SECONDS + 0.25])
 
     def test_retry_after_date_and_cap(self):
         when = time.time() + 30
@@ -205,11 +207,11 @@ class DownloadRetryTest(FetchCase):
 
         sleeps: list[float] = []
         with patch("fetch_gbif.urllib.request.urlopen", side_effect=urlopen), patch(
-            "fetch_gbif.time.sleep", side_effect=lambda seconds: sleeps.append(seconds)
-        ):
+            "fetch_gbif.random.uniform", return_value=0.25
+        ), patch("fetch_gbif.time.sleep", side_effect=lambda seconds: sleeps.append(seconds)):
             fetch_gbif.download_image(self._url, self._dest)
         self.assertEqual(calls["n"], 2)
-        self.assertEqual(sleeps, [fetch_gbif.DOWNLOAD_BACKOFF_SECONDS])
+        self.assertEqual(sleeps, [fetch_gbif.DOWNLOAD_BACKOFF_SECONDS + 0.25])
 
     def test_dns_timeout_reset_and_ssl_are_retried(self):
         reasons = [
@@ -219,6 +221,41 @@ class DownloadRetryTest(FetchCase):
             ssl.SSLError("ssl handshake failure"),
         ]
         for reason in reasons:
+            calls = {"n": 0}
+
+            def urlopen(request, timeout=40, reason=reason):
+                calls["n"] += 1
+                raise urllib.error.URLError(reason)
+
+            with patch("fetch_gbif.urllib.request.urlopen", side_effect=urlopen), patch("fetch_gbif.time.sleep"):
+                with self.assertRaises(urllib.error.URLError):
+                    fetch_gbif.download_image(self._url, self._dest)
+            self.assertEqual(calls["n"], 3, reason)
+
+    def test_certificate_errors_are_not_retried(self):
+        refused = [
+            urllib.error.URLError(ssl.SSLCertVerificationError(1, "certificate verify failed")),
+            urllib.error.URLError(ssl.SSLError("CERTIFICATE_VERIFY_FAILED")),
+            urllib.error.URLError("certificate verify failed"),
+        ]
+        for reason in refused:
+            calls = {"n": 0}
+
+            def urlopen(request, timeout=40, reason=reason):
+                calls["n"] += 1
+                raise urllib.error.URLError(reason) if not isinstance(reason, urllib.error.URLError) else reason
+
+            with patch("fetch_gbif.urllib.request.urlopen", side_effect=urlopen), patch("fetch_gbif.time.sleep"):
+                with self.assertRaises(urllib.error.URLError):
+                    fetch_gbif.download_image(self._url, self._dest)
+            self.assertEqual(calls["n"], 1, reason)
+
+        still_transient = [
+            ssl.SSLError("EOF occurred in violation of protocol"),
+            ssl.SSLError("The handshake operation timed out"),
+            ssl.SSLError("ssl wrong version number from a broken connection"),
+        ]
+        for reason in still_transient:
             calls = {"n": 0}
 
             def urlopen(request, timeout=40, reason=reason):
@@ -690,8 +727,7 @@ class CheckpointRecoveryTest(FetchCase):
             partial_lines = (resumed / "attributions.jsonl").read_text(encoding="utf-8").splitlines()
             self.assertEqual(len(partial_lines), 2)
             self.assertTrue(all("boletus_edulis" in line for line in partial_lines))
-            checkpoint = (resumed / "checkpoints" / "boletus_edulis.jsonl").read_bytes()
-            self.assertEqual(checkpoint, (resumed / "attributions.jsonl").read_bytes())
+            self.assertFalse((resumed / "checkpoints" / "boletus_edulis.jsonl").exists())
             partial_report = json.loads((resumed / "fetch_report.json").read_text(encoding="utf-8"))
             self.assertEqual(list(partial_report["classes"]), ["boletus_edulis"])
             self.assertEqual(partial_report["toxic_probes"], [])
@@ -714,7 +750,7 @@ class CheckpointRecoveryTest(FetchCase):
             self.assertEqual((resumed / "fetch_report.json").read_bytes(), fresh_report)
             self.assertNotIn("boletus_edulis", " ".join(downloads))
             self.assertEqual(collected, ["amanita_virosa", "unknown_mushroom"])
-            self.assertTrue((resumed / "checkpoints" / "probe-Lepiota_cristata.jsonl").is_file())
+            self.assertFalse((resumed / "checkpoints" / "probe-Lepiota_cristata.jsonl").exists())
             self.assertTrue(fresh_attributions.splitlines()[0].startswith(partial_lines[0].encode("utf-8")))
             # A second resume does not page GBIF or download the photos again.
             collected.clear()
@@ -1049,6 +1085,199 @@ class ImageIntegrityTest(FetchCase):
                 continue
             text = path.read_text(encoding="utf-8")
             self.assertIsNone(re.search(r"LOAD_TRUNCATED_IMAGES\s*=\s*True", text), path)
+
+    def test_bad_payloads_do_not_land_in_images_sidecar_or_reports(self):
+        truncated = self._truncated()
+        garbage = b"not-a-jpeg" * 800
+        self.assertGreaterEqual(len(garbage), 5_000)
+        self.assertGreater(len(self.jpeg), 8_000)
+        cases = [
+            ("truncated", truncated, "image/jpeg", None, 2),
+            ("garbage", garbage, "image/gif", None, 1),
+            ("oversize", self.jpeg, "image/jpeg", 8_000, 1),
+        ]
+        for name, payload, content_type, limit, expected_calls in cases:
+            with self.subTest(name=name):
+                root = self._root / name
+                calls = {"n": 0}
+
+                def urlopen(request, timeout=40, payload=payload, content_type=content_type):
+                    calls["n"] += 1
+                    return _Response(payload, content_type=content_type)
+
+                def collect(species, max_per_class, max_per_occurrence, max_pages):
+                    return [
+                        {
+                            "occurrence_key": 42,
+                            "media_index": 0,
+                            "image_url": f"https://images.example.test/rejected/{name}.jpg",
+                            "license": "https://creativecommons.org/licenses/by/4.0/",
+                            "license_normalized": "cc-by-4.0",
+                            "class_id": "boletus_edulis",
+                            "taxon_name": "Boletus edulis",
+                            "queried_name": "Boletus edulis",
+                            "region_scope": "central_europe",
+                            "held_out_taxon": False,
+                            "toxic": False,
+                            "genus_relation": "",
+                        }
+                    ]
+
+                manifest = {
+                    "classes": [
+                        {
+                            "id": "boletus_edulis",
+                            "gbif_names": ["Boletus edulis"],
+                            "safety_tag": "edible",
+                        }
+                    ]
+                }
+                patches = [
+                    patch("fetch_gbif.collect_class_media", side_effect=collect),
+                    patch("fetch_gbif.urllib.request.urlopen", side_effect=urlopen),
+                    patch("fetch_gbif.time.sleep"),
+                    patch("fetch_gbif.random.uniform", return_value=0.0),
+                ]
+                if limit is not None:
+                    patches.append(patch.object(fetch_gbif, "MAX_IMAGE_BYTES", limit))
+                with patches[0], patches[1], patches[2], patches[3]:
+                    if limit is None:
+                        fetch_gbif.run_fetch(
+                            manifest,
+                            max_per_class=1,
+                            max_pages=1,
+                            only="boletus_edulis",
+                            download_workers=2,
+                            data_dir=root,
+                        )
+                    else:
+                        with patches[4]:
+                            fetch_gbif.run_fetch(
+                                manifest,
+                                max_per_class=1,
+                                max_pages=1,
+                                only="boletus_edulis",
+                                download_workers=2,
+                                data_dir=root,
+                            )
+                self.assertEqual(calls["n"], expected_calls)
+                stored = [path for path in root.rglob("*") if path.is_file() and "images" in path.parts]
+                self.assertEqual(stored, [])
+                sidecar = root / "checkpoints" / "verified.jsonl"
+                self.assertFalse(sidecar.exists())
+                marker = f"rejected/{name}.jpg"
+                attributions = (root / "attributions.jsonl").read_text(encoding="utf-8")
+                report = (root / "fetch_report.json").read_text(encoding="utf-8")
+                self.assertNotIn(marker, attributions)
+                self.assertNotIn(marker, report)
+                self.assertNotIn("42_0.jpg", attributions)
+                self.assertNotIn("42_0.jpg", report)
+                parsed = json.loads(report)
+                self.assertEqual(parsed["classes"]["boletus_edulis"]["accepted"], 0)
+
+    def test_cached_disallowed_license_does_not_reach_attributions(self):
+        species = {
+            "id": "boletus_edulis",
+            "gbif_names": ["Boletus edulis"],
+            "safety_tag": "edible",
+        }
+        parameters = {
+            "cap": 2,
+            "max_per_occurrence": fetch_gbif.MAX_PER_OCCURRENCE,
+            "max_pages": 1,
+            "gbif_names": ["Boletus edulis"],
+            "sampling": None,
+            "safety_tag": "edible",
+        }
+        key = fetch_gbif._query_cache_key("class", "boletus_edulis", parameters)
+        with patch.object(fetch_gbif, "_policy_hash", return_value="other-policy"):
+            self.assertNotEqual(key, fetch_gbif._query_cache_key("class", "boletus_edulis", parameters))
+        bad = {
+            "occurrence_key": 1,
+            "media_index": 0,
+            "image_url": "https://images.example.test/nc.jpg",
+            "license": "http://creativecommons.org/licenses/by-nc/4.0/",
+            "license_normalized": "cc-by-nc-4.0",
+            "class_id": "boletus_edulis",
+            "taxon_name": "Boletus edulis",
+            "queried_name": "Boletus edulis",
+            "region_scope": "central_europe",
+            "held_out_taxon": False,
+            "toxic": False,
+            "genus_relation": "",
+        }
+        good = dict(bad)
+        good.update(
+            {
+                "occurrence_key": 2,
+                "image_url": "https://images.example.test/ok.jpg",
+                "license": "http://creativecommons.org/licenses/by/4.0/",
+                "license_normalized": "cc-by-4.0",
+            }
+        )
+        cache = fetch_gbif._cache_file(self._root, "class", "boletus_edulis", key)
+        cache.parent.mkdir(parents=True)
+        cache.write_text(json.dumps({"key": key, "rows": [bad, good]}), encoding="utf-8")
+
+        def collect(*args, **kwargs):
+            raise AssertionError("GBIF was queried")
+
+        def urlopen(request, timeout=40):
+            self.assertNotIn("nc.jpg", request.full_url)
+            return _Response(self.jpeg)
+
+        with patch("fetch_gbif.collect_class_media", side_effect=collect), patch(
+            "fetch_gbif.urllib.request.urlopen", side_effect=urlopen
+        ), patch("fetch_gbif.time.sleep"):
+            fetch_gbif.run_fetch(
+                {"classes": [species]},
+                max_per_class=2,
+                max_pages=1,
+                only="boletus_edulis",
+                download_workers=2,
+                data_dir=self._root,
+            )
+        attributions = (self._root / "attributions.jsonl").read_text(encoding="utf-8")
+        self.assertEqual(len(attributions.splitlines()), 1)
+        self.assertNotIn("nc.jpg", attributions)
+        self.assertNotIn("by-nc", attributions)
+        self.assertIn("ok.jpg", attributions)
+        report = json.loads((self._root / "fetch_report.json").read_text(encoding="utf-8"))
+        self.assertEqual(report["classes"]["boletus_edulis"]["accepted"], 1)
+        self.assertFalse((self._root / "images" / "boletus_edulis" / "1_0.jpg").exists())
+        self.assertTrue((self._root / "images" / "boletus_edulis" / "2_0.jpg").is_file())
+
+    def test_verify_existing_drops_quarantined_attribution_rows(self):
+        good_a = self._root / "images" / "boletus_edulis" / "1_0.jpg"
+        bad = self._root / "images" / "boletus_edulis" / "2_0.jpg"
+        good_b = self._root / "images" / "amanita_virosa" / "3_0.jpg"
+        for path, payload in ((good_a, self.jpeg), (bad, self._truncated()), (good_b, self.jpeg)):
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(payload)
+        rows = [
+            {"file": "images/boletus_edulis/1_0.jpg", "image_url": "https://images.example.test/a.jpg", "downloaded": True},
+            {"file": "images/boletus_edulis/2_0.jpg", "image_url": "https://images.example.test/b.jpg", "downloaded": True},
+            {"file": "images/amanita_virosa/3_0.jpg", "image_url": "https://images.example.test/c.jpg", "downloaded": True},
+        ]
+        original = "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows)
+        (self._root / "attributions.jsonl").write_text(original, encoding="utf-8")
+        stdout = io.StringIO()
+        with patch("sys.stdout", stdout):
+            fetch_gbif.verify_existing_images(self._root, workers=2)
+        kept = (self._root / "attributions.jsonl").read_text(encoding="utf-8")
+        self.assertEqual(
+            kept,
+            json.dumps(rows[0], ensure_ascii=False) + "\n" + json.dumps(rows[2], ensure_ascii=False) + "\n",
+        )
+        self.assertNotIn("2_0.jpg", kept)
+        self.assertIn("dropped 1 attribution rows", stdout.getvalue())
+        self.assertFalse(bad.exists())
+        self.assertTrue((self._root / "quarantine" / "boletus_edulis" / "2_0.jpg").is_file())
+        again = io.StringIO()
+        with patch("sys.stdout", again):
+            fetch_gbif.verify_existing_images(self._root, workers=1)
+        self.assertEqual((self._root / "attributions.jsonl").read_text(encoding="utf-8"), kept)
+        self.assertIn("dropped 0 attribution rows", again.getvalue())
 
 
 if __name__ == "__main__":
