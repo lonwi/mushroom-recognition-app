@@ -40,6 +40,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # No published npm fix. pnpm.auditConfig.ignoreCves lists exactly these CVEs.
+      # GHSA-86w9-cpqp-85rv / CVE-2026-85393: node-forge via expo>@expo/cli, not the app runtime.
+      # GHSA-vfj7-8cjw-p6xm / CVE-2026-93687: braces via jest-expo>micromatch.
+      # GHSA-hp3w-g68c-fv3c / CVE-2026-97058: sprintf-js via jest>argparse (moderate, no release).
       - name: Audit dependencies
         run: pnpm audit --audit-level high
 
