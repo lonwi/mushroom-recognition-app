@@ -82,8 +82,10 @@ describe('release config', () => {
   it('keeps remote production versioning and the development build profile', () => {
     expect(app.expo.owner).toEqual(expect.any(String));
     expect(app.expo.owner.length).toBeGreaterThan(0);
-    expect(app.expo.extra.eas.projectId).toEqual(expect.any(String));
-    expect(app.expo.extra.eas.projectId.length).toBeGreaterThan(0);
+    expect(app.expo.owner).not.toContain('REPLACE_WITH_');
+    expect(app.expo.extra.eas.projectId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    );
     expect(app.expo.android.package).toBe('com.grzybobranie.ai');
     expect(app.expo.ios.bundleIdentifier).toBe('com.grzybobranie.ai');
 
@@ -166,11 +168,11 @@ describe('release config', () => {
     }
   });
 
-  it('blocks the app.json and eas.json committed in this repo', () => {
+  it('blocks the committed eas.json until App Store Connect ids are set', () => {
     const blocked = runChecker(path.join(root, 'app.json'), path.join(root, 'eas.json'));
     expect(blocked.status).toBe(1);
-    expect(blocked.output).toContain('expo.owner');
-    expect(blocked.output).toContain('projectId');
+    expect(blocked.output).not.toContain('expo.owner');
+    expect(blocked.output).not.toMatch(/projectId is missing|still a placeholder/);
     expect(blocked.output).toContain('ascAppId');
     expect(blocked.output).toContain('appleTeamId');
   });
