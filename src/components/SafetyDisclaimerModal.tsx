@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLanguage } from '../contexts/LanguageContext';
+import { colors } from '../theme/tokens';
 
 interface Props {
   visible: boolean;
@@ -86,7 +87,7 @@ export const SafetyDisclaimerModal: React.FC<Props> = ({ visible, onAccept }) =>
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F9FBF9',
+    backgroundColor: colors.sheet,
   },
   container: {
     flex: 1,
@@ -104,7 +105,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#1B3B22',
+    color: colors.primary,
     textAlign: 'center',
   },
   scroll: {
@@ -114,8 +115,8 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   alertBox: {
-    backgroundColor: '#FFEBEE',
-    borderColor: '#C62828',
+    backgroundColor: colors.poisonousBg,
+    borderColor: colors.poisonous,
     borderWidth: 2,
     borderRadius: 12,
     padding: 16,
@@ -124,36 +125,36 @@ const styles = StyleSheet.create({
   alertBoxTitle: {
     fontSize: 14,
     fontWeight: '900',
-    color: '#B71C1C',
+    color: colors.redDeep,
     textAlign: 'center',
     marginBottom: 8,
     letterSpacing: 0.3,
   },
   alertBoxText: {
     fontSize: 13,
-    color: '#491217',
+    color: colors.redInk,
     lineHeight: 18,
     textAlign: 'center',
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1B3B22',
+    color: colors.primary,
     marginBottom: 14,
   },
   pointRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     borderRadius: 10,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.slate200,
   },
   pointNum: {
-    backgroundColor: '#2E7D32',
-    color: '#FFF',
+    backgroundColor: colors.edible,
+    color: colors.white,
     fontWeight: 'bold',
     width: 24,
     height: 24,
@@ -166,50 +167,50 @@ const styles = StyleSheet.create({
   pointText: {
     flex: 1,
     fontSize: 13,
-    color: '#334155',
+    color: colors.slate700,
     lineHeight: 18,
   },
   bold: {
     fontWeight: '700',
-    color: '#0F172A',
+    color: colors.slate900,
   },
   emergencyBanner: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: colors.amber100,
     borderWidth: 1,
-    borderColor: '#F59E0B',
+    borderColor: colors.amber500,
     borderRadius: 10,
     padding: 14,
     marginTop: 10,
   },
   emergencyTitle: {
     fontWeight: '800',
-    color: '#92400E',
+    color: colors.amber800,
     fontSize: 14,
     marginBottom: 4,
   },
   emergencyText: {
-    color: '#78350F',
+    color: colors.amber900,
     fontSize: 13,
     lineHeight: 18,
   },
   footer: {
     paddingVertical: 14,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: colors.slate200,
   },
   button: {
-    backgroundColor: '#1B3B22',
+    backgroundColor: colors.primary,
     paddingVertical: 15,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#1B3B22',
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 6,
     elevation: 4,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: colors.white,
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.3,

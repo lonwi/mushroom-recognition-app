@@ -3,6 +3,7 @@ import type { Preview } from '@storybook/react-vite';
 import { PaperProvider } from 'react-native-paper';
 import { paperTheme } from '../src/theme/paperTheme';
 import { LanguageProvider } from '../src/contexts/LanguageContext';
+import { colors } from '../src/theme/tokens';
 
 const preview: Preview = {
   parameters: {
@@ -15,8 +16,8 @@ const preview: Preview = {
     backgrounds: {
       default: 'forest-light',
       values: [
-        { name: 'forest-light', value: '#F8FAFC' },
-        { name: 'forest-dark', value: '#1B3B22' },
+        { name: 'forest-light', value: colors.background },
+        { name: 'forest-dark', value: colors.primary },
       ],
     },
   },

@@ -1,17 +1,26 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { pl } from '../i18n/pl';
 import { en } from '../i18n/en';
+import { settingsStore } from '../services/storage/settingsStore';
 
 export type LanguageType = 'pl' | 'en';
+export type TranslationParams = Record<string, string | number>;
 
 interface LanguageContextType {
   language: LanguageType;
   setLanguage: (lang: LanguageType) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: TranslationParams) => string;
 }
 
-export function translate(language: LanguageType, path: string): string {
+/** Replaces every `{name}` in `template`, not only the first one. */
+export function interpolate(template: string, params: TranslationParams): string {
+  return Object.entries(params).reduce(
+    (text, [key, value]) => text.split(`{${key}}`).join(String(value)),
+    template,
+  );
+}
+
+export function translate(language: LanguageType, path: string, params?: TranslationParams): string {
   const dict = language === 'en' ? en : pl;
   const keys = path.split('.');
   let current: unknown = dict;
@@ -22,51 +31,40 @@ export function translate(language: LanguageType, path: string): string {
       return path;
     }
   }
-  return typeof current === 'string' ? current : path;
+  if (typeof current !== 'string') return path;
+  return params ? interpolate(current, params) : current;
 }
 
 const LanguageContext = createContext<LanguageContextType>({
   language: 'pl',
   setLanguage: () => {},
-  t: (key: string) => translate('pl', key),
+  t: (key: string, params?: TranslationParams) => translate('pl', key, params),
 });
 
 export const useLanguage = () => useContext(LanguageContext);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<LanguageType>('pl');
-  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     const loadLanguage = async () => {
-      try {
-        const storedLang = await AsyncStorage.getItem('app_language');
-        if (storedLang === 'pl' || storedLang === 'en') {
-          setLanguageState(storedLang as LanguageType);
-        }
-      } catch (e) {
-        console.error('Failed to load language', e);
-      } finally {
-        setIsLoaded(true);
-      }
+      const storedLang = await settingsStore.getLanguage();
+      if (storedLang) setLanguageState(storedLang);
     };
     loadLanguage();
   }, []);
 
-  const setLanguage = async (lang: LanguageType) => {
-    try {
-      setLanguageState(lang);
-      await AsyncStorage.setItem('app_language', lang);
-    } catch (e) {
-      console.error('Failed to save language', e);
-    }
-  };
+  const setLanguage = useCallback((lang: LanguageType) => {
+    setLanguageState(lang);
+    void settingsStore.setLanguage(lang);
+  }, []);
 
-  const t = (path: string): string => translate(language, path);
-
-  return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
-      {children}
-    </LanguageContext.Provider>
+  const t = useCallback(
+    (path: string, params?: TranslationParams) => translate(language, path, params),
+    [language],
   );
+
+  const value = useMemo(() => ({ language, setLanguage, t }), [language, setLanguage, t]);
+
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 };

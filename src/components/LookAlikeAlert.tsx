@@ -11,6 +11,7 @@ import {
 } from '../data/mushrooms';
 import { useLanguage } from '../contexts/LanguageContext';
 import { pl } from '../i18n/pl';
+import { colors } from '../theme/tokens';
 
 interface Props {
   risks: ConfusionRisk[];
@@ -51,7 +52,7 @@ export const LookAlikeAlert: React.FC<Props> = ({
         <View style={styles.sourcedContainer} testID="lookalike-sourced-clearance">
           <Text style={styles.sourcedTitle}>{t('lookalike.sourcedTitle')}</Text>
           <Text style={styles.sourcedDesc}>
-            {t('lookalike.sourcedBody').replace('{source}', source)}
+            {t('lookalike.sourcedBody', { source })}
           </Text>
         </View>
       );
@@ -98,7 +99,7 @@ export const LookAlikeAlert: React.FC<Props> = ({
           <View key={`${risk.confusedWithId}-${idx}`} style={styles.riskCard}>
             <View style={styles.riskTop}>
               <Text style={styles.riskName}>
-                {t('lookalike.confusedWith').replace('{name}', risk.confusedWithName)}
+                {t('lookalike.confusedWith', { name: risk.confusedWithName })}
               </Text>
               <View testID={`lookalike-status-${risk.confusedWithId}`}>
                 {showStatus ? (
@@ -150,17 +151,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 14,
     marginVertical: 10,
-    backgroundColor: '#FFF',
+    backgroundColor: colors.white,
   },
   warningBorder: {
     borderWidth: 1.5,
-    borderColor: '#FFA000',
-    backgroundColor: '#FFFDE7',
+    borderColor: colors.amberMaterial,
+    backgroundColor: colors.amberMaterialBgLight,
   },
   fatalBorder: {
     borderWidth: 2,
-    borderColor: '#D32F2F',
-    backgroundColor: '#FFEBEE',
+    borderColor: colors.redMaterial,
+    backgroundColor: colors.poisonousBg,
   },
   headerRow: {
     flexDirection: 'row',
@@ -177,23 +178,23 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#D84315',
+    color: colors.orangeDeep,
   },
   fatalTitle: {
-    color: '#B71C1C',
+    color: colors.redDeep,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#555',
+    color: colors.gray555,
     marginTop: 2,
   },
   riskCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     borderRadius: 8,
     padding: 12,
     marginTop: 8,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: colors.gray300,
   },
   riskTop: {
     flexDirection: 'row',
@@ -206,19 +207,19 @@ const styles = StyleSheet.create({
   riskName: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#212121',
+    color: colors.gray900,
     flex: 1,
   },
   linkText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#1B3B22',
+    color: colors.primary,
     textDecorationLine: 'underline',
     marginBottom: 8,
   },
   unlinkedNote: {
     fontSize: 12,
-    color: '#6D4C41',
+    color: colors.brown600,
     fontWeight: '600',
     marginBottom: 8,
   },
@@ -228,7 +229,7 @@ const styles = StyleSheet.create({
   diffLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#424242',
+    color: colors.gray800,
     marginBottom: 4,
   },
   bulletRow: {
@@ -237,7 +238,7 @@ const styles = StyleSheet.create({
     marginBottom: 3,
   },
   bulletDot: {
-    color: '#D32F2F',
+    color: colors.redMaterial,
     fontSize: 14,
     lineHeight: 18,
     marginRight: 6,
@@ -245,44 +246,44 @@ const styles = StyleSheet.create({
   },
   bulletText: {
     fontSize: 12,
-    color: '#333',
+    color: colors.gray333,
     flex: 1,
     lineHeight: 17,
   },
   incompleteContainer: {
-    backgroundColor: '#FFF8E1',
-    borderColor: '#FFB300',
+    backgroundColor: colors.amberMaterialBg,
+    borderColor: colors.amberMaterialLight,
     borderWidth: 1.5,
     borderRadius: 10,
     padding: 12,
     marginVertical: 10,
   },
   incompleteTitle: {
-    color: '#E65100',
+    color: colors.inedible,
     fontWeight: '800',
     fontSize: 14,
   },
   incompleteDesc: {
-    color: '#6D4C41',
+    color: colors.brown600,
     fontSize: 12,
     marginTop: 4,
     lineHeight: 18,
   },
   sourcedContainer: {
-    backgroundColor: '#F1F5F9',
-    borderColor: '#64748B',
+    backgroundColor: colors.surfaceVariant,
+    borderColor: colors.slate500,
     borderWidth: 1.5,
     borderRadius: 10,
     padding: 12,
     marginVertical: 10,
   },
   sourcedTitle: {
-    color: '#1E293B',
+    color: colors.slate800,
     fontWeight: '800',
     fontSize: 14,
   },
   sourcedDesc: {
-    color: '#334155',
+    color: colors.slate700,
     fontSize: 12,
     marginTop: 4,
     lineHeight: 18,

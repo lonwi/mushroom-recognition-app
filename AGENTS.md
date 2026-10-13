@@ -83,7 +83,7 @@ mushroom-app/
    - The scanner uses TFLite, not TensorFlow.js tensors. Do not allocate a long-lived copy of the input buffer. If a future change does use `@tensorflow/tfjs` tensors inside `classifierService.ts`, wrap them in `tf.tidy()`.
 
 4. **Hermes Engine Compatibility**:
-   - In React Native (Hermes engine), TensorFlow.js cannot auto-detect a platform because neither DOM nor Node `process.versions.node` exist. Always ensure `PlatformReactNative` from `src/utils/tfjsPlatform.ts` is registered via `ensureTensorFlowPlatform()` to prevent `isTypedArray of undefined` errors. The TFLite path does not import TensorFlow.js.
+   - In React Native (Hermes engine), TensorFlow.js cannot auto-detect a platform because neither DOM nor Node `process.versions.node` exist. The TFLite path does not import TensorFlow.js and must not load it at startup. Call `ensureTensorFlowPlatform()` from `src/utils/tfjsPlatform.ts` only in code that actually uses `@tensorflow/tfjs`.
 
 5. **Recognition honesty**:
    - `classifierService` must not return a species, a confidence percentage, or an inference time unless a real on-device model consumed that photo's pixels.

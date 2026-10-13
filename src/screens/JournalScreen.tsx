@@ -16,10 +16,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { JournalReadError, storageService } from '../services/storageService';
 import { resolveJournalPhotoUri } from '../services/journalPhotos';
 import { openSpotInMaps } from '../services/mapsLink';
-import { formatConfidencePercent } from '../services/recognitionDecision';
 import { SightingRecord } from '../types/mushroom';
-import { MUSHROOMS_DATABASE } from '../data/mushrooms';
 import { useLanguage } from '../contexts/LanguageContext';
+import { journalActionStyles } from '../components/journalActionStyles';
+import { RecognitionSummary } from '../components/RecognitionSummary';
+import { colors } from '../theme/tokens';
 
 interface Props {
   onOpenAtlasSpecies?: (speciesId: string) => void;
@@ -125,132 +126,14 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
     }
   };
 
-  const renderRecognition = (item: SightingRecord) => {
-    const recognition = item.recognition;
-    if (recognition.status === 'legacy') {
-      return (
-        <View>
-          <Text style={styles.legacyBanner} testID={`journal-legacy-${item.id}`}>
-            {t('journal.legacyBanner')}
-          </Text>
-          <Text style={styles.speciesNamePl} testID={`journal-title-${item.id}`}>
-            {t('journal.legacyTitle')}
-          </Text>
-          {recognition.speciesNamePl || recognition.speciesNameLatin ? (
-            <View>
-              <Text style={styles.honestBody} testID={`journal-legacy-name-${item.id}`}>
-                {t('journal.legacyStoredName')}: {recognition.speciesNamePl ?? recognition.speciesNameLatin}
-                {recognition.speciesNamePl && recognition.speciesNameLatin
-                  ? ` (${recognition.speciesNameLatin})`
-                  : ''}
-              </Text>
-              <Text style={styles.honestBody} testID={`journal-legacy-name-notice-${item.id}`}>
-                {t('journal.legacyNameNotice')}
-              </Text>
-            </View>
-          ) : null}
-          <Text style={styles.warningText} testID={`journal-legacy-edibility-${item.id}`}>
-            {t('journal.legacyEdibility')}
-          </Text>
-        </View>
-      );
-    }
-    if (recognition.status === 'rejected' && recognition.reason === 'unknown_mushroom') {
-      return (
-        <View>
-          <Text style={styles.speciesNamePl} testID={`journal-title-${item.id}`}>
-            {t('journal.unknownMushroomTitle')}
-          </Text>
-          <Text style={styles.honestBody} testID={`journal-unknown-${item.id}`}>
-            {t('scanner.unknownMushroomBody')}
-          </Text>
-          <Text style={styles.warningText} testID={`journal-unknown-deadly-${item.id}`}>
-            {t('scanner.unknownMushroomDeadly')}
-          </Text>
-          <Text style={styles.honestBody} testID={`journal-unknown-verify-${item.id}`}>
-            {t('scanner.rejectedVerify')}
-          </Text>
-        </View>
-      );
-    }
-    if (recognition.status === 'rejected' && recognition.reason === 'unclear') {
-      return (
-        <View>
-          <Text style={styles.speciesNamePl} testID={`journal-title-${item.id}`}>
-            {t('journal.unclearTitle')}
-          </Text>
-          <Text style={styles.honestBody}>{t('scanner.rejectedUnclear')}</Text>
-        </View>
-      );
-    }
-    if (recognition.status === 'rejected') {
-      return (
-        <View>
-          <Text style={styles.speciesNamePl} testID={`journal-title-${item.id}`}>
-            {t('journal.notMushroomTitle')}
-          </Text>
-          <Text style={styles.honestBody}>{t('scanner.rejectedNotMushroom')}</Text>
-        </View>
-      );
-    }
-    if (recognition.status === 'candidates') {
-      const primary = recognition.top3[0];
-      const inAtlas = primary ? MUSHROOMS_DATABASE.some((species) => species.id === primary.id) : false;
-      return (
-        <View>
-          <Text style={styles.speciesNamePl} testID={`journal-title-${item.id}`}>
-            {t('journal.candidatesTitle')}
-          </Text>
-          <Text style={styles.honestBody}>{t('scanner.candidatesLead')}</Text>
-          <Text style={styles.honestBody} testID={`journal-not-edible-${item.id}`}>
-            {t('scanner.notEdibilityVerdict')}
-          </Text>
-          {recognition.expertVerificationRequired ? (
-            <Text style={styles.warningText} testID={`journal-expert-${item.id}`}>
-              {t('scanner.expertWarningBody')}
-            </Text>
-          ) : null}
-          {recognition.warningReasons.includes('dangerous_genus') ? (
-            <Text style={styles.warningText}>{t('scanner.dangerousGenusWarning')}</Text>
-          ) : null}
-          {recognition.warningReasons.includes('low_confidence') ? (
-            <Text style={styles.warningText} testID={`journal-low-confidence-${item.id}`}>
-              {t('scanner.lowConfidenceWarning')}
-            </Text>
-          ) : null}
-          {recognition.top3.map((candidate) => (
-            <Text
-              key={`${item.id}-${candidate.rank}-${candidate.id}`}
-              style={styles.candidateText}
-              testID={`journal-candidate-${item.id}-${candidate.rank}`}
-            >
-              {candidate.rank}. {candidate.namePl} · {t('journal.confidence')}:{' '}
-              {formatConfidencePercent(candidate.confidence)}
-            </Text>
-          ))}
-          {primary && inAtlas && onOpenAtlasSpecies ? (
-            <TouchableOpacity
-              style={styles.actionBtn}
-              onPress={() => onOpenAtlasSpecies(primary.id)}
-              testID={`journal-open-candidate-${item.id}`}
-            >
-              <Text style={styles.actionBtnText}>
-                {t('journal.openCandidate')}: {primary.namePl}
-              </Text>
-            </TouchableOpacity>
-          ) : null}
-        </View>
-      );
-    }
-    return (
-      <View>
-        <Text style={styles.speciesNamePl} testID={`journal-title-${item.id}`}>
-          {t('journal.unavailableTitle')}
-        </Text>
-        <Text style={styles.honestBody}>{t('scanner.recognitionUnavailableNote')}</Text>
-      </View>
-    );
-  };
+  const renderRecognition = (item: SightingRecord) => (
+    <RecognitionSummary
+      variant="journal"
+      entryId={item.id}
+      recognition={item.recognition}
+      onOpenAtlasSpecies={onOpenAtlasSpecies}
+    />
+  );
 
   const renderItem = ({ item }: { item: SightingRecord }) => {
     const dateStr =
@@ -314,13 +197,13 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
                 />
                 <View style={styles.notesActions}>
                   <TouchableOpacity
-                    style={styles.actionBtn}
+                    style={journalActionStyles.actionBtn}
                     onPress={() => {
                       setEditing(null);
                       setDraftNotes('');
                     }}
                   >
-                    <Text style={styles.actionBtnText}>{t('journal.cancel')}</Text>
+                    <Text style={journalActionStyles.actionBtnText}>{t('journal.cancel')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.mapBtn} onPress={saveNotes} testID="journal-notes-save">
                     <Text style={styles.mapBtnText}>{t('journal.notesSave')}</Text>
@@ -337,11 +220,11 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
 
         <View style={styles.cardActions}>
           <TouchableOpacity
-            style={styles.actionBtn}
+            style={journalActionStyles.actionBtn}
             onPress={() => openNotes(item)}
             testID={`journal-edit-notes-${item.id}`}
           >
-            <Text style={styles.actionBtnText}>{t('journal.editNotes')}</Text>
+            <Text style={journalActionStyles.actionBtnText}>{t('journal.editNotes')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.deleteBtn}
@@ -396,7 +279,7 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
@@ -405,18 +288,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 14,
     paddingBottom: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: colors.slate200,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#1B3B22',
+    color: colors.primary,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.slate500,
     marginTop: 2,
   },
   listContent: {
@@ -424,13 +307,13 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
+    borderColor: colors.slate200,
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
@@ -443,13 +326,13 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 8,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.slate200,
   },
   thumbPlaceholder: {
     width: 80,
     height: 80,
     borderRadius: 8,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surfaceVariant,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -457,59 +340,25 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
   },
-  speciesNamePl: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  legacyBanner: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#7C2D12',
-    backgroundColor: '#FFEDD5',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 8,
-    marginBottom: 6,
-    lineHeight: 17,
-  },
-  honestBody: {
-    fontSize: 12,
-    color: '#334155',
-    marginTop: 4,
-    lineHeight: 17,
-  },
-  warningText: {
-    fontSize: 12,
-    color: '#991B1B',
-    fontWeight: '700',
-    marginTop: 4,
-    lineHeight: 17,
-  },
-  candidateText: {
-    fontSize: 12,
-    color: '#0F172A',
-    marginTop: 4,
-  },
   dateText: {
     fontSize: 11,
-    color: '#64748B',
+    color: colors.slate500,
     marginTop: 6,
   },
   gpsText: {
     fontSize: 11,
-    color: '#2E7D32',
+    color: colors.edible,
     fontWeight: '600',
     marginTop: 2,
   },
   noGpsText: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.slate500,
     marginTop: 4,
   },
   notesText: {
     fontSize: 12,
-    color: '#475569',
+    color: colors.slate600,
     marginTop: 6,
   },
   cardActions: {
@@ -518,45 +367,32 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: colors.surfaceVariant,
     gap: 10,
-  },
-  actionBtn: {
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-    marginTop: 8,
-  },
-  actionBtnText: {
-    fontSize: 12,
-    color: '#334155',
-    fontWeight: '600',
   },
   mapBtn: {
     paddingVertical: 6,
     paddingHorizontal: 10,
-    backgroundColor: '#1B3B22',
+    backgroundColor: colors.primary,
     borderRadius: 6,
     alignSelf: 'flex-start',
     marginTop: 6,
   },
   mapBtnText: {
     fontSize: 12,
-    color: '#FFFFFF',
+    color: colors.white,
     fontWeight: '700',
   },
   deleteBtn: {
     paddingVertical: 5,
     paddingHorizontal: 10,
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.red100,
     borderRadius: 6,
     marginTop: 8,
   },
   deleteBtnText: {
     fontSize: 12,
-    color: '#DC2626',
+    color: colors.red600,
     fontWeight: '600',
   },
   emptyContainer: {
@@ -571,18 +407,18 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 17,
     fontWeight: '800',
-    color: '#334155',
+    color: colors.slate700,
   },
   damagedBody: {
     fontSize: 14,
-    color: '#7C2D12',
+    color: colors.orange900,
     textAlign: 'center',
     marginTop: 8,
     lineHeight: 20,
   },
   emptyDesc: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: colors.slate400,
     textAlign: 'center',
     marginTop: 6,
     lineHeight: 18,
@@ -590,11 +426,11 @@ const styles = StyleSheet.create({
   notesInput: {
     minHeight: 100,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: colors.outline,
     borderRadius: 10,
     padding: 12,
     fontSize: 15,
-    color: '#0F172A',
+    color: colors.slate900,
     textAlignVertical: 'top',
   },
   notesActions: {

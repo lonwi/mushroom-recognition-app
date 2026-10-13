@@ -66,12 +66,6 @@ export interface MushroomSpecies {
   };
 }
 
-export interface ModelPrediction {
-  species: MushroomSpecies;
-  confidence: number; // 0 - 100%
-  rank: number;
-}
-
 export interface JournalCandidate {
   id: string;
   namePl: string;
