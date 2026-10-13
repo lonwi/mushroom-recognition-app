@@ -6,7 +6,14 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from licenses import UnsafeMediaUrl, accepted_media_records, normalize_cc_license, validate_media_url
+import fetch_gbif
+from licenses import accepted_media_records, normalize_cc_license
+from url_safety import UnsafeMediaUrl, listed_media_records, validate_media_url, validate_media_url_syntax
+
+
+# licences.py and sampling.py as of main 19a8476. URL checks live in url_safety.py
+# so this hash, and the GBIF query cache that includes it, stay put.
+_MAIN_POLICY_HASH = "75ac5d2d56a415bf638bade37797c230af9c0eb66f96874f36f6f024c45e9368"
 
 
 def _offline_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
@@ -22,10 +29,6 @@ def _offline_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
 
 
 class LicenseFilterTest(unittest.TestCase):
-    def setUp(self):
-        self._dns = patch("licenses.socket.getaddrinfo", side_effect=_offline_getaddrinfo)
-        self._dns.start()
-        self.addCleanup(self._dns.stop)
 
     def test_accepts_cc_by_and_cc0_urls(self):
         self.assertEqual(
@@ -103,7 +106,13 @@ class LicenseFilterTest(unittest.TestCase):
         self.assertEqual(accepted[0]["source_url"], "https://www.inaturalist.org/observations/42")
         self.assertIn("gbif.org/occurrence/42", accepted[0]["gbif_occurrence"])
 
-    def test_drops_non_public_media_urls_and_cleans_attribution(self):
+    def test_policy_hash_matches_main(self):
+        self.assertEqual(fetch_gbif._policy_hash(), _MAIN_POLICY_HASH)
+
+    def test_listing_checks_syntax_only_and_cleans_attribution(self):
+        def boom(*args, **kwargs):
+            raise AssertionError("listing must not resolve DNS")
+
         occurrence = {
             "key": 42,
             "rightsHolder": "Holder\n\x1b[31m",
@@ -138,8 +147,12 @@ class LicenseFilterTest(unittest.TestCase):
                 },
             ],
         }
-        accepted = accepted_media_records(occurrence)
-        self.assertEqual([row["image_url"] for row in accepted], ["https://example.test/by.jpg"])
+        with patch("url_safety.socket.getaddrinfo", side_effect=boom):
+            accepted = listed_media_records(occurrence)
+        self.assertEqual(
+            [row["image_url"] for row in accepted],
+            ["https://example.test/by.jpg", "http://127.0.0.1/secret.jpg"],
+        )
         self.assertEqual(accepted[0]["creator"], "AdaLovelace")
         self.assertEqual(accepted[0]["rights_holder"], "Holder[31m")
         self.assertEqual(accepted[0]["scientific_name"], "Amanita phalloides")
@@ -147,10 +160,7 @@ class LicenseFilterTest(unittest.TestCase):
         self.assertNotIn("\n", accepted[0]["creator"])
         self.assertNotIn("\u202e", accepted[0]["scientific_name"])
 
-    def test_unresolved_host_stays_in_the_pool(self):
-        def fail(host, port, family=0, type=0, proto=0, flags=0):
-            raise socket.gaierror("temporary failure in name resolution")
-
+    def test_listing_keeps_an_unresolved_name_without_dns(self):
         occurrence = {
             "key": 7,
             "media": [
@@ -162,9 +172,25 @@ class LicenseFilterTest(unittest.TestCase):
                 }
             ],
         }
-        with patch("licenses.socket.getaddrinfo", side_effect=fail):
-            accepted = accepted_media_records(occurrence)
+        with patch("url_safety.socket.getaddrinfo", side_effect=AssertionError("dns")):
+            accepted = listed_media_records(occurrence)
         self.assertEqual(accepted[0]["image_url"], "https://images.example.test/a.jpg")
+
+    def test_syntax_allows_only_http_on_ports_80_and_443(self):
+        validate_media_url_syntax("https://images.example.test/a.jpg")
+        validate_media_url_syntax("http://images.example.test/a.jpg")
+        validate_media_url_syntax("https://images.example.test:443/a.jpg")
+        validate_media_url_syntax("http://images.example.test:80/a.jpg")
+        for url in (
+            "ftp://images.example.test/a.jpg",
+            "https://images.example.test/a.jpg\n",
+            "https://images.example.test:8443/a.jpg",
+            "http://images.example.test:8080/a.jpg",
+            "http://images.example.test:4430/a.jpg",
+            "https://example.test:21/a.jpg",
+        ):
+            with self.assertRaises(UnsafeMediaUrl, msg=url):
+                validate_media_url_syntax(url)
 
     def test_validate_media_url_rejects_special_purpose_addresses(self):
         rejected = [
@@ -175,13 +201,29 @@ class LicenseFilterTest(unittest.TestCase):
             "http://192.168.0.1/a.jpg",
             "http://[::1]/a.jpg",
             "http://224.0.0.1/a.jpg",
+            "http://198.18.0.1/a.jpg",
             "ftp://images.example.test/a.jpg",
+            "https://images.example.test:8443/a.jpg",
             "https://images.example.test/a.jpg\n",
         ]
-        for url in rejected:
-            with self.assertRaises(UnsafeMediaUrl, msg=url):
-                validate_media_url(url)
-        validate_media_url("https://images.example.test/a.jpg")
+        with patch("url_safety.socket.getaddrinfo", side_effect=_offline_getaddrinfo):
+            for url in rejected:
+                with self.assertRaises(UnsafeMediaUrl, msg=url):
+                    validate_media_url(url)
+            validate_media_url("https://images.example.test/a.jpg")
+
+    def test_license_filter_itself_does_not_drop_a_url(self):
+        occurrence = {
+            "key": 1,
+            "media": [
+                {
+                    "type": "StillImage",
+                    "identifier": "file:///etc/passwd",
+                    "license": "http://creativecommons.org/licenses/by/4.0/",
+                }
+            ],
+        }
+        self.assertEqual(accepted_media_records(occurrence)[0]["image_url"], "file:///etc/passwd")
 
 
 if __name__ == "__main__":

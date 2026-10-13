@@ -17,6 +17,7 @@ import time
 import unittest
 import urllib.error
 import urllib.parse
+import urllib.request
 from email.message import EmailMessage
 from email.utils import formatdate
 from pathlib import Path
@@ -27,7 +28,7 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import fetch_gbif
-import licenses
+import url_safety
 
 
 def _offline_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
@@ -65,6 +66,13 @@ def _http_error(code: int, reason: str, headers: dict[str, str] | None = None, u
     for key, value in (headers or {}).items():
         header[key] = value
     return urllib.error.HTTPError(url, code, reason, header, None)
+
+
+class _TestMediaOpener:
+    """Download stand-in. Production uses ``_RedirectMediaOpener``."""
+
+    def open(self, request, timeout=40):
+        return urllib.request.urlopen(request, timeout=timeout)
 
 
 class _Response:
@@ -117,9 +125,16 @@ class FetchCase(unittest.TestCase):
         fetch_gbif.MAX_DOWNLOADS_PER_HOST = 4
         fetch_gbif._KEY_CACHE.clear()
         fetch_gbif._clear_load_cache()
-        self._dns = patch("licenses.socket.getaddrinfo", side_effect=_offline_getaddrinfo)
+        self._dns = patch("url_safety.socket.getaddrinfo", side_effect=_offline_getaddrinfo)
         self._dns.start()
         self.addCleanup(self._dns.stop)
+        self._opener = fetch_gbif._media_opener
+        fetch_gbif._media_opener = _TestMediaOpener()
+        self.addCleanup(self._restore_media_opener)
+        fetch_gbif._reset_unsafe_url_counts()
+
+    def _restore_media_opener(self):
+        fetch_gbif._media_opener = self._opener
 
 
 class DownloadRetryTest(FetchCase):
@@ -2856,7 +2871,7 @@ class MediaUrlSafetyTest(FetchCase):
             "fetch_gbif.time.sleep", side_effect=sleeps.append
         ):
             for url in urls:
-                with self.assertRaises(licenses.UnsafeMediaUrl, msg=url):
+                with self.assertRaises(url_safety.UnsafeMediaUrl, msg=url):
                     fetch_gbif.download_image(url, self._dest)
         self.assertEqual(calls["n"], 0)
         self.assertEqual(sleeps, [])
@@ -2874,17 +2889,17 @@ class MediaUrlSafetyTest(FetchCase):
             "file:///etc/passwd",
             "https://cdn.example.test/b.jpg\nSet-Cookie: a",
         ):
-            with self.assertRaises(licenses.UnsafeMediaUrl, msg=target):
+            with self.assertRaises(url_safety.UnsafeMediaUrl, msg=target):
                 handler.redirect_request(request, None, 302, "Found", EmailMessage(), target)
 
     def test_hostname_resolving_to_a_private_address_is_rejected(self):
         def private(host, port, family=0, type=0, proto=0, flags=0):
             return [(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP, "", ("10.1.2.3", port or 0))]
 
-        with patch("licenses.socket.getaddrinfo", side_effect=private), patch(
+        with patch("url_safety.socket.getaddrinfo", side_effect=private), patch(
             "fetch_gbif.urllib.request.urlopen", side_effect=AssertionError("urlopen")
         ):
-            with self.assertRaises(licenses.UnsafeMediaUrl):
+            with self.assertRaises(url_safety.UnsafeMediaUrl):
                 fetch_gbif.download_image(self._url, self._dest)
 
     def test_dns_failure_is_retried_then_downloaded(self):
@@ -2901,7 +2916,7 @@ class MediaUrlSafetyTest(FetchCase):
             return _Response(self.jpeg)
 
         sleeps: list[float] = []
-        with patch("licenses.socket.getaddrinfo", side_effect=flaky), patch(
+        with patch("url_safety.socket.getaddrinfo", side_effect=flaky), patch(
             "fetch_gbif.urllib.request.urlopen", side_effect=urlopen
         ), patch("fetch_gbif.time.sleep", side_effect=sleeps.append), patch(
             "fetch_gbif.random.uniform", return_value=0.0
@@ -2912,15 +2927,87 @@ class MediaUrlSafetyTest(FetchCase):
         self.assertEqual(calls["dns"], 3)
         self.assertEqual(len(sleeps), 2)
 
-    def test_unpatched_urlopen_uses_the_redirect_opener(self):
+    def test_production_opener_checks_redirects(self):
         request = urllib.request.Request(self._url)
         opener = unittest.mock.Mock()
         opener.open.return_value = _Response(self.jpeg)
+        production = fetch_gbif._RedirectMediaOpener()
         with patch("fetch_gbif.urllib.request.build_opener", return_value=opener) as build:
-            opened = fetch_gbif._open_media(request, 5)
+            opened = production.open(request, 5)
         self.assertIs(opened, opener.open.return_value)
         build.assert_called_once_with(fetch_gbif._PublicRedirectHandler)
         opener.open.assert_called_once_with(request, timeout=5)
+
+    def test_open_media_uses_the_injected_opener(self):
+        request = urllib.request.Request(self._url)
+        seen = {}
+        payload = self.jpeg
+
+        class Opener:
+            def open(self, request, timeout, payload=payload, seen=seen):
+                seen["url"] = request.full_url
+                seen["timeout"] = timeout
+                return _Response(payload)
+
+        fetch_gbif._media_opener = Opener()
+        opened = fetch_gbif._open_media(request, 7)
+        self.assertEqual(opened.read(), self.jpeg)
+        self.assertEqual(seen, {"url": self._url, "timeout": 7})
+
+    def test_unsafe_url_rate_aborts_only_above_five_percent_after_twenty(self):
+        fetch_gbif._reset_unsafe_url_counts()
+        for _ in range(19):
+            fetch_gbif._observe_download_attempt({"downloaded": False, "_failure_reason": "unsafe_url"})
+        self.assertEqual(fetch_gbif._unsafe_url_attempts, 19)
+        fetch_gbif._reset_unsafe_url_counts()
+        for _ in range(19):
+            fetch_gbif._observe_download_attempt({"downloaded": True})
+        fetch_gbif._observe_download_attempt({"downloaded": False, "_failure_reason": "unsafe_url"})
+        self.assertEqual(fetch_gbif._unsafe_url_attempts, 20)
+        with self.assertRaises(fetch_gbif.UnsafeUrlRateError):
+            fetch_gbif._observe_download_attempt({"downloaded": False, "_failure_reason": "unsafe_url"})
+
+    def test_run_aborts_when_dns_marks_most_downloads_unsafe(self):
+        import tempfile
+
+        def private(host, port, family=0, type=0, proto=0, flags=0):
+            return [(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP, "", ("198.18.0.1", port or 0))]
+
+        rows = []
+        for index in range(20):
+            rows.append(
+                {
+                    "occurrence_key": index + 1,
+                    "media_index": 0,
+                    "image_url": f"https://images.example.test/{index}.jpg",
+                    "license": "http://creativecommons.org/licenses/by/4.0/",
+                    "license_normalized": "cc-by-4.0",
+                }
+            )
+
+        def collect(species, max_per_class, max_per_occurrence, max_pages):
+            return [dict(row) for row in rows]
+
+        calls = {"n": 0}
+
+        def urlopen(request, timeout=40):
+            calls["n"] += 1
+            raise AssertionError("urlopen")
+
+        with tempfile.TemporaryDirectory() as directory:
+            with patch("fetch_gbif.collect_class_media", side_effect=collect), patch(
+                "url_safety.socket.getaddrinfo", side_effect=private
+            ), patch("fetch_gbif.urllib.request.urlopen", side_effect=urlopen):
+                with self.assertRaises(fetch_gbif.UnsafeUrlRateError):
+                    fetch_gbif.run_fetch(
+                        {"classes": [{"id": "boletus_edulis", "gbif_names": ["Boletus edulis"], "safety_tag": "edible"}]},
+                        max_per_class=20,
+                        max_pages=1,
+                        only="boletus_edulis",
+                        download_workers=2,
+                        data_dir=Path(directory),
+                    )
+        self.assertEqual(calls["n"], 0)
 
     def test_occurrence_key_must_be_digits_before_the_filename_is_built(self):
         row = {"occurrence_key": "../etc", "media_index": 0, "image_url": self._url}
