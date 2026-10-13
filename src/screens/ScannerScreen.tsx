@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Platform,
   ScrollView,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -57,13 +58,19 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
 
     try {
       setIsAnalyzing(true);
-      const photo = await camera.takePictureAsync({
-        quality: 0.8,
-        // Leave EXIF orientation on the file. readPhotoAsPngBytes bakes it,
-        // then imagePreprocess area-resizes to match the training PNGs.
-        exif: true,
-        ...SKIP_PROCESSING_CAPTURE,
-      });
+      // Leave EXIF orientation on the file. readPhotoAsPngBytes bakes it,
+      // then imagePreprocess area-resizes to match the training PNGs.
+      // iOS can reject the capture when exif is requested; retry without it.
+      const capture = { quality: 0.8, ...SKIP_PROCESSING_CAPTURE };
+      let photo;
+      try {
+        photo = await camera.takePictureAsync({ ...capture, exif: true });
+      } catch (exifError) {
+        if (Platform.OS !== 'ios') {
+          throw exifError;
+        }
+        photo = await camera.takePictureAsync(capture);
+      }
 
       if (photo && photo.uri) {
         // Stored EXIF pixels, swapped for orientations 5–8. Avoids a full

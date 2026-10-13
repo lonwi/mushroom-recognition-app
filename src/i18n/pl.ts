@@ -27,6 +27,7 @@ export const pl = {
       'Zdjęcia CC0 i CC-BY z kart atlasu. Gdy model jest dołączony, lista obejmuje też trening, test i sondy oceniające.',
     photoCreditsEmpty:
       'Nie ma dołączonego modelu, więc nie ma listy autorów zdjęć. Rozpoznawanie ze skanu pozostaje wyłączone.',
+    photoCreditsLoadError: 'Nie udało się wczytać listy autorów zdjęć.',
     photoCreditsUnknownAuthor: 'Autor niepodany',
     photoCreditsBack: 'Wróć do ustawień',
     photoCreditsSearch: 'Szukaj autora lub gatunku',

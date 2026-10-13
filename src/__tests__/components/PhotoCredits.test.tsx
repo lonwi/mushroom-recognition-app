@@ -45,6 +45,19 @@ describe('PhotoCredits', () => {
     openURL.mockRestore();
   });
 
+  it('shows a load failure instead of the empty-model message', async () => {
+    const { getByTestId, queryByTestId, getByText } = await render(
+      <LanguageProvider>
+        <PhotoCredits credits={null} loadFailed onClose={() => undefined} />
+      </LanguageProvider>,
+    );
+    expect(getByTestId('photo-credits-error')).toBeTruthy();
+    expect(getByText('Nie udało się wczytać listy autorów zdjęć.')).toBeTruthy();
+    expect(queryByTestId('photo-credits-empty')).toBeNull();
+    // Atlas gallery credits do not come from loadPhotoCredits(), so they stay visible.
+    expect(getByTestId('photo-credits-list')).toBeTruthy();
+  });
+
   it('shows a loading state instead of the empty-model message', async () => {
     const { getByTestId, queryByTestId, getByText } = await render(
       <LanguageProvider>

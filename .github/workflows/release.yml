@@ -100,7 +100,7 @@ jobs:
           fi
 
       - name: Setup EAS
-        uses: expo/expo-github-action@eab7a230208c952974db8c3245cfd78402c7b385 # v9.0.0
+        uses: expo/expo-github-action@eab7a230208c952974db8c3245cfd78402c7b385 # 9.0.0
         with:
           eas-version: 24.12.0
           packager: npm
@@ -125,6 +125,7 @@ jobs:
                 else error("expected a JSON array of builds") end;
               [ rows[]
                 | select((.platform // "" | ascii_downcase) == $platform)
+                | select(.status == "FINISHED")
                 | .id
                 | select(type == "string" and length > 0)
               ]
@@ -176,8 +177,11 @@ jobs:
         run: node scripts/assert-eas-release-config.mjs --tag "$GITHUB_REF_NAME"
 
       - name: Require build ids from this run
+        env:
+          ANDROID_ID: ${{ needs.build.outputs.android_id }}
+          IOS_ID: ${{ needs.build.outputs.ios_id }}
         run: |
-          if [ -z "${{ needs.build.outputs.android_id }}" ] || [ -z "${{ needs.build.outputs.ios_id }}" ]; then
+          if [ -z "$ANDROID_ID" ] || [ -z "$IOS_ID" ]; then
             echo "Build ids from this run are empty, so submit is refused. A timed-out EAS build keeps running on Expo and is not submitted."
             exit 1
           fi
@@ -192,7 +196,7 @@ jobs:
           fi
 
       - name: Setup EAS
-        uses: expo/expo-github-action@eab7a230208c952974db8c3245cfd78402c7b385 # v9.0.0
+        uses: expo/expo-github-action@eab7a230208c952974db8c3245cfd78402c7b385 # 9.0.0
         with:
           eas-version: 24.12.0
           packager: npm
@@ -202,7 +206,11 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Submit the Android build from this run
-        run: eas submit --profile production --platform android --id "${{ needs.build.outputs.android_id }}" --non-interactive
+        env:
+          ANDROID_ID: ${{ needs.build.outputs.android_id }}
+        run: eas submit --profile production --platform android --id "$ANDROID_ID" --non-interactive
 
       - name: Submit the iOS build from this run
-        run: eas submit --profile production --platform ios --id "${{ needs.build.outputs.ios_id }}" --non-interactive
+        env:
+          IOS_ID: ${{ needs.build.outputs.ios_id }}
+        run: eas submit --profile production --platform ios --id "$IOS_ID" --non-interactive

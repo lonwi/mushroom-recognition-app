@@ -17,8 +17,9 @@ export const NATIVE_PREVIEW_EDGE = 448;
  */
 export const SKIP_PROCESSING_CAPTURE = { skipProcessing: true } as const;
 
-const EXIF_WIDTH_KEYS = ['PixelXDimension', 'ImageWidth'] as const;
-const EXIF_HEIGHT_KEYS = ['PixelYDimension', 'ImageLength', 'ImageHeight'] as const;
+/** TIFF pair. ImageLength is the standard height; ImageHeight is the same slot when a reader uses that name. */
+const TIFF_HEIGHT_KEYS = ['ImageLength', 'ImageHeight'] as const;
+const PIXEL_HEIGHT_KEYS = ['PixelYDimension'] as const;
 
 function positiveInteger(value: unknown): number | undefined {
   if (typeof value === 'number' && Number.isInteger(value) && value >= 1) {
@@ -43,6 +44,40 @@ function readKeyedInteger(record: Record<string, unknown>, keys: readonly string
   return undefined;
 }
 
+/** Both members must come from this record. A width from one pair is never matched with a height from the other. */
+function dimensionPair(
+  record: Record<string, unknown>,
+  widthKey: string,
+  heightKeys: readonly string[],
+): { width: number; height: number } | undefined {
+  const width = positiveInteger(record[widthKey]);
+  const height = readKeyedInteger(record, heightKeys);
+  if (width === undefined || height === undefined) {
+    return undefined;
+  }
+  return { width, height };
+}
+
+/**
+ * `ImageWidth` + `ImageLength` wins over `PixelXDimension` + `PixelYDimension`,
+ * even when the TIFF pair is on a later nested object.
+ */
+function storedDimensionPair(records: Record<string, unknown>[]): { width: number; height: number } | undefined {
+  for (const record of records) {
+    const tiff = dimensionPair(record, 'ImageWidth', TIFF_HEIGHT_KEYS);
+    if (tiff) {
+      return tiff;
+    }
+  }
+  for (const record of records) {
+    const pixels = dimensionPair(record, 'PixelXDimension', PIXEL_HEIGHT_KEYS);
+    if (pixels) {
+      return pixels;
+    }
+  }
+  return undefined;
+}
+
 function exifRecords(exif: object): Record<string, unknown>[] {
   const root = exif as Record<string, unknown>;
   const records = [root];
@@ -57,40 +92,36 @@ function exifRecords(exif: object): Record<string, unknown>[] {
 /**
  * Upright pixel width from stored EXIF dimensions.
  *
- * `PixelXDimension` / `ImageWidth` are the JPEG's stored width, before the
- * orientation tag is applied. Orientations 5–8 transpose the axes (90° and
- * 270°, including the mirrored forms), so the upright width is the stored
- * height. Orientations 1–4 keep the stored width. This matches Android
- * `skipProcessing` (stored `TAG_IMAGE_WIDTH` plus the orientation tag) and
- * iOS, which puts `PixelXDimension` and `Orientation` on the capture exif
- * and does not implement `skipProcessing`.
+ * Dimensions are one pair from the same EXIF record. `ImageWidth` with
+ * `ImageLength` (or `ImageHeight` on that same record) takes priority over
+ * `PixelXDimension` with `PixelYDimension`. Those two pairs are never mixed.
+ * The stored width is the JPEG width before the orientation tag is applied.
+ * Orientations 5–8 transpose the axes (90° and 270°, including the mirrored
+ * forms), so the upright width is the stored height. Orientations 1–4 keep
+ * the stored width. This matches Android `skipProcessing` (stored
+ * `TAG_IMAGE_WIDTH` plus the orientation tag) and iOS, which puts
+ * `PixelXDimension` and `Orientation` on the capture exif and does not
+ * implement `skipProcessing`.
  */
 export function uprightWidthFromExif(exif: object | null | undefined): number | undefined {
   if (!exif) {
     return undefined;
   }
+  const records = exifRecords(exif);
   let orientation: number | undefined;
-  let storedWidth: number | undefined;
-  let storedHeight: number | undefined;
-  for (const record of exifRecords(exif)) {
-    if (orientation === undefined) {
-      const parsed = readKeyedInteger(record, ['Orientation']);
-      if (parsed !== undefined && parsed >= 1 && parsed <= 8) {
-        orientation = parsed;
-      }
+  for (const record of records) {
+    const parsed = readKeyedInteger(record, ['Orientation']);
+    if (parsed !== undefined && parsed >= 1 && parsed <= 8) {
+      orientation = parsed;
+      break;
     }
-    if (storedWidth === undefined) {
-      storedWidth = readKeyedInteger(record, EXIF_WIDTH_KEYS);
-    }
-    if (storedHeight === undefined) {
-      storedHeight = readKeyedInteger(record, EXIF_HEIGHT_KEYS);
-    }
+  }
+  const pair = storedDimensionPair(records);
+  if (!pair) {
+    return undefined;
   }
   const swapsAxes = orientation !== undefined && orientation >= 5 && orientation <= 8;
-  if (swapsAxes) {
-    return storedHeight;
-  }
-  return storedWidth;
+  return swapsAxes ? pair.height : pair.width;
 }
 
 /**

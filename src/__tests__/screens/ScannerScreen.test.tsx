@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { ScannerScreen } from '../../screens/ScannerScreen';
@@ -167,6 +167,51 @@ describe('ScannerScreen does not invent a recognition result', () => {
     expect(queryByText(/Pewność/)).toBeNull();
     expect(queryByText(/TFLite/)).toBeNull();
     expect(queryByText(/Borowik szlachetny/)).toBeNull();
+  });
+
+  it('retries an iOS capture without exif when the exif read fails', async () => {
+    const previous = Platform.OS;
+    Platform.OS = 'ios';
+    takePictureAsync
+      .mockRejectedValueOnce(new Error('exif failed'))
+      .mockResolvedValueOnce({ uri: 'file://camera/ios-retry.jpg', width: 3024 });
+    try {
+      const { getByTestId } = await renderScanner();
+      await fireEvent.press(getByTestId('scanner-shutter'));
+      await waitFor(() => {
+        expect(classifySpy).toHaveBeenCalledWith('file://camera/ios-retry.jpg', undefined);
+      });
+      expect(takePictureAsync).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ ...SKIP_PROCESSING_CAPTURE, exif: true }),
+      );
+      const retry = takePictureAsync.mock.calls[1][0] as { exif?: boolean; skipProcessing?: boolean };
+      expect(retry.exif).toBeUndefined();
+      expect(retry).toEqual(expect.objectContaining(SKIP_PROCESSING_CAPTURE));
+      expect(Alert.alert).not.toHaveBeenCalled();
+    } finally {
+      Platform.OS = previous;
+    }
+  });
+
+  it('does not retry a failed exif capture on Android', async () => {
+    const previous = Platform.OS;
+    Platform.OS = 'android';
+    takePictureAsync.mockRejectedValue(new Error('exif failed'));
+    try {
+      const { getByTestId } = await renderScanner();
+      await fireEvent.press(getByTestId('scanner-shutter'));
+      await waitFor(() => {
+        expect(Alert.alert).toHaveBeenCalledWith(
+          pl.scanner.photoFailedTitle,
+          pl.scanner.photoFailedBody,
+        );
+      });
+      expect(takePictureAsync).toHaveBeenCalledTimes(1);
+      expect(classifySpy).not.toHaveBeenCalled();
+    } finally {
+      Platform.OS = previous;
+    }
   });
 
   it('passes the upright EXIF width and does not use the stored photo.width', async () => {

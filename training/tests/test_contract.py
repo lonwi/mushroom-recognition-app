@@ -208,6 +208,48 @@ class DecisionTest(unittest.TestCase):
         self.assertAlmostEqual(energy_score(logits), -2.464369, places=5)
 
 
+# Names copied from .gitignore that can hold tokens or signing material.
+# `training/data` is matched by directory, not by this basename list, so `src/data` stays.
+_REPO_COPY_SECRET_PATTERNS = (
+    ".env",
+    ".env.*",
+    "*.pem",
+    "*.jks",
+    "*.p8",
+    "*.p12",
+    "*.key",
+    "*.mobileprovision",
+    "google-service-account.json",
+    "credentials.json",
+    "id_rsa",
+    "id_dsa",
+    "id_ecdsa",
+    "id_ed25519",
+)
+
+
+def _ignore_repo_copy(repo_root: Path):
+    """Skip install bulk, `training/data`, and secret-shaped filenames."""
+    skip_names = shutil.ignore_patterns(
+        "node_modules",
+        ".git",
+        "storybook-static",
+        "dist",
+        "coverage",
+        ".cache",
+        *_REPO_COPY_SECRET_PATTERNS,
+    )
+    training = (repo_root / "training").resolve()
+
+    def ignore(directory: str, names: list[str]) -> set[str]:
+        ignored = set(skip_names(directory, names))
+        if Path(directory).resolve() == training and "data" in names:
+            ignored.add("data")
+        return ignored
+
+    return ignore
+
+
 class ManifestAndShipGateTest(unittest.TestCase):
     def test_class_contract_covers_the_atlas_and_deadly_species(self):
         manifest = load_manifest()
@@ -1337,15 +1379,9 @@ class ManifestAndShipGateTest(unittest.TestCase):
                 ROOT,
                 copy_root,
                 symlinks=True,
-                ignore=shutil.ignore_patterns(
-                    "node_modules",
-                    ".git",
-                    "storybook-static",
-                    "dist",
-                    "coverage",
-                    ".cache",
-                ),
+                ignore=_ignore_repo_copy(ROOT),
             )
+            self.assertFalse((copy_root / "training" / "data").exists())
             (copy_root / "node_modules").symlink_to(ROOT / "node_modules", target_is_directory=True)
             module = copy_root / "src" / "services" / "attributionPackage.ts"
             model_module = copy_root / "src" / "services" / "modelPackage.ts"
@@ -1409,6 +1445,35 @@ class ManifestAndShipGateTest(unittest.TestCase):
     def test_install_writes_jsonl_on_a_repo_copy(self):
         with self._installed_repo_copy():
             pass
+
+    def test_repo_copy_ignores_training_data_and_secret_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "repo"
+            (source / "training" / "data" / "images").mkdir(parents=True)
+            (source / "training" / "data" / "images" / "a.jpg").write_bytes(b"jpg")
+            (source / "training" / "data" / ".env").write_text("TOKEN=1\n", encoding="utf-8")
+            (source / "training" / "prepare_data.py").write_text("print('ok')\n", encoding="utf-8")
+            (source / "src" / "data").mkdir(parents=True)
+            (source / "src" / "data" / "mushrooms.ts").write_text("export {}\n", encoding="utf-8")
+            (source / ".env").write_text("EXPO_TOKEN=1\n", encoding="utf-8")
+            (source / ".env.local").write_text("LOCAL=1\n", encoding="utf-8")
+            (source / "google-service-account.json").write_text("{}\n", encoding="utf-8")
+            (source / "certs").mkdir()
+            (source / "certs" / "store.p12").write_bytes(b"p12")
+            (source / "certs" / "readme.txt").write_text("keep\n", encoding="utf-8")
+            dest = Path(tmp) / "copy"
+            shutil.copytree(source, dest, ignore=_ignore_repo_copy(source))
+            self.assertFalse((dest / "training" / "data").exists())
+            self.assertTrue((dest / "training" / "prepare_data.py").is_file())
+            self.assertEqual(
+                (dest / "src" / "data" / "mushrooms.ts").read_text(encoding="utf-8"),
+                "export {}\n",
+            )
+            self.assertFalse((dest / ".env").exists())
+            self.assertFalse((dest / ".env.local").exists())
+            self.assertFalse((dest / "google-service-account.json").exists())
+            self.assertFalse((dest / "certs" / "store.p12").exists())
+            self.assertTrue((dest / "certs" / "readme.txt").is_file())
 
     @unittest.skipUnless(
         os.environ.get("REQUIRE_PNPM") == "1" or shutil.which("pnpm"),
