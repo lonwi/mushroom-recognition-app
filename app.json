@@ -30,9 +30,6 @@
         "android.permission.CAMERA",
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION"
-      ],
-      "blockedPermissions": [
-        "android.permission.WRITE_EXTERNAL_STORAGE"
       ]
     },
     "web": {

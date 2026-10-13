@@ -1567,7 +1567,11 @@ def _write_outputs(
 
 
 def _policy_hash() -> str:
-    """Hash the licence filter and the sampling rules that choose rows."""
+    """Hash the licence filter and the sampling rules that choose rows.
+
+    ``url_safety`` is not part of this hash, so previously cached rows are not
+    purged when URL checks change. Those rows are re-validated at download time.
+    """
     digest = hashlib.sha256()
     root = Path(__file__).resolve().parent
     for name in ("licenses.py", "sampling.py"):
