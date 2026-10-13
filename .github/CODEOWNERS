@@ -1,0 +1,4 @@
+/.github/workflows/ @lonwi
+/eas.json @lonwi
+/app.json @lonwi
+/scripts/assert-eas-release-config.mjs @lonwi

@@ -33,20 +33,38 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-        with:
-          version: 10
 
       - name: Setup Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Same audit as CI. pnpm.auditConfig.ignoreCves lists the CVEs with no published npm fix.
+      - name: Audit dependencies
+        run: pnpm audit --audit-level high
+
       - name: Typecheck
         run: pnpm typecheck
+
+      - name: Code quality
+        run: pnpm quality
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version-file: .python-version
+          cache: pip
+          cache-dependency-path: training/requirements-dev.txt
+
+      - name: Install Python test dependencies
+        run: python -m pip install -r training/requirements-dev.txt
+
+      - name: Python unit tests
+        run: python -m unittest discover -s training/tests -v
 
       - name: Test
         run: pnpm test --ci --watchAll=false
@@ -69,6 +87,10 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     environment: release-build
+    # builds.json upload needs actions: write. contents stays read.
+    permissions:
+      contents: read
+      actions: write
     outputs:
       android_id: ${{ steps.ids.outputs.android_id }}
       ios_id: ${{ steps.ids.outputs.ios_id }}
@@ -78,13 +100,11 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-        with:
-          version: 10
 
       - name: Setup Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Require linked Expo project and submit fields
@@ -111,6 +131,14 @@ jobs:
 
       - name: Build production binaries
         run: eas build --profile production --platform all --non-interactive --json > builds.json
+
+      - name: Upload EAS build report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: eas-builds
+          path: builds.json
+          retention-days: 30
 
       - name: Publish build ids from this run
         id: ids
@@ -164,13 +192,11 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-        with:
-          version: 10
 
       - name: Setup Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Require linked Expo project and submit fields

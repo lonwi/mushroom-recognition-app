@@ -43,6 +43,7 @@ yarn-error.*
 
 # caches and local tooling
 .cache/
+coverage/
 
 # Storybook / Playwright
 storybook-static
