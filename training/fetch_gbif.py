@@ -86,7 +86,8 @@ from datetime import timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 
-from licenses import accepted_media_records, normalize_cc_license
+from licenses import normalize_cc_license
+from url_safety import UnsafeMediaUrl, listed_media_records, validate_media_url
 from manifest import CENTRAL_EUROPE, LABELS_PATH, ROOT, load_manifest
 from sampling import (
     MAX_PER_OCCURRENCE,
@@ -105,11 +106,19 @@ GBIF_MATCH_DELAY = 0.2
 GBIF_PAGE_DELAY = 0.25
 MAX_DOWNLOADS_PER_HOST = 4
 DOWNLOAD_ATTEMPTS = 3
+# One run aborts when unsafe URL rejections exceed this share of download
+# attempts. Below the minimum, a handful of bad links does not stop the fetch.
+# The cut is strict: exactly 5% does not abort.
+UNSAFE_URL_MIN_ATTEMPTS = 20
+UNSAFE_URL_ABORT_RATE = 0.05
 DOWNLOAD_BACKOFF_SECONDS = 0.5
 # Added on top of backoff and Retry-After so 16 workers do not wake together.
 DOWNLOAD_JITTER_SECONDS = 0.5
 MAX_RETRY_AFTER_SECONDS = 120.0
 MAX_IMAGE_BYTES = 16_000_000
+# Pillow 12 decompression-bomb ceiling (1024**3 // 4 // 3). Set on every decode
+# so a caller cannot leave the check disabled.
+MAX_IMAGE_PIXELS = 1024 ** 3 // 4 // 3
 GBIF_PAGE_SIZE = 300
 # First licensed batch is this many times the download cap. Further GBIF pages
 # are requested only after that margin has been used as replacements.
@@ -154,6 +163,44 @@ _TRANSIENT_ERRNOS = {
     errno.EHOSTUNREACH,
     errno.ENETUNREACH,
 }
+
+_unsafe_url_attempts = 0
+_unsafe_url_hits = 0
+
+
+class UnsafeUrlRateError(RuntimeError):
+    """Too many download attempts resolved to a non-public address."""
+
+
+def _reset_unsafe_url_counts() -> None:
+    global _unsafe_url_attempts, _unsafe_url_hits
+    _unsafe_url_attempts = 0
+    _unsafe_url_hits = 0
+
+
+def _observe_download_attempt(row: dict) -> None:
+    """Count one network download. Abort when unsafe URLs dominate the run.
+
+    A filtering resolver or a VPN can answer public hostnames with addresses
+    in 198.18.0.0/15 or other non-public ranges. Those failures must stop the
+    run instead of being skipped until the pool looks empty.
+    """
+    global _unsafe_url_attempts, _unsafe_url_hits
+    _unsafe_url_attempts += 1
+    if row.get("_failure_reason") == "unsafe_url":
+        _unsafe_url_hits += 1
+    if _unsafe_url_attempts < UNSAFE_URL_MIN_ATTEMPTS:
+        return
+    if _unsafe_url_hits / _unsafe_url_attempts <= UNSAFE_URL_ABORT_RATE:
+        return
+    raise UnsafeUrlRateError(
+        f"aborting GBIF fetch: {_unsafe_url_hits} of {_unsafe_url_attempts} "
+        "download attempts were rejected as unsafe URLs "
+        f"(more than {UNSAFE_URL_ABORT_RATE:.0%}). "
+        "A VPN or a filtering resolver can answer public names with "
+        "non-public addresses such as 198.18.0.0/15. Refusing to drop the rest of the run."
+    )
+
 
 _FETCH_NOTE = (
     "Global fill runs after the Central European countries until the class cap. "
@@ -449,7 +496,7 @@ def _take_from_occurrence(
     key = record.get("key")
     if key in seen and key != partial_key:
         return [], 0, None, "skip"
-    licensed = accepted_media_records(record)
+    licensed = listed_media_records(record)
     if not licensed or max_per_occurrence < 1 or room < 1:
         return [], 0, None, "skip"
     takeable = licensed[:max_per_occurrence]
@@ -867,10 +914,12 @@ def _ensure_truncated_images_rejected() -> None:
     Nothing in this pipeline turns the truncated-image flag on. Force it off
     before every decode so a resumed file is a real image.
     """
-    from PIL import ImageFile
+    from PIL import Image, ImageFile
 
     ImageFile.LOAD_TRUNCATED_IMAGES = False
+    Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
     assert ImageFile.LOAD_TRUNCATED_IMAGES is False
+    assert Image.MAX_IMAGE_PIXELS == MAX_IMAGE_PIXELS
 
 
 def _is_json_int(value: object) -> bool:
@@ -1236,12 +1285,42 @@ def _verified_image_payload(payload: bytes) -> None:
     _decode_image_bytes(payload)
 
 
+class _PublicRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Re-check the target of every redirect before following it.
+
+    The same limitation as :func:`url_safety.validate_media_url` applies to
+    each target: urllib connects on its own lookup, and a proxy is not pinned
+    to the address that was checked.
+    """
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        validate_media_url(newurl)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+class _RedirectMediaOpener:
+    """Opener used for photo downloads. Tests replace ``_media_opener``."""
+
+    def open(self, request: urllib.request.Request, timeout: int):
+        opener = urllib.request.build_opener(_PublicRedirectHandler)
+        return opener.open(request, timeout=timeout)
+
+
+_media_opener = _RedirectMediaOpener()
+
+
+def _open_media(request: urllib.request.Request, timeout: int):
+    """Open one media URL through ``_media_opener`` after the address check."""
+    validate_media_url(request.full_url)
+    return _media_opener.open(request, timeout=timeout)
+
+
 def _download_once(url: str, destination: Path, timeout: int) -> int:
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     semaphore = _semaphore_for_host(url)
     semaphore.acquire()
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
+        with _open_media(request, timeout) as response:
             content_type = (response.headers.get("Content-Type") or "").lower()
             if content_type and not content_type.startswith("image/"):
                 raise RuntimeError(f"not an image ({content_type})")
@@ -1336,6 +1415,11 @@ def download_image(
     data_dir: Path | None = None,
 ) -> int:
     """Download one photo. A verified image already at `destination` is skipped.
+
+    The URL must be http or https on port 80 or 443, and every resolved
+    address must be public. Each redirect is checked the same way. urllib
+    resolves the host again after that check, and an HTTP proxy is not
+    forced onto the address that was accepted.
 
     Bytes land in a temporary file in the same directory and are renamed into
     place. The bytes are decoded in memory first. HTTP 429 honors Retry-After
@@ -1483,7 +1567,11 @@ def _write_outputs(
 
 
 def _policy_hash() -> str:
-    """Hash the licence filter and the sampling rules that choose rows."""
+    """Hash the licence filter and the sampling rules that choose rows.
+
+    ``url_safety`` is not part of this hash, so previously cached rows are not
+    purged when URL checks change. Those rows are re-validated at download time.
+    """
     digest = hashlib.sha256()
     root = Path(__file__).resolve().parent
     for name in ("licenses.py", "sampling.py"):
@@ -1696,8 +1784,23 @@ def _destination_for(directory: Path, relative: str) -> Path:
     return directory.joinpath(*relative.split("/"))
 
 
+def _occurrence_key_for_filename(value: object) -> str:
+    """GBIF keys are decimal digits. Anything else can escape the class folder."""
+    if isinstance(value, bool) or not isinstance(value, (int, str)):
+        raise ValueError("occurrence_key must be digits")
+    text = str(value) if isinstance(value, int) else value
+    if isinstance(value, int) and value < 0:
+        raise ValueError("occurrence_key must be digits")
+    if re.fullmatch(r"[0-9]+", text) is None:
+        raise ValueError("occurrence_key must be digits")
+    return text
+
+
 def _attach_file(row: dict, folder: str) -> Path:
-    filename = f"{row['occurrence_key']}_{row['media_index']}{suffix_for(row['image_url'])}"
+    filename = (
+        f"{_occurrence_key_for_filename(row.get('occurrence_key'))}"
+        f"_{row['media_index']}{suffix_for(row['image_url'])}"
+    )
     relative = Path("images") / folder / filename
     row["file"] = str(relative).replace("\\", "/")
     row["source"] = "gbif"
@@ -1707,6 +1810,8 @@ def _attach_file(row: dict, folder: str) -> Path:
 
 def _failure_reason(error: BaseException) -> str:
     """Stable bucket for one candidate that will not be retried."""
+    if isinstance(error, UnsafeMediaUrl):
+        return "unsafe_url"
     if isinstance(error, _RejectedImage):
         text = str(error).lower()
         if "too large" in text:
@@ -1996,6 +2101,8 @@ def _fill_to_cap(
         network = [row for row in batch if id(row) not in local_ids]
         if network:
             _download_rows(network, directory=directory, resume=resume, workers=workers)
+            for row in network:
+                _observe_download_attempt(row)
         for row in batch:
             if row.get("downloaded") is True:
                 kept.append(row)
@@ -2083,6 +2190,7 @@ def run_fetch(
     data_dir: Path | None = None,
 ) -> None:
     """Collect a licensed candidate pool and download until each cap is filled."""
+    _reset_unsafe_url_counts()
     _ensure_truncated_images_rejected()
     _clear_load_cache()
     if download_workers < 1:
