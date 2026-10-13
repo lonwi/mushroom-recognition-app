@@ -27,6 +27,19 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import fetch_gbif
+import licenses
+
+
+def _offline_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    """IP literals stay themselves. Names resolve to a public address. No network."""
+    import ipaddress
+
+    try:
+        ipaddress.ip_address(host)
+        ip = host
+    except ValueError:
+        ip = "93.184.216.34"
+    return [(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP, "", (ip, port or 0))]
 
 
 def _jpeg_bytes(index: int = 0) -> bytes:
@@ -104,6 +117,9 @@ class FetchCase(unittest.TestCase):
         fetch_gbif.MAX_DOWNLOADS_PER_HOST = 4
         fetch_gbif._KEY_CACHE.clear()
         fetch_gbif._clear_load_cache()
+        self._dns = patch("licenses.socket.getaddrinfo", side_effect=_offline_getaddrinfo)
+        self._dns.start()
+        self.addCleanup(self._dns.stop)
 
 
 class DownloadRetryTest(FetchCase):
@@ -2808,6 +2824,128 @@ class IdempotentReportTest(FetchCase):
             self.assertFalse(parked.exists())
             self.assertFalse(stale_same.exists())
             self.assertEqual(decoy.read_bytes(), decoy_bytes)
+
+
+class MediaUrlSafetyTest(FetchCase):
+    def setUp(self):
+        super().setUp()
+        import tempfile
+
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self._dest = Path(self._tmp.name) / "images" / "boletus_edulis" / "1_0.jpg"
+        self._url = "https://images.example.test/1.jpg"
+
+    def test_private_and_non_http_urls_are_not_opened_or_retried(self):
+        sleeps: list[float] = []
+        calls = {"n": 0}
+
+        def urlopen(request, timeout=40):
+            calls["n"] += 1
+            raise AssertionError("urlopen")
+
+        urls = [
+            "file:///etc/passwd",
+            "ftp://images.example.test/a.jpg",
+            "http://127.0.0.1/secret.jpg",
+            "http://169.254.169.254/latest/meta-data",
+            "http://10.0.0.1/a.jpg",
+            "http://[::1]/a.jpg",
+        ]
+        with patch("fetch_gbif.urllib.request.urlopen", side_effect=urlopen), patch(
+            "fetch_gbif.time.sleep", side_effect=sleeps.append
+        ):
+            for url in urls:
+                with self.assertRaises(licenses.UnsafeMediaUrl, msg=url):
+                    fetch_gbif.download_image(url, self._dest)
+        self.assertEqual(calls["n"], 0)
+        self.assertEqual(sleeps, [])
+
+    def test_redirect_is_checked_again(self):
+        handler = fetch_gbif._PublicRedirectHandler()
+        request = urllib.request.Request(self._url)
+        allowed = handler.redirect_request(
+            request, None, 302, "Found", EmailMessage(), "https://cdn.example.test/b.jpg"
+        )
+        self.assertEqual(allowed.full_url, "https://cdn.example.test/b.jpg")
+        for target in (
+            "http://127.0.0.1/secret",
+            "http://169.254.169.254/latest",
+            "file:///etc/passwd",
+            "https://cdn.example.test/b.jpg\nSet-Cookie: a",
+        ):
+            with self.assertRaises(licenses.UnsafeMediaUrl, msg=target):
+                handler.redirect_request(request, None, 302, "Found", EmailMessage(), target)
+
+    def test_hostname_resolving_to_a_private_address_is_rejected(self):
+        def private(host, port, family=0, type=0, proto=0, flags=0):
+            return [(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP, "", ("10.1.2.3", port or 0))]
+
+        with patch("licenses.socket.getaddrinfo", side_effect=private), patch(
+            "fetch_gbif.urllib.request.urlopen", side_effect=AssertionError("urlopen")
+        ):
+            with self.assertRaises(licenses.UnsafeMediaUrl):
+                fetch_gbif.download_image(self._url, self._dest)
+
+    def test_dns_failure_is_retried_then_downloaded(self):
+        calls = {"dns": 0, "open": 0}
+
+        def flaky(host, port, family=0, type=0, proto=0, flags=0):
+            calls["dns"] += 1
+            if calls["dns"] < 3:
+                raise socket.gaierror("temporary failure in name resolution")
+            return _offline_getaddrinfo(host, port, family, type, proto, flags)
+
+        def urlopen(request, timeout=40):
+            calls["open"] += 1
+            return _Response(self.jpeg)
+
+        sleeps: list[float] = []
+        with patch("licenses.socket.getaddrinfo", side_effect=flaky), patch(
+            "fetch_gbif.urllib.request.urlopen", side_effect=urlopen
+        ), patch("fetch_gbif.time.sleep", side_effect=sleeps.append), patch(
+            "fetch_gbif.random.uniform", return_value=0.0
+        ):
+            size = fetch_gbif.download_image(self._url, self._dest)
+        self.assertEqual(size, len(self.jpeg))
+        self.assertEqual(calls["open"], 1)
+        self.assertEqual(calls["dns"], 3)
+        self.assertEqual(len(sleeps), 2)
+
+    def test_unpatched_urlopen_uses_the_redirect_opener(self):
+        request = urllib.request.Request(self._url)
+        opener = unittest.mock.Mock()
+        opener.open.return_value = _Response(self.jpeg)
+        with patch("fetch_gbif.urllib.request.build_opener", return_value=opener) as build:
+            opened = fetch_gbif._open_media(request, 5)
+        self.assertIs(opened, opener.open.return_value)
+        build.assert_called_once_with(fetch_gbif._PublicRedirectHandler)
+        opener.open.assert_called_once_with(request, timeout=5)
+
+    def test_occurrence_key_must_be_digits_before_the_filename_is_built(self):
+        row = {"occurrence_key": "../etc", "media_index": 0, "image_url": self._url}
+        with self.assertRaises(ValueError):
+            fetch_gbif._attach_file(row, "boletus_edulis")
+        for bad in (True, -1, 1.5, "12\n", "12/3", None, "١"):
+            row["occurrence_key"] = bad
+            with self.assertRaises(ValueError, msg=repr(bad)):
+                fetch_gbif._attach_file(row, "boletus_edulis")
+        row["occurrence_key"] = 42
+        relative = fetch_gbif._attach_file(row, "boletus_edulis")
+        self.assertEqual(relative.as_posix(), "images/boletus_edulis/42_0.jpg")
+        row["occurrence_key"] = "0007"
+        relative = fetch_gbif._attach_file(row, "boletus_edulis")
+        self.assertEqual(relative.name, "0007_0.jpg")
+
+    def test_decode_sets_an_explicit_pixel_ceiling(self):
+        from PIL import Image, ImageFile
+
+        Image.MAX_IMAGE_PIXELS = None
+        ImageFile.LOAD_TRUNCATED_IMAGES = True
+        fetch_gbif._load_image_bytes(self.jpeg)
+        self.assertEqual(Image.MAX_IMAGE_PIXELS, fetch_gbif.MAX_IMAGE_PIXELS)
+        self.assertFalse(ImageFile.LOAD_TRUNCATED_IMAGES)
+        self.assertEqual(fetch_gbif.MAX_IMAGE_PIXELS, 1024 ** 3 // 4 // 3)
 
 
 if __name__ == "__main__":

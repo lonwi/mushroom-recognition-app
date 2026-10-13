@@ -25,12 +25,14 @@
       },
       "package": "com.grzybobranie.ai",
       "versionCode": 1,
+      "allowBackup": false,
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION"
+      ],
+      "blockedPermissions": [
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ]
     },
     "web": {

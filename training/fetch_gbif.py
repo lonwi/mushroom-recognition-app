@@ -86,7 +86,7 @@ from datetime import timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 
-from licenses import accepted_media_records, normalize_cc_license
+from licenses import accepted_media_records, normalize_cc_license, validate_media_url
 from manifest import CENTRAL_EUROPE, LABELS_PATH, ROOT, load_manifest
 from sampling import (
     MAX_PER_OCCURRENCE,
@@ -110,6 +110,9 @@ DOWNLOAD_BACKOFF_SECONDS = 0.5
 DOWNLOAD_JITTER_SECONDS = 0.5
 MAX_RETRY_AFTER_SECONDS = 120.0
 MAX_IMAGE_BYTES = 16_000_000
+# Pillow 12 decompression-bomb ceiling (1024**3 // 4 // 3). Set on every decode
+# so a caller cannot leave the check disabled.
+MAX_IMAGE_PIXELS = 1024 ** 3 // 4 // 3
 GBIF_PAGE_SIZE = 300
 # First licensed batch is this many times the download cap. Further GBIF pages
 # are requested only after that margin has been used as replacements.
@@ -867,10 +870,12 @@ def _ensure_truncated_images_rejected() -> None:
     Nothing in this pipeline turns the truncated-image flag on. Force it off
     before every decode so a resumed file is a real image.
     """
-    from PIL import ImageFile
+    from PIL import Image, ImageFile
 
     ImageFile.LOAD_TRUNCATED_IMAGES = False
+    Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
     assert ImageFile.LOAD_TRUNCATED_IMAGES is False
+    assert Image.MAX_IMAGE_PIXELS == MAX_IMAGE_PIXELS
 
 
 def _is_json_int(value: object) -> bool:
@@ -1236,12 +1241,35 @@ def _verified_image_payload(payload: bytes) -> None:
     _decode_image_bytes(payload)
 
 
+class _PublicRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Re-check the target of every redirect before following it."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        validate_media_url(newurl)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+def _open_media(request: urllib.request.Request, timeout: int):
+    """Open one media URL.
+
+    Tests replace ``urllib.request.urlopen``. Honor that replacement so a
+    mocked download does not open a socket. The real client uses an opener
+    whose redirect handler validates each target.
+    """
+    validate_media_url(request.full_url)
+    urlopen = urllib.request.urlopen
+    if getattr(urlopen, "__module__", None) != "urllib.request":
+        return urlopen(request, timeout=timeout)
+    opener = urllib.request.build_opener(_PublicRedirectHandler)
+    return opener.open(request, timeout=timeout)
+
+
 def _download_once(url: str, destination: Path, timeout: int) -> int:
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     semaphore = _semaphore_for_host(url)
     semaphore.acquire()
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
+        with _open_media(request, timeout) as response:
             content_type = (response.headers.get("Content-Type") or "").lower()
             if content_type and not content_type.startswith("image/"):
                 raise RuntimeError(f"not an image ({content_type})")
@@ -1336,6 +1364,9 @@ def download_image(
     data_dir: Path | None = None,
 ) -> int:
     """Download one photo. A verified image already at `destination` is skipped.
+
+    The URL must be http or https, and every resolved address must be public.
+    Each redirect is checked the same way.
 
     Bytes land in a temporary file in the same directory and are renamed into
     place. The bytes are decoded in memory first. HTTP 429 honors Retry-After
@@ -1696,8 +1727,23 @@ def _destination_for(directory: Path, relative: str) -> Path:
     return directory.joinpath(*relative.split("/"))
 
 
+def _occurrence_key_for_filename(value: object) -> str:
+    """GBIF keys are decimal digits. Anything else can escape the class folder."""
+    if isinstance(value, bool) or not isinstance(value, (int, str)):
+        raise ValueError("occurrence_key must be digits")
+    text = str(value) if isinstance(value, int) else value
+    if isinstance(value, int) and value < 0:
+        raise ValueError("occurrence_key must be digits")
+    if re.fullmatch(r"[0-9]+", text) is None:
+        raise ValueError("occurrence_key must be digits")
+    return text
+
+
 def _attach_file(row: dict, folder: str) -> Path:
-    filename = f"{row['occurrence_key']}_{row['media_index']}{suffix_for(row['image_url'])}"
+    filename = (
+        f"{_occurrence_key_for_filename(row.get('occurrence_key'))}"
+        f"_{row['media_index']}{suffix_for(row['image_url'])}"
+    )
     relative = Path("images") / folder / filename
     row["file"] = str(relative).replace("\\", "/")
     row["source"] = "gbif"

@@ -3,5 +3,5 @@
 # 2.21 is the pinned TensorFlow release. Do not float this to a newer major
 # without re-checking MobileNetV3Small(include_preprocessing=False) and the fp16 export.
 tensorflow==2.21.0
-numpy>=1.26
-pillow>=10.0.0
+numpy>=1.26,<=2.4.4
+pillow>=10.0.0,<=12.3.0
