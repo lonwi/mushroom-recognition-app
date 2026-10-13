@@ -2,7 +2,7 @@
 // fails this script. Findings that have been fixed do not (so a cleanup PR
 // stays green). Drop stale entries with: pnpm knip:update
 //
-// TODO: run `pnpm knip:update` after the real issues are removed, until the
+// TODO: run `pnpm knip:update` after real unused exports are removed, until the
 // baseline is empty. Do not use --update to hide a new finding.
 //
 // knip.json `ignoreDependencies` is only for false positives: @babel/core
@@ -74,7 +74,7 @@ const current = identities(report);
 if (update) {
   fs.mkdirSync(path.dirname(baselinePath), { recursive: true });
   const document = {
-    note: 'Grandfathered Knip issues. A new dependency, unlisted import, or unresolved import (including require) fails immediately. Up to 12 new files, exports, or types are allowed so a split can move symbols; lower EXPORT_SLACK in scripts/knip-baseline.mjs to 0 after that. pnpm knip:update rewrites this list from the current tree.',
+    note: 'Grandfathered Knip issues. A new dependency, unlisted import, unresolved import (including require), file, export, or type fails immediately. pnpm knip:update rewrites this list from the current tree.',
     issues: current,
   };
   fs.writeFileSync(baselinePath, `${JSON.stringify(document, null, 2)}\n`);
@@ -87,12 +87,9 @@ if (!fs.existsSync(baselinePath)) {
   process.exit(1);
 }
 
-// Exports, types, and files move when code is split. A few new identities of
-// those kinds are allowed so the in-flight refactor can land beside this gate.
-// A new dependency, unlisted import, or unresolved import (JS import or
-// require of a missing module) is never inside that slack.
-// TODO: set EXPORT_SLACK to 0 once that refactor is merged and the baseline is refreshed.
-const EXPORT_SLACK = 12;
+// #16 has landed. New files, exports, and types fail immediately, same as a
+// new dependency or an unresolved import.
+const EXPORT_SLACK = 0;
 const SLACK_TYPES = new Set([
   'files',
   'exports',

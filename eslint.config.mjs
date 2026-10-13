@@ -66,7 +66,99 @@ function collectPlatformImports(node, tainted) {
 }
 
 function taintAlias(node, tainted) {
-  if (node.id.type === 'Identifier' && isPlatformValue(node.init, tainted)) tainted.add(node.id.name);
+  const init = unwrapExpression(node.init);
+  if (node.id.type === 'Identifier' && init?.type === 'Identifier' && tainted.has(init.name)) {
+    tainted.add(node.id.name);
+  }
+}
+
+function isImportBinding(node) {
+  const parent = node.parent;
+  if (!parent) return false;
+  if (
+    parent.type === 'ImportDefaultSpecifier' ||
+    parent.type === 'ImportSpecifier' ||
+    parent.type === 'ImportNamespaceSpecifier'
+  ) {
+    return parent.local === node;
+  }
+  return false;
+}
+
+function isTypePosition(node) {
+  const parent = node.parent;
+  if (!parent) return false;
+  return (
+    parent.type === 'TSTypeQuery' ||
+    parent.type === 'TSTypeReference' ||
+    parent.type === 'TSQualifiedName' ||
+    parent.type === 'TSImportType'
+  );
+}
+
+function isNonComputedProperty(node) {
+  const parent = node.parent;
+  return parent?.type === 'MemberExpression' && parent.property === node && !parent.computed;
+}
+
+function platformRooted(node, tainted) {
+  const current = unwrapExpression(node);
+  if (!current || current.type === 'CallExpression') return false;
+  if (current.type === 'Identifier') return tainted.has(current.name);
+  if (current.type === 'MemberExpression') return platformRooted(current.object, tainted);
+  if (current.type === 'ChainExpression') return platformRooted(current.expression, tainted);
+  return false;
+}
+
+const DECLARED_ID = new Set(['VariableDeclarator', 'FunctionDeclaration', 'ClassDeclaration']);
+const PATTERN_PARENT = new Set(['ObjectPattern', 'ArrayPattern']);
+
+function isPatternBinding(parent, node) {
+  return parent.type === 'Property' && parent.value === node && PATTERN_PARENT.has(parent.parent?.type);
+}
+
+function isDeclaredName(node) {
+  const parent = node.parent;
+  if (!parent) return false;
+  if (DECLARED_ID.has(parent.type) && parent.id === node) return true;
+  if (parent.type === 'RestElement' && parent.argument === node) return true;
+  if (parent.type === 'AssignmentPattern' && parent.left === node) return true;
+  if (parent.type === 'ArrowFunctionExpression' && parent.params.includes(node)) return true;
+  return isPatternBinding(parent, node);
+}
+
+function reportBarePlatformUse(node, tainted, context) {
+  if (node.type !== 'Identifier' || !tainted.has(node.name)) return;
+  if (isImportBinding(node) || isTypePosition(node) || isNonComputedProperty(node) || isDeclaredName(node)) return;
+  const parent = node.parent;
+  if (parent?.type === 'MemberExpression' && parent.object === node) return;
+  if (parent?.type === 'ChainExpression') return;
+  context.report({ node, messageId: 'reexport' });
+}
+
+function reportReturnedPlatform(node, tainted, context) {
+  const value = node.type === 'ReturnStatement' ? node.argument : node.body;
+  if (!value || value.type === 'BlockStatement' || value.type === 'CallExpression') return;
+  if (platformRooted(value, tainted)) context.report({ node: value, messageId: 'reexport' });
+}
+
+function reportDestructure(node, tainted, context) {
+  if (node.id.type !== 'ObjectPattern' && node.id.type !== 'ArrayPattern') return;
+  if (platformRooted(node.init, tainted)) context.report({ node, messageId: 'reexport' });
+}
+
+function reportObjectAssign(node, tainted, context) {
+  const callee = unwrapExpression(node.callee);
+  if (callee?.type !== 'MemberExpression' || callee.computed) return;
+  if (callee.object?.type !== 'Identifier' || callee.object.name !== 'Object') return;
+  if (callee.property?.type !== 'Identifier' || callee.property.name !== 'assign') return;
+  for (const argument of node.arguments) {
+    if (platformRooted(argument, tainted)) context.report({ node: argument, messageId: 'reexport' });
+  }
+}
+
+function reportSpread(node, tainted, context) {
+  if (platformRooted(node.argument, tainted)) context.report({ node, messageId: 'reexport' });
 }
 
 function reportNamedExport(node, tainted, context) {
@@ -102,7 +194,7 @@ const noPlatformReexport = {
     schema: [],
     messages: {
       reexport:
-        'Do not re-export a storage or platform package from src/services. Keep the import inside an adapter and export a narrowed API.',
+        'Use a platform import only as X.method(...) inside an adapter. Do not return it, destructure it, copy it with Object.assign, or re-export it.',
     },
   },
   create(context) {
@@ -111,8 +203,24 @@ const noPlatformReexport = {
       ImportDeclaration(node) {
         collectPlatformImports(node, tainted);
       },
+      Identifier(node) {
+        reportBarePlatformUse(node, tainted, context);
+      },
       VariableDeclarator(node) {
         taintAlias(node, tainted);
+        reportDestructure(node, tainted, context);
+      },
+      ArrowFunctionExpression(node) {
+        reportReturnedPlatform(node, tainted, context);
+      },
+      ReturnStatement(node) {
+        reportReturnedPlatform(node, tainted, context);
+      },
+      CallExpression(node) {
+        reportObjectAssign(node, tainted, context);
+      },
+      SpreadElement(node) {
+        reportSpread(node, tainted, context);
       },
       ExportNamedDeclaration(node) {
         reportNamedExport(node, tainted, context);
@@ -211,6 +319,9 @@ export default tseslint.config(
         ...globals.jest,
       },
     },
+    rules: {
+      'sonarjs/no-duplicate-string': 'off',
+    },
   },
   {
     // Catalogs and specs are allowed to be long. The cap still applies to
@@ -227,12 +338,12 @@ export default tseslint.config(
     },
   },
   {
-    // Adapters may call platform packages. They must not hand the imported
-    // binding out: `export const qaRaw = AsyncStorage`, `export default`,
-    // `export { AsyncStorage }`, `export { default } from`, or `export * from`.
+    // Adapters may call platform packages as X.method(...). They must not
+    // return the binding (`() => AsyncStorage`), destructure it, copy it with
+    // Object.assign, or re-export it (`export const`, `export default`,
+    // `export { X }`, `export { default } from`, `export * from`).
     // `import type` stays allowed. A narrowed wrapper
-    // (`export const store = { getItem: (key) => AsyncStorage.getItem(key) }`)
-    // stays allowed. keyValueStore.ts (PR #16, src/services/storage/) is covered.
+    // (`getItem: (key) => AsyncStorage.getItem(key)`) stays allowed.
     files: ['src/services/**/*.{ts,tsx,js,jsx}'],
     plugins: {
       grzybobranie: {

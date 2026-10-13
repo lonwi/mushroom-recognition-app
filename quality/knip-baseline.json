@@ -1,5 +1,5 @@
 {
-  "note": "Grandfathered Knip issues. A new dependency, unlisted import, or unresolved import (including require) fails immediately. Up to 12 new files, exports, or types are allowed so a split can move symbols; lower EXPORT_SLACK in scripts/knip-baseline.mjs to 0 after that. pnpm knip:update rewrites this list from the current tree.",
+  "note": "Grandfathered Knip issues. A new dependency, unlisted import, unresolved import (including require), file, export, or type fails immediately. pnpm knip:update rewrites this list from the current tree.",
   "issues": [
     "dependencies\tpackage.json\texpo-status-bar",
     "devDependencies\tpackage.json\t@testing-library/jest-native",
@@ -8,6 +8,7 @@
     "exports\tsrc/components/EdibilityBadge.tsx\tIncompleteCardBadge",
     "exports\tsrc/data/atlasQuery.ts\tnormalizeAtlasQuery",
     "exports\tsrc/data/atlasQuery.ts\tspeciesMatchesSearch",
+    "exports\tsrc/data/speciesCatalog.ts\thasSpecies",
     "exports\tsrc/services/attributionPackage.ts\tPACKAGED_PHOTO_CREDITS",
     "exports\tsrc/services/classifierService.ts\tisModelPackaged",
     "exports\tsrc/services/imagePreprocess.ts\tMODEL_INPUT_SIZE",
@@ -20,11 +21,16 @@
     "exports\tsrc/services/recognitionDecision.ts\tDANGEROUS_GENUS_MIN_PROBABILITY",
     "exports\tsrc/services/recognitionDecision.ts\tlogsumexp",
     "exports\tsrc/services/recognitionDecision.ts\tsoftmax",
+    "exports\tsrc/services/storage/journalRepository.ts\tJournalRepository",
+    "exports\tsrc/services/storage/journalSchema.ts\tsanitizeRecognition",
+    "exports\tsrc/services/storage/settingsStore.ts\tSettingsStore",
     "exports\tsrc/services/storageService.ts\tsanitizeRecognition",
     "exports\tsrc/services/storageService.ts\tsanitizeSighting",
     "exports\tsrc/theme/paperTheme.ts\tmushroomForestColors",
     "exports\tsrc/utils/mushroomImages.ts\tMUSHROOM_IMAGES",
     "exports\tsrc/utils/tfjsPlatform.ts\tensureTensorFlowPlatform",
+    "types\tsrc/components/RecognitionSummary.tsx\tRecognitionCandidate",
+    "types\tsrc/data/preparationRules.ts\tPreparationCategory",
     "types\tsrc/services/classifierService.ts\tCandidatesClassification",
     "types\tsrc/services/classifierService.ts\tRejectedClassification",
     "types\tsrc/services/classifierService.ts\tUnavailableClassification",
@@ -33,8 +39,8 @@
     "types\tsrc/services/journalEntry.ts\tJournalPhotoOutcome",
     "types\tsrc/services/modelManifest.ts\tModelClass",
     "types\tsrc/services/modelManifest.ts\tOodConfig",
+    "types\tsrc/services/storage/settingsStore.ts\tStoredLanguage",
     "types\tsrc/types/mushroom.ts\tConfusedWithStatus",
-    "types\tsrc/types/mushroom.ts\tModelPrediction",
     "unresolved\tsrc/__tests__/services/tfliteRuntime.test.ts\t../../../assets/models/mushrooms_model.tflite"
   ]
 }

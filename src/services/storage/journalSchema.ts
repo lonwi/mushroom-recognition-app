@@ -88,40 +88,60 @@ export function sanitizeRecognition(value: unknown): JournalRecognition {
   return { status: 'unavailable' };
 }
 
+function trimmedNotes(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function photoNameFromRaw(raw: Record<string, unknown>): string | null {
+  const storedPhoto =
+    typeof raw.photoFile === 'string' ? raw.photoFile : typeof raw.photoUri === 'string' ? raw.photoUri : undefined;
+  return journalPhotoFileName(storedPhoto);
+}
+
+function sightingCoordinates(
+  raw: Record<string, unknown>,
+): { latitude: number; longitude: number } | undefined {
+  const { latitude, longitude } = raw;
+  if (isUsableCoordinate(latitude, longitude) && typeof longitude === 'number') {
+    return { latitude, longitude };
+  }
+  return undefined;
+}
+
+function legacyHasIdentity(recognition: Extract<JournalRecognition, { status: 'legacy' }>): boolean {
+  return Boolean(
+    recognition.speciesId || recognition.speciesNamePl || recognition.speciesNameLatin || recognition.confidence !== undefined,
+  );
+}
+
+function withLegacyParent(raw: Record<string, unknown>): JournalRecognition {
+  const recognition = sanitizeRecognition(raw.recognition);
+  if (recognition.status !== 'unavailable' && recognition.status !== 'legacy') return recognition;
+  const fromParent = legacyFromFields(raw);
+  if (recognition.status === 'legacy') {
+    return legacyHasIdentity(recognition) ? recognition : fromParent ?? recognition;
+  }
+  return fromParent ?? recognition;
+}
+
+function finiteTimestamp(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+}
+
 export function sanitizeSighting(value: unknown): SightingRecord | null {
   if (!value || typeof value !== 'object') return null;
   const raw = value as Record<string, unknown>;
   if (typeof raw.id !== 'string' || raw.id.length === 0) return null;
 
-  const latitude = raw.latitude;
-  const longitude = raw.longitude;
-  const notes = typeof raw.notes === 'string' ? raw.notes.trim() : '';
-  const storedPhoto =
-    typeof raw.photoFile === 'string' ? raw.photoFile : typeof raw.photoUri === 'string' ? raw.photoUri : undefined;
-  const photoFile = journalPhotoFileName(storedPhoto);
-  const coordinates =
-    isUsableCoordinate(latitude, longitude) && typeof longitude === 'number'
-      ? { latitude, longitude }
-      : {};
-
-  let recognition = sanitizeRecognition(raw.recognition);
-  if (recognition.status === 'unavailable' || recognition.status === 'legacy') {
-    const fromParent = legacyFromFields(raw);
-    if (recognition.status === 'legacy') {
-      recognition = recognition.speciesId || recognition.speciesNamePl || recognition.speciesNameLatin || recognition.confidence !== undefined
-        ? recognition
-        : fromParent ?? recognition;
-    } else if (fromParent) {
-      recognition = fromParent;
-    }
-  }
-
+  const notes = trimmedNotes(raw.notes);
+  const photoFile = photoNameFromRaw(raw);
+  const coordinates = sightingCoordinates(raw);
   return {
     id: raw.id,
-    timestamp: typeof raw.timestamp === 'number' && Number.isFinite(raw.timestamp) ? raw.timestamp : 0,
-    recognition,
+    timestamp: finiteTimestamp(raw.timestamp),
+    recognition: withLegacyParent(raw),
     ...(photoFile ? { photoFile } : {}),
-    ...coordinates,
+    ...(coordinates ?? {}),
     ...(notes ? { notes } : {}),
   };
 }

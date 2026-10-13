@@ -61,7 +61,8 @@ describe('adapter importer allowlist', { concurrency: 1 }, () => {
     const baseline = JSON.parse(fs.readFileSync('.dependency-cruiser-known-violations.json', 'utf8'));
     assert.equal(baseline.some((violation) => String(violation.rule?.name ?? '').startsWith(IMPORTER_PREFIX)), false);
     assert.equal(baseline.some((violation) => String(violation.rule?.name ?? '').includes('platform-adapter')), false);
-    assert.equal(baseline.length, 3);
+    assert.equal(baseline.length, 2);
+    assert.equal(baseline.some((violation) => String(violation.from).includes('LanguageContext')), false);
     assert.equal(baseline.every((violation) => violation.rule?.name === 'ui-not-to-storage-or-platform'), true);
   });
 });
@@ -87,6 +88,10 @@ export function keep(value: PermissionResponse | null): PermissionResponse | nul
 }`,
       `import type { PermissionResponse } from 'expo-camera';
 export type { PermissionResponse };`,
+      `import * as FileSystem from 'expo-file-system/legacy';
+export function directory(fallback: string | null = FileSystem.documentDirectory): string | null {
+  return fallback;
+}`,
     ];
     for (const code of allowed) {
       assert.deepEqual(await platformFindings(code), []);
@@ -115,6 +120,17 @@ const qaRaw = QaAsyncStorage;
 export default qaRaw;`,
       `export { default } from '${PLATFORM_PACKAGE}';`,
       `export * from 'expo-file-system';`,
+      `import QaAsyncStorage from '${PLATFORM_PACKAGE}';
+export const leak = () => QaAsyncStorage;`,
+      `import QaAsyncStorage from '${PLATFORM_PACKAGE}';
+const { getItem } = QaAsyncStorage;
+export const read = getItem;`,
+      `import QaAsyncStorage from '${PLATFORM_PACKAGE}';
+const wrapper = {};
+Object.assign(wrapper, QaAsyncStorage);
+export const copied = wrapper;`,
+      `import QaAsyncStorage from '${PLATFORM_PACKAGE}';
+export const spread = { ...QaAsyncStorage };`,
     ];
     for (const code of banned) {
       const findings = await platformFindings(code);
