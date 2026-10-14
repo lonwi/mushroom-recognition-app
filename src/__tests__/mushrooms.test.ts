@@ -438,6 +438,9 @@ describe('Mushroom Database & Safety Verification', () => {
 
     expect(bitter?.months).toEqual([6, 7, 8, 9, 10]);
     expect(shaggy?.status).toBe('POISONOUS');
+    expect(shaggy?.namePl).toBe('Czubajnik czerwieniejący');
+    expect(shaggy?.commonNicknames).toContain('Czubajka czerwieniejąca');
+    expect(shaggy?.warningNotes).toMatch(/Dawna nazwa: czubajka czerwieniejąca \(Zarzyński 2021, s\. 110\)/);
     expect(shaggy?.culinaryValue).toMatch(
       /^W części źródeł nadal opisywany jako jadalny; u części osób powoduje poważne dolegliwości żołądkowo-jelitowe; łatwo pomylić z trującymi czubajnikami/
     );

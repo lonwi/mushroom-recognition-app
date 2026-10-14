@@ -571,7 +571,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         fatal: true
       }
     ],
-    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Młode owocniki łatwo pomylić ze śmiertelnymi muchomorami. Podobnych czerwieniejących czubajników ta karta nie rozdziela.'
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Młode owocniki łatwo pomylić ze śmiertelnymi muchomorami. Podobnych czerwieniejących czubajników ta karta nie rozdziela. Dawna nazwa: czubajka czerwieniejąca (Zarzyński 2021, s. 110).'
   },
   {
     id: 'hygrophoropsis_aurantiaca',

@@ -92,6 +92,18 @@ describe('atlas filters', () => {
       status: 'ALL',
       hymenophore: 'ALL',
     }).map((species) => species.id)).toEqual(['inocybe_erubescens']);
+
+    expect(filterAtlasSpecies(MUSHROOMS_DATABASE, {
+      query: 'czubajnik czerwieniejacy',
+      status: 'ALL',
+      hymenophore: 'ALL',
+    }).map((species) => species.id)).toEqual(['chlorophyllum_rhacodes']);
+
+    expect(filterAtlasSpecies(MUSHROOMS_DATABASE, {
+      query: 'czubajka czerwieniejaca',
+      status: 'ALL',
+      hymenophore: 'ALL',
+    }).map((species) => species.id)).toEqual(['chlorophyllum_rhacodes']);
   });
 
   test('the edible filter skips unfinished cards and the incomplete chip lists them', () => {
