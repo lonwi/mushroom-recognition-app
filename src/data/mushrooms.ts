@@ -2,6 +2,24 @@ import { type MushroomSpecies } from '../types/mushroom';
 
 const STROPHARIACEAE = 'Pierścieniakowate (Strophariaceae)';
 
+/** Poisoning symptoms only. No dose, no description of how the toxins act. */
+export const FLY_AGARIC_POISONING_SYMPTOMS =
+  'Objawy zatrucia: po 0,5–2 godz. pobudzenie i halucynacje, potem wymioty, ból głowy, kołatanie serca, rozszerzone źrenice, stan podobny do upojenia alkoholowego i długi, głęboki sen. U osób wrażliwych możliwa utrata przytomności i zatrzymanie akcji serca (Zarzyński, „Grzyby polskich lasów”, 2021, s. 36, 294).';
+
+export const PANTHER_POISONING_SYMPTOMS =
+  'Objawy zatrucia: przebieg podobny jak po muchomorze czerwonym, zwykle cięższy — dolegliwości żołądkowe, biegunka, halucynacje, drgawki (Zarzyński, „Grzyby polskich lasów”, 2021, s. 302).';
+
+/** GIS first aid. Emergency numbers 112 and 999 only; no toxicology-centre list. */
+export const GIS_MUSHROOM_FIRST_AID =
+  'Przy objawach zatrucia po zjedzeniu grzybów: numer alarmowy 112 lub 999 albo transport do szpitala. Do lekarza zgłaszają się wszyscy, którzy jedli ten sam posiłek, także bez objawów. Osobie z objawami nie podaje się mleka ani alkoholu (GIS, „Bezpieczne grzybobranie”, 23.09.2022).';
+
+/** Look-alike warning only. Not a card and not a guide to where these fungi grow. */
+export const GALERINA_PSILOCYBE_WARNING =
+  'Łysiczki (Psilocybe) nie mają karty. Hełmówka jadowita jest śmiertelnie trująca i łatwo pomylić ją z łysiczką. Stamets 1996, s. 31–33, 144–145, 192–193.';
+
+export const PANAEOLUS_LOOKALIKE_WARNING =
+  'Kołpaczki (Panaeolus) nie mają karty. Hełmówka jadowita, łatwa do pomylenia z łysiczką, jest śmiertelnie trująca. Stamets 1996, s. 67–68.';
+
 export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
   {
     id: 'boletus_edulis',
@@ -366,7 +384,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         fatal: false
       }
     ],
-    warningNotes: 'TRUJĄCY. Nie jedz i nie próbuj usuwać toksyn w domu.'
+    warningNotes: `TRUJĄCY. Nie jedz i nie próbuj usuwać toksyn w domu. ${FLY_AGARIC_POISONING_SYMPTOMS} ${GIS_MUSHROOM_FIRST_AID}`
   },
   {
     id: 'lactarius_deliciosus',
@@ -780,7 +798,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         fatal: false
       }
     ],
-    warningNotes: 'NIE JEDZ. Silnie trujący. Łatki może zmyć deszcz, więc gładki brązowy kapelusz nadal może być tym muchomorem.'
+    warningNotes: `NIE JEDZ. Silnie trujący. Łatki może zmyć deszcz, więc gładki brązowy kapelusz nadal może być tym muchomorem. ${PANTHER_POISONING_SYMPTOMS} ${GIS_MUSHROOM_FIRST_AID}`
   },
   {
     id: 'amanita_virosa',
@@ -1463,9 +1481,23 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
           'Karta maślanki łagodnej odsyła tutaj po różnice. Same szare blaszki nie dowodzą, że to maślanka łagodna.'
         ],
         fatal: false
+      },
+      {
+        confusedWithId: 'psilocybe',
+        confusedWithName: 'Łysiczki (Psilocybe)',
+        confusedWithStatus: 'NO_ATLAS_VERDICT',
+        keyDifferences: [GALERINA_PSILOCYBE_WARNING],
+        fatal: false
+      },
+      {
+        confusedWithId: 'panaeolus',
+        confusedWithName: 'Kołpaczki (Panaeolus)',
+        confusedWithStatus: 'NO_ATLAS_VERDICT',
+        keyDifferences: [PANAEOLUS_LOOKALIKE_WARNING],
+        fatal: false
       }
     ],
-    warningNotes: 'NIE JEDZ. Śmiertelnie trująca. Małe brązowe owocniki na drewnie zostaw. Brak zdjęcia. Maślanka łagodna ma osobną kartę i porównuje się z tą.'
+    warningNotes: `NIE JEDZ. Śmiertelnie trująca. Małe brązowe owocniki na drewnie zostaw. Brak zdjęcia. Maślanka łagodna ma osobną kartę i porównuje się z tą. ${GALERINA_PSILOCYBE_WARNING} ${PANAEOLUS_LOOKALIKE_WARNING}`
   },
   {
     id: 'amanita_rubescens',
@@ -1943,6 +1975,18 @@ export const LOOKALIKES_WITHOUT_CARD: Readonly<
     note: POISONOUS_NOTE,
     reason:
       'Other Rubroboletus species (R. legaliae, R. rhodoxanthus and kin) are poisonous twins of the scarletina bolete. There is no atlas card. The look-alike row says poisonous.',
+  },
+  psilocybe: {
+    status: 'NO_ATLAS_VERDICT',
+    note: ATLAS_NO_VERDICT_NOTE,
+    reason:
+      'Łysiczki (Psilocybe) have no atlas card. The warning is only that the funeral bell is deadly poisonous and easy to confuse with them (Stamets 1996, s. 31–33, 144–145, 192–193). This atlas gives no edibility verdict.',
+  },
+  panaeolus: {
+    status: 'NO_ATLAS_VERDICT',
+    note: ATLAS_NO_VERDICT_NOTE,
+    reason:
+      'Kołpaczki (Panaeolus) have no atlas card. The warning stays on the funeral bell, which is deadly poisonous and easy to confuse with Psilocybe (Stamets 1996, s. 67–68). This atlas gives no edibility verdict.',
   },
 };
 

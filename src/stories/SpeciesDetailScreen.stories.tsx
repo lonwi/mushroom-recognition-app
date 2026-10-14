@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SpeciesDetailScreen } from '../screens/SpeciesDetailScreen';
 import { MUSHROOMS_DATABASE } from '../data/mushrooms';
 
@@ -43,6 +43,29 @@ export const PantherMissingCardTwins: Story = {
     </View>
   ),
 };
+
+export const FlyAgaricPoisoningNote: Story = {
+  render: () => (
+    <View style={styles.frame}>
+      <SpeciesDetailScreen species={species('amanita_muscaria')} onBack={() => {}} />
+    </View>
+  ),
+};
+
+export const FuneralBellLookalikes: Story = {
+  render: () => (
+    <View style={styles.frame}>
+      <SpeciesDetailScreen species={species('galerina_marginata')} onBack={() => {}} />
+    </View>
+  ),
+};
+
+const styles = StyleSheet.create({
+  frame: {
+    flex: 1,
+    minHeight: 900,
+  },
+});
 
 export const PaxillusIncompleteLookAlikes: Story = {
   render: () => (

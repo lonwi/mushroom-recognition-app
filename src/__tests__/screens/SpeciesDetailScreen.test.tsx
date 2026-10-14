@@ -53,6 +53,55 @@ describe('SpeciesDetailScreen safety notices', () => {
     expect(getByTestId('lookalike-unlinked-amanita_caesarea')).toBeTruthy();
     expect(getByTestId('species-warning-notes')).toBeTruthy();
     expect(getByText(/nie próbuj usuwać toksyn w domu/)).toBeTruthy();
+    expect(getByText(/112 lub 999/)).toBeTruthy();
+    expect(getByText(/nie podaje się mleka ani alkoholu/)).toBeTruthy();
+    expect(queryByText(/psylocybin/i)).toBeNull();
+    expect(queryByTestId('species-poisoning-note')).toBeNull();
+  });
+
+  it('shows the panther-cap poisoning note and the funeral-bell look-alike warning', async () => {
+    const panther = await render(
+      <SpeciesDetailScreen species={species('amanita_pantherina')} onBack={() => {}} />,
+    );
+    expect(panther.getByText(/zwykle cięższy/)).toBeTruthy();
+    expect(panther.getByText(/112 lub 999/)).toBeTruthy();
+    expect(panther.queryByText(/607 218 174/)).toBeNull();
+    expect(panther.queryByTestId('species-poisoning-note')).toBeNull();
+
+    const bell = await render(
+      <SpeciesDetailScreen species={species('galerina_marginata')} onBack={() => {}} />,
+    );
+    expect(bell.getAllByText(/Łysiczki \(Psilocybe\)/).length).toBeGreaterThan(1);
+    expect(bell.getAllByText(/Kołpaczki \(Panaeolus\)/).length).toBeGreaterThan(1);
+    expect(bell.getAllByText(/Stamets 1996, s\. 31–33/).length).toBeGreaterThan(1);
+    expect(bell.getAllByText(/Stamets 1996, s\. 67–68/).length).toBeGreaterThan(1);
+    expect(bell.getByTestId('lookalike-unlinked-psilocybe')).toBeTruthy();
+    expect(bell.getByTestId('lookalike-unlinked-panaeolus')).toBeTruthy();
+    expect(bell.queryByTestId('lookalike-link-psilocybe')).toBeNull();
+    expect(bell.queryByText(/pastwisk/i)).toBeNull();
+    expect(bell.queryByText(/upraw/i)).toBeNull();
+  });
+
+  it('translates the poisoning note and the funeral-bell warning in English', async () => {
+    await AsyncStorage.setItem('app_language', 'en');
+    const fly = await render(
+      <LanguageProvider>
+        <SpeciesDetailScreen species={species('amanita_muscaria')} onBack={() => {}} />
+      </LanguageProvider>,
+    );
+    expect(await fly.findByTestId('species-poisoning-note')).toBeTruthy();
+    expect(await fly.findByText(/call the emergency number 112 or 999/)).toBeTruthy();
+    expect(await fly.findByText(/Do not give milk or alcohol/)).toBeTruthy();
+    expect(fly.queryByText(/Psilocybin/i)).toBeNull();
+
+    const bell = await render(
+      <LanguageProvider>
+        <SpeciesDetailScreen species={species('galerina_marginata')} onBack={() => {}} />
+      </LanguageProvider>,
+    );
+    expect(await bell.findByTestId('species-galerina-lookalike-note')).toBeTruthy();
+    expect(await bell.findByText(/deadly poisonous and easy to confuse with a Psilocybe/)).toBeTruthy();
+    expect(bell.queryByTestId('species-poisoning-note')).toBeNull();
   });
 
   it('omits the season calendar when a card has no checked months', async () => {

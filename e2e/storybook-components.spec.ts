@@ -131,6 +131,39 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.getByTestId('incomplete-card-badge-amanita_rubescens')).toContainText('KARTA NIEPEŁNA');
     await expect(page.getByTestId('lookalike-status-amanita_rubescens')).not.toContainText('JADALNY');
     await expect(page.getByTestId('lookalike-status-macrolepiota_procera')).toContainText('JADALNY');
+    await expect(page.getByTestId('species-warning-notes')).toContainText('112 lub 999');
+    await expect(page.getByTestId('species-warning-notes')).toContainText(
+      'nie podaje się mleka ani alkoholu',
+    );
+    await expect(page.getByTestId('species-warning-notes')).toContainText('drgawki');
+    await expect(page.locator('body')).not.toContainText('psylocybin');
+    await expect(page.locator('body')).not.toContainText('607 218 174');
+  });
+
+  test('Fly agaric card lists poisoning symptoms and GIS first aid', async ({ page }) => {
+    await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--fly-agaric-poisoning-note');
+    await expect(page.getByTestId('species-warning-notes')).toContainText('112 lub 999');
+    await expect(page.getByTestId('species-warning-notes')).toContainText('po 0,5–2 godz.');
+    await expect(page.getByTestId('species-warning-notes')).toContainText(
+      'nie podaje się mleka ani alkoholu',
+    );
+    await expect(page.locator('body')).not.toContainText('psylocybin');
+    await expect(page.locator('body')).not.toContainText('607 218 174');
+  });
+
+  test('Funeral bell warns that it is deadly and easy to confuse with Psilocybe', async ({ page }) => {
+    await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--funeral-bell-lookalikes');
+    await expect(page.getByTestId('species-warning-notes')).toContainText(
+      'Hełmówka jadowita jest śmiertelnie trująca i łatwo pomylić ją z łysiczką',
+    );
+    await expect(page.getByTestId('lookalike-unlinked-psilocybe')).toContainText(
+      'Atlas nie wydaje werdyktu dla tego gatunku',
+    );
+    await expect(page.getByTestId('lookalike-unlinked-panaeolus')).toBeVisible();
+    await expect(page.locator('body')).toContainText('Stamets 1996, s. 31–33, 144–145, 192–193');
+    await expect(page.locator('body')).toContainText('Stamets 1996, s. 67–68');
+    await expect(page.locator('body')).not.toContainText('psylocybin');
+    await expect(page.locator('body')).not.toContainText('pastwisk');
   });
 
   test('Fibrecap names majówka on an unfinished card without a green edible badge', async ({ page }) => {

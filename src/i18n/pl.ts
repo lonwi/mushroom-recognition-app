@@ -1,3 +1,11 @@
+import {
+  FLY_AGARIC_POISONING_SYMPTOMS,
+  GALERINA_PSILOCYBE_WARNING,
+  GIS_MUSHROOM_FIRST_AID,
+  PANAEOLUS_LOOKALIKE_WARNING,
+  PANTHER_POISONING_SYMPTOMS,
+} from '../data/mushrooms';
+
 export const pl = {
   app: {
     title: 'Grzybobranie AI',
@@ -86,6 +94,11 @@ export const pl = {
     useLiterature: 'Znaczenie w literaturze',
     sourceLanguageNote:
       'Opisy, różnice sobowtórów i morfologia są tekstem źródłowym po polsku. Skróty miesięcy są w języku aplikacji.',
+    poisoningNoteTitle: 'Notka o zatruciu',
+    flyAgaricPoisoning: FLY_AGARIC_POISONING_SYMPTOMS,
+    pantherPoisoning: PANTHER_POISONING_SYMPTOMS,
+    poisoningFirstAid: GIS_MUSHROOM_FIRST_AID,
+    galerinaLookalikeWarning: `${GALERINA_PSILOCYBE_WARNING} ${PANAEOLUS_LOOKALIKE_WARNING}`,
     morelProtectionTitle: 'Ochrona częściowa w Polsce',
     morelProtectionBody:
       'Nie zbieraj dziko rosnących. Smardze są w Polsce objęte ochroną częściową. Zbiór tylko za zezwoleniem, z wyjątkiem okazów rosnących na terenie ogrodów, upraw ogrodniczych, szkółek leśnych oraz terenów zieleni (rozporządzenie Ministra Środowiska z 9 października 2014 r., Dz.U. 2014 poz. 1408). Ta informacja nie jest zezwoleniem.',
