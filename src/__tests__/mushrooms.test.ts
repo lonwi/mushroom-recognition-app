@@ -303,12 +303,15 @@ describe('Mushroom Database & Safety Verification', () => {
     const tasteJudgment = /najsmaczniejsz|\bsmaczn|smakowo|smakiem ustępuje|wyśmienit|rarytas/i;
     const polishLetter = String.raw`\p{L}\p{N}_`;
     const cookingOrder = new RegExp(
-      `(?<![${polishLetter}])(?:obgotować|obgotuj|odlać|odlej|zdjąć|zdejmij|odciąć|odetnij|zeskrob)(?![${polishLetter}])|Tylko dla doświadczonych|(?<=^|\\.\\s)Jadaln`,
-      'u'
+      `(?<![${polishLetter}])(?:obgotować|obgotuj|odlać|odlej|zdjąć|zdejmij|odciąć|odetnij|zeskrob)(?![${polishLetter}])|Tylko dla doświadczonych|(?<=^|[.!?]\\s+)Jadaln`,
+      'iu'
     );
     expect('Jadalny po obróbce').toMatch(cookingOrder);
     expect('Zdanie. Jadalne tylko po obróbce').toMatch(cookingOrder);
+    expect('Zdanie! jadalne tylko po obróbce').toMatch(cookingOrder);
+    expect('Pytanie? Jadalny grzyb').toMatch(cookingOrder);
     expect('W literaturze jadalny wyłącznie po obróbce').not.toMatch(cookingOrder);
+    expect('W literaturze jadalne tylko po obróbce').not.toMatch(cookingOrder);
     for (const order of ['obgotować', 'obgotuj', 'odlać', 'odlej', 'zdjąć', 'zdejmij', 'odciąć', 'odetnij', 'zeskrob']) {
       expect(order).toMatch(cookingOrder);
       expect(`W literaturze ${order}e się`).not.toMatch(cookingOrder);
@@ -440,7 +443,8 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(shaggy?.status).toBe('POISONOUS');
     expect(shaggy?.namePl).toBe('Czubajnik czerwieniejący');
     expect(shaggy?.commonNicknames).toContain('Czubajka czerwieniejąca');
-    expect(shaggy?.warningNotes).toMatch(/Dawna nazwa: czubajka czerwieniejąca \(Zarzyński 2021, s\. 110\)/);
+    expect(shaggy?.warningNotes).not.toMatch(/Zarzyński/);
+    expect(shaggy?.warningNotes).not.toMatch(/s\. 110/);
     expect(shaggy?.culinaryValue).toMatch(
       /^W części źródeł nadal opisywany jako jadalny; u części osób powoduje poważne dolegliwości żołądkowo-jelitowe; łatwo pomylić z trującymi czubajnikami/
     );
