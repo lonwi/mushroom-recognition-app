@@ -1,11 +1,14 @@
 import {
+  activateShellTab,
   applyHardwareBack,
   highlightedTab,
   initialViewStack,
   openPreparation,
   openSettings,
   openSpecies,
+  selectSpecies,
   selectTab,
+  shellScreen,
   visibleRoute,
 } from '../../navigation/viewStack';
 
@@ -83,6 +86,18 @@ describe('view stack', () => {
     expect(back).toEqual({ handled: true, stack: safety });
     if (!back.handled) return;
     expect(applyHardwareBack(back.stack).handled).toBe(false);
+  });
+
+  it('lets the header logo return to the scanner without touching settings first', () => {
+    const detail = openSpecies(root, 'boletus_edulis');
+    const settings = activateShellTab(detail, 'SETTINGS');
+    expect(shellScreen(settings)).toBe('SETTINGS');
+    expect(selectSpecies(settings, null)).toBe(settings);
+
+    const home = activateShellTab(selectSpecies(settings, null), 'SCANNER');
+    expect(home).toEqual(root);
+    expect(shellScreen(selectSpecies(detail, null))).toBe('ATLAS');
+    expect(activateShellTab(selectSpecies(detail, null), 'SCANNER')).toEqual(root);
   });
 
   it('clears pushed screens when a tab is selected', () => {

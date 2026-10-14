@@ -1,4 +1,5 @@
 export type RootTab = 'SCANNER' | 'ATLAS' | 'JOURNAL' | 'SAFETY';
+export type ShellTab = RootTab | 'SETTINGS' | 'PREPARATION';
 
 type SpeciesScreen = { readonly name: 'species'; readonly speciesId: string };
 type SettingsScreen = { readonly name: 'settings' };
@@ -75,6 +76,30 @@ export function visibleRoute(stack: ViewStack): VisibleRoute {
   if (top.name === 'species') return { kind: 'species', speciesId: top.speciesId };
   if (top.name === 'settings') return { kind: 'settings' };
   return { kind: 'preparation' };
+}
+
+/** Header and tab bar keep calling these. Settings and preparation push; root tabs clear. */
+export function activateShellTab(stack: ViewStack, tab: ShellTab): ViewStack {
+  if (tab === 'SETTINGS') return openSettings(stack);
+  if (tab === 'PREPARATION') return openPreparation(stack);
+  return selectTab(stack, tab);
+}
+
+/** A species id opens atlas detail. Null pops a species frame and leaves settings alone. */
+export function selectSpecies(stack: ViewStack, speciesId: string | null): ViewStack {
+  if (speciesId) return openSpecies(stack, speciesId);
+  const top = stack.pushed[stack.pushed.length - 1];
+  if (top?.name !== 'species') return stack;
+  const popped = applyHardwareBack(stack);
+  return popped.handled ? popped.stack : stack;
+}
+
+/** Which `screens` entry is visible. Species stays on the atlas entry. */
+export function shellScreen(stack: ViewStack): ShellTab {
+  const highlighted = highlightedTab(stack);
+  if (highlighted) return highlighted;
+  const top = stack.pushed[stack.pushed.length - 1];
+  return top?.name === 'settings' ? 'SETTINGS' : 'PREPARATION';
 }
 
 function pushOnce(stack: ViewStack, screen: SettingsScreen | PreparationScreen): ViewStack {

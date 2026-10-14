@@ -20,36 +20,72 @@ import { getSpecies } from './src/data/speciesCatalog';
 import { LanguageProvider, useLanguage } from './src/contexts/LanguageContext';
 import { useHardwareBack } from './src/navigation/hardwareBack';
 import {
+  activateShellTab,
   applyHardwareBack,
-  highlightedTab,
   initialViewStack,
-  openPreparation,
-  openSettings,
-  openSpecies,
-  selectTab,
+  selectSpecies,
+  shellScreen,
   visibleRoute,
-  type RootTab,
-  type VisibleRoute,
+  type ShellTab,
+  type ViewStack,
 } from './src/navigation/viewStack';
 
 import { PaperProvider } from 'react-native-paper';
 import { paperTheme } from './src/theme/paperTheme';
 import { colors, radius, spacing, typography } from './src/theme/tokens';
 
-const TAB_BAR: ReadonlyArray<{ id: RootTab; icon: string; labelKey: string }> = [
+type Tab = ShellTab;
+
+const TAB_BAR: ReadonlyArray<{ id: Tab; icon: string; labelKey: string; resetAtlas?: boolean }> = [
   { id: 'SCANNER', icon: '📷', labelKey: 'nav.scanner' },
-  { id: 'ATLAS', icon: '📖', labelKey: 'nav.atlas' },
+  { id: 'ATLAS', icon: '📖', labelKey: 'nav.atlas', resetAtlas: true },
   { id: 'JOURNAL', icon: '🧺', labelKey: 'nav.journal' },
   { id: 'SAFETY', icon: '🛡', labelKey: 'nav.safety' },
 ];
 
-interface ScreenActions {
+interface ShellHandlers {
   journalRefreshSignal: number;
-  onOpenSpecies: (speciesId: string) => void;
+  onOpenAtlasSpecies: (speciesId: string) => void;
   onBack: () => void;
   onOpenPreparation: () => void;
   onSavedToJournal: () => void;
   onShowDisclaimer: () => void;
+}
+
+function shellScreens(stack: ViewStack, handlers: ShellHandlers): Record<Tab, React.ReactNode> {
+  const route = visibleRoute(stack);
+  const species = route.kind === 'species' ? getSpecies(route.speciesId) : undefined;
+  return {
+    SCANNER: (
+      <ScannerScreen
+        onOpenAtlasSpecies={handlers.onOpenAtlasSpecies}
+        onSavedToJournal={handlers.onSavedToJournal}
+      />
+    ),
+    ATLAS: species ? (
+      <SpeciesDetailScreen
+        species={species}
+        onBack={handlers.onBack}
+        onOpenLookAlike={handlers.onOpenAtlasSpecies}
+      />
+    ) : (
+      <AtlasScreen onSelectSpecies={(item) => handlers.onOpenAtlasSpecies(item.id)} />
+    ),
+    JOURNAL: (
+      <JournalScreen
+        refreshSignal={handlers.journalRefreshSignal}
+        onOpenAtlasSpecies={handlers.onOpenAtlasSpecies}
+      />
+    ),
+    SAFETY: (
+      <SafetyGuideScreen
+        onShowDisclaimer={handlers.onShowDisclaimer}
+        onOpenPreparation={handlers.onOpenPreparation}
+      />
+    ),
+    PREPARATION: <PreparationGuideScreen />,
+    SETTINGS: <SettingsScreen />,
+  };
 }
 
 function AppContent() {
@@ -84,20 +120,28 @@ function AppContent() {
     setDisclaimerVisible(false);
   };
 
-  const openSpeciesById = (speciesId: string) => {
-    if (!getSpecies(speciesId)) return;
-    setStack((current) => openSpecies(current, speciesId));
+  const setActiveTab = (tab: Tab) => {
+    setStack((current) => activateShellTab(current, tab));
   };
 
-  const popStack = () => {
-    setStack((current) => {
-      const result = applyHardwareBack(current);
-      return result.handled ? result.stack : current;
-    });
+  const setSelectedSpecies = (species: { id: string } | null) => {
+    setStack((current) => selectSpecies(current, species?.id ?? null));
   };
 
-  const route = visibleRoute(stack);
-  const activeTab = highlightedTab(stack);
+  const handleOpenAtlasSpecies = (speciesId: string) => {
+    const match = getSpecies(speciesId);
+    if (match) setSelectedSpecies(match);
+  };
+
+  const activeTab = shellScreen(stack);
+  const screens = shellScreens(stack, {
+    journalRefreshSignal,
+    onOpenAtlasSpecies: handleOpenAtlasSpecies,
+    onBack: () => setSelectedSpecies(null),
+    onOpenPreparation: () => setActiveTab('PREPARATION'),
+    onSavedToJournal: () => setJournalRefreshSignal((value) => value + 1),
+    onShowDisclaimer: () => setDisclaimerVisible(true),
+  });
 
   return (
     // Top, bottom, and side insets are applied once, here. Tab screens sit in
@@ -113,130 +157,44 @@ function AppContent() {
             <Text style={styles.brandSubtitle}>{t('app.subtitle')}</Text>
           </View>
         </View>
-        <View style={styles.headerActions}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <View style={styles.offlinePill}>
             <Text style={styles.offlinePillText}>{t('app.offline')}</Text>
           </View>
-          <TouchableOpacity
-            onPress={() => setStack((current) => openSettings(current))}
-            style={styles.settingsButton}
-            testID="open-settings"
-          >
-            <Text style={styles.settingsIcon}>⚙️</Text>
+          <TouchableOpacity onPress={() => setActiveTab('SETTINGS')} style={{ marginLeft: 12 }}>
+            <Text style={{ fontSize: 20 }}>⚙️</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      <View style={styles.content}>
-        <VisibleScreen
-          route={route}
-          journalRefreshSignal={journalRefreshSignal}
-          onOpenSpecies={openSpeciesById}
-          onBack={popStack}
-          onOpenPreparation={() => setStack((current) => openPreparation(current))}
-          onSavedToJournal={() => setJournalRefreshSignal((value) => value + 1)}
-          onShowDisclaimer={() => setDisclaimerVisible(true)}
-        />
-      </View>
+      <View style={styles.content}>{screens[activeTab]}</View>
 
-      <TabBar
-        activeTab={activeTab}
-        onSelect={(tab) => setStack((current) => selectTab(current, tab))}
-      />
+      <View style={styles.bottomNav}>
+        {TAB_BAR.map((tab) => {
+          const active = activeTab === tab.id;
+          return (
+            <TouchableOpacity
+              key={tab.id}
+              style={[styles.navItem, active && styles.navItemActive]}
+              onPress={() => {
+                if (tab.resetAtlas) setSelectedSpecies(null);
+                setActiveTab(tab.id);
+              }}
+              activeOpacity={0.7}
+              testID={`nav-${tab.id}`}
+            >
+              <Text style={styles.navIcon}>{tab.icon}</Text>
+              <Text style={[styles.navText, active && styles.navTextActive]}>{t(tab.labelKey)}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
 
       <SafetyDisclaimerModal
         visible={disclaimerVisible}
         onAccept={handleAcceptDisclaimer}
       />
     </SafeAreaView>
-  );
-}
-
-function VisibleScreen({ route, ...actions }: ScreenActions & { route: VisibleRoute }) {
-  if (route.kind === 'species') {
-    return <SpeciesRoute speciesId={route.speciesId} onBack={actions.onBack} onOpenSpecies={actions.onOpenSpecies} />;
-  }
-  if (route.kind === 'settings') return <SettingsScreen />;
-  if (route.kind === 'preparation') return <PreparationGuideScreen />;
-  return <TabScreen tab={route.tab} {...actions} />;
-}
-
-function SpeciesRoute({
-  speciesId,
-  onBack,
-  onOpenSpecies,
-}: {
-  speciesId: string;
-  onBack: () => void;
-  onOpenSpecies: (speciesId: string) => void;
-}) {
-  const species = getSpecies(speciesId);
-  if (!species) {
-    return <AtlasScreen onSelectSpecies={(item) => onOpenSpecies(item.id)} />;
-  }
-  return (
-    <SpeciesDetailScreen
-      species={species}
-      onBack={onBack}
-      onOpenLookAlike={onOpenSpecies}
-    />
-  );
-}
-
-function TabScreen({ tab, ...actions }: ScreenActions & { tab: RootTab }) {
-  if (tab === 'ATLAS') {
-    return <AtlasScreen onSelectSpecies={(species) => actions.onOpenSpecies(species.id)} />;
-  }
-  if (tab === 'JOURNAL') {
-    return (
-      <JournalScreen
-        refreshSignal={actions.journalRefreshSignal}
-        onOpenAtlasSpecies={actions.onOpenSpecies}
-      />
-    );
-  }
-  if (tab === 'SAFETY') {
-    return (
-      <SafetyGuideScreen
-        onShowDisclaimer={actions.onShowDisclaimer}
-        onOpenPreparation={actions.onOpenPreparation}
-      />
-    );
-  }
-  return (
-    <ScannerScreen
-      onOpenAtlasSpecies={actions.onOpenSpecies}
-      onSavedToJournal={actions.onSavedToJournal}
-    />
-  );
-}
-
-function TabBar({
-  activeTab,
-  onSelect,
-}: {
-  activeTab: RootTab | null;
-  onSelect: (tab: RootTab) => void;
-}) {
-  const { t } = useLanguage();
-  return (
-    <View style={styles.bottomNav}>
-      {TAB_BAR.map((tab) => {
-        const active = activeTab === tab.id;
-        return (
-          <TouchableOpacity
-            key={tab.id}
-            style={[styles.navItem, active && styles.navItemActive]}
-            onPress={() => onSelect(tab.id)}
-            activeOpacity={0.7}
-            testID={`nav-${tab.id}`}
-          >
-            <Text style={styles.navIcon}>{tab.icon}</Text>
-            <Text style={[styles.navText, active && styles.navTextActive]}>{t(tab.labelKey)}</Text>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
   );
 }
 
@@ -286,16 +244,6 @@ const styles = StyleSheet.create({
     // emerald50 on primary is 11.76:1. 10px text needs WCAG AA 4.5:1.
     color: colors.emerald50,
     fontWeight: '600',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  settingsButton: {
-    marginLeft: spacing.md,
-  },
-  settingsIcon: {
-    fontSize: typography.headline,
   },
   offlinePill: {
     backgroundColor: colors.emerald900,

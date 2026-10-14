@@ -69,7 +69,7 @@ describe('Android hardware back', () => {
       expect(back.press()).toBe(false);
 
       await fireEvent.press(screen.getByTestId('atlas-card-boletus_edulis'));
-      await fireEvent.press(screen.getByTestId('open-settings'));
+      await fireEvent.press(screen.getByText('⚙️'));
       expect(screen.getByTestId('btn-lang-pl')).toBeTruthy();
       expect(screen.queryByTestId('species-back')).toBeNull();
 
@@ -98,7 +98,7 @@ describe('Android hardware back', () => {
     const back = installBackHandler();
     try {
       const screen = await render(<App />);
-      await fireEvent.press(screen.getByTestId('open-settings'));
+      await fireEvent.press(screen.getByText('⚙️'));
       await fireEvent.press(screen.getByTestId('btn-photo-credits'));
       expect(screen.getByTestId('photo-credits-screen')).toBeTruthy();
       expect(back.handlers.length).toBeGreaterThan(1);
