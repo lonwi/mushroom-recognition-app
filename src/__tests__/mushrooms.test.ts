@@ -240,7 +240,7 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(fieldMushroom.nameEn).toBe('Field mushroom');
     expect(fieldMushroom.commonNicknames).toEqual([]);
     expect(fieldMushroom.culinaryValue).toContain(
-      'rozporządzenie MZ z 17.05.2011 (Dz.U. 2011 nr 115 poz. 672; t.j. Dz.U. 2026 poz. 258)'
+      'rozporządzenie MZ z 17.05.2011 (Dz.U. 2011 nr 115 poz. 672; t.j. Dz.U. 2026 poz. 258, zał. nr 1)'
     );
     expect(fieldMushroom.culinaryValue).toMatch(/zbyt młodych egzemplarzy ze stanu naturalnego/);
     expect(fieldMushroom.culinaryValue).toMatch(/blaszki jeszcze nie poróżowiały/);

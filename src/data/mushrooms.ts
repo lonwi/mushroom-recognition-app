@@ -495,7 +495,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     stemDescription: 'Krótki trzon z pierścieniem. Brak pochwy u nasady.',
     fleshDescription: 'Miąższ jasny. Silne, chromowe żółknięcie u nasady trzonu i zapach karbolu wskazują na pieczarkę żółtawą, nie na tę kartę.',
     tasteAndSmell: 'Nie sprawdzaj smakiem.',
-    culinaryValue: 'W literaturze (rozporządzenie MZ z 17.05.2011 (Dz.U. 2011 nr 115 poz. 672; t.j. Dz.U. 2026 poz. 258), załącznik nr 1) pieczarka polna jest na wykazie grzybów dopuszczonych do obrotu, z wyjątkiem zbyt młodych egzemplarzy ze stanu naturalnego, których blaszki jeszcze nie poróżowiały. Ta karta nie uprawnia do zbioru ani spożycia.',
+    culinaryValue: 'W literaturze (rozporządzenie MZ z 17.05.2011 (Dz.U. 2011 nr 115 poz. 672; t.j. Dz.U. 2026 poz. 258, zał. nr 1)) pieczarka polna jest na wykazie grzybów dopuszczonych do obrotu, z wyjątkiem zbyt młodych egzemplarzy ze stanu naturalnego, których blaszki jeszcze nie poróżowiały. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'amanita_phalloides',
