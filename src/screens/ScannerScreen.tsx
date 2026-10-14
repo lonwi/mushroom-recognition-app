@@ -213,9 +213,16 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
                 style={[styles.demoChip, example.danger && styles.demoChipDanger]}
                 onPress={() => openAtlasSample(example.id)}
                 disabled={isAnalyzing}
+                accessibilityLabel={example.label}
                 testID={`demo-atlas-${example.slug}`}
               >
-                <Text style={styles.demoChipEmoji}>{example.emoji}</Text>
+                <Text
+                  style={styles.demoChipEmoji}
+                  importantForAccessibility="no"
+                  accessibilityElementsHidden
+                >
+                  {example.emoji}
+                </Text>
                 <Text
                   style={[styles.demoChipText, example.danger && styles.demoChipDangerText]}
                   testID={`demo-atlas-label-${example.slug}`}

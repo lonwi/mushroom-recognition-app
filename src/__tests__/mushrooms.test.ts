@@ -275,8 +275,9 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(blusher.fleshDescription).toMatch(/hemolizyn/);
     expect(blusher.tasteAndSmell).toMatch(/Czerwienienie nie jest dowodem/);
 
-    expect(orangeBolete.culinaryValue).toMatch(/versipelle/);
-    expect(orangeBolete.culinaryValue).toMatch(/nie jest dopuszczony/);
+    expect(orangeBolete.culinaryValue).toContain(
+      'Koźlarz czerwony (L. aurantiacum, w wykazie MZ jako L. rufum) jest dopuszczony do obrotu, koźlarz pomarańczowożółty (L. versipelle) nie.'
+    );
     const rawStatement = /surowy i niedogotowany jest trujący/gi;
     const scarletinaText = [
       scarletina.fleshDescription,
@@ -302,9 +303,17 @@ describe('Mushroom Database & Safety Verification', () => {
     const tasteJudgment = /najsmaczniejsz|\bsmaczn|smakowo|smakiem ustępuje|wyśmienit|rarytas/i;
     const polishLetter = String.raw`\p{L}\p{N}_`;
     const cookingOrder = new RegExp(
-      `(?<![${polishLetter}])(?:obgotować|odlać|zdjąć|odciąć)(?![${polishLetter}])|Tylko dla doświadczonych|^Jadalny`,
+      `(?<![${polishLetter}])(?:obgotować|obgotuj|odlać|odlej|zdjąć|zdejmij|odciąć|odetnij|zeskrob)(?![${polishLetter}])|Tylko dla doświadczonych|(?<=^|\\.\\s)Jadaln`,
       'u'
     );
+    expect('Jadalny po obróbce').toMatch(cookingOrder);
+    expect('Zdanie. Jadalne tylko po obróbce').toMatch(cookingOrder);
+    expect('W literaturze jadalny wyłącznie po obróbce').not.toMatch(cookingOrder);
+    for (const order of ['obgotować', 'obgotuj', 'odlać', 'odlej', 'zdjąć', 'zdejmij', 'odciąć', 'odetnij', 'zeskrob']) {
+      expect(order).toMatch(cookingOrder);
+      expect(`W literaturze ${order}e się`).not.toMatch(cookingOrder);
+    }
+    expect('W literaturze kosmki z trzonu zeskrobuje się przed jedzeniem').not.toMatch(cookingOrder);
     expect(unfinished.length).toBeGreaterThan(0);
     for (const species of unfinished) {
       expect(species.culinaryValue).toMatch(/W literaturze|Według |Wg /);

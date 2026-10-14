@@ -23,7 +23,6 @@ import { colors } from '../theme/tokens';
  * Catalog photos are 1200×896 and have no per-image focal point.
  * `cover` on a frame of that aspect keeps the whole picture, centered.
  */
-export const HERO_PHOTO_CONTENT_POSITION: 'center' | 'bottom' = 'center';
 const HERO_PHOTO_ASPECT = 1200 / 896;
 
 interface Props {
@@ -100,7 +99,7 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
           <View style={styles.photoFrame} testID="species-photo-frame">
             <Image
               source={photo}
-              style={HERO_PHOTO_CONTENT_POSITION === 'center' ? styles.photoCenter : styles.photoBottom}
+              style={styles.photo}
               resizeMode="cover"
               testID="species-photo"
             />
@@ -321,15 +320,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: colors.emerald800,
   },
-  photoCenter: {
+  photo: {
     ...StyleSheet.absoluteFill,
-  },
-  photoBottom: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: '130%',
   },
   navBar: {
     paddingHorizontal: 16,
