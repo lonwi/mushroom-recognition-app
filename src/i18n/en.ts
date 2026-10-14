@@ -26,7 +26,7 @@ export const en: Translations = {
     photoCreditsOpen: 'Dataset photo credits',
     photoCreditsLoading: 'Loading photo credits…',
     photoCreditsLead:
-      'CC0 and CC-BY photos in the shipped model dataset: training, test, and evaluation probes.',
+      'CC0 and CC-BY photos on the atlas cards. When a model is installed, the list also includes training, test, and evaluation probes.',
     photoCreditsEmpty:
       'No model is installed, so there is no list of photo credits. Scan recognition stays off.',
     photoCreditsUnknownAuthor: 'Author not listed',
@@ -101,6 +101,29 @@ export const en: Translations = {
     stemVeil: 'Stem and veil',
     fleshTasteSmell: 'Flesh, taste and smell',
     significanceUse: 'Significance and use',
+  },
+  gallery: {
+    note: 'Example photos. This is not an identification and it is not an edibility verdict.',
+    author: 'Author: {name}',
+    source: 'Source',
+    position: '{index} / {count}',
+    modified: 'modified: resized, WebP',
+    photoLabel: '{species}. {feature}',
+    feature: {
+      cap: 'Cap from above',
+      amanitaWhole: 'Whole fruiting body with the bulb or volva at the base',
+      amanitaYoung: 'Young fruiting body (“egg”)',
+      wholeStemBase: 'Whole fruiting body with stem base',
+      swollenBaseNotVolva:
+        'Whole fruiting body with stem base. A thickened (bulbous) stem base is not an Amanita volva or bulb.',
+      chlorophyllumWhole:
+        'Whole fruiting body with stem base. A thickened (bulbous) stem base is not an Amanita volva or bulb. The base can have a rim, but it has no volva.',
+      gills: 'Gills from below',
+      gillsRing: 'Gills and ring from below',
+      gillsCortina: 'Gills and cortina from below',
+      young: 'Young fruiting body',
+      undersideStem: 'Underside with the stem',
+    },
   },
   scanner: {
     title: 'AI Mushroom Scanner',

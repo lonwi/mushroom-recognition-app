@@ -34,7 +34,7 @@ describe('SettingsScreen RTL Tests', () => {
     expect(AsyncStorage.setItem).toHaveBeenCalledWith('app_language', 'en');
   });
 
-  it('opens an empty photo-credit list when no model is installed', async () => {
+  it('lists atlas gallery credits when no model is installed', async () => {
     let resolveCredits: (value: null) => void = () => undefined;
     (loadPhotoCredits as jest.Mock).mockImplementation(
       () =>
@@ -42,7 +42,7 @@ describe('SettingsScreen RTL Tests', () => {
           resolveCredits = resolve;
         }),
     );
-    const { getByTestId, queryByTestId, queryByText, findByTestId } = await render(
+    const { getByTestId, queryByTestId, queryByText, findAllByText } = await render(
       <LanguageProvider>
         <SettingsScreen />
       </LanguageProvider>
@@ -56,6 +56,9 @@ describe('SettingsScreen RTL Tests', () => {
     await act(async () => {
       resolveCredits(null);
     });
-    expect(await findByTestId('photo-credits-empty')).toHaveTextContent(/Nie ma dołączonego modelu/);
+    expect((await findAllByText('Павлик Лисицын')).length).toBeGreaterThan(0);
+    expect((await findAllByText('zmieniono: przeskalowano, WebP')).length).toBeGreaterThan(0);
+    expect((await findAllByText('sigridjakob')).length).toBeGreaterThan(0);
+    expect(queryByTestId('photo-credits-empty')).toBeNull();
   });
 });

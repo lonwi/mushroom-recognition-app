@@ -8,6 +8,11 @@ declare module '*.png' {
   export default value;
 }
 
+declare module '*.webp' {
+  const value: number;
+  export default value;
+}
+
 declare module '*.tflite' {
   const assetId: number;
   export = assetId;

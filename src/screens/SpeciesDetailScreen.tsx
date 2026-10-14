@@ -12,6 +12,7 @@ import { Ionicons, Feather } from '@expo/vector-icons';
 import { MushroomSpecies } from '../types/mushroom';
 import { SpeciesStatusBadge } from '../components/EdibilityBadge';
 import { LookAlikeAlert } from '../components/LookAlikeAlert';
+import { SpeciesGallery } from '../components/SpeciesGallery';
 import { getMushroomImage } from '../utils/mushroomImages';
 import { hasFatalLookAlikeRisk, MUSHROOM_IDS, showsKitchenSection } from '../data/mushrooms';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -138,6 +139,8 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+
+        <SpeciesGallery speciesId={species.id} />
 
         {language === 'en' ? (
           <Text style={styles.sourceLanguageNote} testID="species-source-language-note">

@@ -375,4 +375,13 @@ export default tseslint.config(
     files: ['src/screens/SpeciesDetailScreen.tsx'],
     rules: { 'max-lines': ['error', { max: 720, skipBlankLines: true, skipComments: true }] },
   },
+  {
+    // Metro bundles offline images from a string literal require(). This file
+    // is the gallery manifest, so the import rule stays off without a new
+    // suppression entry.
+    files: ['src/data/speciesGallery.ts'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
 );

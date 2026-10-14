@@ -171,4 +171,10 @@ export const typography = {
   body: 14,
   title: 16,
   headline: 20,
+  /** Line height for 12px caption copy. */
+  lineHeightSmall: 18,
+} as const;
+
+export const sizing = {
+  galleryPhotoHeight: 220,
 } as const;

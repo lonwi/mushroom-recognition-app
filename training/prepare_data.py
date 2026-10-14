@@ -1,5 +1,8 @@
 """Dedup, write the 224px training PNGs, then split by observation.
 
+Atlas gallery photos that match by image URL, mo_observation_id, or
+iNaturalist observation id stay out of the test split.
+
     python training/prepare_data.py
 
 Corrupt files are skipped. The cached PNG is EXIF-oriented and area-resized
@@ -18,6 +21,7 @@ from pathlib import Path
 import numpy as np
 
 from dedup import dedup_records, dropped_per_class, write_jsonl
+from gallery_exclusion import gallery_test_blocked
 from manifest import ROOT, load_manifest
 from preprocess import MODEL_INPUT_SIZE, ImageReadError, load_oriented_rgb, write_model_png
 from split import split_by_observation, split_key_summary
@@ -139,6 +143,11 @@ def _cache_model_pngs(records: list[dict], size: int) -> tuple[list[dict], list[
     return kept, skipped
 
 
+def assign_splits(records: list[dict]) -> dict[str, list[dict]]:
+    """Train/val/test split. Atlas gallery photos stay out of test."""
+    return split_by_observation(records, test_blocked=gallery_test_blocked)
+
+
 def main() -> None:
     source = DATA_DIR / "attributions.jsonl"
     if not source.is_file():
@@ -164,7 +173,7 @@ def main() -> None:
         ),
         encoding="utf-8",
     )
-    splits = split_by_observation(prepared)
+    splits = assign_splits(prepared)
     serializable = {name: rows for name, rows in splits.items()}
     (DATA_DIR / "splits.json").write_text(json.dumps(serializable, ensure_ascii=False), encoding="utf-8")
     counts = {name: dict(Counter(row["class_id"] for row in rows)) for name, rows in splits.items()}

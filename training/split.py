@@ -77,12 +77,20 @@ def split_by_observation(
     val_ratio: float = 0.15,
     test_ratio: float = 0.15,
     seed: int = 42,
+    test_blocked=None,
 ) -> dict[str, list[dict]]:
+    """Split by observation. ``test_blocked`` rows never enter the test split.
+
+    A blocked photo keeps its whole collector group out of test, so the group
+    still does not straddle two splits. Held-out taxa still go to test unless
+    the row itself is blocked.
+    """
     if val_ratio < 0 or test_ratio < 0 or val_ratio + test_ratio >= 1:
         raise ValueError("val and test ratios must leave a non-empty train share")
 
-    held_out = [record for record in records if record.get("held_out_taxon")]
-    records = [record for record in records if not record.get("held_out_taxon")]
+    blocked = test_blocked or (lambda _record: False)
+    held_out = [record for record in records if record.get("held_out_taxon") and not blocked(record)]
+    records = [record for record in records if not record.get("held_out_taxon") or blocked(record)]
     grouped = defaultdict(lambda: defaultdict(list))
     for record in records:
         grouped[record["class_id"]][collector_group_key(record)].append(record)
@@ -106,7 +114,12 @@ def split_by_observation(
         for index, group in enumerate(observations):
             remaining = observations[index:]
             remaining_images = sum(len(item) for item in remaining)
-            if test_count < test_target and (total_images - test_count - len(group)) > 0:
+            group_blocked = any(blocked(record) for record in group)
+            if (
+                not group_blocked
+                and test_count < test_target
+                and (total_images - test_count - len(group)) > 0
+            ):
                 splits["test"].extend(group)
                 test_count += len(group)
             elif val_count < val_target and remaining_images > len(group):
