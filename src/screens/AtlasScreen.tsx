@@ -8,7 +8,6 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { hasFatalLookAlikeRisk, MUSHROOMS_DATABASE } from '../data/mushrooms';
 import { countByStatus, filterAtlasSpecies, HymenophoreFilter, StatusFilter } from '../data/atlasQuery';
 import { MushroomSpecies } from '../types/mushroom';
@@ -16,7 +15,13 @@ import { HYMENOPHORE_FILTERS, HYMENOPHORE_META } from '../presentation/speciesMe
 import { SpeciesStatusBadge } from '../components/EdibilityBadge';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getMushroomImage } from '../utils/mushroomImages';
-import { colors } from '../theme/tokens';
+import { colors, spacing } from '../theme/tokens';
+
+/** Android's default breaker splits narrow titles mid-word ("Much" / "omor"). */
+const unbrokenWords = {
+  textBreakStrategy: 'simple',
+  android_hyphenationFrequency: 'none',
+} as const;
 
 interface Props {
   onSelectSpecies: (species: MushroomSpecies) => void;
@@ -66,13 +71,27 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
               <Text style={styles.cardThumbnailMissingText}>{t('cards.photoMissing')}</Text>
             </View>
           )}
-          <View style={styles.cardDetails}>
-            <View style={styles.cardHeader}>
-              <View style={{ flex: 1, paddingRight: 6 }}>
-                <Text style={styles.namePl}>{item.namePl}</Text>
-                {item.nameEn ? <Text style={styles.nameEn}>{item.nameEn}</Text> : null}
-                <Text style={styles.nameLatin}>{item.nameLatin}</Text>
-              </View>
+          <View style={styles.cardDetails} testID={`atlas-card-copy-${item.id}`}>
+            <Text
+              style={styles.namePl}
+              testID={`atlas-name-pl-${item.id}`}
+              {...unbrokenWords}
+            >
+              {item.namePl}
+            </Text>
+            {item.nameEn ? (
+              <Text style={styles.nameEn} {...unbrokenWords}>
+                {item.nameEn}
+              </Text>
+            ) : null}
+            <Text
+              style={styles.nameLatin}
+              testID={`atlas-name-latin-${item.id}`}
+              {...unbrokenWords}
+            >
+              {item.nameLatin}
+            </Text>
+            <View style={styles.cardBadge} testID={`atlas-card-badge-${item.id}`}>
               <SpeciesStatusBadge
                 status={item.status}
                 incompleteCard={item.incompleteCard}
@@ -109,8 +128,7 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
+    <View style={styles.screen}>
         {/* Pasek Wyszukiwania */}
         <View style={styles.searchBarContainer}>
           <Text style={styles.searchIcon}>🔍</Text>
@@ -204,18 +222,14 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
             ))}
           </ScrollView>
         )}
-      </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
+  screen: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  container: {
-    flex: 1,
     paddingTop: 10,
   },
   searchBarContainer: {
@@ -374,28 +388,32 @@ const styles = StyleSheet.create({
   },
   cardDetails: {
     flex: 1,
+    flexDirection: 'column',
+    alignItems: 'stretch',
   },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 4,
+  cardBadge: {
+    alignSelf: 'flex-start',
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
   },
   namePl: {
     fontSize: 16,
     fontWeight: '800',
     color: colors.slate900,
+    alignSelf: 'stretch',
   },
   nameEn: {
     fontSize: 12,
     color: colors.slate600,
     marginTop: 1,
+    alignSelf: 'stretch',
   },
   nameLatin: {
     fontSize: 13,
     fontStyle: 'italic',
     color: colors.slate500,
     marginTop: 1,
+    alignSelf: 'stretch',
   },
   nicknames: {
     fontSize: 12,

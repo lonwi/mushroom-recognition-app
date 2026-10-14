@@ -11,7 +11,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLanguage } from '../contexts/LanguageContext';
 import { creditLicenseUrl, type PhotoCredit } from '../services/attributionPackage';
 
@@ -50,7 +49,7 @@ export const PhotoCredits: React.FC<{
   }, [query, rows]);
 
   return (
-    <SafeAreaView style={styles.safeArea} testID="photo-credits-screen">
+    <View style={styles.screen} testID="photo-credits-screen">
       <View style={styles.header}>
         {onClose ? (
           <Pressable onPress={onClose} testID="photo-credits-back">
@@ -123,12 +122,12 @@ export const PhotoCredits: React.FC<{
           }}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
+  screen: {
     flex: 1,
     backgroundColor: '#F8FAFC',
   },

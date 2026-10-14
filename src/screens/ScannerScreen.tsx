@@ -14,6 +14,16 @@ import { classifierService, ClassificationResult } from '../services/classifierS
 import { SKIP_PROCESSING_CAPTURE, uprightCaptureWidth, widthForCapture } from '../services/photoPixels';
 import { ResultModal } from '../components/ResultModal';
 import { useLanguage } from '../contexts/LanguageContext';
+import { getSpecies } from '../data/speciesCatalog';
+import { spacing } from '../theme/tokens';
+import { visibleAtlasExamples } from '../utils/atlasExampleLabel';
+
+const ATLAS_EXAMPLES = [
+  { id: 'boletus_edulis', slug: 'boletus', emoji: '🌲', danger: false },
+  { id: 'amanita_phalloides', slug: 'amanita', emoji: '☠', danger: true },
+  { id: 'macrolepiota_procera', slug: 'macrolepiota', emoji: '☂', danger: false },
+  { id: 'cantharellus_cibarius', slug: 'cantharellus', emoji: '🍳', danger: false },
+] as const;
 
 interface Props {
   onOpenAtlasSpecies?: (speciesId: string) => void;
@@ -21,7 +31,8 @@ interface Props {
 }
 
 export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJournal }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const atlasExamples = visibleAtlasExamples(ATLAS_EXAMPLES, language, getSpecies);
   const [permission, requestPermission] = useCameraPermissions();
   const [torchEnabled, setTorchEnabled] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -175,10 +186,6 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
               {torchEnabled ? t('scanner.torchOnShort') : t('scanner.torchOffShort')}
             </Text>
           </TouchableOpacity>
-
-          <View style={styles.badgeOffline}>
-            <Text style={styles.badgeOfflineText}>{t('scanner.offlineBadge')}</Text>
-          </View>
         </View>
 
         {/* Celownik i wskazówki kadrowania makro */}
@@ -200,38 +207,23 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
             {t('scanner.atlasScopeHint')}
           </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.demoScroll}>
-            <TouchableOpacity
-              style={styles.demoChip}
-              onPress={() => openAtlasSample('boletus_edulis')}
-              disabled={isAnalyzing}
-              testID="demo-atlas-boletus"
-            >
-              <Text style={styles.demoChipText}>{t('scanner.sampleBoletus')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.demoChip, styles.demoChipDanger]}
-              onPress={() => openAtlasSample('amanita_phalloides')}
-              disabled={isAnalyzing}
-              testID="demo-atlas-amanita"
-            >
-              <Text style={[styles.demoChipText, styles.demoChipDangerText]}>{t('scanner.sampleAmanita')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.demoChip}
-              onPress={() => openAtlasSample('macrolepiota_procera')}
-              disabled={isAnalyzing}
-              testID="demo-atlas-macrolepiota"
-            >
-              <Text style={styles.demoChipText}>{t('scanner.sampleParasol')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.demoChip}
-              onPress={() => openAtlasSample('cantharellus_cibarius')}
-              disabled={isAnalyzing}
-              testID="demo-atlas-cantharellus"
-            >
-              <Text style={styles.demoChipText}>{t('scanner.sampleChanterelle')}</Text>
-            </TouchableOpacity>
+            {atlasExamples.map((example) => (
+              <TouchableOpacity
+                key={example.id}
+                style={[styles.demoChip, example.danger && styles.demoChipDanger]}
+                onPress={() => openAtlasSample(example.id)}
+                disabled={isAnalyzing}
+                testID={`demo-atlas-${example.slug}`}
+              >
+                <Text style={styles.demoChipEmoji}>{example.emoji}</Text>
+                <Text
+                  style={[styles.demoChipText, example.danger && styles.demoChipDangerText]}
+                  testID={`demo-atlas-label-${example.slug}`}
+                >
+                  {example.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </ScrollView>
         </View>
 
@@ -286,7 +278,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 50,
+    paddingTop: spacing.lg,
     paddingHorizontal: 20,
   },
   toolBtn: {
@@ -305,18 +297,6 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 12,
     fontWeight: '700',
-  },
-  badgeOffline: {
-    backgroundColor: 'rgba(46, 125, 50, 0.85)',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-  },
-  badgeOfflineText: {
-    color: '#FFF',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.5,
   },
   viewfinderCenter: {
     alignSelf: 'center',
@@ -403,6 +383,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   demoChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 0,
+    gap: spacing.xs,
     backgroundColor: 'rgba(255,255,255,0.2)',
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -410,10 +394,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.25)',
   },
+  demoChipEmoji: {
+    fontSize: 12,
+    flexShrink: 0,
+  },
   demoChipText: {
     color: '#FFF',
     fontSize: 12,
     fontWeight: '600',
+    flexShrink: 0,
   },
   demoChipDanger: {
     backgroundColor: 'rgba(220, 38, 38, 0.4)',
@@ -426,8 +415,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingBottom: 40,
-    paddingTop: 16,
+    paddingBottom: spacing.lg,
+    paddingTop: spacing.lg,
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   galleryButton: {

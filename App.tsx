@@ -100,7 +100,9 @@ function AppContent() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    // Top, bottom, and side insets are applied once, here. Tab screens sit in
+    // `content`, between the header and the tab bar, and must not add them again.
+    <SafeAreaView style={styles.container} edges={['top', 'right', 'bottom', 'left']}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
 
       <View style={styles.topHeader}>
@@ -194,7 +196,8 @@ const styles = StyleSheet.create({
   },
   brandSubtitle: {
     fontSize: typography.caption,
-    color: colors.emerald200,
+    // emerald50 on primary is 11.76:1. 10px text needs WCAG AA 4.5:1.
+    color: colors.emerald50,
     fontWeight: '600',
   },
   offlinePill: {
@@ -206,8 +209,9 @@ const styles = StyleSheet.create({
     borderColor: colors.emerald600,
   },
   offlinePillText: {
-    color: colors.emerald300,
-    fontSize: 10,
+    // onPrimary on emerald900 is 9.72:1.
+    color: colors.onPrimary,
+    fontSize: typography.caption,
     fontWeight: '800',
   },
   content: {

@@ -8,7 +8,6 @@ import {
   Platform,
   Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { MushroomSpecies } from '../types/mushroom';
 import { SpeciesStatusBadge } from '../components/EdibilityBadge';
@@ -18,6 +17,13 @@ import { hasFatalLookAlikeRisk, MUSHROOM_IDS, showsKitchenSection } from '../dat
 import { useLanguage } from '../contexts/LanguageContext';
 import { HYMENOPHORE_META, MONTH_KEYS } from '../presentation/speciesMeta';
 import { colors } from '../theme/tokens';
+
+/**
+ * Catalog photos are 1200×896 and have no per-image focal point.
+ * `cover` on a frame of that aspect keeps the whole picture, centered.
+ */
+export const HERO_PHOTO_CONTENT_POSITION: 'center' | 'bottom' = 'center';
+const HERO_PHOTO_ASPECT = 1200 / 896;
 
 interface Props {
   species: MushroomSpecies;
@@ -76,32 +82,30 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
     <View style={styles.container}>
       {/* Hero Section */}
       <View style={styles.heroSection}>
+        <View style={styles.navBar}>
+          <TouchableOpacity
+            onPress={onBack}
+            style={styles.backBtn}
+            activeOpacity={0.8}
+            testID="species-back"
+          >
+            <View style={styles.backBtnCircle}>
+              <Ionicons name="chevron-back" size={22} color={colors.onPrimary} />
+            </View>
+            <Text style={styles.backBtnText} testID="species-back-label">{t('nav.atlas')}</Text>
+          </TouchableOpacity>
+        </View>
         {photo ? (
-          <Image
-            source={photo}
-            style={StyleSheet.absoluteFill}
-            resizeMode="cover"
-            testID="species-photo"
-          />
-        ) : null}
-        <View style={styles.heroOverlay} />
-        <SafeAreaView>
-          <View style={styles.navBar}>
-            <TouchableOpacity
-              onPress={onBack}
-              style={styles.backBtn}
-              activeOpacity={0.8}
-              testID="species-back"
-            >
-              <View style={styles.backBtnCircle}>
-                <Ionicons name="chevron-back" size={22} color={colors.emerald500} />
-              </View>
-              <Text style={styles.backBtnText} testID="species-back-label">{t('nav.atlas')}</Text>
-            </TouchableOpacity>
+          <View style={styles.photoFrame} testID="species-photo-frame">
+            <Image
+              source={photo}
+              style={HERO_PHOTO_CONTENT_POSITION === 'center' ? styles.photoCenter : styles.photoBottom}
+              resizeMode="cover"
+              testID="species-photo"
+            />
           </View>
-        </SafeAreaView>
-        
-        <View style={styles.heroContent}>
+        ) : null}
+        <View style={styles.heroContent} testID="species-hero-copy">
            <Text style={styles.namePl}>{species.namePl}</Text>
            {species.nameEn ? (
              <Text style={styles.nameEn} testID="species-name-en">{species.nameEn}</Text>
@@ -308,9 +312,21 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
   },
-  heroOverlay: {
+  photoFrame: {
+    width: '100%',
+    aspectRatio: HERO_PHOTO_ASPECT,
+    overflow: 'hidden',
+    backgroundColor: colors.emerald800,
+  },
+  photoCenter: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(5, 30, 18, 0.68)',
+  },
+  photoBottom: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '130%',
   },
   navBar: {
     paddingHorizontal: 16,
@@ -325,7 +341,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: colors.emerald800,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
@@ -367,7 +383,7 @@ const styles = StyleSheet.create({
   namePl: {
     fontSize: 32,
     fontWeight: '900',
-    color: colors.white,
+    color: colors.onPrimary,
     letterSpacing: -0.5,
   },
   nameLatin: {
