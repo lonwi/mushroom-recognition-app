@@ -1,4 +1,3 @@
-import * as tf from '@tensorflow/tfjs';
 import type { Platform } from '@tensorflow/tfjs-core/dist/platforms/platform';
 
 /**
@@ -47,19 +46,5 @@ export class PlatformReactNative implements Platform {
       a instanceof Uint8Array ||
       a instanceof Uint8ClampedArray
     );
-  }
-}
-
-/**
- * Ensures TensorFlow.js has a valid Platform registered in Hermes/React Native.
- */
-export function ensureTensorFlowPlatform(): void {
-  try {
-    const currentEnv = tf.env();
-    if (!currentEnv.platform) {
-      currentEnv.setPlatform('react-native', new PlatformReactNative());
-    }
-  } catch (err) {
-    // Platform may already be registered
   }
 }

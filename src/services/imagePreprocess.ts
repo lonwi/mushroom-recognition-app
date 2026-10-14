@@ -15,7 +15,7 @@
  * Layout: NHWC RGB, no batch dimension, values in [-1, 1].
  */
 
-export const MODEL_INPUT_SIZE = 224;
+const MODEL_INPUT_SIZE = 224;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));

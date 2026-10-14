@@ -54,7 +54,7 @@ function sanitizeCandidate(value: unknown): JournalCandidate | null {
   };
 }
 
-export function sanitizeRecognition(value: unknown): JournalRecognition {
+function sanitizeRecognition(value: unknown): JournalRecognition {
   if (!value || typeof value !== 'object') {
     return { status: 'unavailable' };
   }

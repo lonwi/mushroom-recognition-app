@@ -63,7 +63,7 @@ interface IncompleteProps {
   testID?: string;
 }
 
-export const IncompleteCardBadge: React.FC<IncompleteProps> = ({ size = 'medium', testID }) => {
+const IncompleteCardBadge: React.FC<IncompleteProps> = ({ size = 'medium', testID }) => {
   const { t } = useLanguage();
   return (
     <StatusChip

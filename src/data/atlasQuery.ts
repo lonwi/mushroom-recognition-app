@@ -14,7 +14,7 @@ export interface AtlasFilterOptions {
  * Lowercase, then NFD with combining marks removed. ł/Ł do not decompose, so they become l first.
  * „zolciowy” then matches „żółciowy”, and „wlokniak” matches „włókniak”.
  */
-export function normalizeAtlasQuery(query: string): string {
+function normalizeAtlasQuery(query: string): string {
   return query
     .toLowerCase()
     .replace(/ł/g, 'l')
@@ -23,7 +23,7 @@ export function normalizeAtlasQuery(query: string): string {
     .trim();
 }
 
-export function speciesMatchesSearch(species: MushroomSpecies, query: string): boolean {
+function speciesMatchesSearch(species: MushroomSpecies, query: string): boolean {
   const normalized = normalizeAtlasQuery(query);
   if (normalized === '') {
     return true;

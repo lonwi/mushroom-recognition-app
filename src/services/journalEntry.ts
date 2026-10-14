@@ -4,11 +4,11 @@ import { deleteManagedJournalPhoto, isLocalCaptureUri, persistJournalPhoto } fro
 import { storageService } from './storageService';
 import type { JournalCandidate, JournalRecognition, SightingRecord } from '../types/mushroom';
 
-export function createSightingId(now = Date.now(), random = Math.random()): string {
+function createSightingId(now = Date.now(), random = Math.random()): string {
   return `sighting_${now}_${random.toString(36).slice(2, 8)}`;
 }
 
-export function recognitionFromClassification(result: ClassificationResult): JournalRecognition {
+function recognitionFromClassification(result: ClassificationResult): JournalRecognition {
   if (result.status === 'rejected') {
     return { status: 'rejected', reason: result.reason };
   }
@@ -30,12 +30,12 @@ export function recognitionFromClassification(result: ClassificationResult): Jou
   return { status: 'unavailable' };
 }
 
-export type JournalLocationOutcome =
+type JournalLocationOutcome =
   | { state: 'recorded'; latitude: number; longitude: number }
   | { state: 'skipped' }
   | { state: 'unavailable' };
 
-export type JournalPhotoOutcome = { state: 'stored'; fileName: string } | { state: 'missing' };
+type JournalPhotoOutcome = { state: 'stored'; fileName: string } | { state: 'missing' };
 
 export interface SavedJournalEntry {
   record: SightingRecord;

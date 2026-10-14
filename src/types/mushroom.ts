@@ -15,7 +15,7 @@ export type HymenophoreType =
  * Edibility of a named twin, or `NO_ATLAS_VERDICT` when that twin has no atlas card.
  * `NO_ATLAS_VERDICT` is not one of the four edibility statuses and must not be shown as a badge.
  */
-export type ConfusedWithStatus = EdibilityStatus | 'NO_ATLAS_VERDICT';
+type ConfusedWithStatus = EdibilityStatus | 'NO_ATLAS_VERDICT';
 
 export interface ConfusionRisk {
   confusedWithId: string;

@@ -24,27 +24,27 @@ import { runPackagedTflite } from './tfliteRuntime';
 
 export const MODEL_MISSING_REASON = 'model_missing' as const;
 
-export type UnavailableReason =
+type UnavailableReason =
   | typeof MODEL_MISSING_REASON
   | 'gate_not_calibrated'
   | 'runtime_unavailable'
   | 'decode_failed'
   | 'output_mismatch';
 
-export interface UnavailableClassification {
+interface UnavailableClassification {
   status: 'unavailable';
   reason: UnavailableReason;
   processedImageUri: string;
 }
 
-export interface RejectedClassification {
+interface RejectedClassification {
   status: 'rejected';
   reason: 'not_a_mushroom' | 'unknown_mushroom' | 'unclear';
   processedImageUri: string;
   inferenceTimeMs: number;
 }
 
-export interface CandidatesClassification {
+interface CandidatesClassification {
   status: 'candidates';
   processedImageUri: string;
   inferenceTimeMs: number;
@@ -65,7 +65,7 @@ export interface ClassifierDependencies {
   runLogits: (input: Float32Array) => Promise<Float32Array>;
 }
 
-export function isModelPackaged(deps: Pick<ClassifierDependencies, 'packagedModel' | 'manifest'>): boolean {
+function isModelPackaged(deps: Pick<ClassifierDependencies, 'packagedModel' | 'manifest'>): boolean {
   return deps.packagedModel != null && deps.manifest.model_packaged === true && deps.manifest.recognition_available === true;
 }
 

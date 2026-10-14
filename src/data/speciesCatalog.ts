@@ -8,7 +8,3 @@ const speciesById: ReadonlyMap<string, MushroomSpecies> = new Map(
 export function getSpecies(id: string): MushroomSpecies | undefined {
   return speciesById.get(id);
 }
-
-export function hasSpecies(id: string): boolean {
-  return speciesById.has(id);
-}

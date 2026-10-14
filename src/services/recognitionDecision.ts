@@ -7,7 +7,7 @@
 import type { ModelManifest } from './modelManifest';
 
 /** Matches training/recognition_math.py. Rank 1 always counts; later ranks need this probability. */
-export const DANGEROUS_GENUS_MIN_PROBABILITY = 0.1;
+const DANGEROUS_GENUS_MIN_PROBABILITY = 0.1;
 
 export interface SpeciesCandidate {
   id: string;
@@ -36,7 +36,7 @@ export type RecognitionDecision =
       warningReasons: Array<'dangerous_genus' | 'low_confidence'>;
     };
 
-export function logsumexp(values: number[]): number {
+function logsumexp(values: number[]): number {
   const peak = Math.max(...values);
   let sum = 0;
   for (const value of values) {
@@ -45,7 +45,7 @@ export function logsumexp(values: number[]): number {
   return peak + Math.log(sum);
 }
 
-export function softmax(logits: number[]): number[] {
+function softmax(logits: number[]): number[] {
   const peak = Math.max(...logits);
   const exps = logits.map((value) => Math.exp(value - peak));
   const total = exps.reduce((sum, value) => sum + value, 0);

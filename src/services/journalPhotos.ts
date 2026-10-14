@@ -1,6 +1,6 @@
 import * as FileSystem from 'expo-file-system/legacy';
 
-export const JOURNAL_PHOTO_FOLDER = 'journal-photos';
+const JOURNAL_PHOTO_FOLDER = 'journal-photos';
 
 const LOCAL_CAPTURE_URI = /^(file:|content:|ph:|assets-library:|blob:)/;
 const DISPLAYABLE_CAPTURE_URI = /^(file:|content:|data:|blob:|ph:|assets-library:)/;
@@ -16,7 +16,7 @@ export function isLocalCaptureUri(uri: string): boolean {
   return LOCAL_CAPTURE_URI.test(uri);
 }
 
-export function photoExtensionForSource(sourceUri: string): string {
+function photoExtensionForSource(sourceUri: string): string {
   const path = sourceUri.split('?')[0].split('#')[0];
   const match = /\.([a-zA-Z0-9]+)$/.exec(path);
   const raw = match?.[1]?.toLowerCase();
@@ -25,7 +25,7 @@ export function photoExtensionForSource(sourceUri: string): string {
   return 'jpg';
 }
 
-export function journalPhotoDirectory(documentDirectory: string): string {
+function journalPhotoDirectory(documentDirectory: string): string {
   const root = documentDirectory.endsWith('/') ? documentDirectory : `${documentDirectory}/`;
   return `${root}${JOURNAL_PHOTO_FOLDER}/`;
 }
