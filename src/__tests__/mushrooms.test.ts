@@ -258,7 +258,8 @@ describe('Mushroom Database & Safety Verification', () => {
 
     const larch = byId.suillus_grevillei;
     expect(larch.fleshDescription).toMatch(/Jasnożółty/);
-    expect(larch.fleshDescription).toMatch(/czerwienieje/);
+    expect(larch.fleshDescription).toMatch(/brudnoróż/);
+    expect(larch.fleshDescription).not.toMatch(/czerwien/);
     expect(larch.fleshDescription).not.toMatch(/biaław/i);
     expect(larch.tasteAndSmell).toMatch(/jasnożółty/);
     expect(larch.tasteAndSmell).toMatch(/Zarzyński, 2021/);

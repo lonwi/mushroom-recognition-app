@@ -1192,7 +1192,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     capDescription: 'Średnica 4–12 cm. Złocistożółty do pomarańczowego, bardzo lepki. Skórka ściąga się łatwo.',
     hymenophoreDescription: 'Rurki żółte, zakryte u młodych białożółtą błoną. Po uciśnięciu brązowieją.',
     stemDescription: 'Żółty, z pierścieniem, który u starszych owocników przywiera do trzonu. Nad pierścieniem często jest siateczkowaty.',
-    fleshDescription: 'Jasnożółty, w kapeluszu miękki. Po przekrojeniu czerwienieje.',
+    fleshDescription: 'Jasnożółty, w kapeluszu miękki. Po przekrojeniu barwi się na brudnoróżowo.',
     tasteAndSmell: 'Nie sprawdzaj smakiem. W literaturze (Zarzyński, 2021) jasnożółty miąższ ma słaby zapach kojarzący się z owocami.',
     culinaryValue: 'W literaturze chętnie zbierany i dopuszczony do obrotu. Przed przyrządzeniem zdjąć skórkę z kapelusza. Do marynowania, duszenia, suszenia, gotowania i smażenia. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
