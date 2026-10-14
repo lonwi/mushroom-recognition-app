@@ -158,12 +158,7 @@ export const pl = {
     galleryAlt: '🖼 Wybierz z galerii',
     torchOnShort: '🔦 WŁ',
     torchOffShort: '🔦 Latarka',
-    offlineBadge: '● 100% OFFLINE',
     aimGuide: 'Skieruj aparat na kapelusz i spód grzyba',
-    sampleBoletus: '🌲 Borowik',
-    sampleAmanita: '☠ Muchomor sromotnikowy',
-    sampleParasol: '☂ Czubajka kania',
-    sampleChanterelle: '🍳 Kurka',
     gallery: 'Galeria',
   },
   journal: {

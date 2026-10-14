@@ -90,6 +90,27 @@ describe('ScannerScreen does not invent a recognition result', () => {
     expect(classifySpy).not.toHaveBeenCalled();
   });
 
+  it('gives every atlas example chip a non-empty name and no camera offline pill', async () => {
+    const { getByTestId, queryByText } = await renderScanner();
+    const expected = {
+      boletus: 'Prawdziwki',
+      amanita: 'Muchomor sromotnikowy (zielonawy)',
+      macrolepiota: 'Czubajka kania',
+      cantharellus: 'Pieprznik jadalny (Kurka)',
+    } as const;
+
+    for (const [slug, name] of Object.entries(expected)) {
+      const label = getByTestId(`demo-atlas-label-${slug}`);
+      const text = typeof label.props.children === 'string' ? label.props.children : '';
+      expect(text).toBe(name);
+      expect(text.trim()).toMatch(/\p{L}/u);
+      expect(getByTestId(`demo-atlas-${slug}`)).toBeTruthy();
+    }
+
+    expect(queryByText(/100% OFFLINE/)).toBeNull();
+    expect(queryByText(pl.app.offline)).toBeNull();
+  });
+
   it('does not fall back to a stock photo when the camera fails', async () => {
     takePictureAsync.mockRejectedValue(new Error('camera failed'));
     const { getByTestId, queryByText } = await renderScanner();

@@ -158,12 +158,7 @@ export const en: Translations = {
     galleryAlt: '🖼 Choose from gallery',
     torchOnShort: '🔦 ON',
     torchOffShort: '🔦 Torch',
-    offlineBadge: '● 100% OFFLINE',
     aimGuide: 'Point the camera at the cap and the underside',
-    sampleBoletus: '🌲 Porcini',
-    sampleAmanita: '☠ Death cap',
-    sampleParasol: '☂ Parasol mushroom',
-    sampleChanterelle: '🍳 Chanterelle',
     gallery: 'Gallery',
   },
   journal: {
