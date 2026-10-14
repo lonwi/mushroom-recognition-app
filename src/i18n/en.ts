@@ -53,7 +53,7 @@ export const en: Translations = {
       'No card in this atlas matches the filters. A missing card does not mean the mushroom is edible. The atlas is not a complete key to the mushrooms of Poland.',
     emptyResults: 'No mushrooms match the selected criteria.',
     szatanNotice:
-      '“Szatan” is sometimes a folk name for the bitter bolete, and it also means Satan’s bolete (Rubroboletus satanas). Satan’s bolete is not described in this atlas and it is not the bitter bolete. This search does not open the bitter bolete card. A missing card does not mean the mushroom is edible.',
+      '“Szatan” is sometimes a folk name for the bitter bolete, but Satan’s bolete (Rubroboletus satanas) has its own card and is not the bitter bolete. This search does not open the bitter bolete card. No result under these filters does not mean the mushroom is edible.',
     resultCount: 'Matching cards: {count}',
     scopeNotice:
       'This atlas has {count} cards. It is not a complete key to the mushrooms of Poland and it does not replace a mycologist or a Sanepid mushroom inspection point.',
@@ -94,6 +94,7 @@ export const en: Translations = {
     family: 'FAMILY',
     otherNames: 'OTHER NAMES',
     seasonPoland: 'SEASON IN POLAND',
+    seasonOmitted: 'The season is not stated on this card.',
     morphologyHabitat: 'Morphology and habitat',
     occurrence: 'Occurrence',
     cap: 'Cap',
@@ -119,6 +120,7 @@ export const en: Translations = {
       chlorophyllumWhole:
         'Whole fruiting body with stem base. A thickened (bulbous) stem base is not an Amanita volva or bulb. The base can have a rim, but it has no volva.',
       gills: 'Gills from below',
+      tubes: 'Tubes from below',
       gillsRing: 'Gills and ring from below',
       gillsCortina: 'Gills and cortina from below',
       young: 'Young fruiting body',

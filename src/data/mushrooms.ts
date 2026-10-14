@@ -1,5 +1,7 @@
 import { type MushroomSpecies } from '../types/mushroom';
 
+const STROPHARIACEAE = 'Pierścieniakowate (Strophariaceae)';
+
 export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
   {
     id: 'boletus_edulis',
@@ -31,7 +33,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         fatal: false
       }
     ],
-    warningNotes: 'Ta karta obejmuje prawdziwki: borowika szlachetnego, usiatkowanego i sosnowego. Rozporządzenie MZ wymienia borowika szlachetnego jako wszystkie odmiany. Zwracaj uwagę na barwę rurek i siateczkę na trzonie, by nie pomylić z gorzkim goryczakiem. Borowik szatański (Rubroboletus satanas) to inny gatunek i nie ma go w tym atlasie.'
+    warningNotes: 'Ta karta obejmuje prawdziwki: borowika szlachetnego, usiatkowanego i sosnowego. Rozporządzenie MZ wymienia borowika szlachetnego jako wszystkie odmiany. Zwracaj uwagę na barwę rurek i siateczkę na trzonie, by nie pomylić z gorzkim goryczakiem. Borowik szatański (Rubroboletus satanas) to inny gatunek i ma osobną kartę.'
   },
   {
     id: 'amanita_phalloides',
@@ -320,7 +322,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         fatal: false
       }
     ],
-    warningNotes: 'Sprawdź siatkę na trzonie i kolor rurek. W części przekazów ludowych goryczaka też nazywano „szatanem”, ale to samo słowo oznacza borowika szatańskiego (Rubroboletus satanas). Tego drugiego gatunku nie ma w atlasie i nie jest to ta karta. Nie próbuj smaku, żeby „upewnić się” co do gatunku.'
+    warningNotes: 'Sprawdź siatkę na trzonie i kolor rurek. W części przekazów ludowych goryczaka też nazywano „szatanem”, ale to samo słowo oznacza borowika szatańskiego (Rubroboletus satanas), który ma osobną kartę i nie jest goryczakiem. Nie próbuj smaku, żeby „upewnić się” co do gatunku.'
   },
   {
     id: 'amanita_muscaria',
@@ -338,7 +340,32 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     fleshDescription: 'Biały, pod skórką kapelusza żółtopomarańczowy.',
     tasteAndSmell: 'Bez wyraźnego zapachu, smak słodkawy.',
     culinaryValue: 'Trujący. Zawiera kwas ibotenowy i muscymol; muskaryna występuje tylko śladowo. Po spożyciu: halucynacje, pobudzenie, wymioty, silne bicie serca. W skrajnych przypadkach opisywano utratę przytomności.',
-    confusionRisks: [],
+    confusionRisks: [
+      {
+        confusedWithId: 'amanita_caesarea',
+        confusedWithName: 'Muchomor cesarski',
+        confusedWithStatus: 'NO_ATLAS_VERDICT',
+        keyDifferences: [
+          'Blaszki i trzon intensywnie żółte, u muchomora czerwonego białe do kremowych',
+          'U nasady wyraźna, biała, workowata pochwa. U czerwonego bulwa z brodawkowatymi wałeczkami, pochwa niewyraźna',
+          'Kapelusz zwykle bez białych łatek, brzeg prążkowany, pierścień żółty',
+          'W Polsce stwierdzony raz (1959), na Czerwonej liście jako wymarły. W praktyce pomyłka grozi głównie poza krajem, przy okazach muchomora czerwonego pozbawionych łatek'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'amanita_rubescens',
+        confusedWithName: 'Muchomor czerwieniejący (młode owocniki)',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Kapelusz różowawy do czerwonobrązowego, nie jaskrawoczerwony. Łatki białawe do szarawych',
+          'Miąższ i uszkodzone miejsca, zwłaszcza u nasady trzonu i ślady żerowania, czerwienieją. U muchomora czerwonego miąższ biały, pod skórką żółtawy, i nie czerwienieje',
+          'Pierścień wyraźnie prążkowany. U czerwonego pierścień nieprążkowany',
+          'Młode, kuliste owocniki o czerwonawym odcieniu i ze zmytymi łatkami mogą przypominać młody muchomor czerwony. Rozstrzyga reakcja czerwienienia'
+        ],
+        fatal: false
+      }
+    ],
     warningNotes: 'TRUJĄCY. Nie jedz i nie próbuj usuwać toksyn w domu.'
   },
   {
@@ -732,7 +759,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
       {
         confusedWithId: 'amanita_excelsa',
         confusedWithName: 'Muchomor twardawy',
-        confusedWithStatus: 'NO_ATLAS_VERDICT',
+        confusedWithStatus: 'INEDIBLE',
         keyDifferences: [
           'Twardawy ma pierścień prążkowany od góry. Plamisty ma pierścień gładki',
           'Bulwa twardawego nie ma wyraźnego rąbka. U plamistego pochwa tworzy kołnierz na bulwie',
@@ -860,7 +887,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
       {
         confusedWithId: 'calocybe_gambosa',
         confusedWithName: 'Gęśnica wiosenna (majówka)',
-        confusedWithStatus: 'NO_ATLAS_VERDICT',
+        confusedWithStatus: 'EDIBLE',
         keyDifferences: [
           'Gęśnica wiosenna nie czerwienieje. Strzępiak po uszkodzeniu czerwienieje i z wiekiem staje się ceglasty',
           'Gęśnica pachnie mącznie i ma gładki, mięsisty kapelusz. Strzępiak ma kapelusz promieniście popękany',
@@ -880,7 +907,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         fatal: false
       }
     ],
-    warningNotes: 'NIE JEDZ. Śmiertelnie trujący. Młode owocniki bywają brane za gęśnicę wiosenną (majówkę) i za kurki. Brak zdjęcia. Gęśnicy wiosennej i płachetki zwyczajnej nie ma w tym atlasie.'
+    warningNotes: 'NIE JEDZ. Śmiertelnie trujący. Młode owocniki bywają brane za gęśnicę wiosenną (majówkę) i za kurki. Brak zdjęcia. Gęśnica wiosenna ma osobną kartę. Płachetki zwyczajnej nie ma w tym atlasie.'
   },
   {
     id: 'hypholoma_fasciculare',
@@ -888,7 +915,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     nameEn: 'Sulphur tuft',
     nameLatin: 'Hypholoma fasciculare',
     commonNicknames: ['Maślanka trująca'],
-    family: 'Pierścieniakowate (Strophariaceae)',
+    family: STROPHARIACEAE,
     status: 'POISONOUS',
     hymenophore: 'GILLS',
     months: [4, 5, 6, 7, 8, 9, 10, 11],
@@ -936,16 +963,16 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
       {
         confusedWithId: 'hypholoma_capnoides',
         confusedWithName: 'Maślanka łagodna',
-        confusedWithStatus: 'NO_ATLAS_VERDICT',
+        confusedWithStatus: 'EDIBLE',
         keyDifferences: [
           'Maślanka łagodna ma blaszki szare, nie siarkowożółte ani zielonkawe',
           'Rośnie na drewnie iglastym. Maślanka wiązkowa bywa na liściastym i iglastym',
-          'Brak karty nie oznacza, że żółte blaszki są łagodną maślanką'
+          'Maślanka łagodna ma kartę. Żółte albo zielonkawe blaszki to nie ta karta'
         ],
         fatal: false
       }
     ],
-    warningNotes: 'NIE JEDZ. Trująca. Rośnie na pniakach razem z opieńkami i łuskwiakiem, a hełmówka jadowita bywa na tym samym drewnie. Maślanka łagodna (Hypholoma capnoides) ma szare blaszki i nie ma karty. Brak zdjęcia.'
+    warningNotes: 'NIE JEDZ. Trująca. Rośnie na pniakach razem z opieńkami i łuskwiakiem, a hełmówka jadowita bywa na tym samym drewnie. Maślanka łagodna (Hypholoma capnoides) ma szare blaszki i osobną kartę. Brak zdjęcia.'
   },
   {
     id: 'tricholoma_equestre',
@@ -1012,11 +1039,11 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
       {
         confusedWithId: 'suillellus_luridus',
         confusedWithName: 'Borowik ponury',
-        confusedWithStatus: 'NO_ATLAS_VERDICT',
+        confusedWithStatus: 'POISONOUS',
         keyDifferences: [
           'Borowik ponury ma na trzonie siateczkę, ceglastopory ma czerwone punkciki',
-          'Oba sinieją i oba są surowe trujące',
-          'Tej karty nie używaj do oddzielenia ponurego od ceglastoporego'
+          'Oba sinieją. Objawy zatrucia ponurego jego karta podaje tylko ogólnie',
+          'Porównanie jest na karcie borowika ponurego'
         ],
         fatal: false
       },
@@ -1026,8 +1053,8 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         confusedWithStatus: 'POISONOUS',
         keyDifferences: [
           'Borowik szatański ma jasny kapelusz i trzon z wyraźną czerwoną siatką',
-          'Jest trujący i w Polsce ściśle chroniony. Nie zbieraj go',
-          'Czerwone pory nie rozstrzygają, czy to ceglastopory. Brak karty nie oznacza, że grzyb jest jadalny'
+          'Jest trujący i w Polsce ściśle chroniony. Ma osobną kartę',
+          'Czerwone pory nie rozstrzygają, czy to ceglastopory'
         ],
         fatal: false
       },
@@ -1348,7 +1375,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     nameEn: 'Sheathed woodtuft',
     nameLatin: 'Kuehneromyces mutabilis',
     commonNicknames: ['Łuszczak zmienny'],
-    family: 'Pierścieniakowate (Strophariaceae)',
+    family: STROPHARIACEAE,
     status: 'EDIBLE',
     incompleteCard: true,
     hymenophore: 'GILLS',
@@ -1425,9 +1452,20 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
           'Wspólne drewno nie czyni opieńki bezpieczną, jeśli owocnik jest mały i brązowy'
         ],
         fatal: false
+      },
+      {
+        confusedWithId: 'hypholoma_capnoides',
+        confusedWithName: 'Maślanka łagodna (Hypholoma capnoides)',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Maślanka łagodna ma blaszki szare do fioletowobrązowych. Hełmówka ma blaszki cynamonowobrązowe',
+          'Hełmówka ma wąski pierścień, a trzon pod pierścieniem włóknisty',
+          'Karta maślanki łagodnej odsyła tutaj po różnice. Szare blaszki nie czynią owocnika hełmówką'
+        ],
+        fatal: false
       }
     ],
-    warningNotes: 'NIE JEDZ. Śmiertelnie trująca. Małe brązowe owocniki na drewnie zostaw. Brak zdjęcia.'
+    warningNotes: 'NIE JEDZ. Śmiertelnie trująca. Małe brązowe owocniki na drewnie zostaw. Brak zdjęcia. Maślanka łagodna ma osobną kartę i porównuje się z tą.'
   },
   {
     id: 'amanita_rubescens',
@@ -1461,12 +1499,12 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
       },
       {
         confusedWithId: 'amanita_excelsa',
-        confusedWithName: 'Muchomor twardawy',
-        confusedWithStatus: 'NO_ATLAS_VERDICT',
+        confusedWithName: 'Muchomor twardawy (Amanita excelsa)',
+        confusedWithStatus: 'INEDIBLE',
         keyDifferences: [
           'Twardawy nie czerwienieje na blaszkach ani w miąższu',
           'Czerwieniejący różowieje po uszkodzeniu. Gładki brzeg nie rozstrzyga: twardawy też ma brzeg gładki',
-          'Twardawy nie ma w tym atlasie karty. Brak karty nie oznacza, że grzyb jest jadalny'
+          'Twardawy ma osobną kartę. Brak czerwienienia nie oznacza, że grzyb jest jadalny'
         ],
         fatal: false
       }
@@ -1612,6 +1650,240 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
       }
     ],
     warningNotes: 'NIE JEDZ. Śmiertelnie trujący. Orellanina. Brak zdjęcia. Nazwy Cortinarius speciosissimus i C. orellanoides są synonimami.'
+  },
+  {
+    id: 'amanita_excelsa',
+    namePl: 'Muchomor twardawy',
+    nameLatin: 'Amanita excelsa (syn. Amanita spissa)',
+    commonNicknames: ['Bedłka silna'],
+    family: 'Muchomorowate (Amanitaceae)',
+    status: 'INEDIBLE',
+    hymenophore: 'GILLS',
+    months: [7, 8, 9, 10],
+    habitat: 'Lasy iglaste i mieszane, rzadziej liściaste. Owocniki zwykle w grupach. Europa i Ameryka Północna; w Polsce pospolity.',
+    capDescription: 'Do około 15 cm, szarobrunatny, początkowo półkulisty, potem płaski. Brzeg bez prążkowania. Na wierzchu białe łatki, które deszcz może zmyć. Klucz: szarobrunatny kapelusz z białymi łatkami i prążkowany pierścień.',
+    hymenophoreDescription: 'Blaszki białe, gęste, wolne. Wysyp zarodników biały.',
+    stemDescription: 'Wysoki, do około 20 cm, białawy, z dużym, zwisającym, karbowanym pierścieniem. Nasada bulwiasta, z brodawkowatymi obwódkami, bez wyraźnej pochwy.',
+    fleshDescription: 'Biały, pod skórką szarawy.',
+    tasteAndSmell: 'Zapach ziemisty. Smaku ta karta nie podaje.',
+    culinaryValue: 'W literaturze (Zarzyński 2021) bywa opisywany jako jadalny, wraz z wyraźnym zaleceniem odstąpienia od zbioru, bo łatwo pomylić go z trującymi muchomorami, zwłaszcza plamistym. Nie figuruje w wykazie grzybów dopuszczonych do obrotu (rozporządzenie MZ z 17.05.2011, Dz.U. 2011 nr 115 poz. 672; t.j. Dz.U. 2026 poz. 258). W tej karcie gatunek jest niejadalny. Ta karta nie uprawnia do zbioru ani spożycia.',
+    confusionRisks: [
+      {
+        confusedWithId: 'amanita_pantherina',
+        confusedWithName: 'Muchomor plamisty',
+        confusedWithStatus: 'POISONOUS',
+        keyDifferences: [
+          'Plamisty ma wyraźną, gładką, odstającą pochwę u nasady, nad nią pierścieniowate kołnierzyki, a pierścień nieprążkowany',
+          'Brzeg kapelusza plamistego często bywa prążkowany, ale forma górska ma brzeg gładki. Prążkowanie nie rozstrzyga',
+          'Twardawy ma karbowany pierścień i bulwę bez odstającej pochwy'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'amanita_porphyria',
+        confusedWithName: 'Muchomor porfirowy',
+        confusedWithStatus: 'NO_ATLAS_VERDICT',
+        keyDifferences: [
+          'Porfirowy ma pochwę u nasady, postrzępioną, i blaszki różnej długości',
+          'Twardawy nie ma wyraźnej pochwy',
+          'Muchomor porfirowy nie ma karty w tym atlasie. Brak karty nie oznacza, że grzyb jest jadalny'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'amanita_rubescens',
+        confusedWithName: 'Muchomor czerwieniejący (Amanita rubescens)',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Uszkodzone blaszki i miąższ czerwieniejącego szybko czerwienieją',
+          'Twardawy nie czerwienieje',
+          'Czerwienienie nie jest dowodem, że grzyb nadaje się do spożycia'
+        ],
+        fatal: false
+      }
+    ],
+    warningNotes: 'W tej karcie niejadalny. Niechroniony: nie figuruje w Dz.U. 2014 poz. 1408. Drzew żywicielskich źródło nie podaje, więc karta ich nie wymienia.'
+  },
+  {
+    id: 'calocybe_gambosa',
+    namePl: 'Gęśnica wiosenna',
+    nameLatin: 'Calocybe gambosa (syn. Tricholoma gambosum)',
+    commonNicknames: ['Majówka wiosenna', 'Gąska majowa'],
+    family: 'Kępkowcowate (Lyophyllaceae)',
+    status: 'EDIBLE',
+    incompleteCard: true,
+    hymenophore: 'GILLS',
+    months: [4, 5, 6, 7],
+    habitat: 'Saprotrof. Skraje lasów liściastych, łąki, pastwiska, zarośla, parki i ogrody, często w kręgach. Europa, także Ameryka Północna i Japonia. W Polsce dość pospolita, liczniejsza na pogórzu.',
+    capDescription: 'Do około 12 cm, mięsisty, biały do kremowego, matowy. Brzeg podwinięty. Klucz: wiosna, biały mięsisty owocnik o mącznym zapachu, często w kręgach.',
+    hymenophoreDescription: 'Blaszki cienkie, gęste, białawe, z wiekiem lekko żółtawe, przy trzonie wycięte ząbkiem. Wysyp zarodników biały.',
+    stemDescription: 'Biały do kremowego, pełny, bez pierścienia i bez pochwy.',
+    fleshDescription: 'Biały, twardy.',
+    tasteAndSmell: 'Zapach mączny. Smaku ta karta nie podaje.',
+    culinaryValue: 'W literaturze (Zarzyński 2021; Bielawska 2016) opisywana jako jadalna. Nie figuruje w wykazie grzybów dopuszczonych do obrotu (rozporządzenie MZ z 17.05.2011, Dz.U. 2011 nr 115 poz. 672; t.j. Dz.U. 2026 poz. 258, zał. nr 1); w wykazie jest tylko uprawiana gęśnica indyjska. Ryzyko pomyłki z wieruszką zatokowatą i strzępiakiem ceglastym, które rosną w tych samych miejscach i porze. Ta karta nie uprawnia do zbioru ani spożycia.',
+    confusionRisks: [
+      {
+        confusedWithId: 'entoloma_sinuatum',
+        confusedWithName: 'Wieruszka zatokowata',
+        confusedWithStatus: 'NO_ATLAS_VERDICT',
+        keyDifferences: [
+          'Starsze okazy wieruszki mają różowe do czerwonawych blaszek i różowy wysyp',
+          'Młode owocniki są bardzo podobne',
+          'Wieruszka zatokowata nie ma karty w tym atlasie. Brak karty nie oznacza, że grzyb jest jadalny'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'inocybe_erubescens',
+        confusedWithName: 'Strzępiak ceglasty (Inocybe erubescens)',
+        confusedWithStatus: 'DEADLY_POISONOUS',
+        keyDifferences: [
+          'Strzępiak ma kapelusz stożkowaty i włóknisty. Miąższ oraz owocnik czerwienieją przy uszkodzeniu',
+          'Gęśnica nie czerwienieje i pachnie mącznie',
+          'Oba wyrastają w tej samej porze. Strzępiak ceglasty jest śmiertelnie trujący'
+        ],
+        fatal: true
+      },
+      {
+        confusedWithId: 'amanita_virosa',
+        confusedWithName: 'Muchomor jadowity',
+        confusedWithStatus: 'DEADLY_POISONOUS',
+        keyDifferences: [
+          'Białe muchomory mają pierścień i bulwę w pochwie. Gęśnica nie ma ani pierścienia, ani pochwy',
+          'Muchomor jadowity ma białe blaszki i pochwę u nasady',
+          'Muchomor wiosenny (Amanita verna) jest podobny i nie ma osobnej karty. Brak karty nie oznacza, że biały owocnik jest gęśnicą'
+        ],
+        fatal: true
+      }
+    ],
+    warningNotes: 'Wiosenny biały owocnik o mącznym zapachu trzeba odróżnić od strzępiaka ceglastego i od białych muchomorów. Niechroniona: nie figuruje w Dz.U. 2014 poz. 1408.'
+  },
+  {
+    id: 'suillellus_luridus',
+    namePl: 'Borowik ponury',
+    nameLatin: 'Suillellus luridus (syn. Boletus luridus)',
+    commonNicknames: ['Goryczak (nazwa ludowa)'],
+    family: 'Borowikowate (Boletaceae)',
+    status: 'POISONOUS',
+    hymenophore: 'TUBES',
+    months: [6, 7, 8, 9, 10],
+    habitat: 'Mykoryza z dębem, bukiem i jodłą, także z lipą w parkach. Miejsca ciepłe i nasłonecznione. Europa, Ameryka Północna i Japonia. W Polsce w całym kraju, ale niezbyt pospolity.',
+    capDescription: 'Do około 20 cm, płowy do brązowego z oliwkowym odcieniem, zamszowy, potem gładki. Po dotknięciu szybko ciemnieje, niemal do czarnego. Klucz: czerwonawe pory, siateczka na trzonie i silne sinienie.',
+    hymenophoreDescription: 'Rurki żółtawe, pory pomarańczowe do czerwonych. Mocno sinieją. Wysyp zarodników oliwkowy.',
+    stemDescription: 'Baryłkowaty, potem wydłużony, żółtawy do czerwonawego, z wyraźną brązowawą do czerwonej siateczką o podłużnych oczkach.',
+    fleshDescription: 'Żółtawy, u nasady trzonu czerwonawy. Po przekrojeniu szybko sinieje.',
+    tasteAndSmell: 'Zapach niewyraźny. Smaku ta karta nie podaje.',
+    culinaryValue: 'Trujący. W źródłach są tylko ogólne dolegliwości żołądkowo-jelitowe. Nie figuruje w wykazie grzybów dopuszczonych do obrotu (rozporządzenie MZ z 17.05.2011, Dz.U. 2011 nr 115 poz. 672; t.j. Dz.U. 2026 poz. 258). Nazwa ludowa „goryczak” nie oznacza goryczaka żółciowego. Ta karta nie uprawnia do zbioru ani spożycia.',
+    confusionRisks: [
+      {
+        confusedWithId: 'neoboletus_luridiformis',
+        confusedWithName: 'Borowik ceglastopory',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Ceglastopory nie ma siateczki. Trzon pokrywają drobne czerwone łuseczki, jak kropki',
+          'Ponury ma wyraźną siateczkę na trzonie',
+          'Czerwone pory nie rozstrzygają gatunku'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'rubroboletus_satanas',
+        confusedWithName: 'Borowik szatański (Rubroboletus satanas)',
+        confusedWithStatus: 'POISONOUS',
+        keyDifferences: [
+          'Szatański ma białawy do szarego kapelusz i czerwoną siateczkę na baryłkowatym trzonie',
+          'Miąższ szatańskiego sinieje słabiej',
+          'Szatański jest trujący i w Polsce pod ochroną ścisłą'
+        ],
+        fatal: false
+      }
+    ],
+    warningNotes: 'Trujący. Objawy w źródle są tylko ogólne, jako dolegliwości żołądkowo-jelitowe. Poza wykazem MZ. Niechroniony: nie figuruje w Dz.U. 2014 poz. 1408.'
+  },
+  {
+    id: 'hypholoma_capnoides',
+    namePl: 'Maślanka łagodna',
+    nameLatin: 'Hypholoma capnoides (syn. Psilocybe capnoides)',
+    commonNicknames: ['Łysiczka łagodna'],
+    family: STROPHARIACEAE,
+    status: 'EDIBLE',
+    incompleteCard: true,
+    hymenophore: 'GILLS',
+    months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    habitat: 'Saprotrof na silnie rozłożonym drewnie drzew iglastych, zwłaszcza świerka. Gromadnie w kępach. Półkula północna; w Polsce pospolita. Owocniki przez cały rok, głównie latem i jesienią.',
+    capDescription: 'Do około 7 cm, ciemnożółty do musztardowego, środek rdzawy. Na brzegu młodych owocników resztki białawej, pajęczynowatej osłony. Klucz: kępy na pniakach drzew iglastych, blaszki szare do fioletowobrązowych, bez zieleni.',
+    hymenophoreDescription: 'Blaszki szarawe, z wiekiem fioletowobrązowe, nigdy zielonkawe. Wysyp zarodników fioletowobrązowy do czerwonobrązowego.',
+    stemDescription: 'Cienki, wygięty, pusty. U góry jasny, niżej rdzawobrązowy. U młodych słaby, szybko znikający ślad pierścienia.',
+    fleshDescription: 'Żółtawy, w trzonie ciemniejszy.',
+    tasteAndSmell: 'Zapach przyjemny. Smaku ta karta nie podaje.',
+    culinaryValue: 'W literaturze (Zarzyński 2021) opisywana jako jadalna i rzadko zbierana. Nie figuruje w wykazie grzybów dopuszczonych do obrotu (rozporządzenie MZ z 17.05.2011, Dz.U. 2011 nr 115 poz. 672; t.j. Dz.U. 2026 poz. 258). Ryzyko pomyłki z trującą maślanką wiązkową i ze śmiertelnie trującą hełmówką jadowitą. Różnice wobec hełmówki bierze karta galerina_marginata. Ta karta nie uprawnia do zbioru ani spożycia.',
+    confusionRisks: [
+      {
+        confusedWithId: 'hypholoma_fasciculare',
+        confusedWithName: 'Maślanka wiązkowa',
+        confusedWithStatus: 'POISONOUS',
+        keyDifferences: [
+          'Wiązkowa ma zielonkawożółte blaszki i siarkowożółty kapelusz',
+          'Łagodna ma blaszki szare do fioletowobrązowych, bez zieleni',
+          'Wiązkowa rośnie na drewnie różnych drzew'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'galerina_marginata',
+        confusedWithName: 'Hełmówka jadowita',
+        confusedWithStatus: 'DEADLY_POISONOUS',
+        keyDifferences: [
+          'Różnice są na karcie hełmówki jadowitej (galerina_marginata): blaszki cynamonowobrązowe, dość rzadkie, oraz wąski, często zanikający pierścień',
+          'Na karcie hełmówki trzon pod pierścieniem jest włóknisty, bez odstających łuseczek',
+          'Maślanka łagodna ma blaszki szare do fioletowobrązowych, nigdy zielonkawe. Hełmówka jadowita jest śmiertelnie trująca'
+        ],
+        fatal: true
+      }
+    ],
+    warningNotes: 'Z hełmówką jadowitą porównuje się kartę galerina_marginata. Niechroniona: nie figuruje w Dz.U. 2014 poz. 1408.'
+  },
+  {
+    id: 'rubroboletus_satanas',
+    namePl: 'Borowik szatański',
+    nameLatin: 'Rubroboletus satanas (syn. Boletus satanas)',
+    commonNicknames: ['Szatan'],
+    family: 'Borowikowate (Boletaceae)',
+    status: 'POISONOUS',
+    hymenophore: 'TUBES',
+    months: [],
+    habitat: 'Siedlisko, pora i rozmieszczenie nie są podane na tej karcie.',
+    capDescription: '10–30 cm, białawy, szarawy do oliwkowoszarego, zamszowy. Klucz: biały kapelusz, czerwone pory i czerwona siatka na trzonie.',
+    hymenophoreDescription: 'Rurki żółte, pory czerwone. Po ucisku sinieją. Wysyp zarodników oliwkowobrązowy.',
+    stemDescription: 'Bardzo gruby, beczułkowaty, żółty u góry, w środku czerwony, pokryty czerwoną siateczką.',
+    fleshDescription: 'Białawy do żółtawego. Po przekrojeniu słabo sinieje.',
+    tasteAndSmell: 'Starsze okazy pachną nieprzyjemnie, padliną. Smaku ta karta nie podaje.',
+    culinaryValue: 'Trujący. Ta karta podaje rozpoznawanie, sobowtóry i ochronę ścisłą. Objawów zatrucia nie opisuje. Ta karta nie uprawnia do zbioru ani spożycia.',
+    confusionRisks: [
+      {
+        confusedWithId: 'neoboletus_luridiformis',
+        confusedWithName: 'Borowik ceglastopory (Neoboletus luridiformis)',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Ceglastopory ma ciemnobrązowy kapelusz i czerwone kropki, nie siatkę, na trzonie',
+          'Miąższ ceglastoporego mocno sinieje',
+          'Szatański ma białawy kapelusz i czerwoną siateczkę'
+        ],
+        fatal: false
+      },
+      {
+        confusedWithId: 'boletus_edulis',
+        confusedWithName: 'Prawdziwki',
+        confusedWithStatus: 'EDIBLE',
+        keyDifferences: [
+          'Prawdziwek ma białe, potem zielonkawe rurki, bez czerwonych porów',
+          'Szatański ma czerwone pory',
+          'Czerwone pory wykluczają borowika szlachetnego z tej pary'
+        ],
+        fatal: false
+      }
+    ],
+    warningNotes: 'Ochrona ścisła (Dz.U. 2014 poz. 1408, zał. 1 lp. 8, jako Boletus satanas, oznaczenie (1), bez odstępstw od zakazów z § 7 pkt 1). Zbiór jest zakazany.'
   }
 ];
 
@@ -1628,41 +1900,29 @@ export const ATLAS_NO_VERDICT_NOTE = 'Atlas nie wydaje werdyktu dla tego gatunku
 export const LOOKALIKES_WITHOUT_CARD: Readonly<
   Record<string, { status: 'NO_ATLAS_VERDICT' | 'POISONOUS'; reason: string; note: string }>
 > = {
-  calocybe_gambosa: {
+  amanita_caesarea: {
     status: 'NO_ATLAS_VERDICT',
     note: ATLAS_NO_VERDICT_NOTE,
     reason:
-      'Gęśnica wiosenna (majówka) is only the spring twin of the deadly fibrecap. Literature may still call it edible. There is no finished card, so this atlas does not show an edible verdict.',
+      'Muchomor cesarski (Amanita caesarea) is only a look-alike of the fly agaric. There is no card, so this atlas does not show an edible verdict.',
   },
-  amanita_excelsa: {
-    status: 'NO_ATLAS_VERDICT',
-    note: NOT_FOR_COLLECTION_NOTE,
-    reason:
-      'Muchomor twardawy (Amanita excelsa, syn. A. spissa) has no card. Authors disagree, and it is too close to the panther cap to present as edible.',
-  },
-  suillellus_luridus: {
+  amanita_porphyria: {
     status: 'NO_ATLAS_VERDICT',
     note: ATLAS_NO_VERDICT_NOTE,
     reason:
-      'Borowik ponury (Suillellus luridus) is only the netted twin of the scarletina bolete. Literature calls it edible after cooking and poisonous raw. There is no finished card, so this atlas does not show that verdict.',
+      'Muchomor porfirowy (Amanita porphyria) is only a look-alike of the grey spotted amanita. There is no card, so this atlas does not show an edibility verdict.',
+  },
+  entoloma_sinuatum: {
+    status: 'NO_ATLAS_VERDICT',
+    note: ATLAS_NO_VERDICT_NOTE,
+    reason:
+      'Wieruszka zatokowata (Entoloma sinuatum) is only a look-alike of St George’s mushroom. There is no card, so this atlas does not show an edibility verdict.',
   },
   craterellus_tubaeformis: {
     status: 'NO_ATLAS_VERDICT',
     note: ATLAS_NO_VERDICT_NOTE,
     reason:
       'Pieprznik trąbkowy (Craterellus tubaeformis) is only the funnel-shaped twin of the deadly webcaps. There is no card, so this atlas does not show an edible verdict.',
-  },
-  hypholoma_capnoides: {
-    status: 'NO_ATLAS_VERDICT',
-    note: ATLAS_NO_VERDICT_NOTE,
-    reason:
-      'Maślanka łagodna (Hypholoma capnoides) is the mild twin of the sulphur tuft. There is no card, so this atlas does not show an edible verdict.',
-  },
-  rubroboletus_satanas: {
-    status: 'POISONOUS',
-    note: ATLAS_NO_VERDICT_NOTE,
-    reason:
-      'Borowik szatański (Rubroboletus satanas) is strictly protected in Poland and poisonous. It is a test-only probe, not a model class and not an atlas card. The look-alike row says poisonous.',
   },
   imperator_rhodopurpureus: {
     status: 'POISONOUS',

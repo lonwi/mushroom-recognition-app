@@ -112,9 +112,9 @@ describe('AtlasScreen RTL Tests', () => {
     });
   });
 
-  it('does not treat a search for szatan as goryczak or as borowik szatański', async () => {
+  it('opens borowik szatański for szatan and does not open goryczak', async () => {
     const onSelect = jest.fn();
-    const { getByPlaceholderText, getByTestId, queryByText } = await render(
+    const { getByPlaceholderText, getByText, queryByTestId, queryByText } = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={onSelect} />
       </LanguageProvider>
@@ -126,9 +126,11 @@ describe('AtlasScreen RTL Tests', () => {
     );
 
     await waitFor(() => {
-      expect(getByTestId('atlas-szatan-notice')).toBeTruthy();
+      expect(getByText('Borowik szatański')).toBeTruthy();
       expect(queryByText('Goryczak żółciowy')).toBeNull();
-      expect(queryByText(/Borowik szatański \(Rubroboletus satanas\) nie jest opisany/)).toBeTruthy();
+      expect(queryByTestId('atlas-szatan-notice')).toBeNull();
+      expect(queryByText(/nie jest opisany/)).toBeNull();
+      expect(queryByTestId('atlas-months-rubroboletus_satanas')).toBeNull();
     });
   });
 
@@ -219,7 +221,7 @@ describe('AtlasScreen RTL Tests', () => {
       </LanguageProvider>
     );
 
-    expect(screen.getByText(/Karta niepełna \(14\)/)).toBeTruthy();
+    expect(screen.getByText(/Karta niepełna \(16\)/)).toBeTruthy();
     await fireEvent.press(screen.getByTestId('filter-status-EDIBLE'));
     await waitFor(() => {
       expect(screen.getByText('Prawdziwki')).toBeTruthy();
@@ -236,7 +238,7 @@ describe('AtlasScreen RTL Tests', () => {
       expect(screen.getByText('Pieczarka polna')).toBeTruthy();
       expect(screen.queryByText('Prawdziwki')).toBeNull();
       expect(screen.queryAllByText('JADALNY')).toHaveLength(0);
-      expect(screen.getByTestId('atlas-result-count').props.children).toBe('Pasujące karty: 14');
+      expect(screen.getByTestId('atlas-result-count').props.children).toBe('Pasujące karty: 16');
     });
   });
 

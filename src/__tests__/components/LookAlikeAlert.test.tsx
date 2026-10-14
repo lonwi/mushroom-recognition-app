@@ -128,8 +128,8 @@ describe('LookAlikeAlert RTL Component Tests', () => {
   it('does not show the green edible badge for a look-alike that has no finished card', async () => {
     const risks: ConfusionRisk[] = [
       {
-        confusedWithId: 'calocybe_gambosa',
-        confusedWithName: 'Gęśnica wiosenna (majówka)',
+        confusedWithId: 'entoloma_sinuatum',
+        confusedWithName: 'Wieruszka zatokowata',
         confusedWithStatus: 'EDIBLE',
         keyDifferences: ['Nie czerwienieje'],
         fatal: false,
@@ -144,8 +144,8 @@ describe('LookAlikeAlert RTL Component Tests', () => {
       />
     );
 
-    expect(getByTestId('lookalike-unlinked-calocybe_gambosa')).toBeTruthy();
-    expect(getByTestId('missing-card-badge-calocybe_gambosa')).toBeTruthy();
+    expect(getByTestId('lookalike-unlinked-entoloma_sinuatum')).toBeTruthy();
+    expect(getByTestId('missing-card-badge-entoloma_sinuatum')).toBeTruthy();
     expect(getByText(MISSING_CARD_LABEL)).toBeTruthy();
     expect(getByText(new RegExp(ATLAS_NO_VERDICT_NOTE))).toBeTruthy();
     expect(queryByText(NOT_FOR_COLLECTION_NOTE)).toBeNull();
@@ -156,15 +156,15 @@ describe('LookAlikeAlert RTL Component Tests', () => {
   it('never shows a green badge for an entry without catalogIds', async () => {
     const risks: ConfusionRisk[] = [
       {
-        confusedWithId: 'calocybe_gambosa',
-        confusedWithName: 'Gęśnica wiosenna (majówka)',
+        confusedWithId: 'entoloma_sinuatum',
+        confusedWithName: 'Wieruszka zatokowata',
         confusedWithStatus: 'EDIBLE',
         keyDifferences: ['Nie czerwienieje'],
         fatal: false,
       },
       {
-        confusedWithId: 'amanita_excelsa',
-        confusedWithName: 'Muchomor twardawy',
+        confusedWithId: 'amanita_porphyria',
+        confusedWithName: 'Muchomor porfirowy',
         confusedWithStatus: 'EDIBLE',
         keyDifferences: ['Pierścień prążkowany'],
         fatal: false,
@@ -178,23 +178,20 @@ describe('LookAlikeAlert RTL Component Tests', () => {
     expect(queryByText(INCOMPLETE_CARD_LABEL)).toBeNull();
   });
 
-  it('shows a collection warning only for twardawy and no edibility verdict for the other missing cards', async () => {
+  it('keeps a no-verdict note on look-alikes that still have no card', async () => {
     const risks = MUSHROOMS_DATABASE.flatMap((item) => item.confusionRisks).filter((risk) =>
-      ['calocybe_gambosa', 'amanita_excelsa'].includes(risk.confusedWithId),
+      ['amanita_caesarea', 'entoloma_sinuatum', 'amanita_porphyria'].includes(risk.confusedWithId),
     );
 
     const { getAllByTestId, queryByText } = await render(<LookAlikeAlert risks={risks} />);
 
-    const gambosa = getAllByTestId('lookalike-unlinked-calocybe_gambosa');
-    expect(gambosa.length).toBeGreaterThan(0);
-    for (const row of gambosa) {
-      expect(row).toHaveTextContent(ATLAS_NO_VERDICT_NOTE, { exact: false });
-      expect(row).not.toHaveTextContent(NOT_FOR_COLLECTION_NOTE, { exact: false });
-    }
-    const excelsa = getAllByTestId('lookalike-unlinked-amanita_excelsa');
-    expect(excelsa.length).toBeGreaterThan(1);
-    for (const row of excelsa) {
-      expect(row).toHaveTextContent(NOT_FOR_COLLECTION_NOTE, { exact: false });
+    for (const id of ['amanita_caesarea', 'entoloma_sinuatum', 'amanita_porphyria']) {
+      const rows = getAllByTestId(`lookalike-unlinked-${id}`);
+      expect(rows.length).toBeGreaterThan(0);
+      for (const row of rows) {
+        expect(row).toHaveTextContent(ATLAS_NO_VERDICT_NOTE, { exact: false });
+        expect(row).not.toHaveTextContent(NOT_FOR_COLLECTION_NOTE, { exact: false });
+      }
     }
     expect(queryByText('JADALNY')).toBeNull();
     expect(queryByText('NIEJADALNY')).toBeNull();

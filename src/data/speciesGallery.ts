@@ -237,6 +237,12 @@ export const SPECIES_GALLERY: Record<string, GalleryPhoto[]> = {
     photo(require('../../assets/gallery/cortinarius_rubellus/i445372784.webp') as ImageSourcePropType, FEATURE_C, 'Myles McSweeney', LICENSE_BY, observationUrl('249176651'), inatOriginal('445372784', EXT_JPEG), 'assets/gallery/cortinarius_rubellus/i445372784.webp'),
     photo(require('../../assets/gallery/cortinarius_rubellus/i539178809.webp') as ImageSourcePropType, FEATURE_Y, 'Tim Eberling', LICENSE_BY, observationUrl('299281797'), inatOriginal('539178809', EXT_JPG), 'assets/gallery/cortinarius_rubellus/i539178809.webp'),
   ],
+  suillellus_luridus: [
+    photo(require('../../assets/gallery/suillellus_luridus/i575029415.webp') as ImageSourcePropType, FEATURE_W, 'Paulius Rupšas', LICENSE_BY, observationUrl('318179829'), inatOriginal('575029415', EXT_JPG), 'assets/gallery/suillellus_luridus/i575029415.webp'),
+  ],
+  rubroboletus_satanas: [
+    photo(require('../../assets/gallery/rubroboletus_satanas/i335498704.webp') as ImageSourcePropType, FEATURE_W, 'Алена Ручка', LICENSE_BY, observationUrl('191268109'), inatOriginal('335498704', EXT_JPEG), 'assets/gallery/rubroboletus_satanas/i335498704.webp'),
+  ],
 };
 
 export function photosForSpecies(speciesId: string): GalleryPhoto[] {

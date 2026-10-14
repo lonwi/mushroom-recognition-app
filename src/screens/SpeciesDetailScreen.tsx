@@ -192,22 +192,26 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
           <View style={styles.divider} />
           
           <Text style={styles.infoLabel} testID="species-season-label">{t('cards.seasonPoland')}</Text>
-          <View style={styles.monthsGrid}>
-            {monthsNames.map((m, index) => {
-              const monthNum = index + 1;
-              const isActive = species.months.includes(monthNum);
-              return (
-                <View key={monthNum} style={[styles.monthBox, isActive && styles.monthBoxActive]}>
-                  <Text
-                    testID={`species-month-${monthNum}`}
-                    style={[styles.monthText, isActive && styles.monthTextActive]}
-                  >
-                    {m}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
+          {species.months.length > 0 ? (
+            <View style={styles.monthsGrid}>
+              {monthsNames.map((m, index) => {
+                const monthNum = index + 1;
+                const isActive = species.months.includes(monthNum);
+                return (
+                  <View key={monthNum} style={[styles.monthBox, isActive && styles.monthBoxActive]}>
+                    <Text
+                      testID={`species-month-${monthNum}`}
+                      style={[styles.monthText, isActive && styles.monthTextActive]}
+                    >
+                      {m}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          ) : (
+            <Text style={styles.infoValue} testID="species-season-omitted">{t('cards.seasonOmitted')}</Text>
+          )}
         </View>
 
         {/* Lookalikes Warning */}

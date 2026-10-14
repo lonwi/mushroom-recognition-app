@@ -113,9 +113,11 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
               <View style={styles.tag}>
                 <Text style={styles.tagText}>🍄 {hymenophoreLabel}</Text>
               </View>
-              <View style={styles.tag}>
-                <Text style={styles.tagText} testID={`atlas-months-${item.id}`}>{`📅 ${monthsStr}`}</Text>
-              </View>
+              {item.months.length > 0 ? (
+                <View style={styles.tag}>
+                  <Text style={styles.tagText} testID={`atlas-months-${item.id}`}>{`📅 ${monthsStr}`}</Text>
+                </View>
+              ) : null}
               {hasFatalLookAlikeRisk(item) && (
                 <View style={[styles.tag, styles.tagDanger]}>
                   <Text style={styles.tagDangerText}>{t('atlas.lookAlikeTag')}</Text>

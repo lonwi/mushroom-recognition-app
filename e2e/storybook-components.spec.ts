@@ -119,30 +119,26 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.getByTestId('incomplete-card-badge-russula_virescens')).toContainText('KARTA NIEPEŁNA');
   });
 
-  test('Panther card separates twardawy by ring and bulb and does not badge a missing card as edible', async ({ page }) => {
+  test('Panther card separates twardawy by ring and bulb and does not badge it as edible', async ({ page }) => {
     await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--panther-missing-card-twins');
     await expect(page.locator('body')).toContainText('f. abietum');
     await expect(page.locator('body')).toContainText('w górach, pod jodłami i świerkami');
     await expect(page.locator('body')).toContainText('pierścień gładki');
     await expect(page.locator('body')).toContainText('pierścień prążkowany');
-    await expect(page.getByTestId('missing-card-badge-amanita_excelsa')).toContainText('Brak karty');
-    await expect(page.getByTestId('missing-card-badge-amanita_excelsa')).not.toContainText('JADALNY');
-    await expect(page.getByTestId('lookalike-unlinked-amanita_excelsa')).toContainText('Niezalecany do zbioru');
+    await expect(page.getByTestId('lookalike-status-amanita_excelsa')).toContainText('NIEJADALNY');
+    await expect(page.getByTestId('lookalike-status-amanita_excelsa')).not.toContainText(/\bJADALNY\b/);
+    await expect(page.getByTestId('lookalike-status-amanita_excelsa')).not.toContainText('Brak karty');
     await expect(page.getByTestId('incomplete-card-badge-amanita_rubescens')).toContainText('KARTA NIEPEŁNA');
     await expect(page.getByTestId('lookalike-status-amanita_rubescens')).not.toContainText('JADALNY');
     await expect(page.getByTestId('lookalike-status-macrolepiota_procera')).toContainText('JADALNY');
   });
 
-  test('Fibrecap names majówka without an atlas verdict', async ({ page }) => {
+  test('Fibrecap names majówka on an unfinished card without a green edible badge', async ({ page }) => {
     await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--fibrecap-no-atlas-verdict');
     await expect(page.getByTestId('fatal-lookalike-banner')).toContainText('Śmiertelnie groźny sobowtór');
-    await expect(page.getByTestId('missing-card-badge-calocybe_gambosa')).toContainText('Brak karty');
-    await expect(page.getByTestId('lookalike-unlinked-calocybe_gambosa')).toContainText(
-      'Atlas nie wydaje werdyktu dla tego gatunku'
-    );
-    await expect(page.getByTestId('lookalike-unlinked-calocybe_gambosa')).not.toContainText('Niezalecany do zbioru');
+    await expect(page.getByTestId('incomplete-card-badge-calocybe_gambosa')).toContainText('KARTA NIEPEŁNA');
     await expect(page.getByTestId('lookalike-status-calocybe_gambosa')).not.toContainText('JADALNY');
-    await expect(page.getByTestId('lookalike-status-calocybe_gambosa')).not.toContainText('NIEJADALNY');
+    await expect(page.getByTestId('lookalike-status-calocybe_gambosa')).not.toContainText('Brak karty');
     await expect(page.getByTestId('lookalike-status-cantharellus_cibarius')).toContainText('JADALNY');
   });
 
@@ -205,7 +201,7 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.getByText('Gołąbek zielonawy')).toBeVisible();
     await expect(page.getByText('Kolczak obłączasty')).toBeVisible();
     await expect(page.getByText('Pieczarka polna')).toBeVisible();
-    await expect(page.getByTestId('atlas-result-count')).toContainText('Pasujące karty: 14');
+    await expect(page.getByTestId('atlas-result-count')).toContainText('Pasujące karty: 16');
     await expect(page.locator('body')).not.toContainText('JADALNY');
     await page.getByTestId('filter-status-EDIBLE').click();
     await expect(page.getByText('Prawdziwki')).toBeVisible();

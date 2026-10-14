@@ -818,6 +818,20 @@
       "inaturalist_observation_id": "299281797",
       "mo_observation_id": null,
       "source_url": "https://www.inaturalist.org/observations/299281797"
+    },
+    {
+      "species_id": "suillellus_luridus",
+      "image_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/575029415/original.jpg",
+      "inaturalist_observation_id": "318179829",
+      "mo_observation_id": null,
+      "source_url": "https://www.inaturalist.org/observations/318179829"
+    },
+    {
+      "species_id": "rubroboletus_satanas",
+      "image_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/335498704/original.jpeg",
+      "inaturalist_observation_id": "191268109",
+      "mo_observation_id": null,
+      "source_url": "https://www.inaturalist.org/observations/191268109"
     }
   ]
 }
