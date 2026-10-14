@@ -57,6 +57,8 @@ describe('SettingsScreen RTL Tests', () => {
       resolveCredits(null);
     });
     expect((await findAllByText('Павлик Лисицын')).length).toBeGreaterThan(0);
+    expect((await findAllByText('zmieniono: przeskalowano, WebP')).length).toBeGreaterThan(0);
+    expect((await findAllByText('sigridjakob')).length).toBeGreaterThan(0);
     expect(queryByTestId('photo-credits-empty')).toBeNull();
   });
 });

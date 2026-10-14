@@ -24,6 +24,7 @@ export interface GalleryCredit {
   sourceUrl: string;
   classId: string;
   taxonName: string;
+  modified: true;
 }
 
 const FEATURE_W: GalleryFeature = 'W';
@@ -34,7 +35,10 @@ const FEATURE_G: GalleryFeature = 'G';
 const FEATURE_C: GalleryFeature = 'C';
 const EXT_JPEG = 'jpeg';
 const FEATURE_Y: GalleryFeature = 'Y';
-const CC0_AUTHOR = 'iNaturalist user (CC0)';
+const LOGIN_PILMAR = 'pilmar';
+const LOGIN_MANGOBLATT = 'mangoblatt';
+const LOGIN_REGEXJ = 'regexj';
+const LOGIN_SABEAR = 'sabear';
 const LICENSE_CC0: GalleryPhoto['license'] = 'CC0 1.0';
 const TEXT_JOHAN_ADLER = 'Johan Adler';
 const TEXT_KATRIN_SIMON = 'Katrin Simon';
@@ -91,11 +95,11 @@ export const SPECIES_GALLERY: Record<string, GalleryPhoto[]> = {
     photo(require('../../assets/gallery/amanita_phalloides/commons-amanita-phalloides-2025-g5.webp') as ImageSourcePropType, FEATURE_Y, 'George Chernilevsky', LICENSE_BY, 'https://commons.wikimedia.org/wiki/File:Amanita_phalloides_2025_G5.jpg', 'https://upload.wikimedia.org/wikipedia/commons/7/78/Amanita_phalloides_2025_G5.jpg', 'assets/gallery/amanita_phalloides/commons-amanita-phalloides-2025-g5.webp'),
   ],
   amanita_muscaria: [
-    photo(require('../../assets/gallery/amanita_muscaria/i161856644.webp') as ImageSourcePropType, FEATURE_W, CC0_AUTHOR, LICENSE_CC0, observationUrl('97332092'), inatOriginal('161856644', EXT_JPEG), 'assets/gallery/amanita_muscaria/i161856644.webp'),
+    photo(require('../../assets/gallery/amanita_muscaria/i161856644.webp') as ImageSourcePropType, FEATURE_W, 'sigridjakob', LICENSE_CC0, observationUrl('97332092'), inatOriginal('161856644', EXT_JPEG), 'assets/gallery/amanita_muscaria/i161856644.webp'),
     photo(require('../../assets/gallery/amanita_muscaria/i345508526.webp') as ImageSourcePropType, FEATURE_W, 'Umut Nuri Erdoğan', LICENSE_BY, observationUrl('196273245'), inatOriginal('345508526', EXT_JPEG), 'assets/gallery/amanita_muscaria/i345508526.webp'),
-    photo(require('../../assets/gallery/amanita_muscaria/i165924384.webp') as ImageSourcePropType, FEATURE_G, CC0_AUTHOR, LICENSE_CC0, observationUrl('99522582'), inatOriginal('165924384', EXT_JPEG), 'assets/gallery/amanita_muscaria/i165924384.webp'),
-    photo(require('../../assets/gallery/amanita_muscaria/i27118943.webp') as ImageSourcePropType, FEATURE_G, CC0_AUTHOR, LICENSE_CC0, observationUrl('17776472'), inatOriginal('27118943', EXT_JPEG), 'assets/gallery/amanita_muscaria/i27118943.webp'),
-    photo(require('../../assets/gallery/amanita_muscaria/i165924070.webp') as ImageSourcePropType, FEATURE_C, CC0_AUTHOR, LICENSE_CC0, observationUrl('99522582'), inatOriginal('165924070', EXT_JPEG), 'assets/gallery/amanita_muscaria/i165924070.webp'),
+    photo(require('../../assets/gallery/amanita_muscaria/i165924384.webp') as ImageSourcePropType, FEATURE_G, 'rouk1_mal1', LICENSE_CC0, observationUrl('99522582'), inatOriginal('165924384', EXT_JPEG), 'assets/gallery/amanita_muscaria/i165924384.webp'),
+    photo(require('../../assets/gallery/amanita_muscaria/i27118943.webp') as ImageSourcePropType, FEATURE_G, 'francescocecere', LICENSE_CC0, observationUrl('17776472'), inatOriginal('27118943', EXT_JPEG), 'assets/gallery/amanita_muscaria/i27118943.webp'),
+    photo(require('../../assets/gallery/amanita_muscaria/i165924070.webp') as ImageSourcePropType, FEATURE_C, 'rouk1_mal1', LICENSE_CC0, observationUrl('99522582'), inatOriginal('165924070', EXT_JPEG), 'assets/gallery/amanita_muscaria/i165924070.webp'),
     photo(require('../../assets/gallery/amanita_muscaria/i432197409.webp') as ImageSourcePropType, FEATURE_C, TEXT_JOHAN_ADLER, LICENSE_BY, observationUrl('242423358'), inatOriginal('432197409', EXT_JPEG), 'assets/gallery/amanita_muscaria/i432197409.webp'),
     photo(require('../../assets/gallery/amanita_muscaria/i23413206.webp') as ImageSourcePropType, FEATURE_Y, 'Shawn O\'Donnell', LICENSE_BY, observationUrl('15691035'), inatOriginal('23413206', EXT_JPG), 'assets/gallery/amanita_muscaria/i23413206.webp'),
   ],
@@ -103,45 +107,45 @@ export const SPECIES_GALLERY: Record<string, GalleryPhoto[]> = {
     photo(require('../../assets/gallery/gyromitra_esculenta/i122931313.webp') as ImageSourcePropType, FEATURE_G, TEXT_KATRIN_SIMON, LICENSE_BY, observationUrl(OBS_75162303), inatOriginal('122931313', EXT_JPG), 'assets/gallery/gyromitra_esculenta/i122931313.webp'),
     photo(require('../../assets/gallery/gyromitra_esculenta/i122931278.webp') as ImageSourcePropType, FEATURE_W, TEXT_KATRIN_SIMON, LICENSE_BY, observationUrl(OBS_75162303), inatOriginal('122931278', EXT_JPG), 'assets/gallery/gyromitra_esculenta/i122931278.webp'),
     photo(require('../../assets/gallery/gyromitra_esculenta/i122931298.webp') as ImageSourcePropType, FEATURE_G, TEXT_KATRIN_SIMON, LICENSE_BY, observationUrl(OBS_75162303), inatOriginal('122931298', EXT_JPG), 'assets/gallery/gyromitra_esculenta/i122931298.webp'),
-    photo(require('../../assets/gallery/gyromitra_esculenta/i633714454.webp') as ImageSourcePropType, FEATURE_C, CC0_AUTHOR, LICENSE_CC0, observationUrl('347552429'), inatOriginal('633714454', EXT_JPG), 'assets/gallery/gyromitra_esculenta/i633714454.webp'),
-    photo(require('../../assets/gallery/gyromitra_esculenta/i489205751.webp') as ImageSourcePropType, FEATURE_C, CC0_AUTHOR, LICENSE_CC0, observationUrl('271938271'), inatOriginal('489205751', EXT_JPG), 'assets/gallery/gyromitra_esculenta/i489205751.webp'),
-    photo(require('../../assets/gallery/gyromitra_esculenta/i367519681.webp') as ImageSourcePropType, FEATURE_Y, CC0_AUTHOR, LICENSE_CC0, observationUrl('207756179'), inatOriginal('367519681', EXT_JPEG), 'assets/gallery/gyromitra_esculenta/i367519681.webp'),
+    photo(require('../../assets/gallery/gyromitra_esculenta/i633714454.webp') as ImageSourcePropType, FEATURE_C, 'christiansw', LICENSE_CC0, observationUrl('347552429'), inatOriginal('633714454', EXT_JPG), 'assets/gallery/gyromitra_esculenta/i633714454.webp'),
+    photo(require('../../assets/gallery/gyromitra_esculenta/i489205751.webp') as ImageSourcePropType, FEATURE_C, 'wouterkoch', LICENSE_CC0, observationUrl('271938271'), inatOriginal('489205751', EXT_JPG), 'assets/gallery/gyromitra_esculenta/i489205751.webp'),
+    photo(require('../../assets/gallery/gyromitra_esculenta/i367519681.webp') as ImageSourcePropType, FEATURE_Y, 'tomas_simkunas', LICENSE_CC0, observationUrl('207756179'), inatOriginal('367519681', EXT_JPEG), 'assets/gallery/gyromitra_esculenta/i367519681.webp'),
     photo(require('../../assets/gallery/gyromitra_esculenta/i194842419.webp') as ImageSourcePropType, FEATURE_Y, AUTHOR_LISITSYN, LICENSE_BY, observationUrl('115450577'), inatOriginal('194842419', EXT_JPG), 'assets/gallery/gyromitra_esculenta/i194842419.webp'),
   ],
   paxillus_involutus: [
     photo(require('../../assets/gallery/paxillus_involutus/i220944080.webp') as ImageSourcePropType, FEATURE_W, 'Andreas Schneider', LICENSE_BY, observationUrl('129963651'), inatOriginal('220944080', EXT_JPEG), 'assets/gallery/paxillus_involutus/i220944080.webp'),
-    photo(require('../../assets/gallery/paxillus_involutus/i97788827.webp') as ImageSourcePropType, FEATURE_W, CC0_AUTHOR, LICENSE_CC0, observationUrl('61129056'), inatOriginal('97788827', EXT_JPG), 'assets/gallery/paxillus_involutus/i97788827.webp'),
+    photo(require('../../assets/gallery/paxillus_involutus/i97788827.webp') as ImageSourcePropType, FEATURE_W, LOGIN_MANGOBLATT, LICENSE_CC0, observationUrl('61129056'), inatOriginal('97788827', EXT_JPG), 'assets/gallery/paxillus_involutus/i97788827.webp'),
     photo(require('../../assets/gallery/paxillus_involutus/i102072372.webp') as ImageSourcePropType, FEATURE_G, 'Carminda Santos', LICENSE_BY, observationUrl('63585808'), inatOriginal('102072372', EXT_JPEG), 'assets/gallery/paxillus_involutus/i102072372.webp'),
     photo(require('../../assets/gallery/paxillus_involutus/i576917051.webp') as ImageSourcePropType, FEATURE_G, 'Maksymilian Bobko', LICENSE_BY, observationUrl('319168700'), inatOriginal('576917051', EXT_JPG), 'assets/gallery/paxillus_involutus/i576917051.webp'),
-    photo(require('../../assets/gallery/paxillus_involutus/i317563090.webp') as ImageSourcePropType, FEATURE_C, CC0_AUTHOR, LICENSE_CC0, observationUrl('182162004'), inatOriginal('317563090', EXT_JPEG), 'assets/gallery/paxillus_involutus/i317563090.webp'),
+    photo(require('../../assets/gallery/paxillus_involutus/i317563090.webp') as ImageSourcePropType, FEATURE_C, 'sudenkorentoko', LICENSE_CC0, observationUrl('182162004'), inatOriginal('317563090', EXT_JPEG), 'assets/gallery/paxillus_involutus/i317563090.webp'),
     photo(require('../../assets/gallery/paxillus_involutus/i580253779.webp') as ImageSourcePropType, FEATURE_C, TEXT_JOHAN_ADLER, LICENSE_BY, observationUrl('320891296'), inatOriginal('580253779', EXT_JPG), 'assets/gallery/paxillus_involutus/i580253779.webp'),
     photo(require('../../assets/gallery/paxillus_involutus/i102071929.webp') as ImageSourcePropType, FEATURE_Y, 'Carminda Santos', LICENSE_BY, observationUrl('63585808'), inatOriginal('102071929', EXT_JPEG), 'assets/gallery/paxillus_involutus/i102071929.webp'),
   ],
   chlorophyllum_rhacodes: [
     photo(require('../../assets/gallery/chlorophyllum_rhacodes/i163590155.webp') as ImageSourcePropType, FEATURE_W, 'David Ashcroft', LICENSE_BY, observationUrl('98278500'), inatOriginal('163590155', EXT_JPG), 'assets/gallery/chlorophyllum_rhacodes/i163590155.webp'),
     photo(require('../../assets/gallery/chlorophyllum_rhacodes/i323831957.webp') as ImageSourcePropType, FEATURE_W, 'Tomas B.', LICENSE_BY, observationUrl('185412621'), inatOriginal('323831957', EXT_JPEG), 'assets/gallery/chlorophyllum_rhacodes/i323831957.webp'),
-    photo(require('../../assets/gallery/chlorophyllum_rhacodes/i245119042.webp') as ImageSourcePropType, FEATURE_G, CC0_AUTHOR, LICENSE_CC0, observationUrl('142932579'), inatOriginal('245119042', EXT_JPEG), 'assets/gallery/chlorophyllum_rhacodes/i245119042.webp'),
-    photo(require('../../assets/gallery/chlorophyllum_rhacodes/i316135915.webp') as ImageSourcePropType, FEATURE_G, CC0_AUTHOR, LICENSE_CC0, observationUrl('181419638'), inatOriginal('316135915', EXT_JPEG), 'assets/gallery/chlorophyllum_rhacodes/i316135915.webp'),
-    photo(require('../../assets/gallery/chlorophyllum_rhacodes/i316136021.webp') as ImageSourcePropType, FEATURE_C, CC0_AUTHOR, LICENSE_CC0, observationUrl('181419638'), inatOriginal('316136021', EXT_JPEG), 'assets/gallery/chlorophyllum_rhacodes/i316136021.webp'),
-    photo(require('../../assets/gallery/chlorophyllum_rhacodes/i447235952.webp') as ImageSourcePropType, FEATURE_C, CC0_AUTHOR, LICENSE_CC0, observationUrl('250110514'), inatOriginal('447235952', EXT_JPEG), 'assets/gallery/chlorophyllum_rhacodes/i447235952.webp'),
+    photo(require('../../assets/gallery/chlorophyllum_rhacodes/i245119042.webp') as ImageSourcePropType, FEATURE_G, LOGIN_REGEXJ, LICENSE_CC0, observationUrl('142932579'), inatOriginal('245119042', EXT_JPEG), 'assets/gallery/chlorophyllum_rhacodes/i245119042.webp'),
+    photo(require('../../assets/gallery/chlorophyllum_rhacodes/i316135915.webp') as ImageSourcePropType, FEATURE_G, LOGIN_REGEXJ, LICENSE_CC0, observationUrl('181419638'), inatOriginal('316135915', EXT_JPEG), 'assets/gallery/chlorophyllum_rhacodes/i316135915.webp'),
+    photo(require('../../assets/gallery/chlorophyllum_rhacodes/i316136021.webp') as ImageSourcePropType, FEATURE_C, LOGIN_REGEXJ, LICENSE_CC0, observationUrl('181419638'), inatOriginal('316136021', EXT_JPEG), 'assets/gallery/chlorophyllum_rhacodes/i316136021.webp'),
+    photo(require('../../assets/gallery/chlorophyllum_rhacodes/i447235952.webp') as ImageSourcePropType, FEATURE_C, 'mick-twinn', LICENSE_CC0, observationUrl('250110514'), inatOriginal('447235952', EXT_JPEG), 'assets/gallery/chlorophyllum_rhacodes/i447235952.webp'),
     photo(require('../../assets/gallery/chlorophyllum_rhacodes/i243493084.webp') as ImageSourcePropType, FEATURE_Y, 'Jason Grant', LICENSE_BY, observationUrl('142059891'), inatOriginal('243493084', EXT_JPEG), 'assets/gallery/chlorophyllum_rhacodes/i243493084.webp'),
     photo(require('../../assets/gallery/chlorophyllum_rhacodes/i727046442.webp') as ImageSourcePropType, FEATURE_Y, 'Yuliana Leshchenko', LICENSE_BY, observationUrl('396452253'), inatOriginal('727046442', EXT_JPG), 'assets/gallery/chlorophyllum_rhacodes/i727046442.webp'),
   ],
   hygrophoropsis_aurantiaca: [
     photo(require('../../assets/gallery/hygrophoropsis_aurantiaca/i307121260.webp') as ImageSourcePropType, FEATURE_W, TEXT_TEEMU_KURPPA, LICENSE_BY, observationUrl('176640067'), inatOriginal('307121260', EXT_JPG), 'assets/gallery/hygrophoropsis_aurantiaca/i307121260.webp'),
     photo(require('../../assets/gallery/hygrophoropsis_aurantiaca/i556901415.webp') as ImageSourcePropType, FEATURE_W, 'Matej Frančeškin', LICENSE_BY, observationUrl('308666516'), inatOriginal('556901415', EXT_JPG), 'assets/gallery/hygrophoropsis_aurantiaca/i556901415.webp'),
-    photo(require('../../assets/gallery/hygrophoropsis_aurantiaca/i329482024.webp') as ImageSourcePropType, FEATURE_G, CC0_AUTHOR, LICENSE_CC0, observationUrl('188277065'), inatOriginal('329482024', EXT_JPEG), 'assets/gallery/hygrophoropsis_aurantiaca/i329482024.webp'),
+    photo(require('../../assets/gallery/hygrophoropsis_aurantiaca/i329482024.webp') as ImageSourcePropType, FEATURE_G, LOGIN_PILMAR, LICENSE_CC0, observationUrl('188277065'), inatOriginal('329482024', EXT_JPEG), 'assets/gallery/hygrophoropsis_aurantiaca/i329482024.webp'),
     photo(require('../../assets/gallery/hygrophoropsis_aurantiaca/i249233723.webp') as ImageSourcePropType, FEATURE_G, 'Yves Bas', LICENSE_BY, observationUrl('145123645'), inatOriginal('249233723', EXT_JPEG), 'assets/gallery/hygrophoropsis_aurantiaca/i249233723.webp'),
     photo(require('../../assets/gallery/hygrophoropsis_aurantiaca/i307121285.webp') as ImageSourcePropType, FEATURE_C, TEXT_TEEMU_KURPPA, LICENSE_BY, observationUrl('176640067'), inatOriginal('307121285', EXT_JPG), 'assets/gallery/hygrophoropsis_aurantiaca/i307121285.webp'),
     photo(require('../../assets/gallery/hygrophoropsis_aurantiaca/i455909063.webp') as ImageSourcePropType, FEATURE_C, 'Paweł Ryszawa', LICENSE_BY, observationUrl('254519558'), inatOriginal('455909063', EXT_JPEG), 'assets/gallery/hygrophoropsis_aurantiaca/i455909063.webp'),
   ],
   lactarius_torminosus: [
     photo(require('../../assets/gallery/lactarius_torminosus/i29239661.webp') as ImageSourcePropType, FEATURE_W, 'Davide Puddu', LICENSE_BY, observationUrl('19060576'), inatOriginal('29239661', EXT_JPEG), 'assets/gallery/lactarius_torminosus/i29239661.webp'),
-    photo(require('../../assets/gallery/lactarius_torminosus/i154172493.webp') as ImageSourcePropType, FEATURE_W, CC0_AUTHOR, LICENSE_CC0, observationUrl('93056492'), inatOriginal('154172493', EXT_JPEG), 'assets/gallery/lactarius_torminosus/i154172493.webp'),
+    photo(require('../../assets/gallery/lactarius_torminosus/i154172493.webp') as ImageSourcePropType, FEATURE_W, 'jensu', LICENSE_CC0, observationUrl('93056492'), inatOriginal('154172493', EXT_JPEG), 'assets/gallery/lactarius_torminosus/i154172493.webp'),
     photo(require('../../assets/gallery/lactarius_torminosus/i562993230.webp') as ImageSourcePropType, FEATURE_G, 'Марина Давлетшина', LICENSE_BY, observationUrl('311853107'), inatOriginal('562993230', EXT_JPG), 'assets/gallery/lactarius_torminosus/i562993230.webp'),
-    photo(require('../../assets/gallery/lactarius_torminosus/i223305895.webp') as ImageSourcePropType, FEATURE_G, CC0_AUTHOR, LICENSE_CC0, observationUrl('131239106'), inatOriginal('223305895', EXT_JPEG), 'assets/gallery/lactarius_torminosus/i223305895.webp'),
+    photo(require('../../assets/gallery/lactarius_torminosus/i223305895.webp') as ImageSourcePropType, FEATURE_G, 'kaitaaho', LICENSE_CC0, observationUrl('131239106'), inatOriginal('223305895', EXT_JPEG), 'assets/gallery/lactarius_torminosus/i223305895.webp'),
     photo(require('../../assets/gallery/lactarius_torminosus/i740558441.webp') as ImageSourcePropType, FEATURE_C, 'ikelman', LICENSE_BY, observationUrl('403348205'), inatOriginal('740558441', EXT_JPG), 'assets/gallery/lactarius_torminosus/i740558441.webp'),
-    photo(require('../../assets/gallery/lactarius_torminosus/i316368454.webp') as ImageSourcePropType, FEATURE_C, CC0_AUTHOR, LICENSE_CC0, observationUrl('181543072'), inatOriginal('316368454', EXT_JPEG), 'assets/gallery/lactarius_torminosus/i316368454.webp'),
+    photo(require('../../assets/gallery/lactarius_torminosus/i316368454.webp') as ImageSourcePropType, FEATURE_C, 'denispeace', LICENSE_CC0, observationUrl('181543072'), inatOriginal('316368454', EXT_JPEG), 'assets/gallery/lactarius_torminosus/i316368454.webp'),
   ],
   amanita_pantherina: [
     photo(require('../../assets/gallery/amanita_pantherina/i165670069.webp') as ImageSourcePropType, FEATURE_W, TEXT_DONALD_DAVESNE, LICENSE_BY, observationUrl(OBS_99389943), inatOriginal('165670069', EXT_JPG), 'assets/gallery/amanita_pantherina/i165670069.webp'),
@@ -151,7 +155,7 @@ export const SPECIES_GALLERY: Record<string, GalleryPhoto[]> = {
     photo(require('../../assets/gallery/amanita_pantherina/i165670015.webp') as ImageSourcePropType, FEATURE_C, TEXT_DONALD_DAVESNE, LICENSE_BY, observationUrl(OBS_99389943), inatOriginal('165670015', EXT_JPG), 'assets/gallery/amanita_pantherina/i165670015.webp'),
     photo(require('../../assets/gallery/amanita_pantherina/i536572797.webp') as ImageSourcePropType, FEATURE_C, TEXT_JOHAN_ADLER, LICENSE_BY, observationUrl('297915912'), inatOriginal('536572797', EXT_JPG), 'assets/gallery/amanita_pantherina/i536572797.webp'),
     photo(require('../../assets/gallery/amanita_pantherina/i235186068.webp') as ImageSourcePropType, FEATURE_Y, 'Alessia Guggisberg', LICENSE_BY, observationUrl('137679971'), inatOriginal('235186068', EXT_JPEG), 'assets/gallery/amanita_pantherina/i235186068.webp'),
-    photo(require('../../assets/gallery/amanita_pantherina/i445651430.webp') as ImageSourcePropType, FEATURE_Y, CC0_AUTHOR, LICENSE_CC0, observationUrl('249314522'), inatOriginal('445651430', EXT_JPEG), 'assets/gallery/amanita_pantherina/i445651430.webp'),
+    photo(require('../../assets/gallery/amanita_pantherina/i445651430.webp') as ImageSourcePropType, FEATURE_Y, 'philip_precey', LICENSE_CC0, observationUrl('249314522'), inatOriginal('445651430', EXT_JPEG), 'assets/gallery/amanita_pantherina/i445651430.webp'),
   ],
   amanita_virosa: [
     photo(require('../../assets/gallery/amanita_virosa/i736118412.webp') as ImageSourcePropType, FEATURE_W, 'Anita Engler', LICENSE_BY, observationUrl('401084131'), inatOriginal('736118412', EXT_JPG), 'assets/gallery/amanita_virosa/i736118412.webp'),
@@ -164,32 +168,32 @@ export const SPECIES_GALLERY: Record<string, GalleryPhoto[]> = {
     photo(require('../../assets/gallery/amanita_virosa/i153454708.webp') as ImageSourcePropType, FEATURE_Y, AUTHOR_VIKTOR, LICENSE_BY, observationUrl('92658100'), inatOriginal('153454708', EXT_JPG), 'assets/gallery/amanita_virosa/i153454708.webp'),
   ],
   agaricus_xanthodermus: [
-    photo(require('../../assets/gallery/agaricus_xanthodermus/i290453675.webp') as ImageSourcePropType, FEATURE_W, CC0_AUTHOR, LICENSE_CC0, observationUrl('167651557'), inatOriginal('290453675', EXT_JPEG), 'assets/gallery/agaricus_xanthodermus/i290453675.webp'),
+    photo(require('../../assets/gallery/agaricus_xanthodermus/i290453675.webp') as ImageSourcePropType, FEATURE_W, 'szegedigombasz', LICENSE_CC0, observationUrl('167651557'), inatOriginal('290453675', EXT_JPEG), 'assets/gallery/agaricus_xanthodermus/i290453675.webp'),
     photo(require('../../assets/gallery/agaricus_xanthodermus/i390647588.webp') as ImageSourcePropType, FEATURE_W, 'Lucian Clanet', LICENSE_BY, observationUrl('220629543'), inatOriginal('390647588', EXT_JPG), 'assets/gallery/agaricus_xanthodermus/i390647588.webp'),
     photo(require('../../assets/gallery/agaricus_xanthodermus/i299294079.webp') as ImageSourcePropType, FEATURE_G, 'Duncan Brooks', LICENSE_BY, observationUrl('172408577'), inatOriginal('299294079', EXT_JPEG), 'assets/gallery/agaricus_xanthodermus/i299294079.webp'),
-    photo(require('../../assets/gallery/agaricus_xanthodermus/i599046976.webp') as ImageSourcePropType, FEATURE_G, CC0_AUTHOR, LICENSE_CC0, observationUrl('330364759'), inatOriginal('599046976', EXT_JPG), 'assets/gallery/agaricus_xanthodermus/i599046976.webp'),
-    photo(require('../../assets/gallery/agaricus_xanthodermus/i241602842.webp') as ImageSourcePropType, FEATURE_C, CC0_AUTHOR, LICENSE_CC0, observationUrl('141079385'), inatOriginal('241602842', EXT_JPG), 'assets/gallery/agaricus_xanthodermus/i241602842.webp'),
-    photo(require('../../assets/gallery/agaricus_xanthodermus/i102034384.webp') as ImageSourcePropType, FEATURE_C, CC0_AUTHOR, LICENSE_CC0, observationUrl('63564627'), inatOriginal('102034384', EXT_JPG), 'assets/gallery/agaricus_xanthodermus/i102034384.webp'),
+    photo(require('../../assets/gallery/agaricus_xanthodermus/i599046976.webp') as ImageSourcePropType, FEATURE_G, LOGIN_PILMAR, LICENSE_CC0, observationUrl('330364759'), inatOriginal('599046976', EXT_JPG), 'assets/gallery/agaricus_xanthodermus/i599046976.webp'),
+    photo(require('../../assets/gallery/agaricus_xanthodermus/i241602842.webp') as ImageSourcePropType, FEATURE_C, LOGIN_PILMAR, LICENSE_CC0, observationUrl('141079385'), inatOriginal('241602842', EXT_JPG), 'assets/gallery/agaricus_xanthodermus/i241602842.webp'),
+    photo(require('../../assets/gallery/agaricus_xanthodermus/i102034384.webp') as ImageSourcePropType, FEATURE_C, LOGIN_MANGOBLATT, LICENSE_CC0, observationUrl('63564627'), inatOriginal('102034384', EXT_JPG), 'assets/gallery/agaricus_xanthodermus/i102034384.webp'),
     photo(require('../../assets/gallery/agaricus_xanthodermus/i390647612.webp') as ImageSourcePropType, FEATURE_Y, 'Lucian Clanet', LICENSE_BY, observationUrl('220629543'), inatOriginal('390647612', EXT_JPG), 'assets/gallery/agaricus_xanthodermus/i390647612.webp'),
-    photo(require('../../assets/gallery/agaricus_xanthodermus/i85215083.webp') as ImageSourcePropType, FEATURE_Y, CC0_AUTHOR, LICENSE_CC0, observationUrl('53572968'), inatOriginal('85215083', EXT_JPEG), 'assets/gallery/agaricus_xanthodermus/i85215083.webp'),
+    photo(require('../../assets/gallery/agaricus_xanthodermus/i85215083.webp') as ImageSourcePropType, FEATURE_Y, 'nikcain', LICENSE_CC0, observationUrl('53572968'), inatOriginal('85215083', EXT_JPEG), 'assets/gallery/agaricus_xanthodermus/i85215083.webp'),
   ],
   inocybe_erubescens: [
     photo(require('../../assets/gallery/inocybe_erubescens/i78468338.webp') as ImageSourcePropType, FEATURE_W, 'Enrico Tomschke', LICENSE_BY, observationUrl('49429443'), inatOriginal('78468338', EXT_JPG), 'assets/gallery/inocybe_erubescens/i78468338.webp'),
-    photo(require('../../assets/gallery/inocybe_erubescens/i667678453.webp') as ImageSourcePropType, FEATURE_W, CC0_AUTHOR, LICENSE_CC0, observationUrl('365686049'), inatOriginal('667678453', EXT_JPG), 'assets/gallery/inocybe_erubescens/i667678453.webp'),
+    photo(require('../../assets/gallery/inocybe_erubescens/i667678453.webp') as ImageSourcePropType, FEATURE_W, LOGIN_SABEAR, LICENSE_CC0, observationUrl('365686049'), inatOriginal('667678453', EXT_JPG), 'assets/gallery/inocybe_erubescens/i667678453.webp'),
     photo(require('../../assets/gallery/inocybe_erubescens/i79821844.webp') as ImageSourcePropType, FEATURE_G, 'Peeter Talvistu', LICENSE_BY, observationUrl('50267582'), inatOriginal('79821844', EXT_JPEG), 'assets/gallery/inocybe_erubescens/i79821844.webp'),
-    photo(require('../../assets/gallery/inocybe_erubescens/i676615640.webp') as ImageSourcePropType, FEATURE_G, CC0_AUTHOR, LICENSE_CC0, observationUrl('370374285'), inatOriginal('676615640', EXT_JPG), 'assets/gallery/inocybe_erubescens/i676615640.webp'),
-    photo(require('../../assets/gallery/inocybe_erubescens/i676615528.webp') as ImageSourcePropType, FEATURE_C, CC0_AUTHOR, LICENSE_CC0, observationUrl('370374285'), inatOriginal('676615528', EXT_JPG), 'assets/gallery/inocybe_erubescens/i676615528.webp'),
+    photo(require('../../assets/gallery/inocybe_erubescens/i676615640.webp') as ImageSourcePropType, FEATURE_G, LOGIN_SABEAR, LICENSE_CC0, observationUrl('370374285'), inatOriginal('676615640', EXT_JPG), 'assets/gallery/inocybe_erubescens/i676615640.webp'),
+    photo(require('../../assets/gallery/inocybe_erubescens/i676615528.webp') as ImageSourcePropType, FEATURE_C, LOGIN_SABEAR, LICENSE_CC0, observationUrl('370374285'), inatOriginal('676615528', EXT_JPG), 'assets/gallery/inocybe_erubescens/i676615528.webp'),
     photo(require('../../assets/gallery/inocybe_erubescens/i519370221.webp') as ImageSourcePropType, FEATURE_C, TEXT_VICTOR_LABORDE, LICENSE_BY, observationUrl('288787182'), inatOriginal('519370221', EXT_JPG), 'assets/gallery/inocybe_erubescens/i519370221.webp'),
     photo(require('../../assets/gallery/inocybe_erubescens/i519370407.webp') as ImageSourcePropType, FEATURE_Y, TEXT_VICTOR_LABORDE, LICENSE_BY, observationUrl('288787182'), inatOriginal('519370407', EXT_JPG), 'assets/gallery/inocybe_erubescens/i519370407.webp'),
   ],
   hypholoma_fasciculare: [
-    photo(require('../../assets/gallery/hypholoma_fasciculare/i332909821.webp') as ImageSourcePropType, FEATURE_W, CC0_AUTHOR, LICENSE_CC0, observationUrl(OBS_189971985), inatOriginal('332909821', EXT_JPG), 'assets/gallery/hypholoma_fasciculare/i332909821.webp'),
-    photo(require('../../assets/gallery/hypholoma_fasciculare/i96210405.webp') as ImageSourcePropType, FEATURE_W, CC0_AUTHOR, LICENSE_CC0, observationUrl('60181818'), inatOriginal('96210405', EXT_JPG), 'assets/gallery/hypholoma_fasciculare/i96210405.webp'),
-    photo(require('../../assets/gallery/hypholoma_fasciculare/i335699255.webp') as ImageSourcePropType, FEATURE_G, CC0_AUTHOR, LICENSE_CC0, observationUrl('191367997'), inatOriginal('335699255', EXT_JPEG), 'assets/gallery/hypholoma_fasciculare/i335699255.webp'),
-    photo(require('../../assets/gallery/hypholoma_fasciculare/i332909787.webp') as ImageSourcePropType, FEATURE_G, CC0_AUTHOR, LICENSE_CC0, observationUrl(OBS_189971985), inatOriginal('332909787', EXT_JPG), 'assets/gallery/hypholoma_fasciculare/i332909787.webp'),
+    photo(require('../../assets/gallery/hypholoma_fasciculare/i332909821.webp') as ImageSourcePropType, FEATURE_W, 'sturuss', LICENSE_CC0, observationUrl(OBS_189971985), inatOriginal('332909821', EXT_JPG), 'assets/gallery/hypholoma_fasciculare/i332909821.webp'),
+    photo(require('../../assets/gallery/hypholoma_fasciculare/i96210405.webp') as ImageSourcePropType, FEATURE_W, LOGIN_MANGOBLATT, LICENSE_CC0, observationUrl('60181818'), inatOriginal('96210405', EXT_JPG), 'assets/gallery/hypholoma_fasciculare/i96210405.webp'),
+    photo(require('../../assets/gallery/hypholoma_fasciculare/i335699255.webp') as ImageSourcePropType, FEATURE_G, 'termeszet1', LICENSE_CC0, observationUrl('191367997'), inatOriginal('335699255', EXT_JPEG), 'assets/gallery/hypholoma_fasciculare/i335699255.webp'),
+    photo(require('../../assets/gallery/hypholoma_fasciculare/i332909787.webp') as ImageSourcePropType, FEATURE_G, 'sturuss', LICENSE_CC0, observationUrl(OBS_189971985), inatOriginal('332909787', EXT_JPG), 'assets/gallery/hypholoma_fasciculare/i332909787.webp'),
     photo(require('../../assets/gallery/hypholoma_fasciculare/i175543401.webp') as ImageSourcePropType, FEATURE_C, 'Michel Langeveld', LICENSE_BY, observationUrl('104726384'), inatOriginal('175543401', EXT_JPG), 'assets/gallery/hypholoma_fasciculare/i175543401.webp'),
-    photo(require('../../assets/gallery/hypholoma_fasciculare/i332909798.webp') as ImageSourcePropType, FEATURE_C, CC0_AUTHOR, LICENSE_CC0, observationUrl(OBS_189971985), inatOriginal('332909798', EXT_JPG), 'assets/gallery/hypholoma_fasciculare/i332909798.webp'),
-    photo(require('../../assets/gallery/hypholoma_fasciculare/i456871736.webp') as ImageSourcePropType, FEATURE_Y, CC0_AUTHOR, LICENSE_CC0, observationUrl('254994537'), inatOriginal('456871736', EXT_JPG), 'assets/gallery/hypholoma_fasciculare/i456871736.webp'),
+    photo(require('../../assets/gallery/hypholoma_fasciculare/i332909798.webp') as ImageSourcePropType, FEATURE_C, 'sturuss', LICENSE_CC0, observationUrl(OBS_189971985), inatOriginal('332909798', EXT_JPG), 'assets/gallery/hypholoma_fasciculare/i332909798.webp'),
+    photo(require('../../assets/gallery/hypholoma_fasciculare/i456871736.webp') as ImageSourcePropType, FEATURE_Y, 'cjoynson', LICENSE_CC0, observationUrl('254994537'), inatOriginal('456871736', EXT_JPG), 'assets/gallery/hypholoma_fasciculare/i456871736.webp'),
   ],
   tricholoma_equestre: [
     photo(require('../../assets/gallery/tricholoma_equestre/i321790489.webp') as ImageSourcePropType, FEATURE_W, 'Tatiana Strus', LICENSE_BY, observationUrl('184354733'), inatOriginal('321790489', EXT_JPEG), 'assets/gallery/tricholoma_equestre/i321790489.webp'),
@@ -203,19 +207,19 @@ export const SPECIES_GALLERY: Record<string, GalleryPhoto[]> = {
   galerina_marginata: [
     photo(require('../../assets/gallery/galerina_marginata/i235279592.webp') as ImageSourcePropType, FEATURE_W, 'Ирина Хохрякова', LICENSE_BY, observationUrl('137727590'), inatOriginal('235279592', EXT_JPEG), 'assets/gallery/galerina_marginata/i235279592.webp'),
     photo(require('../../assets/gallery/galerina_marginata/i449439926.webp') as ImageSourcePropType, FEATURE_G, TEXT_TEEMU_KURPPA, LICENSE_BY, observationUrl('251208005'), inatOriginal('449439926', EXT_JPEG), 'assets/gallery/galerina_marginata/i449439926.webp'),
-    photo(require('../../assets/gallery/galerina_marginata/i340065640.webp') as ImageSourcePropType, FEATURE_G, CC0_AUTHOR, LICENSE_CC0, observationUrl('193576157'), inatOriginal('340065640', EXT_JPEG), 'assets/gallery/galerina_marginata/i340065640.webp'),
+    photo(require('../../assets/gallery/galerina_marginata/i340065640.webp') as ImageSourcePropType, FEATURE_G, 'termeszet1', LICENSE_CC0, observationUrl('193576157'), inatOriginal('340065640', EXT_JPEG), 'assets/gallery/galerina_marginata/i340065640.webp'),
     photo(require('../../assets/gallery/galerina_marginata/i623864955.webp') as ImageSourcePropType, FEATURE_C, TEXT_VICTOR_LABORDE, LICENSE_BY, observationUrl('342568493'), inatOriginal('623864955', EXT_JPG), 'assets/gallery/galerina_marginata/i623864955.webp'),
     photo(require('../../assets/gallery/galerina_marginata/i454928128.webp') as ImageSourcePropType, FEATURE_C, 'lizfrost47', LICENSE_BY, observationUrl('254027717'), inatOriginal('454928128', EXT_JPEG), 'assets/gallery/galerina_marginata/i454928128.webp'),
     photo(require('../../assets/gallery/galerina_marginata/i623868009.webp') as ImageSourcePropType, FEATURE_Y, TEXT_VICTOR_LABORDE, LICENSE_BY, observationUrl('342568493'), inatOriginal('623868009', EXT_JPG), 'assets/gallery/galerina_marginata/i623868009.webp'),
   ],
   amanita_citrina: [
-    photo(require('../../assets/gallery/amanita_citrina/i234418893.webp') as ImageSourcePropType, FEATURE_W, CC0_AUTHOR, LICENSE_CC0, observationUrl('137274330'), inatOriginal('234418893', EXT_JPEG), 'assets/gallery/amanita_citrina/i234418893.webp'),
+    photo(require('../../assets/gallery/amanita_citrina/i234418893.webp') as ImageSourcePropType, FEATURE_W, 'jensu', LICENSE_CC0, observationUrl('137274330'), inatOriginal('234418893', EXT_JPEG), 'assets/gallery/amanita_citrina/i234418893.webp'),
     photo(require('../../assets/gallery/amanita_citrina/i575553975.webp') as ImageSourcePropType, FEATURE_W, TEXT_JOHAN_ADLER, LICENSE_BY, observationUrl('318456597'), inatOriginal('575553975', EXT_JPG), 'assets/gallery/amanita_citrina/i575553975.webp'),
     photo(require('../../assets/gallery/amanita_citrina/i439679325.webp') as ImageSourcePropType, FEATURE_G, 'Angelika Baumann', LICENSE_BY, observationUrl('246302696'), inatOriginal('439679325', EXT_JPEG), 'assets/gallery/amanita_citrina/i439679325.webp'),
     photo(require('../../assets/gallery/amanita_citrina/i581744127.webp') as ImageSourcePropType, FEATURE_G, 'Roland Godon', LICENSE_BY, observationUrl('321656115'), inatOriginal('581744127', EXT_JPG), 'assets/gallery/amanita_citrina/i581744127.webp'),
     photo(require('../../assets/gallery/amanita_citrina/i744197630.webp') as ImageSourcePropType, FEATURE_C, TEXT_KATRIN_SIMON, LICENSE_BY, observationUrl('405182907'), inatOriginal('744197630', EXT_JPG), 'assets/gallery/amanita_citrina/i744197630.webp'),
-    photo(require('../../assets/gallery/amanita_citrina/i574762710.webp') as ImageSourcePropType, FEATURE_C, CC0_AUTHOR, LICENSE_CC0, observationUrl('318042732'), inatOriginal('574762710', EXT_JPG), 'assets/gallery/amanita_citrina/i574762710.webp'),
-    photo(require('../../assets/gallery/amanita_citrina/i155987510.webp') as ImageSourcePropType, FEATURE_Y, CC0_AUTHOR, LICENSE_CC0, observationUrl('94063077'), inatOriginal('155987510', EXT_JPG), 'assets/gallery/amanita_citrina/i155987510.webp'),
+    photo(require('../../assets/gallery/amanita_citrina/i574762710.webp') as ImageSourcePropType, FEATURE_C, LOGIN_PILMAR, LICENSE_CC0, observationUrl('318042732'), inatOriginal('574762710', EXT_JPG), 'assets/gallery/amanita_citrina/i574762710.webp'),
+    photo(require('../../assets/gallery/amanita_citrina/i155987510.webp') as ImageSourcePropType, FEATURE_Y, LOGIN_PILMAR, LICENSE_CC0, observationUrl('94063077'), inatOriginal('155987510', EXT_JPG), 'assets/gallery/amanita_citrina/i155987510.webp'),
     photo(require('../../assets/gallery/amanita_citrina/i581744089.webp') as ImageSourcePropType, FEATURE_Y, 'Roland Godon', LICENSE_BY, observationUrl('321656115'), inatOriginal('581744089', EXT_JPG), 'assets/gallery/amanita_citrina/i581744089.webp'),
   ],
   cortinarius_orellanus: [
@@ -258,6 +262,7 @@ export function galleryPhotoCredits(): GalleryCredit[] {
         sourceUrl: item.sourceUrl,
         classId: speciesId,
         taxonName: latin.get(speciesId) ?? speciesId,
+        modified: true,
       });
     }
   }

@@ -111,6 +111,8 @@ export const PhotoCredits: React.FC<{
                     onPress={() => {
                       void Linking.openURL(url);
                     }}
+                    accessibilityRole="link"
+                    accessibilityLabel={license}
                     testID={`photo-credit-license-${index}`}
                   >
                     <Text style={styles.licenseLink}>{license}</Text>
@@ -118,11 +120,23 @@ export const PhotoCredits: React.FC<{
                 ) : (
                   <Text style={styles.license}>{license}</Text>
                 )}
+                {item.modified ? (
+                  <Text style={styles.meta} testID={`photo-credit-modified-${index}`}>
+                    {t('gallery.modified')}
+                  </Text>
+                ) : null}
                 {item.taxonName ? <Text style={styles.meta}>{item.taxonName}</Text> : null}
                 {item.sourceUrl ? (
-                  <Text style={styles.url} testID={`photo-credit-source-${index}`}>
-                    {item.sourceUrl}
-                  </Text>
+                  <Pressable
+                    onPress={() => {
+                      void Linking.openURL(item.sourceUrl);
+                    }}
+                    accessibilityRole="link"
+                    accessibilityLabel={t('gallery.source')}
+                    testID={`photo-credit-source-${index}`}
+                  >
+                    <Text style={styles.url}>{item.sourceUrl}</Text>
+                  </Pressable>
                 ) : null}
               </View>
             );

@@ -14,6 +14,8 @@ export interface PhotoCredit {
   sourceUrl: string;
   classId: string;
   taxonName: string;
+  /** Set for atlas gallery photos, which were resized and saved as WebP. */
+  modified?: boolean;
 }
 
 export const PACKAGED_PHOTO_CREDITS: PhotoCredit[] | null = null;

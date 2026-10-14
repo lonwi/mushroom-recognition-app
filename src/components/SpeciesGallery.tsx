@@ -12,22 +12,11 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { useLanguage, type TranslationParams } from '../contexts/LanguageContext';
-import {
-  galleryLicenseUrl,
-  photosForSpecies,
-  type GalleryFeature,
-  type GalleryPhoto,
-} from '../data/speciesGallery';
-import { colors, radius, spacing, typography } from '../theme/tokens';
+import { galleryFeatureKey, gallerySpeciesName } from '../data/galleryCaptions';
+import { galleryLicenseUrl, photosForSpecies, type GalleryPhoto } from '../data/speciesGallery';
+import { colors, radius, sizing, spacing, typography } from '../theme/tokens';
 
 type Translate = (key: string, params?: TranslationParams) => string;
-
-function featureKey(speciesId: string, feature: GalleryFeature): string {
-  if (speciesId === 'gyromitra_esculenta' && feature === 'G') {
-    return 'gallery.feature.undersideStem';
-  }
-  return `gallery.feature.${feature}`;
-}
 
 function openLink(url: string): void {
   void Linking.openURL(url);
@@ -36,12 +25,15 @@ function openLink(url: string): void {
 const GallerySlide: React.FC<{
   photo: GalleryPhoto;
   speciesId: string;
+  speciesName: string;
   index: number;
   total: number;
   pageStyle: StyleProp<ViewStyle>;
   t: Translate;
-}> = ({ photo, speciesId, index, total, pageStyle, t }) => {
+}> = ({ photo, speciesId, speciesName, index, total, pageStyle, t }) => {
   const position = index + 1;
+  const feature = t(galleryFeatureKey(speciesId, photo.feature));
+  const sourceLabel = t('gallery.source');
   return (
     <View style={pageStyle} testID={`species-gallery-slide-${index}`}>
       <Image
@@ -49,26 +41,36 @@ const GallerySlide: React.FC<{
         style={styles.photo}
         resizeMode="cover"
         testID={`species-gallery-photo-${index}`}
-        accessibilityLabel={t(featureKey(speciesId, photo.feature))}
+        accessibilityLabel={t('gallery.photoLabel', { species: speciesName, feature })}
       />
       <View style={styles.caption}>
         <Text style={styles.position} testID={`species-gallery-position-${index}`}>
           {t('gallery.position', { index: position, count: total })}
         </Text>
         <Text style={styles.feature} testID={`species-gallery-feature-${index}`}>
-          {t(featureKey(speciesId, photo.feature))}
+          {feature}
         </Text>
         <Text style={styles.author} testID={`species-gallery-author-${index}`}>
           {t('gallery.author', { name: photo.author })}
         </Text>
+        <Text style={styles.modified} testID={`species-gallery-modified-${index}`}>
+          {t('gallery.modified')}
+        </Text>
         <Pressable
           onPress={() => openLink(galleryLicenseUrl(photo.license))}
+          accessibilityRole="link"
+          accessibilityLabel={photo.license}
           testID={`species-gallery-license-${index}`}
         >
           <Text style={styles.link}>{photo.license}</Text>
         </Pressable>
-        <Pressable onPress={() => openLink(photo.sourceUrl)} testID={`species-gallery-source-${index}`}>
-          <Text style={styles.link}>{`${t('gallery.source')}: ${photo.sourceUrl}`}</Text>
+        <Pressable
+          onPress={() => openLink(photo.sourceUrl)}
+          accessibilityRole="link"
+          accessibilityLabel={sourceLabel}
+          testID={`species-gallery-source-${index}`}
+        >
+          <Text style={styles.link}>{`${sourceLabel}: ${photo.sourceUrl}`}</Text>
         </Pressable>
       </View>
     </View>
@@ -76,7 +78,8 @@ const GallerySlide: React.FC<{
 };
 
 export const SpeciesGallery: React.FC<{ speciesId: string }> = ({ speciesId }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const speciesName = gallerySpeciesName(speciesId, language);
   const { width } = useWindowDimensions();
   const [containerWidth, setContainerWidth] = useState(0);
   const pageWidth = containerWidth > 0 ? containerWidth : width;
@@ -111,6 +114,7 @@ export const SpeciesGallery: React.FC<{ speciesId: string }> = ({ speciesId }) =
             key={`${photo.assetPath}:${photo.feature}:${index}`}
             photo={photo}
             speciesId={speciesId}
+            speciesName={speciesName}
             index={index}
             total={photos.length}
             pageStyle={frame.page}
@@ -134,13 +138,13 @@ const styles = StyleSheet.create({
   note: {
     color: colors.slate600,
     fontSize: typography.small,
-    lineHeight: 18,
+    lineHeight: typography.lineHeightSmall,
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
   },
   photo: {
     width: '100%',
-    height: 220,
+    height: sizing.galleryPhotoHeight,
     backgroundColor: colors.slate200,
   },
   caption: {
@@ -164,10 +168,15 @@ const styles = StyleSheet.create({
     fontSize: typography.small,
     marginTop: spacing.xs,
   },
+  modified: {
+    color: colors.slate600,
+    fontSize: typography.caption,
+    marginTop: spacing.xxs,
+  },
   link: {
     color: colors.green800,
     fontSize: typography.small,
-    lineHeight: 18,
+    lineHeight: typography.lineHeightSmall,
     marginTop: spacing.xxs,
     textDecorationLine: 'underline',
   },

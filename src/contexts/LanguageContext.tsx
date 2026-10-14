@@ -43,24 +43,16 @@ const LanguageContext = createContext<LanguageContextType>({
 
 export const useLanguage = () => useContext(LanguageContext);
 
-export const LanguageProvider: React.FC<{
-  children: React.ReactNode;
-  initialLanguage?: LanguageType;
-}> = ({ children, initialLanguage }) => {
-  const [language, setLanguageState] = useState<LanguageType>(initialLanguage ?? 'pl');
+export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [language, setLanguageState] = useState<LanguageType>('pl');
 
   useEffect(() => {
-    if (initialLanguage) return undefined;
-    let active = true;
     const loadLanguage = async () => {
       const storedLang = await settingsStore.getLanguage();
-      if (active && storedLang) setLanguageState(storedLang);
+      if (storedLang) setLanguageState(storedLang);
     };
     loadLanguage();
-    return () => {
-      active = false;
-    };
-  }, [initialLanguage]);
+  }, []);
 
   const setLanguage = useCallback((lang: LanguageType) => {
     setLanguageState(lang);
