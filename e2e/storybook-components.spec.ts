@@ -199,15 +199,17 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
 
     await page.getByTestId('filter-chip-kind-edible').click();
     await expect(page.getByTestId('atlas-matches').getByText('Prawdziwki')).toBeVisible();
-    await expect(page.getByTestId('atlas-condition-armillaria_mellea')).toContainText('Jadalny warunkowo');
     await expect(page.getByTestId('atlas-matches').getByText('☠ Sobowtór!').first()).toBeVisible();
+    await expect(page.getByTestId('atlas-matches').getByText('Opieńki')).toHaveCount(0);
     await expect(page.getByTestId('atlas-matches').getByText('Gołąbek zielonawy')).toHaveCount(0);
+    await expect(page.getByTestId('atlas-unverified').getByText('Opieńki')).toBeVisible();
     await expect(page.getByTestId('atlas-unverified').getByText('Gołąbek zielonawy')).toBeVisible();
 
     await page.getByTestId('filter-chip-kind-poisonous').click();
     await expect(page.getByTestId('atlas-matches').getByText('Prawdziwki')).toBeVisible();
     await expect(page.getByTestId('atlas-matches').getByText('Muchomor sromotnikowy (zielonawy)')).toBeVisible();
-    await expect(page.getByTestId('atlas-matches').getByText('ŚMIERTELNIE TRUJĄCY').first()).toBeVisible();
+    await expect(page.getByTestId('atlas-matches').getByText('Krowiak podwinięty (Olszówka)')).toBeVisible();
+    await expect(page.getByTestId('atlas-card-badge-paxillus_involutus')).toContainText('ŚMIERTELNIE TRUJĄCY');
     await expect(page.getByTestId('atlas-psychoactive-amanita_muscaria')).toBeVisible();
 
     await page.getByTestId('filter-chip-kind-edible').click();

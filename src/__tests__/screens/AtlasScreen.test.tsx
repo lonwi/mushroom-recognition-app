@@ -199,13 +199,15 @@ describe('AtlasScreen RTL Tests', () => {
       expect(matches.getByTestId('atlas-psychoactive-amanita_pantherina')).toBeTruthy();
       expect(screen.queryByTestId('filter-chip-psychoactive')).toBeNull();
       expect(matches.getByText('Muchomor sromotnikowy (zielonawy)')).toBeTruthy();
+      expect(matches.getByText('Krowiak podwinięty (Olszówka)')).toBeTruthy();
       expect(within(matches.getByTestId('atlas-card-badge-amanita_phalloides')).getByText('ŚMIERTELNIE TRUJĄCY')).toBeTruthy();
+      expect(within(matches.getByTestId('atlas-card-badge-paxillus_involutus')).getByText('ŚMIERTELNIE TRUJĄCY')).toBeTruthy();
       expect(matches.queryByText('Goryczak żółciowy')).toBeNull();
       expect(matches.queryByText('Prawdziwki')).toBeNull();
     });
   });
 
-  it('keeps edible results qualified and moves an empty field to verification', async () => {
+  it('edible filter skips unfinished cards', async () => {
     const screen = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={() => {}} />
@@ -217,17 +219,40 @@ describe('AtlasScreen RTL Tests', () => {
       const matches = within(screen.getByTestId('atlas-matches'));
       expect(matches.getByText('Prawdziwki')).toBeTruthy();
       expect(matches.getAllByText('JADALNY').length).toBeGreaterThan(0);
-      expect(matches.getByTestId('atlas-condition-armillaria_mellea')).toBeTruthy();
       expect(matches.getAllByText('☠ Sobowtór!').length).toBeGreaterThan(0);
       expect(matches.queryByText('Muchomor sromotnikowy (zielonawy)')).toBeNull();
       expect(matches.queryByText('Gołąbek zielonawy')).toBeNull();
+      expect(matches.queryByText('Pieczarka polna')).toBeNull();
+      expect(matches.queryByText('Smardz jadalny')).toBeNull();
+      expect(matches.queryByText('Borowik ceglastopory')).toBeNull();
+      expect(matches.queryByText('Maślak sitarz')).toBeNull();
+      expect(matches.queryByText('Opieńki')).toBeNull();
+      expect(matches.queryByText('Łuskwiak zmienny')).toBeNull();
+      expect(matches.queryByText('Gęśnica wiosenna')).toBeNull();
+      expect(matches.queryByText('Maślanka łagodna')).toBeNull();
       const unverified = within(screen.getByTestId('atlas-unverified'));
       expect(unverified.getByText('Gołąbek zielonawy')).toBeTruthy();
+      expect(unverified.getByText('Pieczarka polna')).toBeTruthy();
+      expect(unverified.getByText('Smardz jadalny')).toBeTruthy();
+      expect(unverified.getByText('Borowik ceglastopory')).toBeTruthy();
+      expect(unverified.getByText('Maślak sitarz')).toBeTruthy();
+      expect(unverified.getByText('Opieńki')).toBeTruthy();
+      expect(unverified.getByText('Łuskwiak zmienny')).toBeTruthy();
+      expect(unverified.getByText('Gęśnica wiosenna')).toBeTruthy();
+      expect(unverified.getByText('Maślanka łagodna')).toBeTruthy();
       expect(unverified.getByText('Kolczak obłączasty')).toBeTruthy();
       expect(unverified.getByText(/nie oznacza, że grzyb jest jadalny/)).toBeTruthy();
+      expect(screen.queryByTestId('atlas-condition-armillaria_mellea')).toBeNull();
     });
+  });
 
-    await fireEvent.press(screen.getByTestId('filter-chip-kind-edible'));
+  it('moves an empty feature to verification and keeps the result count on the matches', async () => {
+    const screen = await render(
+      <LanguageProvider>
+        <AtlasScreen onSelectSpecies={() => {}} />
+      </LanguageProvider>
+    );
+
     await fireEvent.press(screen.getByTestId('filter-chip-ring-present'));
     await waitFor(() => {
       const matches = within(screen.getByTestId('atlas-matches'));
@@ -312,9 +337,12 @@ describe('AtlasScreen RTL Tests', () => {
     await fireEvent.changeText(screen.getByPlaceholderText(en.atlas.searchPlaceholder), '');
     await fireEvent.press(screen.getByTestId('filter-chip-kind-edible'));
     await waitFor(() => {
-      expect(screen.getByTestId('atlas-condition-armillaria_mellea').props.children).toBe(
-        'Conditionally edible. The condition is on the card.',
-      );
+      const matches = within(screen.getByTestId('atlas-matches'));
+      const unverified = within(screen.getByTestId('atlas-unverified'));
+      expect(matches.getByText('Prawdziwki')).toBeTruthy();
+      expect(matches.queryByText('Opieńki')).toBeNull();
+      expect(unverified.getByText('Opieńki')).toBeTruthy();
+      expect(screen.queryByTestId('atlas-condition-armillaria_mellea')).toBeNull();
     });
     await fireEvent.press(screen.getByTestId('filter-chip-kind-edible'));
     await fireEvent.press(screen.getByTestId('filter-chip-kind-poisonous'));

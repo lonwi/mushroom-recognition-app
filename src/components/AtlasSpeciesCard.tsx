@@ -69,11 +69,6 @@ export const AtlasSpeciesCard: React.FC<Props> = ({ row, onPress }) => {
               testID={`incomplete-card-badge-${item.id}`}
             />
           </View>
-          {row.conditionalEdible ? (
-            <Text style={styles.condition} testID={`atlas-condition-${item.id}`}>
-              {t('atlas.conditionalEdible')}
-            </Text>
-          ) : null}
           {row.psychoactive ? (
             <Text style={styles.psychoactive} testID={`atlas-psychoactive-${item.id}`}>
               {t('atlas.psychoactive')}
@@ -165,12 +160,6 @@ const styles = StyleSheet.create({
     alignSelf: flag.alignSelf,
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
-  },
-  condition: {
-    ...flag,
-    backgroundColor: colors.amberMaterialBg,
-    color: colors.amber900,
-    borderColor: colors.amber700,
   },
   psychoactive: {
     ...flag,

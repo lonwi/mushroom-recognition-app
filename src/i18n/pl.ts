@@ -74,11 +74,10 @@ export const pl = {
       volvaBulb: 'Bulwa',
       volvaNone: 'Brak pochwy i bulwy',
     },
-    conditionalEdible: 'Jadalny warunkowo. Warunek jest na karcie.',
     psychoactive: 'Psychoaktywne',
     unverifiedTitle: 'Do weryfikacji ({count})',
     unverifiedBody:
-      'Te karty nie są wynikiem filtra. Pole dla wybranego chipa jest puste albo oznaczone do weryfikacji. To nie jest werdykt i nie oznacza, że grzyb jest jadalny.',
+      'Te karty nie są wynikiem filtra. Karta jest niepełna albo pole wybranej cechy jest puste lub do weryfikacji. To nie jest werdykt i nie oznacza, że grzyb jest jadalny.',
     emptyTitle: 'Brak kart',
     emptyDesc:
       'Żadna karta w tym atlasie nie pasuje do wybranych filtrów. Brak karty nie oznacza, że grzyb jest jadalny. Atlas nie jest kompletnym kluczem do grzybów Polski.',

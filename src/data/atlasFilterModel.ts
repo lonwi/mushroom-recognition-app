@@ -1,37 +1,26 @@
-import type { MushroomSpecies } from '../types/mushroom';
+import type { EdibilityStatus, MushroomSpecies } from '../types/mushroom';
 import table from './atlasFilterFacts.json';
 
-/**
- * Coarse kind for the five source statuses copied from species cards.
- * `NO_ATLAS_VERDICT` has no kind, so it cannot land in a safe chip.
- */
-const STATUS = {
-  edible: 'jadalny',
-  conditional: 'jadalny warunkowo',
-  inedible: 'niejadalny',
-  poisonous: 'trujący',
-  deadly: 'śmiertelnie trujący',
-  noVerdict: 'NO_ATLAS_VERDICT',
-} as const;
-
-type SourceStatus = (typeof STATUS)[keyof typeof STATUS];
+type SpeciesId = MushroomSpecies['id'];
 
 type KindId = 'edible' | 'inedible' | 'poisonous';
 
-const KIND: Record<SourceStatus, KindId | null> = {
-  [STATUS.edible]: 'edible',
-  [STATUS.conditional]: 'edible',
-  [STATUS.inedible]: 'inedible',
-  [STATUS.poisonous]: 'poisonous',
-  [STATUS.deadly]: 'poisonous',
-  [STATUS.noVerdict]: null,
+/** Card status is the only source of kind. Deadly stays inside poisonous. */
+const KIND_FROM_STATUS: Record<EdibilityStatus, KindId> = {
+  EDIBLE: 'edible',
+  INEDIBLE: 'inedible',
+  POISONOUS: 'poisonous',
+  DEADLY_POISONOUS: 'poisonous',
 };
 
 type FilterScalar = string | boolean;
 type FilterFieldValue = FilterScalar | readonly FilterScalar[] | null;
 
-interface SpeciesFilterFacts {
-  status: SourceStatus | null;
+/**
+ * Morphological facts only. `status` and `propozycja` are not fields:
+ * a second copy of either key fails the assignment below.
+ */
+export interface StructureFacts {
   psychoactive: boolean;
   hymenophore: FilterFieldValue;
   sporePrint: FilterFieldValue;
@@ -40,16 +29,31 @@ interface SpeciesFilterFacts {
   protection: FilterFieldValue;
 }
 
-const FACTS = table as Readonly<Record<string, SpeciesFilterFacts>>;
+type ForbiddenFactKey = 'status' | 'propozycja' | 'rodzaj';
+type Assert<T extends true> = T;
+type _FactsExcludeStatusAndProposal = Assert<
+  [ForbiddenFactKey] extends [Exclude<ForbiddenFactKey, keyof StructureFacts>] ? true : never
+>;
 
-type FilterableField = 'status' | 'hymenophore' | 'sporePrint' | 'ring' | 'volva' | 'protection';
+interface ImportedFact {
+  psychoactive: boolean;
+  hymenophore: string | null;
+  sporePrint: string | readonly string[] | null;
+  ring: boolean | null;
+  volva: string | null;
+  protection: string | null;
+}
 
-type FactsLookup = (speciesId: string) => SpeciesFilterFacts | undefined;
+type FilterableField = 'hymenophore' | 'sporePrint' | 'ring' | 'volva' | 'protection';
+
+type FactsLookup = (speciesId: string) => StructureFacts | undefined;
 
 interface FilterChip {
   id: string;
   label: string;
   predicate: (species: MushroomSpecies, facts: FactsLookup) => boolean;
+  /** A non-match that stays visible under "Do weryfikacji". */
+  hold?: (species: MushroomSpecies) => boolean;
 }
 
 interface FilterGroup {
@@ -61,9 +65,8 @@ interface FilterGroup {
 
 export interface AtlasRow {
   species: MushroomSpecies;
-  /** Coarse kind. Null for a missing status and for `NO_ATLAS_VERDICT`. */
-  kind: KindId | null;
-  conditionalEdible: boolean;
+  /** Coarse kind taken from `species.status`. */
+  kind: KindId;
   psychoactive: boolean;
 }
 
@@ -84,16 +87,47 @@ interface ChipSpec {
   accepted: readonly FilterScalar[];
 }
 
-function filterFacts(speciesId: string): SpeciesFilterFacts | undefined {
-  return FACTS[speciesId];
+/** Copies only structure fields. A spread would let `status` or `propozycja` through. */
+function structureFacts(raw: ImportedFact): StructureFacts {
+  return {
+    psychoactive: raw.psychoactive,
+    hymenophore: raw.hymenophore,
+    sporePrint: raw.sporePrint,
+    ring: raw.ring,
+    volva: raw.volva,
+    protection: raw.protection,
+  };
 }
 
-function kindOf(status: SourceStatus | null): KindId | null {
-  if (status == null) return null;
-  return KIND[status];
+/** `true` stops compiling if StructureFacts grows status, propozycja, or rodzaj. */
+const FACT_SHAPE_OK: _FactsExcludeStatusAndProposal = true;
+
+function loadFacts(
+  source: Readonly<Record<string, ImportedFact>>,
+): Readonly<Record<SpeciesId, StructureFacts>> {
+  const facts: Record<SpeciesId, StructureFacts> = {};
+  if (!FACT_SHAPE_OK) return facts;
+  for (const id of Object.keys(source)) {
+    facts[id] = structureFacts(source[id]);
+  }
+  return facts;
 }
 
-function readField(facts: SpeciesFilterFacts | undefined, field: FilterableField): FilterFieldValue | null {
+export const ATLAS_FILTER_FACTS = loadFacts(table) satisfies Readonly<Record<SpeciesId, StructureFacts>>;
+
+function filterFacts(speciesId: string): StructureFacts | undefined {
+  return ATLAS_FILTER_FACTS[speciesId];
+}
+
+function kindOf(species: MushroomSpecies): KindId {
+  return KIND_FROM_STATUS[species.status];
+}
+
+function unfinishedEdible(species: MushroomSpecies): boolean {
+  return species.status === 'EDIBLE' && species.incompleteCard === true;
+}
+
+function readField(facts: StructureFacts | undefined, field: FilterableField): FilterFieldValue | null {
   if (!facts) return null;
   return facts[field];
 }
@@ -133,10 +167,6 @@ function fieldGroup(
   };
 }
 
-function statusOf(species: MushroomSpecies, facts: FactsLookup): SourceStatus | null {
-  return facts(species.id)?.status ?? null;
-}
-
 const SPORE_CHIPS: readonly ChipSpec[] = [
   ['bialy', 'atlas.filters.sporeWhite'],
   ['kremowy', 'atlas.filters.sporeCream'],
@@ -156,22 +186,23 @@ export const ATLAS_FILTER_GROUPS: readonly FilterGroup[] = [
   {
     id: 'kind',
     label: 'atlas.filters.kind',
-    defined: (species, facts) => statusOf(species, facts) != null,
+    defined: () => true,
     chips: [
       {
         id: 'kind-edible',
         label: 'atlas.filters.edible',
-        predicate: (species, facts) => kindOf(statusOf(species, facts)) === 'edible',
+        predicate: (species) => kindOf(species) === 'edible' && !unfinishedEdible(species),
+        hold: unfinishedEdible,
       },
       {
         id: 'kind-inedible',
         label: 'atlas.filters.inedible',
-        predicate: (species, facts) => kindOf(statusOf(species, facts)) === 'inedible',
+        predicate: (species) => kindOf(species) === 'inedible',
       },
       {
         id: 'kind-poisonous',
         label: 'atlas.filters.poisonous',
-        predicate: (species, facts) => kindOf(statusOf(species, facts)) === 'poisonous',
+        predicate: (species) => kindOf(species) === 'poisonous',
       },
     ],
   },
@@ -219,13 +250,10 @@ function matchesSearch(species: MushroomSpecies, query: string): boolean {
 }
 
 function toRow(species: MushroomSpecies, facts: FactsLookup): AtlasRow {
-  const record = facts(species.id);
-  const status = record?.status ?? null;
   return {
     species,
-    kind: kindOf(status),
-    conditionalEdible: status === STATUS.conditional,
-    psychoactive: record?.psychoactive === true,
+    kind: kindOf(species),
+    psychoactive: facts(species.id)?.psychoactive === true,
   };
 }
 
@@ -237,8 +265,9 @@ function groupOutcome(
 ): 'skip' | 'match' | 'miss' | 'unverified' {
   const selected = group.chips.filter((chip) => chipIds.has(chip.id));
   if (selected.length === 0) return 'skip';
-  if (!group.defined(species, facts)) return 'unverified';
   if (selected.some((chip) => chip.predicate(species, facts))) return 'match';
+  if (selected.some((chip) => chip.hold?.(species) === true)) return 'unverified';
+  if (!group.defined(species, facts)) return 'unverified';
   return 'miss';
 }
 
