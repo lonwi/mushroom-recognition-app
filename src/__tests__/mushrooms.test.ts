@@ -239,7 +239,9 @@ describe('Mushroom Database & Safety Verification', () => {
 
     expect(fieldMushroom.nameEn).toBe('Field mushroom');
     expect(fieldMushroom.commonNicknames).toEqual([]);
-    expect(fieldMushroom.culinaryValue).toMatch(/Dz\.U\. 2026 poz\. 258/);
+    expect(fieldMushroom.culinaryValue).toContain(
+      'rozporządzenie MZ z 17.05.2011 (Dz.U. 2011 nr 115 poz. 672; t.j. Dz.U. 2026 poz. 258)'
+    );
     expect(fieldMushroom.culinaryValue).toMatch(/zbyt młodych egzemplarzy ze stanu naturalnego/);
     expect(fieldMushroom.culinaryValue).toMatch(/blaszki jeszcze nie poróżowiały/);
     expect(fieldMushroom.culinaryValue).not.toMatch(/Jadalna\./);
@@ -291,16 +293,24 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(honeyText).not.toMatch(/lekko truj/);
     expect(honey.culinaryValue).toMatch(/oparów/);
     expect(honey.culinaryValue).toMatch(/łykowate/);
-    expect(woodtuft.culinaryValue).toMatch(/hełmówk/);
+    expect(woodtuft.culinaryValue).toMatch(/hełmówką jadowitą/);
     expect(woodtuft.culinaryValue).toMatch(/uprawy/);
+    expect(woodtuft.culinaryValue).not.toMatch(/Tylko dla doświadczonych/);
+    expect(woodtuft.culinaryValue).not.toMatch(/Jadalny po obróbce/);
 
     const unfinished = MUSHROOMS_DATABASE.filter((species) => species.incompleteCard === true);
     const tasteJudgment = /najsmaczniejsz|\bsmaczn|smakowo|smakiem ustępuje|wyśmienit|rarytas/i;
+    const polishLetter = String.raw`\p{L}\p{N}_`;
+    const cookingOrder = new RegExp(
+      `(?<![${polishLetter}])(?:obgotować|odlać|zdjąć|odciąć)(?![${polishLetter}])|Tylko dla doświadczonych|^Jadalny`,
+      'u'
+    );
     expect(unfinished.length).toBeGreaterThan(0);
     for (const species of unfinished) {
       expect(species.culinaryValue).toMatch(/W literaturze|Według |Wg /);
       expect(species.culinaryValue).toContain('Ta karta nie uprawnia do zbioru ani spożycia');
       expect(species.culinaryValue).not.toMatch(tasteJudgment);
+      expect(species.culinaryValue).not.toMatch(cookingOrder);
     }
   });
 
