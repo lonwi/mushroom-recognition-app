@@ -30,8 +30,19 @@ export function selectTab(stack: ViewStack, tab: RootTab): ViewStack {
   return { tab, pushed: [] };
 }
 
-/** Push a species card on the current tab. A look-alike stacks, so Back returns to the previous card. */
+/**
+ * Push a species card on the current tab. A look-alike stacks, so Back returns
+ * to the previous card. Opening an id already on the stack truncates back to
+ * that card instead of growing A, B, A, B.
+ */
 export function openSpecies(stack: ViewStack, speciesId: string): ViewStack {
+  const existing = stack.pushed.findIndex(
+    (screen) => screen.name === 'species' && screen.speciesId === speciesId,
+  );
+  if (existing >= 0) {
+    if (existing === stack.pushed.length - 1) return stack;
+    return { tab: stack.tab, pushed: stack.pushed.slice(0, existing + 1) };
+  }
   const next: SpeciesScreen = { name: 'species', speciesId };
   return { tab: stack.tab, pushed: [...stack.pushed, next] };
 }

@@ -58,6 +58,21 @@ describe('view stack', () => {
     expect(applyHardwareBack(backToJournal.stack)).toEqual({ handled: false });
   });
 
+  it('truncates A → B → A back to the first card', () => {
+    const cardA = openSpecies(root, 'macrolepiota_procera');
+    const cardB = openSpecies(cardA, 'amanita_phalloides');
+    const again = openSpecies(cardB, 'macrolepiota_procera');
+
+    expect(again.pushed).toHaveLength(1);
+    expect(again).toEqual(cardA);
+    expect(visibleRoute(again)).toEqual({ kind: 'species', speciesId: 'macrolepiota_procera' });
+
+    const source = applyHardwareBack(again);
+    expect(source).toEqual({ handled: true, stack: root });
+    if (!source.handled) return;
+    expect(applyHardwareBack(source.stack)).toEqual({ handled: false });
+  });
+
   it('returns from settings to the screen that opened it', () => {
     const journal = selectTab(root, 'JOURNAL');
     const settings = openSettings(journal);
