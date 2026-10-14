@@ -1444,9 +1444,9 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     capDescription: 'Średnica 5–15 cm. Brudnoróżowy do brązowawego, z szarawymi łatkami, które deszcz może zmyć. Brzeg nie jest prążkowany.',
     hymenophoreDescription: 'Blaszki białe, gęste, wolne. Z wiekiem i po uszkodzeniu pojawiają się na nich czerwonawe plamy.',
     stemDescription: 'Biały, z pierścieniem prążkowanym od góry. Nasada bulwiasta, bez workowatej pochwy.',
-    fleshDescription: 'Biały. Uszkodzony miąższ różowieje albo czerwienieje, zwłaszcza w trzonie i przy bulwie. Surowe owocniki są trujące.',
+    fleshDescription: 'Biały. Uszkodzony miąższ różowieje albo czerwienieje, zwłaszcza w trzonie i przy bulwie. Nie jeść na surowo ani niedogotowanego. Zawiera hemolizyny, które rozkłada dopiero kilkunastominutowe gotowanie.',
     tasteAndSmell: 'Nie sprawdzaj smakiem. Czerwienienie nie jest dowodem, że grzyb jest jadalny.',
-    culinaryValue: 'Smaczny grzyb jadalny, w Polsce rzadko zbierany; do gotowania, smażenia, duszenia i marynowania, często robaczywy. Jadalny tylko po obróbce termicznej. Surowy jest trujący: surowe owocniki zawierają hemolizyny niszczone przez gotowanie. Silnie trujący sobowtór: muchomor plamisty. Nie ma go na wykazie MZ.',
+    culinaryValue: 'Smaczny grzyb jadalny, w Polsce rzadko zbierany; do gotowania, smażenia, duszenia i marynowania, często robaczywy. Nie jeść na surowo ani niedogotowanego. Zawiera hemolizyny, które rozkłada dopiero kilkunastominutowe gotowanie. Silnie trujący sobowtór: muchomor plamisty. Nie ma go na wykazie MZ.',
     confusionRisks: [
       {
         confusedWithId: 'amanita_pantherina',
@@ -1471,7 +1471,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         fatal: false
       }
     ],
-    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Surowy jest trujący. Blaszki z wiekiem i po uszkodzeniu dostają czerwonawych plam. Muchomor plamisty ma brzeg prążkowany i czysto białe łatki, a nie czerwienieje. Brak zdjęcia.'
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Nie jeść na surowo ani niedogotowanego. Zawiera hemolizyny, które rozkłada dopiero kilkunastominutowe gotowanie. Blaszki z wiekiem i po uszkodzeniu dostają czerwonawych plam. Muchomor plamisty ma brzeg prążkowany i czysto białe łatki, a nie czerwienieje. Brak zdjęcia.'
   },
   {
     id: 'amanita_citrina',

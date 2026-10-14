@@ -257,9 +257,15 @@ describe('Mushroom Database & Safety Verification', () => {
     );
     expect(JSON.stringify(variegated)).not.toMatch(/Zarzyńsk/);
 
-    expect(blusher.culinaryValue).toMatch(/Surowy jest trujący/);
-    expect(blusher.culinaryValue).toMatch(/hemolizyny niszczone przez gotowanie/);
-    expect(blusher.culinaryValue).toMatch(/muchomor plamisty/);
+    const rawBlusherWarning =
+      'Nie jeść na surowo ani niedogotowanego. Zawiera hemolizyny, które rozkłada dopiero kilkunastominutowe gotowanie.';
+    expect(blusher.culinaryValue).toContain(rawBlusherWarning);
+    expect(blusher.culinaryValue).toContain('Silnie trujący sobowtór: muchomor plamisty');
+    expect(blusher.warningNotes).toContain(rawBlusherWarning);
+    expect(blusher.fleshDescription).toContain(rawBlusherWarning);
+    expect(`${blusher.culinaryValue} ${blusher.warningNotes} ${blusher.fleshDescription}`).not.toMatch(
+      /Surowy jest trujący|Surowe owocniki są trujące|hemolizyny niszczone przez gotowanie/
+    );
     expect(blusher.tasteAndSmell).toMatch(/Czerwienienie nie jest dowodem/);
 
     expect(orangeBolete.culinaryValue).toMatch(

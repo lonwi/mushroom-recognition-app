@@ -100,6 +100,22 @@ describe('SpeciesDetailScreen safety notices', () => {
     expect(queryByText('W kuchni')).toBeNull();
   });
 
+  it('shows the blusher cooking warning and the panther twin on the unfinished card', async () => {
+    const { getAllByText, getByTestId, getByText, queryByText } = await render(
+      <SpeciesDetailScreen species={species('amanita_rubescens')} onBack={() => {}} />
+    );
+
+    expect(getByTestId('incomplete-card-banner')).toBeTruthy();
+    expect(getByTestId('incomplete-card-badge')).toBeTruthy();
+    expect(queryByText('JADALNY')).toBeNull();
+    expect(queryByText('W kuchni')).toBeNull();
+    expect(getByText('Znaczenie w literaturze')).toBeTruthy();
+    expect(getAllByText(/Nie jeść na surowo ani niedogotowanego/).length).toBeGreaterThan(0);
+    expect(getByText(/Silnie trujący sobowtór: muchomor plamisty/)).toBeTruthy();
+    expect(getByText(/Czerwienienie nie jest dowodem/)).toBeTruthy();
+    expect(queryByText(/Surowy jest trujący/)).toBeNull();
+  });
+
   it('does not present the other unfinished edible cards as a kitchen recommendation', async () => {
     for (const id of ['agaricus_campestris', 'morchella_esculenta']) {
       const screen = await render(<SpeciesDetailScreen species={species(id)} onBack={() => {}} />);
