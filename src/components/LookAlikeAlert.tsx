@@ -8,6 +8,7 @@ import {
   LOOKALIKES_WITHOUT_CARD,
   MUSHROOM_IDS,
   NOT_FOR_COLLECTION_NOTE,
+  WEAKLY_POISONOUS_NOTE,
 } from '../data/mushrooms';
 import { useLanguage } from '../contexts/LanguageContext';
 import { pl } from '../i18n/pl';
@@ -43,6 +44,7 @@ export const LookAlikeAlert: React.FC<Props> = ({
   const noteFor = (note: string) => {
     if (note === ATLAS_NO_VERDICT_NOTE) return t('lookalike.noVerdict');
     if (note === NOT_FOR_COLLECTION_NOTE) return t('lookalike.notForCollection');
+    if (note === WEAKLY_POISONOUS_NOTE) return t('lookalike.weaklyPoisonous');
     return note;
   };
 

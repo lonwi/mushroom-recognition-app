@@ -114,9 +114,9 @@ export const pl = {
       amanitaYoung: 'Młody owocnik („jajo”)',
       wholeStemBase: 'Cały owocnik z nasadą trzonu',
       swollenBaseNotVolva:
-        'Cały owocnik z nasadą trzonu. Zgrubiała (bulwiasta) nasada trzonu to nie bulwa ani pochwa muchomora.',
+        'Cały owocnik z nasadą trzonu. Zgrubiała nasada trzonu to nie bulwa ani pochwa muchomora.',
       chlorophyllumWhole:
-        'Cały owocnik z nasadą trzonu. Zgrubiała (bulwiasta) nasada trzonu to nie bulwa ani pochwa muchomora. Nasada może mieć rąbek, ale nie ma pochwy.',
+        'Cały owocnik z nasadą trzonu. Zgrubiała nasada trzonu to nie bulwa ani pochwa muchomora. Nasada może mieć rąbek, ale nie ma pochwy.',
       gills: 'Blaszki od spodu',
       tubes: 'Rurki od spodu',
       gillsRing: 'Blaszki i pierścień od spodu',
@@ -273,6 +273,7 @@ export const pl = {
     differences: 'Kluczowe różnice rozpoznawcze:',
     noVerdict: 'Atlas nie wydaje werdyktu dla tego gatunku',
     notForCollection: 'Niezalecany do zbioru',
+    weaklyPoisonous: 'trujący (słabo)',
   },
   edibility: {
     edible: 'JADALNY',

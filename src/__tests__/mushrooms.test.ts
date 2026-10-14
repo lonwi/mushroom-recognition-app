@@ -5,8 +5,8 @@ import {
   LOOKALIKES_WITHOUT_CARD,
   MUSHROOM_IDS,
   MUSHROOMS_DATABASE,
-  NOT_FOR_COLLECTION_NOTE,
   showsKitchenSection,
+  WEAKLY_POISONOUS_NOTE,
 } from '../data/mushrooms';
 import { getMushroomImage } from '../utils/mushroomImages';
 import { GOLDEN_RULES, TOXICOLOGY_CENTERS } from '../data/safetyRules';
@@ -18,6 +18,13 @@ function mustSpecies(id: string): MushroomSpecies {
     throw new Error(`Missing atlas card: ${id}`);
   }
   return species;
+}
+
+function noteForPoisonousLookalike(id: string): string {
+  if (id === 'amanita_porphyria') {
+    return WEAKLY_POISONOUS_NOTE;
+  }
+  return ATLAS_NO_VERDICT_NOTE;
 }
 
 describe('Mushroom Database & Safety Verification', () => {
@@ -65,7 +72,7 @@ describe('Mushroom Database & Safety Verification', () => {
           } else {
             expect(allowed.status).toBe('POISONOUS');
             expect(risk.fatal).toBe(false);
-            expect(allowed.note).toBe(ATLAS_NO_VERDICT_NOTE);
+            expect(allowed.note).toBe(noteForPoisonousLookalike(risk.confusedWithId));
           }
           expect(allowed.reason.trim().length).toBeGreaterThan(0);
           continue;
@@ -100,6 +107,8 @@ describe('Mushroom Database & Safety Verification', () => {
     ]);
 
     const poisonousWithoutCard = new Set([
+      'amanita_porphyria',
+      'entoloma_sinuatum',
       'imperator_rhodopurpureus',
       'imperator_torosus',
       'rubroboletus_other',
@@ -128,8 +137,13 @@ describe('Mushroom Database & Safety Verification', () => {
 
     expect(LOOKALIKES_WITHOUT_CARD.amanita_caesarea.note).toBe(ATLAS_NO_VERDICT_NOTE);
     expect(LOOKALIKES_WITHOUT_CARD.amanita_caesarea.status).toBe('NO_ATLAS_VERDICT');
+    expect(LOOKALIKES_WITHOUT_CARD.entoloma_sinuatum.status).toBe('POISONOUS');
     expect(LOOKALIKES_WITHOUT_CARD.entoloma_sinuatum.note).toBe(ATLAS_NO_VERDICT_NOTE);
-    expect(LOOKALIKES_WITHOUT_CARD.amanita_porphyria.note).not.toBe(NOT_FOR_COLLECTION_NOTE);
+    expect(LOOKALIKES_WITHOUT_CARD.amanita_porphyria.status).toBe('POISONOUS');
+    expect(LOOKALIKES_WITHOUT_CARD.amanita_porphyria.note).toBe(WEAKLY_POISONOUS_NOTE);
+    expect(`${LOOKALIKES_WITHOUT_CARD.amanita_porphyria.note} ${LOOKALIKES_WITHOUT_CARD.amanita_porphyria.reason}`).not.toMatch(
+      /śmiertel|lethal|deadly/i,
+    );
   });
 
   test('fatal is set only when the named look-alike is deadly', () => {
@@ -518,16 +532,26 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(luridus.status).toBe('POISONOUS');
     expect(luridusText).toMatch(/żołądkowo-jelitow/);
     expect(luridusText).toMatch(/Dz\.U\. 2026 poz\. 258/);
+    expect(luridus.warningNotes).toContain(
+      'Źródła są rozbieżne (Zarzyński 2021: niejadalny; Poradnik grzybiarza: trujący); karta przyjmuje wersję ostrożniejszą.',
+    );
     expect(luridusText).not.toMatch(/alkohol/);
     expect(luridusText).not.toMatch(/surow/);
 
     const galerina = capnoides.confusionRisks.find((risk) => risk.confusedWithId === 'galerina_marginata');
-    expect(galerina?.fatal).toBe(true);
-    const galerinaText = galerina?.keyDifferences.join('\n') ?? '';
-    expect(galerinaText).toMatch(/galerina_marginata/);
+    if (!galerina) {
+      throw new Error('galerina look-alike missing');
+    }
+    expect(galerina.confusedWithId).toBe('galerina_marginata');
+    expect(galerina.fatal).toBe(true);
+    const galerinaText = [galerina.keyDifferences.join('\n'), capnoides.culinaryValue, capnoides.warningNotes].join(
+      '\n',
+    );
+    expect(galerinaText).toMatch(/karcie hełmówki jadowitej/);
     expect(galerinaText).toMatch(/cynamonowobrązow/);
     expect(galerinaText).toMatch(/włóknisty/);
     expect(galerinaText).not.toMatch(/rdzawobrązow/);
+    expect(galerinaText).not.toMatch(/galerina_marginata/);
 
     for (const id of [
       'amanita_excelsa',

@@ -38,14 +38,14 @@ function caption(speciesId: string, feature: GalleryFeature, language: 'pl' | 'e
 }
 
 function bulwaOnlyAsNegation(text: string): boolean {
-  const re = /(?<![\p{L}])(?:bulwą|bulwa|pochw\p{L}*)(?![\p{L}])/giu;
+  const re = /(?<![\p{L}])(?:bulw\p{L}*|pochw\p{L}*)(?![\p{L}])/giu;
   let match: RegExpExecArray | null;
   let any = false;
   while ((match = re.exec(text)) !== null) {
     any = true;
     const word = match[0];
     const before = text.slice(Math.max(0, match.index - 16), match.index);
-    const negatedBulwa = /^(?:bulwa|bulwą)$/iu.test(word) && /nie\s+$/iu.test(before);
+    const negatedBulwa = /^bulw/iu.test(word) && /(?:nie\s+|nie\s+ma\s+)$/iu.test(before);
     const negatedPochwa = /^pochw/iu.test(word) && /(?:nie\s+|nie\s+ma\s+|ani\s+)$/iu.test(before);
     if (!negatedBulwa && !negatedPochwa) {
       return false;
@@ -130,6 +130,9 @@ describe('gallery feature captions', () => {
     expect(bulwaOnlyAsNegation('z bulwą')).toBe(false);
     expect(bulwaOnlyAsNegation('z pochwą')).toBe(false);
     expect(bulwaOnlyAsNegation('bulwa u nasady')).toBe(false);
+    expect(bulwaOnlyAsNegation('przy bulwie')).toBe(false);
+    expect(bulwaOnlyAsNegation('nie ma bulwy')).toBe(true);
+    expect(bulwaOnlyAsNegation('w pochwie')).toBe(false);
   });
 
   const speciesIds = Object.keys(SPECIES_GALLERY);

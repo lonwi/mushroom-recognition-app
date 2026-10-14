@@ -273,6 +273,7 @@ export const en: Translations = {
     differences: 'Key identifying differences:',
     noVerdict: 'The atlas does not give a verdict for this species',
     notForCollection: 'Not recommended for collection',
+    weaklyPoisonous: 'weakly poisonous',
   },
   edibility: {
     edible: 'EDIBLE',

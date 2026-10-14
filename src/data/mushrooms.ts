@@ -1460,7 +1460,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         keyDifferences: [
           'Maślanka łagodna ma blaszki szare do fioletowobrązowych. Hełmówka ma blaszki cynamonowobrązowe',
           'Hełmówka ma wąski pierścień, a trzon pod pierścieniem włóknisty',
-          'Karta maślanki łagodnej odsyła tutaj po różnice. Szare blaszki nie czynią owocnika hełmówką'
+          'Karta maślanki łagodnej odsyła tutaj po różnice. Same szare blaszki nie dowodzą, że to maślanka łagodna.'
         ],
         fatal: false
       }
@@ -1682,7 +1682,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
       {
         confusedWithId: 'amanita_porphyria',
         confusedWithName: 'Muchomor porfirowy',
-        confusedWithStatus: 'NO_ATLAS_VERDICT',
+        confusedWithStatus: 'POISONOUS',
         keyDifferences: [
           'Porfirowy ma pochwę u nasady, postrzępioną, i blaszki różnej długości',
           'Twardawy nie ma wyraźnej pochwy',
@@ -1725,7 +1725,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
       {
         confusedWithId: 'entoloma_sinuatum',
         confusedWithName: 'Wieruszka zatokowata',
-        confusedWithStatus: 'NO_ATLAS_VERDICT',
+        confusedWithStatus: 'POISONOUS',
         keyDifferences: [
           'Starsze okazy wieruszki mają różowe do czerwonawych blaszek i różowy wysyp',
           'Młode owocniki są bardzo podobne',
@@ -1798,7 +1798,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         fatal: false
       }
     ],
-    warningNotes: 'Trujący. Objawy w źródle są tylko ogólne, jako dolegliwości żołądkowo-jelitowe. Poza wykazem MZ. Niechroniony: nie figuruje w Dz.U. 2014 poz. 1408.'
+    warningNotes: 'Trujący. Objawy w źródle są tylko ogólne, jako dolegliwości żołądkowo-jelitowe. Poza wykazem MZ. Niechroniony: nie figuruje w Dz.U. 2014 poz. 1408. Źródła są rozbieżne (Zarzyński 2021: niejadalny; Poradnik grzybiarza: trujący); karta przyjmuje wersję ostrożniejszą.'
   },
   {
     id: 'hypholoma_capnoides',
@@ -1816,7 +1816,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     stemDescription: 'Cienki, wygięty, pusty. U góry jasny, niżej rdzawobrązowy. U młodych słaby, szybko znikający ślad pierścienia.',
     fleshDescription: 'Żółtawy, w trzonie ciemniejszy.',
     tasteAndSmell: 'Zapach przyjemny. Smaku ta karta nie podaje.',
-    culinaryValue: 'W literaturze (Zarzyński 2021) opisywana jako jadalna i rzadko zbierana. Nie figuruje w wykazie grzybów dopuszczonych do obrotu (rozporządzenie MZ z 17.05.2011, Dz.U. 2011 nr 115 poz. 672; t.j. Dz.U. 2026 poz. 258). Ryzyko pomyłki z trującą maślanką wiązkową i ze śmiertelnie trującą hełmówką jadowitą. Różnice wobec hełmówki bierze karta galerina_marginata. Ta karta nie uprawnia do zbioru ani spożycia.',
+    culinaryValue: 'W literaturze (Zarzyński 2021) opisywana jako jadalna i rzadko zbierana. Nie figuruje w wykazie grzybów dopuszczonych do obrotu (rozporządzenie MZ z 17.05.2011, Dz.U. 2011 nr 115 poz. 672; t.j. Dz.U. 2026 poz. 258). Ryzyko pomyłki z trującą maślanką wiązkową i ze śmiertelnie trującą hełmówką jadowitą. Różnice są na karcie hełmówki jadowitej. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'hypholoma_fasciculare',
@@ -1834,14 +1834,14 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         confusedWithName: 'Hełmówka jadowita',
         confusedWithStatus: 'DEADLY_POISONOUS',
         keyDifferences: [
-          'Różnice są na karcie hełmówki jadowitej (galerina_marginata): blaszki cynamonowobrązowe, dość rzadkie, oraz wąski, często zanikający pierścień',
+          'Różnice są na karcie hełmówki jadowitej: blaszki cynamonowobrązowe, dość rzadkie, oraz wąski, często zanikający pierścień',
           'Na karcie hełmówki trzon pod pierścieniem jest włóknisty, bez odstających łuseczek',
           'Maślanka łagodna ma blaszki szare do fioletowobrązowych, nigdy zielonkawe. Hełmówka jadowita jest śmiertelnie trująca'
         ],
         fatal: true
       }
     ],
-    warningNotes: 'Z hełmówką jadowitą porównuje się kartę galerina_marginata. Niechroniona: nie figuruje w Dz.U. 2014 poz. 1408.'
+    warningNotes: 'Porównanie jest na karcie hełmówki jadowitej. Niechroniona: nie figuruje w Dz.U. 2014 poz. 1408.'
   },
   {
     id: 'rubroboletus_satanas',
@@ -1890,12 +1890,12 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
 /**
  * Named on a card, with no atlas page of their own.
  * A new id must be added here with a reason, or the integrity test fails.
- * `status` is `NO_ATLAS_VERDICT`, not an edibility status: there is no finished card
- * and this atlas does not call the species edible, inedible, poisonous, or deadly.
- * `note` is the user-facing caution.
+ * `status` is `NO_ATLAS_VERDICT` when this atlas gives no edibility, or `POISONOUS`
+ * when the species is poisonous and still has no card. `note` is the user-facing caution.
  */
 export const NOT_FOR_COLLECTION_NOTE = 'Niezalecany do zbioru';
 export const ATLAS_NO_VERDICT_NOTE = 'Atlas nie wydaje werdyktu dla tego gatunku';
+export const WEAKLY_POISONOUS_NOTE = 'trujący (słabo)';
 
 export const LOOKALIKES_WITHOUT_CARD: Readonly<
   Record<string, { status: 'NO_ATLAS_VERDICT' | 'POISONOUS'; reason: string; note: string }>
@@ -1907,16 +1907,16 @@ export const LOOKALIKES_WITHOUT_CARD: Readonly<
       'Muchomor cesarski (Amanita caesarea) is only a look-alike of the fly agaric. There is no card, so this atlas does not show an edible verdict.',
   },
   amanita_porphyria: {
-    status: 'NO_ATLAS_VERDICT',
-    note: ATLAS_NO_VERDICT_NOTE,
+    status: 'POISONOUS',
+    note: WEAKLY_POISONOUS_NOTE,
     reason:
-      'Muchomor porfirowy (Amanita porphyria) is only a look-alike of the grey spotted amanita. There is no card, so this atlas does not show an edibility verdict.',
+      'Muchomor porfirowy (Amanita porphyria) has no atlas card. Zarzyński 2021 (Właściwości użytkowe) calls it poisonous. Bezpieczne grzybobranie 2016, PDF page 33, calls it inedible and weakly poisonous. The note stays at that weaker wording.',
   },
   entoloma_sinuatum: {
-    status: 'NO_ATLAS_VERDICT',
+    status: 'POISONOUS',
     note: ATLAS_NO_VERDICT_NOTE,
     reason:
-      'Wieruszka zatokowata (Entoloma sinuatum) is only a look-alike of St George’s mushroom. There is no card, so this atlas does not show an edibility verdict.',
+      'Wieruszka zatokowata (Entoloma sinuatum) is strongly poisonous and a dangerous look-alike of St George’s mushroom. There is no card. The look-alike row says poisonous.',
   },
   craterellus_tubaeformis: {
     status: 'NO_ATLAS_VERDICT',
