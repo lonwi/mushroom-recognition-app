@@ -2,7 +2,15 @@ import { pl } from '../i18n/pl';
 import { en } from '../i18n/en';
 import { interpolate, translate } from '../contexts/LanguageContext';
 import { GOLDEN_RULES, POISON_SYNDROMES } from '../data/safetyRules';
-import { ATLAS_NO_VERDICT_NOTE, NOT_FOR_COLLECTION_NOTE, POISONOUS_NOTE } from '../data/mushrooms';
+import {
+  ATLAS_NO_VERDICT_NOTE,
+  FLY_AGARIC_POISONING_SYMPTOMS,
+  GALERINA_PSILOCYBE_WARNING,
+  GIS_MUSHROOM_FIRST_AID,
+  NOT_FOR_COLLECTION_NOTE,
+  PANTHER_POISONING_SYMPTOMS,
+  POISONOUS_NOTE,
+} from '../data/mushrooms';
 
 function leaves(value: unknown, prefix = ''): string[] {
   if (typeof value === 'string') return [prefix];
@@ -91,6 +99,37 @@ describe('Polish and English dictionaries', () => {
     expect(pl.safetyGuide.rules.rule_tubes_first.title).toMatch(/początkujących/);
     expect(en.journal.legacyEdibility).toMatch(/^Do not eat/);
 
+    expect(pl.cards.poisoningNoteTitle).toBe('Notka o zatruciu');
+    expect(pl.cards.flyAgaricPoisoning).toBe(FLY_AGARIC_POISONING_SYMPTOMS);
+    expect(pl.cards.pantherPoisoning).toBe(PANTHER_POISONING_SYMPTOMS);
+    expect(pl.cards.poisoningFirstAid).toBe(GIS_MUSHROOM_FIRST_AID);
+    expect(pl.cards.galerinaLookalikeWarning).toBe(GALERINA_PSILOCYBE_WARNING);
+    expect(pl.cards.poisoningFirstAid).toMatch(/nie podaje się mleka ani alkoholu/);
+    expect(pl.cards.poisoningFirstAid).not.toMatch(/podawaj/);
+    expect(pl.cards.poisoningFirstAid).toMatch(/112/);
+    expect(pl.cards.poisoningFirstAid).toMatch(/999/);
+    expect(pl.cards.poisoningFirstAid).toMatch(/mleka/);
+    expect(en.cards.poisoningNoteTitle).toBe('Poisoning warning');
+    expect(en.cards.flyAgaricPoisoning).toMatch(/vomiting/);
+    expect(en.cards.flyAgaricPoisoning).toMatch(/cardiac arrest/);
+    expect(en.cards.pantherPoisoning).toMatch(/convulsions/);
+    expect(en.cards.poisoningFirstAid).toMatch(/112 or 999/);
+    expect(en.cards.poisoningFirstAid).toMatch(/Do not give milk or alcohol/);
+    expect(en.cards.galerinaLookalikeWarning).toMatch(/deadly poisonous/);
+    expect(en.cards.galerinaLookalikeWarning).toMatch(/Stamets 1996, pp\. 31–33, 144–145, 192–193/);
+    expect(en.cards.galerinaLookalikeWarning).not.toMatch(/Stamets 1996, s\./);
+    expect(en.cards.galerinaLookalikeWarning).not.toMatch(/Panaeolus/);
+    const translatedNotes = [
+      pl.cards.flyAgaricPoisoning,
+      pl.cards.pantherPoisoning,
+      pl.cards.poisoningFirstAid,
+      pl.cards.galerinaLookalikeWarning,
+      en.cards.flyAgaricPoisoning,
+      en.cards.pantherPoisoning,
+      en.cards.poisoningFirstAid,
+      en.cards.galerinaLookalikeWarning,
+    ].join('\n');
+    expect(translatedNotes).not.toMatch(/psylocybin|psilocybin|cultivat|upraw|607 218 174/i);
     expect(pl.cards.useKitchen).toBe('W kuchni');
     expect(pl.cards.useToxic).toBe('Toksyczność i objawy');
     expect(pl.cards.useInedible).toBe('Nie do jedzenia');
