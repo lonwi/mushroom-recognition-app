@@ -448,20 +448,21 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
   {
     id: 'russula_virescens',
     namePl: 'Gołąbek zielonawy',
+    nameEn: 'Greencracked brittlegill',
     nameLatin: 'Russula virescens',
-    commonNicknames: [],
+    commonNicknames: ['Surowiatka', 'Surojadka zielonawa', 'Siwek'],
     family: 'Gołąbkowate (Russulaceae)',
     status: 'EDIBLE',
     incompleteCard: true,
     hymenophore: 'GILLS',
     months: [6, 7, 8, 9, 10],
-    habitat: 'Lasy liściaste i mieszane, często pod dębami, bukami i brzozami. Pora występowania jest orientacyjna.',
+    habitat: 'Od czerwca do października w lasach liściastych i mieszanych, najczęściej pod dębem, bukiem i brzozą.',
     capDescription: 'Kapelusz szarozielony, zielononiebieski lub oliwkowy, szybko pękający w kostkowate poletka. Ta skrócona karta nie opisuje innych zielonych gołąbków.',
     hymenophoreDescription: 'Blaszki jasne i kruche. Brak pierścienia.',
     stemDescription: 'Trzon bez pierścienia i bez pochwy u nasady. Brak tych osłon nie wystarcza, by wykluczyć pomyłkę, jeśli owocnik jest młody albo uszkodzony.',
     fleshDescription: 'Miąższ kruchy, łamliwy, bez włókien typowych dla muchomora.',
-    tasteAndSmell: 'Nie sprawdzaj smakiem. Ta karta nie podaje cech smakowych.',
-    culinaryValue: 'W literaturze mykologicznej gatunek bywa podawany jako jadalny. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem. W literaturze świeżo przekrojone młode owocniki pachną słabo, owocowo-orzechowo; starsze mają zapach przypominający ser.',
+    culinaryValue: 'W literaturze do gotowania, duszenia i marynowania; na surowo niezalecany. Główne ryzyko: pomylenie ze śmiertelnie trującym muchomorem zielonawym. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'amanita_phalloides',
@@ -480,6 +481,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
   {
     id: 'agaricus_campestris',
     namePl: 'Pieczarka polna',
+    nameEn: 'Field mushroom',
     nameLatin: 'Agaricus campestris',
     commonNicknames: [],
     family: 'Pieczarkowate (Agaricaceae)',
@@ -493,7 +495,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     stemDescription: 'Krótki trzon z pierścieniem. Brak pochwy u nasady.',
     fleshDescription: 'Miąższ jasny. Silne, chromowe żółknięcie u nasady trzonu i zapach karbolu wskazują na pieczarkę żółtawą, nie na tę kartę.',
     tasteAndSmell: 'Nie sprawdzaj smakiem.',
-    culinaryValue: 'W literaturze mykologicznej gatunek bywa podawany jako jadalny. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    culinaryValue: 'W literaturze (rozporządzenie MZ z 17.05.2011 (Dz.U. 2011 nr 115 poz. 672; t.j. Dz.U. 2026 poz. 258, zał. nr 1)) pieczarka polna jest na wykazie grzybów dopuszczonych do obrotu, z wyjątkiem zbyt młodych egzemplarzy ze stanu naturalnego, których blaszki jeszcze nie poróżowiały. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'amanita_phalloides',
@@ -638,7 +640,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     namePl: 'Smardz jadalny',
     nameEn: 'Common morel',
     nameLatin: 'Morchella esculenta',
-    commonNicknames: [],
+    commonNicknames: ['Smardz', 'Murchel majowy'],
     family: 'Smardzowate (Morchellaceae)',
     status: 'EDIBLE',
     incompleteCard: true,
@@ -649,8 +651,8 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Warstwa rodzajna na żeberkowanej powierzchni główki.',
     stemDescription: 'Trzon jasny, połączony z główką. Cały owocnik jest w środku pusty i tworzy jedną komorę.',
     fleshDescription: 'Cienki, woskowaty. Wnętrze puste i tworzy jedną komorę. Piestrzenica jest pofałdowana mózgowato, a młode owocniki bywają w środku pełne.',
-    tasteAndSmell: 'Nie sprawdzaj smakiem.',
-    culinaryValue: 'W literaturze ugotowane smardze bywają podawane jako jadalne. Surowe i niedogotowane są trujące. Ta karta nie uprawnia do zbioru ani spożycia.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem. W literaturze owocniki są kruche, woskowate, o korzennym zapachu.',
+    culinaryValue: 'W literaturze wyłącznie po obróbce termicznej. Surowe i niedogotowane są trujące. Miąższ bywa łykowaty. W Polsce pod ochroną częściową: zbiór dziko rosnących tylko za zezwoleniem RDOŚ/GDOŚ; do obrotu dopuszczony wyłącznie z upraw/terenów zieleni lub spoza Polski. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'gyromitra_esculenta',
@@ -669,6 +671,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
   {
     id: 'hydnum_repandum',
     namePl: 'Kolczak obłączasty',
+    nameEn: 'Wood hedgehog',
     nameLatin: 'Hydnum repandum',
     commonNicknames: ['Kolczak'],
     family: 'Kolczakowate (Hydnaceae)',
@@ -682,7 +685,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     stemDescription: 'Krótki, dość gruby, często asymetryczny, kremowy do jasnobrązowego, bez pierścienia i bez pochwy.',
     fleshDescription: 'Miąższ białawy, po uszkodzeniu żółknie. Jest twardy. Jeść tylko po obróbce termicznej.',
     tasteAndSmell: 'Nie sprawdzaj smakiem. Starsze owocniki, z długimi kolcami, bywają gorzkie.',
-    culinaryValue: 'W literaturze młode owocniki po obróbce cieplnej bywają podawane jako jadalne i dopuszczone do obrotu. Jeść tylko po obróbce termicznej. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    culinaryValue: 'Według Zarzyńskiego (2021) na surowo lekko trujący, jeść tylko po obróbce termicznej. W literaturze młode owocniki po obróbce cieplnej bywają podawane jako jadalne i dopuszczone do obrotu. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'cantharellus_cibarius',
@@ -991,9 +994,9 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     capDescription: 'Średnica do około 20 cm. Ciemnobrązowy, filcowaty, suchy. Po uciśnięciu miąższ i pory szybko sinieją.',
     hymenophoreDescription: 'Rurki i pory ceglastoczerwone albo pomarańczowoczerwone. Po dotknięciu natychmiast sinieją. To nie są różowe rurki goryczaka.',
     stemDescription: 'Żółty do czerwonawego, pokryty drobnymi czerwonymi punkcikami, bez wyraźnej siateczki. Po uszkodzeniu sinieje.',
-    fleshDescription: 'Żółty, po przekrojeniu szybko niebiesko-czarny. Surowe owocniki są trujące.',
-    tasteAndSmell: 'Nie sprawdzaj smakiem. Surowe owocniki powodują dolegliwości żołądkowo-jelitowe.',
-    culinaryValue: 'W literaturze jadalny tylko po dokładnej obróbce termicznej. Surowy i niedogotowany jest trujący. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    fleshDescription: 'Żółty, po przekrojeniu szybko niebiesko-czarny.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem. W literaturze miąższ żółty, zapach opisywany jako przyjemny.',
+    culinaryValue: 'W literaturze jadalny wyłącznie po obróbce termicznej. Surowy i niedogotowany jest trujący. W literaturze podawany po obgotowaniu i odlaniu wody. Nie ma go na wykazie MZ grzybów dopuszczonych do obrotu. Łatwo pomylić z trującymi borowikami o czerwonych porach. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'tylopilus_felleus',
@@ -1062,7 +1065,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         fatal: false
       }
     ],
-    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. W literaturze jadalny tylko po obróbce termicznej. Surowy jest trujący. Borowik szatański (Rubroboletus satanas) jest trujący i ściśle chroniony. Imperator rhodopurpureus, Imperator torosus i inne Rubroboletus też są trujące i nie mają kart. Brak zdjęcia.'
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. W literaturze jadalny tylko po obróbce termicznej. Borowik szatański (Rubroboletus satanas) jest trujący i ściśle chroniony. Imperator rhodopurpureus, Imperator torosus i inne Rubroboletus też są trujące i nie mają kart. Brak zdjęcia.'
   },
   {
     id: 'xerocomellus_chrysenteron',
@@ -1081,7 +1084,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     stemDescription: 'Smukły, żółtawy, często z czerwonawym nalotem, bez pierścienia i bez siateczki.',
     fleshDescription: 'Miękki, żółtawy, w kapeluszu po przekrojeniu słabo sinieje.',
     tasteAndSmell: 'Nie sprawdzaj smakiem. Łagodny smak nie rozstrzyga gatunku.',
-    culinaryValue: 'W literaturze jadalny i dopuszczony do obrotu. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    culinaryValue: 'W literaturze powszechnie zbierany i dopuszczony do obrotu. Owocniki łatwo robaczywieją i pleśnieją. W literaturze podawany do suszenia, marynowania, duszenia i gotowania, najlepiej jako dodatek do innych grzybów. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'imleria_badia',
@@ -1114,7 +1117,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     stemDescription: 'Wysoki, pokryty czarniawymi albo rudymi kosmkami. Bez siateczki i bez pierścienia.',
     fleshDescription: 'Biały, po przekrojeniu szarzeje, fioletowieje albo czernieje. Koźlarz babka po przekrojeniu barwy nie zmienia.',
     tasteAndSmell: 'Nie sprawdzaj smakiem.',
-    culinaryValue: 'W literaturze jadalne tylko po obróbce termicznej. Surowe i niedogotowane powodują dolegliwości żołądkowo-jelitowe. Koźlarz pomarańczowożółty (Leccinum versipelle) nie jest dopuszczony do obrotu. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia. Przed jedzeniem zeskrob kosmki z trzonu.',
+    culinaryValue: 'W literaturze powszechnie zbierany. W literaturze podawany do marynowania, gotowania, duszenia i suszenia. Rzadko bywa robaczywy. Ciemnienie miąższu po obróbce ogranicza dodatek octu do wody. Koźlarz czerwony (Leccinum aurantiacum). Dopuszczony do obrotu. Koźlarz pomarańczowożółty (Leccinum versipelle) nie jest dopuszczony do obrotu. Jadalne tylko po obróbce termicznej. Surowe i niedogotowane powodują dolegliwości żołądkowo-jelitowe. W literaturze kosmki z trzonu zeskrobuje się przed jedzeniem. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'leccinum_scabrum',
@@ -1158,7 +1161,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     stemDescription: 'Smukły, żółtawy, czasem z podłużnymi żeberkami, bez pierścienia.',
     fleshDescription: 'Białożółty, w kapeluszu miękki. Po przekrojeniu prawie nie sinieje.',
     tasteAndSmell: 'Nie sprawdzaj smakiem.',
-    culinaryValue: 'W literaturze jadalny i dopuszczony do obrotu. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    culinaryValue: 'W literaturze chętnie zbierany i dopuszczony do obrotu. Łatwo robaczywieje i źle znosi transport. W literaturze podawany do suszenia, marynowania, duszenia i gotowania. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'imleria_badia',
@@ -1189,9 +1192,9 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     capDescription: 'Średnica 4–12 cm. Złocistożółty do pomarańczowego, bardzo lepki. Skórka ściąga się łatwo.',
     hymenophoreDescription: 'Rurki żółte, zakryte u młodych białożółtą błoną. Po uciśnięciu brązowieją.',
     stemDescription: 'Żółty, z pierścieniem, który u starszych owocników przywiera do trzonu. Nad pierścieniem często jest siateczkowaty.',
-    fleshDescription: 'Żółty, w kapeluszu miękki. Po przekrojeniu słabo różowieje albo nie zmienia barwy.',
-    tasteAndSmell: 'Nie sprawdzaj smakiem.',
-    culinaryValue: 'W literaturze jadalny i dopuszczony do obrotu. Śliską skórkę zdejmuje się przed gotowaniem. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    fleshDescription: 'Jasnożółty, w kapeluszu miękki. Po przekrojeniu barwi się na brudnoróżowo.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem. W literaturze (Zarzyński, 2021) jasnożółty miąższ ma słaby zapach kojarzący się z owocami.',
+    culinaryValue: 'W literaturze chętnie zbierany i dopuszczony do obrotu. W literaturze przed przyrządzeniem zdejmuje się skórkę z kapelusza. W literaturze podawany do marynowania, duszenia, suszenia, gotowania i smażenia. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'suillus_luteus',
@@ -1223,8 +1226,8 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Rurki szerokie, kanciaste, oliwkowożółte, zbiegające na trzon. Wyglądają jak sitko. Nie ma błony ani pierścienia.',
     stemDescription: 'Krótki, barwy kapelusza, bez pierścienia, często zwężony u nasady.',
     fleshDescription: 'Miękki, żółtawy albo różowawy. Elastyczny, nie kruchy.',
-    tasteAndSmell: 'Nie sprawdzaj smakiem. Smak bywa kwaskowaty.',
-    culinaryValue: 'W literaturze jadalny i dopuszczony do obrotu, gorszy od maślaka zwyczajnego. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem. W literaturze po przyrządzeniu smak bywa lekko kwaskowaty.',
+    culinaryValue: 'W literaturze zbierany głównie z powodu masowego występowania. W literaturze podawany do gotowania, duszenia i marynowania, najlepiej jako dodatek do innych grzybów. Po ugotowaniu barwi się na czerwonofioletowo, co jest normalne. Na wykazie MZ. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'suillus_luteus',
@@ -1267,8 +1270,8 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Rurki drobne, oliwkowobrązowe. Po uciśnięciu sinieją albo brązowieją.',
     stemDescription: 'Walcowaty, żółtawy, bez pierścienia, gładki albo drobno kosmkowaty.',
     fleshDescription: 'Żółtawy, po przekrojeniu słabo niebieskieje, zwłaszcza w trzonie. Zapach bywa chlorowy albo kwaskowaty.',
-    tasteAndSmell: 'Nie sprawdzaj smakiem. Zapach bywa ostry, chemiczny.',
-    culinaryValue: 'W literaturze jadalny i dopuszczony do obrotu. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem. W literaturze zapach słaby, chlorowy lub metaliczny; bywa też opisywany jako przypominający igliwie.',
+    culinaryValue: 'W literaturze twardszy od innych maślaków; lokalnie zbierany przy masowych wysypach. W literaturze podawany do suszenia i długiego duszenia. Na wykazie MZ. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'imleria_badia',
@@ -1310,9 +1313,9 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     capDescription: 'Średnica 3–12 cm. Miodowożółty, brązowy albo oliwkowy, z drobnymi, ciemniejszymi łuseczkami, które deszcz zmywa. Brzeg prążkowany u starszych owocników.',
     hymenophoreDescription: 'Blaszki białawe, potem kremowe z brązowymi plamkami. Nie są siarkowożółte ani zielonkawe.',
     stemDescription: 'Włóknisty, z błoniastym pierścieniem. U opieńki żółtawej pierścień bywa delikatniejszy. Nie ma pochwy.',
-    fleshDescription: 'Biały, w trzonie łykowaty. Surowe i niedogotowane owocniki powodują dolegliwości żołądkowo-jelitowe.',
-    tasteAndSmell: 'Nie sprawdzaj smakiem. Zapach bywa przyjemny, grzybowy.',
-    culinaryValue: 'W literaturze jadalne tylko po dokładnym obgotowaniu albo duszeniu. Surowe i niedogotowane są trujące. Kapelusze młodych owocników; trzony bywają łykowate. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    fleshDescription: 'Biały, w trzonie łykowaty.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem. W literaturze zapach grzybowy; po przyrządzeniu smak korzenny.',
+    culinaryValue: 'W literaturze jadalne są kapelusze młodych owocników. Trzony bywają łykowate. Surowy i niedogotowany jest trujący. W literaturze podawane po obgotowaniu (ok. 5 min) i odlaniu wody; oparów z gotowania nie wdycha się (u wrażliwych osób bóle głowy, wymioty). W literaturze podawane potem do marynowania, duszenia, zup i sosów. Na wykazie MZ. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'hypholoma_fasciculare',
@@ -1337,7 +1340,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         fatal: true
       }
     ],
-    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Jadalne tylko po obróbce termicznej. Surowe są trujące. Hełmówka jadowita rośnie na tym samym drewnie i jest śmiertelnie trująca. Brak zdjęcia. Armillaria mellea w szerokim sensie obejmuje też owocniki spoza Europy, których ta karta nie rozdziela.'
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Jadalne tylko po obróbce termicznej. Hełmówka jadowita rośnie na tym samym drewnie i jest śmiertelnie trująca. Brak zdjęcia. Armillaria mellea w szerokim sensie obejmuje też owocniki spoza Europy, których ta karta nie rozdziela.'
   },
   {
     id: 'kuehneromyces_mutabilis',
@@ -1355,8 +1358,8 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Blaszki jasne, potem cynamonowobrązowe. Nie są siarkowożółte.',
     stemDescription: 'Pod pierścieniem łuseczkowaty, nad pierścieniem gładki. Pierścień jest wyraźny. Nie ma pochwy.',
     fleshDescription: 'Cienki, bladobrązowy. Surowe owocniki nie są do jedzenia.',
-    tasteAndSmell: 'Nie sprawdzaj smakiem. Zapach bywa przyjemny.',
-    culinaryValue: 'Na wykazie grzybów dopuszczonych do obrotu (rozporządzenie MZ) tylko owocniki z uprawy. Dziko rosnące nie są na tym wykazie. W literaturze jadalny po obróbce termicznej, ale łatwo pomylić ze śmiertelną hełmówką jadowitą. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem. W literaturze miąższ kapelusza ma niezbyt silny zapach.',
+    culinaryValue: 'W literaturze rzadko zbierany; można go uprawiać na drewnie. W literaturze podawany do duszenia i gotowania; zdrewniałe trzony się odcina. Na wykazie MZ wyłącznie z uprawy lub spoza Polski. Dziko rosnące nie są na tym wykazie. Łatwo pomylić ze śmiertelnie trującą hełmówką jadowitą. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'galerina_marginata',
@@ -1441,9 +1444,9 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     capDescription: 'Średnica 5–15 cm. Brudnoróżowy do brązowawego, z szarawymi łatkami, które deszcz może zmyć. Brzeg nie jest prążkowany.',
     hymenophoreDescription: 'Blaszki białe, gęste, wolne. Z wiekiem i po uszkodzeniu pojawiają się na nich czerwonawe plamy.',
     stemDescription: 'Biały, z pierścieniem prążkowanym od góry. Nasada bulwiasta, bez workowatej pochwy.',
-    fleshDescription: 'Biały. Uszkodzony miąższ różowieje albo czerwienieje, zwłaszcza w trzonie i przy bulwie. Surowe owocniki są trujące.',
+    fleshDescription: 'Biały. Uszkodzony miąższ różowieje albo czerwienieje, zwłaszcza w trzonie i przy bulwie. Nie jeść na surowo ani niedogotowanego. Zawiera hemolizyny, które rozkłada dopiero kilkunastominutowe gotowanie.',
     tasteAndSmell: 'Nie sprawdzaj smakiem. Czerwienienie nie jest dowodem, że grzyb jest jadalny.',
-    culinaryValue: 'W literaturze jadalny tylko po obróbce termicznej. Surowy jest trujący. Ta karta, bez zdjęcia, nie uprawnia do zbioru ani spożycia.',
+    culinaryValue: 'W literaturze w Polsce rzadko zbierany; do gotowania, smażenia, duszenia i marynowania, często robaczywy. Nie jeść na surowo ani niedogotowanego. Zawiera hemolizyny, które rozkłada dopiero kilkunastominutowe gotowanie. Silnie trujący sobowtór: muchomor plamisty. Nie ma go na wykazie MZ. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'amanita_pantherina',
@@ -1468,7 +1471,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         fatal: false
       }
     ],
-    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Surowy jest trujący. Blaszki z wiekiem i po uszkodzeniu dostają czerwonawych plam. Muchomor plamisty ma brzeg prążkowany i czysto białe łatki, a nie czerwienieje. Brak zdjęcia.'
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Nie jeść na surowo ani niedogotowanego. Zawiera hemolizyny, które rozkłada dopiero kilkunastominutowe gotowanie. Blaszki z wiekiem i po uszkodzeniu dostają czerwonawych plam. Muchomor plamisty ma brzeg prążkowany i czysto białe łatki, a nie czerwienieje. Brak zdjęcia.'
   },
   {
     id: 'amanita_citrina',
