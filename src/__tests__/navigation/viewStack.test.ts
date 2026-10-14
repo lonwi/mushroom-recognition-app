@@ -6,6 +6,7 @@ import {
   openPreparation,
   openSettings,
   openSpecies,
+  resetToScanner,
   selectSpecies,
   selectTab,
   shellScreen,
@@ -88,16 +89,23 @@ describe('view stack', () => {
     expect(applyHardwareBack(back.stack).handled).toBe(false);
   });
 
-  it('lets the header logo return to the scanner without touching settings first', () => {
-    const detail = openSpecies(root, 'boletus_edulis');
-    const settings = activateShellTab(detail, 'SETTINGS');
-    expect(shellScreen(settings)).toBe('SETTINGS');
-    expect(selectSpecies(settings, null)).toBe(settings);
+  it('resets the header logo to the scanner root from any screen', () => {
+    const detail = openSpecies(selectTab(root, 'JOURNAL'), 'boletus_edulis');
+    const settings = openSettings(detail);
+    const preparation = openPreparation(selectTab(root, 'SAFETY'));
 
-    const home = activateShellTab(selectSpecies(settings, null), 'SCANNER');
-    expect(home).toEqual(root);
-    expect(shellScreen(selectSpecies(detail, null))).toBe('ATLAS');
+    expect(resetToScanner(settings)).toEqual(initialViewStack());
+    expect(resetToScanner(preparation)).toEqual(root);
+    expect(resetToScanner(detail)).toEqual(root);
+    expect(resetToScanner(selectTab(root, 'ATLAS'))).toEqual(root);
+    expect(resetToScanner(root)).toBe(root);
+    expect(activateShellTab(selectSpecies(settings, null), 'SCANNER')).toEqual(root);
     expect(activateShellTab(selectSpecies(detail, null), 'SCANNER')).toEqual(root);
+
+    const home = resetToScanner(settings);
+    expect(shellScreen(home)).toBe('SCANNER');
+    expect(highlightedTab(home)).toBe('SCANNER');
+    expect(applyHardwareBack(home).handled).toBe(false);
   });
 
   it('clears pushed screens when a tab is selected', () => {

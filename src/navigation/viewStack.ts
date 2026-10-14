@@ -78,10 +78,17 @@ export function visibleRoute(stack: ViewStack): VisibleRoute {
   return { kind: 'preparation' };
 }
 
+/** The header logo drops every pushed screen and returns to the scanner. */
+export function resetToScanner(stack: ViewStack): ViewStack {
+  if (stack.tab === 'SCANNER' && stack.pushed.length === 0) return stack;
+  return initialViewStack();
+}
+
 /** Header and tab bar keep calling these. Settings and preparation push; root tabs clear. */
 export function activateShellTab(stack: ViewStack, tab: ShellTab): ViewStack {
   if (tab === 'SETTINGS') return openSettings(stack);
   if (tab === 'PREPARATION') return openPreparation(stack);
+  if (tab === 'SCANNER') return resetToScanner(stack);
   return selectTab(stack, tab);
 }
 
