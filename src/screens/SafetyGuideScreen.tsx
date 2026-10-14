@@ -118,6 +118,7 @@ export const SafetyGuideScreen = ({ onShowDisclaimer, onOpenPreparation }: Props
               style={styles.preparationBtn}
               onPress={onOpenPreparation}
               activeOpacity={0.8}
+              testID="open-preparation"
             >
               <Text style={styles.preparationIcon}>🍳</Text>
               <View style={{ flex: 1, marginLeft: 10 }}>

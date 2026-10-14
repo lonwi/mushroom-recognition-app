@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -16,29 +16,49 @@ import { SettingsScreen } from './src/screens/SettingsScreen';
 import { PreparationGuideScreen } from './src/screens/PreparationGuideScreen';
 import { SafetyDisclaimerModal } from './src/components/SafetyDisclaimerModal';
 import { settingsStore } from './src/services/storage/settingsStore';
-import { MushroomSpecies } from './src/types/mushroom';
 import { getSpecies } from './src/data/speciesCatalog';
 import { LanguageProvider, useLanguage } from './src/contexts/LanguageContext';
+import { useHardwareBack } from './src/navigation/hardwareBack';
+import {
+  applyHardwareBack,
+  highlightedTab,
+  initialViewStack,
+  openPreparation,
+  openSettings,
+  openSpecies,
+  selectTab,
+  visibleRoute,
+  type RootTab,
+  type VisibleRoute,
+} from './src/navigation/viewStack';
 
 import { PaperProvider } from 'react-native-paper';
 import { paperTheme } from './src/theme/paperTheme';
 import { colors, radius, spacing, typography } from './src/theme/tokens';
 
-type Tab = 'SCANNER' | 'ATLAS' | 'JOURNAL' | 'SAFETY' | 'PREPARATION' | 'SETTINGS';
-
-const TAB_BAR: ReadonlyArray<{ id: Tab; icon: string; labelKey: string; resetAtlas?: boolean }> = [
+const TAB_BAR: ReadonlyArray<{ id: RootTab; icon: string; labelKey: string }> = [
   { id: 'SCANNER', icon: '📷', labelKey: 'nav.scanner' },
-  { id: 'ATLAS', icon: '📖', labelKey: 'nav.atlas', resetAtlas: true },
+  { id: 'ATLAS', icon: '📖', labelKey: 'nav.atlas' },
   { id: 'JOURNAL', icon: '🧺', labelKey: 'nav.journal' },
   { id: 'SAFETY', icon: '🛡', labelKey: 'nav.safety' },
 ];
 
+interface ScreenActions {
+  journalRefreshSignal: number;
+  onOpenSpecies: (speciesId: string) => void;
+  onBack: () => void;
+  onOpenPreparation: () => void;
+  onSavedToJournal: () => void;
+  onShowDisclaimer: () => void;
+}
+
 function AppContent() {
-  const [activeTab, setActiveTab] = useState<Tab>('SCANNER');
-  const [selectedSpecies, setSelectedSpecies] = useState<MushroomSpecies | null>(null);
+  const [stack, setStack] = useState(initialViewStack);
   const [disclaimerVisible, setDisclaimerVisible] = useState(false);
-  const [journalRefreshKey, setJournalRefreshKey] = useState(0);
+  const [journalRefreshSignal, setJournalRefreshSignal] = useState(0);
   const { t } = useLanguage();
+  const stackRef = useRef(stack);
+  stackRef.current = stack;
 
   useEffect(() => {
     const checkDisclaimer = async () => {
@@ -50,54 +70,34 @@ function AppContent() {
     checkDisclaimer();
   }, []);
 
+  // One subscription for the life of the shell. Photo credits adds its own
+  // listener later and must receive the Android back press first.
+  useHardwareBack(() => {
+    const result = applyHardwareBack(stackRef.current);
+    if (!result.handled) return false;
+    setStack(result.stack);
+    return true;
+  });
+
   const handleAcceptDisclaimer = async () => {
     await settingsStore.setAcceptedDisclaimer(true);
     setDisclaimerVisible(false);
   };
 
-  const handleOpenAtlasSpecies = (speciesId: string) => {
-    const match = getSpecies(speciesId);
-    if (match) {
-      setSelectedSpecies(match);
-      setActiveTab('ATLAS');
-    }
+  const openSpeciesById = (speciesId: string) => {
+    if (!getSpecies(speciesId)) return;
+    setStack((current) => openSpecies(current, speciesId));
   };
 
-  const handleSavedToJournal = () => {
-    setJournalRefreshKey((prev) => prev + 1);
+  const popStack = () => {
+    setStack((current) => {
+      const result = applyHardwareBack(current);
+      return result.handled ? result.stack : current;
+    });
   };
 
-  const screens: Record<Tab, React.ReactNode> = {
-    SCANNER: (
-      <ScannerScreen
-        onOpenAtlasSpecies={handleOpenAtlasSpecies}
-        onSavedToJournal={handleSavedToJournal}
-      />
-    ),
-    ATLAS: selectedSpecies ? (
-      <SpeciesDetailScreen
-        species={selectedSpecies}
-        onBack={() => setSelectedSpecies(null)}
-        onOpenLookAlike={handleOpenAtlasSpecies}
-      />
-    ) : (
-      <AtlasScreen onSelectSpecies={(species) => setSelectedSpecies(species)} />
-    ),
-    JOURNAL: (
-      <JournalScreen
-        key={journalRefreshKey}
-        onOpenAtlasSpecies={handleOpenAtlasSpecies}
-      />
-    ),
-    SAFETY: (
-      <SafetyGuideScreen
-        onShowDisclaimer={() => setDisclaimerVisible(true)}
-        onOpenPreparation={() => setActiveTab('PREPARATION')}
-      />
-    ),
-    PREPARATION: <PreparationGuideScreen />,
-    SETTINGS: <SettingsScreen />,
-  };
+  const route = visibleRoute(stack);
+  const activeTab = highlightedTab(stack);
 
   return (
     // Top, bottom, and side insets are applied once, here. Tab screens sit in
@@ -106,67 +106,137 @@ function AppContent() {
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
 
       <View style={styles.topHeader}>
-        <TouchableOpacity
-          style={styles.brandRow}
-          onPress={() => {
-            setSelectedSpecies(null);
-            setActiveTab('SCANNER');
-          }}
-          accessibilityRole="button"
-          accessibilityLabel={t('app.title')}
-        >
-          <Text style={styles.brandIcon} importantForAccessibility="no">
-            🍄
-          </Text>
+        <View style={styles.brandRow}>
+          <Text style={styles.brandIcon}>🍄</Text>
           <View>
             <Text style={styles.brandTitle}>{t('app.title')}</Text>
             <Text style={styles.brandSubtitle}>{t('app.subtitle')}</Text>
           </View>
-        </TouchableOpacity>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        </View>
+        <View style={styles.headerActions}>
           <View style={styles.offlinePill}>
             <Text style={styles.offlinePillText}>{t('app.offline')}</Text>
           </View>
           <TouchableOpacity
-            onPress={() => setActiveTab('SETTINGS')}
-            style={{ marginLeft: 12 }}
-            accessibilityRole="button"
-            accessibilityLabel={t('nav.settings')}
+            onPress={() => setStack((current) => openSettings(current))}
+            style={styles.settingsButton}
+            testID="open-settings"
           >
-            <Text style={{ fontSize: 20 }} importantForAccessibility="no">
-              ⚙️
-            </Text>
+            <Text style={styles.settingsIcon}>⚙️</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      <View style={styles.content}>{screens[activeTab]}</View>
-
-      <View style={styles.bottomNav}>
-        {TAB_BAR.map((tab) => {
-          const active = activeTab === tab.id;
-          return (
-            <TouchableOpacity
-              key={tab.id}
-              style={[styles.navItem, active && styles.navItemActive]}
-              onPress={() => {
-                if (tab.resetAtlas) setSelectedSpecies(null);
-                setActiveTab(tab.id);
-              }}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.navIcon}>{tab.icon}</Text>
-              <Text style={[styles.navText, active && styles.navTextActive]}>{t(tab.labelKey)}</Text>
-            </TouchableOpacity>
-          );
-        })}
+      <View style={styles.content}>
+        <VisibleScreen
+          route={route}
+          journalRefreshSignal={journalRefreshSignal}
+          onOpenSpecies={openSpeciesById}
+          onBack={popStack}
+          onOpenPreparation={() => setStack((current) => openPreparation(current))}
+          onSavedToJournal={() => setJournalRefreshSignal((value) => value + 1)}
+          onShowDisclaimer={() => setDisclaimerVisible(true)}
+        />
       </View>
+
+      <TabBar
+        activeTab={activeTab}
+        onSelect={(tab) => setStack((current) => selectTab(current, tab))}
+      />
 
       <SafetyDisclaimerModal
         visible={disclaimerVisible}
         onAccept={handleAcceptDisclaimer}
       />
     </SafeAreaView>
+  );
+}
+
+function VisibleScreen({ route, ...actions }: ScreenActions & { route: VisibleRoute }) {
+  if (route.kind === 'species') {
+    return <SpeciesRoute speciesId={route.speciesId} onBack={actions.onBack} onOpenSpecies={actions.onOpenSpecies} />;
+  }
+  if (route.kind === 'settings') return <SettingsScreen />;
+  if (route.kind === 'preparation') return <PreparationGuideScreen />;
+  return <TabScreen tab={route.tab} {...actions} />;
+}
+
+function SpeciesRoute({
+  speciesId,
+  onBack,
+  onOpenSpecies,
+}: {
+  speciesId: string;
+  onBack: () => void;
+  onOpenSpecies: (speciesId: string) => void;
+}) {
+  const species = getSpecies(speciesId);
+  if (!species) {
+    return <AtlasScreen onSelectSpecies={(item) => onOpenSpecies(item.id)} />;
+  }
+  return (
+    <SpeciesDetailScreen
+      species={species}
+      onBack={onBack}
+      onOpenLookAlike={onOpenSpecies}
+    />
+  );
+}
+
+function TabScreen({ tab, ...actions }: ScreenActions & { tab: RootTab }) {
+  if (tab === 'ATLAS') {
+    return <AtlasScreen onSelectSpecies={(species) => actions.onOpenSpecies(species.id)} />;
+  }
+  if (tab === 'JOURNAL') {
+    return (
+      <JournalScreen
+        refreshSignal={actions.journalRefreshSignal}
+        onOpenAtlasSpecies={actions.onOpenSpecies}
+      />
+    );
+  }
+  if (tab === 'SAFETY') {
+    return (
+      <SafetyGuideScreen
+        onShowDisclaimer={actions.onShowDisclaimer}
+        onOpenPreparation={actions.onOpenPreparation}
+      />
+    );
+  }
+  return (
+    <ScannerScreen
+      onOpenAtlasSpecies={actions.onOpenSpecies}
+      onSavedToJournal={actions.onSavedToJournal}
+    />
+  );
+}
+
+function TabBar({
+  activeTab,
+  onSelect,
+}: {
+  activeTab: RootTab | null;
+  onSelect: (tab: RootTab) => void;
+}) {
+  const { t } = useLanguage();
+  return (
+    <View style={styles.bottomNav}>
+      {TAB_BAR.map((tab) => {
+        const active = activeTab === tab.id;
+        return (
+          <TouchableOpacity
+            key={tab.id}
+            style={[styles.navItem, active && styles.navItemActive]}
+            onPress={() => onSelect(tab.id)}
+            activeOpacity={0.7}
+            testID={`nav-${tab.id}`}
+          >
+            <Text style={styles.navIcon}>{tab.icon}</Text>
+            <Text style={[styles.navText, active && styles.navTextActive]}>{t(tab.labelKey)}</Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
   );
 }
 
@@ -216,6 +286,16 @@ const styles = StyleSheet.create({
     // emerald50 on primary is 11.76:1. 10px text needs WCAG AA 4.5:1.
     color: colors.emerald50,
     fontWeight: '600',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  settingsButton: {
+    marginLeft: spacing.md,
+  },
+  settingsIcon: {
+    fontSize: typography.headline,
   },
   offlinePill: {
     backgroundColor: colors.emerald900,

@@ -1,0 +1,127 @@
+import React from 'react';
+import { BackHandler, Platform } from 'react-native';
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import App from '../../../App';
+import { HARDWARE_BACK_EVENT } from '../../navigation/hardwareBack';
+import { pl } from '../../i18n/pl';
+
+type BackHandlerFn = () => boolean | null | undefined;
+
+function installBackHandler() {
+  const handlers: BackHandlerFn[] = [];
+  const spy = jest.spyOn(BackHandler, 'addEventListener').mockImplementation((event, handler) => {
+    if (event !== 'hardwareBackPress') {
+      return { remove: () => undefined };
+    }
+    const listener = handler as BackHandlerFn;
+    handlers.push(listener);
+    return {
+      remove: () => {
+        const index = handlers.indexOf(listener);
+        if (index >= 0) handlers.splice(index, 1);
+      },
+    };
+  });
+
+  const press = (): boolean => {
+    for (let index = handlers.length - 1; index >= 0; index -= 1) {
+      if (handlers[index]()) return true;
+    }
+    return false;
+  };
+
+  return { handlers, press, restore: () => spy.mockRestore() };
+}
+
+describe('Android hardware back', () => {
+  const previousPlatform = Platform.OS;
+
+  beforeEach(async () => {
+    Platform.OS = 'android';
+    await AsyncStorage.clear();
+  });
+
+  afterEach(() => {
+    Platform.OS = previousPlatform;
+  });
+
+  it('pops detail, settings, and preparation, and leaves a root tab alone', async () => {
+    const back = installBackHandler();
+    try {
+      const screen = await render(<App />);
+      expect(back.handlers).toHaveLength(1);
+
+      await act(async () => {
+        expect(back.press()).toBe(false);
+      });
+      expect(screen.getByTestId('scanner-atlas-scope')).toBeTruthy();
+
+      await fireEvent.press(screen.getByTestId('nav-ATLAS'));
+      await fireEvent.press(screen.getByTestId('atlas-card-boletus_edulis'));
+      expect(screen.getByTestId('species-back')).toBeTruthy();
+
+      await act(async () => {
+        expect(back.press()).toBe(true);
+      });
+      expect(screen.queryByTestId('species-back')).toBeNull();
+      expect(screen.getByTestId('atlas-scope-notice')).toBeTruthy();
+      expect(back.press()).toBe(false);
+
+      await fireEvent.press(screen.getByTestId('atlas-card-boletus_edulis'));
+      await fireEvent.press(screen.getByTestId('open-settings'));
+      expect(screen.getByTestId('btn-lang-pl')).toBeTruthy();
+      expect(screen.queryByTestId('species-back')).toBeNull();
+
+      await act(async () => {
+        expect(back.press()).toBe(true);
+      });
+      expect(screen.queryByTestId('btn-lang-pl')).toBeNull();
+      expect(screen.getByTestId('species-back')).toBeTruthy();
+
+      await fireEvent.press(screen.getByTestId('nav-SAFETY'));
+      await fireEvent.press(screen.getByTestId('open-preparation'));
+      expect(screen.getByTestId('tab-prep-all')).toBeTruthy();
+
+      await act(async () => {
+        expect(back.press()).toBe(true);
+      });
+      expect(screen.queryByTestId('tab-prep-all')).toBeNull();
+      expect(screen.getByText(pl.safetyGuide.title)).toBeTruthy();
+      expect(back.press()).toBe(false);
+    } finally {
+      back.restore();
+    }
+  });
+
+  it('lets photo credits consume back before the settings screen does', async () => {
+    const back = installBackHandler();
+    try {
+      const screen = await render(<App />);
+      await fireEvent.press(screen.getByTestId('open-settings'));
+      await fireEvent.press(screen.getByTestId('btn-photo-credits'));
+      expect(screen.getByTestId('photo-credits-screen')).toBeTruthy();
+      expect(back.handlers.length).toBeGreaterThan(1);
+
+      await act(async () => {
+        expect(back.press()).toBe(true);
+      });
+      await waitFor(() => {
+        expect(screen.queryByTestId('photo-credits-screen')).toBeNull();
+      });
+      expect(screen.getByTestId('btn-lang-pl')).toBeTruthy();
+
+      await act(async () => {
+        expect(back.press()).toBe(true);
+      });
+      expect(screen.queryByTestId('btn-lang-pl')).toBeNull();
+      expect(screen.getByTestId('scanner-atlas-scope')).toBeTruthy();
+    } finally {
+      back.restore();
+    }
+  });
+
+  it('keeps the hardware back event name stable for browser tests', () => {
+    expect(HARDWARE_BACK_EVENT).toBe('hardwareBackPress');
+  });
+});

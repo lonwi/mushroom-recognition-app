@@ -57,6 +57,7 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
         style={styles.card}
         onPress={() => onSelectSpecies(item)}
         activeOpacity={0.7}
+        testID={`atlas-card-${item.id}`}
       >
         <View style={styles.cardMainRow}>
           {photo ? (
