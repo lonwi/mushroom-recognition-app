@@ -1,6 +1,6 @@
 import React from 'react';
 import { Alert } from 'react-native';
-import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { ScannerScreen } from '../../screens/ScannerScreen';
 import { classifierService } from '../../services/classifierService';
@@ -93,18 +93,23 @@ describe('ScannerScreen does not invent a recognition result', () => {
   it('gives every atlas example chip a non-empty name and no camera offline pill', async () => {
     const { getByTestId, queryByText } = await renderScanner();
     const expected = {
-      boletus: 'Prawdziwki',
-      amanita: 'Muchomor sromotnikowy (zielonawy)',
-      macrolepiota: 'Czubajka kania',
-      cantharellus: 'Pieprznik jadalny (Kurka)',
+      boletus: { name: 'Prawdziwki', emoji: '🌲' },
+      amanita: { name: 'Muchomor sromotnikowy (zielonawy)', emoji: '☠' },
+      macrolepiota: { name: 'Czubajka kania', emoji: '☂' },
+      cantharellus: { name: 'Pieprznik jadalny (Kurka)', emoji: '🍳' },
     } as const;
 
-    for (const [slug, name] of Object.entries(expected)) {
+    for (const [slug, { name, emoji }] of Object.entries(expected)) {
       const label = getByTestId(`demo-atlas-label-${slug}`);
       const text = typeof label.props.children === 'string' ? label.props.children : '';
       expect(text).toBe(name);
       expect(text.trim()).toMatch(/\p{L}/u);
-      expect(getByTestId(`demo-atlas-${slug}`)).toBeTruthy();
+      const chip = getByTestId(`demo-atlas-${slug}`);
+      expect(chip.props.accessibilityLabel).toBe(name);
+      expect(within(chip).queryByText(emoji)).toBeNull();
+      const emojiText = within(chip).getByText(emoji, { includeHiddenElements: true });
+      expect(emojiText.props.importantForAccessibility).toBe('no');
+      expect(emojiText.props.accessibilityElementsHidden).toBe(true);
     }
 
     expect(queryByText(/100% OFFLINE/)).toBeNull();

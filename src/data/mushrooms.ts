@@ -1117,7 +1117,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     stemDescription: 'Wysoki, pokryty czarniawymi albo rudymi kosmkami. Bez siateczki i bez pierścienia.',
     fleshDescription: 'Biały, po przekrojeniu szarzeje, fioletowieje albo czernieje. Koźlarz babka po przekrojeniu barwy nie zmienia.',
     tasteAndSmell: 'Nie sprawdzaj smakiem.',
-    culinaryValue: 'W literaturze powszechnie zbierany. W literaturze podawany do marynowania, gotowania, duszenia i suszenia. Rzadko bywa robaczywy. Ciemnienie miąższu po obróbce ogranicza dodatek octu do wody. Koźlarz czerwony (Leccinum aurantiacum). Dopuszczony do obrotu. Koźlarz pomarańczowożółty (Leccinum versipelle) nie jest dopuszczony do obrotu. Jadalne tylko po obróbce termicznej. Surowe i niedogotowane powodują dolegliwości żołądkowo-jelitowe. W literaturze kosmki z trzonu zeskrobuje się przed jedzeniem. Ta karta nie uprawnia do zbioru ani spożycia.',
+    culinaryValue: 'W literaturze powszechnie zbierany. W literaturze podawany do marynowania, gotowania, duszenia i suszenia. Rzadko bywa robaczywy. Ciemnienie miąższu po obróbce ogranicza dodatek octu do wody. Koźlarz czerwony (L. aurantiacum, w wykazie MZ jako L. rufum) jest dopuszczony do obrotu, koźlarz pomarańczowożółty (L. versipelle) nie. W literaturze jadalne tylko po obróbce termicznej. Surowe i niedogotowane powodują dolegliwości żołądkowo-jelitowe. W literaturze kosmki z trzonu zeskrobuje się przed jedzeniem. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'leccinum_scabrum',
