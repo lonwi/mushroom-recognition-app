@@ -4,6 +4,8 @@ import { MUSHROOMS_DATABASE } from './mushrooms';
 const AMANITA_GENUS = 'amanita_';
 const RING_GENERA = ['galerina_', 'agaricus_', 'chlorophyllum_'] as const;
 const CORTINA_GENERA = ['cortinarius_'] as const;
+/** Young Hypholoma fasciculare has a cortina; it later leaves a dark ring zone, not a true ring. */
+const CORTINA_SPECIES = new Set(['hypholoma_fasciculare']);
 const GYROMITRA = 'gyromitra_esculenta';
 
 function startsWithGenus(speciesId: string, genera: readonly string[]): boolean {
@@ -26,7 +28,7 @@ export function galleryFeatureKey(speciesId: string, feature: GalleryFeature): s
   if (speciesId === GYROMITRA) {
     return 'gallery.feature.undersideStem';
   }
-  if (startsWithGenus(speciesId, CORTINA_GENERA)) {
+  if (CORTINA_SPECIES.has(speciesId) || startsWithGenus(speciesId, CORTINA_GENERA)) {
     return 'gallery.feature.gillsCortina';
   }
   if (speciesId.startsWith(AMANITA_GENUS) || startsWithGenus(speciesId, RING_GENERA)) {

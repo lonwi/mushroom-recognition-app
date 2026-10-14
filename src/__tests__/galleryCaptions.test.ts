@@ -18,13 +18,12 @@ const RING = new Set([
   'agaricus_xanthodermus',
   'chlorophyllum_rhacodes',
 ]);
-const CORTINA = new Set(['cortinarius_orellanus', 'cortinarius_rubellus']);
+const CORTINA = new Set(['cortinarius_orellanus', 'cortinarius_rubellus', 'hypholoma_fasciculare']);
 const PLAIN = new Set([
   'paxillus_involutus',
   'lactarius_torminosus',
   'hygrophoropsis_aurantiaca',
   'inocybe_erubescens',
-  'hypholoma_fasciculare',
   'tricholoma_equestre',
 ]);
 const GYROMITRA = 'gyromitra_esculenta';
