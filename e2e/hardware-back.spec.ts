@@ -23,9 +23,10 @@ test('hardware back returns from species detail, settings, and preparation', asy
   await expect(page.getByTestId('atlas-scope-notice')).toBeVisible();
 
   await pressHardwareBack(page);
-  await expect(page.getByTestId('atlas-scope-notice')).toBeVisible();
-  await expect(page.getByTestId('nav-ATLAS')).toBeVisible();
+  await expect(page.getByTestId('atlas-scope-notice')).toHaveCount(0);
+  await expect(page.getByTestId('scanner-atlas-scope')).toBeVisible();
 
+  await page.getByTestId('nav-ATLAS').click();
   await page.getByTestId('atlas-card-boletus_edulis').click();
   await page.getByText('⚙️').click();
   await expect(page.getByTestId('btn-lang-pl')).toBeVisible();
@@ -44,4 +45,8 @@ test('hardware back returns from species detail, settings, and preparation', asy
   await expect(page.getByTestId('tab-prep-all')).toHaveCount(0);
   await expect(page.getByText('Poradnik Bezpieczeństwa & Pomoc')).toBeVisible();
   await expect(page.getByTestId('open-preparation')).toBeVisible();
+
+  await pressHardwareBack(page);
+  await expect(page.getByTestId('open-preparation')).toHaveCount(0);
+  await expect(page.getByTestId('scanner-atlas-scope')).toBeVisible();
 });

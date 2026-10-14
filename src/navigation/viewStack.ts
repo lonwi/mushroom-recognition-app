@@ -55,10 +55,14 @@ export function openPreparation(stack: ViewStack): ViewStack {
   return pushOnce(stack, { name: 'preparation' });
 }
 
-/** Root tabs exit the app. Anything pushed is popped and the event is consumed. */
+/**
+ * Pops a pushed screen. An empty atlas, journal, or safety tab returns to the
+ * scanner. Only an empty scanner returns false, so Android can exit the app.
+ */
 export function applyHardwareBack(stack: ViewStack): HardwareBackResult {
   if (stack.pushed.length === 0) {
-    return { handled: false };
+    if (stack.tab === 'SCANNER') return { handled: false };
+    return { handled: true, stack: initialViewStack() };
   }
   return {
     handled: true,

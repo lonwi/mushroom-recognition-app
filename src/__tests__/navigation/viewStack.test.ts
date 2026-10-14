@@ -16,13 +16,21 @@ import {
 describe('view stack', () => {
   const root = initialViewStack();
 
-  it('exits only from a root tab', () => {
+  it('exits only from the scanner when nothing is pushed', () => {
     expect(applyHardwareBack(root)).toEqual({ handled: false });
-    expect(applyHardwareBack(selectTab(root, 'ATLAS'))).toEqual({ handled: false });
-    expect(applyHardwareBack(selectTab(root, 'JOURNAL'))).toEqual({ handled: false });
-    expect(applyHardwareBack(selectTab(root, 'SAFETY'))).toEqual({ handled: false });
+    expect(applyHardwareBack(selectTab(root, 'SCANNER'))).toEqual({ handled: false });
     expect(highlightedTab(root)).toBe('SCANNER');
     expect(visibleRoute(root)).toEqual({ kind: 'tab', tab: 'SCANNER' });
+  });
+
+  it('switches an empty atlas, journal, or safety tab back to the scanner', () => {
+    for (const tab of ['ATLAS', 'JOURNAL', 'SAFETY'] as const) {
+      const there = selectTab(root, tab);
+      expect(applyHardwareBack(there)).toEqual({ handled: true, stack: root });
+      const moved = applyHardwareBack(there);
+      if (!moved.handled) return;
+      expect(applyHardwareBack(moved.stack)).toEqual({ handled: false });
+    }
   });
 
   it('returns from a look-alike to the previous card, and from scanner or journal to that tab', () => {
@@ -55,7 +63,7 @@ describe('view stack', () => {
     const backToJournal = applyHardwareBack(fromJournal);
     expect(backToJournal).toEqual({ handled: true, stack: journal });
     if (!backToJournal.handled) return;
-    expect(applyHardwareBack(backToJournal.stack)).toEqual({ handled: false });
+    expect(applyHardwareBack(backToJournal.stack)).toEqual({ handled: true, stack: root });
   });
 
   it('truncates A → B → A back to the first card', () => {
@@ -111,7 +119,7 @@ describe('view stack', () => {
     const back = applyHardwareBack(preparation);
     expect(back).toEqual({ handled: true, stack: safety });
     if (!back.handled) return;
-    expect(applyHardwareBack(back.stack).handled).toBe(false);
+    expect(applyHardwareBack(back.stack)).toEqual({ handled: true, stack: root });
   });
 
   it('resets the header logo to the scanner root from any screen', () => {

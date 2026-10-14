@@ -47,7 +47,7 @@ describe('Android hardware back', () => {
     Platform.OS = previousPlatform;
   });
 
-  it('pops detail, settings, and preparation, and leaves a root tab alone', async () => {
+  it('pops detail, settings, and preparation, and returns an empty tab to the scanner', async () => {
     const back = installBackHandler();
     try {
       const screen = await render(<App />);
@@ -67,8 +67,14 @@ describe('Android hardware back', () => {
       });
       expect(screen.queryByTestId('species-back')).toBeNull();
       expect(screen.getByTestId('atlas-scope-notice')).toBeTruthy();
-      expect(back.press()).toBe(false);
 
+      await act(async () => {
+        expect(back.press()).toBe(true);
+      });
+      expect(screen.queryByTestId('atlas-scope-notice')).toBeNull();
+      expect(screen.getByTestId('scanner-atlas-scope')).toBeTruthy();
+
+      await fireEvent.press(screen.getByTestId('nav-ATLAS'));
       await fireEvent.press(screen.getByTestId('atlas-card-boletus_edulis'));
       await fireEvent.press(screen.getByText('⚙️'));
       expect(screen.getByTestId('btn-lang-pl')).toBeTruthy();
@@ -89,6 +95,11 @@ describe('Android hardware back', () => {
       });
       expect(screen.queryByTestId('tab-prep-all')).toBeNull();
       expect(screen.getByText(pl.safetyGuide.title)).toBeTruthy();
+
+      await act(async () => {
+        expect(back.press()).toBe(true);
+      });
+      expect(screen.getByTestId('scanner-atlas-scope')).toBeTruthy();
       expect(back.press()).toBe(false);
     } finally {
       back.restore();
@@ -144,6 +155,11 @@ describe('Android hardware back', () => {
       });
       expect(screen.getByTestId('journal-entry-sighting_spot')).toBeTruthy();
       expect(screen.queryByText('Prawdziwki')).toBeNull();
+
+      await act(async () => {
+        expect(back.press()).toBe(true);
+      });
+      expect(screen.getByTestId('scanner-atlas-scope')).toBeTruthy();
       expect(back.press()).toBe(false);
     } finally {
       back.restore();
