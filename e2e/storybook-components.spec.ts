@@ -159,9 +159,11 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.getByTestId('lookalike-unlinked-psilocybe')).toContainText(
       'Atlas nie wydaje werdyktu dla tego gatunku',
     );
-    await expect(page.getByTestId('lookalike-unlinked-panaeolus')).toBeVisible();
+    await expect(page.getByTestId('lookalike-unlinked-panaeolus')).toHaveCount(0);
     await expect(page.locator('body')).toContainText('Stamets 1996, s. 31–33, 144–145, 192–193');
-    await expect(page.locator('body')).toContainText('Stamets 1996, s. 67–68');
+    await expect(page.locator('body')).not.toContainText('Stamets 1996, s. 67–68');
+    await expect(page.locator('body')).not.toContainText('Panaeolus');
+    await expect(page.locator('body')).not.toContainText('Kołpaczki');
     await expect(page.locator('body')).not.toContainText('psylocybin');
     await expect(page.locator('body')).not.toContainText('pastwisk');
   });

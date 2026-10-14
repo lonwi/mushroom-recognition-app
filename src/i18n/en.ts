@@ -94,7 +94,7 @@ export const en: Translations = {
     poisoningFirstAid:
       'If poisoning symptoms appear after eating mushrooms: call the emergency number 112 or 999, or go to a hospital. Everyone who ate the same meal must see a doctor, including people with no symptoms. Do not give milk or alcohol to the person who has symptoms (GIS, Bezpieczne grzybobranie, 23 September 2022).',
     galerinaLookalikeWarning:
-      'Psilocybe has no atlas card. The funeral bell is deadly poisonous and easy to confuse with a Psilocybe. Stamets 1996, s. 31–33, 144–145, 192–193. Panaeolus has no atlas card. The funeral bell, easy to confuse with a Psilocybe, is deadly poisonous. Stamets 1996, s. 67–68.',
+      'Psilocybe has no atlas card. The funeral bell is deadly poisonous and easy to confuse with a Psilocybe. Stamets 1996, pp. 31–33, 144–145, 192–193.',
     morelProtectionTitle: 'Partially protected in Poland',
     morelProtectionBody:
       'Do not collect wild-growing morels. Morels are partially protected in Poland. Collection requires a permit, except for specimens growing in gardens, horticultural plantings, forest nurseries, and green areas (Regulation of the Minister of the Environment of 9 October 2014, Journal of Laws 2014 item 1408). This notice is not a permit.',

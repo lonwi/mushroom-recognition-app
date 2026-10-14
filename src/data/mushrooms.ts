@@ -17,9 +17,6 @@ export const GIS_MUSHROOM_FIRST_AID =
 export const GALERINA_PSILOCYBE_WARNING =
   'Łysiczki (Psilocybe) nie mają karty. Hełmówka jadowita jest śmiertelnie trująca i łatwo pomylić ją z łysiczką. Stamets 1996, s. 31–33, 144–145, 192–193.';
 
-export const PANAEOLUS_LOOKALIKE_WARNING =
-  'Kołpaczki (Panaeolus) nie mają karty. Hełmówka jadowita, łatwa do pomylenia z łysiczką, jest śmiertelnie trująca. Stamets 1996, s. 67–68.';
-
 export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
   {
     id: 'boletus_edulis',
@@ -1488,16 +1485,9 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         confusedWithStatus: 'NO_ATLAS_VERDICT',
         keyDifferences: [GALERINA_PSILOCYBE_WARNING],
         fatal: false
-      },
-      {
-        confusedWithId: 'panaeolus',
-        confusedWithName: 'Kołpaczki (Panaeolus)',
-        confusedWithStatus: 'NO_ATLAS_VERDICT',
-        keyDifferences: [PANAEOLUS_LOOKALIKE_WARNING],
-        fatal: false
       }
     ],
-    warningNotes: `NIE JEDZ. Śmiertelnie trująca. Małe brązowe owocniki na drewnie zostaw. Brak zdjęcia. Maślanka łagodna ma osobną kartę i porównuje się z tą. ${GALERINA_PSILOCYBE_WARNING} ${PANAEOLUS_LOOKALIKE_WARNING}`
+    warningNotes: `NIE JEDZ. Śmiertelnie trująca. Małe brązowe owocniki na drewnie zostaw. Brak zdjęcia. Maślanka łagodna ma osobną kartę i porównuje się z tą. ${GALERINA_PSILOCYBE_WARNING}`
   },
   {
     id: 'amanita_rubescens',
@@ -1980,13 +1970,7 @@ export const LOOKALIKES_WITHOUT_CARD: Readonly<
     status: 'NO_ATLAS_VERDICT',
     note: ATLAS_NO_VERDICT_NOTE,
     reason:
-      'Łysiczki (Psilocybe) have no atlas card. The warning is only that the funeral bell is deadly poisonous and easy to confuse with them (Stamets 1996, s. 31–33, 144–145, 192–193). This atlas gives no edibility verdict.',
-  },
-  panaeolus: {
-    status: 'NO_ATLAS_VERDICT',
-    note: ATLAS_NO_VERDICT_NOTE,
-    reason:
-      'Kołpaczki (Panaeolus) have no atlas card. The warning stays on the funeral bell, which is deadly poisonous and easy to confuse with Psilocybe (Stamets 1996, s. 67–68). This atlas gives no edibility verdict.',
+      'Łysiczki (Psilocybe) have no atlas card. The warning is only that the funeral bell is deadly poisonous and easy to confuse with them (Stamets 1996, pp. 31–33, 144–145, 192–193). This atlas gives no edibility verdict.',
   },
 };
 

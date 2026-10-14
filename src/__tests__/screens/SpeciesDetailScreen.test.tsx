@@ -72,11 +72,11 @@ describe('SpeciesDetailScreen safety notices', () => {
       <SpeciesDetailScreen species={species('galerina_marginata')} onBack={() => {}} />,
     );
     expect(bell.getAllByText(/Łysiczki \(Psilocybe\)/).length).toBeGreaterThan(1);
-    expect(bell.getAllByText(/Kołpaczki \(Panaeolus\)/).length).toBeGreaterThan(1);
     expect(bell.getAllByText(/Stamets 1996, s\. 31–33/).length).toBeGreaterThan(1);
-    expect(bell.getAllByText(/Stamets 1996, s\. 67–68/).length).toBeGreaterThan(1);
+    expect(bell.queryByText(/Kołpaczki|Panaeolus/)).toBeNull();
+    expect(bell.queryByText(/Stamets 1996, s\. 67–68/)).toBeNull();
     expect(bell.getByTestId('lookalike-unlinked-psilocybe')).toBeTruthy();
-    expect(bell.getByTestId('lookalike-unlinked-panaeolus')).toBeTruthy();
+    expect(bell.queryByTestId('lookalike-unlinked-panaeolus')).toBeNull();
     expect(bell.queryByTestId('lookalike-link-psilocybe')).toBeNull();
     expect(bell.queryByText(/pastwisk/i)).toBeNull();
     expect(bell.queryByText(/upraw/i)).toBeNull();
@@ -99,8 +99,14 @@ describe('SpeciesDetailScreen safety notices', () => {
         <SpeciesDetailScreen species={species('galerina_marginata')} onBack={() => {}} />
       </LanguageProvider>,
     );
-    expect(await bell.findByTestId('species-galerina-lookalike-note')).toBeTruthy();
-    expect(await bell.findByText(/deadly poisonous and easy to confuse with a Psilocybe/)).toBeTruthy();
+    const note = await bell.findByTestId('species-galerina-lookalike-note');
+    const noteText = Array.isArray(note.props.children)
+      ? note.props.children.join('')
+      : String(note.props.children);
+    expect(noteText).toMatch(/deadly poisonous and easy to confuse with a Psilocybe/);
+    expect(noteText).toMatch(/Stamets 1996, pp\. 31–33, 144–145, 192–193/);
+    expect(noteText).not.toMatch(/Stamets 1996, s\./);
+    expect(noteText).not.toMatch(/Panaeolus/);
     expect(bell.queryByTestId('species-poisoning-note')).toBeNull();
   });
 

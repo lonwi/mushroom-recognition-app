@@ -8,7 +8,6 @@ import {
   LOOKALIKES_WITHOUT_CARD,
   MUSHROOM_IDS,
   MUSHROOMS_DATABASE,
-  PANAEOLUS_LOOKALIKE_WARNING,
   PANTHER_POISONING_SYMPTOMS,
   POISONOUS_NOTE,
   showsKitchenSection,
@@ -126,7 +125,6 @@ describe('Mushroom Database & Safety Verification', () => {
       'entoloma_sinuatum',
       'imperator_rhodopurpureus',
       'imperator_torosus',
-      'panaeolus',
       'psilocybe',
       'rubroboletus_other',
     ]);
@@ -646,8 +644,9 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(panther.warningNotes).toContain(GIS_MUSHROOM_FIRST_AID);
     expect(fly.warningNotes).toMatch(/112/);
     expect(fly.warningNotes).toMatch(/999/);
-    expect(fly.warningNotes).toMatch(/mleka/);
-    expect(fly.warningNotes).toMatch(/alkoholu/);
+    expect(fly.warningNotes).toMatch(/nie podaje się mleka ani alkoholu/);
+    expect(GIS_MUSHROOM_FIRST_AID).toMatch(/nie podaje się mleka ani alkoholu/);
+    expect(GIS_MUSHROOM_FIRST_AID).not.toMatch(/podawaj/);
     expect(fly.warningNotes).toMatch(/wymioty/);
     expect(panther.warningNotes).toMatch(/drgawki/);
     expect(fly.warningNotes).not.toMatch(excluded);
@@ -657,32 +656,35 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(GIS_MUSHROOM_FIRST_AID).not.toMatch(excluded);
   });
 
-  test('Psilocybe and Panaeolus are look-alike warnings, not cards or a finding guide', () => {
+  test('Psilocybe is a look-alike warning, not a card or a finding guide', () => {
     expect(MUSHROOMS_DATABASE.some((species) => species.id === 'psilocybe' || species.id === 'panaeolus')).toBe(
       false,
     );
+    expect(Object.prototype.hasOwnProperty.call(LOOKALIKES_WITHOUT_CARD, 'panaeolus')).toBe(false);
     const galerina = mustSpecies('galerina_marginata');
     const ids = galerina.confusionRisks.map((risk) => risk.confusedWithId);
-    expect(ids).toEqual(expect.arrayContaining(['psilocybe', 'panaeolus']));
+    expect(ids).toContain('psilocybe');
+    expect(ids).not.toContain('panaeolus');
+    expect(JSON.stringify(galerina)).not.toMatch(/[Pp]anaeolus|kołpaczk/i);
 
     const guide =
       /pastwisk|odchod|upraw|zrębk|trocin|kompost|trawnik|garbk|sinien|psylocybin|do_weryfikacji|kultury|pieczarkarn/i;
-    for (const id of ['psilocybe', 'panaeolus'] as const) {
-      const risk = galerina.confusionRisks.find((item) => item.confusedWithId === id);
-      expect(risk?.confusedWithStatus).toBe('NO_ATLAS_VERDICT');
-      expect(risk?.fatal).toBe(false);
-      expect(LOOKALIKES_WITHOUT_CARD[id].status).toBe('NO_ATLAS_VERDICT');
-      expect(LOOKALIKES_WITHOUT_CARD[id].note).toBe(ATLAS_NO_VERDICT_NOTE);
-      const text = `${risk?.keyDifferences.join(' ')} ${LOOKALIKES_WITHOUT_CARD[id].reason}`;
-      expect(text).toMatch(/Stamets 1996, s\. /);
-      expect(text).toMatch(/śmiertelnie|deadly/i);
-      expect(text).not.toMatch(guide);
-    }
+    const risk = galerina.confusionRisks.find((item) => item.confusedWithId === 'psilocybe');
+    expect(risk?.confusedWithStatus).toBe('NO_ATLAS_VERDICT');
+    expect(risk?.fatal).toBe(false);
+    expect(LOOKALIKES_WITHOUT_CARD.psilocybe.status).toBe('NO_ATLAS_VERDICT');
+    expect(LOOKALIKES_WITHOUT_CARD.psilocybe.note).toBe(ATLAS_NO_VERDICT_NOTE);
+    const polish = risk?.keyDifferences.join(' ') ?? '';
+    expect(polish).toBe(GALERINA_PSILOCYBE_WARNING);
+    expect(polish).toMatch(/Stamets 1996, s\. 31–33, 144–145, 192–193/);
+    expect(polish).toMatch(/śmiertelnie/);
+    expect(polish).not.toMatch(guide);
+    expect(LOOKALIKES_WITHOUT_CARD.psilocybe.reason).toMatch(/Stamets 1996, pp\. 31–33, 144–145, 192–193/);
+    expect(LOOKALIKES_WITHOUT_CARD.psilocybe.reason).not.toMatch(/Stamets 1996, s\./);
+    expect(LOOKALIKES_WITHOUT_CARD.psilocybe.reason).toMatch(/deadly/);
+    expect(LOOKALIKES_WITHOUT_CARD.psilocybe.reason).not.toMatch(guide);
     expect(galerina.warningNotes).toContain(GALERINA_PSILOCYBE_WARNING);
-    expect(galerina.warningNotes).toContain(PANAEOLUS_LOOKALIKE_WARNING);
-    expect(GALERINA_PSILOCYBE_WARNING).toMatch(/Stamets 1996, s\. 31–33, 144–145, 192–193/);
-    expect(PANAEOLUS_LOOKALIKE_WARNING).toMatch(/Stamets 1996, s\. 67–68/);
-    expect(`${GALERINA_PSILOCYBE_WARNING} ${PANAEOLUS_LOOKALIKE_WARNING}`).not.toMatch(guide);
+    expect(GALERINA_PSILOCYBE_WARNING).not.toMatch(guide);
   });
 
   test('Golden rules and toxicology hotlines are properly configured', () => {

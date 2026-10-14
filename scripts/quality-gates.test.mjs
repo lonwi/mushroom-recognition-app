@@ -60,6 +60,7 @@ describe('adapter importer allowlist', { concurrency: 1 }, () => {
   test('the dependency baseline does not grandfather importer rules', () => {
     const baseline = JSON.parse(fs.readFileSync('.dependency-cruiser-known-violations.json', 'utf8'));
     assert.equal(baseline.some((violation) => String(violation.rule?.name ?? '').startsWith(IMPORTER_PREFIX)), false);
+    assert.equal(baseline.some((violation) => violation.rule?.name === 'i18n-not-to-data'), false);
     assert.equal(baseline.some((violation) => String(violation.rule?.name ?? '').includes('platform-adapter')), false);
     assert.equal(baseline.length, 2);
     assert.equal(baseline.some((violation) => String(violation.from).includes('LanguageContext')), false);
@@ -139,6 +140,23 @@ export const spread = { ...QaAsyncStorage };`,
   });
 });
 
+describe('i18n does not import data', () => {
+  test('the cruiser rule matches i18n sources and data targets only', () => {
+    const rule = cruiseConfig.forbidden.find((item) => item.name === 'i18n-not-to-data');
+    assert.ok(rule);
+    const from = new RegExp(rule.from.path);
+    const to = new RegExp(rule.to.path);
+    assert.equal(from.test('src/i18n/pl.ts'), true);
+    assert.equal(from.test('src/i18n/en.ts'), true);
+    assert.equal(from.test('src/data/mushrooms.ts'), false);
+    assert.equal(from.test('src/screens/AtlasScreen.tsx'), false);
+    assert.equal(to.test('src/data/mushrooms.ts'), true);
+    assert.equal(to.test('src/data/safetyRules.ts'), true);
+    assert.equal(to.test('src/i18n/pl.ts'), false);
+    assert.equal(to.test('src/types/mushroom.ts'), false);
+  });
+});
+
 describe('depcruise fixture', { concurrency: 1 }, () => {
   test('a wrapper outside the allowlist fails the gate', () => {
     const storageDir = path.dirname(STORE);
@@ -186,6 +204,24 @@ export function QaRawScreen(): null {
     } finally {
       for (const file of created) fs.rmSync(file, { force: true });
       if (createdDir) fs.rmSync(storageDir, { recursive: true, force: true });
+    }
+  });
+
+  test('an i18n import of src/data fails the gate and is not baselined', () => {
+    const file = 'src/i18n/qaDataImport.ts';
+    fs.writeFileSync(
+      file,
+      `import { MUSHROOMS_DATABASE } from '../data/mushrooms';
+export const qaCount = MUSHROOMS_DATABASE.length;
+`,
+    );
+    try {
+      const result = spawnSync(process.execPath, ['scripts/depcruise-gate.mjs'], { encoding: 'utf8' });
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /i18n-not-to-data/);
+      assert.match(result.stderr, /qaDataImport\.ts/);
+    } finally {
+      fs.rmSync(file, { force: true });
     }
   });
 });
