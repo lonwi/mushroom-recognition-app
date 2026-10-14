@@ -1,7 +1,9 @@
 import React from 'react';
-import { fireEvent, render } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
+import { fireEvent, render, within } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SpeciesDetailScreen } from '../../screens/SpeciesDetailScreen';
+import { HERO_PHOTO_CONTENT_POSITION, SpeciesDetailScreen } from '../../screens/SpeciesDetailScreen';
+import { colors } from '../../theme/tokens';
 import { MUSHROOMS_DATABASE, showsKitchenSection } from '../../data/mushrooms';
 import { LanguageProvider } from '../../contexts/LanguageContext';
 import { en } from '../../i18n/en';
@@ -372,5 +374,80 @@ describe('SpeciesDetailScreen language', () => {
     expect(await english.findByText(/Journal of Laws 2014 item 1408/)).toBeTruthy();
     expect(english.getByText(/green areas/)).toBeTruthy();
     expect(english.getByTestId('species-warning-notes')).toBeTruthy();
+  });
+});
+
+function contrastRatio(foreground: string, background: string): number {
+  const channel = (value: number) => {
+    const srgb = value / 255;
+    return srgb <= 0.04045 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
+  };
+  const luminance = (hex: string) => {
+    const parsed = Number.parseInt(hex.slice(1), 16);
+    const red = channel((parsed >> 16) & 255);
+    const green = channel((parsed >> 8) & 255);
+    const blue = channel(parsed & 255);
+    return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+  };
+  const lighter = Math.max(luminance(foreground), luminance(background));
+  const darker = Math.min(luminance(foreground), luminance(background));
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function nearestBackground(node: { parent: unknown; props?: { style?: unknown } }): string {
+  let current: { parent?: unknown; props?: { style?: unknown } } | null = node;
+  while (current) {
+    const style = StyleSheet.flatten(current.props?.style) as { backgroundColor?: unknown } | undefined;
+    if (typeof style?.backgroundColor === 'string' && !style.backgroundColor.startsWith('rgba')) {
+      return style.backgroundColor;
+    }
+    current = (current.parent as typeof current) ?? null;
+  }
+  throw new Error('No background colour behind this text');
+}
+
+describe('Species detail hero', () => {
+  it('shows the mushroom photo clear of the title, centered, at WCAG AA', async () => {
+    const screen = await render(
+      <SpeciesDetailScreen species={species('amanita_phalloides')} onBack={() => {}} />,
+    );
+    const frame = screen.getByTestId('species-photo-frame');
+    const photo = screen.getByTestId('species-photo');
+    const copy = screen.getByTestId('species-hero-copy');
+    const title = within(copy).getByText('Muchomor sromotnikowy (zielonawy)');
+    const latin = within(copy).getByText('Amanita phalloides');
+    const back = screen.getByTestId('species-back-label');
+
+    expect(HERO_PHOTO_CONTENT_POSITION).toBe('center');
+    expect(photo.props.resizeMode).toBe('cover');
+    expect(StyleSheet.flatten(frame.props.style).aspectRatio).toBeCloseTo(1200 / 896, 5);
+    expect(StyleSheet.flatten(photo.props.style)).toMatchObject({ top: 0, right: 0, bottom: 0, left: 0 });
+    expect(within(frame).queryByText('Muchomor sromotnikowy (zielonawy)')).toBeNull();
+    expect(within(frame).queryByText('Amanita phalloides')).toBeNull();
+
+    const heroChildren = (frame.parent?.children ?? []).flatMap((child) =>
+      typeof child === 'string' ? [] : [child],
+    );
+    const ids = heroChildren.map((child) => child.props.testID as string | undefined);
+    expect(ids.indexOf('species-photo-frame')).toBeLessThan(ids.indexOf('species-hero-copy'));
+    for (const child of heroChildren) {
+      const background = StyleSheet.flatten(child.props.style)?.backgroundColor;
+      expect(background).not.toBe('rgba(5, 30, 18, 0.68)');
+    }
+
+    expect(StyleSheet.flatten(title.props.style).color).toBe(colors.onPrimary);
+    expect(nearestBackground(title)).toBe(colors.emerald900);
+    expect(contrastRatio(colors.onPrimary, colors.emerald900)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(colors.onPrimary, colors.emerald900)).toBeCloseTo(9.72, 2);
+
+    expect(StyleSheet.flatten(latin.props.style).color).toBe(colors.emerald200);
+    expect(nearestBackground(latin)).toBe(colors.emerald900);
+    expect(contrastRatio(colors.emerald200, colors.emerald900)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(colors.emerald200, colors.emerald900)).toBeCloseTo(7.58, 2);
+
+    expect(StyleSheet.flatten(back.props.style).color).toBe(colors.emerald100);
+    expect(nearestBackground(back)).toBe(colors.emerald900);
+    expect(contrastRatio(colors.emerald100, colors.emerald900)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(colors.emerald100, colors.emerald900)).toBeCloseTo(8.57, 2);
   });
 });
