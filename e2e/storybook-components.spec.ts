@@ -215,9 +215,10 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await page.getByTestId('filter-chip-kind-edible').click();
     await page.getByTestId('filter-chip-kind-poisonous').click();
     await page.getByTestId('filter-chip-hymenophore-kolce').click();
-    await expect(page.getByTestId('atlas-unverified').getByText('Kolczak obłączasty')).toBeVisible();
-    await expect(page.getByTestId('atlas-result-count')).toContainText('Pasujące karty: 0');
-    await expect(page.getByTestId('atlas-no-matches')).toContainText('Brak karty nie oznacza, że grzyb jest jadalny');
+    await expect(page.getByTestId('atlas-matches').getByText('Kolczak obłączasty')).toBeVisible();
+    await expect(page.getByTestId('atlas-result-count')).toContainText('Pasujące karty: 1');
+    await expect(page.getByTestId('atlas-unverified').getByText('Zasłonak rudawy')).toBeVisible();
+    await expect(page.getByTestId('atlas-unverified')).toContainText('nie oznacza, że grzyb jest jadalny');
 
     await page.getByPlaceholder('Szukaj grzyba (np. borowik, kania, kurka)...').fill('brak-takiego-grzyba');
     await expect(page.getByTestId('atlas-empty')).toContainText('Brak karty nie oznacza, że grzyb jest jadalny');

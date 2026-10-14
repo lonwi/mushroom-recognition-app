@@ -67,6 +67,7 @@ describe('atlas filter model', () => {
     const factIds = Object.keys(factsTable);
     expect(factIds.length).toBeGreaterThan(0);
     expect(factIds.every((id) => cardIds.has(id))).toBe(true);
+    expect(MUSHROOMS_DATABASE.every((species) => factIds.includes(species.id))).toBe(true);
     expect(Object.keys(ATLAS_FILTER_FACTS)).toEqual(factIds);
     for (const facts of Object.values(ATLAS_FILTER_FACTS)) {
       expect(Object.keys(facts).sort()).toEqual(FACT_KEYS);
@@ -91,34 +92,58 @@ describe('atlas filter model', () => {
   });
 
   test('kind follows the card status when the fact row is missing', () => {
-    const missing = MUSHROOMS_DATABASE.filter((species) => ATLAS_FILTER_FACTS[species.id] == null);
-    expect(missing.length).toBeGreaterThan(0);
-    const edible = apply(['kind-edible']);
-    const poisonous = apply(['kind-poisonous']);
-    for (const species of missing) {
-      const edibleHit = idsOf(edible.matches).includes(species.id);
-      const edibleOpen = idsOf(edible.unverified).includes(species.id);
-      if (species.status === 'EDIBLE' && species.incompleteCard !== true) {
-        expect(edibleHit).toBe(true);
-        expect(edibleOpen).toBe(false);
-      } else if (species.incompleteCard === true) {
-        expect(edibleHit).toBe(false);
-        expect(edibleOpen).toBe(true);
-      } else {
-        expect(edibleHit).toBe(false);
-        expect(edibleOpen).toBe(false);
-      }
-      const poisonousHit = species.status === 'POISONOUS' || species.status === 'DEADLY_POISONOUS';
-      expect(idsOf(poisonous.matches).includes(species.id)).toBe(poisonousHit);
-      expect(idsOf(poisonous.unverified).includes(species.id)).toBe(false);
-    }
+    const factsById = (id: string) => (id === 'suillus_luteus' ? undefined : ATLAS_FILTER_FACTS[id]);
+    const edible = applyAtlasFilters(MUSHROOMS_DATABASE, {
+      query: '',
+      chipIds: new Set(['kind-edible']),
+      factsById,
+    });
+    expect(idsOf(edible.matches)).toContain('suillus_luteus');
+    expect(idsOf(edible.unverified)).not.toContain('suillus_luteus');
 
-    const tubes = apply(['hymenophore-rurki']);
+    const tubes = applyAtlasFilters(MUSHROOMS_DATABASE, {
+      query: '',
+      chipIds: new Set(['hymenophore-rurki']),
+      factsById,
+    });
     expect(idsOf(tubes.matches)).toContain('boletus_edulis');
     expect(idsOf(tubes.matches)).not.toContain('suillus_luteus');
     expect(idsOf(tubes.unverified)).toContain('suillus_luteus');
-    expect(idsOf(apply(['kind-poisonous']).matches)).toContain('gyromitra_esculenta');
+
+    const hiddenDeath = applyAtlasFilters(MUSHROOMS_DATABASE, {
+      query: '',
+      chipIds: new Set(['kind-poisonous']),
+      factsById: (id) => (id === 'gyromitra_esculenta' ? undefined : ATLAS_FILTER_FACTS[id]),
+    });
+    const gyromitra = hiddenDeath.matches.find((row) => row.species.id === 'gyromitra_esculenta');
+    expect(gyromitra?.species.status).toBe('DEADLY_POISONOUS');
+    expect(idsOf(hiddenDeath.unverified)).not.toContain('gyromitra_esculenta');
     expect(idsOf(apply(['kind-edible']).unverified)).not.toContain('gyromitra_esculenta');
+  });
+
+  test('a recorded spore pair matches either color and an unconfirmed shade stays unverified', () => {
+    const recorded = apply(['hymenophore-rurki']);
+    expect(idsOf(recorded.matches)).toContain('suillus_luteus');
+    expect(idsOf(recorded.unverified)).not.toContain('suillus_luteus');
+
+    const white = apply(['spore-bialy']);
+    const cream = apply(['spore-kremowy']);
+    const yellow = apply(['spore-zolty']);
+    expect(idsOf(white.matches)).toContain('russula_virescens');
+    expect(idsOf(cream.matches)).toContain('russula_virescens');
+    expect(idsOf(yellow.matches).concat(idsOf(yellow.unverified))).not.toContain('russula_virescens');
+    expect(idsOf(cream.matches)).not.toContain('hygrophoropsis_aurantiaca');
+    expect(idsOf(cream.unverified)).toContain('hygrophoropsis_aurantiaca');
+  });
+
+  test('volva remnants on a bulb match both the volva chip and the bulb chip', () => {
+    const bulb = apply(['volva-bulwa']);
+    const sheath = apply(['volva-pochwa']);
+    const neither = apply(['volva-brak']);
+    expect(idsOf(bulb.matches)).toContain('amanita_rubescens');
+    expect(idsOf(sheath.matches)).toContain('amanita_rubescens');
+    expect(idsOf(neither.matches).concat(idsOf(neither.unverified))).not.toContain('amanita_rubescens');
+    expect(ATLAS_FILTER_FACTS.amanita_rubescens?.volva).toEqual(['bulwa', 'pochwa']);
   });
 
   test('there is no non-poisonous chip and deadly cards keep their own status', () => {

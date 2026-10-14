@@ -40,7 +40,7 @@ interface ImportedFact {
   hymenophore: string | null;
   sporePrint: string | readonly string[] | null;
   ring: boolean | null;
-  volva: string | null;
+  volva: string | readonly string[] | null;
   protection: string | null;
 }
 
