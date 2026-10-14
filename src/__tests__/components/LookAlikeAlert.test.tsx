@@ -11,6 +11,7 @@ import {
   ATLAS_NO_VERDICT_NOTE,
   MUSHROOMS_DATABASE,
   NOT_FOR_COLLECTION_NOTE,
+  POISONOUS_NOTE,
   WEAKLY_POISONOUS_NOTE,
 } from '../../data/mushrooms';
 import { ConfusionRisk } from '../../types/mushroom';
@@ -210,7 +211,14 @@ describe('LookAlikeAlert RTL Component Tests', () => {
 
     const { getAllByTestId, getAllByText } = await render(<LookAlikeAlert risks={risks} />);
 
-    expect(getAllByTestId('lookalike-unlinked-entoloma_sinuatum').length).toBeGreaterThan(0);
+    const entoloma = getAllByTestId('lookalike-unlinked-entoloma_sinuatum');
+    expect(entoloma.length).toBeGreaterThan(0);
+    for (const row of entoloma) {
+      expect(row).toHaveTextContent(POISONOUS_NOTE, { exact: false });
+      expect(row).not.toHaveTextContent(ATLAS_NO_VERDICT_NOTE, { exact: false });
+      expect(row).not.toHaveTextContent(WEAKLY_POISONOUS_NOTE, { exact: false });
+      expect(row).not.toHaveTextContent(/słabo|weak/i);
+    }
     expect(getAllByText('TRUJĄCY').length).toBeGreaterThan(0);
     const porphyria = getAllByTestId('lookalike-unlinked-amanita_porphyria');
     expect(porphyria.length).toBeGreaterThan(0);

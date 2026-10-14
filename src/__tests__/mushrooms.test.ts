@@ -5,6 +5,7 @@ import {
   LOOKALIKES_WITHOUT_CARD,
   MUSHROOM_IDS,
   MUSHROOMS_DATABASE,
+  POISONOUS_NOTE,
   showsKitchenSection,
   WEAKLY_POISONOUS_NOTE,
 } from '../data/mushrooms';
@@ -24,7 +25,27 @@ function noteForPoisonousLookalike(id: string): string {
   if (id === 'amanita_porphyria') {
     return WEAKLY_POISONOUS_NOTE;
   }
-  return ATLAS_NO_VERDICT_NOTE;
+  return POISONOUS_NOTE;
+}
+
+function expectStatusAgreesWithNote(status: string, note: string | undefined): void {
+  if (status === 'POISONOUS') {
+    expect(note).not.toBe(ATLAS_NO_VERDICT_NOTE);
+  }
+  if (status === 'NO_ATLAS_VERDICT') {
+    expect(note).toBe(ATLAS_NO_VERDICT_NOTE);
+  }
+}
+
+function recordedNote(value: object): string | undefined {
+  if (!('note' in value)) {
+    return undefined;
+  }
+  const note = (value as { note?: unknown }).note;
+  if (typeof note !== 'string') {
+    return undefined;
+  }
+  return note;
 }
 
 describe('Mushroom Database & Safety Verification', () => {
@@ -138,12 +159,29 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(LOOKALIKES_WITHOUT_CARD.amanita_caesarea.note).toBe(ATLAS_NO_VERDICT_NOTE);
     expect(LOOKALIKES_WITHOUT_CARD.amanita_caesarea.status).toBe('NO_ATLAS_VERDICT');
     expect(LOOKALIKES_WITHOUT_CARD.entoloma_sinuatum.status).toBe('POISONOUS');
-    expect(LOOKALIKES_WITHOUT_CARD.entoloma_sinuatum.note).toBe(ATLAS_NO_VERDICT_NOTE);
+    expect(LOOKALIKES_WITHOUT_CARD.entoloma_sinuatum.note).toBe(POISONOUS_NOTE);
+    expect(
+      `${LOOKALIKES_WITHOUT_CARD.entoloma_sinuatum.note} ${LOOKALIKES_WITHOUT_CARD.entoloma_sinuatum.reason}`,
+    ).not.toMatch(/słabo|weak|silnie|ciężk/i);
     expect(LOOKALIKES_WITHOUT_CARD.amanita_porphyria.status).toBe('POISONOUS');
     expect(LOOKALIKES_WITHOUT_CARD.amanita_porphyria.note).toBe(WEAKLY_POISONOUS_NOTE);
     expect(`${LOOKALIKES_WITHOUT_CARD.amanita_porphyria.note} ${LOOKALIKES_WITHOUT_CARD.amanita_porphyria.reason}`).not.toMatch(
       /śmiertel|lethal|deadly/i,
     );
+  });
+
+  test('poisonous notes are never the no-verdict sentence', () => {
+    for (const species of MUSHROOMS_DATABASE) {
+      expectStatusAgreesWithNote(species.status, recordedNote(species));
+      for (const risk of species.confusionRisks) {
+        const linked = LOOKALIKES_WITHOUT_CARD[risk.confusedWithId];
+        const note = linked ? linked.note : recordedNote(risk);
+        expectStatusAgreesWithNote(risk.confusedWithStatus, note);
+      }
+    }
+    for (const entry of Object.values(LOOKALIKES_WITHOUT_CARD)) {
+      expectStatusAgreesWithNote(entry.status, entry.note);
+    }
   });
 
   test('fatal is set only when the named look-alike is deadly', () => {

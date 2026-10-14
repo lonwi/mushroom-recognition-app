@@ -8,6 +8,7 @@ import {
   LOOKALIKES_WITHOUT_CARD,
   MUSHROOM_IDS,
   NOT_FOR_COLLECTION_NOTE,
+  POISONOUS_NOTE,
   WEAKLY_POISONOUS_NOTE,
 } from '../data/mushrooms';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -31,6 +32,13 @@ interface Props {
 export const INCOMPLETE_LOOKALIKE_TITLE = pl.lookalike.incompleteTitle;
 export const INCOMPLETE_LOOKALIKE_BODY = pl.lookalike.incompleteBody;
 
+const LOOKALIKE_NOTE_KEYS: Record<string, string> = {
+  [ATLAS_NO_VERDICT_NOTE]: 'lookalike.noVerdict',
+  [NOT_FOR_COLLECTION_NOTE]: 'lookalike.notForCollection',
+  [WEAKLY_POISONOUS_NOTE]: 'lookalike.weaklyPoisonous',
+  [POISONOUS_NOTE]: 'lookalike.poisonousNote',
+};
+
 export const LookAlikeAlert: React.FC<Props> = ({
   risks,
   noDangerousLookAlikesSource,
@@ -42,10 +50,9 @@ export const LookAlikeAlert: React.FC<Props> = ({
   const list = risks ?? [];
   const source = noDangerousLookAlikesSource?.trim() ?? '';
   const noteFor = (note: string) => {
-    if (note === ATLAS_NO_VERDICT_NOTE) return t('lookalike.noVerdict');
-    if (note === NOT_FOR_COLLECTION_NOTE) return t('lookalike.notForCollection');
-    if (note === WEAKLY_POISONOUS_NOTE) return t('lookalike.weaklyPoisonous');
-    return note;
+    const key = LOOKALIKE_NOTE_KEYS[note];
+    if (!key) return note;
+    return t(key);
   };
 
   if (list.length === 0) {

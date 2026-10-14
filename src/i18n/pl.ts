@@ -274,6 +274,7 @@ export const pl = {
     noVerdict: 'Atlas nie wydaje werdyktu dla tego gatunku',
     notForCollection: 'Niezalecany do zbioru',
     weaklyPoisonous: 'trujący (słabo)',
+    poisonousNote: 'trujący',
   },
   edibility: {
     edible: 'JADALNY',

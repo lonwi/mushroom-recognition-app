@@ -1892,10 +1892,12 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
  * A new id must be added here with a reason, or the integrity test fails.
  * `status` is `NO_ATLAS_VERDICT` when this atlas gives no edibility, or `POISONOUS`
  * when the species is poisonous and still has no card. `note` is the user-facing caution.
+ * `NO_ATLAS_VERDICT` uses `ATLAS_NO_VERDICT_NOTE`. `POISONOUS` does not.
  */
 export const NOT_FOR_COLLECTION_NOTE = 'Niezalecany do zbioru';
 export const ATLAS_NO_VERDICT_NOTE = 'Atlas nie wydaje werdyktu dla tego gatunku';
 export const WEAKLY_POISONOUS_NOTE = 'trujący (słabo)';
+export const POISONOUS_NOTE = 'trujący';
 
 export const LOOKALIKES_WITHOUT_CARD: Readonly<
   Record<string, { status: 'NO_ATLAS_VERDICT' | 'POISONOUS'; reason: string; note: string }>
@@ -1914,9 +1916,9 @@ export const LOOKALIKES_WITHOUT_CARD: Readonly<
   },
   entoloma_sinuatum: {
     status: 'POISONOUS',
-    note: ATLAS_NO_VERDICT_NOTE,
+    note: POISONOUS_NOTE,
     reason:
-      'Wieruszka zatokowata (Entoloma sinuatum) is strongly poisonous and a dangerous look-alike of St George’s mushroom. There is no card. The look-alike row says poisonous.',
+      'Wieruszka zatokowata (Entoloma sinuatum) has no atlas card. training/README.md lists it among poisonous held-out taxa. assets/models/labels.json marks the taxon toxic and does not set deadly. The researcher upload marks this look-alike dangerous. The note stays at poisonous and names no syndrome.',
   },
   craterellus_tubaeformis: {
     status: 'NO_ATLAS_VERDICT',
@@ -1926,19 +1928,19 @@ export const LOOKALIKES_WITHOUT_CARD: Readonly<
   },
   imperator_rhodopurpureus: {
     status: 'POISONOUS',
-    note: ATLAS_NO_VERDICT_NOTE,
+    note: POISONOUS_NOTE,
     reason:
       'Imperator rhodopurpureus is a poisonous twin of the scarletina bolete. There is no atlas card. The look-alike row says poisonous.',
   },
   imperator_torosus: {
     status: 'POISONOUS',
-    note: ATLAS_NO_VERDICT_NOTE,
+    note: POISONOUS_NOTE,
     reason:
       'Imperator torosus is a poisonous twin of the scarletina bolete. There is no atlas card. The look-alike row says poisonous.',
   },
   rubroboletus_other: {
     status: 'POISONOUS',
-    note: ATLAS_NO_VERDICT_NOTE,
+    note: POISONOUS_NOTE,
     reason:
       'Other Rubroboletus species (R. legaliae, R. rhodoxanthus and kin) are poisonous twins of the scarletina bolete. There is no atlas card. The look-alike row says poisonous.',
   },

@@ -2,7 +2,7 @@ import { pl } from '../i18n/pl';
 import { en } from '../i18n/en';
 import { interpolate, translate } from '../contexts/LanguageContext';
 import { GOLDEN_RULES, POISON_SYNDROMES } from '../data/safetyRules';
-import { ATLAS_NO_VERDICT_NOTE, NOT_FOR_COLLECTION_NOTE } from '../data/mushrooms';
+import { ATLAS_NO_VERDICT_NOTE, NOT_FOR_COLLECTION_NOTE, POISONOUS_NOTE } from '../data/mushrooms';
 
 function leaves(value: unknown, prefix = ''): string[] {
   if (typeof value === 'string') return [prefix];
@@ -48,6 +48,7 @@ describe('Polish and English dictionaries', () => {
 
     expect(pl.lookalike.noVerdict).toBe(ATLAS_NO_VERDICT_NOTE);
     expect(pl.lookalike.notForCollection).toBe(NOT_FOR_COLLECTION_NOTE);
+    expect(pl.lookalike.poisonousNote).toBe(POISONOUS_NOTE);
     expect(pl.disclaimer.alertTitle).toMatch(/NIGDY NIE SPOŻYWAJ/);
     expect(pl.disclaimer.point2Body).toMatch(/ZOSTAW GRZYBA W LESIE/);
     expect(pl.cardWarnings.fatalBannerBody).toMatch(/^Nie jedz/);
