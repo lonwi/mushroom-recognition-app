@@ -40,10 +40,20 @@ const config: StorybookConfig = {
     const mockSafeAreaPath = path.resolve(__dirname, 'mockSafeArea.js');
     const mockLocationPath = path.resolve(__dirname, 'mockLocation.js');
     const mockFileSystemPath = path.resolve(__dirname, 'mockFileSystem.js');
+    const mockCameraPath = path.resolve(__dirname, 'mockCamera.js');
+    const mockImagePickerPath = path.resolve(__dirname, 'mockImagePicker.js');
+    const mockTflitePath = path.resolve(__dirname, 'mockTflite.js');
+    const mockAssetPath = path.resolve(__dirname, 'mockAsset.js');
+    const mockImageManipulatorPath = path.resolve(__dirname, 'mockImageManipulator.js');
 
     config.resolve = config.resolve || {};
     config.resolve.alias = {
       ...config.resolve.alias,
+      'expo-asset': mockAssetPath,
+      'expo-image-manipulator': mockImageManipulatorPath,
+      'expo-camera': mockCameraPath,
+      'expo-image-picker': mockImagePickerPath,
+      'react-native-fast-tflite': mockTflitePath,
       'expo-location': mockLocationPath,
       'expo-file-system/legacy': mockFileSystemPath,
       'react-native-safe-area-context': mockSafeAreaPath,

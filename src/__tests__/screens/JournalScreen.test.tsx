@@ -79,6 +79,29 @@ describe('JournalScreen', () => {
     jest.restoreAllMocks();
   });
 
+  it('reloads a saved find when the refresh signal changes and keeps the open editor', async () => {
+    await storageService.saveSighting(unclear);
+    const screen = await render(
+      <LanguageProvider>
+        <JournalScreen refreshSignal={0} onOpenAtlasSpecies={jest.fn()} />
+      </LanguageProvider>,
+    );
+    await screen.findByTestId('journal-entry-sighting_unclear');
+    await fireEvent.press(screen.getByTestId('journal-edit-notes-sighting_unclear'));
+    expect(screen.getByTestId('journal-notes-input').props.value).toBe('');
+
+    await storageService.saveSighting(unknown);
+    screen.rerender(
+      <LanguageProvider>
+        <JournalScreen refreshSignal={1} onOpenAtlasSpecies={jest.fn()} />
+      </LanguageProvider>,
+    );
+
+    expect(await screen.findByTestId('journal-entry-sighting_unknown')).toBeTruthy();
+    expect(screen.getByTestId('journal-entry-sighting_unclear')).toBeTruthy();
+    expect(screen.getByTestId('journal-notes-input')).toBeTruthy();
+  });
+
   it('shows an unclear find without a species, a confidence, or a map', async () => {
     await storageService.saveSighting(unclear);
     const screen = await renderJournal();

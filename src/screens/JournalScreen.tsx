@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -24,13 +24,15 @@ import { colors } from '../theme/tokens';
 
 interface Props {
   onOpenAtlasSpecies?: (speciesId: string) => void;
+  /** Bumps when a find is saved. Reloads entries without remounting the screen. */
+  refreshSignal?: number;
 }
 
 function hasGps(item: SightingRecord): item is SightingRecord & { latitude: number; longitude: number } {
   return typeof item.latitude === 'number' && typeof item.longitude === 'number';
 }
 
-export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
+export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies, refreshSignal = 0 }) => {
   const { t, language } = useLanguage();
   const [sightings, setSightings] = useState<SightingRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +40,7 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
   const [editing, setEditing] = useState<SightingRecord | null>(null);
   const [draftNotes, setDraftNotes] = useState('');
 
-  const loadSightings = async () => {
+  const loadSightings = useCallback(async () => {
     setLoading(true);
     try {
       const data = await storageService.getSightings();
@@ -55,11 +57,13 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
+  const loadSightingsRef = useRef(loadSightings);
+  loadSightingsRef.current = loadSightings;
 
   useEffect(() => {
-    loadSightings();
-  }, []);
+    void loadSightingsRef.current();
+  }, [refreshSignal]);
 
   const handleDelete = (item: SightingRecord) => {
     Alert.alert(t('journal.deleteTitle'), t('journal.deleteBody'), [
