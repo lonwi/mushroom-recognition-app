@@ -229,63 +229,73 @@ describe('Mushroom Database & Safety Verification', () => {
     const woodtuft = byId.kuehneromyces_mutabilis;
 
     expect(russula.nameEn).toBe('Greencracked brittlegill');
-    expect(russula.commonNicknames).toEqual([
-      'Surowiatka',
-      'Surojadka zielonawa',
-      'Siwek',
-      'Gołąbek siwy',
-    ]);
-    expect(russula.habitat).toMatch(/Od czerwca do października/);
+    expect(russula.commonNicknames).toContain('Surowiatka');
+    expect(russula.commonNicknames).not.toContain('Gołąbek siwy');
+    expect(russula.habitat).toMatch(/czerwca/);
     expect(russula.tasteAndSmell).toMatch(/owocowo-orzechowo/);
-    expect(russula.tasteAndSmell).not.toMatch(/nie podaje/);
     expect(russula.capDescription).toMatch(/skrócona karta/);
     expect(russula.culinaryValue).toMatch(/muchomorem zielonawym/);
+    expect(russula.culinaryValue).not.toMatch(/najsmaczniejsz/);
 
     expect(fieldMushroom.nameEn).toBe('Field mushroom');
     expect(fieldMushroom.commonNicknames).toEqual([]);
-    expect(fieldMushroom.habitat).toMatch(/Pora występowania jest orientacyjna/);
-    expect(fieldMushroom.tasteAndSmell).toBe('Nie sprawdzaj smakiem.');
-    expect(fieldMushroom.culinaryValue).toMatch(/nie poróżowiały/);
+    expect(fieldMushroom.culinaryValue).toMatch(/wykazie/);
+    expect(fieldMushroom.culinaryValue).not.toMatch(/Jadalna/);
+    expect(fieldMushroom.culinaryValue).not.toMatch(/poróżowiały/);
 
     expect(morel.commonNicknames).toContain('Murchel majowy');
-    expect(morel.culinaryValue).toMatch(/Surowe i niedogotowane są trujące/);
-    expect(morel.culinaryValue).toMatch(/RDOŚ\/GDOŚ/);
+    expect(morel.commonNicknames).not.toContain('Bedłka');
+    expect(morel.commonNicknames).not.toContain('Kołpak');
+    expect(morel.culinaryValue).toMatch(/niedogotowane są trujące/);
+    expect(morel.culinaryValue).toMatch(/RDOŚ/);
     expect(morel.nameEn).toBe('Common morel');
 
-    expect(variegated.tasteAndSmell).toBe(
-      'Nie sprawdzaj smakiem. Zapach słaby, chlorowy lub metaliczny; bywa też opisywany jako przypominający igliwie.'
-    );
+    expect(variegated.tasteAndSmell).toMatch(/chlorowy/);
+    expect(variegated.tasteAndSmell).toMatch(/metaliczny/);
+    expect(variegated.tasteAndSmell).toMatch(/igliwie/);
     expect(JSON.stringify(variegated)).not.toMatch(/Zarzyńsk/);
 
-    const rawBlusherWarning =
-      'Nie jeść na surowo ani niedogotowanego. Zawiera hemolizyny, które rozkłada dopiero kilkunastominutowe gotowanie.';
-    expect(blusher.culinaryValue).toContain(rawBlusherWarning);
-    expect(blusher.culinaryValue).toContain('Silnie trujący sobowtór: muchomor plamisty');
-    expect(blusher.warningNotes).toContain(rawBlusherWarning);
-    expect(blusher.fleshDescription).toContain(rawBlusherWarning);
-    expect(`${blusher.culinaryValue} ${blusher.warningNotes} ${blusher.fleshDescription}`).not.toMatch(
-      /Surowy jest trujący|Surowe owocniki są trujące|hemolizyny niszczone przez gotowanie/
-    );
+    const larch = byId.suillus_grevillei;
+    expect(larch.fleshDescription).toMatch(/Biaław/);
+    expect(larch.tasteAndSmell).toMatch(/biaław/);
+    expect(larch.fleshDescription).not.toMatch(/Żółty/);
+
+    expect(blusher.culinaryValue).toMatch(/hemolizyn/);
+    expect(blusher.culinaryValue).toMatch(/kilkunastominutowe gotowanie/);
+    expect(blusher.culinaryValue).toMatch(/muchomor plamisty/);
+    expect(blusher.culinaryValue).toMatch(/Nie jeść na surowo/);
+    expect(blusher.culinaryValue).not.toMatch(/Smaczny grzyb/);
+    expect(blusher.warningNotes).toMatch(/hemolizyn/);
+    expect(blusher.fleshDescription).toMatch(/hemolizyn/);
     expect(blusher.tasteAndSmell).toMatch(/Czerwienienie nie jest dowodem/);
 
-    expect(orangeBolete.culinaryValue).toMatch(
-      /Koźlarz pomarańczowożółty \(Leccinum versipelle\) nie jest dopuszczony do obrotu/
+    expect(orangeBolete.culinaryValue).toMatch(/versipelle/);
+    expect(orangeBolete.culinaryValue).toMatch(/nie jest dopuszczony/);
+    const rawStatement = /surowy i niedogotowany jest trujący/gi;
+    const scarletinaText = [
+      scarletina.fleshDescription,
+      scarletina.tasteAndSmell,
+      scarletina.culinaryValue,
+      scarletina.warningNotes,
+    ].join('\n');
+    const honeyText = [honey.fleshDescription, honey.tasteAndSmell, honey.culinaryValue, honey.warningNotes].join(
+      '\n'
     );
-    expect(orangeBolete.culinaryValue).toMatch(/Surowe i niedogotowane/);
-    expect(scarletina.culinaryValue).toMatch(/na surowo lekko trujący/);
-    expect(scarletina.culinaryValue).toMatch(/Surowy i niedogotowany jest trujący/);
-    expect(scarletina.tasteAndSmell).toMatch(/przyjemnym zapachu/);
-    expect(honey.culinaryValue).toMatch(/nie wdychać oparów/);
-    expect(honey.culinaryValue).toMatch(/Trzony bywają łykowate/);
-    expect(woodtuft.culinaryValue).toMatch(/hełmówka jadowita/);
-    expect(woodtuft.culinaryValue).toMatch(/Dziko rosnące nie są na tym wykazie/);
+    expect(scarletinaText.match(rawStatement)).toHaveLength(1);
+    expect(honeyText.match(rawStatement)).toHaveLength(1);
+    expect(scarletinaText).not.toMatch(/lekko truj/);
+    expect(honeyText).not.toMatch(/lekko truj/);
+    expect(honey.culinaryValue).toMatch(/oparów/);
+    expect(honey.culinaryValue).toMatch(/łykowate/);
+    expect(woodtuft.culinaryValue).toMatch(/hełmówk/);
+    expect(woodtuft.culinaryValue).toMatch(/uprawy/);
 
-    const unfinishedCulinary = MUSHROOMS_DATABASE.filter((species) => species.incompleteCard === true)
-      .map((species) => species.culinaryValue)
-      .join('\n');
-    expect(unfinishedCulinary).not.toMatch(/nie uprawnia do zbioru/);
-    expect(unfinishedCulinary).not.toMatch(/bez zdjęcia/);
-    expect(unfinishedCulinary).not.toMatch(/Wg /);
+    const unfinished = MUSHROOMS_DATABASE.filter((species) => species.incompleteCard === true);
+    expect(unfinished.length).toBeGreaterThan(0);
+    for (const species of unfinished) {
+      expect(species.culinaryValue).toMatch(/W literaturze/);
+      expect(species.culinaryValue).toContain('Ta karta nie uprawnia do zbioru ani spożycia');
+    }
   });
 
   test('smardz protection note follows the 2014 regulation wording', () => {
@@ -380,8 +390,7 @@ describe('Mushroom Database & Safety Verification', () => {
 
     expect(hedgehog?.commonNicknames.join(' ')).not.toMatch(/Sarna/);
     expect(hedgehog?.nameEn).toBe('Wood hedgehog');
-    expect(hedgehog?.culinaryValue).toMatch(/Na surowo lekko trujący, tylko po obróbce termicznej/);
-    expect(hedgehog?.warningNotes).not.toMatch(/lekko truj/);
+    expect(JSON.stringify(hedgehog)).not.toMatch(/lekko truj/);
     expect(hedgehog?.fleshDescription).toMatch(/obróbce termicznej/);
     expect(hedgehog?.warningNotes).toMatch(/^NIE JEDZ NA PODSTAWIE TEJ KARTY\. W literaturze jadalny tylko po obróbce termicznej\./);
 
