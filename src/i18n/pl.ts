@@ -86,6 +86,15 @@ export const pl = {
     useLiterature: 'Znaczenie w literaturze',
     sourceLanguageNote:
       'Opisy, różnice sobowtórów i morfologia są tekstem źródłowym po polsku. Skróty miesięcy są w języku aplikacji.',
+    poisoningNoteTitle: 'Notka o zatruciu',
+    flyAgaricPoisoning:
+      'Objawy zatrucia: po 0,5–2 godz. pobudzenie i halucynacje, potem wymioty, ból głowy, kołatanie serca, rozszerzone źrenice, stan podobny do upojenia alkoholowego i długi, głęboki sen. U osób wrażliwych możliwa utrata przytomności i zatrzymanie akcji serca (Zarzyński, „Grzyby polskich lasów”, 2021, s. 36, 294).',
+    pantherPoisoning:
+      'Objawy zatrucia: przebieg podobny jak po muchomorze czerwonym, zwykle cięższy — dolegliwości żołądkowe, biegunka, halucynacje, drgawki (Zarzyński, „Grzyby polskich lasów”, 2021, s. 302).',
+    poisoningFirstAid:
+      'Przy objawach zatrucia po zjedzeniu grzybów: numer alarmowy 112 lub 999 albo transport do szpitala. Do lekarza zgłaszają się wszyscy, którzy jedli ten sam posiłek, także bez objawów. Osobie z objawami nie podaje się mleka ani alkoholu (GIS, „Bezpieczne grzybobranie”, 23.09.2022).',
+    galerinaLookalikeWarning:
+      'Łysiczki (Psilocybe) nie mają karty. Hełmówka jadowita jest śmiertelnie trująca i łatwo pomylić ją z łysiczką. Stamets 1996, s. 31–33, 144–145, 192–193.',
     morelProtectionTitle: 'Ochrona częściowa w Polsce',
     morelProtectionBody:
       'Nie zbieraj dziko rosnących. Smardze są w Polsce objęte ochroną częściową. Zbiór tylko za zezwoleniem, z wyjątkiem okazów rosnących na terenie ogrodów, upraw ogrodniczych, szkółek leśnych oraz terenów zieleni (rozporządzenie Ministra Środowiska z 9 października 2014 r., Dz.U. 2014 poz. 1408). Ta informacja nie jest zezwoleniem.',

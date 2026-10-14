@@ -25,6 +25,37 @@ import { colors } from '../theme/tokens';
  */
 const HERO_PHOTO_ASPECT = 1200 / 896;
 
+const ENGLISH_POISONING_KEYS: Record<string, string> = {
+  amanita_muscaria: 'cards.flyAgaricPoisoning',
+  amanita_pantherina: 'cards.pantherPoisoning',
+};
+
+function EnglishSafetyNote({ speciesId }: { speciesId: string }) {
+  const { language, t } = useLanguage();
+  if (language !== 'en') {
+    return null;
+  }
+  const poisoningKey = ENGLISH_POISONING_KEYS[speciesId];
+  const galerina = speciesId === 'galerina_marginata';
+  if (!poisoningKey && !galerina) {
+    return null;
+  }
+  return (
+    <>
+      {poisoningKey ? (
+        <Text testID="species-poisoning-note" style={styles.warningText}>
+          {t('cards.poisoningNoteTitle')} {t(poisoningKey)} {t('cards.poisoningFirstAid')}
+        </Text>
+      ) : null}
+      {galerina ? (
+        <Text testID="species-galerina-lookalike-note" style={styles.warningText}>
+          {t('cards.galerinaLookalikeWarning')}
+        </Text>
+      ) : null}
+    </>
+  );
+}
+
 interface Props {
   species: MushroomSpecies;
   onBack: () => void;
@@ -164,7 +195,10 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
         {species.warningNotes ? (
           <View style={styles.warningBox} testID="species-warning-notes">
             <Feather name="info" size={18} color={colors.amber700} style={{ marginTop: 2 }} />
-            <Text style={styles.warningText}>{species.warningNotes}</Text>
+            <View style={styles.warningCopy}>
+              <Text style={styles.warningText}>{species.warningNotes}</Text>
+              <EnglishSafetyNote speciesId={species.id} />
+            </View>
           </View>
         ) : null}
 
@@ -653,6 +687,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: colors.amber200,
+  },
+  warningCopy: {
+    flex: 1,
   },
   warningText: {
     flex: 1,

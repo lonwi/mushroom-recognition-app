@@ -3,7 +3,8 @@
 // Only the files in scripts/adapter-allowlist.cjs may import storage and
 // platform packages. Each of those adapters may be imported only by the
 // modules named next to it. That importer check is exact: hits are never
-// written to .dependency-cruiser-known-violations.json.
+// written to .dependency-cruiser-known-violations.json. The same holds for
+// i18n-not-to-data: src/i18n must not import src/data.
 //
 // UI may still reach an adapter through an allowed importer. The old
 // transitive UI→adapter rule is gone because LanguageContext → settingsStore
@@ -42,6 +43,7 @@ const shrink = process.argv.includes('--shrink');
 const platformRuleName = 'ui-not-to-storage-or-platform';
 const platformReachableName = 'ui-not-to-storage-or-platform-reachable';
 const IMPORTER_PREFIX = 'adapter-importer-';
+const EXACT_RULE_NAMES = new Set(['i18n-not-to-data']);
 const removedAdapterRules = ['ui-not-to-platform-adapter', 'ui-not-to-platform-adapter-reachable'];
 const outsideWrapper = 'src/services/qaRawStore.ts';
 const outsideScreen = 'src/screens/QaRawScreen.tsx';
@@ -142,10 +144,28 @@ function assertPlatformLayer() {
   );
 }
 
+function assertI18nRule() {
+  const rule = ruleByName('i18n-not-to-data');
+  if (!rule?.from?.path || !rule?.to?.path) fail('Missing i18n-not-to-data rule.');
+  assertPattern(
+    'i18n-not-to-data from',
+    rule.from.path,
+    ['src/i18n/pl.ts', 'src/i18n/en.ts'],
+    ['src/data/mushrooms.ts', 'src/screens/ScannerScreen.tsx'],
+  );
+  assertPattern(
+    'i18n-not-to-data to',
+    rule.to.path,
+    ['src/data/mushrooms.ts', 'src/data/safetyRules.ts'],
+    ['src/i18n/pl.ts', 'src/types/mushroom.ts'],
+  );
+}
+
 function assertAdapterConfig() {
   assertRemovedRules();
   assertImporterRulesMatchAllowlist();
   assertPlatformLayer();
+  assertI18nRule();
 }
 
 assertAdapterConfig();
@@ -242,14 +262,15 @@ function readKnown() {
   return parsed;
 }
 
-function isImporterViolation(violation) {
-  return (violation.rule?.name ?? '').startsWith(IMPORTER_PREFIX);
+function isExactViolation(violation) {
+  const name = violation.rule?.name ?? '';
+  return name.startsWith(IMPORTER_PREFIX) || EXACT_RULE_NAMES.has(name);
 }
 
-function rejectBaselinedImporters(violations) {
-  const leaked = violations.filter(isImporterViolation);
+function rejectBaselinedExact(violations) {
+  const leaked = violations.filter(isExactViolation);
   if (leaked.length === 0) return;
-  console.error('Importer allowlist violations are exact and must not be baselined:');
+  console.error('Exact dependency rules must not be baselined (importer allowlist and i18n-not-to-data):');
   for (const violation of leaked) {
     console.error(`  ${violation.rule?.name}: ${violation.from} → ${violation.to}`);
   }
@@ -277,7 +298,7 @@ function platformReachAllowed(violation, grandfathered) {
 }
 
 function keepCruiserViolation(violation, grandfathered) {
-  if (isImporterViolation(violation)) return true;
+  if (isExactViolation(violation)) return true;
   if (violation.rule?.name === platformReachableName) {
     return !platformReachAllowed(violation, grandfathered);
   }
@@ -387,10 +408,10 @@ function printRoute(violation) {
 }
 
 if (update) {
-  const importerHits = current.filter(isImporterViolation);
-  if (importerHits.length > 0) {
-    console.error('Refusing to baseline importer-allowlist violations:');
-    for (const violation of importerHits) console.error(`  ${printRoute(violation)}`);
+  const exactHits = current.filter(isExactViolation);
+  if (exactHits.length > 0) {
+    console.error('Refusing to baseline exact rules (importer allowlist and i18n-not-to-data):');
+    for (const violation of exactHits) console.error(`  ${printRoute(violation)}`);
     process.exit(1);
   }
   writeKnown(current);
@@ -399,7 +420,7 @@ if (update) {
 }
 
 if (shrink) {
-  rejectBaselinedImporters(known);
+  rejectBaselinedExact(known);
   const kept = known.filter((violation) => current.some((item) => isSameViolation(item, violation)));
   writeKnown(kept);
   console.log(`Dependency baseline shrink: kept ${kept.length}, dropped ${known.length - kept.length} stale`);
@@ -410,9 +431,9 @@ if (!fs.existsSync(knownPath)) {
   fail(`Missing ${knownPath}. Run pnpm depcruise:baseline and commit the file.`);
 }
 
-rejectBaselinedImporters(known);
+rejectBaselinedExact(known);
 
-const fresh = current.filter((violation) => isImporterViolation(violation) || !known.some((item) => isSameViolation(item, violation)));
+const fresh = current.filter((violation) => isExactViolation(violation) || !known.some((item) => isSameViolation(item, violation)));
 const stale = known.filter((violation) => !current.some((item) => isSameViolation(item, violation)));
 
 console.log(

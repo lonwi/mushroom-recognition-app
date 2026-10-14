@@ -20,11 +20,13 @@
 //
 // Known direct platform imports live in .dependency-cruiser-known-violations.json.
 // `pnpm depcruise` ignores those and fails on any new one, including every
-// importer-allowlist hit.
+// importer-allowlist hit and every i18n → data hit.
 // `pnpm depcruise:tighten` drops entries that no longer occur.
 // A full rewrite is: pnpm depcruise:baseline
 // Review that diff before committing it: it accepts current violations.
-// It must not accept importer-allowlist violations; the gate refuses those.
+// It must not accept importer-allowlist violations or i18n-not-to-data; the
+// gate refuses those. src/i18n copies Polish source strings and must not
+// import src/data.
 //
 // TODO: when LanguageContext reads language through a service, and when the
 // scanner's camera / image-picker access moves behind an adapter, run
@@ -112,6 +114,18 @@ module.exports = {
       },
     },
     ...adapters.map(importerRule),
+    {
+      name: 'i18n-not-to-data',
+      severity: 'error',
+      comment:
+        'src/i18n keeps its own copy of Polish source strings. It must not import src/data. Not baselined: a new import must fail immediately.',
+      from: {
+        path: '^src/i18n/',
+      },
+      to: {
+        path: '^src/data/',
+      },
+    },
   ],
   options: {
     doNotFollow: {
