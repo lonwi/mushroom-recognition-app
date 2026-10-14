@@ -239,9 +239,11 @@ describe('Mushroom Database & Safety Verification', () => {
 
     expect(fieldMushroom.nameEn).toBe('Field mushroom');
     expect(fieldMushroom.commonNicknames).toEqual([]);
-    expect(fieldMushroom.culinaryValue).toMatch(/wykazie/);
-    expect(fieldMushroom.culinaryValue).not.toMatch(/Jadalna/);
-    expect(fieldMushroom.culinaryValue).not.toMatch(/poróżowiały/);
+    expect(fieldMushroom.culinaryValue).toMatch(/Dz\.U\. 2026 poz\. 258/);
+    expect(fieldMushroom.culinaryValue).toMatch(/zbyt młodych egzemplarzy ze stanu naturalnego/);
+    expect(fieldMushroom.culinaryValue).toMatch(/blaszki jeszcze nie poróżowiały/);
+    expect(fieldMushroom.culinaryValue).not.toMatch(/Jadalna\./);
+    expect(fieldMushroom.culinaryValue).not.toMatch(/Zarzyńsk|GPL/);
 
     expect(morel.commonNicknames).toContain('Murchel majowy');
     expect(morel.commonNicknames).not.toContain('Bedłka');
@@ -253,12 +255,13 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(variegated.tasteAndSmell).toMatch(/chlorowy/);
     expect(variegated.tasteAndSmell).toMatch(/metaliczny/);
     expect(variegated.tasteAndSmell).toMatch(/igliwie/);
-    expect(JSON.stringify(variegated)).not.toMatch(/Zarzyńsk/);
 
     const larch = byId.suillus_grevillei;
-    expect(larch.fleshDescription).toMatch(/Biaław/);
-    expect(larch.tasteAndSmell).toMatch(/biaław/);
-    expect(larch.fleshDescription).not.toMatch(/Żółty/);
+    expect(larch.fleshDescription).toMatch(/Jasnożółty/);
+    expect(larch.fleshDescription).toMatch(/czerwienieje/);
+    expect(larch.fleshDescription).not.toMatch(/biaław/i);
+    expect(larch.tasteAndSmell).toMatch(/jasnożółty/);
+    expect(larch.tasteAndSmell).toMatch(/Zarzyński, 2021/);
 
     expect(blusher.culinaryValue).toMatch(/hemolizyn/);
     expect(blusher.culinaryValue).toMatch(/kilkunastominutowe gotowanie/);
@@ -291,10 +294,12 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(woodtuft.culinaryValue).toMatch(/uprawy/);
 
     const unfinished = MUSHROOMS_DATABASE.filter((species) => species.incompleteCard === true);
+    const tasteJudgment = /najsmaczniejsz|\bsmaczn|smakowo|smakiem ustępuje|wyśmienit|rarytas/i;
     expect(unfinished.length).toBeGreaterThan(0);
     for (const species of unfinished) {
-      expect(species.culinaryValue).toMatch(/W literaturze/);
+      expect(species.culinaryValue).toMatch(/W literaturze|Według |Wg /);
       expect(species.culinaryValue).toContain('Ta karta nie uprawnia do zbioru ani spożycia');
+      expect(species.culinaryValue).not.toMatch(tasteJudgment);
     }
   });
 
@@ -390,7 +395,9 @@ describe('Mushroom Database & Safety Verification', () => {
 
     expect(hedgehog?.commonNicknames.join(' ')).not.toMatch(/Sarna/);
     expect(hedgehog?.nameEn).toBe('Wood hedgehog');
-    expect(JSON.stringify(hedgehog)).not.toMatch(/lekko truj/);
+    expect(hedgehog?.culinaryValue).toMatch(/Według Zarzyńskiego \(2021\)/);
+    expect(hedgehog?.culinaryValue).toMatch(/na surowo lekko trujący/);
+    expect(hedgehog?.culinaryValue).toMatch(/jeść tylko po obróbce termicznej/);
     expect(hedgehog?.fleshDescription).toMatch(/obróbce termicznej/);
     expect(hedgehog?.warningNotes).toMatch(/^NIE JEDZ NA PODSTAWIE TEJ KARTY\. W literaturze jadalny tylko po obróbce termicznej\./);
 

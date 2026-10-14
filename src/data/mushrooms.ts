@@ -495,7 +495,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     stemDescription: 'Krótki trzon z pierścieniem. Brak pochwy u nasady.',
     fleshDescription: 'Miąższ jasny. Silne, chromowe żółknięcie u nasady trzonu i zapach karbolu wskazują na pieczarkę żółtawą, nie na tę kartę.',
     tasteAndSmell: 'Nie sprawdzaj smakiem.',
-    culinaryValue: 'W literaturze na wykazie grzybów dopuszczonych do obrotu. Ta karta nie uprawnia do zbioru ani spożycia.',
+    culinaryValue: 'W literaturze (rozporządzenie Ministra Zdrowia, tekst jednolity Dz.U. 2026 poz. 258, załącznik nr 1) pieczarka polna jest na wykazie grzybów dopuszczonych do obrotu, z wyjątkiem zbyt młodych egzemplarzy ze stanu naturalnego, których blaszki jeszcze nie poróżowiały. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'amanita_phalloides',
@@ -685,7 +685,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     stemDescription: 'Krótki, dość gruby, często asymetryczny, kremowy do jasnobrązowego, bez pierścienia i bez pochwy.',
     fleshDescription: 'Miąższ białawy, po uszkodzeniu żółknie. Jest twardy. Jeść tylko po obróbce termicznej.',
     tasteAndSmell: 'Nie sprawdzaj smakiem. Starsze owocniki, z długimi kolcami, bywają gorzkie.',
-    culinaryValue: 'W literaturze młode owocniki po obróbce cieplnej bywają podawane jako jadalne i dopuszczone do obrotu. Jeść tylko po obróbce termicznej. Ta karta nie uprawnia do zbioru ani spożycia.',
+    culinaryValue: 'Według Zarzyńskiego (2021) na surowo lekko trujący, jeść tylko po obróbce termicznej. W literaturze młode owocniki po obróbce cieplnej bywają podawane jako jadalne i dopuszczone do obrotu. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
         confusedWithId: 'cantharellus_cibarius',
@@ -1192,8 +1192,8 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     capDescription: 'Średnica 4–12 cm. Złocistożółty do pomarańczowego, bardzo lepki. Skórka ściąga się łatwo.',
     hymenophoreDescription: 'Rurki żółte, zakryte u młodych białożółtą błoną. Po uciśnięciu brązowieją.',
     stemDescription: 'Żółty, z pierścieniem, który u starszych owocników przywiera do trzonu. Nad pierścieniem często jest siateczkowaty.',
-    fleshDescription: 'Białawy, w kapeluszu miękki. Po przekrojeniu słabo różowieje albo nie zmienia barwy.',
-    tasteAndSmell: 'Nie sprawdzaj smakiem. W literaturze białawy miąższ ma słaby zapach kojarzący się z owocami.',
+    fleshDescription: 'Jasnożółty, w kapeluszu miękki. Po przekrojeniu czerwienieje.',
+    tasteAndSmell: 'Nie sprawdzaj smakiem. W literaturze (Zarzyński, 2021) jasnożółty miąższ ma słaby zapach kojarzący się z owocami.',
     culinaryValue: 'W literaturze chętnie zbierany i dopuszczony do obrotu. Przed przyrządzeniem zdjąć skórkę z kapelusza. Do marynowania, duszenia, suszenia, gotowania i smażenia. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
