@@ -100,7 +100,9 @@ function AppContent() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    // Top, bottom, and side insets are applied once, here. Tab screens sit in
+    // `content`, between the header and the tab bar, and must not add them again.
+    <SafeAreaView style={styles.container} edges={['top', 'right', 'bottom', 'left']}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
 
       <View style={styles.topHeader}>

@@ -12,13 +12,13 @@ import {
   Linking,
   Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { JournalReadError, storageService } from '../services/storageService';
 import { resolveJournalPhotoUri } from '../services/journalPhotos';
 import { openSpotInMaps } from '../services/mapsLink';
 import { SightingRecord } from '../types/mushroom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { journalActionStyles } from '../components/journalActionStyles';
+import { ScreenFrame } from '../components/ScreenFrame';
 import { RecognitionSummary } from '../components/RecognitionSummary';
 import { colors } from '../theme/tokens';
 
@@ -239,13 +239,7 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>{t('journal.title')}</Text>
-          <Text style={styles.headerSubtitle}>{t('journal.subtitle')}</Text>
-        </View>
-
+    <ScreenFrame title={t('journal.title')} subtitle={t('journal.subtitle')}>
         <ScrollView
           contentContainerStyle={styles.listContent}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={loadSightings} />}
@@ -271,37 +265,11 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies }) => {
           ) : null}
           {!journalDamaged ? sightings.map((item) => renderItem({ item })) : null}
         </ScrollView>
-      </View>
-    </SafeAreaView>
+    </ScreenFrame>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  container: {
-    flex: 1,
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 10,
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.slate200,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.primary,
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    color: colors.slate500,
-    marginTop: 2,
-  },
   listContent: {
     padding: 16,
     paddingBottom: 30,

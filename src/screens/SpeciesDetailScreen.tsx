@@ -8,7 +8,6 @@ import {
   Platform,
   Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { MushroomSpecies } from '../types/mushroom';
 import { SpeciesStatusBadge } from '../components/EdibilityBadge';
@@ -85,21 +84,19 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
           />
         ) : null}
         <View style={styles.heroOverlay} />
-        <SafeAreaView>
-          <View style={styles.navBar}>
-            <TouchableOpacity
-              onPress={onBack}
-              style={styles.backBtn}
-              activeOpacity={0.8}
-              testID="species-back"
-            >
-              <View style={styles.backBtnCircle}>
-                <Ionicons name="chevron-back" size={22} color={colors.emerald500} />
-              </View>
-              <Text style={styles.backBtnText} testID="species-back-label">{t('nav.atlas')}</Text>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
+        <View style={styles.navBar}>
+          <TouchableOpacity
+            onPress={onBack}
+            style={styles.backBtn}
+            activeOpacity={0.8}
+            testID="species-back"
+          >
+            <View style={styles.backBtnCircle}>
+              <Ionicons name="chevron-back" size={22} color={colors.emerald500} />
+            </View>
+            <Text style={styles.backBtnText} testID="species-back-label">{t('nav.atlas')}</Text>
+          </TouchableOpacity>
+        </View>
         
         <View style={styles.heroContent}>
            <Text style={styles.namePl}>{species.namePl}</Text>

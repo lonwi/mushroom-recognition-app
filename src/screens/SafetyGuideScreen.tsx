@@ -7,10 +7,10 @@ import {
   TouchableOpacity,
   Linking,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { GOLDEN_RULES, POISON_SYNDROMES, TOXICOLOGY_CENTERS } from '../data/safetyRules';
 import { useLanguage } from '../contexts/LanguageContext';
 import { colors } from '../theme/tokens';
+import { ScreenFrame } from '../components/ScreenFrame';
 
 interface Props {
   onShowDisclaimer: () => void;
@@ -25,13 +25,7 @@ export const SafetyGuideScreen = ({ onShowDisclaimer, onOpenPreparation }: Props
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>{t('safetyGuide.title')}</Text>
-          <Text style={styles.headerSubtitle}>{t('safetyGuide.subtitle')}</Text>
-        </View>
-
+    <ScreenFrame title={t('safetyGuide.title')} subtitle={t('safetyGuide.subtitle')}>
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
           {/* Przycisk Alarmowy 112 */}
           <TouchableOpacity
@@ -142,37 +136,11 @@ export const SafetyGuideScreen = ({ onShowDisclaimer, onOpenPreparation }: Props
             <Text style={styles.disclaimerReopenText}>{t('safetyGuide.reopenDisclaimer')}</Text>
           </TouchableOpacity>
         </ScrollView>
-      </View>
-    </SafeAreaView>
+    </ScreenFrame>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  container: {
-    flex: 1,
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 10,
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.slate200,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.primary,
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    color: colors.slate500,
-    marginTop: 2,
-  },
   scroll: {
     flex: 1,
   },

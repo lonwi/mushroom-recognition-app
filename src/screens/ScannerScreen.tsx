@@ -14,6 +14,7 @@ import { classifierService, ClassificationResult } from '../services/classifierS
 import { SKIP_PROCESSING_CAPTURE, uprightCaptureWidth, widthForCapture } from '../services/photoPixels';
 import { ResultModal } from '../components/ResultModal';
 import { useLanguage } from '../contexts/LanguageContext';
+import { spacing } from '../theme/tokens';
 
 interface Props {
   onOpenAtlasSpecies?: (speciesId: string) => void;
@@ -286,7 +287,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 50,
+    paddingTop: spacing.lg,
     paddingHorizontal: 20,
   },
   toolBtn: {
@@ -426,8 +427,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingBottom: 40,
-    paddingTop: 16,
+    paddingBottom: spacing.lg,
+    paddingTop: spacing.lg,
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   galleryButton: {

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { PhotoCredits } from '../components/PhotoCredits';
 import { useLanguage } from '../contexts/LanguageContext';
 import { MUSHROOMS_DATABASE } from '../data/mushrooms';
 import { loadPhotoCredits, type PhotoCredit } from '../services/attributionPackage';
 import { colors } from '../theme/tokens';
+import { ScreenFrame } from '../components/ScreenFrame';
 
 export const SettingsScreen: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
@@ -57,12 +57,7 @@ export const SettingsScreen: React.FC = () => {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>{t('settings.title')}</Text>
-        </View>
-
+    <ScreenFrame title={t('settings.title')}>
         <ScrollView style={styles.content} contentContainerStyle={styles.contentInner}>
           <Text style={styles.sectionTitle}>{t('settings.language')}</Text>
 
@@ -113,32 +108,11 @@ export const SettingsScreen: React.FC = () => {
             </Text>
           </View>
         </ScrollView>
-      </View>
-    </SafeAreaView>
+    </ScreenFrame>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  container: {
-    flex: 1,
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 10,
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.slate200,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.primary,
-  },
   content: {
     flex: 1,
   },

@@ -6,10 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { PREPARATION_GUIDE, PREPARATION_TABS } from '../data/preparationRules';
 import { useLanguage } from '../contexts/LanguageContext';
 import { colors } from '../theme/tokens';
+import { ScreenFrame } from '../components/ScreenFrame';
 
 type CategoryFilter = (typeof PREPARATION_TABS)[number]['id'];
 
@@ -22,13 +22,7 @@ export const PreparationGuideScreen: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>{t('preparation.title')}</Text>
-          <Text style={styles.headerSubtitle}>{t('preparation.subtitle')}</Text>
-        </View>
-
+    <ScreenFrame title={t('preparation.title')} subtitle={t('preparation.subtitle')}>
         <View style={styles.tabsRow}>
           {PREPARATION_TABS.map((tab) => {
             const active = activeCategory === tab.id;
@@ -60,37 +54,11 @@ export const PreparationGuideScreen: React.FC = () => {
             ))}
           </View>
         </ScrollView>
-      </View>
-    </SafeAreaView>
+    </ScreenFrame>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  container: {
-    flex: 1,
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 10,
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.slate200,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.primary,
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    color: colors.slate500,
-    marginTop: 2,
-  },
   tabsRow: {
     flexDirection: 'row',
     paddingHorizontal: 12,

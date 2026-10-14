@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
+import { render, fireEvent, waitFor, within } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AtlasScreen } from '../../screens/AtlasScreen';
 import { LanguageProvider } from '../../contexts/LanguageContext';
@@ -38,6 +39,52 @@ describe('AtlasScreen RTL Tests', () => {
       expect(getByText('Prawdziwki')).toBeTruthy();
       expect(queryByText('Muchomor sromotnikowy (zielonawy)')).toBeNull();
     });
+  });
+
+  it('puts the edibility badge under a full-width title, including long Latin names', async () => {
+    const screen = await render(
+      <LanguageProvider>
+        <AtlasScreen onSelectSpecies={() => {}} />
+      </LanguageProvider>
+    );
+
+    await fireEvent.press(screen.getByTestId('filter-status-DEADLY_POISONOUS'));
+
+    const copy = await screen.findByTestId('atlas-card-copy-amanita_phalloides');
+    const title = screen.getByTestId('atlas-name-pl-amanita_phalloides');
+    const latin = screen.getByTestId('atlas-name-latin-amanita_phalloides');
+    const badge = screen.getByTestId('atlas-card-badge-amanita_phalloides');
+    const column = StyleSheet.flatten(copy.props.style);
+
+    expect(column.flexDirection).toBe('column');
+    expect(column.alignItems).toBe('stretch');
+    expect(title.parent).toBe(copy);
+    expect(latin.parent).toBe(copy);
+    expect(badge.parent).toBe(copy);
+    expect(copy.children.indexOf(title)).toBeLessThan(copy.children.indexOf(latin));
+    expect(copy.children.indexOf(latin)).toBeLessThan(copy.children.indexOf(badge));
+    expect(title.props.children).toBe('Muchomor sromotnikowy (zielonawy)');
+    expect(title.props.textBreakStrategy).toBe('simple');
+    expect(title.props.android_hyphenationFrequency).toBe('none');
+    expect(latin.props.children).toBe('Amanita phalloides');
+    expect(latin.props.textBreakStrategy).toBe('simple');
+    expect(latin.props.android_hyphenationFrequency).toBe('none');
+    expect(within(badge).getByText('ŚMIERTELNIE TRUJĄCY')).toBeTruthy();
+
+    await fireEvent.press(screen.getByTestId('filter-status-ALL'));
+    await fireEvent.changeText(
+      screen.getByPlaceholderText('Szukaj grzyba (np. borowik, kania, kurka)...'),
+      'Tricholoma'
+    );
+
+    const longLatin = await screen.findByTestId('atlas-name-latin-tricholoma_equestre');
+    const longCopy = screen.getByTestId('atlas-card-copy-tricholoma_equestre');
+    expect(longLatin.props.children).toBe('Tricholoma equestre (syn. T. flavovirens, T. auratum)');
+    expect(longLatin.props.textBreakStrategy).toBe('simple');
+    expect(longLatin.props.android_hyphenationFrequency).toBe('none');
+    expect(longLatin.parent).toBe(longCopy);
+    expect(screen.getByTestId('atlas-card-badge-tricholoma_equestre').parent).toBe(longCopy);
+    expect(StyleSheet.flatten(longCopy.props.style).alignItems).toBe('stretch');
   });
 
   it('filters deadly poisonous mushrooms', async () => {
