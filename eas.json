@@ -5,6 +5,7 @@
   },
   "build": {
     "development": {
+      "pnpm": "10.33.4",
       "distribution": "internal",
       "android": {
         "buildType": "apk"
@@ -14,12 +15,14 @@
       }
     },
     "preview": {
+      "pnpm": "10.33.4",
       "distribution": "internal",
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
+      "pnpm": "10.33.4",
       "autoIncrement": true,
       "android": {
         "buildType": "app-bundle"
