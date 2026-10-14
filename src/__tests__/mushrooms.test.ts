@@ -524,18 +524,3 @@ describe('Mushroom Database & Safety Verification', () => {
   });
 });
 
-describe('Mushroom Classifier Offline Engine', () => {
-  test('PlatformReactNative properly validates typed arrays for Hermes/React Native', () => {
-    const { PlatformReactNative } = require('../utils/tfjsPlatform');
-    const platform = new PlatformReactNative();
-
-    expect(platform.isTypedArray(new Float32Array([1, 2, 3]))).toBe(true);
-    expect(platform.isTypedArray(new Int32Array([1, 2, 3]))).toBe(true);
-    expect(platform.isTypedArray(new Uint8Array([1, 2, 3]))).toBe(true);
-    expect(platform.isTypedArray(new Uint8ClampedArray([1, 2, 3]))).toBe(true);
-    expect(platform.isTypedArray([1, 2, 3])).toBe(false);
-    expect(platform.isTypedArray('not an array')).toBe(false);
-    expect(platform.isTypedArray(null)).toBe(false);
-  });
-});
-
