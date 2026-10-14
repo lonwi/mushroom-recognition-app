@@ -30,17 +30,10 @@ export function selectTab(stack: ViewStack, tab: RootTab): ViewStack {
   return { tab, pushed: [] };
 }
 
-/**
- * A species card always opens on the atlas. Replacing the current species
- * (a look-alike) keeps a single detail frame, so Back returns to the atlas.
- */
+/** Push a species card on the current tab. A look-alike stacks, so Back returns to the previous card. */
 export function openSpecies(stack: ViewStack, speciesId: string): ViewStack {
   const next: SpeciesScreen = { name: 'species', speciesId };
-  const top = stack.pushed[stack.pushed.length - 1];
-  if (top?.name === 'species') {
-    return { tab: 'ATLAS', pushed: [...stack.pushed.slice(0, -1), next] };
-  }
-  return { tab: 'ATLAS', pushed: [next] };
+  return { tab: stack.tab, pushed: [...stack.pushed, next] };
 }
 
 export function openSettings(stack: ViewStack): ViewStack {
@@ -62,11 +55,10 @@ export function applyHardwareBack(stack: ViewStack): HardwareBackResult {
   };
 }
 
-/** Species detail stays on the atlas tab. Settings and preparation highlight none. */
+/** A species card keeps the tab it was opened from. Settings and preparation highlight none. */
 export function highlightedTab(stack: ViewStack): RootTab | null {
   const top = stack.pushed[stack.pushed.length - 1];
-  if (!top) return stack.tab;
-  if (top.name === 'species') return 'ATLAS';
+  if (!top || top.name === 'species') return stack.tab;
   return null;
 }
 
@@ -92,7 +84,7 @@ export function activateShellTab(stack: ViewStack, tab: ShellTab): ViewStack {
   return selectTab(stack, tab);
 }
 
-/** A species id opens atlas detail. Null pops a species frame and leaves settings alone. */
+/** A species id pushes a card on the current tab. Null pops a species frame and leaves settings alone. */
 export function selectSpecies(stack: ViewStack, speciesId: string | null): ViewStack {
   if (speciesId) return openSpecies(stack, speciesId);
   const top = stack.pushed[stack.pushed.length - 1];
@@ -101,7 +93,7 @@ export function selectSpecies(stack: ViewStack, speciesId: string | null): ViewS
   return popped.handled ? popped.stack : stack;
 }
 
-/** Which `screens` entry is visible. Species stays on the atlas entry. */
+/** Which `screens` entry is visible. A species card uses the source tab's slot. */
 export function shellScreen(stack: ViewStack): ShellTab {
   const highlighted = highlightedTab(stack);
   if (highlighted) return highlighted;

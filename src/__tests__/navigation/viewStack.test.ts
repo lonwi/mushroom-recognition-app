@@ -25,27 +25,37 @@ describe('view stack', () => {
     expect(visibleRoute(root)).toEqual({ kind: 'tab', tab: 'SCANNER' });
   });
 
-  it('pops species detail back to the atlas and then exits', () => {
-    const detail = openSpecies(selectTab(root, 'JOURNAL'), 'boletus_edulis');
-    expect(detail).toEqual({ tab: 'ATLAS', pushed: [{ name: 'species', speciesId: 'boletus_edulis' }] });
-    expect(highlightedTab(detail)).toBe('ATLAS');
-    expect(visibleRoute(detail)).toEqual({ kind: 'species', speciesId: 'boletus_edulis' });
+  it('returns from a look-alike to the previous card, and from scanner or journal to that tab', () => {
+    const fromScanner = openSpecies(root, 'macrolepiota_procera');
+    const lookalike = openSpecies(fromScanner, 'amanita_phalloides');
+    expect(lookalike).toEqual({
+      tab: 'SCANNER',
+      pushed: [
+        { name: 'species', speciesId: 'macrolepiota_procera' },
+        { name: 'species', speciesId: 'amanita_phalloides' },
+      ],
+    });
+    expect(highlightedTab(lookalike)).toBe('SCANNER');
+    expect(shellScreen(lookalike)).toBe('SCANNER');
+    expect(visibleRoute(lookalike)).toEqual({ kind: 'species', speciesId: 'amanita_phalloides' });
 
-    const atlas = applyHardwareBack(detail);
-    expect(atlas).toEqual({ handled: true, stack: { tab: 'ATLAS', pushed: [] } });
-    if (!atlas.handled) return;
-    expect(applyHardwareBack(atlas.stack)).toEqual({ handled: false });
-  });
+    const previousCard = applyHardwareBack(lookalike);
+    expect(previousCard).toEqual({ handled: true, stack: fromScanner });
+    if (!previousCard.handled) return;
+    const scanner = applyHardwareBack(previousCard.stack);
+    expect(scanner).toEqual({ handled: true, stack: root });
+    if (!scanner.handled) return;
+    expect(applyHardwareBack(scanner.stack)).toEqual({ handled: false });
 
-  it('replaces a look-alike instead of stacking another species', () => {
-    const detail = openSpecies(root, 'macrolepiota_procera');
-    const twin = openSpecies(detail, 'amanita_phalloides');
-    expect(twin.pushed).toEqual([{ name: 'species', speciesId: 'amanita_phalloides' }]);
-    const back = applyHardwareBack(twin);
-    expect(back.handled).toBe(true);
-    if (!back.handled) return;
-    expect(back.stack.pushed).toEqual([]);
-    expect(back.stack.tab).toBe('ATLAS');
+    const journal = selectTab(root, 'JOURNAL');
+    const fromJournal = openSpecies(journal, 'boletus_edulis');
+    expect(fromJournal.tab).toBe('JOURNAL');
+    expect(highlightedTab(fromJournal)).toBe('JOURNAL');
+    expect(shellScreen(fromJournal)).toBe('JOURNAL');
+    const backToJournal = applyHardwareBack(fromJournal);
+    expect(backToJournal).toEqual({ handled: true, stack: journal });
+    if (!backToJournal.handled) return;
+    expect(applyHardwareBack(backToJournal.stack)).toEqual({ handled: false });
   });
 
   it('returns from settings to the screen that opened it', () => {
@@ -69,11 +79,11 @@ describe('view stack', () => {
     if (!toDetail.handled) return;
     expect(visibleRoute(toDetail.stack)).toEqual({ kind: 'species', speciesId: 'boletus_edulis' });
 
-    const toAtlas = applyHardwareBack(toDetail.stack);
-    expect(toAtlas.handled).toBe(true);
-    if (!toAtlas.handled) return;
-    expect(visibleRoute(toAtlas.stack)).toEqual({ kind: 'tab', tab: 'ATLAS' });
-    expect(applyHardwareBack(toAtlas.stack).handled).toBe(false);
+    const toScanner = applyHardwareBack(toDetail.stack);
+    expect(toScanner.handled).toBe(true);
+    if (!toScanner.handled) return;
+    expect(visibleRoute(toScanner.stack)).toEqual({ kind: 'tab', tab: 'SCANNER' });
+    expect(applyHardwareBack(toScanner.stack).handled).toBe(false);
   });
 
   it('returns from the preparation guide to the safety tab', () => {

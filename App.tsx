@@ -36,9 +36,9 @@ import { colors, radius, spacing, typography } from './src/theme/tokens';
 
 type Tab = ShellTab;
 
-const TAB_BAR: ReadonlyArray<{ id: Tab; icon: string; labelKey: string; resetAtlas?: boolean }> = [
+const TAB_BAR: ReadonlyArray<{ id: Tab; icon: string; labelKey: string }> = [
   { id: 'SCANNER', icon: '📷', labelKey: 'nav.scanner' },
-  { id: 'ATLAS', icon: '📖', labelKey: 'nav.atlas', resetAtlas: true },
+  { id: 'ATLAS', icon: '📖', labelKey: 'nav.atlas' },
   { id: 'JOURNAL', icon: '🧺', labelKey: 'nav.journal' },
   { id: 'SAFETY', icon: '🛡', labelKey: 'nav.safety' },
 ];
@@ -55,29 +55,30 @@ interface ShellHandlers {
 function shellScreens(stack: ViewStack, handlers: ShellHandlers): Record<Tab, React.ReactNode> {
   const route = visibleRoute(stack);
   const species = route.kind === 'species' ? getSpecies(route.speciesId) : undefined;
+  const speciesCard = species ? (
+    <SpeciesDetailScreen
+      species={species}
+      onBack={handlers.onBack}
+      onOpenLookAlike={handlers.onOpenAtlasSpecies}
+    />
+  ) : null;
   return {
-    SCANNER: (
+    SCANNER: speciesCard ?? (
       <ScannerScreen
         onOpenAtlasSpecies={handlers.onOpenAtlasSpecies}
         onSavedToJournal={handlers.onSavedToJournal}
       />
     ),
-    ATLAS: species ? (
-      <SpeciesDetailScreen
-        species={species}
-        onBack={handlers.onBack}
-        onOpenLookAlike={handlers.onOpenAtlasSpecies}
-      />
-    ) : (
+    ATLAS: speciesCard ?? (
       <AtlasScreen onSelectSpecies={(item) => handlers.onOpenAtlasSpecies(item.id)} />
     ),
-    JOURNAL: (
+    JOURNAL: speciesCard ?? (
       <JournalScreen
         refreshSignal={handlers.journalRefreshSignal}
         onOpenAtlasSpecies={handlers.onOpenAtlasSpecies}
       />
     ),
-    SAFETY: (
+    SAFETY: speciesCard ?? (
       <SafetyGuideScreen
         onShowDisclaimer={handlers.onShowDisclaimer}
         onOpenPreparation={handlers.onOpenPreparation}
@@ -176,10 +177,7 @@ function AppContent() {
             <TouchableOpacity
               key={tab.id}
               style={[styles.navItem, active && styles.navItemActive]}
-              onPress={() => {
-                if (tab.resetAtlas) setSelectedSpecies(null);
-                setActiveTab(tab.id);
-              }}
+              onPress={() => setActiveTab(tab.id)}
               activeOpacity={0.7}
               testID={`nav-${tab.id}`}
             >

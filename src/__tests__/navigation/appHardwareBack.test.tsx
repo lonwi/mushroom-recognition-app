@@ -4,6 +4,7 @@ import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import App from '../../../App';
 import { HARDWARE_BACK_EVENT } from '../../navigation/hardwareBack';
+import { storageService } from '../../services/storageService';
 import { pl } from '../../i18n/pl';
 
 type BackHandlerFn = () => boolean | null | undefined;
@@ -88,6 +89,61 @@ describe('Android hardware back', () => {
       });
       expect(screen.queryByTestId('tab-prep-all')).toBeNull();
       expect(screen.getByText(pl.safetyGuide.title)).toBeTruthy();
+      expect(back.press()).toBe(false);
+    } finally {
+      back.restore();
+    }
+  });
+
+  it('returns from a look-alike to the previous card and from the journal to that tab', async () => {
+    const back = installBackHandler();
+    try {
+      await storageService.saveSighting({
+        id: 'sighting_spot',
+        timestamp: 1_720_000_100_000,
+        recognition: {
+          status: 'candidates',
+          expertVerificationRequired: true,
+          warningReasons: ['low_confidence'],
+          top3: [
+            {
+              id: 'boletus_edulis',
+              namePl: 'Borowik szlachetny',
+              nameLatin: 'Boletus edulis',
+              confidence: 0.57,
+              rank: 1,
+            },
+          ],
+        },
+      });
+      const screen = await render(<App />);
+
+      await fireEvent.press(screen.getByTestId('demo-atlas-macrolepiota'));
+      expect(screen.getByText('Macrolepiota procera')).toBeTruthy();
+      await fireEvent.press(screen.getByTestId('lookalike-link-amanita_phalloides'));
+      expect(screen.getByText('Amanita phalloides')).toBeTruthy();
+
+      await act(async () => {
+        expect(back.press()).toBe(true);
+      });
+      expect(screen.getByText('Macrolepiota procera')).toBeTruthy();
+      expect(screen.queryByText('Amanita phalloides')).toBeNull();
+
+      await act(async () => {
+        expect(back.press()).toBe(true);
+      });
+      expect(screen.queryByTestId('species-back')).toBeNull();
+      expect(screen.getByTestId('scanner-atlas-scope')).toBeTruthy();
+
+      await fireEvent.press(screen.getByTestId('nav-JOURNAL'));
+      await fireEvent.press(await screen.findByTestId('journal-open-candidate-sighting_spot'));
+      expect(screen.getByText('Prawdziwki')).toBeTruthy();
+
+      await act(async () => {
+        expect(back.press()).toBe(true);
+      });
+      expect(screen.getByTestId('journal-entry-sighting_spot')).toBeTruthy();
+      expect(screen.queryByText('Prawdziwki')).toBeNull();
       expect(back.press()).toBe(false);
     } finally {
       back.restore();
