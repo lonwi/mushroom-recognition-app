@@ -1,0 +1,308 @@
+{
+  "agaricus_campestris": {
+    "status": "jadalny",
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "czekoladowobrazowy",
+    "ring": true,
+    "volva": "brak",
+    "protection": "brak"
+  },
+  "amanita_muscaria": {
+    "status": "trujący",
+    "psychoactive": true,
+    "hymenophore": "blaszki",
+    "sporePrint": "bialy",
+    "ring": true,
+    "volva": null,
+    "protection": "brak"
+  },
+  "amanita_pantherina": {
+    "status": "trujący",
+    "psychoactive": true,
+    "hymenophore": "blaszki",
+    "sporePrint": "bialy",
+    "ring": true,
+    "volva": "pochwa",
+    "protection": "brak"
+  },
+  "amanita_phalloides": {
+    "status": "śmiertelnie trujący",
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "bialy",
+    "ring": true,
+    "volva": "pochwa",
+    "protection": "brak"
+  },
+  "amanita_virosa": {
+    "status": "śmiertelnie trujący",
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "bialy",
+    "ring": true,
+    "volva": "pochwa",
+    "protection": "brak"
+  },
+  "armillaria_mellea": {
+    "status": "jadalny warunkowo",
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "bialy",
+    "ring": true,
+    "volva": null,
+    "protection": "brak"
+  },
+  "boletus_edulis": {
+    "status": "jadalny",
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": "oliwkowobrazowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "cantharellus_cibarius": {
+    "status": "jadalny",
+    "psychoactive": false,
+    "hymenophore": "listwy",
+    "sporePrint": "kremowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "cortinarius_caperatus": {
+    "status": "jadalny",
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "rdzawobrazowy",
+    "ring": true,
+    "volva": "brak",
+    "protection": "brak"
+  },
+  "entoloma_sinuatum": {
+    "status": "trujący",
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "rozowy",
+    "ring": false,
+    "volva": "brak",
+    "protection": "brak"
+  },
+  "galerina_marginata": {
+    "status": "śmiertelnie trujący",
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "rdzawobrazowy",
+    "ring": true,
+    "volva": null,
+    "protection": "brak"
+  },
+  "gyroporus_castaneus": {
+    "status": "jadalny",
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": "zolty",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "hypholoma_fasciculare": {
+    "status": "trujący",
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "fioletowoczarny",
+    "ring": true,
+    "volva": null,
+    "protection": "brak"
+  },
+  "imleria_badia": {
+    "status": "jadalny",
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": "oliwkowobrazowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "kuehneromyces_mutabilis": {
+    "status": "jadalny",
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "rdzawobrazowy",
+    "ring": true,
+    "volva": null,
+    "protection": "brak"
+  },
+  "lactarius_deliciosus": {
+    "status": "jadalny",
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "kremowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "lactarius_torminosus": {
+    "status": "trujący",
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "kremowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "leccinum_scabrum": {
+    "status": "jadalny",
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": "brazowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "lycoperdon_perlatum": {
+    "status": "jadalny warunkowo",
+    "psychoactive": false,
+    "hymenophore": "inne",
+    "sporePrint": "oliwkowobrazowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "macrolepiota_procera": {
+    "status": "jadalny",
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "bialy",
+    "ring": true,
+    "volva": "bulwa",
+    "protection": "brak"
+  },
+  "morchella_esculenta": {
+    "status": "jadalny warunkowo",
+    "psychoactive": false,
+    "hymenophore": "inne",
+    "sporePrint": "kremowy",
+    "ring": null,
+    "volva": null,
+    "protection": "czesciowa"
+  },
+  "neoboletus_luridiformis": {
+    "status": "jadalny warunkowo",
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": "oliwkowobrazowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "paxillus_involutus": {
+    "status": "trujący",
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "brazowy",
+    "ring": false,
+    "volva": null,
+    "protection": "brak"
+  },
+  "rubroboletus_satanas": {
+    "status": "trujący",
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": "oliwkowobrazowy",
+    "ring": null,
+    "volva": null,
+    "protection": "scisla"
+  },
+  "russula_emetica": {
+    "status": "trujący",
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "bialy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "scleroderma_citrinum": {
+    "status": "trujący",
+    "psychoactive": false,
+    "hymenophore": "inne",
+    "sporePrint": "czarnobrazowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "sparassis_crispa": {
+    "status": "jadalny",
+    "psychoactive": false,
+    "hymenophore": "inne",
+    "sporePrint": "kremowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "suillus_bovinus": {
+    "status": "jadalny",
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": "oliwkowobrazowy",
+    "ring": false,
+    "volva": null,
+    "protection": "brak"
+  },
+  "tricholoma_equestre": {
+    "status": "trujący",
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "bialy",
+    "ring": false,
+    "volva": "brak",
+    "protection": "brak"
+  },
+  "tylopilus_felleus": {
+    "status": "niejadalny",
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": "rozowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "amanita_excelsa": {
+    "status": "niejadalny",
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "bialy",
+    "ring": true,
+    "volva": "bulwa",
+    "protection": "brak"
+  },
+  "calocybe_gambosa": {
+    "status": "jadalny warunkowo",
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "bialy",
+    "ring": false,
+    "volva": "brak",
+    "protection": "brak"
+  },
+  "suillellus_luridus": {
+    "status": "trujący",
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": "oliwkowobrazowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "hypholoma_capnoides": {
+    "status": "jadalny warunkowo",
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "fioletowobrazowy",
+    "ring": true,
+    "volva": null,
+    "protection": "brak"
+  }
+}

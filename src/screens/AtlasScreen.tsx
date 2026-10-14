@@ -1,27 +1,13 @@
-import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  Image,
-} from 'react-native';
-import { hasFatalLookAlikeRisk, MUSHROOMS_DATABASE } from '../data/mushrooms';
-import { countByStatus, filterAtlasSpecies, HymenophoreFilter, StatusFilter } from '../data/atlasQuery';
-import { MushroomSpecies } from '../types/mushroom';
-import { HYMENOPHORE_FILTERS, HYMENOPHORE_META } from '../presentation/speciesMeta';
-import { SpeciesStatusBadge } from '../components/EdibilityBadge';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { MUSHROOMS_DATABASE } from '../data/mushrooms';
+import type { AtlasRow } from '../data/atlasFilterModel';
+import type { MushroomSpecies } from '../types/mushroom';
+import { AtlasFilterBar } from '../components/AtlasFilterBar';
+import { AtlasSpeciesCard } from '../components/AtlasSpeciesCard';
+import { useAtlasFilters } from '../hooks/useAtlasFilters';
 import { useLanguage } from '../contexts/LanguageContext';
-import { getMushroomImage } from '../utils/mushroomImages';
 import { colors, spacing } from '../theme/tokens';
-
-/** Android's default breaker splits narrow titles mid-word ("Much" / "omor"). */
-const unbrokenWords = {
-  textBreakStrategy: 'simple',
-  android_hyphenationFrequency: 'none',
-} as const;
 
 interface Props {
   onSelectSpecies: (species: MushroomSpecies) => void;
@@ -29,125 +15,27 @@ interface Props {
 
 export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
   const { t, language } = useLanguage();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
-  const [hymenophoreFilter, setHymenophoreFilter] = useState<HymenophoreFilter>('ALL');
-  const statusCounts = useMemo(() => countByStatus(MUSHROOMS_DATABASE), []);
-
-  const filteredMushrooms = useMemo(() => {
-    return filterAtlasSpecies(MUSHROOMS_DATABASE, {
-      query: searchQuery,
-      status: statusFilter,
-      hymenophore: hymenophoreFilter,
-    });
-  }, [searchQuery, statusFilter, hymenophoreFilter]);
-
-  const renderItem = ({ item }: { item: MushroomSpecies }) => {
-    const hymenophoreLabel = t(HYMENOPHORE_META[item.hymenophore].labelKey);
-
-    const monthsStr = t('atlas.monthRange', {
-      start: item.months[0],
-      end: item.months[item.months.length - 1],
-    });
-
-    const photo = getMushroomImage(item.id);
-
-    return (
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() => onSelectSpecies(item)}
-        activeOpacity={0.7}
-        testID={`atlas-card-${item.id}`}
-      >
-        <View style={styles.cardMainRow}>
-          {photo ? (
-            <Image
-              source={photo}
-              style={styles.cardThumbnail}
-              resizeMode="cover"
-              testID={`atlas-photo-${item.id}`}
-            />
-          ) : (
-            <View style={[styles.cardThumbnail, styles.cardThumbnailMissing]} testID={`atlas-photo-missing-${item.id}`}>
-              <Text style={styles.cardThumbnailMissingText}>{t('cards.photoMissing')}</Text>
-            </View>
-          )}
-          <View style={styles.cardDetails} testID={`atlas-card-copy-${item.id}`}>
-            <Text
-              style={styles.namePl}
-              testID={`atlas-name-pl-${item.id}`}
-              {...unbrokenWords}
-            >
-              {item.namePl}
-            </Text>
-            {item.nameEn ? (
-              <Text style={styles.nameEn} {...unbrokenWords}>
-                {item.nameEn}
-              </Text>
-            ) : null}
-            <Text
-              style={styles.nameLatin}
-              testID={`atlas-name-latin-${item.id}`}
-              {...unbrokenWords}
-            >
-              {item.nameLatin}
-            </Text>
-            <View style={styles.cardBadge} testID={`atlas-card-badge-${item.id}`}>
-              <SpeciesStatusBadge
-                status={item.status}
-                incompleteCard={item.incompleteCard}
-                size="small"
-                testID={`incomplete-card-badge-${item.id}`}
-              />
-            </View>
-
-            {item.commonNicknames.length > 0 ? (
-              <Text style={styles.nicknames} numberOfLines={1}>
-                {t('atlas.colloquial', { names: item.commonNicknames.join(', ') })}
-              </Text>
-            ) : (
-              <View style={styles.nicknamesSpacer} />
-            )}
-
-            <View style={styles.cardFooter}>
-              <View style={styles.tag}>
-                <Text style={styles.tagText}>🍄 {hymenophoreLabel}</Text>
-              </View>
-              {item.months.length > 0 ? (
-                <View style={styles.tag}>
-                  <Text style={styles.tagText} testID={`atlas-months-${item.id}`}>{`📅 ${monthsStr}`}</Text>
-                </View>
-              ) : null}
-              {hasFatalLookAlikeRisk(item) && (
-                <View style={[styles.tag, styles.tagDanger]}>
-                  <Text style={styles.tagDangerText}>{t('atlas.lookAlikeTag')}</Text>
-                </View>
-              )}
-            </View>
-          </View>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  const filters = useAtlasFilters(MUSHROOMS_DATABASE);
+  const nothingLeft = filters.matches.length === 0 && filters.unverified.length === 0;
 
   return (
     <View style={styles.screen}>
-        {/* Pasek Wyszukiwania */}
+      <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
         <View style={styles.searchBarContainer}>
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
             style={styles.searchInput}
             placeholder={t('atlas.searchPlaceholder')}
             placeholderTextColor={colors.slate400}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
+            value={filters.query}
+            onChangeText={filters.setQuery}
             clearButtonMode="while-editing"
           />
-          {searchQuery !== '' && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
+          {filters.query !== '' ? (
+            <TouchableOpacity onPress={() => filters.setQuery('')}>
               <Text style={styles.clearBtn}>✕</Text>
             </TouchableOpacity>
-          )}
+          ) : null}
         </View>
 
         <Text style={styles.scopeNotice} testID="atlas-scope-notice">
@@ -160,73 +48,98 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
           </Text>
         ) : null}
 
-        <View style={styles.filtersRow}>
-          {(
-            [
-              ['ALL', `${t('atlas.filterAll')} (${statusCounts.ALL})`],
-              ['EDIBLE', `🟢 ${t('atlas.filterEdible')} (${statusCounts.EDIBLE})`],
-              ['INEDIBLE', `🟡 ${t('atlas.filterInedible')} (${statusCounts.INEDIBLE})`],
-              ['POISONOUS', `🔴 ${t('atlas.filterPoisonous')} (${statusCounts.POISONOUS})`],
-              ['DEADLY_POISONOUS', `☠ ${t('atlas.filterDeadly')} (${statusCounts.DEADLY_POISONOUS})`],
-              ['INCOMPLETE', `${t('atlas.filterIncomplete')} (${statusCounts.INCOMPLETE})`],
-            ] as const
-          ).map(([status, label]) => (
-            <TouchableOpacity
-              key={status}
-              testID={`filter-status-${status}`}
-              style={[styles.filterChip, statusFilter === status && styles.filterChipActive]}
-              onPress={() => setStatusFilter(status)}
-            >
-              <Text style={[styles.filterText, statusFilter === status && styles.filterTextActive]}>
-                {label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.filtersRowSecondary}>
-          {HYMENOPHORE_FILTERS.map((type) => {
-            const label = t(HYMENOPHORE_META[type].labelKey);
-            return (
-            <TouchableOpacity
-              key={type}
-              testID={`filter-hymenophore-${type}`}
-              style={[styles.chipSecondary, hymenophoreFilter === type && styles.chipSecondaryActive]}
-              onPress={() => setHymenophoreFilter(hymenophoreFilter === type ? 'ALL' : type)}
-            >
-              <Text style={[styles.chipSecText, hymenophoreFilter === type && styles.chipSecTextActive]}>
-                {label}
-              </Text>
-            </TouchableOpacity>
-            );
-          })}
-        </View>
+        <AtlasFilterBar chipIds={filters.chipIds} onToggle={filters.toggleChip} />
 
         <Text style={styles.resultCount} testID="atlas-result-count">
-          {t('atlas.resultCount', { count: filteredMushrooms.length })}
+          {t('atlas.resultCount', { count: filters.resultCount })}
         </Text>
 
-        {filteredMushrooms.length === 0 ? (
-          <View style={styles.emptyContainer} testID="atlas-empty">
-            <Text style={styles.emptyIcon}>🍄</Text>
-            <Text style={styles.emptyTitle}>{t('atlas.emptyTitle')}</Text>
-            {/szatan/.test(searchQuery.toLowerCase()) ? (
-              <Text style={styles.emptyDesc} testID="atlas-szatan-notice">
-                {t('atlas.szatanNotice')}
-              </Text>
-            ) : (
-              <Text style={styles.emptyDesc}>{t('atlas.emptyDesc')}</Text>
-            )}
-          </View>
+        {nothingLeft ? (
+          <EmptyAtlas query={filters.query} />
         ) : (
-          <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
-            {filteredMushrooms.map((item) => (
-              <View key={item.id}>{renderItem({ item })}</View>
-            ))}
-          </ScrollView>
+          <AtlasResults
+            matches={filters.matches}
+            unverified={filters.unverified}
+            onSelectSpecies={onSelectSpecies}
+          />
         )}
+      </ScrollView>
     </View>
   );
+};
+
+function AtlasResults({
+  matches,
+  unverified,
+  onSelectSpecies,
+}: {
+  matches: readonly AtlasRow[];
+  unverified: readonly AtlasRow[];
+  onSelectSpecies: (species: MushroomSpecies) => void;
+}) {
+  const { t } = useLanguage();
+  return (
+    <View>
+      {matches.length > 0 ? (
+        <View testID="atlas-matches">
+          {matches.map((row) => (
+            <AtlasSpeciesCard key={row.species.id} row={row} onPress={onSelectSpecies} />
+          ))}
+        </View>
+      ) : (
+        <Text style={styles.matchNote} testID="atlas-no-matches">
+          {t('atlas.emptyDesc')}
+        </Text>
+      )}
+      {unverified.length > 0 ? (
+        <View style={styles.unverified} testID="atlas-unverified">
+          <Text style={styles.unverifiedTitle} testID="atlas-unverified-title">
+            {t('atlas.unverifiedTitle', { count: unverified.length })}
+          </Text>
+          <Text style={styles.unverifiedBody}>{t('atlas.unverifiedBody')}</Text>
+          {unverified.map((row) => (
+            <AtlasSpeciesCard key={row.species.id} row={row} onPress={onSelectSpecies} />
+          ))}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function EmptyAtlas({ query }: { query: string }) {
+  const { t } = useLanguage();
+  const szatan = /szatan/.test(query.toLowerCase());
+  return (
+    <View style={styles.emptyContainer} testID="atlas-empty">
+      <Text style={styles.emptyIcon}>🍄</Text>
+      <Text style={styles.emptyTitle}>{t('atlas.emptyTitle')}</Text>
+      {szatan ? (
+        <Text style={styles.emptyDesc} testID="atlas-szatan-notice">
+          {t('atlas.szatanNotice')}
+        </Text>
+      ) : (
+        <Text style={styles.emptyDesc}>{t('atlas.emptyDesc')}</Text>
+      )}
+    </View>
+  );
+}
+
+const noticeBox = {
+  marginBottom: 10,
+  borderWidth: 1,
+  borderRadius: 10,
+  paddingHorizontal: 12,
+  paddingVertical: 8,
+  fontSize: 12,
+  lineHeight: 18,
+  fontWeight: '600',
+} as const;
+
+const warningNotice = {
+  ...noticeBox,
+  color: colors.orange900,
+  backgroundColor: colors.orange50,
+  borderColor: colors.orange300,
 };
 
 const styles = StyleSheet.create({
@@ -239,7 +152,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.white,
-    marginHorizontal: 16,
     marginBottom: 10,
     borderRadius: 12,
     paddingHorizontal: 12,
@@ -261,195 +173,44 @@ const styles = StyleSheet.create({
     color: colors.slate400,
     padding: 6,
   },
-  scopeNotice: {
-    marginHorizontal: 16,
-    marginBottom: 10,
-    color: colors.orange900,
-    backgroundColor: colors.orange50,
-    borderColor: colors.orange300,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 12,
-    lineHeight: 18,
-    fontWeight: '600',
-  },
+  scopeNotice: warningNotice,
   sourceLanguageNote: {
-    marginHorizontal: 16,
-    marginBottom: 10,
+    ...noticeBox,
     color: colors.blueInk,
     backgroundColor: colors.blue50,
     borderColor: colors.blue300,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 12,
-    lineHeight: 18,
-    fontWeight: '600',
-  },
-  filtersRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 16,
-    marginBottom: 8,
-    gap: 8,
-  },
-  filterChip: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    backgroundColor: colors.gray100,
-  },
-  filterChipActive: {
-    backgroundColor: colors.primary,
-  },
-  filterText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.gray600,
-  },
-  filterTextActive: {
-    color: colors.white,
-  },
-  filtersRowSecondary: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 16,
-    marginBottom: 8,
-    gap: 8,
   },
   resultCount: {
-    marginHorizontal: 16,
     marginBottom: 10,
     fontSize: 12,
     fontWeight: '700',
     color: colors.slate700,
   },
-  chipSecondary: {
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.outline,
-    backgroundColor: colors.white,
+  matchNote: {
+    marginBottom: 12,
+    color: colors.slate600,
+    fontSize: 13,
+    lineHeight: 18,
   },
-  chipSecondaryActive: {
-    backgroundColor: colors.edible,
-    borderColor: colors.edible,
+  unverified: {
+    marginTop: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.orange300,
   },
-  chipSecText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.slate500,
+  unverifiedTitle: {
+    marginBottom: 4,
+    color: colors.orange900,
+    fontSize: 14,
+    fontWeight: '800',
   },
-  chipSecTextActive: {
-    color: colors.white,
-  },
+  unverifiedBody: warningNotice,
   list: {
     flex: 1,
   },
   listContent: {
     paddingHorizontal: 16,
     paddingBottom: 24,
-  },
-  card: {
-    backgroundColor: colors.white,
-    borderRadius: 14,
-    padding: 12,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: colors.slate200,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  cardMainRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  cardThumbnail: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
-    backgroundColor: colors.slate200,
-    marginRight: 12,
-  },
-  cardThumbnailMissing: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 4,
-  },
-  cardThumbnailMissingText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.slate500,
-    textAlign: 'center',
-  },
-  cardDetails: {
-    flex: 1,
-    flexDirection: 'column',
-    alignItems: 'stretch',
-  },
-  cardBadge: {
-    alignSelf: 'flex-start',
-    marginTop: spacing.sm,
-    marginBottom: spacing.xs,
-  },
-  namePl: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: colors.slate900,
-    alignSelf: 'stretch',
-  },
-  nameEn: {
-    fontSize: 12,
-    color: colors.slate600,
-    marginTop: 1,
-    alignSelf: 'stretch',
-  },
-  nameLatin: {
-    fontSize: 13,
-    fontStyle: 'italic',
-    color: colors.slate500,
-    marginTop: 1,
-    alignSelf: 'stretch',
-  },
-  nicknames: {
-    fontSize: 12,
-    color: colors.slate400,
-    marginBottom: 10,
-  },
-  nicknamesSpacer: {
-    height: 12,
-    marginBottom: 10,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  tag: {
-    backgroundColor: colors.surfaceVariant,
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-  },
-  tagText: {
-    fontSize: 11,
-    color: colors.slate600,
-    fontWeight: '600',
-  },
-  tagDanger: {
-    backgroundColor: colors.red100,
-  },
-  tagDangerText: {
-    color: colors.red600,
-    fontSize: 11,
-    fontWeight: '700',
   },
   emptyContainer: {
     alignItems: 'center',

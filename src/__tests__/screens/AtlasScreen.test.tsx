@@ -48,7 +48,7 @@ describe('AtlasScreen RTL Tests', () => {
       </LanguageProvider>
     );
 
-    await fireEvent.press(screen.getByTestId('filter-status-DEADLY_POISONOUS'));
+    await fireEvent.press(screen.getByTestId('filter-chip-kind-poisonous'));
 
     const copy = await screen.findByTestId('atlas-card-copy-amanita_phalloides');
     const title = screen.getByTestId('atlas-name-pl-amanita_phalloides');
@@ -103,7 +103,7 @@ describe('AtlasScreen RTL Tests', () => {
       </LanguageProvider>
     );
 
-    await fireEvent.press(getByTestId('filter-status-DEADLY_POISONOUS'));
+    await fireEvent.press(getByTestId('filter-chip-kind-poisonous'));
 
     await waitFor(() => {
       expect(getByText('Muchomor sromotnikowy (zielonawy)')).toBeTruthy();
@@ -173,72 +173,73 @@ describe('AtlasScreen RTL Tests', () => {
     );
   });
 
-  it('filters by inedible, poisonous, gills and spines, and combines them', async () => {
+  it('filters by inedible and poisonous chips and keeps the result count on the matches', async () => {
     const screen = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={() => {}} />
       </LanguageProvider>
     );
 
-    await fireEvent.press(screen.getByTestId('filter-status-INEDIBLE'));
+    await fireEvent.press(screen.getByTestId('filter-chip-kind-inedible'));
     await waitFor(() => {
-      expect(screen.getByText('Goryczak żółciowy')).toBeTruthy();
-      expect(screen.queryByText('Czubajnik czerwieniejący')).toBeNull();
-      expect(screen.queryByText('Prawdziwki')).toBeNull();
-      expect(screen.queryByText('W kuchni')).toBeNull();
+      const matches = within(screen.getByTestId('atlas-matches'));
+      expect(matches.getByText('Goryczak żółciowy')).toBeTruthy();
+      expect(matches.queryByText('Prawdziwki')).toBeNull();
+      expect(matches.queryByText('W kuchni')).toBeNull();
+      expect(screen.getByTestId('atlas-result-count').props.children).toBe('Pasujące karty: 2');
     });
 
-    await fireEvent.press(screen.getByTestId('filter-status-POISONOUS'));
+    await fireEvent.press(screen.getByTestId('filter-chip-kind-inedible'));
+    await fireEvent.press(screen.getByTestId('filter-chip-kind-poisonous'));
     await waitFor(() => {
-      expect(screen.getByText('Muchomor czerwony')).toBeTruthy();
-      expect(screen.getByText('Czubajnik czerwieniejący')).toBeTruthy();
-      expect(screen.queryByText('Goryczak żółciowy')).toBeNull();
-      expect(screen.queryByText('Muchomor sromotnikowy (zielonawy)')).toBeNull();
-    });
-
-    await fireEvent.press(screen.getByTestId('filter-status-ALL'));
-    await fireEvent.press(screen.getByTestId('filter-hymenophore-SPINES'));
-    await waitFor(() => {
-      expect(screen.getByText('Kolczak obłączasty')).toBeTruthy();
-      expect(screen.queryByText('Prawdziwki')).toBeNull();
-      expect(screen.getByTestId('atlas-result-count').props.children).toBe('Pasujące karty: 1');
-    });
-
-    await fireEvent.press(screen.getByTestId('filter-status-DEADLY_POISONOUS'));
-    await waitFor(() => {
-      expect(screen.getByTestId('atlas-empty')).toBeTruthy();
-      expect(screen.getByText('Brak kart')).toBeTruthy();
-      expect(screen.getByText(/Brak karty nie oznacza, że grzyb jest jadalny/)).toBeTruthy();
-      expect(screen.getByTestId('atlas-result-count').props.children).toBe('Pasujące karty: 0');
-      expect(screen.queryByText('Kolczak obłączasty')).toBeNull();
+      const matches = within(screen.getByTestId('atlas-matches'));
+      expect(matches.getByText('Muchomor czerwony')).toBeTruthy();
+      expect(matches.getByText('Muchomor plamisty')).toBeTruthy();
+      expect(matches.getByTestId('atlas-psychoactive-amanita_muscaria')).toBeTruthy();
+      expect(matches.getByTestId('atlas-psychoactive-amanita_pantherina')).toBeTruthy();
+      expect(screen.queryByTestId('filter-chip-psychoactive')).toBeNull();
+      expect(matches.getByText('Muchomor sromotnikowy (zielonawy)')).toBeTruthy();
+      expect(within(matches.getByTestId('atlas-card-badge-amanita_phalloides')).getByText('ŚMIERTELNIE TRUJĄCY')).toBeTruthy();
+      expect(matches.queryByText('Goryczak żółciowy')).toBeNull();
+      expect(matches.queryByText('Prawdziwki')).toBeNull();
     });
   });
 
-  it('puts unfinished edible cards on the incomplete chip, not the edible one', async () => {
+  it('keeps edible results qualified and moves an empty field to verification', async () => {
     const screen = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={() => {}} />
       </LanguageProvider>
     );
 
-    expect(screen.getByText(/Karta niepełna \(16\)/)).toBeTruthy();
-    await fireEvent.press(screen.getByTestId('filter-status-EDIBLE'));
+    await fireEvent.press(screen.getByTestId('filter-chip-kind-edible'));
     await waitFor(() => {
-      expect(screen.getByText('Prawdziwki')).toBeTruthy();
-      expect(screen.queryByText('Gołąbek zielonawy')).toBeNull();
-      expect(screen.queryByText('Kolczak obłączasty')).toBeNull();
-      expect(screen.getAllByText('JADALNY').length).toBeGreaterThan(0);
+      const matches = within(screen.getByTestId('atlas-matches'));
+      expect(matches.getByText('Prawdziwki')).toBeTruthy();
+      expect(matches.getAllByText('JADALNY').length).toBeGreaterThan(0);
+      expect(matches.getByTestId('atlas-condition-armillaria_mellea')).toBeTruthy();
+      expect(matches.getAllByText('☠ Sobowtór!').length).toBeGreaterThan(0);
+      expect(matches.queryByText('Muchomor sromotnikowy (zielonawy)')).toBeNull();
+      expect(matches.queryByText('Gołąbek zielonawy')).toBeNull();
+      const unverified = within(screen.getByTestId('atlas-unverified'));
+      expect(unverified.getByText('Gołąbek zielonawy')).toBeTruthy();
+      expect(unverified.getByText('Kolczak obłączasty')).toBeTruthy();
+      expect(unverified.getByText(/nie oznacza, że grzyb jest jadalny/)).toBeTruthy();
     });
 
-    await fireEvent.press(screen.getByTestId('filter-status-INCOMPLETE'));
+    await fireEvent.press(screen.getByTestId('filter-chip-kind-edible'));
+    await fireEvent.press(screen.getByTestId('filter-chip-ring-present'));
     await waitFor(() => {
-      expect(screen.getByText('Gołąbek zielonawy')).toBeTruthy();
-      expect(screen.getByText('Kolczak obłączasty')).toBeTruthy();
-      expect(screen.getByText('Smardz jadalny')).toBeTruthy();
-      expect(screen.getByText('Pieczarka polna')).toBeTruthy();
-      expect(screen.queryByText('Prawdziwki')).toBeNull();
-      expect(screen.queryAllByText('JADALNY')).toHaveLength(0);
-      expect(screen.getByTestId('atlas-result-count').props.children).toBe('Pasujące karty: 16');
+      const matches = within(screen.getByTestId('atlas-matches'));
+      expect(matches.getByText('Czubajka kania')).toBeTruthy();
+      expect(matches.queryByText('Prawdziwki')).toBeNull();
+      const unverified = within(screen.getByTestId('atlas-unverified'));
+      expect(unverified.getByText('Prawdziwki')).toBeTruthy();
+      expect(screen.queryByText('Gęśnica wiosenna')).toBeNull();
+      const listed = screen.getAllByTestId(/^atlas-card-[a-z0-9_]+$/);
+      const matchCount = within(screen.getByTestId('atlas-matches')).getAllByTestId(/^atlas-card-[a-z0-9_]+$/).length;
+      expect(screen.getByTestId('atlas-result-count').props.children).toBe(`Pasujące karty: ${matchCount}`);
+      expect(listed.length).toBeGreaterThan(matchCount);
     });
   });
 
@@ -273,7 +274,7 @@ describe('AtlasScreen RTL Tests', () => {
     expect(screen.queryByText(en.cards.sourceLanguageNote)).toBeNull();
     expect(pl.atlas.monthRange).toBe('{start} - {end} mies.');
 
-    await fireEvent.press(screen.getByTestId('filter-status-DEADLY_POISONOUS'));
+    await fireEvent.press(screen.getByTestId('filter-chip-kind-poisonous'));
     await waitFor(() => {
       expect(screen.getAllByText('☠ Sobowtór!').length).toBeGreaterThan(0);
       expect(screen.queryByText('☠ Look-alike!')).toBeNull();
@@ -309,11 +310,21 @@ describe('AtlasScreen RTL Tests', () => {
     });
 
     await fireEvent.changeText(screen.getByPlaceholderText(en.atlas.searchPlaceholder), '');
-    await fireEvent.press(screen.getByTestId('filter-status-DEADLY_POISONOUS'));
+    await fireEvent.press(screen.getByTestId('filter-chip-kind-edible'));
+    await waitFor(() => {
+      expect(screen.getByTestId('atlas-condition-armillaria_mellea').props.children).toBe(
+        'Conditionally edible. The condition is on the card.',
+      );
+    });
+    await fireEvent.press(screen.getByTestId('filter-chip-kind-edible'));
+    await fireEvent.press(screen.getByTestId('filter-chip-kind-poisonous'));
     await waitFor(() => {
       expect(screen.getAllByText('☠ Look-alike!').length).toBeGreaterThan(0);
       expect(screen.queryByText('☠ Sobowtór!')).toBeNull();
+      expect(screen.getByTestId('atlas-psychoactive-amanita_muscaria').props.children).toBe('Psychoactive');
       expect(screen.getByTestId('atlas-source-language-note')).toBeTruthy();
+      expect(screen.queryByText('Nietrujące')).toBeNull();
+      expect(screen.queryByText('Non-poisonous')).toBeNull();
     });
   });
 });
