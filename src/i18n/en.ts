@@ -114,6 +114,10 @@ export const en: Translations = {
       amanitaWhole: 'Whole fruiting body with the bulb or volva at the base',
       amanitaYoung: 'Young fruiting body (“egg”)',
       wholeStemBase: 'Whole fruiting body with stem base',
+      swollenBaseNotVolva:
+        'Whole fruiting body with stem base. A thickened (bulbous) stem base is not an Amanita volva or bulb.',
+      chlorophyllumWhole:
+        'Whole fruiting body with stem base. A thickened (bulbous) stem base is not an Amanita volva or bulb. The base can have a rim, but it has no volva.',
       gills: 'Gills from below',
       gillsRing: 'Gills and ring from below',
       gillsCortina: 'Gills and cortina from below',

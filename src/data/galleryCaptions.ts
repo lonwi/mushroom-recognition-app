@@ -7,6 +7,22 @@ const CORTINA_GENERA = ['cortinarius_'] as const;
 /** Young Hypholoma fasciculare has a cortina; it later leaves a dark ring zone, not a true ring. */
 const CORTINA_SPECIES = new Set(['hypholoma_fasciculare']);
 const GYROMITRA = 'gyromitra_esculenta';
+const CHLOROPHYLLUM = 'chlorophyllum_rhacodes';
+/** Thickened stem base that must not be read as an Amanita volva or bulb. */
+const SWOLLEN_BASE_NOT_VOLVA = new Set(['inocybe_erubescens', 'agaricus_xanthodermus']);
+
+function wholeFeatureKey(speciesId: string): string {
+  if (speciesId.startsWith(AMANITA_GENUS)) {
+    return 'gallery.feature.amanitaWhole';
+  }
+  if (speciesId === CHLOROPHYLLUM) {
+    return 'gallery.feature.chlorophyllumWhole';
+  }
+  if (SWOLLEN_BASE_NOT_VOLVA.has(speciesId)) {
+    return 'gallery.feature.swollenBaseNotVolva';
+  }
+  return 'gallery.feature.wholeStemBase';
+}
 
 function startsWithGenus(speciesId: string, genera: readonly string[]): boolean {
   return genera.some((genus) => speciesId.startsWith(genus));
@@ -18,9 +34,7 @@ export function galleryFeatureKey(speciesId: string, feature: GalleryFeature): s
     return 'gallery.feature.cap';
   }
   if (feature === 'W') {
-    return speciesId.startsWith(AMANITA_GENUS)
-      ? 'gallery.feature.amanitaWhole'
-      : 'gallery.feature.wholeStemBase';
+    return wholeFeatureKey(speciesId);
   }
   if (feature === 'Y') {
     return speciesId.startsWith(AMANITA_GENUS) ? 'gallery.feature.amanitaYoung' : 'gallery.feature.young';

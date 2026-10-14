@@ -112,6 +112,10 @@ export const pl = {
       amanitaWhole: 'Cały owocnik z bulwą lub pochwą u nasady',
       amanitaYoung: 'Młody owocnik („jajo”)',
       wholeStemBase: 'Cały owocnik z nasadą trzonu',
+      swollenBaseNotVolva:
+        'Cały owocnik z nasadą trzonu. Zgrubiała (bulwiasta) nasada trzonu to nie bulwa ani pochwa muchomora.',
+      chlorophyllumWhole:
+        'Cały owocnik z nasadą trzonu. Zgrubiała (bulwiasta) nasada trzonu to nie bulwa ani pochwa muchomora. Nasada może mieć rąbek, ale nie ma pochwy.',
       gills: 'Blaszki od spodu',
       gillsRing: 'Blaszki i pierścień od spodu',
       gillsCortina: 'Blaszki i zasnówka od spodu',
