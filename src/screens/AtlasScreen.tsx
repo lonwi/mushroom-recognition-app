@@ -400,17 +400,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     color: colors.slate900,
+    alignSelf: 'stretch',
   },
   nameEn: {
     fontSize: 12,
     color: colors.slate600,
     marginTop: 1,
+    alignSelf: 'stretch',
   },
   nameLatin: {
     fontSize: 13,
     fontStyle: 'italic',
     color: colors.slate500,
     marginTop: 1,
+    alignSelf: 'stretch',
   },
   nicknames: {
     fontSize: 12,

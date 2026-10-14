@@ -41,7 +41,7 @@ describe('AtlasScreen RTL Tests', () => {
     });
   });
 
-  it('puts the edibility badge under a full-width title, including long Latin names', async () => {
+  it('keeps a long deadly name full width with the badge under the title', async () => {
     const screen = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={() => {}} />
@@ -55,36 +55,44 @@ describe('AtlasScreen RTL Tests', () => {
     const latin = screen.getByTestId('atlas-name-latin-amanita_phalloides');
     const badge = screen.getByTestId('atlas-card-badge-amanita_phalloides');
     const column = StyleSheet.flatten(copy.props.style);
+    const titleStyle = StyleSheet.flatten(title.props.style);
 
     expect(column.flexDirection).toBe('column');
     expect(column.alignItems).toBe('stretch');
+    expect(titleStyle.alignSelf).toBe('stretch');
     expect(title.parent).toBe(copy);
     expect(latin.parent).toBe(copy);
     expect(badge.parent).toBe(copy);
-    expect(copy.children.indexOf(title)).toBeLessThan(copy.children.indexOf(latin));
+    expect(copy.children.indexOf(title)).toBeLessThan(copy.children.indexOf(badge));
     expect(copy.children.indexOf(latin)).toBeLessThan(copy.children.indexOf(badge));
     expect(title.props.children).toBe('Muchomor sromotnikowy (zielonawy)');
     expect(title.props.textBreakStrategy).toBe('simple');
     expect(title.props.android_hyphenationFrequency).toBe('none');
-    expect(latin.props.children).toBe('Amanita phalloides');
+    expect(StyleSheet.flatten(latin.props.style).alignSelf).toBe('stretch');
     expect(latin.props.textBreakStrategy).toBe('simple');
     expect(latin.props.android_hyphenationFrequency).toBe('none');
     expect(within(badge).getByText('ŚMIERTELNIE TRUJĄCY')).toBeTruthy();
 
-    await fireEvent.press(screen.getByTestId('filter-status-ALL'));
-    await fireEvent.changeText(
-      screen.getByPlaceholderText('Szukaj grzyba (np. borowik, kania, kurka)...'),
-      'Tricholoma'
-    );
+    const longCopy = screen.getByTestId('atlas-card-copy-inocybe_erubescens');
+    const longTitle = screen.getByTestId('atlas-name-pl-inocybe_erubescens');
+    const longLatin = screen.getByTestId('atlas-name-latin-inocybe_erubescens');
+    const longBadge = screen.getByTestId('atlas-card-badge-inocybe_erubescens');
 
-    const longLatin = await screen.findByTestId('atlas-name-latin-tricholoma_equestre');
-    const longCopy = screen.getByTestId('atlas-card-copy-tricholoma_equestre');
-    expect(longLatin.props.children).toBe('Tricholoma equestre (syn. T. flavovirens, T. auratum)');
+    expect(longTitle.props.children).toBe('Strzępiak ceglasty');
+    expect(longLatin.props.children).toBe('Inosperma erubescens (syn. Inocybe erubescens)');
+    expect(longTitle.parent).toBe(longCopy);
+    expect(longLatin.parent).toBe(longCopy);
+    expect(longBadge.parent).toBe(longCopy);
+    expect(longCopy.children.indexOf(longTitle)).toBeLessThan(longCopy.children.indexOf(longBadge));
+    expect(longCopy.children.indexOf(longLatin)).toBeLessThan(longCopy.children.indexOf(longBadge));
+    expect(StyleSheet.flatten(longCopy.props.style).flexDirection).toBe('column');
+    expect(StyleSheet.flatten(longCopy.props.style).alignItems).toBe('stretch');
+    expect(StyleSheet.flatten(longTitle.props.style).alignSelf).toBe('stretch');
+    expect(StyleSheet.flatten(longLatin.props.style).alignSelf).toBe('stretch');
+    expect(longTitle.props.textBreakStrategy).toBe('simple');
     expect(longLatin.props.textBreakStrategy).toBe('simple');
     expect(longLatin.props.android_hyphenationFrequency).toBe('none');
-    expect(longLatin.parent).toBe(longCopy);
-    expect(screen.getByTestId('atlas-card-badge-tricholoma_equestre').parent).toBe(longCopy);
-    expect(StyleSheet.flatten(longCopy.props.style).alignItems).toBe('stretch');
+    expect(within(longBadge).getByText('ŚMIERTELNIE TRUJĄCY')).toBeTruthy();
   });
 
   it('filters deadly poisonous mushrooms', async () => {
