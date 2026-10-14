@@ -51,7 +51,7 @@ export const pl = {
       'Żadna karta w tym atlasie nie pasuje do wybranych filtrów. Brak karty nie oznacza, że grzyb jest jadalny. Atlas nie jest kompletnym kluczem do grzybów Polski.',
     emptyResults: 'Nie znaleziono grzybów spełniających wybrane kryteria.',
     szatanNotice:
-      'Słowo „szatan” bywa ludową nazwą goryczaka, ale oznacza też borowika szatańskiego (Rubroboletus satanas). Borowik szatański (Rubroboletus satanas) nie jest opisany w tym atlasie i nie jest goryczakiem żółciowym. To wyszukiwanie celowo nie otwiera karty goryczaka. Brak karty nie oznacza, że grzyb jest jadalny.',
+      'Słowo „szatan” bywa ludową nazwą goryczaka, ale borowik szatański (Rubroboletus satanas) ma osobną kartę i nie jest goryczakiem żółciowym. To wyszukiwanie nie otwiera karty goryczaka. Brak wyniku przy tych filtrach nie oznacza, że grzyb jest jadalny.',
     resultCount: 'Pasujące karty: {count}',
     scopeNotice:
       'W tym atlasie jest {count} kart. To nie jest kompletny klucz do grzybów Polski i nie zastępuje oceny grzyboznawcy ani punktu kontroli grzybów w Sanepidzie.',
@@ -92,6 +92,7 @@ export const pl = {
     family: 'RODZINA',
     otherNames: 'INNE NAZWY',
     seasonPoland: 'SEZON WYSTĘPOWANIA W POLSCE',
+    seasonOmitted: 'Pora występowania nie jest podana na tej karcie.',
     morphologyHabitat: 'Morfologia i siedlisko',
     occurrence: 'Występowanie',
     cap: 'Kapelusz',
@@ -113,10 +114,11 @@ export const pl = {
       amanitaYoung: 'Młody owocnik („jajo”)',
       wholeStemBase: 'Cały owocnik z nasadą trzonu',
       swollenBaseNotVolva:
-        'Cały owocnik z nasadą trzonu. Zgrubiała (bulwiasta) nasada trzonu to nie bulwa ani pochwa muchomora.',
+        'Cały owocnik z nasadą trzonu. Zgrubiała nasada trzonu to nie bulwa ani pochwa muchomora.',
       chlorophyllumWhole:
-        'Cały owocnik z nasadą trzonu. Zgrubiała (bulwiasta) nasada trzonu to nie bulwa ani pochwa muchomora. Nasada może mieć rąbek, ale nie ma pochwy.',
+        'Cały owocnik z nasadą trzonu. Zgrubiała nasada trzonu to nie bulwa ani pochwa muchomora. Nasada może mieć rąbek, ale nie ma pochwy.',
       gills: 'Blaszki od spodu',
+      tubes: 'Rurki od spodu',
       gillsRing: 'Blaszki i pierścień od spodu',
       gillsCortina: 'Blaszki i zasnówka od spodu',
       young: 'Młody owocnik',
@@ -271,6 +273,8 @@ export const pl = {
     differences: 'Kluczowe różnice rozpoznawcze:',
     noVerdict: 'Atlas nie wydaje werdyktu dla tego gatunku',
     notForCollection: 'Niezalecany do zbioru',
+    weaklyPoisonous: 'trujący (słabo)',
+    poisonousNote: 'trujący',
   },
   edibility: {
     edible: 'JADALNY',

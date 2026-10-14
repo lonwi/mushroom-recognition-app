@@ -39,15 +39,34 @@ describe('SpeciesDetailScreen safety notices', () => {
     expect(getByTestId('species-use-toxic')).toBeTruthy();
   });
 
-  it('shows the same incomplete notice for muchomor czerwony', async () => {
-    const { getByTestId, getByText, queryByText } = await render(
+  it('names caesarea and young blusher on muchomor czerwony, without Russula', async () => {
+    const { getByTestId, getByText, queryByTestId, queryByText } = await render(
       <SpeciesDetailScreen species={species('amanita_muscaria')} onBack={() => {}} />
     );
 
-    expect(getByTestId('lookalike-incomplete')).toBeTruthy();
+    expect(queryByTestId('lookalike-incomplete')).toBeNull();
     expect(queryByText(/Brak niebezpiecznych sobowtórów/)).toBeNull();
+    expect(queryByText(/gołąbek/i)).toBeNull();
+    expect(queryByText(/Russula/)).toBeNull();
+    expect(getByText(/Muchomor cesarski/)).toBeTruthy();
+    expect(getByText(/młode owocniki/)).toBeTruthy();
+    expect(getByTestId('lookalike-unlinked-amanita_caesarea')).toBeTruthy();
     expect(getByTestId('species-warning-notes')).toBeTruthy();
     expect(getByText(/nie próbuj usuwać toksyn w domu/)).toBeTruthy();
+  });
+
+  it('omits the season calendar when a card has no checked months', async () => {
+    const { getByTestId, queryByTestId, getByText } = await render(
+      <SpeciesDetailScreen species={species('rubroboletus_satanas')} onBack={() => {}} />
+    );
+
+    expect(getByTestId('species-season-omitted').props.children).toBe(
+      'Pora występowania nie jest podana na tej karcie.',
+    );
+    expect(queryByTestId('species-month-7')).toBeNull();
+    expect(getByText(/Dz\.U\. 2014 poz\. 1408/)).toBeTruthy();
+    expect(getByText('TRUJĄCY')).toBeTruthy();
+    expect(queryByTestId('species-use-edible')).toBeNull();
   });
 
   it('shows fatal look-alike risk and warning notes for kania', async () => {

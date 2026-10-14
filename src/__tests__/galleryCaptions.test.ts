@@ -25,6 +25,7 @@ const PLAIN = new Set([
   'hygrophoropsis_aurantiaca',
   'tricholoma_equestre',
 ]);
+const TUBES = new Set(['suillellus_luridus', 'rubroboletus_satanas']);
 const NOT_VOLVA = new Set(['inocybe_erubescens', 'agaricus_xanthodermus', 'chlorophyllum_rhacodes']);
 const GYROMITRA = 'gyromitra_esculenta';
 
@@ -37,13 +38,16 @@ function caption(speciesId: string, feature: GalleryFeature, language: 'pl' | 'e
 }
 
 function bulwaOnlyAsNegation(text: string): boolean {
-  const re = /bulwa\w*/gi;
+  const re = /(?<![\p{L}])(?:bulw\p{L}*|pochw\p{L}*)(?![\p{L}])/giu;
   let match: RegExpExecArray | null;
   let any = false;
   while ((match = re.exec(text)) !== null) {
     any = true;
-    const before = text.slice(Math.max(0, match.index - 6), match.index);
-    if (!/^bulwa$/i.test(match[0]) || !/nie\s+$/i.test(before)) {
+    const word = match[0];
+    const before = text.slice(Math.max(0, match.index - 16), match.index);
+    const negatedBulwa = /^bulw/iu.test(word) && /(?:nie\s+|nie\s+ma\s+)$/iu.test(before);
+    const negatedPochwa = /^pochw/iu.test(word) && /(?:nie\s+|nie\s+ma\s+|ani\s+)$/iu.test(before);
+    if (!negatedBulwa && !negatedPochwa) {
       return false;
     }
   }
@@ -113,13 +117,28 @@ function expectGroupCopy(speciesId: string, feature: GalleryFeature, language: '
   if (PLAIN.has(speciesId) && feature === 'G') {
     expect(text).toBe(phrase(language, pl.gallery.feature.gills, en.gallery.feature.gills));
   }
+  if (TUBES.has(speciesId) && feature === 'G') {
+    expect(text).toBe(phrase(language, pl.gallery.feature.tubes, en.gallery.feature.tubes));
+  }
 }
 
 describe('gallery feature captions', () => {
+  it('treats bulwa, bulwą and pochwa as allowed only in a negation', () => {
+    expect(bulwaOnlyAsNegation('to nie bulwa ani pochwa')).toBe(true);
+    expect(bulwaOnlyAsNegation('to nie bulwą')).toBe(true);
+    expect(bulwaOnlyAsNegation('nie ma pochwy')).toBe(true);
+    expect(bulwaOnlyAsNegation('z bulwą')).toBe(false);
+    expect(bulwaOnlyAsNegation('z pochwą')).toBe(false);
+    expect(bulwaOnlyAsNegation('bulwa u nasady')).toBe(false);
+    expect(bulwaOnlyAsNegation('przy bulwie')).toBe(false);
+    expect(bulwaOnlyAsNegation('nie ma bulwy')).toBe(true);
+    expect(bulwaOnlyAsNegation('w pochwie')).toBe(false);
+  });
+
   const speciesIds = Object.keys(SPECIES_GALLERY);
 
   it('classifies every poisonous gallery species', () => {
-    const known = [...AMANITA, ...RING, ...CORTINA, ...PLAIN, ...NOT_VOLVA, GYROMITRA];
+    const known = [...AMANITA, ...RING, ...CORTINA, ...PLAIN, ...NOT_VOLVA, ...TUBES, GYROMITRA];
     expect(speciesIds.slice().sort()).toEqual([...new Set(known)].sort());
   });
 

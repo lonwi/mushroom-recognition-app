@@ -5,11 +5,48 @@ import {
   LOOKALIKES_WITHOUT_CARD,
   MUSHROOM_IDS,
   MUSHROOMS_DATABASE,
-  NOT_FOR_COLLECTION_NOTE,
+  POISONOUS_NOTE,
   showsKitchenSection,
+  WEAKLY_POISONOUS_NOTE,
 } from '../data/mushrooms';
 import { getMushroomImage } from '../utils/mushroomImages';
 import { GOLDEN_RULES, TOXICOLOGY_CENTERS } from '../data/safetyRules';
+import { type MushroomSpecies } from '../types/mushroom';
+
+function mustSpecies(id: string): MushroomSpecies {
+  const species = MUSHROOMS_DATABASE.find((item) => item.id === id);
+  if (!species) {
+    throw new Error(`Missing atlas card: ${id}`);
+  }
+  return species;
+}
+
+function noteForPoisonousLookalike(id: string): string {
+  if (id === 'amanita_porphyria') {
+    return WEAKLY_POISONOUS_NOTE;
+  }
+  return POISONOUS_NOTE;
+}
+
+function expectStatusAgreesWithNote(status: string, note: string | undefined): void {
+  if (status === 'POISONOUS') {
+    expect(note).not.toBe(ATLAS_NO_VERDICT_NOTE);
+  }
+  if (status === 'NO_ATLAS_VERDICT') {
+    expect(note).toBe(ATLAS_NO_VERDICT_NOTE);
+  }
+}
+
+function recordedNote(value: object): string | undefined {
+  if (!('note' in value)) {
+    return undefined;
+  }
+  const note = (value as { note?: unknown }).note;
+  if (typeof note !== 'string') {
+    return undefined;
+  }
+  return note;
+}
 
 describe('Mushroom Database & Safety Verification', () => {
   test('Database contains valid Central European mushroom species', () => {
@@ -52,13 +89,11 @@ describe('Mushroom Database & Safety Verification', () => {
           }
           expect(risk.confusedWithStatus).toBe(allowed.status);
           if (allowed.status === 'NO_ATLAS_VERDICT') {
-            expect(allowed.note).toBe(
-              risk.confusedWithId === 'amanita_excelsa' ? NOT_FOR_COLLECTION_NOTE : ATLAS_NO_VERDICT_NOTE,
-            );
+            expect(allowed.note).toBe(ATLAS_NO_VERDICT_NOTE);
           } else {
             expect(allowed.status).toBe('POISONOUS');
             expect(risk.fatal).toBe(false);
-            expect(allowed.note).toBe(ATLAS_NO_VERDICT_NOTE);
+            expect(allowed.note).toBe(noteForPoisonousLookalike(risk.confusedWithId));
           }
           expect(allowed.reason.trim().length).toBeGreaterThan(0);
           continue;
@@ -83,22 +118,21 @@ describe('Mushroom Database & Safety Verification', () => {
   test('look-alikes without a card do not use a normal edibility status', () => {
     const normalStatuses = ['EDIBLE', 'INEDIBLE', 'POISONOUS', 'DEADLY_POISONOUS'];
     expect(Object.keys(LOOKALIKES_WITHOUT_CARD).sort()).toEqual([
-      'amanita_excelsa',
-      'calocybe_gambosa',
+      'amanita_caesarea',
+      'amanita_porphyria',
       'craterellus_tubaeformis',
-      'hypholoma_capnoides',
+      'entoloma_sinuatum',
       'imperator_rhodopurpureus',
       'imperator_torosus',
       'rubroboletus_other',
-      'rubroboletus_satanas',
-      'suillellus_luridus',
     ]);
 
     const poisonousWithoutCard = new Set([
+      'amanita_porphyria',
+      'entoloma_sinuatum',
       'imperator_rhodopurpureus',
       'imperator_torosus',
       'rubroboletus_other',
-      'rubroboletus_satanas',
     ]);
 
     for (const [id, entry] of Object.entries(LOOKALIKES_WITHOUT_CARD)) {
@@ -122,11 +156,32 @@ describe('Mushroom Database & Safety Verification', () => {
       }
     }
 
-    expect(LOOKALIKES_WITHOUT_CARD.amanita_excelsa.note).toBe(NOT_FOR_COLLECTION_NOTE);
-    expect(LOOKALIKES_WITHOUT_CARD.calocybe_gambosa.note).toBe(ATLAS_NO_VERDICT_NOTE);
-    expect(LOOKALIKES_WITHOUT_CARD.rubroboletus_satanas.note).toBe(ATLAS_NO_VERDICT_NOTE);
-    expect(LOOKALIKES_WITHOUT_CARD.calocybe_gambosa.note).not.toBe(NOT_FOR_COLLECTION_NOTE);
-    expect(LOOKALIKES_WITHOUT_CARD.rubroboletus_satanas.status).toBe('POISONOUS');
+    expect(LOOKALIKES_WITHOUT_CARD.amanita_caesarea.note).toBe(ATLAS_NO_VERDICT_NOTE);
+    expect(LOOKALIKES_WITHOUT_CARD.amanita_caesarea.status).toBe('NO_ATLAS_VERDICT');
+    expect(LOOKALIKES_WITHOUT_CARD.entoloma_sinuatum.status).toBe('POISONOUS');
+    expect(LOOKALIKES_WITHOUT_CARD.entoloma_sinuatum.note).toBe(POISONOUS_NOTE);
+    expect(
+      `${LOOKALIKES_WITHOUT_CARD.entoloma_sinuatum.note} ${LOOKALIKES_WITHOUT_CARD.entoloma_sinuatum.reason}`,
+    ).not.toMatch(/słabo|weak|silnie|ciężk/i);
+    expect(LOOKALIKES_WITHOUT_CARD.amanita_porphyria.status).toBe('POISONOUS');
+    expect(LOOKALIKES_WITHOUT_CARD.amanita_porphyria.note).toBe(WEAKLY_POISONOUS_NOTE);
+    expect(`${LOOKALIKES_WITHOUT_CARD.amanita_porphyria.note} ${LOOKALIKES_WITHOUT_CARD.amanita_porphyria.reason}`).not.toMatch(
+      /śmiertel|lethal|deadly/i,
+    );
+  });
+
+  test('poisonous notes are never the no-verdict sentence', () => {
+    for (const species of MUSHROOMS_DATABASE) {
+      expectStatusAgreesWithNote(species.status, recordedNote(species));
+      for (const risk of species.confusionRisks) {
+        const linked = LOOKALIKES_WITHOUT_CARD[risk.confusedWithId];
+        const note = linked ? linked.note : recordedNote(risk);
+        expectStatusAgreesWithNote(risk.confusedWithStatus, note);
+      }
+    }
+    for (const entry of Object.values(LOOKALIKES_WITHOUT_CARD)) {
+      expectStatusAgreesWithNote(entry.status, entry.note);
+    }
   });
 
   test('fatal is set only when the named look-alike is deadly', () => {
@@ -139,13 +194,19 @@ describe('Mushroom Database & Safety Verification', () => {
 
   test('an empty look-alike list is not a sourced all-clear', () => {
     const empty = MUSHROOMS_DATABASE.filter((species) => species.confusionRisks.length === 0);
-    expect(empty.map((species) => species.id).sort()).toEqual(['amanita_muscaria']);
+    expect(empty.map((species) => species.id).sort()).toEqual([]);
 
     for (const species of MUSHROOMS_DATABASE) {
       expect(species.noDangerousLookAlikes).toBeUndefined();
     }
 
-    expect(hasFatalLookAlikeRisk(empty[0])).toBe(false);
+    const flyAgaric = MUSHROOMS_DATABASE.find((species) => species.id === 'amanita_muscaria');
+    expect(flyAgaric?.confusionRisks.map((risk) => risk.confusedWithId)).toEqual([
+      'amanita_caesarea',
+      'amanita_rubescens',
+    ]);
+    expect(JSON.stringify(flyAgaric?.confusionRisks)).not.toMatch(/Russula|gołąbek/i);
+    expect(flyAgaric && hasFatalLookAlikeRisk(flyAgaric)).toBe(false);
   });
 
   test('fatal look-alike risk follows the recorded flags', () => {
@@ -194,6 +255,8 @@ describe('Mushroom Database & Safety Verification', () => {
       'russula_virescens',
       'agaricus_campestris',
       'amanita_rubescens',
+      'calocybe_gambosa',
+      'hypholoma_capnoides',
       'morchella_esculenta',
       'hydnum_repandum',
       'neoboletus_luridiformis',
@@ -316,6 +379,7 @@ describe('Mushroom Database & Safety Verification', () => {
       expect(order).toMatch(cookingOrder);
       expect(`W literaturze ${order}e się`).not.toMatch(cookingOrder);
     }
+    expect('Odlej wodę').toMatch(cookingOrder);
     expect('W literaturze kosmki z trzonu zeskrobuje się przed jedzeniem').not.toMatch(cookingOrder);
     expect(unfinished.length).toBeGreaterThan(0);
     for (const species of unfinished) {
@@ -341,7 +405,7 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(note).not.toMatch(/w parku (jest )?dozwol/i);
   });
 
-  test('szatan is not a name for goryczak and borowik szatański is absent', () => {
+  test('szatan is not a name for goryczak', () => {
     const goryczak = MUSHROOMS_DATABASE.find((species) => species.id === 'tylopilus_felleus');
     expect(goryczak).toBeDefined();
     const names = [goryczak?.namePl, goryczak?.nameLatin, ...(goryczak?.commonNicknames ?? [])]
@@ -353,10 +417,22 @@ describe('Mushroom Database & Safety Verification', () => {
     const boleteLookalike = bolete?.confusionRisks.find((risk) => risk.confusedWithId === 'tylopilus_felleus');
     expect(boleteLookalike?.confusedWithName).toBe('Goryczak żółciowy');
     expect(boleteLookalike?.confusedWithName.toLowerCase()).not.toMatch(/szatan/);
+  });
 
-    expect(
-      MUSHROOMS_DATABASE.some((species) => /satana|szatańsk/i.test(`${species.namePl} ${species.nameLatin}`))
-    ).toBe(false);
+  test('borowik szatański has its own card without unverified habitat', () => {
+    const satanas = mustSpecies('rubroboletus_satanas');
+    const page = `${satanas.culinaryValue} ${satanas.habitat} ${satanas.warningNotes}`;
+    expect(satanas.namePl).toBe('Borowik szatański');
+    expect(satanas.nameLatin).toMatch(/Rubroboletus satanas/);
+    expect(satanas.status).toBe('POISONOUS');
+    expect(satanas.months).toEqual([]);
+    expect(satanas.habitat).toMatch(/nie są podane/);
+    expect(satanas.habitat).not.toMatch(/dąb|buk|grab|wapien/i);
+    expect(page).toMatch(/Dz\.U\. 2014 poz\. 1408/);
+    expect(satanas.warningNotes).toMatch(/ochroną ścisłą|Ochrona ścisła/);
+    expect(satanas.warningNotes).toMatch(/Zbiór jest zakazany/);
+    expect(page).not.toMatch(/Czerwon\w* liś/i);
+    expect(page).not.toMatch(/wymiot/);
   });
 
   test('the green kitchen section is only for a finished edible card', () => {
@@ -462,6 +538,69 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(excelsaText).toMatch(/Gładki brzeg nie rozstrzyga/);
     expect(excelsaText).toMatch(/też ma brzeg gładki/);
     expect(excelsaText).not.toMatch(/różowieje po uszkodzeniu i ma brzeg gładki/);
+  });
+
+  test('sobowtór cards keep unverified fields off the page', () => {
+    const byId = Object.fromEntries(MUSHROOMS_DATABASE.map((species) => [species.id, species]));
+    const excelsa = byId.amanita_excelsa;
+    const gambosa = byId.calocybe_gambosa;
+    const luridus = byId.suillellus_luridus;
+    const capnoides = byId.hypholoma_capnoides;
+    const polishLetter = String.raw`\p{L}\p{N}_`;
+    const cookingOrder = new RegExp(
+      `(?<![${polishLetter}])(?:obgotować|obgotuj|odlać|odlej|zdjąć|zdejmij|odciąć|odetnij|zeskrob)(?![${polishLetter}])|Tylko dla doświadczonych|(?<=^|[.!?]\\s+)Jadaln`,
+      'iu',
+    );
+    const collectingOrder = new RegExp(
+      `(?<![${polishLetter}])(?:zbieraj|zbierz|zostaw|nie niszcz)(?![${polishLetter}])`,
+      'iu',
+    );
+
+    expect(excelsa.status).toBe('INEDIBLE');
+    expect(excelsa.habitat).not.toMatch(/dąb|buk|sosn|świerk|jodł|brzoz|grab|lipa/i);
+    expect(excelsa.nameLatin).toMatch(/Amanita spissa/);
+
+    expect(gambosa.incompleteCard).toBe(true);
+    expect(gambosa.culinaryValue).toMatch(/gęśnica indyjska/);
+    expect(gambosa.confusionRisks.some((risk) => risk.confusedWithId === 'inocybe_erubescens' && risk.fatal)).toBe(
+      true,
+    );
+
+    const luridusText = [luridus.culinaryValue, luridus.warningNotes, luridus.fleshDescription].join('\n');
+    expect(luridus.status).toBe('POISONOUS');
+    expect(luridusText).toMatch(/żołądkowo-jelitow/);
+    expect(luridusText).toMatch(/Dz\.U\. 2026 poz\. 258/);
+    expect(luridus.warningNotes).toContain(
+      'Źródła są rozbieżne (Zarzyński 2021: niejadalny; Poradnik grzybiarza: trujący); karta przyjmuje wersję ostrożniejszą.',
+    );
+    expect(luridusText).not.toMatch(/alkohol/);
+    expect(luridusText).not.toMatch(/surow/);
+
+    const galerina = capnoides.confusionRisks.find((risk) => risk.confusedWithId === 'galerina_marginata');
+    if (!galerina) {
+      throw new Error('galerina look-alike missing');
+    }
+    expect(galerina.confusedWithId).toBe('galerina_marginata');
+    expect(galerina.fatal).toBe(true);
+    const galerinaText = [galerina.keyDifferences.join('\n'), capnoides.culinaryValue, capnoides.warningNotes].join(
+      '\n',
+    );
+    expect(galerinaText).toMatch(/karcie hełmówki jadowitej/);
+    expect(galerinaText).toMatch(/cynamonowobrązow/);
+    expect(galerinaText).toMatch(/włóknisty/);
+    expect(galerinaText).not.toMatch(/rdzawobrązow/);
+    expect(galerinaText).not.toMatch(/galerina_marginata/);
+
+    for (const id of [
+      'amanita_excelsa',
+      'calocybe_gambosa',
+      'suillellus_luridus',
+      'hypholoma_capnoides',
+      'rubroboletus_satanas',
+    ]) {
+      expect(JSON.stringify(byId[id])).not.toMatch(cookingOrder);
+      expect(JSON.stringify(byId[id])).not.toMatch(collectingOrder);
+    }
   });
 
   test('a zigzag on the stem is not treated as proof that the mushroom is a parasol', () => {

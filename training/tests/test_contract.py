@@ -220,8 +220,13 @@ class ManifestAndShipGateTest(unittest.TestCase):
         # Closed list. A new atlas card with no model class fails until it is
         # added here with a reason. labels.json is not the place to hide the gap.
         cards_without_model_class = {
+            "amanita_excelsa": "Inedible look-alike card. The class contract does not include it.",
+            "calocybe_gambosa": "Unfinished spring card. The class contract does not include it.",
             "hydnum_repandum": "Unfinished hedgehog card. The class contract does not include it.",
+            "hypholoma_capnoides": "Unfinished wood-tuft card. The class contract does not include it.",
             "inocybe_erubescens": "Deadly fibrecap is an atlas look-alike card, not a model class.",
+            "rubroboletus_satanas": "Strictly protected poisonous card. The class contract does not include it.",
+            "suillellus_luridus": "Poisonous bolete card. The class contract does not include it.",
         }
         unexpected = [
             species_id

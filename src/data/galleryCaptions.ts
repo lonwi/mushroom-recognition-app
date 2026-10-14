@@ -10,6 +10,8 @@ const GYROMITRA = 'gyromitra_esculenta';
 const CHLOROPHYLLUM = 'chlorophyllum_rhacodes';
 /** Thickened stem base that must not be read as an Amanita volva or bulb. */
 const SWOLLEN_BASE_NOT_VOLVA = new Set(['inocybe_erubescens', 'agaricus_xanthodermus']);
+/** Boletes. The underside is tubes, not gills. */
+const TUBE_SPECIES = new Set(['suillellus_luridus', 'rubroboletus_satanas']);
 
 function wholeFeatureKey(speciesId: string): string {
   if (speciesId.startsWith(AMANITA_GENUS)) {
@@ -41,6 +43,9 @@ export function galleryFeatureKey(speciesId: string, feature: GalleryFeature): s
   }
   if (speciesId === GYROMITRA) {
     return 'gallery.feature.undersideStem';
+  }
+  if (TUBE_SPECIES.has(speciesId)) {
+    return 'gallery.feature.tubes';
   }
   if (CORTINA_SPECIES.has(speciesId) || startsWithGenus(speciesId, CORTINA_GENERA)) {
     return 'gallery.feature.gillsCortina';

@@ -7,7 +7,13 @@ import {
   LookAlikeAlert,
 } from '../../components/LookAlikeAlert';
 import { INCOMPLETE_CARD_LABEL, MISSING_CARD_LABEL } from '../../components/EdibilityBadge';
-import { ATLAS_NO_VERDICT_NOTE, MUSHROOMS_DATABASE, NOT_FOR_COLLECTION_NOTE } from '../../data/mushrooms';
+import {
+  ATLAS_NO_VERDICT_NOTE,
+  MUSHROOMS_DATABASE,
+  NOT_FOR_COLLECTION_NOTE,
+  POISONOUS_NOTE,
+  WEAKLY_POISONOUS_NOTE,
+} from '../../data/mushrooms';
 import { ConfusionRisk } from '../../types/mushroom';
 import { LanguageProvider } from '../../contexts/LanguageContext';
 import { en } from '../../i18n/en';
@@ -128,10 +134,10 @@ describe('LookAlikeAlert RTL Component Tests', () => {
   it('does not show the green edible badge for a look-alike that has no finished card', async () => {
     const risks: ConfusionRisk[] = [
       {
-        confusedWithId: 'calocybe_gambosa',
-        confusedWithName: 'Gęśnica wiosenna (majówka)',
+        confusedWithId: 'craterellus_tubaeformis',
+        confusedWithName: 'Pieprznik trąbkowy',
         confusedWithStatus: 'EDIBLE',
-        keyDifferences: ['Nie czerwienieje'],
+        keyDifferences: ['Lejkowaty owocnik'],
         fatal: false,
       },
     ];
@@ -144,8 +150,8 @@ describe('LookAlikeAlert RTL Component Tests', () => {
       />
     );
 
-    expect(getByTestId('lookalike-unlinked-calocybe_gambosa')).toBeTruthy();
-    expect(getByTestId('missing-card-badge-calocybe_gambosa')).toBeTruthy();
+    expect(getByTestId('lookalike-unlinked-craterellus_tubaeformis')).toBeTruthy();
+    expect(getByTestId('missing-card-badge-craterellus_tubaeformis')).toBeTruthy();
     expect(getByText(MISSING_CARD_LABEL)).toBeTruthy();
     expect(getByText(new RegExp(ATLAS_NO_VERDICT_NOTE))).toBeTruthy();
     expect(queryByText(NOT_FOR_COLLECTION_NOTE)).toBeNull();
@@ -156,17 +162,17 @@ describe('LookAlikeAlert RTL Component Tests', () => {
   it('never shows a green badge for an entry without catalogIds', async () => {
     const risks: ConfusionRisk[] = [
       {
-        confusedWithId: 'calocybe_gambosa',
-        confusedWithName: 'Gęśnica wiosenna (majówka)',
+        confusedWithId: 'craterellus_tubaeformis',
+        confusedWithName: 'Pieprznik trąbkowy',
         confusedWithStatus: 'EDIBLE',
-        keyDifferences: ['Nie czerwienieje'],
+        keyDifferences: ['Lejkowaty owocnik'],
         fatal: false,
       },
       {
-        confusedWithId: 'amanita_excelsa',
-        confusedWithName: 'Muchomor twardawy',
+        confusedWithId: 'amanita_caesarea',
+        confusedWithName: 'Muchomor cesarski',
         confusedWithStatus: 'EDIBLE',
-        keyDifferences: ['Pierścień prążkowany'],
+        keyDifferences: ['Brak białych łatek'],
         fatal: false,
       },
     ];
@@ -178,27 +184,48 @@ describe('LookAlikeAlert RTL Component Tests', () => {
     expect(queryByText(INCOMPLETE_CARD_LABEL)).toBeNull();
   });
 
-  it('shows a collection warning only for twardawy and no edibility verdict for the other missing cards', async () => {
+  it('keeps a no-verdict note on look-alikes that still have no card', async () => {
     const risks = MUSHROOMS_DATABASE.flatMap((item) => item.confusionRisks).filter((risk) =>
-      ['calocybe_gambosa', 'amanita_excelsa'].includes(risk.confusedWithId),
+      ['amanita_caesarea', 'craterellus_tubaeformis'].includes(risk.confusedWithId),
     );
 
     const { getAllByTestId, queryByText } = await render(<LookAlikeAlert risks={risks} />);
 
-    const gambosa = getAllByTestId('lookalike-unlinked-calocybe_gambosa');
-    expect(gambosa.length).toBeGreaterThan(0);
-    for (const row of gambosa) {
-      expect(row).toHaveTextContent(ATLAS_NO_VERDICT_NOTE, { exact: false });
-      expect(row).not.toHaveTextContent(NOT_FOR_COLLECTION_NOTE, { exact: false });
-    }
-    const excelsa = getAllByTestId('lookalike-unlinked-amanita_excelsa');
-    expect(excelsa.length).toBeGreaterThan(1);
-    for (const row of excelsa) {
-      expect(row).toHaveTextContent(NOT_FOR_COLLECTION_NOTE, { exact: false });
+    for (const id of ['amanita_caesarea', 'craterellus_tubaeformis']) {
+      const rows = getAllByTestId(`lookalike-unlinked-${id}`);
+      expect(rows.length).toBeGreaterThan(0);
+      for (const row of rows) {
+        expect(row).toHaveTextContent(ATLAS_NO_VERDICT_NOTE, { exact: false });
+        expect(row).not.toHaveTextContent(NOT_FOR_COLLECTION_NOTE, { exact: false });
+      }
     }
     expect(queryByText('JADALNY')).toBeNull();
     expect(queryByText('NIEJADALNY')).toBeNull();
     expect(queryByText('TRUJĄCY')).toBeNull();
+  });
+
+  it('marks wieruszka as poisonous and muchomor porfirowy as weakly poisonous', async () => {
+    const risks = MUSHROOMS_DATABASE.flatMap((item) => item.confusionRisks).filter((risk) =>
+      risk.confusedWithId === 'entoloma_sinuatum' || risk.confusedWithId === 'amanita_porphyria',
+    );
+
+    const { getAllByTestId, getAllByText } = await render(<LookAlikeAlert risks={risks} />);
+
+    const entoloma = getAllByTestId('lookalike-unlinked-entoloma_sinuatum');
+    expect(entoloma.length).toBeGreaterThan(0);
+    for (const row of entoloma) {
+      expect(row).toHaveTextContent(POISONOUS_NOTE, { exact: false });
+      expect(row).not.toHaveTextContent(ATLAS_NO_VERDICT_NOTE, { exact: false });
+      expect(row).not.toHaveTextContent(WEAKLY_POISONOUS_NOTE, { exact: false });
+      expect(row).not.toHaveTextContent(/słabo|weak/i);
+    }
+    expect(getAllByText('TRUJĄCY').length).toBeGreaterThan(0);
+    const porphyria = getAllByTestId('lookalike-unlinked-amanita_porphyria');
+    expect(porphyria.length).toBeGreaterThan(0);
+    for (const row of porphyria) {
+      expect(row).toHaveTextContent(WEAKLY_POISONOUS_NOTE, { exact: false });
+      expect(row).not.toHaveTextContent(/śmiertel/i);
+    }
   });
 
   it('turns the warning red when the open card is deadly even if every twin is edible', async () => {
