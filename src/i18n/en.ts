@@ -26,7 +26,7 @@ export const en: Translations = {
     photoCreditsOpen: 'Dataset photo credits',
     photoCreditsLoading: 'Loading photo credits…',
     photoCreditsLead:
-      'CC0 and CC-BY photos in the shipped model dataset: training, test, and evaluation probes.',
+      'CC0 and CC-BY photos on the atlas cards. When a model is installed, the list also includes training, test, and evaluation probes.',
     photoCreditsEmpty:
       'No model is installed, so there is no list of photo credits. Scan recognition stays off.',
     photoCreditsUnknownAuthor: 'Author not listed',
@@ -101,6 +101,19 @@ export const en: Translations = {
     stemVeil: 'Stem and veil',
     fleshTasteSmell: 'Flesh, taste and smell',
     significanceUse: 'Significance and use',
+  },
+  gallery: {
+    note: 'Example photos. This is not an identification and it is not an edibility verdict.',
+    author: 'Author: {name}',
+    source: 'Source',
+    position: '{index} / {count}',
+    feature: {
+      W: 'Whole fruiting body with the bulb or volva at the base',
+      G: 'Gills and ring from below',
+      C: 'Cap from above',
+      Y: 'Young fruiting body (“egg”)',
+      undersideStem: 'Underside with the stem',
+    },
   },
   scanner: {
     title: 'AI Mushroom Scanner',

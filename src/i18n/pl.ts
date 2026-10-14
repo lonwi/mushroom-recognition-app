@@ -24,7 +24,7 @@ export const pl = {
     photoCreditsOpen: 'Autorzy zdjęć zbioru',
     photoCreditsLoading: 'Wczytywanie listy autorów…',
     photoCreditsLead:
-      'Zdjęcia CC0 i CC-BY ze zbioru dołączonego modelu: trening, test i sondy oceniające.',
+      'Zdjęcia CC0 i CC-BY z kart atlasu. Gdy model jest dołączony, lista obejmuje też trening, test i sondy oceniające.',
     photoCreditsEmpty:
       'Nie ma dołączonego modelu, więc nie ma listy autorów zdjęć. Rozpoznawanie ze skanu pozostaje wyłączone.',
     photoCreditsUnknownAuthor: 'Autor niepodany',
@@ -99,6 +99,19 @@ export const pl = {
     stemVeil: 'Trzon i osłona',
     fleshTasteSmell: 'Miąższ, smak i zapach',
     significanceUse: 'Znaczenie i zastosowanie',
+  },
+  gallery: {
+    note: 'Przykładowe zdjęcia. To nie jest rozpoznanie i nie jest oceną jadalności.',
+    author: 'Autor: {name}',
+    source: 'Źródło',
+    position: '{index} / {count}',
+    feature: {
+      W: 'Cały owocnik z bulwą lub pochwą u nasady',
+      G: 'Blaszki i pierścień od spodu',
+      C: 'Kapelusz z góry',
+      Y: 'Młody owocnik („jajo”)',
+      undersideStem: 'Spód wraz z trzonem',
+    },
   },
   scanner: {
     title: 'Skaner Grzybów AI',
