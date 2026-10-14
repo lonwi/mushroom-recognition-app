@@ -1,4 +1,4 @@
-export type PreparationCategory = 'CLEAN' | 'COOK' | 'STORE';
+type PreparationCategory = 'CLEAN' | 'COOK' | 'STORE';
 
 export interface PreparationRule {
   id: 'clean' | 'blanch' | 'cooking' | 'store' | 'dry';

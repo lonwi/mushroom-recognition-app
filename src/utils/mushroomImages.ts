@@ -12,7 +12,7 @@ import lactariusDeliciosus from '../../assets/mushrooms/lactarius_deliciosus.jpg
 import gyromitraEsculenta from '../../assets/mushrooms/gyromitra_esculenta.jpg';
 import paxillusInvolutus from '../../assets/mushrooms/paxillus_involutus.jpg';
 
-export const MUSHROOM_IMAGES: Record<string, ImageSourcePropType> = {
+const MUSHROOM_IMAGES: Record<string, ImageSourcePropType> = {
   boletus_edulis: boletusEdulis,
   amanita_phalloides: amanitaPhalloides,
   macrolepiota_procera: macrolepiotaProcera,

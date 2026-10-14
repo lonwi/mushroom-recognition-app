@@ -8,7 +8,7 @@ Welcome to the **Grzybobranie AI** repository. This document serves as the prima
 
 **Grzybobranie AI** is a mobile (Android/iOS) and web application for mushroom hunters in Poland and Central Europe.
 - **100% Offline-First**: Must function deep in the forest without GSM, cellular data, or internet connectivity.
-- **On-Device AI / Computer Vision**: Local neural network inference powered by **TensorFlow.js** (`@tensorflow/tfjs`) on CPU/GPU/NPU without cloud dependencies.
+- **On-Device AI / Computer Vision**: Local neural network inference on device (TFLite via `react-native-fast-tflite`) without cloud dependencies.
 - **Safety First**: Mushroom edibility and look-alike danger alerts are safety-critical. Never remove or bypass safety disclaimers, Sanepid notices, or toxicology emergency numbers.
 
 ---
@@ -80,10 +80,10 @@ mushroom-app/
    - If a species can be confused with a deadly mushroom (e.g. *Macrolepiota procera* vs *Amanita phalloides*), `fatal: true` must be flagged so `LookAlikeAlert` renders prominent red alerts.
 
 3. **Memory Management**:
-   - The scanner uses TFLite, not TensorFlow.js tensors. Do not allocate a long-lived copy of the input buffer. If a future change does use `@tensorflow/tfjs` tensors inside `classifierService.ts`, wrap them in `tf.tidy()`.
+   - The scanner runs on-device TFLite (`react-native-fast-tflite`). Do not allocate a long-lived copy of the input buffer. The input `Float32Array` stays local to the classification call.
 
-4. **Hermes Engine Compatibility**:
-   - In React Native (Hermes engine), TensorFlow.js cannot auto-detect a platform because neither DOM nor Node `process.versions.node` exist. The TFLite path does not import TensorFlow.js and must not load it at startup. Call `ensureTensorFlowPlatform()` from `src/utils/tfjsPlatform.ts` only in code that actually uses `@tensorflow/tfjs`.
+4. **No TensorFlow.js in the app runtime**:
+   - Recognition does not use `@tensorflow/tfjs` or `@tensorflow/tfjs-core`. Do not add those packages, and do not load TensorFlow.js at startup. Python TensorFlow under `training/` is the training stack only.
 
 5. **Recognition honesty**:
    - `classifierService` must not return a species, a confidence percentage, or an inference time unless a real on-device model consumed that photo's pixels.

@@ -25,7 +25,7 @@ function isReadableJournal(raw: string | null): boolean {
 }
 
 /** Journal CRUD. Writes are serialized. Backups and settings live elsewhere. */
-export class JournalRepository {
+class JournalRepository {
   private tail: Promise<unknown> = Promise.resolve();
   private readonly backups: JournalBackupStore;
 

@@ -1,6 +1,6 @@
 import manifestJson from '../../assets/models/labels.json';
 
-export interface ModelClass {
+interface ModelClass {
   index: number;
   id: string;
   name: string;
@@ -8,7 +8,7 @@ export interface ModelClass {
   genus: string;
 }
 
-export interface OodConfig {
+interface OodConfig {
   method: string;
   background_class_id: string;
   unknown_class_id?: string;
@@ -35,5 +35,3 @@ export interface ModelManifest {
 }
 
 export const modelManifest = manifestJson as ModelManifest;
-
-export const DANGEROUS_GENERA = modelManifest.dangerous_genera;

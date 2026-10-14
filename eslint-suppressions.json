@@ -362,10 +362,5 @@
     "@typescript-eslint/no-explicit-any": {
       "count": 2
     }
-  },
-  "src/utils/tfjsPlatform.ts": {
-    "@typescript-eslint/no-unused-vars": {
-      "count": 2
-    }
   }
 }

@@ -4,10 +4,10 @@ import { asyncStorageStore, type KeyValueStore } from './keyValueStore';
 export const LANGUAGE_STORAGE_KEY = 'app_language';
 export const DISCLAIMER_STORAGE_KEY = '@grzybobranie_ai:disclaimer_accepted_v1';
 
-export type StoredLanguage = 'pl' | 'en';
+type StoredLanguage = 'pl' | 'en';
 
 /** Disclaimer acceptance and app language. Not part of the journal. */
-export class SettingsStore {
+class SettingsStore {
   constructor(private readonly store: KeyValueStore) {}
 
   async getLanguage(): Promise<StoredLanguage | null> {

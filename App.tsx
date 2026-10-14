@@ -106,19 +106,36 @@ function AppContent() {
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
 
       <View style={styles.topHeader}>
-        <View style={styles.brandRow}>
-          <Text style={styles.brandIcon}>🍄</Text>
+        <TouchableOpacity
+          style={styles.brandRow}
+          onPress={() => {
+            setSelectedSpecies(null);
+            setActiveTab('SCANNER');
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={t('app.title')}
+        >
+          <Text style={styles.brandIcon} importantForAccessibility="no">
+            🍄
+          </Text>
           <View>
             <Text style={styles.brandTitle}>{t('app.title')}</Text>
             <Text style={styles.brandSubtitle}>{t('app.subtitle')}</Text>
           </View>
-        </View>
+        </TouchableOpacity>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <View style={styles.offlinePill}>
             <Text style={styles.offlinePillText}>{t('app.offline')}</Text>
           </View>
-          <TouchableOpacity onPress={() => setActiveTab('SETTINGS')} style={{ marginLeft: 12 }}>
-            <Text style={{ fontSize: 20 }}>⚙️</Text>
+          <TouchableOpacity
+            onPress={() => setActiveTab('SETTINGS')}
+            style={{ marginLeft: 12 }}
+            accessibilityRole="button"
+            accessibilityLabel={t('nav.settings')}
+          >
+            <Text style={{ fontSize: 20 }} importantForAccessibility="no">
+              ⚙️
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

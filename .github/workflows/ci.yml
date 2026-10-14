@@ -39,8 +39,8 @@ jobs:
       # No published npm fix. pnpm.auditConfig.ignoreCves lists exactly these CVEs.
       # GHSA-86w9-cpqp-85rv / CVE-2026-85393: node-forge via expo>@expo/cli, not the app runtime.
       # GHSA-vfj7-8cjw-p6xm / CVE-2026-93687: braces via jest-expo>micromatch and @expo/metro-file-map.
-      # GHSA-hp3w-g68c-fv3c / CVE-2026-97058: sprintf-js via jest>argparse and
-      #   @tensorflow/tfjs>argparse (a runtime dependency used by the CLI only).
+      # GHSA-hp3w-g68c-fv3c / CVE-2026-97058: sprintf-js via jest>argparse
+      #   (used by the Jest CLI, not the app runtime).
       - name: Audit dependencies
         run: pnpm audit --audit-level high
 

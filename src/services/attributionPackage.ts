@@ -18,7 +18,7 @@ export interface PhotoCredit {
   modified?: boolean;
 }
 
-export const PACKAGED_PHOTO_CREDITS: PhotoCredit[] | null = null;
+const PACKAGED_PHOTO_CREDITS: PhotoCredit[] | null = null;
 
 export function creditsFromJsonl(text: string): PhotoCredit[] {
   const credits: PhotoCredit[] = [];

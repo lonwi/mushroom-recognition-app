@@ -8,7 +8,7 @@ import { colors, radius, spacing } from '../theme/tokens';
 
 type RejectedReason = 'not_a_mushroom' | 'unknown_mushroom' | 'unclear';
 
-export type RecognitionCandidate = {
+type RecognitionCandidate = {
   id: string;
   namePl: string;
   nameLatin: string;

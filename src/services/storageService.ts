@@ -6,4 +6,3 @@ export {
   journalBackupStorageKey,
 } from './storage/keys';
 export { JournalReadError, journalRepository as storageService } from './storage/journalRepository';
-export { sanitizeRecognition, sanitizeSighting } from './storage/journalSchema';

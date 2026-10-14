@@ -2,7 +2,7 @@ import { MD3LightTheme, type MD3Theme } from 'react-native-paper';
 import { colors } from './tokens';
 
 /** Paper palette. Values come from `colors` so badges and the provider cannot drift. */
-export const mushroomForestColors = {
+const mushroomForestColors = {
   primary: colors.primary,
   onPrimary: colors.onPrimary,
   primaryContainer: colors.primaryContainer,
