@@ -10,6 +10,7 @@ const UNVERIFIED_CHIP_ID = 'unverified';
 
 interface ActiveChip {
   id: string;
+  group: string;
   label: string;
 }
 
@@ -84,7 +85,7 @@ export const AtlasFilterBar: React.FC<Props> = ({
               key={chip.id}
               testID={`filter-active-${chip.id}`}
               accessibilityRole="button"
-              accessibilityLabel={t('atlas.filters.remove', { label: t(chip.label) })}
+              accessibilityLabel={t('atlas.filters.remove', { group: t(chip.group), label: t(chip.label) })}
               style={styles.activeChip}
               onPress={() => onRemove(chip.id)}
             >

@@ -18,7 +18,7 @@ import { colors, spacing } from '../theme/tokens';
 interface Props {
   visible: boolean;
   chipIds: ReadonlySet<string>;
-  resultCount: number;
+  visibleCount: number;
   onToggle: (id: string) => void;
   onClear: () => void;
   onClose: () => void;
@@ -27,7 +27,7 @@ interface Props {
 export const AtlasFilterSheet: React.FC<Props> = ({
   visible,
   chipIds,
-  resultCount,
+  visibleCount,
   onToggle,
   onClear,
   onClose,
@@ -64,11 +64,11 @@ export const AtlasFilterSheet: React.FC<Props> = ({
             <TouchableOpacity
               testID="atlas-filter-show"
               accessibilityRole="button"
-              accessibilityLabel={t('atlas.filters.showA11y', { count: resultCount })}
+              accessibilityLabel={t('atlas.filters.showA11y', { count: visibleCount })}
               style={styles.showButton}
               onPress={onClose}
             >
-              <Text style={styles.showText}>{t('atlas.filters.show', { count: resultCount })}</Text>
+              <Text style={styles.showText}>{t('atlas.filters.show', { count: visibleCount })}</Text>
             </TouchableOpacity>
           </View>
           <ScrollView

@@ -374,6 +374,13 @@ describe('AtlasScreen RTL Tests', () => {
       expect(screen.queryByText('Nietrujące')).toBeNull();
       expect(screen.queryByText('Non-poisonous')).toBeNull();
     });
+
+    await fireEvent.press(screen.getByTestId('atlas-filter-open'));
+    await fireEvent.press(screen.getByTestId('filter-chip-protection-brak'));
+    expect(screen.getByTestId('filter-active-protection-brak').props.accessibilityLabel).toBe(
+      'Remove filter: Protection: Not protected',
+    );
+    expect(within(screen.getByTestId('filter-active-protection-brak')).getByText('Not protected ×')).toBeTruthy();
   });
 
   it('keeps type chips and Do weryfikacji in one row and the other groups in the sheet', async () => {
@@ -420,21 +427,31 @@ describe('AtlasScreen RTL Tests', () => {
     await fireEvent.press(screen.getByTestId('filter-chip-ring-present'));
 
     const withBoth = screen.getByTestId('atlas-result-count').props.children as string;
-    const bothCount = withBoth.replace('Pasujące karty: ', '');
+    expect(withBoth).toBe('Pasujące karty: 0');
+    const visibleBoth = screen.getAllByTestId(/^atlas-card-[a-z0-9_]+$/).length;
+    expect(visibleBoth).toBeGreaterThan(0);
     expect(screen.getByText('Filtry (2)')).toBeTruthy();
     expect(screen.getByTestId('atlas-filter-open').props.accessibilityLabel).toBe('Filtry, aktywne: 2');
     const show = screen.getByTestId('atlas-filter-show');
     expect(show.props.accessibilityRole).toBe('button');
-    expect(show.props.accessibilityLabel).toBe(`Pokaż ${bothCount} wyników`);
-    expect(within(show).getByText(`Pokaż ${bothCount}`)).toBeTruthy();
+    expect(show.props.accessibilityLabel).toBe(`Pokaż ${visibleBoth} wyników`);
+    expect(within(show).getByText(`Pokaż ${visibleBoth}`)).toBeTruthy();
     expect(screen.getByTestId('filter-chip-hymenophore-kolce').props.accessibilityState).toEqual({ selected: true });
+    expect(screen.getByTestId('filter-active-hymenophore-kolce').props.accessibilityLabel).toBe(
+      'Usuń filtr: Spód kapelusza: Kolce',
+    );
+    expect(within(screen.getByTestId('filter-active-hymenophore-kolce')).getByText('Kolce ×')).toBeTruthy();
 
     await fireEvent.press(screen.getByTestId('filter-active-hymenophore-kolce'));
     await waitFor(() => {
       expect(screen.getByText('Filtry (1)')).toBeTruthy();
       expect(screen.queryByTestId('filter-active-hymenophore-kolce')).toBeNull();
-      expect(screen.getByTestId('filter-active-ring-present').props.accessibilityLabel).toBe('Usuń filtr: Jest pierścień');
+      expect(screen.getByTestId('filter-active-ring-present').props.accessibilityLabel).toBe(
+        'Usuń filtr: Pierścień: Jest pierścień',
+      );
       expect(screen.getByTestId('atlas-result-count').props.children).not.toBe(withBoth);
+      const visible = screen.getAllByTestId(/^atlas-card-[a-z0-9_]+$/).length;
+      expect(screen.getByTestId('atlas-filter-show').props.accessibilityLabel).toBe(`Pokaż ${visible} wyników`);
     });
 
     await fireEvent.press(screen.getByTestId('atlas-filter-clear'));
@@ -459,6 +476,62 @@ describe('AtlasScreen RTL Tests', () => {
     await waitFor(() => {
       expect(screen.getByText('Muchomor sromotnikowy (zielonawy)')).toBeTruthy();
       expect(screen.getByTestId('filter-chip-kind-edible').props.accessibilityState).toEqual({ selected: false });
+    });
+  });
+
+  it('counts unverified cards in Pokaż when no card matches', async () => {
+    const screen = await render(
+      <LanguageProvider>
+        <AtlasScreen onSelectSpecies={() => {}} />
+      </LanguageProvider>
+    );
+
+    await fireEvent.press(screen.getByTestId('atlas-filter-open'));
+    await fireEvent.press(screen.getByTestId('filter-chip-spore-zolty'));
+    await waitFor(() => {
+      expect(screen.getByTestId('atlas-result-count').props.children).toBe('Pasujące karty: 0');
+      expect(screen.queryByTestId('atlas-empty')).toBeNull();
+      expect(screen.getByTestId('atlas-unverified')).toBeTruthy();
+    });
+    const visible = screen.getAllByTestId(/^atlas-card-[a-z0-9_]+$/);
+    expect(visible.length).toBeGreaterThan(1);
+    const show = screen.getByTestId('atlas-filter-show');
+    expect(show.props.accessibilityLabel).toBe(`Pokaż ${visible.length} wyników`);
+    expect(within(show).getByText(`Pokaż ${visible.length}`)).toBeTruthy();
+    expect(within(show).queryByText('Pokaż 0')).toBeNull();
+
+    await fireEvent.press(show);
+    await waitFor(() => {
+      expect(screen.queryByTestId('atlas-filter-sheet')).toBeNull();
+    });
+    expect(screen.getAllByTestId(/^atlas-card-[a-z0-9_]+$/)).toHaveLength(visible.length);
+    expect(screen.queryByTestId('atlas-matches')).toBeNull();
+    expect(screen.queryByTestId('atlas-empty')).toBeNull();
+  });
+
+  it('names the group when two absence chips would otherwise collide', async () => {
+    const screen = await render(
+      <LanguageProvider>
+        <AtlasScreen onSelectSpecies={() => {}} />
+      </LanguageProvider>
+    );
+
+    await fireEvent.press(screen.getByTestId('atlas-filter-open'));
+    await fireEvent.press(screen.getByTestId('filter-chip-protection-brak'));
+    await fireEvent.press(screen.getByTestId('filter-chip-volva-brak'));
+
+    const protection = screen.getByTestId('filter-active-protection-brak');
+    const volva = screen.getByTestId('filter-active-volva-brak');
+    expect(protection.props.accessibilityLabel).toBe('Usuń filtr: Ochrona: Niechroniony');
+    expect(volva.props.accessibilityLabel).toBe('Usuń filtr: Pochwa / bulwa: Brak pochwy i bulwy');
+    expect(within(protection).getByText('Niechroniony ×')).toBeTruthy();
+    expect(within(volva).getByText('Brak pochwy i bulwy ×')).toBeTruthy();
+
+    await fireEvent.press(protection);
+    await waitFor(() => {
+      expect(screen.queryByTestId('filter-active-protection-brak')).toBeNull();
+      expect(screen.getByTestId('filter-active-volva-brak')).toBeTruthy();
+      expect(screen.getByText('Filtry (1)')).toBeTruthy();
     });
   });
 

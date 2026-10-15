@@ -160,10 +160,18 @@ describe('Polish and English dictionaries', () => {
     expect(pl.atlas.filters.open).toBe('Filtry ({count})');
     expect(pl.atlas.filters.clear).toBe('Wyczyść');
     expect(pl.atlas.filters.show).toBe('Pokaż {count}');
+    expect(pl.atlas.filters.remove).toBe('Usuń filtr: {group}: {label}');
+    expect(translate('pl', 'atlas.filters.remove', { group: 'Ochrona', label: 'Niechroniony' })).toBe(
+      'Usuń filtr: Ochrona: Niechroniony',
+    );
     expect(en.atlas.filters.unverified).toBe('To be verified');
     expect(en.atlas.filters.open).toBe('Filters ({count})');
     expect(en.atlas.filters.clear).toBe('Clear');
     expect(en.atlas.filters.show).toBe('Show {count}');
+    expect(en.atlas.filters.remove).toBe('Remove filter: {group}: {label}');
+    expect(translate('en', 'atlas.filters.remove', { group: 'Protection', label: 'Not protected' })).toBe(
+      'Remove filter: Protection: Not protected',
+    );
     expect(pl.atlas.lookAlikeTag).toBe('☠ Sobowtór!');
     expect(pl.atlas.monthRange).toBe('{start} - {end} mies.');
     expect(pl.months.jan).toBe('Sty');

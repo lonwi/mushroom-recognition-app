@@ -90,7 +90,7 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
       <AtlasFilterSheet
         visible={sheetOpen}
         chipIds={filters.chipIds}
-        resultCount={filters.resultCount}
+        visibleCount={filters.visibleCount}
         onToggle={filters.toggleChip}
         onClear={filters.clearPanelFilters}
         onClose={() => setSheetOpen(false)}

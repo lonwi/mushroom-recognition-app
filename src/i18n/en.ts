@@ -82,7 +82,7 @@ export const en: Translations = {
       clear: 'Clear',
       show: 'Show {count}',
       showA11y: 'Show {count} results',
-      remove: 'Remove filter: {label}',
+      remove: 'Remove filter: {group}: {label}',
       close: 'Close filters',
     },
     psychoactive: 'Psychoactive',

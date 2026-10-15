@@ -3,6 +3,7 @@ import {
   activePanelChips,
   applyAtlasFilters,
   panelFilterCount,
+  visibleAtlasCount,
   withoutChip,
   withoutPanelChips,
 } from '../data/atlasFilterModel';
@@ -50,5 +51,6 @@ export function useAtlasFilters(species: readonly MushroomSpecies[]) {
     matches: filtered.matches,
     unverified: filtered.unverified,
     resultCount: filtered.matches.length,
+    visibleCount: visibleAtlasCount(filtered),
   };
 }

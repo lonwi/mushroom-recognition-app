@@ -80,7 +80,7 @@ export const pl = {
       clear: 'Wyczyść',
       show: 'Pokaż {count}',
       showA11y: 'Pokaż {count} wyników',
-      remove: 'Usuń filtr: {label}',
+      remove: 'Usuń filtr: {group}: {label}',
       close: 'Zamknij filtry',
     },
     psychoactive: 'Psychoaktywne',

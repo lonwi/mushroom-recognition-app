@@ -8,7 +8,7 @@ Wpis faktów bez karty w atlasie nie jest trzymany. Karta bez wpisu zostaje w at
 
 Nad listą jest jeden przewijany rząd: jadalne, niejadalne, trujące, „Do weryfikacji” i przycisk „Filtry (n)”.
 `n` liczy tylko chipy z dolnego panelu (spód, wysyp, ochrona, pierścień, pochwa/bulwa).
-Aktywne chipy panelu wiszą pod rzędem i schodzą pojedynczo. „Wyczyść” zdejmuje chipy panelu i zostawia rodzaj.
+Aktywne chipy panelu wiszą pod rzędem i schodzą pojedynczo. Czytnik dostaje „Usuń filtr: {grupa}: {wartość}”, a na chipie zostaje sama wartość. „Wyczyść” zdejmuje chipy panelu i zostawia rodzaj. „Pokaż n” liczy karty widoczne po zamknięciu panelu: pasujące oraz te w „Do weryfikacji”. Zero pasujących nie daje „Pokaż 0”, dopóki sekcja weryfikacji ma karty.
 „Do weryfikacji” jest zawsze w rzędzie. To przełącznik sekcji, nie chip modelu: nie wchodzi do `chipIds` i nie zmienia OR/AND.
 Odznaczenie rodzaju nie ukrywa trujących. Brak chipa rodzaju dalej pokazuje cały atlas, łącznie ze śmiertelnie trującymi.
 

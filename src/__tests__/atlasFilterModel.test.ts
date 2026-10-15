@@ -6,6 +6,7 @@ import {
   activePanelChips,
   applyAtlasFilters,
   panelFilterCount,
+  visibleAtlasCount,
   withoutChip,
   withoutPanelChips,
 } from '../data/atlasFilterModel';
@@ -265,6 +266,10 @@ describe('atlas filter model', () => {
     expect(panelFilterCount(selected)).toBe(2);
     expect(panelFilterCount(new Set(['kind-poisonous']))).toBe(0);
     expect(activePanelChips(selected).map((chip) => chip.id)).toEqual(['hymenophore-kolce', 'ring-present']);
+    expect(activePanelChips(new Set(['protection-brak', 'volva-brak']))).toEqual([
+      { id: 'protection-brak', group: 'atlas.filters.protection', label: 'atlas.filters.protectionNone' },
+      { id: 'volva-brak', group: 'atlas.filters.volva', label: 'atlas.filters.volvaNone' },
+    ]);
 
     const spines = apply(['kind-edible', 'hymenophore-kolce', 'ring-present']);
     const oneLess = withoutChip(selected, 'hymenophore-kolce');
@@ -303,5 +308,22 @@ describe('atlas filter model', () => {
     expect(restored.matches.length).toBeGreaterThan(panelOnly.matches.length);
     expect(idsOf(restored.matches)).toContain('amanita_phalloides');
     expect(idsOf(restored.matches)).toContain('boletus_edulis');
+  });
+
+  test('the show count includes unverified cards that stay on the list', () => {
+    const yellow = apply(['spore-zolty']);
+    expect(yellow.matches).toHaveLength(0);
+    expect(yellow.unverified.length).toBeGreaterThan(1);
+    expect(visibleAtlasCount(yellow)).toBe(yellow.unverified.length);
+    expect(visibleAtlasCount(yellow)).toBeGreaterThan(0);
+
+    const edible = apply(['kind-edible']);
+    expect(visibleAtlasCount(edible)).toBe(edible.matches.length + edible.unverified.length);
+    expect(visibleAtlasCount(edible)).toBeGreaterThan(edible.matches.length);
+    expect(idsOf(edible.matches).concat(idsOf(edible.unverified))).not.toContain('amanita_phalloides');
+
+    const all = apply([]);
+    expect(visibleAtlasCount(all)).toBe(MUSHROOMS_DATABASE.length);
+    expect(all.unverified).toHaveLength(0);
   });
 });

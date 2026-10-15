@@ -308,14 +308,26 @@ const PANEL_CHIP_IDS = new Set(
   ATLAS_PANEL_GROUPS.flatMap((group) => group.chips.map((chip) => chip.id)),
 );
 
-export function activePanelChips(chipIds: ReadonlySet<string>): readonly { id: string; label: string }[] {
-  const selected: { id: string; label: string }[] = [];
+interface ActivePanelChip {
+  id: string;
+  /** i18n key of the group, so two chips that share a value stay distinct. */
+  group: string;
+  label: string;
+}
+
+export function activePanelChips(chipIds: ReadonlySet<string>): readonly ActivePanelChip[] {
+  const selected: ActivePanelChip[] = [];
   for (const group of ATLAS_PANEL_GROUPS) {
     for (const chip of group.chips) {
-      if (chipIds.has(chip.id)) selected.push({ id: chip.id, label: chip.label });
+      if (chipIds.has(chip.id)) selected.push({ id: chip.id, group: group.label, label: chip.label });
     }
   }
   return selected;
+}
+
+/** Cards still on the list after the sheet closes: matches plus the unverified section. */
+export function visibleAtlasCount(partition: AtlasPartition): number {
+  return partition.matches.length + partition.unverified.length;
 }
 
 /** How many sheet chips are on. Kind chips and „Do weryfikacji” are not in this count. */
