@@ -249,7 +249,9 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
 
     await page.getByTestId('filter-chip-kind-edible').click();
     await page.getByTestId('filter-chip-kind-poisonous').click();
+    await page.getByTestId('atlas-filter-open').click();
     await page.getByTestId('filter-chip-hymenophore-kolce').click();
+    await page.getByTestId('atlas-filter-show').click();
     await expect(page.getByTestId('atlas-matches').getByText('Kolczak obłączasty')).toBeVisible();
     await expect(page.getByTestId('atlas-result-count')).toContainText('Pasujące karty: 1');
     await expect(page.getByTestId('atlas-unverified').getByText('Zasłonak rudawy')).toBeVisible();

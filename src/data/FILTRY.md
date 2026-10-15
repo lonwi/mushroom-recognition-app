@@ -4,6 +4,14 @@ Dane budowy pochodzą z `filtry.json` oraz z uzupełnienia 17 kart (2026-10-14).
 
 Wpis faktów bez karty w atlasie nie jest trzymany. Karta bez wpisu zostaje w atlasie.
 
+## Układ
+
+Nad listą jest jeden przewijany rząd: jadalne, niejadalne, trujące, „Do weryfikacji” i przycisk „Filtry (n)”.
+`n` liczy tylko chipy z dolnego panelu (spód, wysyp, ochrona, pierścień, pochwa/bulwa).
+Aktywne chipy panelu wiszą pod rzędem i schodzą pojedynczo. „Wyczyść” zdejmuje chipy panelu i zostawia rodzaj.
+„Do weryfikacji” jest zawsze w rzędzie. To przełącznik sekcji, nie chip modelu: nie wchodzi do `chipIds` i nie zmienia OR/AND.
+Odznaczenie rodzaju nie ukrywa trujących. Brak chipa rodzaju dalej pokazuje cały atlas, łącznie ze śmiertelnie trującymi.
+
 ## Etap 1
 
 Grupy chipów: rodzaj (jadalne, niejadalne, trujące), spód kapelusza (blaszki, rurki, listwy, kolce), kolor wysypu, ochrona, pierścień, pochwa/bulwa.

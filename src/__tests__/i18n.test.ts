@@ -156,6 +156,14 @@ describe('Polish and English dictionaries', () => {
     expect(en.cards.underside).toBe('Underside ({type})');
     expect(en.nav.atlas).toBe('Atlas');
     expect(en.atlas.hymenophoreOther).toBe('Other underside');
+    expect(pl.atlas.filters.unverified).toBe('Do weryfikacji');
+    expect(pl.atlas.filters.open).toBe('Filtry ({count})');
+    expect(pl.atlas.filters.clear).toBe('Wyczyść');
+    expect(pl.atlas.filters.show).toBe('Pokaż {count}');
+    expect(en.atlas.filters.unverified).toBe('To be verified');
+    expect(en.atlas.filters.open).toBe('Filters ({count})');
+    expect(en.atlas.filters.clear).toBe('Clear');
+    expect(en.atlas.filters.show).toBe('Show {count}');
     expect(pl.atlas.lookAlikeTag).toBe('☠ Sobowtór!');
     expect(pl.atlas.monthRange).toBe('{start} - {end} mies.');
     expect(pl.months.jan).toBe('Sty');

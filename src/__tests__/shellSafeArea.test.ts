@@ -20,6 +20,7 @@ const OWNS_INSETS = [
   'App.tsx',
   'src/components/ResultModal.tsx',
   'src/components/SafetyDisclaimerModal.tsx',
+  'src/components/AtlasFilterSheet.tsx',
 ];
 
 function source(relativePath: string): string {

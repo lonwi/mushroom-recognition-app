@@ -1,4 +1,14 @@
-import { ATLAS_FILTER_FACTS, ATLAS_FILTER_GROUPS, applyAtlasFilters } from '../data/atlasFilterModel';
+import {
+  ATLAS_FILTER_FACTS,
+  ATLAS_FILTER_GROUPS,
+  ATLAS_KIND_GROUP,
+  ATLAS_PANEL_GROUPS,
+  activePanelChips,
+  applyAtlasFilters,
+  panelFilterCount,
+  withoutChip,
+  withoutPanelChips,
+} from '../data/atlasFilterModel';
 import factsTable from '../data/atlasFilterFacts.json';
 import { MUSHROOMS_DATABASE } from '../data/mushrooms';
 import { pl } from '../i18n/pl';
@@ -240,5 +250,58 @@ describe('atlas filter model', () => {
     });
     expect(empty.matches).toEqual([]);
     expect(empty.unverified).toHaveLength(MUSHROOMS_DATABASE.length);
+  });
+
+  test('panel counter ignores kind chips, clear keeps them, and one removal changes the result count', () => {
+    expect(ATLAS_KIND_GROUP.id).toBe('kind');
+    expect(ATLAS_PANEL_GROUPS.map((group) => group.id)).toEqual([
+      'hymenophore',
+      'spore',
+      'protection',
+      'ring',
+      'volva',
+    ]);
+    const selected = new Set(['kind-edible', 'kind-poisonous', 'hymenophore-kolce', 'ring-present']);
+    expect(panelFilterCount(selected)).toBe(2);
+    expect(panelFilterCount(new Set(['kind-poisonous']))).toBe(0);
+    expect(activePanelChips(selected).map((chip) => chip.id)).toEqual(['hymenophore-kolce', 'ring-present']);
+
+    const spines = apply(['kind-edible', 'hymenophore-kolce', 'ring-present']);
+    const oneLess = withoutChip(selected, 'hymenophore-kolce');
+    expect(panelFilterCount(oneLess)).toBe(1);
+    expect(activePanelChips(oneLess).map((chip) => chip.id)).toEqual(['ring-present']);
+    expect(withoutChip(oneLess, 'hymenophore-kolce')).toBe(oneLess);
+    const rings = applyAtlasFilters(MUSHROOMS_DATABASE, { query: '', chipIds: oneLess });
+    expect(rings.matches.length).toBeGreaterThan(spines.matches.length);
+
+    const cleared = withoutPanelChips(oneLess);
+    expect([...cleared]).toEqual(['kind-edible', 'kind-poisonous']);
+    expect(panelFilterCount(cleared)).toBe(0);
+    const kinds = applyAtlasFilters(MUSHROOMS_DATABASE, { query: '', chipIds: cleared });
+    expect(idsOf(kinds.matches)).toContain('amanita_phalloides');
+    expect(idsOf(kinds.matches)).toContain('boletus_edulis');
+    expect(kinds.matches.every((row) => row.kind === 'edible' || row.kind === 'poisonous')).toBe(true);
+  });
+
+  test('deselecting kind chips never hides poisonous mushrooms', () => {
+    const edible = apply(['kind-edible']);
+    expect(idsOf(edible.matches)).not.toContain('amanita_phalloides');
+    expect(edible.matches.some((row) => row.kind === 'poisonous')).toBe(false);
+
+    const typesOff = withoutChip(new Set(['kind-edible']), 'kind-edible');
+    expect([...typesOff]).toEqual([]);
+    const all = applyAtlasFilters(MUSHROOMS_DATABASE, { query: '', chipIds: typesOff });
+    expect(all.matches).toHaveLength(MUSHROOMS_DATABASE.length);
+    expect(idsOf(all.matches)).toContain('amanita_phalloides');
+    expect(idsOf(all.matches)).toContain('gyromitra_esculenta');
+    expect(all.matches.some((row) => row.species.status === 'POISONOUS' || row.species.status === 'DEADLY_POISONOUS')).toBe(true);
+
+    const panelOnly = apply(['hymenophore-blaszki']);
+    const panelCleared = withoutPanelChips(new Set(['hymenophore-blaszki']));
+    expect(panelFilterCount(panelCleared)).toBe(0);
+    const restored = applyAtlasFilters(MUSHROOMS_DATABASE, { query: '', chipIds: panelCleared });
+    expect(restored.matches.length).toBeGreaterThan(panelOnly.matches.length);
+    expect(idsOf(restored.matches)).toContain('amanita_phalloides');
+    expect(idsOf(restored.matches)).toContain('boletus_edulis');
   });
 });

@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { MUSHROOMS_DATABASE } from '../data/mushrooms';
 import type { AtlasRow } from '../data/atlasFilterModel';
 import type { MushroomSpecies } from '../types/mushroom';
 import { AtlasFilterBar } from '../components/AtlasFilterBar';
+import { AtlasFilterSheet } from '../components/AtlasFilterSheet';
 import { AtlasSpeciesCard } from '../components/AtlasSpeciesCard';
 import { useAtlasFilters } from '../hooks/useAtlasFilters';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useHardwareBack } from '../navigation/hardwareBack';
 import { colors, spacing } from '../theme/tokens';
 
 interface Props {
@@ -16,11 +18,19 @@ interface Props {
 export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
   const { t, language } = useLanguage();
   const filters = useAtlasFilters(MUSHROOMS_DATABASE);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [unverifiedFocus, setUnverifiedFocus] = useState(false);
   const nothingLeft = filters.matches.length === 0 && filters.unverified.length === 0;
+
+  useHardwareBack(() => {
+    if (!sheetOpen) return false;
+    setSheetOpen(false);
+    return true;
+  });
 
   return (
     <View style={styles.screen}>
-      <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
+      <View style={styles.header}>
         <View style={styles.searchBarContainer}>
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
@@ -48,22 +58,43 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
           </Text>
         ) : null}
 
-        <AtlasFilterBar chipIds={filters.chipIds} onToggle={filters.toggleChip} />
+        <AtlasFilterBar
+          chipIds={filters.chipIds}
+          panelCount={filters.panelCount}
+          filtersOpen={sheetOpen}
+          unverifiedFocus={unverifiedFocus}
+          activeChips={filters.panelChips}
+          onToggle={filters.toggleChip}
+          onToggleUnverified={() => setUnverifiedFocus((current) => !current)}
+          onOpenFilters={() => setSheetOpen(true)}
+          onRemove={filters.removeChip}
+        />
 
         <Text style={styles.resultCount} testID="atlas-result-count">
           {t('atlas.resultCount', { count: filters.resultCount })}
         </Text>
+      </View>
 
+      <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
         {nothingLeft ? (
           <EmptyAtlas query={filters.query} />
         ) : (
           <AtlasResults
             matches={filters.matches}
             unverified={filters.unverified}
+            focusUnverified={unverifiedFocus}
             onSelectSpecies={onSelectSpecies}
           />
         )}
       </ScrollView>
+      <AtlasFilterSheet
+        visible={sheetOpen}
+        chipIds={filters.chipIds}
+        resultCount={filters.resultCount}
+        onToggle={filters.toggleChip}
+        onClear={filters.clearPanelFilters}
+        onClose={() => setSheetOpen(false)}
+      />
     </View>
   );
 };
@@ -71,15 +102,22 @@ export const AtlasScreen: React.FC<Props> = ({ onSelectSpecies }) => {
 function AtlasResults({
   matches,
   unverified,
+  focusUnverified,
   onSelectSpecies,
 }: {
   matches: readonly AtlasRow[];
   unverified: readonly AtlasRow[];
+  focusUnverified: boolean;
   onSelectSpecies: (species: MushroomSpecies) => void;
 }) {
   const { t } = useLanguage();
+  const unverifiedBlock =
+    unverified.length > 0 || focusUnverified ? (
+      <UnverifiedSection rows={unverified} onSelectSpecies={onSelectSpecies} />
+    ) : null;
   return (
-    <View>
+    <View testID="atlas-results">
+      {focusUnverified ? unverifiedBlock : null}
       {matches.length > 0 ? (
         <View testID="atlas-matches">
           {matches.map((row) => (
@@ -91,17 +129,28 @@ function AtlasResults({
           {t('atlas.emptyDesc')}
         </Text>
       )}
-      {unverified.length > 0 ? (
-        <View style={styles.unverified} testID="atlas-unverified">
-          <Text style={styles.unverifiedTitle} testID="atlas-unverified-title">
-            {t('atlas.unverifiedTitle', { count: unverified.length })}
-          </Text>
-          <Text style={styles.unverifiedBody}>{t('atlas.unverifiedBody')}</Text>
-          {unverified.map((row) => (
-            <AtlasSpeciesCard key={row.species.id} row={row} onPress={onSelectSpecies} />
-          ))}
-        </View>
-      ) : null}
+      {focusUnverified ? null : unverifiedBlock}
+    </View>
+  );
+}
+
+function UnverifiedSection({
+  rows,
+  onSelectSpecies,
+}: {
+  rows: readonly AtlasRow[];
+  onSelectSpecies: (species: MushroomSpecies) => void;
+}) {
+  const { t } = useLanguage();
+  return (
+    <View style={styles.unverified} testID="atlas-unverified">
+      <Text style={styles.unverifiedTitle} testID="atlas-unverified-title">
+        {t('atlas.unverifiedTitle', { count: rows.length })}
+      </Text>
+      <Text style={styles.unverifiedBody}>{t('atlas.unverifiedBody')}</Text>
+      {rows.map((row) => (
+        <AtlasSpeciesCard key={row.species.id} row={row} onPress={onSelectSpecies} />
+      ))}
     </View>
   );
 }
@@ -145,8 +194,18 @@ const warningNotice = {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
     backgroundColor: colors.background,
     paddingTop: 10,
+  },
+  header: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    paddingHorizontal: 16,
   },
   searchBarContainer: {
     flexDirection: 'row',
