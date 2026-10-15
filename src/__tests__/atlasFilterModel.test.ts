@@ -3,6 +3,7 @@ import {
   ATLAS_FILTER_GROUPS,
   ATLAS_KIND_GROUP,
   ATLAS_PANEL_GROUPS,
+  ATLAS_SEASON_FACTS,
   activePanelChips,
   applyAtlasFilters,
   panelFilterCount,
@@ -10,12 +11,48 @@ import {
   withoutChip,
   withoutPanelChips,
 } from '../data/atlasFilterModel';
+import type { SeasonFacts } from '../data/atlasFilterModel';
 import factsTable from '../data/atlasFilterFacts.json';
+import seasonTable from '../data/atlasFilterSeason.json';
 import { MUSHROOMS_DATABASE } from '../data/mushrooms';
 import { pl } from '../i18n/pl';
 import { en } from '../i18n/en';
 
 const FACT_KEYS = ['hymenophore', 'protection', 'psychoactive', 'ring', 'sporePrint', 'volva'];
+const SEASON_KEYS = ['habitats', 'habitatsReview', 'hostTrees', 'seasonMonths'];
+const HABITAT_IDS = [
+  'las',
+  'las_iglasty',
+  'las_lisciasty',
+  'las_mieszany',
+  'laka_pastwisko',
+  'park_ogrod',
+  'drewno',
+  'torfowisko',
+  'wrzosowisko',
+  'skraj_lasu_droga',
+  'gleba_wapienna',
+  'gleba_kwasna_piaszczysta',
+];
+const HOST_IDS = [
+  'sosna',
+  'swierk',
+  'jodla',
+  'modrzew',
+  'brzoza',
+  'dab',
+  'buk',
+  'grab',
+  'leszczyna',
+  'lipa',
+  'topola',
+  'olcha',
+  'jesion',
+  'wiaz',
+  'kasztan_jadalny',
+  'wierzba',
+  'drzewa_owocowe',
+];
 
 const UNFINISHED_EDIBLE = [
   'agaricus_campestris',
@@ -166,6 +203,9 @@ describe('atlas filter model', () => {
       'protection',
       'ring',
       'volva',
+      'month',
+      'habitat',
+      'host',
     ]);
     expect(chipIds.some((id) => /nietruj|non-poison|nonpoison|kind-safe|kind-deadly/i.test(id))).toBe(false);
     expect(JSON.stringify(pl.atlas.filters)).not.toMatch(/nietruj/i);
@@ -256,6 +296,9 @@ describe('atlas filter model', () => {
   test('panel counter ignores kind chips, clear keeps them, and one removal changes the result count', () => {
     expect(ATLAS_KIND_GROUP.id).toBe('kind');
     expect(ATLAS_PANEL_GROUPS.map((group) => group.id)).toEqual([
+      'month',
+      'habitat',
+      'host',
       'hymenophore',
       'spore',
       'protection',
@@ -325,5 +368,226 @@ describe('atlas filter model', () => {
     const all = apply([]);
     expect(visibleAtlasCount(all)).toBe(MUSHROOMS_DATABASE.length);
     expect(all.unverified).toHaveLength(0);
+  });
+
+  test('season keys match the cards and the morphology facts, and the bundle has values only', () => {
+    const cardIds = MUSHROOMS_DATABASE.map((species) => species.id);
+    const factIds = Object.keys(factsTable);
+    const seasonIds = Object.keys(seasonTable);
+    expect(seasonIds).toEqual(factIds);
+    expect([...seasonIds].sort()).toEqual([...cardIds].sort());
+    expect(Object.keys(ATLAS_SEASON_FACTS)).toEqual(seasonIds);
+    expect(factIds.every((id) => cardIds.includes(id))).toBe(true);
+    expect(cardIds.every((id) => seasonIds.includes(id))).toBe(true);
+    for (const facts of Object.values(ATLAS_SEASON_FACTS)) {
+      expect(Object.keys(facts).sort()).toEqual(SEASON_KEYS);
+      expect(facts).not.toHaveProperty('propozycja_z_karty');
+      expect(facts).not.toHaveProperty('do_weryfikacji');
+      expect(facts).not.toHaveProperty('sources');
+    }
+    expect(JSON.stringify(seasonTable)).not.toMatch(
+      /propozycja_z_karty|wartosci_tylko_w_innych_zrodlach|luki_slownika|kandydaci|numeracja_stron|do_weryfikacji|"sources"|"pages"|"note"/,
+    );
+  });
+
+  test('month, habitat and host chips stay inside the closed dictionary', () => {
+    const month = ATLAS_FILTER_GROUPS.find((group) => group.id === 'month');
+    const habitat = ATLAS_FILTER_GROUPS.find((group) => group.id === 'habitat');
+    const host = ATLAS_FILTER_GROUPS.find((group) => group.id === 'host');
+    expect(month?.chips.map((chip) => chip.id)).toEqual(
+      Array.from({ length: 12 }, (_, index) => `month-${index + 1}`),
+    );
+    expect(habitat?.chips.map((chip) => chip.id)).toEqual(HABITAT_IDS.map((id) => `habitat-${id}`));
+    expect(host?.chips.map((chip) => chip.id)).toEqual(HOST_IDS.map((id) => `host-${id}`));
+    const chipIds = ATLAS_FILTER_GROUPS.flatMap((group) => group.chips.map((chip) => chip.id));
+    expect(chipIds).not.toEqual(
+      expect.arrayContaining(['habitat-zarosla', 'habitat-zreby', 'habitat-legi', 'habitat-pola', 'host-klon']),
+    );
+    for (const facts of Object.values(ATLAS_SEASON_FACTS)) {
+      for (const habitatId of facts.habitats ?? []) expect(HABITAT_IDS).toContain(habitatId);
+      for (const tree of facts.hostTrees ?? []) expect(HOST_IDS).toContain(tree);
+      for (const monthNumber of facts.seasonMonths ?? []) {
+        expect(monthNumber).toBeGreaterThanOrEqual(1);
+        expect(monthNumber).toBeLessThanOrEqual(12);
+      }
+    }
+  });
+
+  test('coverage is 40 months, 44 habitats with one review flag, and 39 host rows with 4 empty', () => {
+    const rows = Object.entries(ATLAS_SEASON_FACTS);
+    const nullMonths = rows.filter(([, facts]) => facts.seasonMonths == null).map(([id]) => id);
+    const review = rows.filter(([, facts]) => facts.habitatsReview).map(([id]) => id);
+    const emptyTrees = rows
+      .filter(([, facts]) => Array.isArray(facts.hostTrees) && facts.hostTrees.length === 0)
+      .map(([id]) => id);
+    const nullTrees = rows.filter(([, facts]) => facts.hostTrees == null).map(([id]) => id);
+    expect(nullMonths.sort()).toEqual([
+      'cortinarius_rubellus',
+      'galerina_marginata',
+      'inocybe_erubescens',
+      'tylopilus_felleus',
+    ]);
+    expect(rows.length - nullMonths.length).toBe(40);
+    expect(rows.every(([, facts]) => Array.isArray(facts.habitats) && facts.habitats.length > 0)).toBe(true);
+    expect(review).toEqual(['lactarius_torminosus']);
+    expect(emptyTrees.sort()).toEqual([
+      'calocybe_gambosa',
+      'chlorophyllum_rhacodes',
+      'gyromitra_esculenta',
+      'macrolepiota_procera',
+    ]);
+    expect(nullTrees.sort()).toEqual([
+      'agaricus_campestris',
+      'agaricus_xanthodermus',
+      'amanita_excelsa',
+      'armillaria_mellea',
+      'cortinarius_rubellus',
+    ]);
+    expect(rows.length - nullTrees.length).toBe(39);
+  });
+
+  test('null host trees go to verification and an empty list is a known miss', () => {
+    const seasonById = (id: string): SeasonFacts | undefined => {
+      const base = ATLAS_SEASON_FACTS[id];
+      if (!base) return undefined;
+      if (id === 'amanita_phalloides') {
+        return { seasonMonths: base.seasonMonths, habitats: base.habitats, habitatsReview: false, hostTrees: null };
+      }
+      if (id === 'gyromitra_esculenta') {
+        return { seasonMonths: base.seasonMonths, habitats: base.habitats, habitatsReview: false, hostTrees: [] };
+      }
+      if (id === 'boletus_edulis') {
+        return { seasonMonths: base.seasonMonths, habitats: base.habitats, habitatsReview: false, hostTrees: ['sosna'] };
+      }
+      return { seasonMonths: base.seasonMonths, habitats: base.habitats, habitatsReview: false, hostTrees: ['buk'] };
+    };
+    const pine = applyAtlasFilters(MUSHROOMS_DATABASE, {
+      query: '',
+      chipIds: new Set(['host-sosna']),
+      seasonById,
+    });
+    expect(idsOf(pine.matches)).toContain('boletus_edulis');
+    expect(idsOf(pine.unverified)).toContain('amanita_phalloides');
+    expect(idsOf(pine.matches).concat(idsOf(pine.unverified))).not.toContain('gyromitra_esculenta');
+    expect(pine.unverified.find((row) => row.species.id === 'amanita_phalloides')?.species.status).toBe(
+      'DEADLY_POISONOUS',
+    );
+  });
+
+  test('a habitat review flag behaves as missing data and an unknown token is not remapped', () => {
+    const woolly = apply(['habitat-las_iglasty']);
+    expect(ATLAS_SEASON_FACTS.lactarius_torminosus?.habitatsReview).toBe(true);
+    expect(ATLAS_SEASON_FACTS.lactarius_torminosus?.habitats).toEqual(
+      expect.arrayContaining(['las_iglasty']),
+    );
+    expect(idsOf(woolly.matches)).not.toContain('lactarius_torminosus');
+    expect(idsOf(woolly.unverified)).toContain('lactarius_torminosus');
+    expect(idsOf(woolly.matches)).toContain('boletus_edulis');
+
+    const seasonById = (id: string): SeasonFacts | undefined => {
+      const base = ATLAS_SEASON_FACTS[id];
+      if (!base) return undefined;
+      if (id === 'boletus_edulis') {
+        return { seasonMonths: base.seasonMonths, habitats: ['zarosla'], habitatsReview: false, hostTrees: base.hostTrees };
+      }
+      if (id === 'suillus_luteus') {
+        return {
+          seasonMonths: base.seasonMonths,
+          habitats: ['las_iglasty', 'zarosla'],
+          habitatsReview: false,
+          hostTrees: base.hostTrees,
+        };
+      }
+      return base;
+    };
+    const conifer = applyAtlasFilters(MUSHROOMS_DATABASE, {
+      query: '',
+      chipIds: new Set(['habitat-las_iglasty']),
+      seasonById,
+    });
+    expect(idsOf(conifer.matches).concat(idsOf(conifer.unverified))).not.toContain('boletus_edulis');
+    expect(idsOf(conifer.matches)).toContain('suillus_luteus');
+  });
+
+  test('a month chip uses OR and keeps poisonous cards with missing months visible', () => {
+    const january = apply(['month-1']);
+    expect(idsOf(january.matches)).toEqual(['hypholoma_capnoides']);
+    expect(idsOf(january.unverified).sort()).toEqual([
+      'cortinarius_rubellus',
+      'galerina_marginata',
+      'inocybe_erubescens',
+      'tylopilus_felleus',
+    ]);
+    expect(idsOf(january.matches).concat(idsOf(january.unverified))).not.toContain('amanita_phalloides');
+    for (const id of ['galerina_marginata', 'inocybe_erubescens', 'cortinarius_rubellus']) {
+      const row = january.unverified.find((item) => item.species.id === id);
+      expect(row?.species.status).toBe('DEADLY_POISONOUS');
+      expect(row?.species.confusionRisks.length).toBeGreaterThan(0);
+    }
+    expect(visibleAtlasCount(january)).toBe(january.matches.length + january.unverified.length);
+    expect(visibleAtlasCount(january)).toBeGreaterThan(january.matches.length);
+
+    const either = apply(['month-1', 'month-7']);
+    expect(idsOf(either.matches)).toContain('hypholoma_capnoides');
+    expect(idsOf(either.matches)).toContain('amanita_phalloides');
+    expect(idsOf(either.matches)).toContain('boletus_edulis');
+    expect(idsOf(either.unverified)).toContain('galerina_marginata');
+
+    const julyAndBeech = apply(['month-7', 'host-buk']);
+    expect(idsOf(julyAndBeech.matches)).toContain('amanita_phalloides');
+    expect(idsOf(julyAndBeech.matches)).not.toContain('boletus_edulis');
+    expect(idsOf(julyAndBeech.unverified)).toContain('cortinarius_rubellus');
+  });
+
+  test('real host rows keep null poisonous cards and drop saprotrophs', () => {
+    const pine = apply(['host-sosna']);
+    expect(idsOf(pine.matches)).toContain('suillus_luteus');
+    expect(idsOf(pine.matches)).toContain('cantharellus_cibarius');
+    expect(idsOf(pine.matches)).toContain('inocybe_erubescens');
+    expect(idsOf(pine.unverified)).toEqual(
+      expect.arrayContaining(['cortinarius_rubellus', 'agaricus_xanthodermus']),
+    );
+    const hidden = idsOf(pine.matches).concat(idsOf(pine.unverified));
+    expect(hidden).not.toContain('gyromitra_esculenta');
+    expect(hidden).not.toContain('macrolepiota_procera');
+    expect(hidden).not.toContain('calocybe_gambosa');
+    expect(hidden).not.toContain('chlorophyllum_rhacodes');
+    const webcap = pine.unverified.find((row) => row.species.id === 'cortinarius_rubellus');
+    const stainer = pine.unverified.find((row) => row.species.id === 'agaricus_xanthodermus');
+    expect(webcap?.species.status).toBe('DEADLY_POISONOUS');
+    expect(webcap?.species.confusionRisks.some((risk) => risk.fatal)).toBe(true);
+    expect(stainer?.species.status).toBe('POISONOUS');
+    expect(stainer?.species.confusionRisks.length).toBeGreaterThan(0);
+
+    const chanterelle = apply(['host-buk', 'host-grab']);
+    expect(idsOf(chanterelle.matches)).toContain('cantharellus_cibarius');
+  });
+
+  test('clearing a month chip and deselecting kind never hides poisonous cards', () => {
+    const edibleJuly = apply(['kind-edible', 'month-7']);
+    expect(idsOf(edibleJuly.matches)).toContain('boletus_edulis');
+    expect(idsOf(edibleJuly.matches).concat(idsOf(edibleJuly.unverified))).not.toContain('amanita_phalloides');
+
+    const julyOnly = withoutChip(new Set(['kind-edible', 'month-7']), 'kind-edible');
+    expect([...julyOnly]).toEqual(['month-7']);
+    expect(panelFilterCount(julyOnly)).toBe(1);
+    const july = applyAtlasFilters(MUSHROOMS_DATABASE, { query: '', chipIds: julyOnly });
+    expect(idsOf(july.matches)).toContain('amanita_phalloides');
+    expect(idsOf(july.matches)).toContain('boletus_edulis');
+    expect(idsOf(july.unverified)).toContain('galerina_marginata');
+    expect(july.matches.some((row) => row.species.status === 'DEADLY_POISONOUS')).toBe(true);
+
+    const cleared = withoutPanelChips(julyOnly);
+    expect(panelFilterCount(cleared)).toBe(0);
+    const restored = applyAtlasFilters(MUSHROOMS_DATABASE, { query: '', chipIds: cleared });
+    expect(restored.matches).toHaveLength(MUSHROOMS_DATABASE.length);
+    expect(idsOf(restored.matches)).toContain('amanita_phalloides');
+    expect(idsOf(restored.matches)).toContain('gyromitra_esculenta');
+    expect(activePanelChips(julyOnly).map((chip) => chip.id)).toEqual(['month-7']);
+    expect(activePanelChips(julyOnly)[0]).toEqual({
+      id: 'month-7',
+      group: 'atlas.filters.month',
+      label: 'months.jul',
+    });
   });
 });

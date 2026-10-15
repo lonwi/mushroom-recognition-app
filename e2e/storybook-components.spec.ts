@@ -262,6 +262,33 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.getByTestId('atlas-result-count')).toContainText('Pasujące karty: 0');
   });
 
+  test('Month and host filters keep poisonous cards that have no data', async ({ page }) => {
+    await page.goto('/iframe.html?id=mushroom-atlasscreen--filters');
+    await page.getByTestId('atlas-filter-open').click();
+    await expect(page.getByTestId('filter-month-grid')).toBeVisible();
+    await expect(page.getByTestId('filter-chip-month-1')).toBeVisible();
+    await expect(page.getByTestId('filter-chip-month-12')).toBeVisible();
+    await page.getByTestId('filter-chip-month-1').click();
+    await expect(page.getByTestId('filter-active-month-1')).toContainText('Sty');
+    await expect(page.getByTestId('atlas-unverified').getByTestId('atlas-card-galerina_marginata')).toBeVisible();
+    await expect(page.getByTestId('atlas-card-galerina_marginata')).toContainText('☠ Sobowtór!');
+    await expect(page.getByTestId('atlas-card-amanita_phalloides')).toHaveCount(0);
+    await expect(page.getByTestId('atlas-filter-show')).not.toContainText('Pokaż 0');
+
+    await expect(page.getByTestId('filter-chip-host-sosna')).toHaveCount(0);
+    await page.getByTestId('atlas-filter-sheet-groups').evaluate((el) => {
+      const target = el.querySelector('[data-testid="filter-group-toggle-host"]');
+      if (!target) return;
+      const delta = target.getBoundingClientRect().top - el.getBoundingClientRect().top;
+      el.scrollTop += delta - 8;
+    });
+    await page.getByTestId('filter-group-toggle-host').click();
+    await page.getByTestId('filter-chip-host-sosna').click();
+    await expect(page.getByTestId('atlas-unverified').getByTestId('atlas-card-cortinarius_rubellus')).toBeVisible();
+    await expect(page.getByTestId('atlas-card-cortinarius_rubellus')).toContainText('☠ Sobowtór!');
+    await expect(page.getByTestId('atlas-card-gyromitra_esculenta')).toHaveCount(0);
+  });
+
   test('A finished edible species keeps the green kitchen section', async ({ page }) => {
     await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--kania-fatal-look-alike');
     await expect(page.getByTestId('species-use-edible')).toContainText('W kuchni');

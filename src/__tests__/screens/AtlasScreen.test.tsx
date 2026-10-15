@@ -410,6 +410,25 @@ describe('AtlasScreen RTL Tests', () => {
     expect(sheet.getByTestId('filter-chip-protection-scisla')).toBeTruthy();
     expect(sheet.getByTestId('filter-chip-ring-present')).toBeTruthy();
     expect(sheet.getByTestId('filter-chip-volva-pochwa')).toBeTruthy();
+    expect(sheet.getByTestId('filter-month-grid')).toBeTruthy();
+    expect(sheet.getByTestId('filter-chip-month-1')).toBeTruthy();
+    expect(sheet.getByTestId('filter-chip-month-12')).toBeTruthy();
+    expect(bar.queryByTestId('filter-chip-month-1')).toBeNull();
+    expect(bar.queryByTestId('filter-chip-habitat-las_iglasty')).toBeNull();
+    expect(bar.queryByTestId('filter-chip-host-sosna')).toBeNull();
+    const habitatToggle = sheet.getByTestId('filter-group-toggle-habitat');
+    const hostToggle = sheet.getByTestId('filter-group-toggle-host');
+    expect(habitatToggle.props.accessibilityRole).toBe('button');
+    expect(habitatToggle.props.accessibilityLabel).toBe('Siedlisko');
+    expect(habitatToggle.props.accessibilityState).toEqual({ expanded: false });
+    expect(hostToggle.props.accessibilityState).toEqual({ expanded: false });
+    expect(sheet.queryByTestId('filter-chip-habitat-las_iglasty')).toBeNull();
+    expect(sheet.queryByTestId('filter-chip-host-sosna')).toBeNull();
+    await fireEvent.press(habitatToggle);
+    expect(sheet.getByTestId('filter-group-toggle-habitat').props.accessibilityState).toEqual({ expanded: true });
+    expect(sheet.getByTestId('filter-chip-habitat-las_iglasty')).toBeTruthy();
+    await fireEvent.press(hostToggle);
+    expect(sheet.getByTestId('filter-chip-host-sosna')).toBeTruthy();
     expect(sheet.getByText('Wyczyść')).toBeTruthy();
     expect(screen.getByTestId('atlas-filter-open').props.accessibilityState).toEqual({ expanded: true });
   });
@@ -605,5 +624,75 @@ describe('AtlasScreen RTL Tests', () => {
       spy.mockRestore();
       Platform.OS = previousPlatform;
     }
+  });
+
+  it('keeps poisonous cards with missing month or host data and their look-alike warnings', async () => {
+    const screen = await render(
+      <LanguageProvider>
+        <AtlasScreen onSelectSpecies={() => {}} />
+      </LanguageProvider>
+    );
+
+    expect(screen.getByTestId('atlas-card-amanita_phalloides')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('atlas-filter-open'));
+    expect(within(screen.getByTestId('atlas-filter-bar')).queryByTestId('filter-chip-month-1')).toBeNull();
+    await fireEvent.press(screen.getByTestId('filter-chip-month-1'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Filtry (1)')).toBeTruthy();
+      expect(screen.getByTestId('atlas-filter-open').props.accessibilityLabel).toBe('Filtry, aktywne: 1');
+    });
+    const monthChip = screen.getByTestId('filter-active-month-1');
+    expect(monthChip.props.accessibilityLabel).toBe('Usuń filtr: Miesiąc: Sty');
+    expect(within(monthChip).getByText('Sty ×')).toBeTruthy();
+
+    const unverified = within(screen.getByTestId('atlas-unverified'));
+    for (const id of ['galerina_marginata', 'inocybe_erubescens', 'cortinarius_rubellus']) {
+      const card = unverified.getByTestId(`atlas-card-${id}`);
+      expect(within(card).getByText('☠ Sobowtór!')).toBeTruthy();
+    }
+    expect(screen.queryByTestId('atlas-card-amanita_phalloides')).toBeNull();
+    const visible = screen.getAllByTestId(/^atlas-card-[a-z0-9_]+$/).length;
+    expect(visible).toBeGreaterThan(1);
+    expect(screen.getByTestId('atlas-filter-show').props.accessibilityLabel).toBe(`Pokaż ${visible} wyników`);
+    expect(within(screen.getByTestId('atlas-filter-show')).queryByText('Pokaż 0')).toBeNull();
+
+    await fireEvent.press(screen.getByTestId('atlas-filter-clear'));
+    await waitFor(() => {
+      expect(screen.getByText('Filtry (0)')).toBeTruthy();
+      expect(screen.getByTestId('atlas-card-amanita_phalloides')).toBeTruthy();
+    });
+
+    await fireEvent.press(screen.getByTestId('filter-group-toggle-host'));
+    await fireEvent.press(screen.getByTestId('filter-chip-host-sosna'));
+    await waitFor(() => {
+      expect(screen.getByText('Filtry (1)')).toBeTruthy();
+      const webcap = within(screen.getByTestId('atlas-unverified')).getByTestId('atlas-card-cortinarius_rubellus');
+      const stainer = within(screen.getByTestId('atlas-unverified')).getByTestId('atlas-card-agaricus_xanthodermus');
+      expect(within(webcap).getByText('☠ Sobowtór!')).toBeTruthy();
+      expect(within(stainer).getByText('☠ Sobowtór!')).toBeTruthy();
+      expect(within(screen.getByTestId('atlas-matches')).getByTestId('atlas-card-suillus_luteus')).toBeTruthy();
+    });
+    expect(screen.queryByTestId('atlas-card-gyromitra_esculenta')).toBeNull();
+    expect(screen.queryByTestId('atlas-card-macrolepiota_procera')).toBeNull();
+    expect(screen.getByTestId('filter-active-host-sosna').props.accessibilityLabel).toBe(
+      'Usuń filtr: Drzewo żywicielskie: Sosna',
+    );
+
+    await fireEvent.press(screen.getByTestId('atlas-filter-clear'));
+    await fireEvent.press(screen.getByTestId('filter-chip-month-7'));
+    await fireEvent.press(screen.getByTestId('atlas-filter-show'));
+    await fireEvent.press(screen.getByTestId('filter-chip-kind-edible'));
+    await waitFor(() => {
+      expect(within(screen.getByTestId('atlas-matches')).queryByTestId('atlas-card-amanita_phalloides')).toBeNull();
+      expect(screen.queryByTestId('atlas-card-amanita_phalloides')).toBeNull();
+    });
+    await fireEvent.press(screen.getByTestId('filter-chip-kind-edible'));
+    await waitFor(() => {
+      const matches = within(screen.getByTestId('atlas-matches'));
+      expect(matches.getByTestId('atlas-card-amanita_phalloides')).toBeTruthy();
+      expect(within(matches.getByTestId('atlas-card-amanita_phalloides')).getByText('☠ Sobowtór!')).toBeTruthy();
+      expect(within(screen.getByTestId('atlas-unverified')).getByTestId('atlas-card-galerina_marginata')).toBeTruthy();
+    });
   });
 });

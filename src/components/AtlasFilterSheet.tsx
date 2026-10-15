@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Modal,
   Pressable,
@@ -14,6 +14,13 @@ import { ATLAS_PANEL_GROUPS } from '../data/atlasFilterModel';
 import { AtlasFilterChipList } from './AtlasFilterChip';
 import { useLanguage } from '../contexts/LanguageContext';
 import { colors, spacing } from '../theme/tokens';
+
+interface PanelGroup {
+  id: string;
+  label: string;
+  layout?: 'grid' | 'disclosure';
+  chips: readonly { id: string; label: string }[];
+}
 
 interface Props {
   visible: boolean;
@@ -77,12 +84,7 @@ export const AtlasFilterSheet: React.FC<Props> = ({
             testID="atlas-filter-sheet-groups"
           >
             {ATLAS_PANEL_GROUPS.map((group) => (
-              <View key={group.id} style={styles.group} testID={`filter-group-${group.id}`}>
-                <Text style={styles.groupLabel}>{t(group.label)}</Text>
-                <View style={styles.chips}>
-                  <AtlasFilterChipList chips={group.chips} chipIds={chipIds} onToggle={onToggle} />
-                </View>
-              </View>
+              <SheetGroup key={group.id} group={group} chipIds={chipIds} onToggle={onToggle} />
             ))}
           </ScrollView>
         </SafeAreaView>
@@ -90,6 +92,98 @@ export const AtlasFilterSheet: React.FC<Props> = ({
     </Modal>
   );
 };
+
+function SheetGroup({
+  group,
+  chipIds,
+  onToggle,
+}: {
+  group: PanelGroup;
+  chipIds: ReadonlySet<string>;
+  onToggle: (id: string) => void;
+}) {
+  if (group.layout === 'disclosure') {
+    return <DisclosureGroup group={group} chipIds={chipIds} onToggle={onToggle} />;
+  }
+  return (
+    <View style={styles.group} testID={`filter-group-${group.id}`}>
+      <GroupLabel label={group.label} />
+      {group.layout === 'grid' ? (
+        <MonthGrid chips={group.chips} chipIds={chipIds} onToggle={onToggle} />
+      ) : (
+        <View style={styles.chips}>
+          <AtlasFilterChipList chips={group.chips} chipIds={chipIds} onToggle={onToggle} />
+        </View>
+      )}
+    </View>
+  );
+}
+
+function DisclosureGroup({
+  group,
+  chipIds,
+  onToggle,
+}: {
+  group: PanelGroup;
+  chipIds: ReadonlySet<string>;
+  onToggle: (id: string) => void;
+}) {
+  const { t } = useLanguage();
+  const [open, setOpen] = useState(false);
+  return (
+    <View style={styles.group} testID={`filter-group-${group.id}`}>
+      <TouchableOpacity
+        testID={`filter-group-toggle-${group.id}`}
+        accessibilityRole="button"
+        accessibilityLabel={t(group.label)}
+        accessibilityState={{ expanded: open }}
+        style={styles.toggle}
+        onPress={() => setOpen((current) => !current)}
+      >
+        <Text style={styles.groupLabel}>{t(group.label)}</Text>
+        <Text style={styles.chevron}>{open ? '▾' : '▸'}</Text>
+      </TouchableOpacity>
+      {open ? (
+        <View style={styles.chips} testID={`filter-group-chips-${group.id}`}>
+          <AtlasFilterChipList chips={group.chips} chipIds={chipIds} onToggle={onToggle} />
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function MonthGrid({
+  chips,
+  chipIds,
+  onToggle,
+}: {
+  chips: PanelGroup['chips'];
+  chipIds: ReadonlySet<string>;
+  onToggle: (id: string) => void;
+}) {
+  const rows: PanelGroup['chips'][] = [];
+  for (let index = 0; index < chips.length; index += 4) {
+    rows.push(chips.slice(index, index + 4));
+  }
+  return (
+    <View testID="filter-month-grid">
+      {rows.map((row) => (
+        <View key={row[0].id} style={styles.monthRow}>
+          {row.map((chip) => (
+            <View key={chip.id} style={styles.monthCell}>
+              <AtlasFilterChipList chips={[chip]} chipIds={chipIds} onToggle={onToggle} fill />
+            </View>
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function GroupLabel({ label }: { label: string }) {
+  const { t } = useLanguage();
+  return <Text style={styles.groupLabel}>{t(label)}</Text>;
+}
 
 const styles = StyleSheet.create({
   modal: {
@@ -134,10 +228,30 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
+  toggle: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  chevron: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.slate500,
+  },
   chips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
+  },
+  monthRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  monthCell: {
+    flex: 1,
+    minWidth: 0,
   },
   footer: {
     zIndex: 2,
