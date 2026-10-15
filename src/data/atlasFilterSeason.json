@@ -1,0 +1,835 @@
+{
+  "agaricus_campestris": {
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "habitats": [
+      "laka_pastwisko",
+      "park_ogrod"
+    ],
+    "habitatsReview": false,
+    "hostTrees": null
+  },
+  "agaricus_xanthodermus": {
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "habitats": [
+      "las_lisciasty",
+      "park_ogrod",
+      "skraj_lasu_droga"
+    ],
+    "habitatsReview": false,
+    "hostTrees": null
+  },
+  "amanita_citrina": {
+    "seasonMonths": [
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "habitats": [
+      "las_iglasty",
+      "las_lisciasty",
+      "las_mieszany",
+      "gleba_kwasna_piaszczysta"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "sosna",
+      "swierk"
+    ]
+  },
+  "amanita_excelsa": {
+    "seasonMonths": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "habitats": [
+      "las_iglasty",
+      "las_lisciasty",
+      "las_mieszany"
+    ],
+    "habitatsReview": false,
+    "hostTrees": null
+  },
+  "amanita_muscaria": {
+    "seasonMonths": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "habitats": [
+      "las_iglasty",
+      "las_lisciasty",
+      "las_mieszany"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "sosna",
+      "swierk",
+      "brzoza"
+    ]
+  },
+  "amanita_pantherina": {
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "habitats": [
+      "las_iglasty",
+      "las_lisciasty",
+      "las_mieszany",
+      "gleba_kwasna_piaszczysta"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "sosna",
+      "swierk",
+      "dab",
+      "buk"
+    ]
+  },
+  "amanita_phalloides": {
+    "seasonMonths": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "habitats": [
+      "las_lisciasty",
+      "las_mieszany"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "dab",
+      "buk"
+    ]
+  },
+  "amanita_rubescens": {
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "habitats": [
+      "las_iglasty",
+      "las_lisciasty",
+      "las_mieszany"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "sosna",
+      "brzoza",
+      "dab",
+      "buk"
+    ]
+  },
+  "amanita_virosa": {
+    "seasonMonths": [
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "habitats": [
+      "las_iglasty",
+      "las_lisciasty",
+      "las_mieszany",
+      "gleba_kwasna_piaszczysta"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "sosna",
+      "swierk",
+      "brzoza",
+      "dab",
+      "buk"
+    ]
+  },
+  "armillaria_mellea": {
+    "seasonMonths": [
+      9,
+      10,
+      11
+    ],
+    "habitats": [
+      "las_iglasty",
+      "las_lisciasty",
+      "las_mieszany",
+      "drewno"
+    ],
+    "habitatsReview": false,
+    "hostTrees": null
+  },
+  "boletus_edulis": {
+    "seasonMonths": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "habitats": [
+      "las_iglasty",
+      "las_lisciasty",
+      "las_mieszany"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "sosna",
+      "swierk",
+      "brzoza"
+    ]
+  },
+  "calocybe_gambosa": {
+    "seasonMonths": [
+      4,
+      5,
+      6
+    ],
+    "habitats": [
+      "las_lisciasty",
+      "laka_pastwisko",
+      "park_ogrod",
+      "skraj_lasu_droga"
+    ],
+    "habitatsReview": false,
+    "hostTrees": []
+  },
+  "cantharellus_cibarius": {
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "habitats": [
+      "las_iglasty",
+      "las_lisciasty",
+      "las_mieszany"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "sosna",
+      "swierk",
+      "dab",
+      "buk",
+      "grab"
+    ]
+  },
+  "chlorophyllum_rhacodes": {
+    "seasonMonths": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "habitats": [
+      "las_iglasty",
+      "las_lisciasty",
+      "las_mieszany",
+      "skraj_lasu_droga"
+    ],
+    "habitatsReview": false,
+    "hostTrees": []
+  },
+  "cortinarius_orellanus": {
+    "seasonMonths": [
+      8,
+      9,
+      10
+    ],
+    "habitats": [
+      "las_lisciasty",
+      "las_mieszany"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "brzoza",
+      "dab",
+      "buk"
+    ]
+  },
+  "cortinarius_rubellus": {
+    "seasonMonths": null,
+    "habitats": [
+      "las_iglasty"
+    ],
+    "habitatsReview": false,
+    "hostTrees": null
+  },
+  "galerina_marginata": {
+    "seasonMonths": null,
+    "habitats": [
+      "las_iglasty",
+      "las_mieszany",
+      "drewno"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "swierk",
+      "buk"
+    ]
+  },
+  "gyromitra_esculenta": {
+    "seasonMonths": [
+      3,
+      4,
+      5
+    ],
+    "habitats": [
+      "las_iglasty",
+      "skraj_lasu_droga",
+      "gleba_kwasna_piaszczysta"
+    ],
+    "habitatsReview": false,
+    "hostTrees": []
+  },
+  "hydnum_repandum": {
+    "seasonMonths": [
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "habitats": [
+      "las_iglasty",
+      "las_lisciasty",
+      "las_mieszany",
+      "gleba_wapienna"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "swierk",
+      "buk"
+    ]
+  },
+  "hygrophoropsis_aurantiaca": {
+    "seasonMonths": [
+      9,
+      10,
+      11
+    ],
+    "habitats": [
+      "las_iglasty",
+      "las_mieszany"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "sosna",
+      "jodla",
+      "buk"
+    ]
+  },
+  "hypholoma_capnoides": {
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "habitats": [
+      "las_iglasty",
+      "las_mieszany",
+      "drewno"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "swierk"
+    ]
+  },
+  "hypholoma_fasciculare": {
+    "seasonMonths": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "habitats": [
+      "las_iglasty",
+      "las_lisciasty",
+      "las_mieszany",
+      "drewno"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "sosna",
+      "swierk",
+      "brzoza",
+      "dab",
+      "buk"
+    ]
+  },
+  "imleria_badia": {
+    "seasonMonths": [
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "habitats": [
+      "las_iglasty",
+      "las_lisciasty",
+      "las_mieszany"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "sosna",
+      "swierk"
+    ]
+  },
+  "inocybe_erubescens": {
+    "seasonMonths": null,
+    "habitats": [
+      "las_lisciasty",
+      "park_ogrod"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "sosna",
+      "dab",
+      "buk",
+      "grab",
+      "lipa"
+    ]
+  },
+  "kuehneromyces_mutabilis": {
+    "seasonMonths": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "habitats": [
+      "las_lisciasty",
+      "las_mieszany",
+      "park_ogrod",
+      "drewno"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "sosna",
+      "swierk",
+      "jodla",
+      "brzoza",
+      "dab",
+      "buk",
+      "grab",
+      "leszczyna",
+      "lipa",
+      "olcha",
+      "wierzba"
+    ]
+  },
+  "lactarius_deliciosus": {
+    "seasonMonths": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "habitats": [
+      "las_iglasty"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "sosna"
+    ]
+  },
+  "lactarius_torminosus": {
+    "seasonMonths": [
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "habitats": [
+      "las_iglasty",
+      "las_lisciasty",
+      "las_mieszany",
+      "park_ogrod",
+      "gleba_kwasna_piaszczysta"
+    ],
+    "habitatsReview": true,
+    "hostTrees": [
+      "brzoza"
+    ]
+  },
+  "leccinum_aurantiacum": {
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "habitats": [
+      "las_lisciasty",
+      "park_ogrod",
+      "skraj_lasu_droga"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "dab",
+      "topola"
+    ]
+  },
+  "leccinum_scabrum": {
+    "seasonMonths": [
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "habitats": [
+      "las_lisciasty",
+      "las_mieszany",
+      "laka_pastwisko",
+      "skraj_lasu_droga"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "brzoza"
+    ]
+  },
+  "macrolepiota_procera": {
+    "seasonMonths": [
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "habitats": [
+      "las_lisciasty",
+      "las_mieszany",
+      "skraj_lasu_droga",
+      "gleba_wapienna"
+    ],
+    "habitatsReview": false,
+    "hostTrees": []
+  },
+  "morchella_esculenta": {
+    "seasonMonths": [
+      3,
+      4,
+      5
+    ],
+    "habitats": [
+      "las_lisciasty",
+      "las_mieszany",
+      "laka_pastwisko",
+      "park_ogrod",
+      "torfowisko",
+      "skraj_lasu_droga"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "buk",
+      "grab",
+      "leszczyna",
+      "olcha",
+      "jesion",
+      "wiaz"
+    ]
+  },
+  "neoboletus_luridiformis": {
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "habitats": [
+      "las_iglasty",
+      "las_lisciasty",
+      "las_mieszany",
+      "gleba_kwasna_piaszczysta"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "swierk",
+      "jodla",
+      "dab",
+      "buk",
+      "grab",
+      "lipa"
+    ]
+  },
+  "paxillus_involutus": {
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "habitats": [
+      "las_iglasty",
+      "las_lisciasty",
+      "las_mieszany",
+      "park_ogrod",
+      "gleba_kwasna_piaszczysta"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "sosna",
+      "swierk",
+      "brzoza",
+      "dab",
+      "olcha"
+    ]
+  },
+  "rubroboletus_satanas": {
+    "seasonMonths": [
+      7,
+      8,
+      9
+    ],
+    "habitats": [
+      "las_lisciasty",
+      "gleba_wapienna"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "dab",
+      "buk",
+      "grab",
+      "leszczyna",
+      "lipa"
+    ]
+  },
+  "russula_virescens": {
+    "seasonMonths": [
+      7,
+      8,
+      9
+    ],
+    "habitats": [
+      "las_iglasty",
+      "las_lisciasty",
+      "las_mieszany"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "swierk",
+      "brzoza",
+      "dab",
+      "buk"
+    ]
+  },
+  "suillellus_luridus": {
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "habitats": [
+      "las_iglasty",
+      "las_lisciasty",
+      "las_mieszany",
+      "park_ogrod"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "jodla",
+      "dab",
+      "buk",
+      "lipa"
+    ]
+  },
+  "suillus_bovinus": {
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "habitats": [
+      "las_iglasty",
+      "wrzosowisko",
+      "skraj_lasu_droga",
+      "gleba_kwasna_piaszczysta"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "sosna"
+    ]
+  },
+  "suillus_grevillei": {
+    "seasonMonths": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "habitats": [
+      "las_iglasty",
+      "park_ogrod"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "modrzew"
+    ]
+  },
+  "suillus_luteus": {
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "habitats": [
+      "las_iglasty"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "sosna"
+    ]
+  },
+  "suillus_variegatus": {
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "habitats": [
+      "las_iglasty",
+      "torfowisko",
+      "wrzosowisko",
+      "skraj_lasu_droga",
+      "gleba_kwasna_piaszczysta"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "sosna"
+    ]
+  },
+  "tricholoma_equestre": {
+    "seasonMonths": [
+      9,
+      10,
+      11
+    ],
+    "habitats": [
+      "las_iglasty",
+      "gleba_kwasna_piaszczysta"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "sosna"
+    ]
+  },
+  "tylopilus_felleus": {
+    "seasonMonths": null,
+    "habitats": [
+      "las_iglasty",
+      "las_mieszany",
+      "drewno",
+      "gleba_kwasna_piaszczysta"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "sosna",
+      "swierk"
+    ]
+  },
+  "xerocomellus_chrysenteron": {
+    "seasonMonths": [
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "habitats": [
+      "las_iglasty",
+      "las_lisciasty",
+      "las_mieszany"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "sosna",
+      "dab",
+      "buk"
+    ]
+  },
+  "xerocomus_subtomentosus": {
+    "seasonMonths": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "habitats": [
+      "las_iglasty",
+      "las_lisciasty",
+      "las_mieszany"
+    ],
+    "habitatsReview": false,
+    "hostTrees": [
+      "sosna",
+      "swierk",
+      "dab"
+    ]
+  }
+}

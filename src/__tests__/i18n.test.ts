@@ -156,6 +156,16 @@ describe('Polish and English dictionaries', () => {
     expect(en.cards.underside).toBe('Underside ({type})');
     expect(en.nav.atlas).toBe('Atlas');
     expect(en.atlas.hymenophoreOther).toBe('Other underside');
+    expect(pl.atlas.filters.month).toBe('Miesiąc');
+    expect(pl.atlas.filters.habitat).toBe('Siedlisko');
+    expect(pl.atlas.filters.host).toBe('Drzewo żywicielskie');
+    expect(pl.atlas.filters.habitatForest).toBe('Las (ogólnie)');
+    expect(pl.atlas.filters.hostPine).toBe('Sosna');
+    expect(en.atlas.filters.month).toBe('Month');
+    expect(en.atlas.filters.habitat).toBe('Habitat');
+    expect(en.atlas.filters.host).toBe('Host tree');
+    expect(en.atlas.filters.habitatForest).toBe('Forest (unspecified)');
+    expect(en.atlas.filters.hostPine).toBe('Pine');
     expect(pl.atlas.filters.unverified).toBe('Do weryfikacji');
     expect(pl.atlas.filters.open).toBe('Filtry ({count})');
     expect(pl.atlas.filters.clear).toBe('Wyczyść');

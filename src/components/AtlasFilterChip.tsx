@@ -14,9 +14,18 @@ interface Props {
   active: boolean;
   onPress: () => void;
   tone?: 'default' | 'warning';
+  /** Stretch the chip to its cell. The month grid uses this. */
+  fill?: boolean;
 }
 
-export const AtlasFilterChip: React.FC<Props> = ({ chipId, label, active, onPress, tone = 'default' }) => {
+export const AtlasFilterChip: React.FC<Props> = ({
+  chipId,
+  label,
+  active,
+  onPress,
+  tone = 'default',
+  fill = false,
+}) => {
   const { t } = useLanguage();
   const warning = tone === 'warning';
   return (
@@ -27,6 +36,7 @@ export const AtlasFilterChip: React.FC<Props> = ({ chipId, label, active, onPres
       accessibilityLabel={t(label)}
       style={[
         styles.chip,
+        fill ? styles.chipFill : null,
         warning ? styles.chipWarning : null,
         active ? (warning ? styles.chipWarningActive : styles.chipActive) : null,
       ]}
@@ -35,6 +45,7 @@ export const AtlasFilterChip: React.FC<Props> = ({ chipId, label, active, onPres
       <Text
         style={[
           styles.chipText,
+          fill ? styles.chipTextFill : null,
           warning ? styles.chipWarningText : null,
           active ? styles.chipTextActive : null,
         ]}
@@ -49,7 +60,8 @@ export const AtlasFilterChipList: React.FC<{
   chips: readonly Chip[];
   chipIds: ReadonlySet<string>;
   onToggle: (id: string) => void;
-}> = ({ chips, chipIds, onToggle }) => (
+  fill?: boolean;
+}> = ({ chips, chipIds, onToggle, fill = false }) => (
   <>
     {chips.map((chip) => (
       <AtlasFilterChip
@@ -57,6 +69,7 @@ export const AtlasFilterChipList: React.FC<{
         chipId={chip.id}
         label={chip.label}
         active={chipIds.has(chip.id)}
+        fill={fill}
         onPress={() => onToggle(chip.id)}
       />
     ))}
@@ -71,6 +84,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.gray100,
     borderWidth: 1,
     borderColor: colors.gray100,
+  },
+  chipFill: {
+    width: '100%',
+    alignItems: 'center',
   },
   chipActive: {
     backgroundColor: colors.primary,
@@ -88,6 +105,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: colors.gray600,
+  },
+  chipTextFill: {
+    textAlign: 'center',
   },
   chipWarningText: {
     color: colors.orange900,
