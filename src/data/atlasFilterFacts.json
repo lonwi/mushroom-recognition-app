@@ -1,0 +1,360 @@
+{
+  "agaricus_campestris": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "czekoladowobrazowy",
+    "ring": true,
+    "volva": "brak",
+    "protection": "brak"
+  },
+  "agaricus_xanthodermus": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": null,
+    "ring": true,
+    "volva": "bulwa",
+    "protection": "brak"
+  },
+  "amanita_citrina": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "bialy",
+    "ring": true,
+    "volva": "pochwa",
+    "protection": "brak"
+  },
+  "amanita_excelsa": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "bialy",
+    "ring": true,
+    "volva": "bulwa",
+    "protection": "brak"
+  },
+  "amanita_muscaria": {
+    "psychoactive": true,
+    "hymenophore": "blaszki",
+    "sporePrint": "bialy",
+    "ring": true,
+    "volva": null,
+    "protection": "brak"
+  },
+  "amanita_pantherina": {
+    "psychoactive": true,
+    "hymenophore": "blaszki",
+    "sporePrint": "bialy",
+    "ring": true,
+    "volva": "pochwa",
+    "protection": "brak"
+  },
+  "amanita_phalloides": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "bialy",
+    "ring": true,
+    "volva": "pochwa",
+    "protection": "brak"
+  },
+  "amanita_rubescens": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "bialy",
+    "ring": true,
+    "volva": [
+      "bulwa",
+      "pochwa"
+    ],
+    "protection": "brak"
+  },
+  "amanita_virosa": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "bialy",
+    "ring": true,
+    "volva": "pochwa",
+    "protection": "brak"
+  },
+  "armillaria_mellea": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "bialy",
+    "ring": true,
+    "volva": null,
+    "protection": "brak"
+  },
+  "boletus_edulis": {
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": "oliwkowobrazowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "calocybe_gambosa": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "bialy",
+    "ring": false,
+    "volva": "brak",
+    "protection": "brak"
+  },
+  "cantharellus_cibarius": {
+    "psychoactive": false,
+    "hymenophore": "listwy",
+    "sporePrint": "kremowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "chlorophyllum_rhacodes": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "bialy",
+    "ring": true,
+    "volva": null,
+    "protection": "brak"
+  },
+  "cortinarius_orellanus": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "rdzawobrazowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "cortinarius_rubellus": {
+    "psychoactive": false,
+    "hymenophore": null,
+    "sporePrint": null,
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "galerina_marginata": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "rdzawobrazowy",
+    "ring": true,
+    "volva": null,
+    "protection": "brak"
+  },
+  "gyromitra_esculenta": {
+    "psychoactive": false,
+    "hymenophore": "inne",
+    "sporePrint": "bialy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "hydnum_repandum": {
+    "psychoactive": false,
+    "hymenophore": "kolce",
+    "sporePrint": "kremowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "hygrophoropsis_aurantiaca": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": null,
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "hypholoma_capnoides": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "fioletowobrazowy",
+    "ring": true,
+    "volva": null,
+    "protection": "brak"
+  },
+  "hypholoma_fasciculare": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "fioletowoczarny",
+    "ring": true,
+    "volva": null,
+    "protection": "brak"
+  },
+  "imleria_badia": {
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": "oliwkowobrazowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "inocybe_erubescens": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": null,
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "kuehneromyces_mutabilis": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "rdzawobrazowy",
+    "ring": true,
+    "volva": null,
+    "protection": "brak"
+  },
+  "lactarius_deliciosus": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "kremowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "lactarius_torminosus": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "kremowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "leccinum_aurantiacum": {
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": "brazowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "leccinum_scabrum": {
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": "brazowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "macrolepiota_procera": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "bialy",
+    "ring": true,
+    "volva": "bulwa",
+    "protection": "brak"
+  },
+  "morchella_esculenta": {
+    "psychoactive": false,
+    "hymenophore": "inne",
+    "sporePrint": "kremowy",
+    "ring": null,
+    "volva": null,
+    "protection": "czesciowa"
+  },
+  "neoboletus_luridiformis": {
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": "oliwkowobrazowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "paxillus_involutus": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "brazowy",
+    "ring": false,
+    "volva": null,
+    "protection": "brak"
+  },
+  "rubroboletus_satanas": {
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": "oliwkowobrazowy",
+    "ring": null,
+    "volva": null,
+    "protection": "scisla"
+  },
+  "russula_virescens": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": [
+      "bialy",
+      "kremowy"
+    ],
+    "ring": false,
+    "volva": null,
+    "protection": "brak"
+  },
+  "suillellus_luridus": {
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": "oliwkowobrazowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "suillus_bovinus": {
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": "oliwkowobrazowy",
+    "ring": false,
+    "volva": null,
+    "protection": "brak"
+  },
+  "suillus_grevillei": {
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": null,
+    "ring": true,
+    "volva": null,
+    "protection": "brak"
+  },
+  "suillus_luteus": {
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": "rdzawobrazowy",
+    "ring": true,
+    "volva": null,
+    "protection": "brak"
+  },
+  "suillus_variegatus": {
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": "oliwkowobrazowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "tricholoma_equestre": {
+    "psychoactive": false,
+    "hymenophore": "blaszki",
+    "sporePrint": "bialy",
+    "ring": false,
+    "volva": "brak",
+    "protection": "brak"
+  },
+  "tylopilus_felleus": {
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": "rozowy",
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "xerocomellus_chrysenteron": {
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": null,
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  },
+  "xerocomus_subtomentosus": {
+    "psychoactive": false,
+    "hymenophore": "rurki",
+    "sporePrint": null,
+    "ring": null,
+    "volva": null,
+    "protection": "brak"
+  }
+}

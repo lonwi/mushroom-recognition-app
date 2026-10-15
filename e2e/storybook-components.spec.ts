@@ -232,24 +232,32 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.getByTestId('atlas-result-count')).toContainText('Pasujące karty: 1');
     await search.fill('');
 
-    await page.getByTestId('filter-status-INCOMPLETE').click();
-    await expect(page.getByText('Gołąbek zielonawy')).toBeVisible();
-    await expect(page.getByText('Kolczak obłączasty')).toBeVisible();
-    await expect(page.getByText('Pieczarka polna')).toBeVisible();
-    await expect(page.getByTestId('atlas-result-count')).toContainText('Pasujące karty: 16');
-    await expect(page.locator('body')).not.toContainText('JADALNY');
-    await page.getByTestId('filter-status-EDIBLE').click();
-    await expect(page.getByText('Prawdziwki')).toBeVisible();
-    await expect(page.getByText('Gołąbek zielonawy')).toHaveCount(0);
+    await page.getByTestId('filter-chip-kind-edible').click();
+    await expect(page.getByTestId('atlas-matches').getByText('Prawdziwki')).toBeVisible();
+    await expect(page.getByTestId('atlas-matches').getByText('☠ Sobowtór!').first()).toBeVisible();
+    await expect(page.getByTestId('atlas-matches').getByText('Opieńki')).toHaveCount(0);
+    await expect(page.getByTestId('atlas-matches').getByText('Gołąbek zielonawy')).toHaveCount(0);
+    await expect(page.getByTestId('atlas-unverified').getByText('Opieńki')).toBeVisible();
+    await expect(page.getByTestId('atlas-unverified').getByText('Gołąbek zielonawy')).toBeVisible();
 
-    await page.getByTestId('filter-status-ALL').click();
-    await page.getByTestId('filter-hymenophore-SPINES').click();
-    await expect(page.getByText('Kolczak obłączasty')).toBeVisible();
+    await page.getByTestId('filter-chip-kind-poisonous').click();
+    await expect(page.getByTestId('atlas-matches').getByText('Prawdziwki')).toBeVisible();
+    await expect(page.getByTestId('atlas-matches').getByText('Muchomor sromotnikowy (zielonawy)')).toBeVisible();
+    await expect(page.getByTestId('atlas-matches').getByText('Krowiak podwinięty (Olszówka)')).toBeVisible();
+    await expect(page.getByTestId('atlas-card-badge-paxillus_involutus')).toContainText('ŚMIERTELNIE TRUJĄCY');
+    await expect(page.getByTestId('atlas-psychoactive-amanita_muscaria')).toBeVisible();
+
+    await page.getByTestId('filter-chip-kind-edible').click();
+    await page.getByTestId('filter-chip-kind-poisonous').click();
+    await page.getByTestId('filter-chip-hymenophore-kolce').click();
+    await expect(page.getByTestId('atlas-matches').getByText('Kolczak obłączasty')).toBeVisible();
     await expect(page.getByTestId('atlas-result-count')).toContainText('Pasujące karty: 1');
-    await page.getByTestId('filter-status-DEADLY_POISONOUS').click();
+    await expect(page.getByTestId('atlas-unverified').getByText('Zasłonak rudawy')).toBeVisible();
+    await expect(page.getByTestId('atlas-unverified')).toContainText('nie oznacza, że grzyb jest jadalny');
+
+    await page.getByPlaceholder('Szukaj grzyba (np. borowik, kania, kurka)...').fill('brak-takiego-grzyba');
     await expect(page.getByTestId('atlas-empty')).toContainText('Brak karty nie oznacza, że grzyb jest jadalny');
     await expect(page.getByTestId('atlas-result-count')).toContainText('Pasujące karty: 0');
-    await expect(page.getByText('Kolczak obłączasty')).toHaveCount(0);
   });
 
   test('A finished edible species keeps the green kitchen section', async ({ page }) => {

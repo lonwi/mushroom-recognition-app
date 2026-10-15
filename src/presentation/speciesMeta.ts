@@ -12,9 +12,6 @@ export const HYMENOPHORE_META: Record<HymenophoreType, { labelKey: string; icon:
   OTHER: { labelKey: 'atlas.hymenophoreOther', icon: 'help-circle-outline' },
 };
 
-/** Atlas filter chips. Order is the order shown on the atlas screen. */
-export const HYMENOPHORE_FILTERS: readonly HymenophoreType[] = ['TUBES', 'GILLS', 'SPINES', 'FOLDS', 'OTHER'];
-
 export const EDIBILITY_BADGE: Record<EdibilityStatus, { labelKey: string; icon: string }> = {
   EDIBLE: { labelKey: 'edibility.edible', icon: '✓' },
   INEDIBLE: { labelKey: 'edibility.inedible', icon: '⚠' },

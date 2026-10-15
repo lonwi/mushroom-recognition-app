@@ -1114,7 +1114,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     namePl: 'Podgrzybek złotawy',
     nameEn: 'Red cracking bolete',
     nameLatin: 'Xerocomellus chrysenteron',
-    commonNicknames: ['Podgrzybek złotopory'],
+    commonNicknames: ['Podgrzybek złotopory', 'Xerocomellus pascuus'],
     family: 'Borowikowate (Boletaceae)',
     status: 'EDIBLE',
     incompleteCard: true,
@@ -1140,7 +1140,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
         fatal: false
       }
     ],
-    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Stare, spleśniałe albo rozmiękłe owocniki zostaw. Pleśń i rozkład nie są cechą gatunku. Brak zdjęcia. Pękający kapelusz z różem w szczelinach odróżnia go od podgrzybka brunatnego tylko razem z resztą owocnika.'
+    warningNotes: 'NIE JEDZ NA PODSTAWIE TEJ KARTY. Stare, spleśniałe albo rozmiękłe owocniki zostaw. Pleśń i rozkład nie są cechą gatunku. Brak zdjęcia. Pękający kapelusz z różem w szczelinach odróżnia go od podgrzybka brunatnego tylko razem z resztą owocnika. W źródłach bywa jako Xerocomellus pascuus; identyfikator karty zostaje xerocomellus_chrysenteron.'
   },
   {
     id: 'leccinum_aurantiacum',
