@@ -285,6 +285,77 @@ function classify(
   return open ? 'unverified' : 'match';
 }
 
+function groupById(id: string): FilterGroup {
+  const group = ATLAS_FILTER_GROUPS.find((item) => item.id === id);
+  if (!group) {
+    throw new Error(`Missing atlas filter group ${id}`);
+  }
+  return group;
+}
+
+/** Kind stays in the top row. The other stage-1 groups open from the sheet. */
+export const ATLAS_KIND_GROUP = groupById('kind');
+
+export const ATLAS_PANEL_GROUPS: readonly FilterGroup[] = [
+  groupById('hymenophore'),
+  groupById('spore'),
+  groupById('protection'),
+  groupById('ring'),
+  groupById('volva'),
+];
+
+const PANEL_CHIP_IDS = new Set(
+  ATLAS_PANEL_GROUPS.flatMap((group) => group.chips.map((chip) => chip.id)),
+);
+
+interface ActivePanelChip {
+  id: string;
+  /** i18n key of the group, so two chips that share a value stay distinct. */
+  group: string;
+  label: string;
+}
+
+export function activePanelChips(chipIds: ReadonlySet<string>): readonly ActivePanelChip[] {
+  const selected: ActivePanelChip[] = [];
+  for (const group of ATLAS_PANEL_GROUPS) {
+    for (const chip of group.chips) {
+      if (chipIds.has(chip.id)) selected.push({ id: chip.id, group: group.label, label: chip.label });
+    }
+  }
+  return selected;
+}
+
+/** Cards still on the list after the sheet closes: matches plus the unverified section. */
+export function visibleAtlasCount(partition: AtlasPartition): number {
+  return partition.matches.length + partition.unverified.length;
+}
+
+/** How many sheet chips are on. Kind chips and „Do weryfikacji” are not in this count. */
+export function panelFilterCount(chipIds: ReadonlySet<string>): number {
+  let count = 0;
+  for (const id of chipIds) {
+    if (PANEL_CHIP_IDS.has(id)) count += 1;
+  }
+  return count;
+}
+
+/** Drops sheet chips and keeps kind chips. Matching rules are unchanged. */
+export function withoutPanelChips(chipIds: ReadonlySet<string>): ReadonlySet<string> {
+  const next = new Set<string>();
+  for (const id of chipIds) {
+    if (!PANEL_CHIP_IDS.has(id)) next.add(id);
+  }
+  return next;
+}
+
+/** Removes one chip. The same set comes back when that chip was already off. */
+export function withoutChip(chipIds: ReadonlySet<string>, id: string): ReadonlySet<string> {
+  if (!chipIds.has(id)) return chipIds;
+  const next = new Set(chipIds);
+  next.delete(id);
+  return next;
+}
+
 export function applyAtlasFilters(
   species: readonly MushroomSpecies[],
   options: AtlasFilterOptions,

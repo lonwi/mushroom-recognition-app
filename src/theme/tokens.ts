@@ -113,6 +113,8 @@ export const colors = {
   blue300: '#93C5FD',
   blueInk: '#1E3A5F',
 
+  /** Dim layer behind the atlas filter sheet. slate900 at 45%. */
+  scrim: 'rgba(15, 23, 42, 0.45)',
   canvas: '#F3F6F3',
   sheet: '#F9FBF9',
   gray100: '#EDF2F7',

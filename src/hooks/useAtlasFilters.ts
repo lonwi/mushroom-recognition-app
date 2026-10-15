@@ -1,5 +1,12 @@
 import { useCallback, useMemo, useState } from 'react';
-import { applyAtlasFilters } from '../data/atlasFilterModel';
+import {
+  activePanelChips,
+  applyAtlasFilters,
+  panelFilterCount,
+  visibleAtlasCount,
+  withoutChip,
+  withoutPanelChips,
+} from '../data/atlasFilterModel';
 import type { MushroomSpecies } from '../types/mushroom';
 
 /** One place owns the search box and the chips, so the list and the counter cannot diverge. */
@@ -16,18 +23,34 @@ export function useAtlasFilters(species: readonly MushroomSpecies[]) {
     });
   }, []);
 
+  const removeChip = useCallback((id: string) => {
+    setChipIds((current) => withoutChip(current, id));
+  }, []);
+
+  const clearPanelFilters = useCallback(() => {
+    setChipIds((current) => withoutPanelChips(current));
+  }, []);
+
   const filtered = useMemo(
     () => applyAtlasFilters(species, { query, chipIds }),
     [species, query, chipIds],
   );
+
+  const panelChips = useMemo(() => activePanelChips(chipIds), [chipIds]);
+  const panelCount = useMemo(() => panelFilterCount(chipIds), [chipIds]);
 
   return {
     query,
     setQuery,
     chipIds,
     toggleChip,
+    removeChip,
+    clearPanelFilters,
+    panelChips,
+    panelCount,
     matches: filtered.matches,
     unverified: filtered.unverified,
     resultCount: filtered.matches.length,
+    visibleCount: visibleAtlasCount(filtered),
   };
 }
