@@ -29,6 +29,7 @@ export const en: Translations = {
       'CC0 and CC-BY photos on the atlas cards. When a model is installed, the list also includes training, test, and evaluation probes.',
     photoCreditsEmpty:
       'No model is installed, so there is no list of photo credits. Scan recognition stays off.',
+    photoCreditsLoadError: 'Could not load the list of photo credits.',
     photoCreditsUnknownAuthor: 'Author not listed',
     photoCreditsBack: 'Back to settings',
     photoCreditsSearch: 'Search author or species',

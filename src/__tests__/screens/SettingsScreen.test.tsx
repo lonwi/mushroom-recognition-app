@@ -61,4 +61,20 @@ describe('SettingsScreen RTL Tests', () => {
     expect((await findAllByText('sigridjakob')).length).toBeGreaterThan(0);
     expect(queryByTestId('photo-credits-empty')).toBeNull();
   });
+
+  it('shows a load error when the authors list fails to load', async () => {
+    (loadPhotoCredits as jest.Mock).mockRejectedValue(new Error('unreadable attributions'));
+    const { getByTestId, findByTestId, queryByText } = await render(
+      <LanguageProvider>
+        <SettingsScreen />
+      </LanguageProvider>
+    );
+
+    await fireEvent.press(getByTestId('btn-photo-credits'));
+
+    expect(await findByTestId('photo-credits-error')).toHaveTextContent(
+      'Nie udało się wczytać listy autorów zdjęć.',
+    );
+    expect(queryByText(/Nie ma dołączonego modelu/)).toBeNull();
+  });
 });

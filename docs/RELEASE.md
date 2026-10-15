@@ -93,7 +93,7 @@ Jak dodać sekret, gdy środowisko już jest (tworzenie środowisk jest w sekcji
 3. Name: `EXPO_TOKEN`. Secret: wklejony token. **Add secret**.
 4. Powtórz dla drugiego środowiska.
 
-Workflow czyta `secrets.EXPO_TOKEN` dopiero w jobie, który ma dane środowisko, i podaje go do `expo/expo-github-action` przypiętego do commitu v9.0.0. Akcja ustawia zmienną na kolejne kroki. Nie wypisuj tokenu w logach.
+Workflow czyta `secrets.EXPO_TOKEN` dopiero w jobie, który ma dane środowisko, i podaje go do `expo/expo-github-action` przypiętego do commitu 9.0.0. Akcja ustawia zmienną na kolejne kroki. Nie wypisuj tokenu w logach.
 
 Unieważnienie: ta sama strona Access tokens na Expo → usuń token, potem podmień obie kopie w GitHubie.
 
@@ -282,7 +282,7 @@ Potem:
 3. Job **EAS submit** stoi na akceptacji środowiska `production`.
 4. Po **Approve and deploy** idą dwa submitty: Android i iOS, każdy z `--id` buildu z tego biegu, na ścieżkę wewnętrzną Play (szkic) i do App Store Connect. Nie używamy `--latest`, bo to wziąłoby najnowszy build w projekcie, także z innego biegu.
 
-Concurrency jest jedno na całe wydanie (`group: release`) i nie anuluje trwającego biegu. Drugi tag czeka, aż pierwszy workflow, łącznie z oczekiwaniem na akceptację, się skończy.
+Concurrency jest jedno na całe wydanie (`group: release`) i nie anuluje trwającego biegu. Drugi tag czeka, aż pierwszy workflow, łącznie z oczekiwaniem na akceptację, się skończy. Grupa trzyma najwyżej jeden oczekujący bieg, więc trzeci tag anuluje oczekujący drugi.
 
 Profil `development` odpalasz ręcznie, gdy potrzebujesz binarki z natywnym modułem TFLite, nie tagiem:
 

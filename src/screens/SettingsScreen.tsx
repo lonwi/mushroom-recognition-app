@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { PhotoCredits } from '../components/PhotoCredits';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -11,13 +11,19 @@ export const SettingsScreen: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
   const [creditsOpen, setCreditsOpen] = useState(false);
   const [creditsLoading, setCreditsLoading] = useState(false);
+  const [creditsLoadFailed, setCreditsLoadFailed] = useState(false);
   const [credits, setCredits] = useState<PhotoCredit[] | null>(null);
 
   const openCredits = () => {
     setCredits(null);
+    setCreditsLoadFailed(false);
     setCreditsLoading(true);
     setCreditsOpen(true);
   };
+
+  const closeCredits = useCallback(() => {
+    setCreditsOpen(false);
+  }, []);
 
   useEffect(() => {
     if (!creditsOpen) {
@@ -28,12 +34,14 @@ export const SettingsScreen: React.FC = () => {
     loadPhotoCredits()
       .then((rows) => {
         if (!cancelled) {
+          setCreditsLoadFailed(false);
           setCredits(rows);
         }
       })
       .catch(() => {
         if (!cancelled) {
           setCredits(null);
+          setCreditsLoadFailed(true);
         }
       })
       .finally(() => {
@@ -51,7 +59,8 @@ export const SettingsScreen: React.FC = () => {
       <PhotoCredits
         credits={credits}
         loading={creditsLoading}
-        onClose={() => setCreditsOpen(false)}
+        loadFailed={creditsLoadFailed}
+        onClose={closeCredits}
       />
     );
   }

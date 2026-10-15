@@ -127,6 +127,36 @@ describe('uprightWidthFromExif', () => {
     ).toBe(3024);
   });
 
+  it('prefers an ImageWidth/ImageLength pair over PixelXDimension, including a nested TIFF pair', () => {
+    expect(
+      uprightWidthFromExif({
+        Orientation: 6,
+        PixelXDimension: 100,
+        PixelYDimension: 80,
+        ImageWidth: 4032,
+        ImageLength: 3024,
+      }),
+    ).toBe(3024);
+    expect(
+      uprightWidthFromExif({
+        Orientation: 1,
+        PixelXDimension: 800,
+        PixelYDimension: 600,
+        '{TIFF}': { ImageWidth: 4032, ImageLength: 3024 },
+      }),
+    ).toBe(4032);
+    expect(uprightWidthFromExif({ Orientation: 1, ImageWidth: 640, ImageHeight: 480 })).toBe(640);
+  });
+
+  it('does not mix a width from one EXIF pair with a height from the other', () => {
+    expect(
+      uprightWidthFromExif({ Orientation: 1, PixelXDimension: 4032, ImageLength: 3024 }),
+    ).toBeUndefined();
+    expect(
+      uprightWidthFromExif({ Orientation: 6, ImageWidth: 4032, PixelYDimension: 3024 }),
+    ).toBeUndefined();
+  });
+
   it('does not return an unswapped width when the stored height is missing', () => {
     expect(uprightWidthFromExif({ Orientation: 6, ImageWidth: 4032 })).toBeUndefined();
     expect(uprightWidthFromExif(null)).toBeUndefined();

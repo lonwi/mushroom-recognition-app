@@ -91,15 +91,23 @@ describe('release config', () => {
 
     expect(eas.cli.appVersionSource).toBe('remote');
     expect(eas.cli.version).toBe('>= 16.0.0');
+    const pnpmVersion = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).packageManager.replace(
+      /^pnpm@/,
+      '',
+    );
+    expect(pnpmVersion).toBe('10.33.4');
     expect(eas.build.development).toEqual({
+      pnpm: pnpmVersion,
       distribution: 'internal',
       android: { buildType: 'apk' },
       ios: { simulator: true },
     });
     expect(eas.build.preview).toEqual({
+      pnpm: pnpmVersion,
       distribution: 'internal',
       android: { buildType: 'apk' },
     });
+    expect(eas.build.production.pnpm).toBe(pnpmVersion);
     expect(eas.build.production.autoIncrement).toBe(true);
     expect(eas.build.production.android.buildType).toBe('app-bundle');
     expect(['internal', 'alpha', 'beta', 'production']).toContain(eas.submit.production.android.track);

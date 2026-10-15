@@ -22,8 +22,9 @@ import { creditLicenseUrl, type PhotoCredit } from '../services/attributionPacka
 export const PhotoCredits: React.FC<{
   credits: PhotoCredit[] | null;
   loading?: boolean;
+  loadFailed?: boolean;
   onClose?: () => void;
-}> = ({ credits, loading = false, onClose }) => {
+}> = ({ credits, loading = false, loadFailed = false, onClose }) => {
   const { t } = useLanguage();
   const [query, setQuery] = useState('');
   const atlasCredits = useMemo(() => galleryPhotoCredits(), []);
@@ -71,8 +72,11 @@ export const PhotoCredits: React.FC<{
           <Text style={styles.empty}>{t('settings.photoCreditsLoading')}</Text>
         </View>
       ) : rows.length === 0 ? (
-        <Text style={styles.empty} testID="photo-credits-empty">
-          {t('settings.photoCreditsEmpty')}
+        <Text
+          style={styles.empty}
+          testID={loadFailed ? 'photo-credits-error' : 'photo-credits-empty'}
+        >
+          {loadFailed ? t('settings.photoCreditsLoadError') : t('settings.photoCreditsEmpty')}
         </Text>
       ) : (
         <FlatList
@@ -83,6 +87,11 @@ export const PhotoCredits: React.FC<{
           keyboardShouldPersistTaps="handled"
           ListHeaderComponent={
             <View>
+              {loadFailed ? (
+                <Text style={styles.empty} testID="photo-credits-error">
+                  {t('settings.photoCreditsLoadError')}
+                </Text>
+              ) : null}
               <Text style={styles.lead}>{t('settings.photoCreditsLead')}</Text>
               <TextInput
                 value={query}
