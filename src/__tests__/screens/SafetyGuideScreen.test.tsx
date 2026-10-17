@@ -56,7 +56,7 @@ describe('SafetyGuideScreen — handleCall', () => {
 
   it('calls Linking.openURL when the tel: scheme is supported', async () => {
     jest.spyOn(Linking, 'canOpenURL').mockResolvedValue(true);
-    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue();
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
 
     const { getByText } = await render(
       <LanguageProvider>
