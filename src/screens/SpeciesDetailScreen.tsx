@@ -25,36 +25,51 @@ import { colors } from '../theme/tokens';
  */
 const HERO_PHOTO_ASPECT = 1200 / 896;
 
-const ENGLISH_POISONING_KEYS: Record<string, string> = {
-  amanita_muscaria: 'cards.flyAgaricPoisoning',
-  amanita_pantherina: 'cards.pantherPoisoning',
+/**
+ * Species whose `warningNotes` fields are built from PL-only safety constants
+ * (FLY_AGARIC_POISONING_SYMPTOMS, PANTHER_POISONING_SYMPTOMS,
+ * GALERINA_PSILOCYBE_WARNING, GIS_MUSHROOM_FIRST_AID).
+ * In English the parent must render the translated string returned by
+ * `useEnglishWarningOverride` instead of `species.warningNotes`.
+ */
+export const SPECIES_WITH_TRANSLATED_WARNING = new Set([
+  'amanita_muscaria',
+  'amanita_pantherina',
+  'galerina_marginata',
+]);
+
+/**
+ * testIDs for the translated warning <Text> nodes, keyed by species ID.
+ * These match the values expected by SpeciesDetailScreen.test.tsx.
+ */
+const SPECIES_WARNING_TEST_ID: Record<string, string> = {
+  amanita_muscaria: 'species-poisoning-note',
+  amanita_pantherina: 'species-poisoning-note',
+  galerina_marginata: 'species-galerina-lookalike-note',
 };
 
-function EnglishSafetyNote({ speciesId }: { speciesId: string }) {
+/**
+ * Returns a fully translated EN warning string for the three species whose
+ * `warningNotes` embed hardcoded Polish safety constants, or `null` when:
+ * - the app is in Polish (use the original warningNotes), or
+ * - the species is not in the translated-warning set.
+ */
+function useEnglishWarningOverride(speciesId: string): string | null {
   const { language, t } = useLanguage();
-  if (language !== 'en') {
-    return null;
+  if (language !== 'en') return null;
+
+  if (speciesId === 'amanita_muscaria') {
+    return `${t('cards.poisoningNoteTitle')} ${t('cards.flyAgaricPoisoning')} ${t('cards.poisoningFirstAid')}`;
   }
-  const poisoningKey = ENGLISH_POISONING_KEYS[speciesId];
-  const galerina = speciesId === 'galerina_marginata';
-  if (!poisoningKey && !galerina) {
-    return null;
+  if (speciesId === 'amanita_pantherina') {
+    return `${t('cards.poisoningNoteTitle')} ${t('cards.pantherPoisoning')} ${t('cards.poisoningFirstAid')}`;
   }
-  return (
-    <>
-      {poisoningKey ? (
-        <Text testID="species-poisoning-note" style={styles.warningText}>
-          {t('cards.poisoningNoteTitle')} {t(poisoningKey)} {t('cards.poisoningFirstAid')}
-        </Text>
-      ) : null}
-      {galerina ? (
-        <Text testID="species-galerina-lookalike-note" style={styles.warningText}>
-          {t('cards.galerinaLookalikeWarning')}
-        </Text>
-      ) : null}
-    </>
-  );
+  if (speciesId === 'galerina_marginata') {
+    return t('cards.galerinaLookalikeWarning');
+  }
+  return null;
 }
+
 
 interface Props {
   species: MushroomSpecies;
@@ -69,6 +84,7 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
   const fatalLookAlike = hasFatalLookAlikeRisk(species);
   const hymenophore = HYMENOPHORE_META[species.hymenophore];
   const hymenophoreName = t(hymenophore.labelKey);
+  const englishWarningOverride = useEnglishWarningOverride(species.id);
 
   const kitchen = showsKitchenSection(species);
   const isToxic = species.status === 'DEADLY_POISONOUS' || species.status === 'POISONOUS';
@@ -192,15 +208,21 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
           </View>
         ) : null}
 
-        {species.warningNotes ? (
+        {(englishWarningOverride ?? species.warningNotes) ? (
           <View style={styles.warningBox} testID="species-warning-notes">
             <Feather name="info" size={18} color={colors.amber700} style={{ marginTop: 2 }} />
             <View style={styles.warningCopy}>
-              <Text style={styles.warningText}>{species.warningNotes}</Text>
-              <EnglishSafetyNote speciesId={species.id} />
+              <Text
+                style={styles.warningText}
+                testID={englishWarningOverride ? SPECIES_WARNING_TEST_ID[species.id] : undefined}
+              >
+                {englishWarningOverride ?? species.warningNotes}
+              </Text>
             </View>
           </View>
         ) : null}
+
+
 
         {/* Main Info Card */}
         <View style={styles.mainCard}>
