@@ -384,6 +384,8 @@ export const pl = {
     preparationTitle: 'Jak przygotować grzyby?',
     preparationSub: 'Poradnik czyszczenia, gotowania i przechowywania',
     reopenDisclaimer: '📄 Przeczytaj ponownie Regulamin i Ostrzeżenie AI',
+    callNotSupportedTitle: 'Połączenie niedostępne',
+    callNotSupportedBody: 'To urządzenie nie obsługuje połączeń telefonicznych. Zadzwoń ręcznie pod podany numer.',
     rules: {
       rule_tubes_first: {
         title: 'Dla początkujących: tylko grzyby z rurkami (z "gąbką")',

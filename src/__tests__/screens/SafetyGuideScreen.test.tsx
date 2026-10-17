@@ -1,5 +1,6 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { Alert, Linking } from 'react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafetyGuideScreen } from '../../screens/SafetyGuideScreen';
 import { LanguageProvider } from '../../contexts/LanguageContext';
@@ -44,5 +45,49 @@ describe('SafetyGuideScreen foraging rules', () => {
     expect(await findByText(en.safetyGuide.rules.rule_protect_forest_floor.description)).toBeTruthy();
     expect(await findByText(en.safetyGuide.rules.rule_tubes_first.title)).toBeTruthy();
     expect(queryByText(pl.safetyGuide.rules.rule_whole_mushroom.title)).toBeNull();
+  });
+});
+
+describe('SafetyGuideScreen — handleCall', () => {
+  beforeEach(async () => {
+    await AsyncStorage.clear();
+    jest.restoreAllMocks();
+  });
+
+  it('calls Linking.openURL when the tel: scheme is supported', async () => {
+    jest.spyOn(Linking, 'canOpenURL').mockResolvedValue(true);
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+
+    const { getByText } = await render(
+      <LanguageProvider>
+        <SafetyGuideScreen onShowDisclaimer={() => {}} />
+      </LanguageProvider>,
+    );
+
+    fireEvent.press(getByText(pl.safetyGuide.call112Title));
+
+    await waitFor(() => {
+      expect(openURL).toHaveBeenCalledWith('tel:112');
+    });
+  });
+
+  it('shows an Alert when the tel: scheme is not supported (tablet / simulator)', async () => {
+    jest.spyOn(Linking, 'canOpenURL').mockResolvedValue(false);
+    const alertSpy = jest.spyOn(Alert, 'alert');
+
+    const { getByText } = await render(
+      <LanguageProvider>
+        <SafetyGuideScreen onShowDisclaimer={() => {}} />
+      </LanguageProvider>,
+    );
+
+    fireEvent.press(getByText(pl.safetyGuide.call112Title));
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith(
+        pl.safetyGuide.callNotSupportedTitle,
+        pl.safetyGuide.callNotSupportedBody,
+      );
+    });
   });
 });

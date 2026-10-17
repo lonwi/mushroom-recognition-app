@@ -384,6 +384,8 @@ export const en: Translations = {
     preparationTitle: 'How to prepare mushrooms?',
     preparationSub: 'A guide to cleaning, cooking, and storing',
     reopenDisclaimer: '📄 Read the rules and the AI warning again',
+    callNotSupportedTitle: 'Calling not available',
+    callNotSupportedBody: 'This device does not support phone calls. Please dial the number manually.',
     rules: {
       rule_tubes_first: {
         title: 'For beginners: only mushrooms with tubes (a “sponge”)',
