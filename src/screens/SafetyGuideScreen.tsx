@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Alert,
   View,
   Text,
   StyleSheet,
@@ -19,9 +20,14 @@ interface Props {
 
 export const SafetyGuideScreen = ({ onShowDisclaimer, onOpenPreparation }: Props) => {
   const { t } = useLanguage();
-  const handleCall = (phone: string) => {
-    const cleanNumber = phone.replace(/\s+/g, '');
-    Linking.openURL(`tel:${cleanNumber}`);
+  const handleCall = async (phone: string) => {
+    const url = `tel:${phone.replace(/\s+/g, '')}`;
+    const supported = await Linking.canOpenURL(url);
+    if (supported) {
+      await Linking.openURL(url);
+    } else {
+      Alert.alert(t('safetyGuide.callNotSupportedTitle'), t('safetyGuide.callNotSupportedBody'));
+    }
   };
 
   return (
