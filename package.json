@@ -53,9 +53,9 @@
     "@babel/core": "^8.0.0",
     "@eslint/js": "9.39.5",
     "@playwright/test": "^1.63.0",
-    "@storybook/addon-essentials": "^8.6.14",
-    "@storybook/react": "8.6.14",
-    "@storybook/react-vite": "^8.6.14",
+    "@storybook/addon-essentials": "^8.6.19",
+    "@storybook/react": "8.6.19",
+    "@storybook/react-vite": "^8.6.19",
     "@testing-library/react-native": "^14.0.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.20.5",
@@ -71,10 +71,10 @@
     "jest-expo": "^57.0.5",
     "jscpd": "5.4.0",
     "knip": "6.40.0",
-    "storybook": "^8.6.14",
+    "storybook": "^8.6.19",
     "typescript": "~5.8.2",
     "typescript-eslint": "8.71.1",
-    "vite": "^8.3.1"
+    "vite": "^8.3.5"
   },
   "private": true,
   "pnpm": {
