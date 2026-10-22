@@ -107,6 +107,16 @@ export function toTelUrl(phone: string): string | null {
   return digits.length === 9 ? `tel:+48${digits}` : `tel:${digits}`;
 }
 
+/**
+ * Emergency numbers the public site may print and link, in this order.
+ * Centre lines in `TOXICOLOGY_CENTERS` stay in the app only.
+ * The safety screen shows one button per entry.
+ */
+export const EMERGENCY_CALLS = [
+  { number: '112', titleKey: 'safetyGuide.call112Title', subKey: 'safetyGuide.call112Sub' },
+  { number: '999', titleKey: 'safetyGuide.call999Title', subKey: 'safetyGuide.call999Sub' },
+] as const;
+
 // Every number below was checked against its sourceUrl on this date.
 const CHECKED_AT = '2026-10-17';
 // Used only where the source states round-the-clock service explicitly.

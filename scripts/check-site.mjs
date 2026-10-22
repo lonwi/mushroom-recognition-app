@@ -1,7 +1,8 @@
-// Local check for site/. Not part of pnpm quality.
-// Markup can also be sent to https://validator.w3.org/nu/
+// Site check. `pnpm quality` runs this. Markup can also go to https://validator.w3.org/nu/
 import fs from 'node:fs';
 import path from 'node:path';
+import * as safetyRules from '../src/data/safetyRules.ts';
+import { digitsOnly, numbersOutside, phoneNumbersInHtml } from '../src/site/publicPhones.ts';
 
 const root = path.resolve('site');
 const cssPath = path.join(root, 'css', 'site.css');
@@ -14,25 +15,6 @@ const pairs = [
   [`licencje/${pageName}`, `en/licenses/${pageName}`],
 ];
 const balanced = ['html', 'head', 'body', 'header', 'main', 'footer', 'nav'];
-const blockedFragments = [
-  '619 63 01',
-  '226196301',
-  '12 411 99 99',
-  '124119999',
-  '58 682 04 04',
-  '586820404',
-  '61 847 69 46',
-  '618476946',
-  '42 657 99 00',
-  '426579900',
-  '71 343 30 08',
-  '713433008',
-  'Solidarności 67',
-  'Jakubowskiego',
-  'Powstania Styczniowego',
-  'Teresy 8',
-  'Fieldorfa',
-];
 const trackerNeedles = [
   'fonts.googleapis',
   'fonts.gstatic',
@@ -53,6 +35,34 @@ const errors = [];
 
 function report(message) {
   errors.push(message);
+}
+
+function emergencyNumbers() {
+  return safetyRules.EMERGENCY_CALLS.map((call) => call.number);
+}
+
+function emergencyTelHref(number) {
+  return `tel:${digitsOnly(number)}`;
+}
+
+function pushAddressParts(fragments, address) {
+  fragments.push(address);
+  for (const part of address.split(',')) {
+    const piece = part.trim();
+    if (piece.length >= 8) fragments.push(piece);
+  }
+}
+
+function toxicologyFragments() {
+  const fragments = [];
+  for (const center of safetyRules.TOXICOLOGY_CENTERS) {
+    pushAddressParts(fragments, center.address);
+    for (const phone of center.phones) {
+      fragments.push(phone);
+      fragments.push(digitsOnly(phone));
+    }
+  }
+  return fragments;
 }
 
 function walk(dir) {
@@ -119,7 +129,7 @@ function resolves(fromFile, href) {
   const clean = href.split('#')[0].split('?')[0];
   if (!clean) return;
   if (clean.startsWith('https://')) return;
-  if (clean === 'tel:112' || clean === 'tel:999') return;
+  if (emergencyNumbers().some((number) => clean === emergencyTelHref(number))) return;
   if (/^[a-z]+:/i.test(clean)) {
     report(`${rel(fromFile)}: link scheme not allowed: ${href}`);
     return;
@@ -167,20 +177,55 @@ function checkCss() {
   }
 }
 
-function checkRequired(files) {
-  const names = new Set(files.map(rel));
+function sameNumbers(left, right) {
+  return [...left].sort().join() === [...right].sort().join();
+}
+
+function checkEmergencyNumbers(files) {
+  const allowed = emergencyNumbers().map((number) => digitsOnly(number));
+  const found = new Set();
+  const pages = files.map((file) => fs.readFileSync(file, textEncoding));
+  for (const html of pages) {
+    for (const number of phoneNumbersInHtml(html)) found.add(number);
+  }
+  if (!sameNumbers(found, allowed)) {
+    report(`site phones [${[...found].sort().join(' ')}] != EMERGENCY_CALLS [${[...allowed].sort().join(' ')}]`);
+  }
+  const corpus = pages.join('\n');
+  for (const number of numbersOutside(allowed, [safetyRules])) {
+    if (corpus.includes(number)) report(`site contains a non-emergency number from safetyRules (${number})`);
+  }
+  for (const center of safetyRules.TOXICOLOGY_CENTERS) {
+    for (const phone of center.phones) {
+      if (corpus.includes(phone) || corpus.includes(digitsOnly(phone))) {
+        report(`site contains the ${center.city} toxicology line`);
+      }
+    }
+  }
+}
+
+function requireIncludes(text, label, needles) {
+  for (const needle of needles) {
+    if (!text.includes(needle)) report(`${label} missing ${needle}`);
+  }
+}
+
+function checkPagePairs(names) {
   for (const [left, right] of pairs) {
     if (!names.has(left)) report(`missing ${left}`);
     if (!names.has(right)) report(`missing ${right}`);
   }
+}
+
+function checkRequired(files) {
+  checkPagePairs(new Set(files.map(rel)));
   const home = fs.readFileSync(path.join(root, pageName), textEncoding);
   const english = fs.readFileSync(path.join(root, `en/${pageName}`), textEncoding);
-  for (const needle of ['112', '999', 'grzyboznawc', 'klasyfikator', 'Pomoc', 'Makieta']) {
-    if (!home.includes(needle)) report(`Polish home missing ${needle}`);
-  }
-  for (const needle of ['112', '999', 'grzyboznawca', 'Pomoc', 'Placeholder']) {
-    if (!english.includes(needle)) report(`English home missing ${needle}`);
-  }
+  const numbers = emergencyNumbers();
+  requireIncludes(home, 'Polish home', numbers);
+  requireIncludes(english, 'English home', numbers);
+  requireIncludes(home, 'Polish home', ['grzyboznawc', 'klasyfikator', 'Pomoc', 'Makieta']);
+  requireIncludes(english, 'English home', ['grzyboznawca', 'Pomoc', 'Placeholder']);
   for (const privacy of [`prywatnosc/${pageName}`, `en/privacy/${pageName}`]) {
     const text = fs.readFileSync(path.join(root, privacy), textEncoding);
     if (!text.includes(issuesUrl)) report(`${privacy}: missing issues link`);
@@ -203,7 +248,10 @@ for (const file of files) {
   for (const needle of trackerNeedles) {
     if (lowered.includes(needle)) report(`${where}: blocked ${needle}`);
   }
-  for (const fragment of blockedFragments) {
+  if (!text.includes('http-equiv="Content-Security-Policy"') || !text.includes("default-src 'none'")) {
+    report(`${where}: missing strict Content-Security-Policy`);
+  }
+  for (const fragment of toxicologyFragments()) {
     if (text.includes(fragment)) report(`${where}: toxicology detail`);
   }
 }
@@ -217,6 +265,7 @@ for (const [left, right] of pairs) {
 }
 
 checkRequired(files);
+checkEmergencyNumbers(files);
 
 if (errors.length > 0) {
   for (const error of errors) console.error(error);

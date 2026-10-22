@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; style-src 'self'; base-uri 'none'; form-action 'none'">
   <meta name="description" content="Privacy policy for Grzybobranie AI: on-device recognition, no account, no analytics. Photos and the journal stay on the phone.">
   <meta name="theme-color" content="#1b3b22" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0e1712" media="(prefers-color-scheme: dark)">
@@ -40,7 +41,7 @@
     <ul>
       <li>It does not create an account and it does not ask for an email address.</li>
       <li>It has no online mushroom database that the app would query for cards.</li>
-      <li>It does not store photos or the journal in the cloud.</li>
+      <li>It does not upload photos or the journal to a cloud service of its own.</li>
       <li>It does not show ads and it does not use analytics.</li>
     </ul>
 
@@ -52,21 +53,21 @@
       </div>
       <div>
         <dt>Journal</dt>
-        <dd>Entries (note, date, photo, place) are stored locally. There is no sync between phones.</dd>
+        <dd>Entries (note, date, photo, place) are stored locally in the app. There is no sync between phones. On iPhone, system iCloud backup, when it is turned on, can include photos and the journal stored by the app. The app itself does not upload them to iCloud.</dd>
       </div>
       <div>
         <dt>Location</dt>
-        <dd>A find’s place is used only on the device, when you choose to save a journal entry. The app does not track location in the background. It does not send coordinates today.</dd>
+        <dd>A find’s place stays on the device when you choose to save a journal entry. The app does not track location in the background and does not send coordinates on its own. Coordinates leave the phone only after you tap “Open this spot in maps” in the journal: they go to the maps app that opens (Apple Maps on iPhone, the app that handles that link on Android, Google Maps in the browser).</dd>
       </div>
     </dl>
 
-    <h2>Weather and maps — planned</h2>
-    <p>This version has no weather and no maps. Both are planned.</p>
+    <h2>Weather and maps</h2>
+    <p>This version has no weather. That feature is planned.</p>
     <p>If weather is enabled, only coordinates rounded to about 1&nbsp;km may be sent to a weather API. The exact position stored in the journal is not sent for that.</p>
-    <p>Maps, if they are added, will show <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> data. That is a separate map service, not a store for photos or the journal.</p>
+    <p>The journal button opens the spot in an external maps app and passes the coordinates only then, as above. There is no map inside the app. If one is added, it will show <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> data. That is a separate map service, not a store for photos or the journal.</p>
 
     <h2>This website</h2>
-    <p>The site is static. It sets no cookies, it has no form, and it does not load fonts, analytics, or other scripts from elsewhere.</p>
+    <p>The site is static. It sets no cookies, it has no form, and it does not load fonts, analytics, or other scripts from elsewhere. GitHub Pages, which hosts the site, may keep ordinary server logs (IP address, browser, requested address). This site does not set those logs and does not read them.</p>
 
     <h2>Contact</h2>
     <p>Privacy questions and bugs: <a href="https://github.com/lonwi/mushroom-recognition-app/issues">issues on the GitHub repository</a>. The repository does not publish a company address or a legal entity. Until it does, that issues page is the contact.</p>

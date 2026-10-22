@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; style-src 'self'; base-uri 'none'; form-action 'none'">
   <meta name="description" content="Grzybobranie AI is a test app for offline mushroom foraging. On-device recognition, an atlas, a journal, and help. It does not replace a mycologist.">
   <meta name="theme-color" content="#1b3b22" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0e1712" media="(prefers-color-scheme: dark)">
@@ -67,12 +68,11 @@
       </article>
     </div>
 
-    <h2>Planned</h2>
+    <h2>Weather and maps</h2>
     <div class="planned">
-      <p class="kicker">Not in the app yet</p>
-      <p>Weather and maps are planned. This version does not include them.</p>
-      <p>If weather is turned on, a weather service may receive only coordinates rounded to about 1&nbsp;km. The exact place saved in the journal is not sent for that.</p>
-      <p>Maps, if they are added, will use <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a> data.</p>
+      <p class="kicker">Weather — not yet</p>
+      <p>This version has no weather. If it is turned on, a weather service may receive only coordinates rounded to about 1&nbsp;km. The exact place saved in the journal is not sent for that.</p>
+      <p>In the journal, “Open this spot in maps” passes that entry’s coordinates to a maps app only after you tap it. There is no map inside the app. If one is added, it will use <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a> data.</p>
     </div>
 
     <h2>Screens</h2>
