@@ -24,6 +24,7 @@
     "depcruise:tighten": "node scripts/depcruise-gate.mjs --shrink",
     "depcruise:baseline": "node scripts/depcruise-gate.mjs --update",
     "quality": "pnpm lint && pnpm duplication && pnpm knip && pnpm depcruise",
+    "check:site": "node scripts/check-site.mjs",
     "test": "jest --config jest.config.js",
     "test:e2e": "playwright test",
     "storybook": "storybook dev -p 6006",
