@@ -257,9 +257,10 @@ describe('AtlasScreen RTL Tests', () => {
       expect(unverified.getByText('Gęśnica wiosenna')).toBeTruthy();
       expect(unverified.getByText('Maślanka łagodna')).toBeTruthy();
       expect(unverified.getByText('Kolczak obłączasty')).toBeTruthy();
-      expect(unverified.getByText(/nie oznacza, że grzyb jest jadalny/)).toBeTruthy();
       expect(
-        unverified.getByText(/Są tu też gatunki trujące, których nie da się wykluczyć na podstawie tej cechy/),
+        unverified.getByText(
+          'Gatunki z tej sekcji nie pasują do wszystkich wybranych cech albo brakuje dla nich danych. Są tu też gatunki trujące i śmiertelnie trujące, których nie da się wykluczyć na podstawie tych cech, bo pochwa, pierścień, kolor czy rozmiar mogą być u okazu niewidoczne albo inne niż w opisie.',
+        ),
       ).toBeTruthy();
       expect(screen.queryByTestId('atlas-condition-armillaria_mellea')).toBeNull();
     });
