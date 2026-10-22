@@ -95,7 +95,7 @@
     "hymenophore": "blaszki",
     "sporePrint": "bialy",
     "ring": true,
-    "volva": "pochwa",
+    "volva": "bulwa",
     "protection": "brak",
     "capShape": [
       "polkulisty",
@@ -340,10 +340,7 @@
     "hymenophore": "blaszki",
     "sporePrint": "bialy",
     "ring": true,
-    "volva": [
-      "bulwa",
-      "pochwa"
-    ],
+    "volva": "bulwa",
     "protection": "brak",
     "capShape": [
       "wypukly",
@@ -944,7 +941,7 @@
     "psychoactive": false,
     "hymenophore": "blaszki",
     "sporePrint": "fioletowobrazowy",
-    "ring": true,
+    "ring": false,
     "volva": "brak",
     "protection": "brak",
     "capShape": [
@@ -971,7 +968,8 @@
       "brazowy"
     ],
     "stemFeatures": [
-      "zrosniete"
+      "zrosniete",
+      "wlokna_zasnowki"
     ],
     "smell": [
       "przyjemny"
@@ -996,7 +994,7 @@
     "psychoactive": false,
     "hymenophore": "blaszki",
     "sporePrint": "fioletowoczarny",
-    "ring": true,
+    "ring": false,
     "volva": "brak",
     "protection": "brak",
     "capShape": [
@@ -1020,7 +1018,8 @@
       "zielony"
     ],
     "stemFeatures": [
-      "zrosniete"
+      "zrosniete",
+      "wlokna_zasnowki"
     ],
     "smell": [
       "niewyrazny"

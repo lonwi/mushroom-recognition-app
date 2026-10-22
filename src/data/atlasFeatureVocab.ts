@@ -204,7 +204,8 @@ export interface AtlasFeatureFields {
   substrate?: readonly string[];
 }
 
-export const IMPORT_STATUSES = ['zweryfikowane', 'wniosek_z_klucza'] as const;
+/** Values with these provenance statuses are in the app. `ok` is stored as `zweryfikowane`. */
+export const PRESENT_STATUSES = ['zweryfikowane', 'wniosek_z_klucza', 'istniejace', 'pominiete'] as const;
 
 export const WITHHELD_STATUS = 'do_weryfikacji';
 

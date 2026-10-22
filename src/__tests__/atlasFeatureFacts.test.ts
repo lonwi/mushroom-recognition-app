@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import {
   ATLAS_TOKEN_VOCAB,
   FEATURE_KEYS,
-  IMPORT_STATUSES,
+  PRESENT_STATUSES,
   NULLABLE_IMPORT_FIELDS,
   TASTE_WITHHELD,
   WITHHELD_STATUS,
@@ -33,7 +33,7 @@ interface ProvenanceFile {
 const provenance = JSON.parse(readFileSync('data/sources/atlas_cechy_20261022.json', 'utf8')) as ProvenanceFile;
 const POISONOUS = new Set(['POISONOUS', 'DEADLY_POISONOUS']);
 const NULLABLE = new Set<string>(NULLABLE_IMPORT_FIELDS);
-const ALLOWED_STATUS = new Set<string>([...IMPORT_STATUSES, WITHHELD_STATUS]);
+const ALLOWED_STATUS = new Set<string>([...PRESENT_STATUSES, WITHHELD_STATUS]);
 const LABEL_FIELDS = FEATURE_KEYS.filter((field) => field !== 'capSizeCm');
 
 function factValue(speciesId: string, appField: string): unknown {
@@ -74,6 +74,30 @@ describe('atlas species features', () => {
 
     expect(imported).toBe(613);
     expect(withheld).toBe(47);
+  });
+
+  test('keeps pominiete and istniejace distinct from zweryfikowane', () => {
+    const counts = { zweryfikowane: 0, wniosek_z_klucza: 0, istniejace: 0, pominiete: 0, do_weryfikacji: 0 };
+    for (const record of provenance.records) {
+      const status = record.status as keyof typeof counts;
+      counts[status] += 1;
+    }
+    expect(counts).toEqual({
+      zweryfikowane: 413,
+      wniosek_z_klucza: 110,
+      istniejace: 71,
+      pominiete: 19,
+      do_weryfikacji: 47,
+    });
+    const withheldTaste = provenance.records.filter(
+      (record) => record.field === 'taste' && record.status === 'pominiete',
+    );
+    expect(withheldTaste).toHaveLength(19);
+    expect(withheldTaste.every((record) => Array.isArray(record.value) && record.value[0] === 'nie_podaje_sie')).toBe(
+      true,
+    );
+    const existing = provenance.records.filter((record) => record.status === 'istniejace');
+    expect(existing.every((record) => ['ring', 'volva', 'sporePrint'].includes(record.field))).toBe(true);
   });
 
   test('keeps withheld values out of the app and inside the vocabulary', () => {

@@ -1,6 +1,6 @@
 {
   "checkedAt": "2026-10-22",
-  "description": "Pochodzenie cech atlasu. Wartosc wchodzi do aplikacji tylko przy statusie zweryfikowane albo wniosek_z_klucza. do_weryfikacji ma value null i nie jest w atlasFilterFacts.json.",
+  "description": "Pochodzenie cech atlasu. Wartosc wchodzi do aplikacji przy statusie zweryfikowane, wniosek_z_klucza, istniejace albo pominiete. pominiete i istniejace nie sa skladane do zweryfikowane. do_weryfikacji ma value null i nie jest w atlasFilterFacts.json.",
   "records": [
     {
       "speciesId": "agaricus_campestris",
@@ -186,7 +186,7 @@
       "speciesId": "agaricus_campestris",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": true,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -195,7 +195,7 @@
       "speciesId": "agaricus_campestris",
       "field": "volva",
       "appField": "volva",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "brak",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -204,7 +204,7 @@
       "speciesId": "agaricus_campestris",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "czekoladowobrazowy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -324,7 +324,7 @@
       "speciesId": "agaricus_xanthodermus",
       "field": "taste",
       "appField": "taste",
-      "status": "zweryfikowane",
+      "status": "pominiete",
       "value": [
         "nie_podaje_sie"
       ],
@@ -395,7 +395,7 @@
       "speciesId": "agaricus_xanthodermus",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": true,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -404,7 +404,7 @@
       "speciesId": "agaricus_xanthodermus",
       "field": "volva",
       "appField": "volva",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "bulwa",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -525,7 +525,7 @@
       "speciesId": "amanita_citrina",
       "field": "taste",
       "appField": "taste",
-      "status": "zweryfikowane",
+      "status": "pominiete",
       "value": [
         "nie_podaje_sie"
       ],
@@ -590,7 +590,7 @@
       "speciesId": "amanita_citrina",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": true,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -599,16 +599,17 @@
       "speciesId": "amanita_citrina",
       "field": "volva",
       "appField": "volva",
-      "status": "zweryfikowane",
-      "value": "pochwa",
+      "status": "istniejace",
+      "value": "bulwa",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
-      "checkedAt": "2026-10-22"
+      "checkedAt": "2026-10-22",
+      "note": "Korekta: bulwa z rąbkiem, nie pochwa."
     },
     {
       "speciesId": "amanita_citrina",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "bialy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -789,7 +790,7 @@
       "speciesId": "amanita_excelsa",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": true,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -798,7 +799,7 @@
       "speciesId": "amanita_excelsa",
       "field": "volva",
       "appField": "volva",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "bulwa",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -807,7 +808,7 @@
       "speciesId": "amanita_excelsa",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "bialy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -920,7 +921,7 @@
       "speciesId": "amanita_muscaria",
       "field": "taste",
       "appField": "taste",
-      "status": "zweryfikowane",
+      "status": "pominiete",
       "value": [
         "nie_podaje_sie"
       ],
@@ -985,7 +986,7 @@
       "speciesId": "amanita_muscaria",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": true,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -1011,7 +1012,7 @@
       "speciesId": "amanita_muscaria",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "bialy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -1125,7 +1126,7 @@
       "speciesId": "amanita_pantherina",
       "field": "taste",
       "appField": "taste",
-      "status": "zweryfikowane",
+      "status": "pominiete",
       "value": [
         "nie_podaje_sie"
       ],
@@ -1192,7 +1193,7 @@
       "speciesId": "amanita_pantherina",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": true,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -1201,7 +1202,7 @@
       "speciesId": "amanita_pantherina",
       "field": "volva",
       "appField": "volva",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "pochwa",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -1210,7 +1211,7 @@
       "speciesId": "amanita_pantherina",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "bialy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -1333,7 +1334,7 @@
       "speciesId": "amanita_phalloides",
       "field": "taste",
       "appField": "taste",
-      "status": "zweryfikowane",
+      "status": "pominiete",
       "value": [
         "nie_podaje_sie"
       ],
@@ -1397,7 +1398,7 @@
       "speciesId": "amanita_phalloides",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": true,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -1406,7 +1407,7 @@
       "speciesId": "amanita_phalloides",
       "field": "volva",
       "appField": "volva",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "pochwa",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -1415,7 +1416,7 @@
       "speciesId": "amanita_phalloides",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "bialy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -1600,7 +1601,7 @@
       "speciesId": "amanita_rubescens",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": true,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -1609,19 +1610,17 @@
       "speciesId": "amanita_rubescens",
       "field": "volva",
       "appField": "volva",
-      "status": "zweryfikowane",
-      "value": [
-        "bulwa",
-        "pochwa"
-      ],
+      "status": "istniejace",
+      "value": "bulwa",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
-      "checkedAt": "2026-10-22"
+      "checkedAt": "2026-10-22",
+      "note": "Korekta: brak pełnej pochwy; zostaje bulwa."
     },
     {
       "speciesId": "amanita_rubescens",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "bialy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -1737,7 +1736,7 @@
       "speciesId": "amanita_virosa",
       "field": "taste",
       "appField": "taste",
-      "status": "zweryfikowane",
+      "status": "pominiete",
       "value": [
         "nie_podaje_sie"
       ],
@@ -1804,7 +1803,7 @@
       "speciesId": "amanita_virosa",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": true,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -1813,7 +1812,7 @@
       "speciesId": "amanita_virosa",
       "field": "volva",
       "appField": "volva",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "pochwa",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -1822,7 +1821,7 @@
       "speciesId": "amanita_virosa",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "bialy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -2007,7 +2006,7 @@
       "speciesId": "armillaria_mellea",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": true,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -2030,7 +2029,7 @@
       "speciesId": "armillaria_mellea",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "bialy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -2240,7 +2239,7 @@
       "speciesId": "boletus_edulis",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "oliwkowobrazowy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -2408,7 +2407,7 @@
       "speciesId": "calocybe_gambosa",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": false,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -2417,7 +2416,7 @@
       "speciesId": "calocybe_gambosa",
       "field": "volva",
       "appField": "volva",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "brak",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -2426,7 +2425,7 @@
       "speciesId": "calocybe_gambosa",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "bialy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -2631,7 +2630,7 @@
       "speciesId": "cantharellus_cibarius",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "kremowy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -2745,7 +2744,7 @@
       "speciesId": "chlorophyllum_rhacodes",
       "field": "taste",
       "appField": "taste",
-      "status": "zweryfikowane",
+      "status": "pominiete",
       "value": [
         "nie_podaje_sie"
       ],
@@ -2809,7 +2808,7 @@
       "speciesId": "chlorophyllum_rhacodes",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": true,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -2832,7 +2831,7 @@
       "speciesId": "chlorophyllum_rhacodes",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "bialy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -2952,7 +2951,7 @@
       "speciesId": "cortinarius_orellanus",
       "field": "taste",
       "appField": "taste",
-      "status": "zweryfikowane",
+      "status": "pominiete",
       "value": [
         "nie_podaje_sie"
       ],
@@ -3045,7 +3044,7 @@
       "speciesId": "cortinarius_orellanus",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "rdzawobrazowy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -3158,7 +3157,7 @@
       "speciesId": "cortinarius_rubellus",
       "field": "taste",
       "appField": "taste",
-      "status": "zweryfikowane",
+      "status": "pominiete",
       "value": [
         "nie_podaje_sie"
       ],
@@ -3379,7 +3378,7 @@
       "speciesId": "galerina_marginata",
       "field": "taste",
       "appField": "taste",
-      "status": "zweryfikowane",
+      "status": "pominiete",
       "value": [
         "nie_podaje_sie"
       ],
@@ -3443,7 +3442,7 @@
       "speciesId": "galerina_marginata",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": true,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -3466,7 +3465,7 @@
       "speciesId": "galerina_marginata",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "rdzawobrazowy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -3584,7 +3583,7 @@
       "speciesId": "gyromitra_esculenta",
       "field": "taste",
       "appField": "taste",
-      "status": "zweryfikowane",
+      "status": "pominiete",
       "value": [
         "nie_podaje_sie"
       ],
@@ -3670,7 +3669,7 @@
       "speciesId": "gyromitra_esculenta",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "bialy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -3886,7 +3885,7 @@
       "speciesId": "hydnum_repandum",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "kremowy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -3999,7 +3998,7 @@
       "speciesId": "hygrophoropsis_aurantiaca",
       "field": "taste",
       "appField": "taste",
-      "status": "zweryfikowane",
+      "status": "pominiete",
       "value": [
         "nie_podaje_sie"
       ],
@@ -4189,14 +4188,16 @@
       "appField": "stemFeatures",
       "status": "zweryfikowane",
       "value": [
-        "zrosniete"
+        "zrosniete",
+        "wlokna_zasnowki"
       ],
       "source": "GrzybyPolskichLasow2021 (Zarzyński, CILP 2021) – lokalny PDF | MushroomExpert (M. Kuo)",
       "checkedAt": "2026-10-22",
       "sourceUrls": [
         "https://www.mushroomexpert.com/hypholoma_capnoides.html"
       ],
-      "page": "druk. 242–243 (PDF 240–241)"
+      "page": "druk. 242–243 (PDF 240–241)",
+      "note": "Korekta: włókna zasnówki, nie błoniasty pierścień."
     },
     {
       "speciesId": "hypholoma_capnoides",
@@ -4282,10 +4283,11 @@
       "speciesId": "hypholoma_capnoides",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
-      "value": true,
+      "status": "istniejace",
+      "value": false,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
-      "checkedAt": "2026-10-22"
+      "checkedAt": "2026-10-22",
+      "note": "Korekta: resztki zasnówki, nie błoniasty pierścień."
     },
     {
       "speciesId": "hypholoma_capnoides",
@@ -4305,7 +4307,7 @@
       "speciesId": "hypholoma_capnoides",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "fioletowobrazowy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -4393,14 +4395,16 @@
       "appField": "stemFeatures",
       "status": "zweryfikowane",
       "value": [
-        "zrosniete"
+        "zrosniete",
+        "wlokna_zasnowki"
       ],
       "source": "GrzybyPolskichLasow2021 (Zarzyński, CILP 2021) – lokalny PDF | First Nature",
       "checkedAt": "2026-10-22",
       "sourceUrls": [
         "https://www.first-nature.com/fungi/hypholoma-fasciculare.php"
       ],
-      "page": "druk. 246–247 (PDF 244–245)"
+      "page": "druk. 246–247 (PDF 244–245)",
+      "note": "Korekta: włókna zasnówki, nie błoniasty pierścień."
     },
     {
       "speciesId": "hypholoma_fasciculare",
@@ -4421,7 +4425,7 @@
       "speciesId": "hypholoma_fasciculare",
       "field": "taste",
       "appField": "taste",
-      "status": "zweryfikowane",
+      "status": "pominiete",
       "value": [
         "nie_podaje_sie"
       ],
@@ -4485,10 +4489,11 @@
       "speciesId": "hypholoma_fasciculare",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
-      "value": true,
+      "status": "istniejace",
+      "value": false,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
-      "checkedAt": "2026-10-22"
+      "checkedAt": "2026-10-22",
+      "note": "Korekta: resztki zasnówki, nie błoniasty pierścień."
     },
     {
       "speciesId": "hypholoma_fasciculare",
@@ -4508,7 +4513,7 @@
       "speciesId": "hypholoma_fasciculare",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "fioletowoczarny",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -4720,7 +4725,7 @@
       "speciesId": "imleria_badia",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "oliwkowobrazowy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -4842,7 +4847,7 @@
       "speciesId": "inocybe_erubescens",
       "field": "taste",
       "appField": "taste",
-      "status": "zweryfikowane",
+      "status": "pominiete",
       "value": [
         "nie_podaje_sie"
       ],
@@ -5142,7 +5147,7 @@
       "speciesId": "kuehneromyces_mutabilis",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": true,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -5165,7 +5170,7 @@
       "speciesId": "kuehneromyces_mutabilis",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "rdzawobrazowy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -5383,7 +5388,7 @@
       "speciesId": "lactarius_deliciosus",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "kremowy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -5501,7 +5506,7 @@
       "speciesId": "lactarius_torminosus",
       "field": "taste",
       "appField": "taste",
-      "status": "zweryfikowane",
+      "status": "pominiete",
       "value": [
         "nie_podaje_sie"
       ],
@@ -5592,7 +5597,7 @@
       "speciesId": "lactarius_torminosus",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "kremowy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -5801,7 +5806,7 @@
       "speciesId": "leccinum_aurantiacum",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "brazowy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -6010,7 +6015,7 @@
       "speciesId": "leccinum_scabrum",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "brazowy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -6184,7 +6189,7 @@
       "speciesId": "macrolepiota_procera",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": true,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -6193,7 +6198,7 @@
       "speciesId": "macrolepiota_procera",
       "field": "volva",
       "appField": "volva",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "bulwa",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -6202,7 +6207,7 @@
       "speciesId": "macrolepiota_procera",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "bialy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -6417,7 +6422,7 @@
       "speciesId": "morchella_esculenta",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "kremowy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -6626,7 +6631,7 @@
       "speciesId": "neoboletus_luridiformis",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "oliwkowobrazowy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -6743,7 +6748,7 @@
       "speciesId": "paxillus_involutus",
       "field": "taste",
       "appField": "taste",
-      "status": "zweryfikowane",
+      "status": "pominiete",
       "value": [
         "nie_podaje_sie"
       ],
@@ -6815,7 +6820,7 @@
       "speciesId": "paxillus_involutus",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": false,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -6838,7 +6843,7 @@
       "speciesId": "paxillus_involutus",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "brazowy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -6960,7 +6965,7 @@
       "speciesId": "rubroboletus_satanas",
       "field": "taste",
       "appField": "taste",
-      "status": "zweryfikowane",
+      "status": "pominiete",
       "value": [
         "nie_podaje_sie"
       ],
@@ -7056,7 +7061,7 @@
       "speciesId": "rubroboletus_satanas",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "oliwkowobrazowy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -7241,7 +7246,7 @@
       "speciesId": "russula_virescens",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": false,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -7261,7 +7266,7 @@
       "speciesId": "russula_virescens",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": [
         "bialy",
         "kremowy"
@@ -7383,7 +7388,7 @@
       "speciesId": "suillellus_luridus",
       "field": "taste",
       "appField": "taste",
-      "status": "zweryfikowane",
+      "status": "pominiete",
       "value": [
         "nie_podaje_sie"
       ],
@@ -7479,7 +7484,7 @@
       "speciesId": "suillellus_luridus",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "oliwkowobrazowy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -7656,7 +7661,7 @@
       "speciesId": "suillus_bovinus",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": false,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -7679,7 +7684,7 @@
       "speciesId": "suillus_bovinus",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "oliwkowobrazowy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -7860,7 +7865,7 @@
       "speciesId": "suillus_grevillei",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": true,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -8075,7 +8080,7 @@
       "speciesId": "suillus_luteus",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": true,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -8098,7 +8103,7 @@
       "speciesId": "suillus_luteus",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "rdzawobrazowy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -8301,7 +8306,7 @@
       "speciesId": "suillus_variegatus",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "oliwkowobrazowy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -8420,7 +8425,7 @@
       "speciesId": "tricholoma_equestre",
       "field": "taste",
       "appField": "taste",
-      "status": "zweryfikowane",
+      "status": "pominiete",
       "value": [
         "nie_podaje_sie"
       ],
@@ -8486,7 +8491,7 @@
       "speciesId": "tricholoma_equestre",
       "field": "ring",
       "appField": "ring",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": false,
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -8495,7 +8500,7 @@
       "speciesId": "tricholoma_equestre",
       "field": "volva",
       "appField": "volva",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "brak",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -8504,7 +8509,7 @@
       "speciesId": "tricholoma_equestre",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "bialy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"
@@ -8716,7 +8721,7 @@
       "speciesId": "tylopilus_felleus",
       "field": "sporePrint",
       "appField": "sporePrint",
-      "status": "zweryfikowane",
+      "status": "istniejace",
       "value": "rozowy",
       "source": "atlasFilterFacts.json (repo, main 6bbaee3)",
       "checkedAt": "2026-10-22"

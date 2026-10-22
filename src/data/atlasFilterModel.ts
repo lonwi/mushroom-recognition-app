@@ -244,7 +244,9 @@ export const ATLAS_FILTER_GROUPS: readonly FilterGroup[] = [
     { id: 'absent', label: 'atlas.filters.ringAbsent', accepted: [false] },
   ]),
   fieldGroup('volva', 'atlas.filters.volva', 'volva', [
-    { id: 'pochwa', label: 'atlas.filters.volvaVolva', accepted: ['pochwa'] },
+    // A bulb is not a volva. Matching `bulwa` here keeps a rimmed bulb
+    // (A. citrina) and a bulb without a full volva (A. rubescens) with the death cap.
+    { id: 'pochwa', label: 'atlas.filters.volvaVolva', accepted: ['pochwa', 'bulwa'] },
     { id: 'bulwa', label: 'atlas.filters.volvaBulb', accepted: ['bulwa'] },
     { id: 'brak', label: 'atlas.filters.volvaNone', accepted: ['brak'] },
   ]),

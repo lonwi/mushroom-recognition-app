@@ -3,17 +3,19 @@
 Plik aplikacji: `src/data/atlasFilterFacts.json`.
 Pochodzenie każdej wartości: `data/sources/atlas_cechy_20261022.json` (`source`, `checkedAt`, `status`, adresy `https` albo brak adresu przy lokalnym PDF).
 
-Do faktów weszło **613** rekordów ze statusem `zweryfikowane` albo `wniosek_z_klucza`. **47** rekordów `do_weryfikacji` ma w pochodzeniu `value: null` i nie wchodzi do aplikacji. Nowe pole zostaje wtedy nieobecne. Przy `ring`, `volva` i `sporePrint` zostaje dotychczasowe `null`, żeby panel „Do weryfikacji” działał jak dotąd.
+Do faktów weszło **613** rekordów. **47** rekordów `do_weryfikacji` ma w pochodzeniu `value: null` i nie wchodzi do aplikacji. Nowe pole zostaje wtedy nieobecne. Przy `ring`, `volva` i `sporePrint` zostaje dotychczasowe `null`, żeby panel „Do weryfikacji” działał jak dotąd.
 
-Status w pliku pochodzenia jest już po decyzji właściciela:
+Status w pliku pochodzenia zachowuje rozróżnienie źródła. `pominiete` (19) i `istniejace` (71) nie są składane do `zweryfikowane`.
 
 | status źródła | status w repo | czy wchodzi do aplikacji |
 |---|---|---|
 | `ok` | `zweryfikowane` | tak |
-| `istniejace` | `zweryfikowane` | tak, bez zmiany wartości już obecnej |
-| `pominiete` | `zweryfikowane` | tak, jako `nie_podaje_sie` |
+| `istniejace` | `istniejace` | tak |
+| `pominiete` | `pominiete` | tak, jako `nie_podaje_sie` |
 | `wniosek_z_klucza` | `wniosek_z_klucza` | tak |
 | `do_weryfikacji` | `do_weryfikacji` | nie |
+
+Korekty po imporcie, przy zachowanym statusie `istniejace`: muchomor cytrynowy i czerwonawy mają `volva: bulwa` (cytrynowy to bulwa z rąbkiem, czerwonawy nie ma pełnej pochwy). Obie maślanki mają `ring: false` i `wlokna_zasnowki` (zasnówka, nie błoniasty pierścień). Chip „pochwa” i tak pasuje do tokenu `bulwa`.
 
 Smak `POISONOUS` i `DEADLY_POISONOUS` to token `nie_podaje_sie` (źródłowo `not_given`). To nie jest opis smaku i nie wolno go pokazywać. Sprzeczny albo brakujący smak gatunku nietrującego zostaje polem nieobecnym.
 

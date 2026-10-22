@@ -24,7 +24,8 @@ Poza tym etapem: miesiące, siedliska, drzewa.
 - W obrębie grupy chipy łączą się przez OR. Między grupami obowiązuje AND.
 - Pole wielowartościowe trafia, gdy choć jedna wartość pokrywa się z wybranym chipem. Wysyp może mieć kilka tokenów istniejącego słownika naraz, np. `['bialy','kremowy']`. Nowych słów się nie dopisuje. Odcień bez potwierdzenia w słowniku zostaje pusty (`do_weryfikacji`).
 - Puste pole albo `do_weryfikacji` przy aktywnym chipie tej cechy przenosi kartę do sekcji „Do weryfikacji”. Karta nie wpada do wyników i nie znika.
-- Resztki pochwy na bulwie liczą się i do pochwy, i do bulwy. Muchomor czerwonawy (`amanita_rubescens`) ma `['bulwa','pochwa']`.
+- Chip „pochwa” pasuje do tokenu `pochwa` i do tokenu `bulwa`. Bulwa nie jest pochwą, ale filtr pochwy nie odsiewa muchomora cytrynowego ani czerwonawego od sromotnika. Cytrynowy ma `bulwa` (bulwa z rąbkiem). Czerwonawy ma `bulwa` i nie ma pełnej pochwy. Oba zostają w wynikach chipa „pochwa” razem ze sromotnikiem i muchomorem jadowitym.
+- Maślanka łagodna i wiązkowa mają `ring: false` oraz `wlokna_zasnowki`. Zasnówka nie jest błoniastym pierścieniem.
 - Znana wartość, która nie pokrywa się z żadnym chipem grupy, wyklucza kartę z obu sekcji.
 - Rodzaj liczy się wyłącznie z `species.status` i `incompleteCard`, nie z faktów. `EDIBLE` → jadalne, `INEDIBLE` → niejadalne, `POISONOUS` i `DEADLY_POISONOUS` → trujące. Odznaka zostaje odznaką gatunku.
 - Karta z `incompleteCard: true` nie trafia do wyników „jadalne”. Przy chipie „jadalne” idzie do „Do weryfikacji”.
@@ -37,4 +38,4 @@ Poza tym etapem: miesiące, siedliska, drzewa.
 
 `atlasFilterFacts.json` ma też cechy pod planowany klucz: kształt i kolor kapelusza, rozmiar, trzon, zapach, smak, przebarwienie, mleczko, drzewa, podłoże. Panel filtrów ich nie czyta. Brak pola (albo `null` przy pierścieniu, pochwie i wysypie) zostaje pustką, więc istniejące „Do weryfikacji” działa bez zmian reguły.
 
-Tokeny są polskim ASCII, jak `pochwa` i `bialy`. Mapa z angielskich wartości źródłowych jest w `data/sources/ATLAS_CECHY.md`. Etykiety PL/EN są w `src/i18n`, nie w JSON. Pochodzenie każdego pola (źródło, `checkedAt`, status) jest w `data/sources/atlas_cechy_20261022.json`. Do aplikacji wchodzą tylko `zweryfikowane` i `wniosek_z_klucza`. `do_weryfikacji` zostaje poza faktami. Smak gatunku trującego albo śmiertelnie trującego to `nie_podaje_sie` i nie jest smakiem do pokazania.
+Tokeny są polskim ASCII, jak `pochwa` i `bialy`. Mapa z angielskich wartości źródłowych jest w `data/sources/ATLAS_CECHY.md`. Etykiety PL/EN są w `src/i18n`, nie w JSON. Pochodzenie każdego pola (źródło, `checkedAt`, status) jest w `data/sources/atlas_cechy_20261022.json`. Do aplikacji wchodzą `zweryfikowane`, `wniosek_z_klucza`, `istniejace` i `pominiete`. `do_weryfikacji` zostaje poza faktami. `pominiete` i `istniejace` nie są składane do `zweryfikowane`. Smak gatunku trującego albo śmiertelnie trującego to `nie_podaje_sie` i nie jest smakiem do pokazania.

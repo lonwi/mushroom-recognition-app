@@ -158,7 +158,26 @@ describe('atlas filter model', () => {
     expect(idsOf(bulb.matches)).toContain('amanita_rubescens');
     expect(idsOf(sheath.matches)).toContain('amanita_rubescens');
     expect(idsOf(neither.matches).concat(idsOf(neither.unverified))).not.toContain('amanita_rubescens');
-    expect(ATLAS_FILTER_FACTS.amanita_rubescens?.volva).toEqual(['bulwa', 'pochwa']);
+    expect(ATLAS_FILTER_FACTS.amanita_rubescens?.volva).toBe('bulwa');
+    expect(ATLAS_FILTER_FACTS.amanita_citrina?.volva).toBe('bulwa');
+  });
+
+  test('death cap and destroying angel keep a ring, a volva and a white spore print', () => {
+    for (const id of ['amanita_phalloides', 'amanita_virosa'] as const) {
+      expect(ATLAS_FILTER_FACTS[id]?.ring).toBe(true);
+      expect(ATLAS_FILTER_FACTS[id]?.volva).toBe('pochwa');
+      expect(ATLAS_FILTER_FACTS[id]?.sporePrint).toBe('bialy');
+    }
+    const sheath = idsOf(apply(['volva-pochwa']).matches);
+    expect(sheath).toEqual(
+      expect.arrayContaining(['amanita_phalloides', 'amanita_virosa', 'amanita_citrina', 'amanita_rubescens']),
+    );
+    expect(ATLAS_FILTER_FACTS.hypholoma_capnoides?.ring).toBe(false);
+    expect(ATLAS_FILTER_FACTS.hypholoma_fasciculare?.ring).toBe(false);
+    expect(ATLAS_FILTER_FACTS.hypholoma_capnoides?.stemFeatures).toEqual(expect.arrayContaining(['wlokna_zasnowki']));
+    expect(ATLAS_FILTER_FACTS.hypholoma_fasciculare?.stemFeatures).toEqual(
+      expect.arrayContaining(['wlokna_zasnowki']),
+    );
   });
 
   test('there is no non-poisonous chip and deadly cards keep their own status', () => {
