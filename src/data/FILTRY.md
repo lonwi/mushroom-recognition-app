@@ -35,6 +35,8 @@ Poza tym etapem: miesiące, siedliska, drzewa.
 
 ## Pochodzenie danych
 
+Ścieżki `filtry/…`, `karty/…`, `karty-sobowtory/…` oraz pliki `sources.md` i `PRZEKAZANIE.md` leżą w folderze danych poza repo (strona danych, „Zbieranie informacji o grzybach”).
+
 ### Skąd pochodzą wartości filtrów
 
 Wartości chipów filtrów atlasu powstają po stronie danych, poza repo, w trzech plikach JSON:
