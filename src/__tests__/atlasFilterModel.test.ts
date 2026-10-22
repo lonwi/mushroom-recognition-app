@@ -41,7 +41,14 @@ function apply(chipIds: string[], query = '') {
 }
 
 /** Species the hold must keep. A missing id here is a gap in the toxic set. */
-const EVANESCENT_HOLD_SPECIES = ['amanita_phalloides', 'amanita_virosa', 'galerina_marginata'] as const;
+const EVANESCENT_HOLD_SPECIES = [
+  'amanita_phalloides',
+  'amanita_virosa',
+  'galerina_marginata',
+  'amanita_pantherina',
+  'amanita_muscaria',
+  'amanita_citrina',
+] as const;
 
 function visibleIds(chipIds: readonly string[]): string[] {
   const result = apply([...chipIds]);
