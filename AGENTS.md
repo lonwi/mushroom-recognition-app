@@ -19,7 +19,7 @@ Read also: [`docs/QUALITY.md`](docs/QUALITY.md) (CI gates, baselines, what must 
 
 | Domain | Technology / Library | Rules & Guidelines |
 |---|---|---|
-| **Package Manager** | `pnpm@10.33.4` (pinned in `package.json` → `packageManager`), Node `^22 \|\| ^24` (`.nvmrc`) | Always use `pnpm` (`pnpm.cmd` on Windows). Never commit `package-lock.json` or `yarn.lock`. Install with `pnpm install --frozen-lockfile`. |
+| **Package Manager** | `pnpm@10.33.4` (pinned in `package.json` → `packageManager`). Node 22 (`.nvmrc`, used by CI); `engines` also allows `^24` | Always use `pnpm` (`pnpm.cmd` on Windows). Never commit `package-lock.json` or `yarn.lock`. Install with `pnpm install --frozen-lockfile`. |
 | **Framework** | **React Native 0.86** + **Expo SDK 57** + TypeScript | Keep compatibility with Expo Go, React Native Web, and native builds. |
 | **UI** | `react-native-paper` 5 (MD3) is installed and `PaperProvider` wraps the app in `App.tsx`. Most screens still use the project's own components styled with `src/theme/tokens.ts`. | New UI: take colors, spacing and typography from `src/theme/tokens.ts` (the Paper theme in `src/theme/paperTheme.ts` is built from the same tokens). Never hardcode colors. Prefer Paper components for new widgets; a gradual migration to Paper is planned. Do **not** add MUI (`@mui/*`) – it is a web library and is not used here. |
 | **Safe Areas** | `react-native-safe-area-context` | **NEVER** import `SafeAreaView` from `'react-native'`. Always import from `'react-native-safe-area-context'`. |
@@ -49,8 +49,11 @@ mushroom-recognition-app/
 ├── src/
 │   ├── components/          # Reusable UI components
 │   ├── contexts/            # React contexts (LanguageContext, …)
-│   ├── data/                # Static offline datasets (mushrooms.ts, preparationRules.ts, safetyRules.ts)
+│   ├── data/                # Static offline datasets (mushrooms.ts, preparationRules.ts, safetyRules.ts, FILTRY.md)
+│   ├── hooks/               # React hooks
 │   ├── i18n/                # pl.ts, en.ts
+│   ├── navigation/          # App navigation
+│   ├── presentation/        # Presentation helpers for screens
 │   ├── screens/             # App tabs and views (Scanner, Atlas, SpeciesDetail, Journal, SafetyGuide, …)
 │   ├── services/            # Recognition (classifierService, recognitionDecision, tfliteRuntime,
 │   │   │                    #   imagePreprocess, modelPackage, modelManifest), journal, attribution
@@ -59,6 +62,7 @@ mushroom-recognition-app/
 │   ├── stories/             # Storybook stories
 │   ├── theme/               # tokens.ts (design tokens), paperTheme.ts (MD3 theme built from tokens)
 │   ├── types/               # TypeScript models
+│   ├── utils/               # Small shared utilities
 │   └── __tests__/           # Jest & RNTL tests
 ├── training/                # Python pipeline: fetch_gbif, licenses, dedup, split, train, evaluate,
 │                            #   export_tflite, ship_gates, manifest; tests in training/tests/
@@ -97,13 +101,17 @@ mushroom-recognition-app/
    - A packaged model still must not show an edibility verdict. Amanita, Cortinarius, Galerina, or Gyromitra in the top 3, or low confidence, requires the expert / Sanepid warning. `not_a_mushroom` and the energy gate may reject a photo; `unknown_mushroom` shows the honest "the app does not know this mushroom" message, never a species or verdict.
    - Do not install weights that failed `training/ship_gates.py`.
 
-6. **Training data licensing** (owner decision, 2026-10-16):
-   - **CC0 and CC-BY**: allowed for training and, with attribution, for display.
-   - **CC BY-NC** (plain BY-NC only, **not** NC-ND or NC-SA) and **DF20**: allowed **for training only**. Never published, displayed in the app, or bundled in a release. Attribution is kept.
-   - The license is stored in its own column of the manifest, with a filter that can exclude BY-NC / DF20 from a training run.
-   - **DF20** additionally needs photographer consent: no release built on DF20 data until the repo owner confirms it.
-   - Anything else (ND, SA, unlicensed, unknown) is never fetched.
-   - Split keys combine all available keys (observation id, GBIF key, collector + grid + day); an empty key is never a key. Collector ids are hashed with a salt kept outside the repo.
+6. **Training data licensing**:
+   - **Today the code accepts only CC0 and CC-BY** (`training/licenses.py` rejects `by-nc`). Do not fetch NC, ND, SA, or unlicensed photos.
+   - **Approved, not yet implemented** (owner decision 2026-10-16, to be delivered by training PR 3): CC BY-NC (plain BY-NC only, not NC-ND / NC-SA) and DF20 for **training only** – never published, displayed in the app, or bundled; attribution kept; licence in its own manifest column with a filter that can exclude BY-NC / DF20; DF20 needs photographer consent confirmed by the owner before any release. Until PR 3 is merged, the CC0/CC-BY rule above is what the code enforces.
+   - A **commercial release** needs a model retrained without BY-NC and DF20 data.
+   - Planned with PR 3: split keys combine all available keys (observation id, GBIF key, collector + grid + day), an empty key is never a key, and collector ids are hashed with a salt kept outside the repo.
+
+7. **Content rules**:
+   - Stamets (and other copyrighted books): paraphrase only, always with page numbers; no quotes.
+   - Psychoactive species: never give doses.
+   - Every URL in code, data, and docs uses `https://`.
+   - Emergency phone numbers exist only in `src/data/safetyRules.ts`. The test `src/__tests__/phoneNumbersSingleSource.test.ts` (added with the emergency-numbers PR) enforces it; cards and screens link to the emergency screen instead.
 
 ---
 
@@ -120,4 +128,4 @@ pnpm build-storybook && pnpm test:e2e   # Playwright
 python -m unittest discover -s training/tests -v   # when touching training/
 ```
 
-Then open a PR. CI must be green, the PR gets a review, and **merging needs the repo owner's explicit OK**. Never loosen a quality gate to make CI pass – see "What must not be loosened" in `docs/QUALITY.md`.
+Then open a PR. CI must be green and the PR gets a review. Who merges is described in `docs/QUALITY.md` → "PR process"; safety content always needs the owner's word. Never loosen a quality gate to make CI pass – see "What must not be loosened" in `docs/QUALITY.md`.
