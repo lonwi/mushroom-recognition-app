@@ -9,6 +9,7 @@ import {
   Linking,
 } from 'react-native';
 import {
+  EMERGENCY_CALLS,
   GOLDEN_RULES,
   HOURS_24_7,
   HOURS_24_7_DOCTOR_ADVICE,
@@ -20,12 +21,6 @@ import {
 import { useLanguage } from '../contexts/LanguageContext';
 import { colors } from '../theme/tokens';
 import { ScreenFrame } from '../components/ScreenFrame';
-
-// General emergency numbers shown above the rules, in this order.
-const EMERGENCY_CALLS = [
-  { number: '112', titleKey: 'safetyGuide.call112Title', subKey: 'safetyGuide.call112Sub' },
-  { number: '999', titleKey: 'safetyGuide.call999Title', subKey: 'safetyGuide.call999Sub' },
-] as const;
 
 // Every hours constant in safetyRules.ts has a translated label.
 const HOURS_LABEL_KEYS: Record<string, string> = {
