@@ -7,9 +7,14 @@ export interface SafetyRule {
 
 export interface ToxicologyCenter {
   city: string;
-  phone: string;
+  /** Polish-format numbers, first is primary. Spaces only, no parentheses. */
+  phones: string[];
   address: string;
-  hours: string;
+  /** Only when the source states it explicitly. */
+  hours?: string;
+  sourceUrl: string;
+  /** ISO date when the number was checked against sourceUrl. */
+  checkedAt: string;
 }
 
 export const GOLDEN_RULES: SafetyRule[] = [
@@ -84,41 +89,86 @@ export const POISON_SYNDROMES = [
   }
 ];
 
+// An extension cannot be dialled from a tel: link, so such numbers are refused.
+const EXTENSION = /\b(?:wew|ext|extension)\b|[#,;]/i;
+
+/**
+ * Builds a dialable tel: URL. Nine-digit Polish national numbers get +48 so they
+ * also work from a foreign SIM; short codes such as 112 and 999 stay as they are.
+ * Returns null for empty numbers and numbers with an extension: callers must
+ * then show the number as text instead of a call link.
+ */
+export function toTelUrl(phone: string): string | null {
+  const trimmed = phone.trim();
+  if (trimmed === '' || EXTENSION.test(trimmed)) return null;
+  const digits = trimmed.replace(/\D/g, '');
+  if (digits === '') return null;
+  if (trimmed.startsWith('+')) return `tel:+${digits}`;
+  return digits.length === 9 ? `tel:+48${digits}` : `tel:${digits}`;
+}
+
+// Every number below was checked against its sourceUrl on this date.
+const CHECKED_AT = '2026-10-17';
+// Used only where the source states round-the-clock service explicitly.
+export const HOURS_24_7 = 'Całodobowo 24/7';
+// Wrocław: the source says the 24/7 line gives advice to doctors.
+export const HOURS_24_7_DOCTOR_ADVICE = 'Całodobowo – porady dla lekarzy';
+// Sosnowiec: the source says only that doctors are on duty round the clock.
+export const HOURS_24_7_DOCTOR_ON_DUTY = 'Całodobowo – dyżur lekarski';
+
 export const TOXICOLOGY_CENTERS: ToxicologyCenter[] = [
   {
     city: 'Warszawa',
-    phone: '22 619 63 01',
-    address: 'Praski Szpital Przemienienia Pańskiego, al. Solidarności 67',
-    hours: 'Całodobowo 24/7'
+    phones: ['22 619 66 54'],
+    address: 'Szpital Praski, Pododdział Toksykologii, al. Solidarności 67',
+    sourceUrl: 'https://rprm.ezdrowie.gov.pl/',
+    checkedAt: CHECKED_AT
   },
   {
     city: 'Kraków',
-    phone: '12 411 99 99',
-    address: 'Szpital Uniwersytecki, ul. Jakubowskiego 2',
-    hours: 'Całodobowo 24/7'
+    phones: ['12 411 99 99'],
+    address: 'Pracownia Informacji Toksykologicznej CM UJ, Klinika Toksykologii, ul. Jakubowskiego 2',
+    hours: HOURS_24_7,
+    sourceUrl: 'https://oit.cm.uj.edu.pl/o-pracowni/informacje/',
+    checkedAt: CHECKED_AT
   },
   {
     city: 'Gdańsk',
-    phone: '58 682 04 04',
-    address: 'Uniwersyteckie Centrum Medycyny Morskiej i Tropikalnej, ul. Powstania Styczniowego 9B',
-    hours: 'Całodobowo 24/7'
+    phones: ['58 682 04 04', '512 069 737'],
+    address: 'Pomorskie Centrum Toksykologii, ul. Kartuska 4/6',
+    sourceUrl: 'https://www.pctox.pl/new/kontakt/',
+    checkedAt: CHECKED_AT
   },
   {
     city: 'Poznań',
-    phone: '61 847 69 46',
-    address: 'Szpital Miejski im. F. Raszei, ul. Mickiewicza 2',
-    hours: 'Całodobowo 24/7'
+    phones: ['61 847 69 46'],
+    address: 'Szpital Miejski im. F. Raszei, Oddział Toksykologii, ul. Mickiewicza 2',
+    hours: HOURS_24_7,
+    sourceUrl: 'https://raszeja.poznan.pl/service/oddzial-toksykologiczny/',
+    checkedAt: CHECKED_AT
   },
   {
     city: 'Łódź',
-    phone: '42 657 99 00',
-    address: 'Instytut Medycyny Pracy, ul. św. Teresy 8',
-    hours: 'Całodobowo 24/7'
+    phones: ['661 442 576'],
+    address: 'Centralny Szpital Kliniczny UM, Pododdział Toksykologii, ul. Pomorska 251',
+    hours: HOURS_24_7,
+    sourceUrl: 'https://csk.umed.pl/kliniki-i-oddzialy/pododdzial-toksykologii/',
+    checkedAt: CHECKED_AT
   },
   {
     city: 'Wrocław',
-    phone: '71 343 30 08',
+    phones: ['71 306 48 41', '71 306 48 42'],
     address: 'Dolnośląski Szpital Specjalistyczny im. T. Marciniaka, ul. Gen. Fieldorfa 2',
-    hours: 'Całodobowo 24/7'
+    hours: HOURS_24_7_DOCTOR_ADVICE,
+    sourceUrl: 'https://www.szpital-marciniak.wroclaw.pl/p,168,oddzial-toksykologii-i-chorob-wewnetrznych',
+    checkedAt: CHECKED_AT
+  },
+  {
+    city: 'Sosnowiec',
+    phones: ['32 368 21 16'],
+    address: 'Wojewódzki Szpital Specjalistyczny nr 5 im. św. Barbary, Oddział Toksykologii z Ośrodkiem Ostrych Zatruć, Plac Medyków 1',
+    hours: HOURS_24_7_DOCTOR_ON_DUTY,
+    sourceUrl: 'https://www.wss5.pl/content/oddzial-toksykologii-z-osrodkiem-ostrych-zatruc',
+    checkedAt: CHECKED_AT
   }
 ];
