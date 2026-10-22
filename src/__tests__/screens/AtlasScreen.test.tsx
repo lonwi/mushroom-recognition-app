@@ -7,6 +7,9 @@ import { LanguageProvider } from '../../contexts/LanguageContext';
 import { en } from '../../i18n/en';
 import { pl } from '../../i18n/pl';
 
+// The first Atlas list render on a cold CI worker can exceed Jest's 5s default.
+jest.setTimeout(15000);
+
 interface TestNode {
   props: { onRequestClose?: () => void };
   children: ReadonlyArray<TestNode | string | number>;
