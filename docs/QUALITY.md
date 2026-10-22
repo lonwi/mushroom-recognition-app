@@ -52,7 +52,7 @@ Changing any of these needs an explicit decision by the repo owner, written in t
 ## PR process
 
 1. Work on a branch, one topic per PR. Run the commands from `AGENTS.md` → "Agent Workflow & Commands" locally.
-2. Open a PR with a short description: what changed, why, how it was tested, and any gate or baseline change (baselines may only go down). Deferred items go in a Follow-ups section as `Follow-up: #N`. Rules: "Śledzenie odłożonych rzeczy".
+2. Open a PR with a short description: what changed, why, how it was tested, and any gate or baseline change (baselines may only go down). Deferred items go in a Follow-ups section as `Follow-up: #N`. Rules: "Tracking deferred work".
 3. CI green.
 4. Review by the PR Review agent (checklist in `docs/REVIEW.md` once it exists). Requested changes are fixed in the same PR.
 5. Merge, as a squash merge:
@@ -64,26 +64,26 @@ Changing any of these needs an explicit decision by the repo owner, written in t
 
 Two automated reviews run every Monday morning (Europe/Warsaw) on `main`: a SOLID/DRY code review and a security review (npm and Python dependencies, CI/CD, app permissions and data, training pipeline, new code). Each produces a report with a comparison to the previous week. Fixes from these reviews start only after the owner's OK.
 
-The SOLID/DRY report includes "otwarte follow-upy": issues with no activity for more than 7 days. Tracking rules are in "Śledzenie odłożonych rzeczy".
+The SOLID/DRY report includes "open follow-ups": issues with no activity for more than 7 days. Tracking rules are in "Tracking deferred work".
 
-## Śledzenie odłożonych rzeczy
+## Tracking deferred work
 
-Odłożona rzecz nie zostaje w czacie ani w samym opisie PR. W tej samej turze dostaje issue (albo punkt w issue, które już jest) i link z opisu PR.
+A deferred item does not stay in chat or only in the PR description. In the same turn it gets an issue (or a bullet on an issue that already exists) and a link from the PR description.
 
-1. Każda odłożona rzecz („w osobnym PR”, „po merge'u”, „decyzja Wojtka”) dostaje issue w tej samej turze, w której padła, albo punkt w istniejącym issue. Nic odłożonego nie zostaje tylko w czacie lub opisie PR.
-2. Opis PR ma sekcję „Follow-ups” z linkiem `#N` do każdej odłożonej pozycji. Review nie daje approve, jeśli w review padło „w osobnym PR”, a w opisie nie ma linii `Follow-up: #N`.
-3. `TODO` w kodzie zawsze ma numer issue, na przykład `TODO(#50)`.
-4. Używamy wyłącznie etykiet, które już są w repozytorium.
+1. Every deferred item ("in a separate PR", "after merge", "Wojtek's decision") gets an issue in the turn it came up, or a bullet on an existing issue. Nothing deferred stays only in chat or in the PR description.
+2. The PR description has a "Follow-ups" section with a `#N` link for each deferred item. Review does not approve when the review said "in a separate PR" and the description has no `Follow-up: #N` line.
+3. A `TODO` in code always includes an issue number, for example `TODO(#50)`. `TODO(#N)` is not enforced yet (enforcement tracked in [#56](https://github.com/lonwi/mushroom-recognition-app/issues/56)).
+4. Use only labels that already exist in the repository.
 
-| Etykieta | Kiedy |
+| Label | When |
 |---|---|
-| `needs-decision` | Czeka na decyzję Wojtka. |
-| `deferred` | Odłożone na później. |
-| `safety` | Treści BHP, numery alarmowe, zatrucia. Zawsze priorytet. |
-| `data` | Dane gatunków, zdjęcia treningowe, licencje. |
-| `code` | Kod aplikacji, CI i bramki jakości. |
-| `ui` | Interfejs, teksty i dostępność. |
+| `needs-decision` | Waiting for Wojtek's decision. |
+| `deferred` | Deferred for later. |
+| `safety` | Safety content, emergency numbers, poisoning. Always a priority. |
+| `data` | Species data, training photos, licenses. |
+| `code` | App code, CI, and quality gates. |
+| `ui` | Interface, copy, and accessibility. |
 
-5. Rzecz wymagana przed publiczną wersją dostaje kamień milowy „Przed wydaniem”.
-6. Jedno zbiorcze issue: [#52](https://github.com/lonwi/mushroom-recognition-app/issues/52). Mniejsze issue są jego sub-issues. Szczegóły odhacza się w mniejszych issue.
-7. Poniedziałkowy przegląd SOLID/DRY (sekcja „Weekly reviews”) ma w raporcie sekcję „otwarte follow-upy”: issue bez ruchu dłużej niż 7 dni.
+5. Work required before the public release gets the milestone „Przed wydaniem”.
+6. One parent issue: [#52](https://github.com/lonwi/mushroom-recognition-app/issues/52). Smaller issues are its sub-issues. Details are checked off on the smaller issues.
+7. The Monday SOLID/DRY review ("Weekly reviews") includes an "open follow-ups" section: issues with no activity for more than 7 days.
