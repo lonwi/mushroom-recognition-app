@@ -377,7 +377,7 @@ export const en: Translations = {
     latencyLabel: 'Time until symptoms appear:',
     symptomsLabel: 'Symptoms:',
     actionLabel: '🚨 What to do:',
-    centersTitle: '📞 Toxicology centres in Poland (24/7)',
+    centersTitle: '📞 Toxicology centres in Poland',
     centersSub: 'On-duty toxicologists give immediate advice by phone:',
     availabilityLabel: 'Availability:',
     hours247: 'Around the clock, 24/7',

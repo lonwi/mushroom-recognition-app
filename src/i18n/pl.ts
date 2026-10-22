@@ -377,7 +377,7 @@ export const pl = {
     latencyLabel: 'Czas ujawnienia objawów:',
     symptomsLabel: 'Objawy:',
     actionLabel: '🚨 Postępowanie:',
-    centersTitle: '📞 Ośrodki Toksykologiczne w Polsce (24/7)',
+    centersTitle: '📞 Ośrodki Toksykologiczne w Polsce',
     centersSub: 'Dyżurni toksykolodzy udzielają natychmiastowych porad telefonicznych:',
     availabilityLabel: 'Dostępność:',
     hours247: 'Całodobowo 24/7',
