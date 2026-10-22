@@ -1,4 +1,9 @@
 import type { EdibilityStatus, MushroomSpecies } from '../types/mushroom';
+import {
+  FEATURE_KEYS,
+  structureProblem,
+  type AtlasFeatureFields,
+} from './atlasFeatureVocab';
 import table from './atlasFilterFacts.json';
 
 type SpeciesId = MushroomSpecies['id'];
@@ -20,7 +25,7 @@ type FilterFieldValue = FilterScalar | readonly FilterScalar[] | null;
  * Morphological facts only. `status` and `propozycja` are not fields:
  * a second copy of either key fails the assignment below.
  */
-export interface StructureFacts {
+export interface StructureFacts extends AtlasFeatureFields {
   psychoactive: boolean;
   hymenophore: FilterFieldValue;
   sporePrint: FilterFieldValue;
@@ -35,7 +40,7 @@ type _FactsExcludeStatusAndProposal = Assert<
   [ForbiddenFactKey] extends [Exclude<ForbiddenFactKey, keyof StructureFacts>] ? true : never
 >;
 
-interface ImportedFact {
+interface ImportedFact extends AtlasFeatureFields {
   psychoactive: boolean;
   hymenophore: string | null;
   sporePrint: string | readonly string[] | null;
@@ -87,9 +92,18 @@ interface ChipSpec {
   accepted: readonly FilterScalar[];
 }
 
+/** Copies known feature keys only. A spread would let `status` or `propozycja` through. */
+function copyFeatures(raw: AtlasFeatureFields, facts: StructureFacts): void {
+  for (const key of FEATURE_KEYS) {
+    if (raw[key] !== undefined) {
+      Object.assign(facts, { [key]: raw[key] });
+    }
+  }
+}
+
 /** Copies only structure fields. A spread would let `status` or `propozycja` through. */
 function structureFacts(raw: ImportedFact): StructureFacts {
-  return {
+  const facts: StructureFacts = {
     psychoactive: raw.psychoactive,
     hymenophore: raw.hymenophore,
     sporePrint: raw.sporePrint,
@@ -97,6 +111,8 @@ function structureFacts(raw: ImportedFact): StructureFacts {
     volva: raw.volva,
     protection: raw.protection,
   };
+  copyFeatures(raw, facts);
+  return facts;
 }
 
 /** `true` stops compiling if StructureFacts grows status, propozycja, or rodzaj. */
@@ -108,7 +124,12 @@ function loadFacts(
   const facts: Record<SpeciesId, StructureFacts> = {};
   if (!FACT_SHAPE_OK) return facts;
   for (const id of Object.keys(source)) {
-    facts[id] = structureFacts(source[id]);
+    const row = structureFacts(source[id]);
+    const problem = structureProblem(row);
+    if (problem) {
+      throw new Error(`Invalid atlas fact ${id}.${problem}`);
+    }
+    facts[id] = row;
   }
   return facts;
 }

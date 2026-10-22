@@ -32,3 +32,9 @@ Poza tym etapem: miesiące, siedliska, drzewa.
 - Nie ma chipa „nietrujące”. `NO_ATLAS_VERDICT` nie jest statusem karty i nie wchodzi do jadalnych ani niejadalnych.
 - Żaden układ chipów nie wkłada trujących ani śmiertelnie trujących do wyników wyglądających na bezpieczne. Przy wynikach jadalnych zostają ostrzeżenia o śmiertelnych sobowtórach.
 - Muchomor czerwony i plamisty mają etykietę ostrzegawczą „psychoaktywne”. To nie jest grupa filtrów. Oba zostają widoczne pod „trujące”.
+
+## Cechy klucza (2026-10-22)
+
+`atlasFilterFacts.json` ma też cechy pod planowany klucz: kształt i kolor kapelusza, rozmiar, trzon, zapach, smak, przebarwienie, mleczko, drzewa, podłoże. Panel filtrów ich nie czyta. Brak pola (albo `null` przy pierścieniu, pochwie i wysypie) zostaje pustką, więc istniejące „Do weryfikacji” działa bez zmian reguły.
+
+Tokeny są polskim ASCII, jak `pochwa` i `bialy`. Mapa z angielskich wartości źródłowych jest w `data/sources/ATLAS_CECHY.md`. Etykiety PL/EN są w `src/i18n`, nie w JSON. Pochodzenie każdego pola (źródło, `checkedAt`, status) jest w `data/sources/atlas_cechy_20261022.json`. Do aplikacji wchodzą tylko `zweryfikowane` i `wniosek_z_klucza`. `do_weryfikacji` zostaje poza faktami. Smak gatunku trującego albo śmiertelnie trującego to `nie_podaje_sie` i nie jest smakiem do pokazania.

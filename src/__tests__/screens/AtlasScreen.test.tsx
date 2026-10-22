@@ -274,10 +274,11 @@ describe('AtlasScreen RTL Tests', () => {
     await waitFor(() => {
       const matches = within(screen.getByTestId('atlas-matches'));
       expect(matches.getByText('Czubajka kania')).toBeTruthy();
-      expect(matches.queryByText('Prawdziwki')).toBeNull();
+      expect(matches.queryByText('Zasłonak rudy')).toBeNull();
       const unverified = within(screen.getByTestId('atlas-unverified'));
-      expect(unverified.getByText('Prawdziwki')).toBeTruthy();
+      expect(unverified.getByText('Zasłonak rudy')).toBeTruthy();
       expect(screen.queryByText('Gęśnica wiosenna')).toBeNull();
+      expect(screen.queryByText('Prawdziwki')).toBeNull();
       const listed = screen.getAllByTestId(/^atlas-card-[a-z0-9_]+$/);
       const matchCount = within(screen.getByTestId('atlas-matches')).getAllByTestId(/^atlas-card-[a-z0-9_]+$/).length;
       expect(screen.getByTestId('atlas-result-count').props.children).toBe(`Pasujące karty: ${matchCount}`);

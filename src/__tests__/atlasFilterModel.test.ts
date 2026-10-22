@@ -1,3 +1,4 @@
+import { FEATURE_KEYS } from '../data/atlasFeatureVocab';
 import {
   ATLAS_FILTER_FACTS,
   ATLAS_FILTER_GROUPS,
@@ -15,7 +16,8 @@ import { MUSHROOMS_DATABASE } from '../data/mushrooms';
 import { pl } from '../i18n/pl';
 import { en } from '../i18n/en';
 
-const FACT_KEYS = ['hymenophore', 'protection', 'psychoactive', 'ring', 'sporePrint', 'volva'];
+const BASE_FACT_KEYS = ['hymenophore', 'protection', 'psychoactive', 'ring', 'sporePrint', 'volva'];
+const FACT_KEYS = [...BASE_FACT_KEYS, ...FEATURE_KEYS].sort();
 
 const UNFINISHED_EDIBLE = [
   'agaricus_campestris',
@@ -81,7 +83,9 @@ describe('atlas filter model', () => {
     expect(MUSHROOMS_DATABASE.every((species) => factIds.includes(species.id))).toBe(true);
     expect(Object.keys(ATLAS_FILTER_FACTS)).toEqual(factIds);
     for (const facts of Object.values(ATLAS_FILTER_FACTS)) {
-      expect(Object.keys(facts).sort()).toEqual(FACT_KEYS);
+      const keys = Object.keys(facts).sort();
+      expect(keys.every((key) => FACT_KEYS.includes(key))).toBe(true);
+      for (const key of BASE_FACT_KEYS) expect(keys).toContain(key);
       expect(facts).not.toHaveProperty('status');
       expect(facts).not.toHaveProperty('propozycja');
     }
@@ -199,13 +203,16 @@ describe('atlas filter model', () => {
   test('an empty field goes to verification and a known miss disappears from both lists', () => {
     const rings = apply(['ring-present']);
     expect(idsOf(rings.matches)).toContain('macrolepiota_procera');
-    expect(idsOf(rings.matches)).not.toContain('boletus_edulis');
-    expect(idsOf(rings.unverified)).toContain('boletus_edulis');
+    expect(idsOf(rings.matches)).not.toContain('cortinarius_orellanus');
+    expect(idsOf(rings.unverified)).toContain('cortinarius_orellanus');
     expect(idsOf(rings.matches).concat(idsOf(rings.unverified))).not.toContain('calocybe_gambosa');
+    expect(idsOf(rings.matches).concat(idsOf(rings.unverified))).not.toContain('boletus_edulis');
 
     const eitherRing = apply(['ring-present', 'ring-absent']);
-    expect(idsOf(eitherRing.matches)).toEqual(expect.arrayContaining(['macrolepiota_procera', 'calocybe_gambosa']));
-    expect(idsOf(eitherRing.unverified)).toContain('boletus_edulis');
+    expect(idsOf(eitherRing.matches)).toEqual(
+      expect.arrayContaining(['macrolepiota_procera', 'calocybe_gambosa', 'boletus_edulis']),
+    );
+    expect(idsOf(eitherRing.unverified)).toContain('cortinarius_orellanus');
   });
 
   test('a multi-value field matches when one token hits', () => {
