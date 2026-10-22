@@ -11,6 +11,8 @@ import {
 import {
   GOLDEN_RULES,
   HOURS_24_7,
+  HOURS_24_7_DOCTOR_ADVICE,
+  HOURS_24_7_DOCTOR_ON_DUTY,
   POISON_SYNDROMES,
   TOXICOLOGY_CENTERS,
   toTelUrl,
@@ -19,6 +21,19 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { colors } from '../theme/tokens';
 import { ScreenFrame } from '../components/ScreenFrame';
 
+// General emergency numbers shown above the rules, in this order.
+const EMERGENCY_CALLS = [
+  { number: '112', titleKey: 'safetyGuide.call112Title', subKey: 'safetyGuide.call112Sub' },
+  { number: '999', titleKey: 'safetyGuide.call999Title', subKey: 'safetyGuide.call999Sub' },
+] as const;
+
+// Every hours constant in safetyRules.ts has a translated label.
+const HOURS_LABEL_KEYS: Record<string, string> = {
+  [HOURS_24_7]: 'safetyGuide.hours247',
+  [HOURS_24_7_DOCTOR_ADVICE]: 'safetyGuide.hours247DoctorAdvice',
+  [HOURS_24_7_DOCTOR_ON_DUTY]: 'safetyGuide.hours247DoctorOnDuty',
+};
+
 interface Props {
   onShowDisclaimer: () => void;
   onOpenPreparation?: () => void;
@@ -26,8 +41,16 @@ interface Props {
 
 export const SafetyGuideScreen = ({ onShowDisclaimer, onOpenPreparation }: Props) => {
   const { t } = useLanguage();
+  const hoursLabel = (hours: string) => {
+    const key = HOURS_LABEL_KEYS[hours];
+    return key ? t(key) : hours;
+  };
   const handleCall = async (phone: string) => {
     const url = toTelUrl(phone);
+    if (!url) {
+      Alert.alert(t('safetyGuide.callNotSupportedTitle'), t('safetyGuide.callNotSupportedBody'));
+      return;
+    }
     const supported = await Linking.canOpenURL(url);
     if (supported) {
       await Linking.openURL(url);
@@ -39,21 +62,26 @@ export const SafetyGuideScreen = ({ onShowDisclaimer, onOpenPreparation }: Props
   return (
     <ScreenFrame title={t('safetyGuide.title')} subtitle={t('safetyGuide.subtitle')}>
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-          {/* Przycisk Alarmowy 112 */}
-          <TouchableOpacity
-            style={styles.emergency112Btn}
-            onPress={() => handleCall('112')}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityLabel={t('safetyGuide.call112Title')}
-            testID="call-112"
-          >
-            <Text style={styles.emergency112Icon}>🚨</Text>
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={styles.emergency112Title}>{t('safetyGuide.call112Title')}</Text>
-              <Text style={styles.emergency112Sub}>{t('safetyGuide.call112Sub')}</Text>
-            </View>
-          </TouchableOpacity>
+          {/* Przyciski alarmowe 112 i 999 */}
+          <View style={styles.emergencyBtns}>
+            {EMERGENCY_CALLS.map((call) => (
+              <TouchableOpacity
+                key={call.number}
+                style={styles.emergencyBtn}
+                onPress={() => handleCall(call.number)}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel={t(call.titleKey)}
+                testID={`call-${call.number}`}
+              >
+                <Text style={styles.emergencyIcon}>🚨</Text>
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={styles.emergencyTitle}>{t(call.titleKey)}</Text>
+                  <Text style={styles.emergencySub}>{t(call.subKey)}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
 
           {/* Złote zasady grzybiarza */}
           <View style={styles.section}>
@@ -114,24 +142,31 @@ export const SafetyGuideScreen = ({ onShowDisclaimer, onOpenPreparation }: Props
                   {center.hours ? (
                     <Text style={styles.centerHours}>
                       {t('safetyGuide.availabilityLabel')}{' '}
-                      {center.hours === HOURS_24_7 ? t('safetyGuide.hours247') : center.hours}
+                      {hoursLabel(center.hours)}
                     </Text>
                   ) : null}
                 </View>
 
                 <View style={styles.callCenterBtns}>
-                  {center.phones.map((phone) => (
-                    <TouchableOpacity
-                      key={phone}
-                      style={styles.callCenterBtn}
-                      onPress={() => handleCall(phone)}
-                      accessibilityRole="button"
-                      accessibilityLabel={t('safetyGuide.callCenterA11y', { city: center.city, phone })}
-                      testID={`call-center-${phone.replace(/\D/g, '')}`}
-                    >
-                      <Text style={styles.callCenterBtnText}>📞 {phone}</Text>
-                    </TouchableOpacity>
-                  ))}
+                  {center.phones.map((phone) =>
+                    toTelUrl(phone) ? (
+                      <TouchableOpacity
+                        key={phone}
+                        style={styles.callCenterBtn}
+                        onPress={() => handleCall(phone)}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('safetyGuide.callCenterA11y', { city: center.city, phone })}
+                        testID={`call-center-${phone.replace(/\D/g, '')}`}
+                      >
+                        <Text style={styles.callCenterBtnText}>📞 {phone}</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      // No tel: link for numbers that cannot be dialled directly (e.g. extensions).
+                      <Text key={phone} style={styles.centerPhoneText} selectable>
+                        {phone}
+                      </Text>
+                    ),
+                  )}
                 </View>
               </View>
             ))}
@@ -174,29 +209,32 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 40,
   },
-  emergency112Btn: {
+  emergencyBtns: {
+    gap: 10,
+    marginBottom: 20,
+  },
+  emergencyBtn: {
     minHeight: 44,
     backgroundColor: colors.red600,
     flexDirection: 'row',
     alignItems: 'center',
     padding: 14,
     borderRadius: 12,
-    marginBottom: 20,
     shadowColor: colors.red600,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 3,
   },
-  emergency112Icon: {
+  emergencyIcon: {
     fontSize: 28,
   },
-  emergency112Title: {
+  emergencyTitle: {
     color: colors.white,
     fontSize: 16,
     fontWeight: '900',
   },
-  emergency112Sub: {
+  emergencySub: {
     color: colors.red100,
     fontSize: 12,
     marginTop: 2,
@@ -344,6 +382,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
+    marginLeft: 8,
+  },
+  centerPhoneText: {
+    color: colors.slate800,
+    fontSize: 12,
+    fontWeight: '700',
     marginLeft: 8,
   },
   callCenterBtnText: {

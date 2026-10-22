@@ -110,6 +110,71 @@ describe('SafetyGuideScreen — toxicology centres', () => {
     expect(first).toBeDefined();
     expect(tree.indexOf(pl.safetyGuide.call112Title)).toBeGreaterThan(-1);
     expect(tree.indexOf(pl.safetyGuide.call112Title)).toBeLessThan(tree.indexOf(first?.address ?? ''));
+    expect(tree.indexOf(pl.safetyGuide.call112Title)).toBeLessThan(tree.indexOf(pl.safetyGuide.call999Title));
+    expect(tree.indexOf(pl.safetyGuide.call999Title)).toBeLessThan(tree.indexOf(first?.address ?? ''));
+  });
+
+  it('calls 999 from its own button next to 112', async () => {
+    jest.spyOn(Linking, 'canOpenURL').mockResolvedValue(true);
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+
+    const { getByTestId } = await render(
+      <LanguageProvider>
+        <SafetyGuideScreen onShowDisclaimer={() => {}} />
+      </LanguageProvider>,
+    );
+
+    const button = getByTestId('call-999');
+    expect(button.props.accessibilityRole).toBe('button');
+    expect(button.props.accessibilityLabel).toBe(pl.safetyGuide.call999Title);
+    expect(StyleSheet.flatten(button.props.style)).toEqual(
+      StyleSheet.flatten(getByTestId('call-112').props.style),
+    );
+    expect(StyleSheet.flatten(button.props.style).minHeight).toBeGreaterThanOrEqual(44);
+
+    fireEvent.press(button);
+    await waitFor(() => {
+      expect(openURL).toHaveBeenCalledWith('tel:999');
+    });
+  });
+
+  it('shows the consultation-line note and the sourced hours in Polish', async () => {
+    const { getByText } = await render(
+      <LanguageProvider>
+        <SafetyGuideScreen onShowDisclaimer={() => {}} />
+      </LanguageProvider>,
+    );
+
+    expect(getByText(pl.safetyGuide.centersSub)).toBeTruthy();
+    expect(pl.safetyGuide.centersSub).toContain('112 lub 999');
+    expect(
+      getByText(`${pl.safetyGuide.availabilityLabel} ${pl.safetyGuide.hours247DoctorAdvice}`),
+    ).toBeTruthy();
+    expect(
+      getByText(`${pl.safetyGuide.availabilityLabel} ${pl.safetyGuide.hours247DoctorOnDuty}`),
+    ).toBeTruthy();
+  });
+
+  it('translates every hours label in English', async () => {
+    await AsyncStorage.setItem('app_language', 'en');
+    const { findByText, findByTestId, toJSON } = await render(
+      <LanguageProvider>
+        <SafetyGuideScreen onShowDisclaimer={() => {}} />
+      </LanguageProvider>,
+    );
+
+    expect(await findByText(en.safetyGuide.centersSub)).toBeTruthy();
+    expect(
+      await findByText(`${en.safetyGuide.availabilityLabel} ${en.safetyGuide.hours247DoctorAdvice}`),
+    ).toBeTruthy();
+    expect(
+      await findByText(`${en.safetyGuide.availabilityLabel} ${en.safetyGuide.hours247DoctorOnDuty}`),
+    ).toBeTruthy();
+    expect((await findByTestId('call-999')).props.accessibilityLabel).toBe(en.safetyGuide.call999Title);
+    const tree = JSON.stringify(toJSON());
+    for (const hours of TOXICOLOGY_CENTERS.map((c) => c.hours).filter(Boolean)) {
+      expect(tree).not.toContain(hours);
+    }
   });
 
   it('renders a call button for every number, including the second Gdańsk number', async () => {
