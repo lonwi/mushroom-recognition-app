@@ -424,7 +424,9 @@ describe('atlas filter model', () => {
     expect(visibleIds(['volva-brak'])).not.toContain('amanita_rubescens');
     expect(idsOf(apply(['volva-pochwa', 'volva-brak']).matches)).toContain('amanita_phalloides');
     expect(idsOf(apply(['ring-present', 'ring-absent']).matches)).toContain('galerina_marginata');
-    expect(visibleIds(['ring-present'])).toContain('hypholoma_fasciculare');
+    const ringPresent = apply(['ring-present']);
+    expect(idsOf(ringPresent.unverified)).toContain('hypholoma_fasciculare');
+    expect(idsOf(ringPresent.matches)).not.toContain('hypholoma_fasciculare');
   });
 
   test('a poisonous species misses a chip only for a stable trait or the allowlist', () => {

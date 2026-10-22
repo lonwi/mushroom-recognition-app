@@ -258,6 +258,9 @@ describe('AtlasScreen RTL Tests', () => {
       expect(unverified.getByText('Maślanka łagodna')).toBeTruthy();
       expect(unverified.getByText('Kolczak obłączasty')).toBeTruthy();
       expect(unverified.getByText(/nie oznacza, że grzyb jest jadalny/)).toBeTruthy();
+      expect(
+        unverified.getByText(/Są tu też gatunki trujące, których nie da się wykluczyć na podstawie tej cechy/),
+      ).toBeTruthy();
       expect(screen.queryByTestId('atlas-condition-armillaria_mellea')).toBeNull();
     });
   });

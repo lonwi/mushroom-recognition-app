@@ -194,7 +194,7 @@ export const en: Translations = {
     psychoactive: 'Psychoactive',
     unverifiedTitle: 'To be verified ({count})',
     unverifiedBody:
-      'These cards are not filter matches. The card is unfinished, or the selected feature is empty or still to be checked. This is not a verdict and does not mean the mushroom is edible.',
+      'These cards are not filter matches. The card is unfinished, or the selected feature is empty or still to be checked. This is not a verdict and does not mean the mushroom is edible. This group also contains poisonous species that cannot be ruled out by the selected trait.',
     emptyTitle: 'No cards',
     emptyDesc:
       'No card in this atlas matches the filters. A missing card does not mean the mushroom is edible. The atlas is not a complete key to the mushrooms of Poland.',
