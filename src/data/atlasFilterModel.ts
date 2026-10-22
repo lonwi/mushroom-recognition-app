@@ -1,5 +1,6 @@
 import type { EdibilityStatus, MushroomSpecies } from '../types/mushroom';
 import table from './atlasFilterFacts.json';
+import seasonTable from './atlasFilterSeason.json';
 
 type SpeciesId = MushroomSpecies['id'];
 
@@ -47,11 +48,17 @@ interface ImportedFact {
 type FilterableField = 'hymenophore' | 'sporePrint' | 'ring' | 'volva' | 'protection';
 
 type FactsLookup = (speciesId: string) => StructureFacts | undefined;
+type SeasonLookup = (speciesId: string) => SeasonFacts | undefined;
+
+interface FilterContext {
+  structure: FactsLookup;
+  season: SeasonLookup;
+}
 
 interface FilterChip {
   id: string;
   label: string;
-  predicate: (species: MushroomSpecies, facts: FactsLookup) => boolean;
+  predicate: (species: MushroomSpecies, ctx: FilterContext) => boolean;
   /** A non-match that stays visible under "Do weryfikacji". */
   hold?: (species: MushroomSpecies) => boolean;
 }
@@ -59,8 +66,10 @@ interface FilterChip {
 interface FilterGroup {
   id: string;
   label: string;
-  defined: (species: MushroomSpecies, facts: FactsLookup) => boolean;
+  defined: (species: MushroomSpecies, ctx: FilterContext) => boolean;
   chips: readonly FilterChip[];
+  /** Bottom sheet only. The top row never reads this. */
+  layout?: 'grid' | 'disclosure';
 }
 
 export interface AtlasRow {
@@ -74,6 +83,7 @@ interface AtlasFilterOptions {
   query: string;
   chipIds: ReadonlySet<string>;
   factsById?: FactsLookup;
+  seasonById?: SeasonLookup;
 }
 
 interface AtlasPartition {
@@ -115,8 +125,73 @@ function loadFacts(
 
 export const ATLAS_FILTER_FACTS = loadFacts(table) satisfies Readonly<Record<SpeciesId, StructureFacts>>;
 
+/**
+ * Season, habitat and host tree only. Source notes, page numbers,
+ * `propozycja_z_karty` and the other review lists are not fields.
+ * `habitatsReview` is the one flag copied from habitat `do_weryfikacji`.
+ */
+export interface SeasonFacts {
+  seasonMonths: readonly number[] | null;
+  habitats: readonly string[] | null;
+  habitatsReview: boolean;
+  hostTrees: readonly string[] | null;
+}
+
+type SeasonForbidden =
+  | 'status'
+  | 'propozycja'
+  | 'propozycja_z_karty'
+  | 'do_weryfikacji'
+  | 'sources'
+  | 'kandydaci'
+  | 'luki_slownika'
+  | 'wartosci_tylko_w_innych_zrodlach'
+  | 'note'
+  | 'pages';
+type _SeasonExcludesSources = Assert<
+  [SeasonForbidden] extends [Exclude<SeasonForbidden, keyof SeasonFacts>] ? true : never
+>;
+
+interface ImportedSeason {
+  seasonMonths: readonly number[] | null;
+  habitats: readonly string[] | null;
+  habitatsReview: boolean;
+  hostTrees: readonly string[] | null;
+}
+
+/** Copies only season fields. A spread would let source notes through. */
+function copySeasonFacts(raw: ImportedSeason): SeasonFacts {
+  return {
+    seasonMonths: raw.seasonMonths,
+    habitats: raw.habitats,
+    habitatsReview: raw.habitatsReview,
+    hostTrees: raw.hostTrees,
+  };
+}
+
+const SEASON_SHAPE_OK: _SeasonExcludesSources = true;
+
+function loadSeason(
+  source: Readonly<Record<string, ImportedSeason>>,
+): Readonly<Record<SpeciesId, SeasonFacts>> {
+  const facts: Record<SpeciesId, SeasonFacts> = {};
+  if (!SEASON_SHAPE_OK) return facts;
+  for (const id of Object.keys(source)) {
+    facts[id] = copySeasonFacts(source[id]);
+  }
+  return facts;
+}
+
+export const ATLAS_SEASON_FACTS = loadSeason(seasonTable) satisfies Readonly<
+  Record<SpeciesId, SeasonFacts>
+>;
+
 function filterFacts(speciesId: string): StructureFacts | undefined {
   return ATLAS_FILTER_FACTS[speciesId];
+}
+
+function seasonFacts(speciesId: string): SeasonFacts | undefined {
+  return ATLAS_SEASON_FACTS[speciesId];
 }
 
 function kindOf(species: MushroomSpecies): KindId {
@@ -149,7 +224,7 @@ function fieldChips(groupId: string, field: FilterableField, specs: readonly Chi
   return specs.map((spec) => ({
     id: `${groupId}-${spec.id}`,
     label: spec.label,
-    predicate: (species, facts) => valueMatches(readField(facts(species.id), field), spec.accepted),
+    predicate: (species, ctx) => valueMatches(readField(ctx.structure(species.id), field), spec.accepted),
   }));
 }
 
@@ -162,10 +237,114 @@ function fieldGroup(
   return {
     id,
     label,
-    defined: (species, facts) => isPresent(readField(facts(species.id), field)),
+    defined: (species, ctx) => isPresent(readField(ctx.structure(species.id), field)),
     chips: fieldChips(id, field, specs),
   };
 }
+
+function hasItems(value: readonly unknown[] | null | undefined): boolean {
+  return Array.isArray(value) && value.length > 0;
+}
+
+/** A habitat flagged for review does not take part in matching. */
+function usableHabitats(season: SeasonFacts | undefined): readonly string[] | null {
+  if (!season || season.habitatsReview) return null;
+  return season.habitats;
+}
+
+const MONTH_LABELS = [
+  'months.jan',
+  'months.feb',
+  'months.mar',
+  'months.apr',
+  'months.may',
+  'months.jun',
+  'months.jul',
+  'months.aug',
+  'months.sep',
+  'months.oct',
+  'months.nov',
+  'months.dec',
+] as const;
+
+const MONTH_GROUP: FilterGroup = {
+  id: 'month',
+  label: 'atlas.filters.month',
+  layout: 'grid',
+  defined: (species, ctx) => hasItems(ctx.season(species.id)?.seasonMonths),
+  chips: MONTH_LABELS.map((label, index) => {
+    const month = index + 1;
+    return {
+      id: `month-${month}`,
+      label,
+      predicate: (species, ctx) => {
+        const months = ctx.season(species.id)?.seasonMonths;
+        return Array.isArray(months) && months.includes(month);
+      },
+    };
+  }),
+};
+
+const HABITAT_CHIPS: readonly ChipSpec[] = [
+  { id: 'las', label: 'atlas.filters.habitatForest', accepted: ['las'] },
+  { id: 'las_iglasty', label: 'atlas.filters.habitatConifer', accepted: ['las_iglasty'] },
+  { id: 'las_lisciasty', label: 'atlas.filters.habitatDeciduous', accepted: ['las_lisciasty'] },
+  { id: 'las_mieszany', label: 'atlas.filters.habitatMixed', accepted: ['las_mieszany'] },
+  { id: 'laka_pastwisko', label: 'atlas.filters.habitatMeadow', accepted: ['laka_pastwisko'] },
+  { id: 'park_ogrod', label: 'atlas.filters.habitatPark', accepted: ['park_ogrod'] },
+  { id: 'drewno', label: 'atlas.filters.habitatWood', accepted: ['drewno'] },
+  { id: 'torfowisko', label: 'atlas.filters.habitatPeat', accepted: ['torfowisko'] },
+  { id: 'wrzosowisko', label: 'atlas.filters.habitatHeath', accepted: ['wrzosowisko'] },
+  { id: 'skraj_lasu_droga', label: 'atlas.filters.habitatEdge', accepted: ['skraj_lasu_droga'] },
+  { id: 'gleba_wapienna', label: 'atlas.filters.habitatCalcareous', accepted: ['gleba_wapienna'] },
+  { id: 'gleba_kwasna_piaszczysta', label: 'atlas.filters.habitatAcidic', accepted: ['gleba_kwasna_piaszczysta'] },
+];
+
+const HABITAT_GROUP: FilterGroup = {
+  id: 'habitat',
+  label: 'atlas.filters.habitat',
+  layout: 'disclosure',
+  defined: (species, ctx) => hasItems(usableHabitats(ctx.season(species.id))),
+  chips: HABITAT_CHIPS.map((spec) => ({
+    id: `habitat-${spec.id}`,
+    label: spec.label,
+    predicate: (species, ctx) => valueMatches(usableHabitats(ctx.season(species.id)), spec.accepted),
+  })),
+};
+
+/** Dictionary order from `filtry.json` → `slowniki.host_trees`. No extra trees. */
+const HOST_CHIPS: readonly ChipSpec[] = [
+  { id: 'sosna', label: 'atlas.filters.hostPine', accepted: ['sosna'] },
+  { id: 'swierk', label: 'atlas.filters.hostSpruce', accepted: ['swierk'] },
+  { id: 'jodla', label: 'atlas.filters.hostFir', accepted: ['jodla'] },
+  { id: 'modrzew', label: 'atlas.filters.hostLarch', accepted: ['modrzew'] },
+  { id: 'brzoza', label: 'atlas.filters.hostBirch', accepted: ['brzoza'] },
+  { id: 'dab', label: 'atlas.filters.hostOak', accepted: ['dab'] },
+  { id: 'buk', label: 'atlas.filters.hostBeech', accepted: ['buk'] },
+  { id: 'grab', label: 'atlas.filters.hostHornbeam', accepted: ['grab'] },
+  { id: 'leszczyna', label: 'atlas.filters.hostHazel', accepted: ['leszczyna'] },
+  { id: 'lipa', label: 'atlas.filters.hostLime', accepted: ['lipa'] },
+  { id: 'topola', label: 'atlas.filters.hostPoplar', accepted: ['topola'] },
+  { id: 'olcha', label: 'atlas.filters.hostAlder', accepted: ['olcha'] },
+  { id: 'jesion', label: 'atlas.filters.hostAsh', accepted: ['jesion'] },
+  { id: 'wiaz', label: 'atlas.filters.hostElm', accepted: ['wiaz'] },
+  { id: 'kasztan_jadalny', label: 'atlas.filters.hostChestnut', accepted: ['kasztan_jadalny'] },
+  { id: 'wierzba', label: 'atlas.filters.hostWillow', accepted: ['wierzba'] },
+  { id: 'drzewa_owocowe', label: 'atlas.filters.hostFruit', accepted: ['drzewa_owocowe'] },
+];
+
+const HOST_GROUP: FilterGroup = {
+  id: 'host',
+  label: 'atlas.filters.host',
+  layout: 'disclosure',
+  /** `[]` is a saprotroph: the field is known. `null` is missing data. */
+  defined: (species, ctx) => ctx.season(species.id)?.hostTrees != null,
+  chips: HOST_CHIPS.map((spec) => ({
+    id: `host-${spec.id}`,
+    label: spec.label,
+    predicate: (species, ctx) => valueMatches(ctx.season(species.id)?.hostTrees ?? null, spec.accepted),
+  })),
+};
 
 const SPORE_CHIPS: readonly ChipSpec[] = [
   ['bialy', 'atlas.filters.sporeWhite'],
@@ -181,7 +360,7 @@ const SPORE_CHIPS: readonly ChipSpec[] = [
   ['czarnobrazowy', 'atlas.filters.sporeBlackBrown'],
 ].map(([id, label]) => ({ id, label, accepted: [id] }));
 
-/** Stage 1 chips. Months, habitats and host trees are intentionally absent. */
+/** Kind stays on the top row. Months, habitats and host trees are sheet groups. */
 export const ATLAS_FILTER_GROUPS: readonly FilterGroup[] = [
   {
     id: 'kind',
@@ -227,6 +406,9 @@ export const ATLAS_FILTER_GROUPS: readonly FilterGroup[] = [
     { id: 'bulwa', label: 'atlas.filters.volvaBulb', accepted: ['bulwa'] },
     { id: 'brak', label: 'atlas.filters.volvaNone', accepted: ['brak'] },
   ]),
+  MONTH_GROUP,
+  HABITAT_GROUP,
+  HOST_GROUP,
 ];
 
 function normalizeQuery(query: string): string {
@@ -261,24 +443,24 @@ function groupOutcome(
   species: MushroomSpecies,
   group: FilterGroup,
   chipIds: ReadonlySet<string>,
-  facts: FactsLookup,
+  ctx: FilterContext,
 ): 'skip' | 'match' | 'miss' | 'unverified' {
   const selected = group.chips.filter((chip) => chipIds.has(chip.id));
   if (selected.length === 0) return 'skip';
-  if (selected.some((chip) => chip.predicate(species, facts))) return 'match';
+  if (selected.some((chip) => chip.predicate(species, ctx))) return 'match';
   if (selected.some((chip) => chip.hold?.(species) === true)) return 'unverified';
-  if (!group.defined(species, facts)) return 'unverified';
+  if (!group.defined(species, ctx)) return 'unverified';
   return 'miss';
 }
 
 function classify(
   species: MushroomSpecies,
   chipIds: ReadonlySet<string>,
-  facts: FactsLookup,
+  ctx: FilterContext,
 ): 'match' | 'unverified' | 'out' {
   let open = false;
   for (const group of ATLAS_FILTER_GROUPS) {
-    const outcome = groupOutcome(species, group, chipIds, facts);
+    const outcome = groupOutcome(species, group, chipIds, ctx);
     if (outcome === 'miss') return 'out';
     if (outcome === 'unverified') open = true;
   }
@@ -293,10 +475,13 @@ function groupById(id: string): FilterGroup {
   return group;
 }
 
-/** Kind stays in the top row. The other stage-1 groups open from the sheet. */
+/** Kind stays in the top row. Every other group opens from the sheet. */
 export const ATLAS_KIND_GROUP = groupById('kind');
 
 export const ATLAS_PANEL_GROUPS: readonly FilterGroup[] = [
+  groupById('month'),
+  groupById('habitat'),
+  groupById('host'),
   groupById('hymenophore'),
   groupById('spore'),
   groupById('protection'),
@@ -360,13 +545,15 @@ export function applyAtlasFilters(
   species: readonly MushroomSpecies[],
   options: AtlasFilterOptions,
 ): AtlasPartition {
-  const facts = options.factsById ?? filterFacts;
+  const structure = options.factsById ?? filterFacts;
+  const season = options.seasonById ?? seasonFacts;
+  const ctx = { structure, season };
   const matches: AtlasRow[] = [];
   const unverified: AtlasRow[] = [];
   for (const item of species) {
     if (!matchesSearch(item, options.query)) continue;
-    const row = toRow(item, facts);
-    const bucket = classify(item, options.chipIds, facts);
+    const row = toRow(item, structure);
+    const bucket = classify(item, options.chipIds, ctx);
     if (bucket === 'match') matches.push(row);
     else if (bucket === 'unverified') unverified.push(row);
   }
