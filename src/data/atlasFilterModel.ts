@@ -5,6 +5,7 @@ import {
   type AtlasFeatureFields,
 } from './atlasFeatureVocab';
 import table from './atlasFilterFacts.json';
+import { POISONOUS_MISS_ALLOWLIST } from './poisonousMissAllowlist';
 
 type SpeciesId = MushroomSpecies['id'];
 
@@ -230,6 +231,29 @@ export const EVANESCENT_TRAITS: readonly {
 
 type EvanescentTrait = (typeof EVANESCENT_TRAITS)[number];
 
+/**
+ * Subjective or age- and weather-dependent facts. A contradicting chip on one
+ * of these holds a poisonous species. Cap shape opens with age, stem colour
+ * washes out, taste is withheld for toxic species, and latex shows only after
+ * a cut.
+ */
+export const VARIABLE_TRAITS = [
+  'capSizeCm',
+  'capColor',
+  'capShape',
+  'stemColor',
+  'smell',
+  'taste',
+  'fleshDiscoloration',
+  'latex',
+] as const;
+
+/** A defined contradiction here may remove a poisonous species from both sections. */
+export const POISONOUS_STRUCTURAL_FIELDS = ['hymenophore', 'sporePrint'] as const;
+
+const VARIABLE_TRAIT_FIELDS = new Set<string>(VARIABLE_TRAITS);
+const STRUCTURAL_MISS_FIELDS = new Set<string>(POISONOUS_STRUCTURAL_FIELDS);
+
 /** Stage 1 chips. Months, habitats and host trees are intentionally absent. */
 export const ATLAS_FILTER_GROUPS: readonly FilterGroup[] = [
   {
@@ -272,10 +296,10 @@ export const ATLAS_FILTER_GROUPS: readonly FilterGroup[] = [
     { id: 'absent', label: 'atlas.filters.ringAbsent', accepted: [false] },
   ]),
   fieldGroup(VOLVA, 'atlas.filters.volva', VOLVA, [
-    // A bulb is not a volva. Matching `bulwa` here keeps a rimmed bulb
-    // (A. citrina) and a bulb without a full volva (A. rubescens) with the death cap.
+    // A bulb is not a volva, and a volva left in the soil looks like a bulb.
+    // Both chips accept both tokens, so the death cap stays with citrina and rubescens.
     { id: POCHWA, label: 'atlas.filters.volvaVolva', accepted: [POCHWA, BULWA] },
-    { id: BULWA, label: 'atlas.filters.volvaBulb', accepted: [BULWA] },
+    { id: BULWA, label: 'atlas.filters.volvaBulb', accepted: [BULWA, POCHWA] },
     { id: BRAK, label: 'atlas.filters.volvaNone', accepted: [BRAK] },
   ]),
 ];
@@ -340,6 +364,22 @@ function toxicSpecies(species: MushroomSpecies): boolean {
   return species.status === 'POISONOUS' || species.status === 'DEADLY_POISONOUS';
 }
 
+function missAllowlisted(speciesId: string, chipId: string): boolean {
+  return POISONOUS_MISS_ALLOWLIST.some((pair) => pair.speciesId === speciesId && pair.chipId === chipId);
+}
+
+function onListedField(selected: readonly FilterChip[], fields: ReadonlySet<string>): boolean {
+  return selected.some((chip) => chip.field != null && fields.has(chip.field));
+}
+
+/** Poisonous contradictions outside structure and the allowlist stay visible. */
+function contradictoryPoisonousHolds(species: MushroomSpecies, selected: readonly FilterChip[]): boolean {
+  if (!toxicSpecies(species)) return false;
+  if (onListedField(selected, VARIABLE_TRAIT_FIELDS)) return true;
+  if (onListedField(selected, STRUCTURAL_MISS_FIELDS)) return false;
+  return !selected.every((chip) => missAllowlisted(species.id, chip.id));
+}
+
 function evanescentHold(
   species: MushroomSpecies,
   selected: readonly FilterChip[],
@@ -378,6 +418,7 @@ function groupOutcome(
   if (selected.some((chip) => chip.hold?.(species) === true)) return 'unverified';
   if (evanescentHold(species, selected, facts)) return 'unverified';
   if (!group.defined(species, facts)) return 'unverified';
+  if (contradictoryPoisonousHolds(species, selected)) return 'unverified';
   return 'miss';
 }
 
