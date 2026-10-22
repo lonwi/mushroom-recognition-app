@@ -379,6 +379,7 @@ export const en: Translations = {
     actionLabel: '🚨 What to do:',
     centersTitle: '📞 Toxicology centres in Poland',
     centersSub: 'On-duty toxicologists give immediate advice by phone:',
+    callCenterA11y: 'Call: {city} {phone}',
     availabilityLabel: 'Availability:',
     hours247: 'Around the clock, 24/7',
     preparationTitle: 'How to prepare mushrooms?',

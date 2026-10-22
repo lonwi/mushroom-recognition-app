@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, Linking } from 'react-native';
+import { Alert, Linking, StyleSheet } from 'react-native';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafetyGuideScreen } from '../../screens/SafetyGuideScreen';
@@ -127,7 +127,41 @@ describe('SafetyGuideScreen — toxicology centres', () => {
     }
     fireEvent.press(getByText('📞 512 069 737'));
     await waitFor(() => {
-      expect(openURL).toHaveBeenCalledWith('tel:512069737');
+      expect(openURL).toHaveBeenCalledWith('tel:+48512069737');
     });
+  });
+
+  it('exposes every call button to screen readers with a label and a 44 pt target', async () => {
+    const { getByTestId } = await render(
+      <LanguageProvider>
+        <SafetyGuideScreen onShowDisclaimer={() => {}} />
+      </LanguageProvider>,
+    );
+
+    const emergency = getByTestId('call-112');
+    expect(emergency.props.accessibilityRole).toBe('button');
+    expect(emergency.props.accessibilityLabel).toBe(pl.safetyGuide.call112Title);
+    expect(StyleSheet.flatten(emergency.props.style).minHeight).toBeGreaterThanOrEqual(44);
+
+    for (const center of TOXICOLOGY_CENTERS) {
+      for (const phone of center.phones) {
+        const button = getByTestId(`call-center-${phone.replace(/\D/g, '')}`);
+        expect(button.props.accessibilityRole).toBe('button');
+        expect(button.props.accessibilityLabel).toBe(`Zadzwoń: ${center.city} ${phone}`);
+        expect(StyleSheet.flatten(button.props.style).minHeight).toBeGreaterThanOrEqual(44);
+      }
+    }
+  });
+
+  it('labels the call buttons in English', async () => {
+    await AsyncStorage.setItem('app_language', 'en');
+    const { findByTestId } = await render(
+      <LanguageProvider>
+        <SafetyGuideScreen onShowDisclaimer={() => {}} />
+      </LanguageProvider>,
+    );
+
+    const lodz = await findByTestId('call-center-661442576');
+    expect(lodz.props.accessibilityLabel).toBe('Call: Łódź 661 442 576');
   });
 });

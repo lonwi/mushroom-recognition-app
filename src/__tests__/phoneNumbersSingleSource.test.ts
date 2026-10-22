@@ -14,12 +14,14 @@ const SINGLE_SOURCE = path.join('src', 'data', 'safetyRules.ts');
 const SKIP_DIRS = new Set(['__tests__', 'node_modules']);
 
 // Polish phone formats with separators: (22) 619 66 54, 22 619 66 54,
-// 661 442 576, 661-442-576, +48 ..., and any tel: link.
+// 22-619-66-54, 661 442 576, 661-442-576, +48 ..., and any tel: link.
+// Nine digits written together are not matched on purpose: they would hit
+// iNaturalist/GBIF IDs (speciesGallery.ts, attributions.jsonl).
 const PHONE = new RegExp(
   [
     String.raw`tel:\s*\+?\d`,
     String.raw`\(\d{2}\)\s?\d{3}[ -]?\d{2}[ -]?\d{2}`,
-    String.raw`(?<![\d.])\d{2}\s\d{3}\s\d{2}\s\d{2}(?![\d.])`,
+    String.raw`(?<![\d.])\d{2}[ -]\d{3}[ -]\d{2}[ -]\d{2}(?![\d.])`,
     String.raw`(?<![\d.])\d{3}[ -]\d{3}[ -]\d{3}(?![\d.])`,
     String.raw`\+48[ -]?\d`,
   ].join('|'),
@@ -39,8 +41,38 @@ describe('emergency phone numbers have a single source', () => {
   const files: string[] = [];
   SCAN_DIRS.forEach((d) => walk(path.join(ROOT, d), files));
 
-  it('scans some files', () => {
-    expect(files.length).toBeGreaterThan(0);
+  const topDir = (file: string) => path.relative(ROOT, file).split(path.sep)[0];
+
+  it('scans files from src, assets and locales separately', () => {
+    for (const dir of SCAN_DIRS) {
+      expect(files.filter((f) => topDir(f) === dir).length).toBeGreaterThan(0);
+    }
+    const rel = files.map((f) => path.relative(ROOT, f).split(path.sep).join('/'));
+    expect(rel).toEqual(expect.arrayContaining(['locales/pl.json', 'locales/en.json']));
+  });
+
+  it.each([
+    ['(22) 619 66 54'],
+    ['22 619 66 54'],
+    ['22-619-66-54'],
+    ['661 442 576'],
+    ['661-442-576'],
+    ['+48 661 442 576'],
+    ['tel:661442576'],
+  ])('the pattern catches %s', (sample) => {
+    expect(PHONE.test(sample)).toBe(true);
+  });
+
+  it.each([
+    ["inatOriginal('189971985', EXT_JPG)"],
+    ["observationUrl('61129056')"],
+    ["const OBS_189971985 = '189971985';"],
+    ["assets/gallery/paxillus_involutus/i97788827.webp"],
+    ['https://www.inaturalist.org/observations/189971985'],
+    ['2026-10-17'],
+    ['Bezpieczne grzybobranie (2016), s. 35'],
+  ])('the pattern ignores %s', (sample) => {
+    expect(PHONE.test(sample)).toBe(false);
   });
 
   it('safetyRules.ts still contains numbers (guards the regex itself)', () => {

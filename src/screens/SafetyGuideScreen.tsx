@@ -8,7 +8,13 @@ import {
   TouchableOpacity,
   Linking,
 } from 'react-native';
-import { GOLDEN_RULES, POISON_SYNDROMES, TOXICOLOGY_CENTERS } from '../data/safetyRules';
+import {
+  GOLDEN_RULES,
+  HOURS_24_7,
+  POISON_SYNDROMES,
+  TOXICOLOGY_CENTERS,
+  toTelUrl,
+} from '../data/safetyRules';
 import { useLanguage } from '../contexts/LanguageContext';
 import { colors } from '../theme/tokens';
 import { ScreenFrame } from '../components/ScreenFrame';
@@ -21,7 +27,7 @@ interface Props {
 export const SafetyGuideScreen = ({ onShowDisclaimer, onOpenPreparation }: Props) => {
   const { t } = useLanguage();
   const handleCall = async (phone: string) => {
-    const url = `tel:${phone.replace(/\s+/g, '')}`;
+    const url = toTelUrl(phone);
     const supported = await Linking.canOpenURL(url);
     if (supported) {
       await Linking.openURL(url);
@@ -38,6 +44,9 @@ export const SafetyGuideScreen = ({ onShowDisclaimer, onOpenPreparation }: Props
             style={styles.emergency112Btn}
             onPress={() => handleCall('112')}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={t('safetyGuide.call112Title')}
+            testID="call-112"
           >
             <Text style={styles.emergency112Icon}>🚨</Text>
             <View style={{ flex: 1, marginLeft: 10 }}>
@@ -97,15 +106,15 @@ export const SafetyGuideScreen = ({ onShowDisclaimer, onOpenPreparation }: Props
             <Text style={styles.sectionTitle}>{t('safetyGuide.centersTitle')}</Text>
             <Text style={styles.sectionSub}>{t('safetyGuide.centersSub')}</Text>
 
-            {TOXICOLOGY_CENTERS.map((center, idx) => (
-              <View key={idx} style={styles.centerRow}>
+            {TOXICOLOGY_CENTERS.map((center) => (
+              <View key={center.city} style={styles.centerRow}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.centerCity}>{center.city}</Text>
                   <Text style={styles.centerAddress}>{center.address}</Text>
                   {center.hours ? (
                     <Text style={styles.centerHours}>
                       {t('safetyGuide.availabilityLabel')}{' '}
-                      {center.hours === 'Całodobowo 24/7' ? t('safetyGuide.hours247') : center.hours}
+                      {center.hours === HOURS_24_7 ? t('safetyGuide.hours247') : center.hours}
                     </Text>
                   ) : null}
                 </View>
@@ -116,6 +125,9 @@ export const SafetyGuideScreen = ({ onShowDisclaimer, onOpenPreparation }: Props
                       key={phone}
                       style={styles.callCenterBtn}
                       onPress={() => handleCall(phone)}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('safetyGuide.callCenterA11y', { city: center.city, phone })}
+                      testID={`call-center-${phone.replace(/\D/g, '')}`}
                     >
                       <Text style={styles.callCenterBtnText}>📞 {phone}</Text>
                     </TouchableOpacity>
@@ -163,6 +175,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   emergency112Btn: {
+    minHeight: 44,
     backgroundColor: colors.red600,
     flexDirection: 'row',
     alignItems: 'center',
@@ -325,6 +338,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   callCenterBtn: {
+    minHeight: 44,
+    justifyContent: 'center',
     backgroundColor: colors.primary,
     paddingVertical: 8,
     paddingHorizontal: 12,

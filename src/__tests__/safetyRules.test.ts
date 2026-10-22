@@ -1,9 +1,8 @@
-import { TOXICOLOGY_CENTERS } from '../data/safetyRules';
+import { TOXICOLOGY_CENTERS, toTelUrl } from '../data/safetyRules';
 
 // Numbers verified on 2026-10-17 against the sourceUrl of each entry.
 const POLISH_PHONE = /^(\+48 )?\d{2,3}( \d{2,3}){2,3}$/;
-const TEL_URL = /^tel:(\+48)?\d{9}$/;
-const toTel = (phone: string) => `tel:${phone.replace(/\s+/g, '')}`;
+const TEL_URL = /^tel:\+48\d{9}$/;
 const byCity = (city: string) => TOXICOLOGY_CENTERS.find((c) => c.city === city);
 
 describe('TOXICOLOGY_CENTERS', () => {
@@ -19,8 +18,16 @@ describe('TOXICOLOGY_CENTERS', () => {
   it('every number is in Polish format and produces a valid tel: URL', () => {
     for (const phone of TOXICOLOGY_CENTERS.flatMap((c) => c.phones)) {
       expect(phone).toMatch(POLISH_PHONE);
-      expect(toTel(phone)).toMatch(TEL_URL);
+      expect(toTelUrl(phone)).toMatch(TEL_URL);
     }
+  });
+
+  it('builds tel: URLs with +48 for national numbers and leaves short codes alone', () => {
+    expect(toTelUrl('22 619 66 54')).toBe('tel:+48226196654');
+    expect(toTelUrl('661 442 576')).toBe('tel:+48661442576');
+    expect(toTelUrl('+48 538 81 99 61')).toBe('tel:+48538819961');
+    expect(toTelUrl('112')).toBe('tel:112');
+    expect(toTelUrl('999')).toBe('tel:999');
   });
 
   it('keeps the general emergency numbers out of the centre list', () => {

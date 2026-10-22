@@ -379,6 +379,7 @@ export const pl = {
     actionLabel: '🚨 Postępowanie:',
     centersTitle: '📞 Ośrodki Toksykologiczne w Polsce',
     centersSub: 'Dyżurni toksykolodzy udzielają natychmiastowych porad telefonicznych:',
+    callCenterA11y: 'Zadzwoń: {city} {phone}',
     availabilityLabel: 'Dostępność:',
     hours247: 'Całodobowo 24/7',
     preparationTitle: 'Jak przygotować grzyby?',

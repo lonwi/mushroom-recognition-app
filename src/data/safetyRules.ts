@@ -89,10 +89,20 @@ export const POISON_SYNDROMES = [
   }
 ];
 
+/**
+ * Builds a dialable tel: URL. Nine-digit Polish national numbers get +48 so they
+ * also work from a foreign SIM; short codes such as 112 and 999 stay as they are.
+ */
+export function toTelUrl(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (phone.trim().startsWith('+')) return `tel:+${digits}`;
+  return digits.length === 9 ? `tel:+48${digits}` : `tel:${digits}`;
+}
+
 // Every number below was checked against its sourceUrl on this date.
 const CHECKED_AT = '2026-10-17';
 // Used only where the source states round-the-clock service explicitly.
-const HOURS_24_7 = 'Całodobowo 24/7';
+export const HOURS_24_7 = 'Całodobowo 24/7';
 
 export const TOXICOLOGY_CENTERS: ToxicologyCenter[] = [
   {
