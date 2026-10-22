@@ -41,6 +41,14 @@ Changing any of these needs an explicit decision by the repo owner, written in t
 - Branch ruleset: required checks stay required; the `check` source is "GitHub Actions", never "any source".
 - Training data license rules in `AGENTS.md` (BY-NC and DF20 for training only).
 
+## Working loop: code → check → learn → improve → push
+
+1. **Code** – one small topic per branch.
+2. **Check** – run everything CI runs (`pnpm typecheck`, `pnpm test`, `pnpm quality`, e2e, Python tests when `training/` changed). Read the failures; do not silence them.
+3. **Learn** – when a check, review or bug teaches something new (a missed case, a wrong assumption), write it down where the next person will see it: a test that pins it, a gate rule, or a line in this file or `AGENTS.md`.
+4. **Improve** – fix the cause, not the symptom. If you fixed old findings, shrink the baseline (`lint:prune`, `knip:update`, `depcruise:tighten`).
+5. **Push** – open a (draft) PR and follow the process below.
+
 ## PR process
 
 1. Work on a branch, one topic per PR. Run the commands from `AGENTS.md` → "Agent Workflow & Commands" locally.
