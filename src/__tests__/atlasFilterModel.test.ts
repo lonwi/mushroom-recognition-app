@@ -4,8 +4,10 @@ import {
   ATLAS_FILTER_GROUPS,
   ATLAS_KIND_GROUP,
   ATLAS_PANEL_GROUPS,
+  EVANESCENT_TRAITS,
   activePanelChips,
   applyAtlasFilters,
+  evanescentAbsentSelections,
   panelFilterCount,
   visibleAtlasCount,
   withoutChip,
@@ -36,6 +38,90 @@ function idsOf(rows: { species: { id: string } }[]): string[] {
 
 function apply(chipIds: string[], query = '') {
   return applyAtlasFilters(MUSHROOMS_DATABASE, { query, chipIds: new Set(chipIds) });
+}
+
+/** Species the hold must keep. A missing id here is a gap in the toxic set. */
+const EVANESCENT_HOLD_SPECIES = ['amanita_phalloides', 'amanita_virosa', 'galerina_marginata'] as const;
+
+function visibleIds(chipIds: readonly string[]): string[] {
+  const result = apply([...chipIds]);
+  return idsOf(result.matches).concat(idsOf(result.unverified));
+}
+
+function nonEmptyCombinations(ids: readonly string[]): string[][] {
+  const combos: string[][] = [];
+  const walk = (start: number, picked: string[]): void => {
+    if (picked.length > 0) combos.push([...picked]);
+    for (let index = start; index < ids.length; index += 1) {
+      picked.push(ids[index]);
+      walk(index + 1, picked);
+      picked.pop();
+    }
+  };
+  walk(0, []);
+  return combos;
+}
+
+function groupIdOf(chipId: string): string {
+  const group = ATLAS_FILTER_GROUPS.find((item) => item.chips.some((chip) => chip.id === chipId));
+  if (!group) throw new Error(`Missing atlas chip ${chipId}`);
+  return group.id;
+}
+
+function listedTokens(value: unknown): readonly (string | boolean)[] {
+  if (typeof value === 'string' || typeof value === 'boolean') return [value];
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string | boolean => typeof item === 'string' || typeof item === 'boolean');
+}
+
+function possessesTrait(speciesId: string, trait: (typeof EVANESCENT_TRAITS)[number]): boolean {
+  const facts = ATLAS_FILTER_FACTS[speciesId];
+  if (!facts) return false;
+  const tokens = listedTokens(facts[trait.field]);
+  return tokens.some((token) => trait.present.some((item) => item === token));
+}
+
+function chipsThatMatch(speciesId: string): string[] {
+  const ids: string[] = [];
+  for (const group of ATLAS_FILTER_GROUPS) {
+    for (const chip of group.chips) {
+      if (idsOf(apply([chip.id]).matches).includes(speciesId)) ids.push(chip.id);
+    }
+  }
+  return ids;
+}
+
+function expectTraitHold(
+  speciesIds: readonly string[],
+  absent: readonly { field: string; chipId: string }[],
+): void {
+  for (const id of speciesIds) {
+    for (const trait of EVANESCENT_TRAITS) {
+      if (!possessesTrait(id, trait)) continue;
+      const selection = absent.find((item) => item.field === trait.field);
+      if (!selection) continue;
+      const result = apply([selection.chipId]);
+      expect(idsOf(result.unverified)).toContain(id);
+      expect(idsOf(result.matches)).not.toContain(id);
+    }
+  }
+}
+
+function expectToxicCombinationsStay(
+  toxic: readonly { id: string }[],
+  absentIds: readonly string[],
+): void {
+  const combos = nonEmptyCombinations(absentIds);
+  expect(combos.length).toBeGreaterThan(0);
+  for (const species of toxic) {
+    const matching = chipsThatMatch(species.id);
+    for (const combo of combos) {
+      expect(visibleIds(combo)).toContain(species.id);
+      const blocked = new Set(combo.map((chipId) => groupIdOf(chipId)));
+      const others = matching.filter((chipId) => !blocked.has(groupIdOf(chipId)));
+      expect(visibleIds([...combo, ...others])).toContain(species.id);
+    }
+  }
 }
 
 describe('atlas filter model', () => {
@@ -158,6 +244,8 @@ describe('atlas filter model', () => {
     expect(idsOf(bulb.matches)).toContain('amanita_rubescens');
     expect(idsOf(sheath.matches)).toContain('amanita_rubescens');
     expect(idsOf(neither.matches).concat(idsOf(neither.unverified))).not.toContain('amanita_rubescens');
+    expect(idsOf(neither.matches)).not.toContain('amanita_citrina');
+    expect(idsOf(neither.unverified)).toContain('amanita_citrina');
     expect(ATLAS_FILTER_FACTS.amanita_rubescens?.volva).toBe('bulwa');
     expect(ATLAS_FILTER_FACTS.amanita_citrina?.volva).toBe('bulwa');
   });
@@ -334,6 +422,34 @@ describe('atlas filter model', () => {
     expect(restored.matches.length).toBeGreaterThan(panelOnly.matches.length);
     expect(idsOf(restored.matches)).toContain('amanita_phalloides');
     expect(idsOf(restored.matches)).toContain('boletus_edulis');
+  });
+
+  test('absence chips for traits that can disappear keep toxic species visible', () => {
+    const toxic = MUSHROOMS_DATABASE.filter(
+      (species) => species.status === 'POISONOUS' || species.status === 'DEADLY_POISONOUS',
+    );
+    expect(toxic.length).toBeGreaterThan(EVANESCENT_HOLD_SPECIES.length);
+    expect(EVANESCENT_TRAITS).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ field: 'volva', present: ['pochwa', 'bulwa'], absent: ['brak'] }),
+        expect.objectContaining({ field: 'ring', present: [true], absent: [false] }),
+        expect.objectContaining({ field: 'stemFeatures', present: ['wlokna_zasnowki'], absent: ['brak'] }),
+      ]),
+    );
+
+    const absent = evanescentAbsentSelections();
+    expect(absent.map((item) => item.chipId)).toEqual(expect.arrayContaining(['ring-absent', 'volva-brak']));
+    for (const id of EVANESCENT_HOLD_SPECIES) {
+      expect(toxic.map((species) => species.id)).toContain(id);
+      expect(EVANESCENT_TRAITS.some((trait) => possessesTrait(id, trait))).toBe(true);
+    }
+
+    expectTraitHold(EVANESCENT_HOLD_SPECIES, absent);
+    expectToxicCombinationsStay(toxic, absent.map((item) => item.chipId));
+    expect(visibleIds(['ring-absent'])).not.toContain('amanita_rubescens');
+    expect(visibleIds(['volva-brak'])).not.toContain('amanita_rubescens');
+    expect(idsOf(apply(['volva-pochwa', 'volva-brak']).matches)).toContain('amanita_phalloides');
+    expect(idsOf(apply(['ring-present', 'ring-absent']).matches)).toContain('galerina_marginata');
   });
 
   test('the show count includes unverified cards that stay on the list', () => {

@@ -26,7 +26,7 @@ Poza tym etapem: miesiące, siedliska, drzewa.
 - Puste pole albo `do_weryfikacji` przy aktywnym chipie tej cechy przenosi kartę do sekcji „Do weryfikacji”. Karta nie wpada do wyników i nie znika.
 - Chip „pochwa” pasuje do tokenu `pochwa` i do tokenu `bulwa`. Bulwa nie jest pochwą, ale filtr pochwy nie odsiewa muchomora cytrynowego ani czerwonawego od sromotnika. Cytrynowy ma `bulwa` (bulwa z rąbkiem). Czerwonawy ma `bulwa` i nie ma pełnej pochwy. Oba zostają w wynikach chipa „pochwa” razem ze sromotnikiem i muchomorem jadowitym.
 - Maślanka łagodna i wiązkowa mają `ring: false` oraz `wlokna_zasnowki`. Zasnówka nie jest błoniastym pierścieniem.
-- Znana wartość, która nie pokrywa się z żadnym chipem grupy, wyklucza kartę z obu sekcji.
+- Znana wartość, która nie pokrywa się z żadnym chipem grupy, wyklucza kartę z obu sekcji. Wyjątek: gatunek `POISONOUS` albo `DEADLY_POISONOUS`, który ma cechę z `EVANESCENT_TRAITS` (pochwa lub bulwa zostawiona w ziemi, pierścień, który odpada, włókna zasnówki `wlokna_zasnowki`). Chip braku tej cechy daje „Do weryfikacji”, nie wykluczenie. Nowe pole dopisane do tej jednej mapy dostaje tę samą regułę. Pierścień i pochwa mają chip braku w panelu. Zasnówka jest już w mapie; chip braku zadziała, gdy to pole dostanie chip o wartościach braku.
 - Rodzaj liczy się wyłącznie z `species.status` i `incompleteCard`, nie z faktów. `EDIBLE` → jadalne, `INEDIBLE` → niejadalne, `POISONOUS` i `DEADLY_POISONOUS` → trujące. Odznaka zostaje odznaką gatunku.
 - Karta z `incompleteCard: true` nie trafia do wyników „jadalne”. Przy chipie „jadalne” idzie do „Do weryfikacji”.
 - Karta bez wpisu w faktach przy chipie rodzaju idzie do wyników według statusu. Do „Do weryfikacji” trafia dopiero przy aktywnym chipie cechy, której brak.

@@ -286,6 +286,35 @@ describe('AtlasScreen RTL Tests', () => {
     });
   });
 
+  it('keeps a toxic species with a ring that can fall off under verification', async () => {
+    const screen = await render(
+      <LanguageProvider>
+        <AtlasScreen onSelectSpecies={() => {}} />
+      </LanguageProvider>
+    );
+
+    await fireEvent.press(screen.getByTestId('atlas-filter-open'));
+    await fireEvent.press(screen.getByTestId('filter-chip-ring-absent'));
+    await waitFor(() => {
+      const unverified = within(screen.getByTestId('atlas-unverified'));
+      expect(unverified.getByTestId('atlas-card-amanita_phalloides')).toBeTruthy();
+      expect(unverified.getByTestId('atlas-card-amanita_virosa')).toBeTruthy();
+      expect(unverified.getByTestId('atlas-card-galerina_marginata')).toBeTruthy();
+      expect(screen.queryByTestId('atlas-card-amanita_rubescens')).toBeNull();
+    });
+
+    await fireEvent.press(screen.getByTestId('filter-chip-ring-absent'));
+    await fireEvent.press(screen.getByTestId('filter-chip-volva-brak'));
+    await waitFor(() => {
+      const unverified = within(screen.getByTestId('atlas-unverified'));
+      expect(unverified.getByTestId('atlas-card-amanita_phalloides')).toBeTruthy();
+      expect(unverified.getByTestId('atlas-card-amanita_virosa')).toBeTruthy();
+      const matches = within(screen.getByTestId('atlas-matches'));
+      expect(matches.getByTestId('atlas-card-galerina_marginata')).toBeTruthy();
+      expect(screen.queryByTestId('atlas-card-amanita_rubescens')).toBeNull();
+    });
+  });
+
   it('searches by Latin name', async () => {
     const { getByPlaceholderText, getByText, queryByText } = await render(
       <LanguageProvider>
