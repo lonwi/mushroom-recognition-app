@@ -9,7 +9,7 @@ Aplikacja stworzona z myślą o miłośnikach leśnych wypraw i zbierania grzyb�
 
 1. **Skaner (aparat i galeria)**:
    - Zdjęcie z aparatu lub galerii nie jest dziś klasyfikowane. `assets/models/labels.json` to kontrakt klas, nie sieć. Pliku `mushrooms_model.tflite` nie ma, bramka odrzuceń nie jest skalibrowana, a skaner zostaje przy „rozpoznawanie niedostępne”.
-   - Potok treningu (dziś kod przyjmuje tylko zdjęcia CC0 i CC-BY; zatwierdzone BY-NC/DF20 tylko do treningu opisuje `AGENTS.md`, MobileNetV3-Small na licencji Apache-2.0, eksport TFLite) jest w `training/`. Opis: `training/README.md`.
+   - Potok treningu (MobileNetV3-Small na licencji Apache-2.0, eksport TFLite) jest w `training/`. Opis: `training/README.md`. Dziś kod przyjmuje tylko zdjęcia CC0 i CC-BY, a zatwierdzone BY-NC/DF20 tylko do treningu opisuje `AGENTS.md`.
    - Gdy skalibrowany model zostanie dołączony, skaner pokaże trzy kandydatury z pewnością, bez oceny jadalności. Rodzaj Amanita, Cortinarius, Galerina lub Gyromitra albo niska pewność wymuszają komunikat o grzyboznawcy i Sanepidzie. Zdjęcie kota albo inny wynik poza rozkładem nie dostaje nazwy gatunku.
    - Błąd aparatu lub wyboru zdjęcia nie podstawia ilustracji zastępczej.
    - Skróty gatunków otwierają kartę w atlasie i są opisane jako przykłady z atlasu, a nie jako wynik skanowania.

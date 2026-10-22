@@ -110,7 +110,7 @@ mushroom-recognition-app/
 7. **Content rules**:
    - Stamets (and other copyrighted books): paraphrase only, always with page numbers; no quotes.
    - Psychoactive species: never give doses.
-   - Every URL in code, data, and docs uses `https://`.
+   - Every URL in code, data, and docs uses `https://`. Exception: test fixtures that check `http://` handling on purpose (e.g. `training/tests/test_fetch_gbif.py`, `training/tests/test_licenses.py`).
    - Emergency phone numbers exist only in `src/data/safetyRules.ts`. The test `src/__tests__/phoneNumbersSingleSource.test.ts` (added with the emergency-numbers PR) enforces it; cards and screens link to the emergency screen instead.
 
 ---
