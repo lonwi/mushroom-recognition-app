@@ -89,13 +89,21 @@ export const POISON_SYNDROMES = [
   }
 ];
 
+// An extension cannot be dialled from a tel: link, so such numbers are refused.
+const EXTENSION = /\b(?:wew|ext|extension)\b|[#,;]/i;
+
 /**
  * Builds a dialable tel: URL. Nine-digit Polish national numbers get +48 so they
  * also work from a foreign SIM; short codes such as 112 and 999 stay as they are.
+ * Returns null for empty numbers and numbers with an extension: callers must
+ * then show the number as text instead of a call link.
  */
-export function toTelUrl(phone: string): string {
-  const digits = phone.replace(/\D/g, '');
-  if (phone.trim().startsWith('+')) return `tel:+${digits}`;
+export function toTelUrl(phone: string): string | null {
+  const trimmed = phone.trim();
+  if (trimmed === '' || EXTENSION.test(trimmed)) return null;
+  const digits = trimmed.replace(/\D/g, '');
+  if (digits === '') return null;
+  if (trimmed.startsWith('+')) return `tel:+${digits}`;
   return digits.length === 9 ? `tel:+48${digits}` : `tel:${digits}`;
 }
 
@@ -103,6 +111,10 @@ export function toTelUrl(phone: string): string {
 const CHECKED_AT = '2026-10-17';
 // Used only where the source states round-the-clock service explicitly.
 export const HOURS_24_7 = 'Całodobowo 24/7';
+// Wrocław: the source says the 24/7 line gives advice to doctors.
+export const HOURS_24_7_DOCTOR_ADVICE = 'Całodobowo – porady dla lekarzy';
+// Sosnowiec: the source says only that doctors are on duty round the clock.
+export const HOURS_24_7_DOCTOR_ON_DUTY = 'Całodobowo – dyżur lekarski';
 
 export const TOXICOLOGY_CENTERS: ToxicologyCenter[] = [
   {
@@ -147,7 +159,7 @@ export const TOXICOLOGY_CENTERS: ToxicologyCenter[] = [
     city: 'Wrocław',
     phones: ['71 306 48 41', '71 306 48 42'],
     address: 'Dolnośląski Szpital Specjalistyczny im. T. Marciniaka, ul. Gen. Fieldorfa 2',
-    hours: HOURS_24_7,
+    hours: HOURS_24_7_DOCTOR_ADVICE,
     sourceUrl: 'https://www.szpital-marciniak.wroclaw.pl/p,168,oddzial-toksykologii-i-chorob-wewnetrznych',
     checkedAt: CHECKED_AT
   },
@@ -155,7 +167,7 @@ export const TOXICOLOGY_CENTERS: ToxicologyCenter[] = [
     city: 'Sosnowiec',
     phones: ['32 368 21 16'],
     address: 'Wojewódzki Szpital Specjalistyczny nr 5 im. św. Barbary, Oddział Toksykologii z Ośrodkiem Ostrych Zatruć, Plac Medyków 1',
-    hours: HOURS_24_7,
+    hours: HOURS_24_7_DOCTOR_ON_DUTY,
     sourceUrl: 'https://www.wss5.pl/content/oddzial-toksykologii-z-osrodkiem-ostrych-zatruc',
     checkedAt: CHECKED_AT
   }
