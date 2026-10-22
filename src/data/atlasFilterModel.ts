@@ -206,53 +206,21 @@ const SPORE_CHIPS: readonly ChipSpec[] = [
   ['czarnobrazowy', 'atlas.filters.sporeBlackBrown'],
 ].map(([id, label]) => ({ id, label, accepted: [id] }));
 
+const HYMENOPHORE = 'hymenophore';
 const RING = 'ring';
 const VOLVA = 'volva';
-const STEM_FEATURES = 'stemFeatures';
 const BRAK = 'brak';
 const BULWA = 'bulwa';
 const POCHWA = 'pochwa';
-const CORTINA = 'wlokna_zasnowki';
 
 /**
- * Traits a specimen can lose before it is examined. One row is the whole rule:
- * a poisonous or deadly species that still has the trait stays under
- * "Do weryfikacji" when the user picks that field's absence chip.
+ * Defined contradictions that may remove a poisonous species from both sections.
+ * Every other field, including spore print and any field added later, holds.
+ * A null or missing value on one of these fields holds too.
  */
-export const EVANESCENT_TRAITS: readonly {
-  field: typeof VOLVA | typeof RING | typeof STEM_FEATURES;
-  present: readonly FilterScalar[];
-  absent: readonly FilterScalar[];
-}[] = [
-  { field: VOLVA, present: [POCHWA, BULWA], absent: [BRAK] },
-  { field: RING, present: [true], absent: [false] },
-  { field: STEM_FEATURES, present: [CORTINA], absent: [BRAK] },
-];
+export const STABLE_TRAITS = [HYMENOPHORE] as const;
 
-type EvanescentTrait = (typeof EVANESCENT_TRAITS)[number];
-
-/**
- * Subjective or age- and weather-dependent facts. A contradicting chip on one
- * of these holds a poisonous species. Cap shape opens with age, stem colour
- * washes out, taste is withheld for toxic species, and latex shows only after
- * a cut.
- */
-export const VARIABLE_TRAITS = [
-  'capSizeCm',
-  'capColor',
-  'capShape',
-  'stemColor',
-  'smell',
-  'taste',
-  'fleshDiscoloration',
-  'latex',
-] as const;
-
-/** A defined contradiction here may remove a poisonous species from both sections. */
-export const POISONOUS_STRUCTURAL_FIELDS = ['hymenophore', 'sporePrint'] as const;
-
-const VARIABLE_TRAIT_FIELDS = new Set<string>(VARIABLE_TRAITS);
-const STRUCTURAL_MISS_FIELDS = new Set<string>(POISONOUS_STRUCTURAL_FIELDS);
+const STABLE_TRAIT_FIELDS = new Set<string>(STABLE_TRAITS);
 
 /** Stage 1 chips. Months, habitats and host trees are intentionally absent. */
 export const ATLAS_FILTER_GROUPS: readonly FilterGroup[] = [
@@ -279,7 +247,7 @@ export const ATLAS_FILTER_GROUPS: readonly FilterGroup[] = [
       },
     ],
   },
-  fieldGroup('hymenophore', 'atlas.filters.hymenophore', 'hymenophore', [
+  fieldGroup(HYMENOPHORE, 'atlas.filters.hymenophore', HYMENOPHORE, [
     { id: 'blaszki', label: 'atlas.filters.gills', accepted: ['blaszki'] },
     { id: 'rurki', label: 'atlas.filters.tubes', accepted: ['rurki'] },
     { id: 'listwy', label: 'atlas.filters.folds', accepted: ['listwy'] },
@@ -343,21 +311,12 @@ function scalarValue(value: unknown): FilterFieldValue | null {
   return scalars.length > 0 ? scalars : null;
 }
 
-/** Reads any fact key, so a new `EVANESCENT_TRAITS` row needs no field switch. */
+/** Reads any fact key, so a new filter field needs no field switch. */
 function readTraitValue(facts: StructureFacts, field: string): FilterFieldValue | null {
   for (const [key, value] of Object.entries(facts)) {
     if (key === field) return scalarValue(value);
   }
   return null;
-}
-
-function marksAbsent(chip: FilterChip, trait: EvanescentTrait): boolean {
-  if (chip.field !== trait.field || chip.accepted == null || chip.accepted.length === 0) return false;
-  return chip.accepted.every((value) => trait.absent.some((token) => token === value));
-}
-
-function hasPresentTrait(row: StructureFacts, trait: EvanescentTrait): boolean {
-  return valueMatches(readTraitValue(row, trait.field), trait.present);
 }
 
 function toxicSpecies(species: MushroomSpecies): boolean {
@@ -368,42 +327,18 @@ function missAllowlisted(speciesId: string, chipId: string): boolean {
   return POISONOUS_MISS_ALLOWLIST.some((pair) => pair.speciesId === speciesId && pair.chipId === chipId);
 }
 
-function onListedField(selected: readonly FilterChip[], fields: ReadonlySet<string>): boolean {
-  return selected.some((chip) => chip.field != null && fields.has(chip.field));
+function onStableTrait(selected: readonly FilterChip[]): boolean {
+  return selected.some((chip) => chip.field != null && STABLE_TRAIT_FIELDS.has(chip.field));
 }
 
-/** Poisonous contradictions outside structure and the allowlist stay visible. */
+/**
+ * A poisonous contradiction stays visible unless the chip reads a stable trait
+ * or the pair is allowlisted. Null stable facts never reach this: an undefined
+ * field is already unverified.
+ */
 function contradictoryPoisonousHolds(species: MushroomSpecies, selected: readonly FilterChip[]): boolean {
-  if (!toxicSpecies(species)) return false;
-  if (onListedField(selected, VARIABLE_TRAIT_FIELDS)) return true;
-  if (onListedField(selected, STRUCTURAL_MISS_FIELDS)) return false;
+  if (!toxicSpecies(species) || onStableTrait(selected)) return false;
   return !selected.every((chip) => missAllowlisted(species.id, chip.id));
-}
-
-function evanescentHold(
-  species: MushroomSpecies,
-  selected: readonly FilterChip[],
-  facts: FactsLookup,
-): boolean {
-  if (!toxicSpecies(species)) return false;
-  const row = facts(species.id);
-  if (!row) return false;
-  return EVANESCENT_TRAITS.some(
-    (trait) => selected.some((chip) => marksAbsent(chip, trait)) && hasPresentTrait(row, trait),
-  );
-}
-
-/** Absence chips that the map already covers. A new row shows up here on its own. */
-export function evanescentAbsentSelections(): readonly { field: string; chipId: string }[] {
-  const found: { field: string; chipId: string }[] = [];
-  for (const trait of EVANESCENT_TRAITS) {
-    for (const group of ATLAS_FILTER_GROUPS) {
-      for (const chip of group.chips) {
-        if (marksAbsent(chip, trait)) found.push({ field: trait.field, chipId: chip.id });
-      }
-    }
-  }
-  return found;
 }
 
 function groupOutcome(
@@ -416,7 +351,6 @@ function groupOutcome(
   if (selected.length === 0) return 'skip';
   if (selected.some((chip) => chip.predicate(species, facts))) return 'match';
   if (selected.some((chip) => chip.hold?.(species) === true)) return 'unverified';
-  if (evanescentHold(species, selected, facts)) return 'unverified';
   if (!group.defined(species, facts)) return 'unverified';
   if (contradictoryPoisonousHolds(species, selected)) return 'unverified';
   return 'miss';
@@ -448,7 +382,7 @@ function groupById(id: string): FilterGroup {
 export const ATLAS_KIND_GROUP = groupById('kind');
 
 export const ATLAS_PANEL_GROUPS: readonly FilterGroup[] = [
-  groupById('hymenophore'),
+  groupById(HYMENOPHORE),
   groupById('spore'),
   groupById('protection'),
   groupById(RING),
