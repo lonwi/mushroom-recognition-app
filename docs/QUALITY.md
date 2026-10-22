@@ -68,16 +68,14 @@ The SOLID/DRY report includes "open follow-ups": issues with no activity for mor
 
 ## Tracking deferred work
 
-A deferred item does not stay in chat or only in the PR description. In the same turn it gets an issue (or a bullet on an issue that already exists) and a link from the PR description.
-
-1. Every deferred item ("in a separate PR", "after merge", "Wojtek's decision") gets an issue in the turn it came up, or a bullet on an existing issue. Nothing deferred stays only in chat or in the PR description.
+1. Every deferred item ("in a separate PR", "after merge", "the repo owner's decision") gets an issue before the PR or review is closed, or a bullet on an existing issue. Nothing deferred stays only in the PR description.
 2. The PR description has a "Follow-ups" section with a `#N` link for each deferred item. Review does not approve when the review said "in a separate PR" and the description has no `Follow-up: #N` line.
 3. A `TODO` in code always includes an issue number, for example `TODO(#50)`. `TODO(#N)` is not enforced yet (enforcement tracked in [#56](https://github.com/lonwi/mushroom-recognition-app/issues/56)).
 4. Use only labels that already exist in the repository.
 
 | Label | When |
 |---|---|
-| `needs-decision` | Waiting for Wojtek's decision. |
+| `needs-decision` | Waiting for the repo owner's decision. |
 | `deferred` | Deferred for later. |
 | `safety` | Safety content, emergency numbers, poisoning. Always a priority. |
 | `data` | Species data, training photos, licenses. |
