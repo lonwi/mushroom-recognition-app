@@ -1,4 +1,5 @@
 const GROUPED_PHONE = /(?<!\d)\d{2,4}(?:[ \u00a0-]\d{2,4}){2,}(?!\d)/g;
+// Intentionally matches any standalone 3-digit number, not only 112 and 999.
 const STANDALONE_THREE = /(?<!\d)\d{3}(?!\d)/g;
 const LONG_RUN = /(?<!\d)\d{9,}(?!\d)/g;
 const TEL_HREF = /href="tel:([^"]+)"/gi;
@@ -12,7 +13,7 @@ function remember(found: Set<string>, raw: string, minimumDigits: number): void 
   if (digits.length >= minimumDigits) found.add(digits);
 }
 
-/** Phone-like numbers: 3-digit emergency lines, 9+ digit runs, and spaced groups of 9+ digits. */
+/** Phone-like numbers: any standalone 3-digit run, 9+ digit runs, and spaced groups of 9+ digits. */
 function phoneNumbersInText(text: string): Set<string> {
   const found = new Set<string>();
   GROUPED_PHONE.lastIndex = 0;
