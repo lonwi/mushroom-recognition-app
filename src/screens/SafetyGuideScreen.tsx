@@ -102,18 +102,25 @@ export const SafetyGuideScreen = ({ onShowDisclaimer, onOpenPreparation }: Props
                 <View style={{ flex: 1 }}>
                   <Text style={styles.centerCity}>{center.city}</Text>
                   <Text style={styles.centerAddress}>{center.address}</Text>
-                  <Text style={styles.centerHours}>
-                    {t('safetyGuide.availabilityLabel')}{' '}
-                    {center.hours === 'Całodobowo 24/7' ? t('safetyGuide.hours247') : center.hours}
-                  </Text>
+                  {center.hours ? (
+                    <Text style={styles.centerHours}>
+                      {t('safetyGuide.availabilityLabel')}{' '}
+                      {center.hours === 'Całodobowo 24/7' ? t('safetyGuide.hours247') : center.hours}
+                    </Text>
+                  ) : null}
                 </View>
 
-                <TouchableOpacity
-                  style={styles.callCenterBtn}
-                  onPress={() => handleCall(center.phone)}
-                >
-                  <Text style={styles.callCenterBtnText}>📞 {center.phone}</Text>
-                </TouchableOpacity>
+                <View style={styles.callCenterBtns}>
+                  {center.phones.map((phone) => (
+                    <TouchableOpacity
+                      key={phone}
+                      style={styles.callCenterBtn}
+                      onPress={() => handleCall(phone)}
+                    >
+                      <Text style={styles.callCenterBtnText}>📞 {phone}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
             ))}
           </View>
@@ -313,6 +320,9 @@ const styles = StyleSheet.create({
     color: colors.green700,
     fontWeight: '600',
     marginTop: 2,
+  },
+  callCenterBtns: {
+    gap: 6,
   },
   callCenterBtn: {
     backgroundColor: colors.primary,
