@@ -128,7 +128,43 @@ The sample list is shuffled in full before `from_tensor_slices`. After `dataset.
 
 ## Split
 
-`training/split.py` keeps one field outing in one split. When the photo has a recorder, a finite latitude and longitude, and a date, the group is `recordedBy` (case-folded) plus a 0.01-degree grid (about 1.1 km north–south) plus the calendar day, and the taxon name so two species from the same person on the same day stay separate. Otherwise the group is the GBIF occurrence. The same file also reports a second grouping, recorder plus the 0.01-degree grid with the day left out, so a person who returns to the same square on another day is visible. That second grouping is not the split key. `prepare_data.py` writes both counts to `training/data/split_groups.json`.
+`training/split.py` keeps one photographer and one observation in one split. The split key is the HMAC-SHA256 of every identity key in a connected component. The HMAC key is a salt that is **not** stored in this repository. The salt does not change which rows go to train, val, or test: the same seed and two different salts produce the same split. The salt only pseudonymizes component ids written into manifests and reports. `dataset_manifest.json` stores `salt_fingerprint`, the first 8 hex digits of sha256 of the salt, and not the salt.
+
+Set the salt before `prepare`, and keep a backup outside the repository. A copy next to the training photos in the operator's OneDrive training-data folder is the backup; the pipeline never reads that folder unless `GRZYBOBRANIE_SPLIT_SALT_FILE` points at it.
+
+```bash
+export GRZYBOBRANIE_SPLIT_SALT="$(openssl rand -hex 32)"
+# or a file outside the repo (this path is not read from the tree):
+# mkdir -p ~/.config/grzybobranie && openssl rand -hex 32 > ~/.config/grzybobranie/split_salt
+# export GRZYBOBRANIE_SPLIT_SALT_FILE=$HOME/.config/grzybobranie/split_salt
+# backup: copy that file into the OneDrive training-data folder, not into git
+```
+
+If the variable and the file are both missing, or the file is inside the repo, prepare stops and names the variable. Unit tests pass a fixture salt and do not read a production secret.
+
+Identity keys on a row:
+
+- photographer: `inat_observer` when it is a real person; otherwise `author` / `creator`; otherwise GBIF `recordedBy` (and DF20 `photographer_rightsHolder`). Placeholder strings are missing, not a person: Unknown, Anonymous, anonim, anonimowy, nieznany, unknown author, no rights reserved, -, ?, n/a, na, iNaturalist, GBIF, Wikimedia Commons, and society-like aggregator names. Those rows group only by observation and photo id.
+- photo: iNaturalist photo id, image URL, DF20 `ImageUniqueID`, Commons file, local file
+- observation: iNaturalist observation id, Mushroom Observer `mo_observation_id`, DF20 `observationID`, GBIF occurrence. An external row keyed `inat-obs:<id>` or `inat:<id>` is the same observation as a GBIF row whose `source_url` (or photo URL) points at that iNaturalist observation, so the two copies dedupe when they are the same photo and otherwise stay in one split. The same observer string in `inat_observer`, `recorded_by`, or `collector_key` is one photographer across both sources. `usage=training_only` (CC BY-NC and DF20) stays out of anything published.
+
+Rows that share any of those keys are one component, including two classes photographed by the same person and two DF20 frames with the same `observationID`. A held-out taxon does not drag that observer's other classes into test. The component is assigned normally. If it lands in train or val, its held-out rows are dropped and counted in the manifest; they stay only when the component is already in test. The observer's remaining rows are still in exactly one split.
+
+Before that grouping, `dedup_by_identity` runs once. The same photo or the same observation id under two species drops every conflicting row, and `dedup_report.json` lists them. A repeated photo of one species keeps the versioned CC0 or CC BY copy. Distinct photos of one observation stay, and they stay in the same split.
+
+`collector_group_key` is still the field-outing report: `recordedBy` plus a 0.01-degree grid plus the calendar day. That report is not the split key. The grid without the day is still written next to it. `prepare_data.py` writes both counts to `training/data/split_groups.json`, including the largest component's size and its share of all rows. `training/data/dataset_manifest.json` has per-split totals, per-class counts, a content sha256, the salt fingerprint, and per-class component shares. Each class records the largest component's share, how many rows are placeholder authors (including `no rights reserved`), and how many are DF20, so a class dominated by one DF20 photographer stays visible. The global largest-component share is recorded and is not a gate. The per-class gate is `COMPONENT_SHARE_LIMIT` (0.20). Changing that constant is the owner's decision. A config file, including `component_share_acknowledgements.json` and `--component-share-config`, may set a lower limit and may not set a higher one. A class over the limit, or a class with an empty val or test, stops prepare before any output is written unless it is listed with a reason in `training/component_share_acknowledgements.json`. `cortinarius_orellanus` is acknowledged there. Acknowledgements are copied into the manifest and reported as ship blockers, so `shippable` stays false. The manifest does not contain the salt.
+
+The license value stays in its own `license` column. Text is parsed by `import_external.parse_textual_license`: version from the cell or `license_url`, whole-id compare, versionless and unknown rejected. `excluded_from_publication` is the one condition that drops CC BY-NC rows and Danish Fungi 2020 rows (training-only). The ship-gate attribution file lists every train, val, and test row, including training-only rows; `attributions_complete` rejects those rows, unverified rows, and any license id that is not an exact `cc0-*` or `cc-by-*` key (NC, SA, and ND fail even when the id starts with `cc-by-`). Image and source URLs in that file are https.
+
+Atlas gallery photos must not be in the test split. The checked-in `training/gallery_exclusion.json` is always applied. Extra CSVs (columns such as `app_id,feature,image_url,author,license,source_url`, and `mo_observation_id` when the file has it) match on `image_url`, `mo_observation_id`, and the iNaturalist observation number in `source_url`. A match in test stops the pipeline.
+
+```bash
+python training/prepare_data.py --gallery-csv /path/to/galeria/manifest_gallery.csv
+python training/run_pipeline.py prepare -- --gallery-csv /path/to/galeria/galeria_trujace_v2.csv
+# or a JSON config {"gallery_csvs": ["manifest_gallery.csv"]} whose paths are relative to the file:
+python training/prepare_data.py --gallery-config /path/to/gallery_csvs.json
+# GRZYBOBRANIE_GALLERY_CSV is os.pathsep-separated and is also read by `run_pipeline.py all`
+```
 
 ## Backbone
 

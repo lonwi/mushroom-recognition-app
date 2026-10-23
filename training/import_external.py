@@ -238,6 +238,13 @@ def _code_from_tokens(text: str) -> tuple[str | None, str | None]:
     return None, None
 
 
+def exact_license_usage(license_id: object) -> str | None:
+    """``publishable`` or ``training_only`` when ``license_id`` is an exact known id."""
+    if not isinstance(license_id, str):
+        return None
+    return _EXACT_LICENSE_USAGE.get(license_id)
+
+
 def training_eligible(row: dict, *, publishable_only: bool = False) -> bool:
     """False for unverified rows, and for training-only rows when asked.
 

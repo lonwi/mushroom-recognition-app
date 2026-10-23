@@ -432,6 +432,26 @@ class ManifestAndShipGateTest(unittest.TestCase):
         ok, reasons = assess_shippable({})
         self.assertFalse(ok)
         self.assertTrue(reasons)
+        self.assertTrue(any("component_share" in reason for reason in reasons))
+
+    def test_component_share_limit_is_pinned(self):
+        from component_share import COMPONENT_SHARE_LIMIT
+
+        # Changing this constant is Wojtek's decision only.
+        self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
+
+    def test_missing_component_share_blockers_key_blocks_shipping(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            del report["component_share_blockers"]
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("component_share_blockers" in reason for reason in reasons))
+            report["component_share_blockers"] = ["boletus_edulis: acknowledged. The model is not shippable."]
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("boletus_edulis" in reason for reason in reasons))
 
     def _passing_report(self, artifact_dir: Path) -> dict:
         manifest = load_manifest()
@@ -505,6 +525,7 @@ class ManifestAndShipGateTest(unittest.TestCase):
                 "tflite_sha256": hashlib.sha256(tflite_bytes).hexdigest(),
             },
             "attributions_complete": True,
+            "component_share_blockers": [],
         }
         self._write_attributions(artifact_dir, report)
         return report

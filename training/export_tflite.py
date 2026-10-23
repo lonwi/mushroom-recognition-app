@@ -80,8 +80,13 @@ def write_attribution_file(rows: list[dict], path: Path) -> None:
 
     Every train, val, and test row is written, including ``training_only``.
     The attribution gate reads this file and still blocks a release model
-    that contains those rows.
+    that contains those rows. An image or source URL that is not https is refused.
     """
+    for row in rows:
+        for field in ("image_url", "source_url"):
+            value = row.get(field)
+            if isinstance(value, str) and value.strip() and not value.strip().lower().startswith("https://"):
+                raise RuntimeError(f"{field} must be an https URL, got {value!r}")
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as handle:
         for row in rows:
@@ -629,6 +634,9 @@ def main() -> None:
         replace_file(ARTIFACTS / "mushrooms_model_quantized.tflite", None)
         comparison = None
     metrics["quantized_export"] = comparison
+    from component_share import blockers_from_manifest_file
+
+    metrics["component_share_blockers"] = blockers_from_manifest_file(DATA_DIR / "dataset_manifest.json")
     shippable, reasons = assess_shippable(metrics)
     metrics["shippable"] = shippable
     metrics["ship_blockers"] = reasons
