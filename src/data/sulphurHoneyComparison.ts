@@ -62,8 +62,6 @@ export interface ComparisonPhoto {
   /** Earlier Commons CC0 record. Stored with the credit and not shown as the licence. */
   sourceNote?: string;
   captionKey: string;
-  /** Plain image description. Used as the accessibility label when set. */
-  altKey?: string;
 }
 
 export interface ComparisonTrait {
@@ -112,7 +110,6 @@ function photo(
   inaturalistObservationId: string,
   inaturalistPhotoUrl?: string,
   sourceNote?: string,
-  altKey?: string,
 ): ComparisonPhoto {
   const assetPath = `assets/gallery/porownanie/${fileName}`;
   return {
@@ -130,7 +127,6 @@ function photo(
     inaturalistPhotoUrl,
     sourceNote,
     captionKey,
-    altKey,
   };
 }
 
@@ -331,9 +327,6 @@ export const COMPARISON_PHOTOS: readonly ComparisonPhoto[] = [
     `${S3}/170500861/original.jpeg`,
     `${CAPTION}.galerinaSpore`,
     '102041261',
-    undefined,
-    undefined,
-    `${CAPTION}.galerinaSpore`,
   ),
 ];
 

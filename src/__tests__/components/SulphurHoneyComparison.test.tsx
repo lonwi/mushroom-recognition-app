@@ -43,6 +43,14 @@ function textColor(node: { props?: { style?: unknown } }): string {
   return flat.color;
 }
 
+function expectDecorativeComparisonImage(image: { props: Record<string, unknown> }): void {
+  expect(image.props.accessible).toBe(false);
+  expect(image.props.accessibilityElementsHidden).toBe(true);
+  expect(image.props.importantForAccessibility).toBe('no-hide-descendants');
+  expect(image.props.alt).toBe('');
+  expect(image.props.accessibilityLabel).toBeUndefined();
+}
+
 function expectGalerinaSporePrintCredit(): void {
   const sporePrint = COMPARISON_PHOTOS.find((photo) => photo.id === 'galerina-wysyp');
   if (!sporePrint) {
@@ -143,6 +151,8 @@ describe('sulphur tuft and honey fungus comparison', () => {
       galerinaZone: 'Ring zone often dusted with rusty spores.',
       galerinaCap: 'Smooth cap that fades noticeably as it dries.',
     };
+    expect(pl.comparison.sulphurHoney.title).toBe('Maślanka wiązkowa, opieńka i hełmówka jadowita');
+    expect(en.comparison.sulphurHoney.title).toBe('Sulphur tuft, honey fungus and Deadly Galerina');
     expect(pl.comparison.sulphurHoney.galerinaHeading).toBe(headingPl);
     expect(en.comparison.sulphurHoney.galerinaHeading).toBe(headingEn);
     expect(pl.comparison.sulphurHoney.warning).toBe(warningPl);
@@ -179,6 +189,7 @@ describe('sulphur tuft and honey fungus comparison', () => {
       </LanguageProvider>,
     );
     const comparison = within(screen.getByTestId('sulphur-honey-comparison'));
+    expect(comparison.getByText('Maślanka wiązkowa, opieńka i hełmówka jadowita')).toBeTruthy();
     expect(comparison.getByTestId('comparison-warning')).toHaveTextContent(warningPl);
     expect(comparison.getByTestId('comparison-galerina-heading-ring')).toHaveTextContent(headingPl);
     expect(comparison.getByTestId('comparison-caption-wood-galerina-skupisko')).toHaveTextContent(
@@ -268,7 +279,13 @@ describe('sulphur tuft and honey fungus comparison', () => {
     expect(comparison.getByTestId('comparison-caption-spore-galerina-wysyp')).toHaveTextContent(
       pl.comparison.sulphurHoney.captions.galerinaSpore,
     );
-    expect(comparison.getByLabelText(pl.comparison.sulphurHoney.captions.galerinaSpore)).toBeTruthy();
+    expectDecorativeComparisonImage(
+      comparison.getByTestId('comparison-image-spore-galerina-wysyp', { includeHiddenElements: true }),
+    );
+    expectDecorativeComparisonImage(
+      comparison.getByTestId('comparison-image-cap-galerina-kapelusz', { includeHiddenElements: true }),
+    );
+    expect(comparison.queryByLabelText(pl.comparison.sulphurHoney.captions.galerinaSpore)).toBeNull();
     expect(comparison.getByTestId('comparison-author-spore-galerina-wysyp')).toHaveTextContent(
       /Shirley Zundell/,
     );

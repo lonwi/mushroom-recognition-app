@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 
 async function captionContrast(page: Page, testId: string): Promise<number> {
   return page.getByTestId(testId).evaluate((el) => {
@@ -33,6 +33,28 @@ async function captionContrast(page: Page, testId: string): Promise<number> {
     const darker = Math.min(luminance(foreground), luminance(background));
     return (lighter + 0.05) / (darker + 0.05);
   });
+}
+
+async function expectTextFits(locator: Locator): Promise<void> {
+  const fits = await locator.evaluate((el) => el.scrollWidth <= el.clientWidth);
+  expect(fits).toBe(true);
+}
+
+const COMPARISON_SIDES = ['hypholoma', 'armillaria', 'galerina'] as const;
+const COMPARISON_TRAITS = ['ring', 'gills', 'spore', 'cap', 'stem', 'flesh', 'wood'] as const;
+
+async function expectColumnsFitViewport(page: Page, width: number): Promise<void> {
+  await page.setViewportSize({ width, height: 800 });
+  await page.goto('/iframe.html?id=mushroom-sulphurhoneycomparison--light');
+  for (const trait of COMPARISON_TRAITS) {
+    for (const side of COMPARISON_SIDES) {
+      const box = await columnBox(page, `comparison-side-${side}-${trait}`);
+      expect(box.width).toBeGreaterThanOrEqual(148);
+      expect(box.width).toBeLessThanOrEqual(width);
+    }
+    await expectTextFits(page.getByTestId(`comparison-galerina-heading-${trait}`));
+  }
+  await expectTextFits(page.getByTestId('comparison-warning'));
 }
 
 async function columnBox(page: Page, testId: string): Promise<{ x: number; width: number }> {
@@ -80,6 +102,11 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.getByTestId('comparison-caption-ring-galerina-pierscien')).toBeVisible();
     await expect(page.getByTestId('comparison-galerina-heading-ring')).toContainText('śmiertelnie trująca');
     expect(await captionContrast(page, 'comparison-caption-ring-galerina-pierscien')).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test('comparison columns stay within a narrow viewport', async ({ page }) => {
+    await expectColumnsFitViewport(page, 320);
+    await expectColumnsFitViewport(page, 375);
   });
 
   test('funeral bell captions stay readable in the dark story', async ({ page }) => {

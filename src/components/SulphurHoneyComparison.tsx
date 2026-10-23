@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Text,
   useColorScheme,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useLanguage, type TranslationParams } from '../contexts/LanguageContext';
@@ -64,6 +65,13 @@ const SIDE_LATIN: Record<'hypholoma' | 'armillaria', string> = {
 const GALERINA_LATIN = 'Galerina marginata';
 
 const COLUMN_MIN_WIDTH = 160;
+/** Card padding on both sides, so a column stays inside the window. */
+const COLUMN_SCREEN_PADDING = spacing.md * 2;
+
+function comparisonColumnWidth(windowWidth: number): number {
+  const available = Math.max(0, windowWidth - COLUMN_SCREEN_PADDING);
+  return Math.min(Math.max(COLUMN_MIN_WIDTH, available * 0.8), available || COLUMN_MIN_WIDTH);
+}
 
 function toneFor(scheme: ComparisonScheme): Tone {
   return scheme === 'dark' ? DARK : LIGHT;
@@ -121,13 +129,11 @@ function CreditLine({
 function PhotoBlock({
   photo,
   traitId,
-  species,
   tone,
   t,
 }: {
   photo: ComparisonPhoto;
   traitId: string;
-  species: string;
   tone: Tone;
   t: Translate;
 }) {
@@ -138,9 +144,11 @@ function PhotoBlock({
         source={photo.image}
         style={[styles.photo, { backgroundColor: tone.photo }]}
         resizeMode="cover"
-        accessibilityLabel={
-          photo.altKey ? t(photo.altKey) : t('gallery.photoLabel', { species, feature: caption })
-        }
+        accessible={false}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        alt=""
+        testID={`comparison-image-${traitId}-${photo.id}`}
       />
       <Text
         style={[styles.caption, { color: tone.text }]}
@@ -188,11 +196,13 @@ function SideColumn({
   side,
   tone,
   t,
+  columnWidth,
 }: {
   trait: ComparisonTrait;
   side: ComparisonSideId;
   tone: Tone;
   t: Translate;
+  columnWidth: number;
 }) {
   const species =
     side === 'galerina' ? t('comparison.sulphurHoney.galerinaHeading') : t(SIDE_LABEL[side]);
@@ -202,7 +212,16 @@ function SideColumn({
     .filter((item): item is ComparisonPhoto => item != null);
   return (
     <View
-      style={[styles.side, { borderColor: tone.border, backgroundColor: tone.card }]}
+      style={[
+        styles.side,
+        {
+          width: columnWidth,
+          minWidth: columnWidth,
+          maxWidth: columnWidth,
+          borderColor: tone.border,
+          backgroundColor: tone.card,
+        },
+      ]}
       testID={`comparison-side-${side}-${trait.id}`}
     >
       {side === 'galerina' ? (
@@ -226,7 +245,7 @@ function SideColumn({
         ) : null
       ) : (
         photos.map((item) => (
-          <PhotoBlock key={item.id} photo={item} traitId={trait.id} species={species} tone={tone} t={t} />
+          <PhotoBlock key={item.id} photo={item} traitId={trait.id} tone={tone} t={t} />
         ))
       )}
     </View>
@@ -267,9 +286,19 @@ function TraitSources({ trait, tone, t }: { trait: ComparisonTrait; tone: Tone; 
   return <SourceList id={trait.id} urls={urls} tone={tone} t={t} />;
 }
 
-function TraitBlock({ trait, tone, t }: { trait: ComparisonTrait; tone: Tone; t: Translate }) {
+function TraitBlock({
+  trait,
+  tone,
+  t,
+  columnWidth,
+}: {
+  trait: ComparisonTrait;
+  tone: Tone;
+  t: Translate;
+  columnWidth: number;
+}) {
   const columns = COMPARISON_SIDES.map((side) => (
-    <SideColumn key={side} trait={trait} side={side} tone={tone} t={t} />
+    <SideColumn key={side} trait={trait} side={side} tone={tone} t={t} columnWidth={columnWidth} />
   ));
   return (
     <View style={styles.trait} testID={`comparison-trait-${trait.id}`}>
@@ -292,6 +321,8 @@ function TraitBlock({ trait, tone, t }: { trait: ComparisonTrait; tone: Tone; t:
 export const SulphurHoneyComparison: React.FC<{ colorScheme?: ComparisonScheme }> = ({ colorScheme }) => {
   const { t } = useLanguage();
   const system = useColorScheme();
+  const { width: windowWidth } = useWindowDimensions();
+  const columnWidth = comparisonColumnWidth(windowWidth);
   const scheme: ComparisonScheme = colorScheme ?? (system === 'dark' ? 'dark' : 'light');
   const tone = toneFor(scheme);
   return (
@@ -316,7 +347,7 @@ export const SulphurHoneyComparison: React.FC<{ colorScheme?: ComparisonScheme }
         {t('comparison.sulphurHoney.scope')}
       </Text>
       {COMPARISON_TRAITS.map((trait) => (
-        <TraitBlock key={trait.id} trait={trait} tone={tone} t={t} />
+        <TraitBlock key={trait.id} trait={trait} tone={tone} t={t} columnWidth={columnWidth} />
       ))}
     </View>
   );
@@ -337,17 +368,27 @@ export const RingFilterHint: React.FC = () => {
 
 const styles = StyleSheet.create({
   card: {
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
+    flexShrink: 1,
     borderWidth: 1,
     borderRadius: radius.xs,
     padding: spacing.md,
     marginBottom: spacing.lg,
   },
   title: {
+    flexShrink: 1,
+    flexWrap: 'wrap',
+    maxWidth: '100%',
     fontSize: typography.title,
     fontWeight: '800',
     marginBottom: spacing.sm,
   },
   body: {
+    flexShrink: 1,
+    flexWrap: 'wrap',
+    maxWidth: '100%',
     fontSize: typography.body,
     lineHeight: 20,
     marginBottom: spacing.sm,
@@ -356,6 +397,9 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   traitTitle: {
+    flexShrink: 1,
+    flexWrap: 'wrap',
+    maxWidth: '100%',
     fontSize: typography.body,
     fontWeight: '800',
     marginBottom: spacing.sm,
@@ -363,23 +407,26 @@ const styles = StyleSheet.create({
   columns: {
     alignSelf: 'stretch',
     width: '100%',
+    maxWidth: '100%',
+    flexShrink: 1,
   },
   pair: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    flexGrow: 1,
+    flexGrow: 0,
     gap: spacing.sm,
   },
   side: {
-    flexGrow: 1,
+    flexGrow: 0,
     flexShrink: 0,
-    flexBasis: COLUMN_MIN_WIDTH,
-    minWidth: COLUMN_MIN_WIDTH,
     borderWidth: 1,
     borderRadius: radius.xs,
     padding: spacing.sm,
   },
   mark: {
+    flexShrink: 1,
+    flexWrap: 'wrap',
+    maxWidth: '100%',
     fontSize: typography.small,
     fontWeight: '800',
     lineHeight: typography.lineHeightSmall,
@@ -390,32 +437,51 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   sideName: {
+    flexShrink: 1,
+    flexWrap: 'wrap',
+    maxWidth: '100%',
     fontSize: typography.small,
     fontWeight: '800',
   },
   latin: {
+    flexShrink: 1,
+    flexWrap: 'wrap',
+    maxWidth: '100%',
     fontSize: typography.caption,
     fontStyle: 'italic',
     marginBottom: spacing.xs,
   },
   photoBlock: {
     marginTop: spacing.sm,
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
   },
   photo: {
     width: '100%',
+    maxWidth: '100%',
     aspectRatio: 1,
     borderRadius: radius.xs,
   },
   caption: {
+    flexShrink: 1,
+    flexWrap: 'wrap',
+    maxWidth: '100%',
     fontSize: typography.caption,
     lineHeight: typography.lineHeightSmall,
     marginTop: spacing.xs,
   },
   meta: {
+    flexShrink: 1,
+    flexWrap: 'wrap',
+    maxWidth: '100%',
     fontSize: typography.caption,
     lineHeight: typography.lineHeightSmall,
   },
   link: {
+    flexShrink: 1,
+    flexWrap: 'wrap',
+    maxWidth: '100%',
     fontSize: typography.caption,
     lineHeight: typography.lineHeightSmall,
     textDecorationLine: 'underline',
