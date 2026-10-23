@@ -486,6 +486,153 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertEqual(sa_reason, "")
         self.assertEqual((sa["license_normalized"], sa["usage"]), ("cc-by-sa-4.0", "training_only"))
 
+    def test_ported_cc_stays_inside_the_existing_licence_policy(self):
+        """A jurisdiction port is the same versioned id. The allowed list does not grow."""
+        from import_external import parse_textual_license, photo_license_decision
+        from license_policy import EXACT_LICENSE_USAGE
+        from licenses import normalize_cc_license
+
+        ported = "https://creativecommons.org/licenses/by-sa/3.0/de/"
+        decision, reason = photo_license_decision("CC BY-SA 3.0 de", ported)
+        self.assertEqual(reason, "")
+        self.assertEqual((decision["license_normalized"], decision["usage"]), ("cc-by-sa-3.0", "training_only"))
+        self.assertEqual(parse_textual_license("CC BY 3.0 pl")["license_normalized"], "cc-by-3.0")
+        self.assertIsNone(parse_textual_license("CC BY-NC-SA 3.0 de"))
+        self.assertIsNone(parse_textual_license("CC BY-ND 3.0 de"))
+        self.assertIsNone(parse_textual_license("public domain"))
+        self.assertIsNone(parse_textual_license("public domain", "https://creativecommons.org/publicdomain/zero/1.0/"))
+        self.assertNotIn("cc-by-sa-3.0-de", EXACT_LICENSE_USAGE)
+        self.assertNotIn("cc-by-nc-sa-3.0", EXACT_LICENSE_USAGE)
+        self.assertNotIn("cc-by-nd-3.0", EXACT_LICENSE_USAGE)
+        self.assertEqual(EXACT_LICENSE_USAGE["cc-by-sa-3.0"], "training_only")
+        self.assertEqual(EXACT_LICENSE_USAGE["cc-by-3.0"], "publishable")
+        self.assertEqual(EXACT_LICENSE_USAGE["cc-by-nc-2.0"], "training_only")
+        self.assertIsNone(normalize_cc_license(ported))
+        self.assertEqual(
+            normalize_cc_license("https://creativecommons.org/licenses/by/3.0/pl/"),
+            "cc-by-3.0",
+        )
+
+    def test_public_domain_without_license_url_stays_rejected_in_the_prepare_report(self):
+        """Public domain with an empty license_url is not CC0. Prepare records why."""
+        from component_share import COMPONENT_SHARE_LIMIT
+        from import_external import photo_license_decision
+        from prepare_data import _usable_records, write_prepare_outputs
+        from salt_fixture import FIXTURE_SALT
+
+        for text in ("public domain", "Public Domain", "Public Domain Mark", "PDM", "Public Domain (Wikipedia compatible)"):
+            decision, reason = photo_license_decision(text, "")
+            self.assertIsNone(decision, text)
+            self.assertEqual(reason, "license_url_empty", text)
+            promoted, promoted_reason = photo_license_decision(
+                text,
+                "https://creativecommons.org/publicdomain/zero/1.0/",
+            )
+            self.assertIsNone(promoted, text)
+            self.assertNotEqual((promoted or {}).get("license_normalized"), "cc0-1.0", text)
+            self.assertEqual(promoted_reason, "license", text)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            path = folder / "rows.jsonl"
+            rows = [
+                {
+                    "downloaded": False,
+                    "unverified": False,
+                    "usage": "publishable",
+                    "license": "public domain",
+                    "license_url": "",
+                    "class_id": "boletus_edulis",
+                    "file": "images/pd.jpg",
+                    "image_url": "https://images.example.test/pd.jpg",
+                },
+                {
+                    "downloaded": False,
+                    "unverified": False,
+                    "usage": "publishable",
+                    "license": "Public Domain Mark",
+                    "license_url": "   ",
+                    "class_id": "boletus_edulis",
+                    "file": "images/pdm.jpg",
+                    "image_url": "https://images.example.test/pdm.jpg",
+                },
+                {
+                    "downloaded": False,
+                    "unverified": False,
+                    "usage": "publishable",
+                    "license": "PDM",
+                    "license_url": "",
+                    "class_id": "boletus_edulis",
+                    "file": "images/pdm-code.jpg",
+                    "image_url": "https://images.example.test/pdm-code.jpg",
+                },
+                {
+                    "downloaded": False,
+                    "unverified": False,
+                    "usage": "publishable",
+                    "license": "CC BY 4.0",
+                    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+                    "license_normalized": "cc-by-4.0",
+                    "class_id": "boletus_edulis",
+                    "file": "images/by.jpg",
+                    "image_url": "https://images.example.test/by.jpg",
+                },
+            ]
+            path.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+            kept, skipped = _usable_records([path])
+            self.assertEqual(kept, [])
+            pd_skips = [
+                item
+                for item in skipped
+                if isinstance(item, dict) and str(item.get("license") or "").casefold() in {
+                    "public domain",
+                    "public domain mark",
+                    "pdm",
+                }
+            ]
+            self.assertEqual(len(pd_skips), 3)
+            self.assertTrue(all(item.get("skip_reason") == "license_url_empty" for item in pd_skips))
+            self.assertFalse(any(item.get("license") == "CC BY 4.0" for item in skipped))
+
+            balanced = []
+            for index in range(10):
+                balanced.append(
+                    {
+                        "class_id": "boletus_edulis",
+                        "inat_observer": f"login_{index}",
+                        "author": f"Author {index}",
+                        "license": "CC BY 4.0",
+                        "license_normalized": "cc-by-4.0",
+                        "license_url": "https://creativecommons.org/licenses/by/4.0/",
+                        "image_url": f"https://images.example.test/boletus_edulis/{index}.jpg",
+                        "file": f"boletus_edulis_{index}.jpg",
+                        "occurrence_key": f"boletus_edulis-{index}",
+                        "inat_photo_id": str(index),
+                        "inat_observation_id": f"obs-{index}",
+                    }
+                )
+            splits = {"train": balanced[:6], "val": balanced[6:8], "test": balanced[8:]}
+            out = folder / "prepared"
+            write_prepare_outputs(
+                out,
+                prepared=balanced,
+                splits=splits,
+                dropped=[],
+                identity_dropped=[],
+                skipped=skipped,
+                withheld=[],
+                salt=FIXTURE_SALT,
+                share_config={"limit": COMPONENT_SHARE_LIMIT, "acknowledgements": {}},
+                model_png_size=224,
+            )
+            report = json.loads((out / "dedup_report.json").read_text(encoding="utf-8"))
+            self.assertGreaterEqual(report["skipped_by_reason"].get("license_url_empty", 0), 3)
+            listed = [item for item in report["skipped_rows"] if item.get("reason") == "license_url_empty"]
+            self.assertGreaterEqual(len(listed), 3)
+            self.assertTrue(all(item.get("reason") for item in report["skipped_rows"]))
+            self.assertTrue(any(str(item.get("license") or "").casefold() == "public domain" for item in listed))
+            self.assertTrue(all(not str(item.get("license_url") or "").strip() for item in listed))
+
     def test_nc_sa_nd_and_nc_nd_are_rejected_for_training(self):
         from evaluate import attributions_complete
         from license_policy import allowed_for_training
