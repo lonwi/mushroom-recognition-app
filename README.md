@@ -9,7 +9,7 @@ Aplikacja stworzona z myślą o miłośnikach leśnych wypraw i zbierania grzyb�
 
 1. **Skaner (aparat i galeria)**:
    - Zdjęcie z aparatu lub galerii nie jest dziś klasyfikowane. `assets/models/labels.json` to kontrakt klas, nie sieć. Pliku `mushrooms_model.tflite` nie ma, bramka odrzuceń nie jest skalibrowana, a skaner zostaje przy „rozpoznawanie niedostępne”.
-   - Potok treningu (tylko zdjęcia CC0 i CC-BY, MobileNetV3-Small na licencji Apache-2.0, eksport TFLite) jest w `training/`. Opis: `training/README.md`.
+   - Potok treningu (MobileNetV3-Small na licencji Apache-2.0, eksport TFLite) jest w `training/`. Opis: `training/README.md`. Dziś kod przyjmuje tylko zdjęcia CC0 i CC-BY, a zatwierdzone BY-NC/DF20 tylko do treningu opisuje `AGENTS.md`.
    - Gdy skalibrowany model zostanie dołączony, skaner pokaże trzy kandydatury z pewnością, bez oceny jadalności. Rodzaj Amanita, Cortinarius, Galerina lub Gyromitra albo niska pewność wymuszają komunikat o grzyboznawcy i Sanepidzie. Zdjęcie kota albo inny wynik poza rozkładem nie dostaje nazwy gatunku.
    - Błąd aparatu lub wyboru zdjęcia nie podstawia ilustracji zastępczej.
    - Skróty gatunków otwierają kartę w atlasie i są opisane jako przykłady z atlasu, a nie jako wynik skanowania.
@@ -95,7 +95,7 @@ Sklepy i tag `vX.Y.Z` (równy `expo.version`) opisuje [docs/RELEASE.md](docs/REL
 
 Rozpoznawanie jest wyłączone, dopóki w repozytorium nie ma skalibrowanego `assets/models/mushrooms_model.tflite`. Sam `labels.json` nie jest modelem. `react-native-fast-tflite` jest zależnością pod przyszły plik; bez pliku skaner go nie ładuje i nie podaje gatunku ani procentu pewności.
 
-Trening opisuje `training/README.md`. Wagi z ImageNet (Keras MobileNetV3-Small, Apache-2.0) służą tylko jako inicjalizacja. Zdjęcia treningowe wolno brać wyłącznie z CC0 i CC-BY. Fetch zapisuje atrybucję w `training/data/attributions.jsonl` (katalog roboczy, gitignore). Eksport, który przejdzie bramki, kopiuje ją do `assets/models/attributions.jsonl` obok modelu.
+Trening opisuje `training/README.md`. Wagi z ImageNet (Keras MobileNetV3-Small, Apache-2.0) służą tylko jako inicjalizacja. Kod dziś przyjmuje zdjęcia treningowe wyłącznie z CC0 i CC-BY. Zatwierdzoną zmianę (BY-NC i DF20 tylko do treningu, nigdy do publikacji) opisuje `AGENTS.md`, który jest dokumentem nadrzędnym. Fetch zapisuje atrybucję w `training/data/attributions.jsonl` (katalog roboczy, gitignore). Eksport, który przejdzie bramki, kopiuje ją do `assets/models/attributions.jsonl` obok modelu.
 
 Na maszynie z GPU:
 
