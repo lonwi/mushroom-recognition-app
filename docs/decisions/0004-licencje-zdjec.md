@@ -51,7 +51,7 @@ Tamta rekomendacja A była węższa niż notatka w `AGENTS.md` z 2026-10-16 i w�
 
 „Tylko do treningu” przy CC BY-NC, DF20 i CC BY-SA oznacza, że tych zdjęć nie pokazujemy. Galeria, `site/` i porównania zostają przy CC0 albo CC BY. Model nauczony na zdjęciach CC BY-NC albo CC BY-SA może być modelem wydanym w aplikacji. Model z wierszem DF20 nie może.
 
-CC BY-SA (wariant SA-B) ma status **Podjęta**: jest dopuszczona do treningu modelu wydaniowego jako część tej decyzji, nie jako osobny plik.
+**CC BY-SA, wariant B** (2026-10-23, 12:17). Status **Podjęta**, jako część tej decyzji, nie jako osobny plik. Przyjmujemy, że share-alike z CC BY-SA nie obejmuje wag modelu (TFLite), więc model trenowany na zdjęciach CC BY-SA można wydać publicznie. Zdjęć CC BY-SA nadal nie pokazujemy w aplikacji. W galerii, na `site/` i w porównaniach zostają CC0 i CC BY. To jest świadomie przyjęte ryzyko prawne.
 
 **DF20, wariant B** (2026-10-23, 12:15). Tylko treningi testowe, bez wydania. Wiersz DF20 zawsze blokuje `shippable`. Prośb o zgodę fotografów DF20 nie wysyłamy. README DF20 („non-commercial research purposes only”), regulamin Svampeatlas (bezpośrednie porozumienie) i raport Zbierania zostają tłem tej decyzji, nie warunkiem późniejszego otwarcia bramki.
 
@@ -61,6 +61,7 @@ CC BY-NC i CC BY-SA mogą wejść do modelu wydawanego. Zdjęć DF20, NC i SA ni
 
 Zestaw licencji (wariant C, z CC BY-SA do modelu wydawanego): 2026-10-23, 12:02 czasu polskiego.
 DF20, wariant B: 2026-10-23, 12:15 czasu polskiego.
+CC BY-SA, wariant B (share-alike nie obejmuje wag): 2026-10-23, 12:17 czasu polskiego.
 
 ## Uzasadnienie
 
@@ -69,7 +70,7 @@ Właściciel wybrał CC0, CC BY, CC BY-NC i CC BY-SA do uczenia modelu wydawaneg
 Świadomie przyjęte ryzyka:
 
 - CC BY-NC ogranicza komercyjne użycie aplikacji.
-- Przy CC BY-SA nie wiadomo, czy share-alike obejmuje wagi modelu.
+- Przy CC BY-SA, wariant B z 12:17: świadomie przyjęte ryzyko prawne. Przyjmujemy, że share-alike nie obejmuje wag modelu (TFLite). Model trenowany na tych zdjęciach można wydać publicznie. Zdjęć CC BY-SA nie pokazujemy.
 - Przy DF20 wariant B: tylko treningi testowe, bez wydania. Wiersz DF20 zawsze blokuje `shippable`. Prośb o zgodę nie wysyłamy. README DF20 mówi „non-commercial research purposes only”, regulamin Svampeatlas wymaga bezpośredniego porozumienia, a raport Zbierania to stwierdza.
 
 ## Wdrożenie
