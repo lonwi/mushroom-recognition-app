@@ -444,11 +444,13 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
 
     def test_test_split_balance_thresholds_are_pinned(self):
-        from split import MIN_TEST_COUNT, TEST_SHARE_TOLERANCE, TEST_SPLIT_RATIO
+        from split import MIN_TEST_COUNT, TEST_SHARE_TOLERANCE, TEST_SPLIT_RATIO, VAL_SPLIT_RATIO
 
         # Provisional pair. Wojtek chooses the final values. Do not widen them
-        # to let a split pass.
+        # to let a split pass. Val has its own constant so a test-ratio change
+        # does not move the val default.
         self.assertEqual(TEST_SPLIT_RATIO, 0.15)
+        self.assertEqual(VAL_SPLIT_RATIO, 0.15)
         self.assertEqual(TEST_SHARE_TOLERANCE, 0.05)
         self.assertEqual(MIN_TEST_COUNT, 8)
 

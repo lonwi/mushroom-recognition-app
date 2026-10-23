@@ -24,7 +24,7 @@ from split import (
     component_ids,
     measure_test_balance,
     split_by_observation,
-    test_balance_blockers,
+    balance_blockers,
 )
 
 _MIN_COMPONENTS = 3
@@ -365,10 +365,10 @@ class SplitBalanceTest(unittest.TestCase):
         self.assertEqual(info["val_share"], 12 / 80)
 
     def test_missing_test_balance_block_fails_closed(self):
-        self.assertTrue(test_balance_blockers({}))
-        self.assertTrue(test_balance_blockers({"component_share": {"ship_blockers": [], "hard_stop_classes": []}}))
+        self.assertTrue(balance_blockers({}))
+        self.assertTrue(balance_blockers({"component_share": {"ship_blockers": [], "hard_stop_classes": []}}))
         self.assertEqual(
-            test_balance_blockers(
+            balance_blockers(
                 {
                     "test_balance": {
                         "ratio": 0.15,
@@ -381,7 +381,7 @@ class SplitBalanceTest(unittest.TestCase):
             ),
             [],
         )
-        widened = test_balance_blockers(
+        widened = balance_blockers(
             {
                 "test_balance": {
                     "ratio": 0.15,
@@ -520,8 +520,14 @@ class SplitBalanceTest(unittest.TestCase):
     def _assert_prepare_writes_nothing(self, splits, records) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             directory = Path(tmp)
-            (directory / "splits.json").write_text("{}", encoding="utf-8")
-            (directory / "dataset_manifest.json").write_text("{}", encoding="utf-8")
+            planted = (
+                "splits.json",
+                "dataset_manifest.json",
+                "dedup_report.json",
+                "attributions.dedup.jsonl",
+            )
+            for name in planted:
+                (directory / name).write_text("{}", encoding="utf-8")
             with self.assertRaises(SystemExit) as raised:
                 write_prepare_outputs(
                     directory,
@@ -536,8 +542,8 @@ class SplitBalanceTest(unittest.TestCase):
                     model_png_size=224,
                 )
             self.assertIn("No split files were written", str(raised.exception))
-            self.assertFalse((directory / "splits.json").exists())
-            self.assertFalse((directory / "dataset_manifest.json").exists())
+            for name in planted:
+                self.assertFalse((directory / name).exists(), name)
 
     def _assert_one_home(self, splits) -> None:
         for observer, names in _homes(splits, lambda row: row["inat_observer"]).items():

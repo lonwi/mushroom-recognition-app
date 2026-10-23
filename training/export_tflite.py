@@ -674,11 +674,11 @@ def main() -> None:
         comparison = None
     metrics["quantized_export"] = comparison
     from component_share import blockers_from_manifest_file
-    from split import test_balance_blockers_from_manifest_file
+    from split import balance_blockers_from_manifest_file
 
     manifest_path = DATA_DIR / "dataset_manifest.json"
     metrics["component_share_blockers"] = blockers_from_manifest_file(manifest_path)
-    metrics["test_balance_blockers"] = test_balance_blockers_from_manifest_file(manifest_path)
+    metrics["test_balance_blockers"] = balance_blockers_from_manifest_file(manifest_path)
     shippable, reasons = assess_shippable(metrics)
     metrics["shippable"] = shippable
     metrics["ship_blockers"] = reasons

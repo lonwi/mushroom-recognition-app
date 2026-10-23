@@ -33,7 +33,7 @@ For ESLint, knip and dependency-cruiser, baselines record findings that existed 
 
 Changing any of these needs an explicit decision by the repo owner, written in the PR. "CI is red" is not a reason.
 
-- Any threshold: ESLint rules or `--max-warnings 0`, jscpd `threshold`, `EXPORT_SLACK = 0`, ship-gate floors and minimum test supports. `TEST_SPLIT_RATIO`, `TEST_SHARE_TOLERANCE`, and `MIN_TEST_COUNT` in `training/split.py` are a provisional test-split gate (the owner picks the final pair). Do not widen them to make a split pass.
+- Any threshold: ESLint rules or `--max-warnings 0`, jscpd `threshold`, `EXPORT_SLACK = 0`, ship-gate floors and minimum test supports. `TEST_SPLIT_RATIO`, `VAL_SPLIT_RATIO`, `TEST_SHARE_TOLERANCE`, and `MIN_TEST_COUNT` in `training/split.py` are a provisional test-split gate (the owner picks the final pair). Do not widen them to make a split pass. `VAL_SPLIT_RATIO` is separate from `TEST_SPLIT_RATIO` so one default does not move the other.
 - Baselines (`eslint-suppressions.json`, `.jscpd-baseline.json`, `quality/knip-baseline.json`, `.dependency-cruiser-known-violations.json`) may only **shrink**. `pnpm knip:update`, `pnpm depcruise:baseline`, `pnpm lint:baseline` and `pnpm duplication:update` rewrite a baseline from scratch, so they can also add entries: run them only when the gate reports **no new findings**, and check the diff shrinks. `pnpm lint:prune` and `pnpm depcruise:tighten` only remove entries.
 - Dependency-cruiser allowlists in `scripts/adapter-allowlist.cjs` – adding an importer is a design change, explain it in the PR.
 - `allowBackup: false` in `app.json`.

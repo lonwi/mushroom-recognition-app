@@ -10,8 +10,9 @@ or a GBIF occurrence are one component and go to one split. Placeholder author
 strings are not a photographer. A held-out taxon does not move the component
 into test; those rows are dropped unless the component is already in test.
 
-Test and val targets are ``round(eligible_images * ratio)`` (default
-``TEST_SPLIT_RATIO``, 0.15). Eligible images are the rows that are not a
+Test and val targets are ``round(eligible_images * ratio)``. The defaults are
+``TEST_SPLIT_RATIO`` and ``VAL_SPLIT_RATIO``, both 0.15, and they are
+separate so one ratio does not move the other. Eligible images are the rows that are not a
 held-out taxon, which is also the base of the measured test share. A
 component enters one of those splits only when the added eligible rows stay
 inside the target of every class it contains. A component that fits neither
@@ -50,6 +51,7 @@ _MIN_CLASS_COMPONENTS = 3
 # test set is still outside the band or below the minimum, so a component
 # that fitted nowhere cannot leave a silently empty or tiny test set.
 TEST_SPLIT_RATIO = 0.15
+VAL_SPLIT_RATIO = 0.15
 TEST_SHARE_TOLERANCE = 0.05
 MIN_TEST_COUNT = 8
 # Author strings that are not a person. They must not glue two observations
@@ -606,7 +608,7 @@ def _place_components(
 
 def split_by_observation(
     records: list[dict],
-    val_ratio: float = TEST_SPLIT_RATIO,
+    val_ratio: float = VAL_SPLIT_RATIO,
     test_ratio: float = TEST_SPLIT_RATIO,
     seed: int = 42,
     test_blocked=None,
@@ -731,7 +733,7 @@ def measure_test_balance(splits: dict[str, list[dict]]) -> dict:
     }
 
 
-def test_balance_blockers(manifest: dict | None) -> list[str]:
+def balance_blockers(manifest: dict | None) -> list[str]:
     """Ship-blocker strings for the per-class test split.
 
     A manifest with no ``test_balance`` block is a blocker, the same as a
@@ -776,7 +778,7 @@ def test_balance_blockers(manifest: dict | None) -> list[str]:
     return found
 
 
-def test_balance_blockers_from_manifest_file(path: Path) -> list[str]:
+def balance_blockers_from_manifest_file(path: Path) -> list[str]:
     """Blockers recorded in ``dataset_manifest.json``. A missing file is itself a blocker."""
     file = Path(path)
     if not file.is_file():
@@ -785,7 +787,7 @@ def test_balance_blockers_from_manifest_file(path: Path) -> list[str]:
         payload = json.loads(file.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
         return ["dataset_manifest.json is not valid JSON, so the per-class test split was not checked"]
-    return test_balance_blockers(payload)
+    return balance_blockers(payload)
 
 
 def _drop_held_out_outside_test(splits: dict[str, list[dict]]) -> list[dict]:
