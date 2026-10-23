@@ -94,6 +94,10 @@ describe('sulphur tuft and honey fungus comparison', () => {
       expect(photo.sourceNote).toMatch(/Commons/);
       expect(photo.sourceNote).toMatch(/CC0/);
       expect(photo.license).not.toBe('CC0');
+      expect(photo.sourceUrl).toBe(photo.inaturalistPhotoUrl);
+      expect(photo.sourceUrl).toMatch(/^https:\/\/www\.inaturalist\.org\/photos\/\d+$/);
+      expect(photo.imageUrl).toMatch(/^https:\/\/upload\.wikimedia\.org\//);
+      expect(photo.sourceUrl).not.toMatch(/commons\.wikimedia\.org/);
     }
     expect(POISONOUS_MISS_ALLOWLIST).toEqual([]);
     expect(JSON.stringify(COMPARISON_TRAITS)).not.toMatch(/cortina present|bald; dry|Spore print:/i);
@@ -241,10 +245,12 @@ describe('sulphur tuft and honey fungus comparison', () => {
     expect(screen.getByText('CC BY 4.0')).toBeTruthy();
     expect(screen.queryByText('CC0')).toBeNull();
     expect(screen.queryByText(/Commons listed this file as CC0/)).toBeNull();
-    expect(screen.getByText('https://commons.wikimedia.org/wiki/File:Hypholoma_fasciculare_101886055.jpg')).toBeTruthy();
+    expect(screen.queryByText(/commons\.wikimedia\.org/)).toBeNull();
+    expect(screen.getByText('https://www.inaturalist.org/photos/101886055')).toBeTruthy();
     await fireEvent.changeText(screen.getByTestId('photo-credits-search'), 'sugarsnap_t');
     expect(screen.getByText('sugarsnap_t')).toBeTruthy();
     expect(screen.getByText('CC BY 4.0')).toBeTruthy();
     expect(screen.queryByText('CC0')).toBeNull();
+    expect(screen.getByText('https://www.inaturalist.org/photos/313452639')).toBeTruthy();
   });
 });
