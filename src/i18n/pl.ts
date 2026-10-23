@@ -287,19 +287,15 @@ export const pl = {
       lead: 'Maślanka wiązkowa nie ma błoniastego pierścienia. Zostaje najwyżej słaba strefa włókien, przyciemniona zarodnikami, albo resztki na brzegu kapelusza. Opieńka miodowa zwykle ma wyraźny, błoniasty pierścień.',
       limit: 'Zdjęcia nie pozwalają wykluczyć gatunku trującego. Ocena owocnika należy do grzyboznawcy.',
       scope: 'Zdjęcia opieńki pokazują Armillaria mellea. Karta w atlasie obejmuje też inne opieńki.',
-      deadly: 'Śmiertelnie trująca. Zawiera amatoksyny.',
-      deadlyDetail:
-        'Hełmówka jadowita zawiera amatoksyny, te same grupy toksyn co muchomor zielonawy. Zatrucie może uszkodzić wątrobę i spowodować śmierć.',
-      notSingle:
-        'Pierścień nie potwierdza opieńki. Żadna pojedyncza cecha jej nie potwierdza. Zakresy wielkości się nakładają, a kępka na drewnie też nie rozstrzyga.',
+      galerinaHeading: 'Hełmówka jadowita (Galerina marginata) – śmiertelnie trująca',
+      warning:
+        'Zawiera amatoksyny. Żadna pojedyncza cecha, w tym pierścień, nie potwierdza opieńki.',
       chipHint:
         'Strefę włókien zasnówki łatwo wziąć za pierścień, dlatego przy „Jest pierścień” maślanka wiązkowa zostaje wśród kart do sprawdzenia.',
       hypholoma: 'Maślanka wiązkowa',
       armillaria: 'Opieńka miodowa',
-      galerina: 'Hełmówka jadowita',
       hypholomaLatin: 'Hypholoma fasciculare',
       armillariaLatin: 'Armillaria mellea',
-      galerinaLatin: 'Galerina marginata',
       sources: 'Źródła',
       noPhoto: 'Brak zdjęcia tej cechy.',
       traits: {
@@ -346,7 +342,6 @@ export const pl = {
           title: 'Miąższ',
           hypholoma: 'Miąższ jest siarkowożółty.',
           armillaria: 'Miąższ jest białawy.',
-          galerina: 'To porównanie nie opisuje miąższu hełmówki jadowitej.',
         },
         wood: {
           title: 'Drewno i wzrost',
@@ -368,11 +363,10 @@ export const pl = {
         armillariaStems: 'Dwa owocniki z odstającym pierścieniem na trzonie.',
         armillariaGills: 'Białawy pierścień i kremowe blaszki.',
         armillariaCap: 'Kapelusz z drobnymi, sterczącymi łuseczkami.',
-        galerinaClump:
-          'Kępka na butwiejącym drewnie, gładkie brązowe kapelusze. Kępa na drewnie nie odróżnia hełmówki od opieńki.',
-        galerinaRing: 'Cienki białawy pierścień i rdzawopomarańczowe blaszki. Pierścień nie potwierdza opieńki.',
-        galerinaZone: 'Rdzawa strefa pierścieniowa. Trzon z białawymi włókienkami, ciemniejszy ku podstawie.',
-        galerinaCap: 'Gładki kapelusz: jaśniejszy, wysychający środek i ciemniejszy, wilgotny brzeg.',
+        galerinaClump: 'Kępa na próchniejącym drewnie, jak u opieńki.',
+        galerinaRing: 'Cienki, nietrwały pierścień; blaszki żółtawe do rdzawobrązowych.',
+        galerinaZone: 'Strefa pierścienia często z rdzawym nalotem zarodników.',
+        galerinaCap: 'Gładki kapelusz, wyraźnie jaśniejący przy wysychaniu.',
       },
     },
   },

@@ -378,6 +378,8 @@ export const COMPARISON_TRAITS: readonly ComparisonTrait[] = [
       galerina: `${TRAIT}.spore.galerina`,
     },
     sources: {
+      // cechy.json lists the Galerina page on the sulphur-tuft spore colour:
+      // MushroomExpert compares that print with Galerina there.
       hypholoma: [FN_HYPH, ME_HYPH, ME_GAL],
       armillaria: [FN_ARM, ME_ARM],
       galerina: [ME_GAL, FN_GAL],
@@ -424,7 +426,7 @@ export const COMPARISON_TRAITS: readonly ComparisonTrait[] = [
     textKey: {
       hypholoma: `${TRAIT}.flesh.hypholoma`,
       armillaria: `${TRAIT}.flesh.armillaria`,
-      galerina: `${TRAIT}.flesh.galerina`,
+      galerina: '',
     },
     sources: {
       hypholoma: [FN_HYPH, ME_HYPH],

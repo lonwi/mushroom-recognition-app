@@ -110,6 +110,73 @@ describe('sulphur tuft and honey fungus comparison', () => {
     expect(JSON.stringify(COMPARISON_TRAITS)).not.toMatch(/cortina present|bald; dry|Spore print:/i);
   });
 
+  it('pins the approved Galerina heading, captions, and warning', async () => {
+    const headingPl = 'Hełmówka jadowita (Galerina marginata) – śmiertelnie trująca';
+    const headingEn = 'Deadly Galerina (Galerina marginata) – deadly poisonous';
+    const warningPl = 'Zawiera amatoksyny. Żadna pojedyncza cecha, w tym pierścień, nie potwierdza opieńki.';
+    const warningEn = 'Contains amatoxins. No single feature, including the ring, confirms honey fungus.';
+    const captionsPl = {
+      galerinaClump: 'Kępa na próchniejącym drewnie, jak u opieńki.',
+      galerinaRing: 'Cienki, nietrwały pierścień; blaszki żółtawe do rdzawobrązowych.',
+      galerinaZone: 'Strefa pierścienia często z rdzawym nalotem zarodników.',
+      galerinaCap: 'Gładki kapelusz, wyraźnie jaśniejący przy wysychaniu.',
+    };
+    const captionsEn = {
+      galerinaClump: 'Cluster on rotting wood, like honey fungus.',
+      galerinaRing: 'Thin, fragile ring; yellowish to rusty-brown gills.',
+      galerinaZone: 'Ring zone often dusted with rusty spores.',
+      galerinaCap: 'Smooth cap that fades noticeably as it dries.',
+    };
+    expect(pl.comparison.sulphurHoney.galerinaHeading).toBe(headingPl);
+    expect(en.comparison.sulphurHoney.galerinaHeading).toBe(headingEn);
+    expect(pl.comparison.sulphurHoney.warning).toBe(warningPl);
+    expect(en.comparison.sulphurHoney.warning).toBe(warningEn);
+    expect(pl.comparison.sulphurHoney.captions.galerinaClump).toBe(captionsPl.galerinaClump);
+    expect(pl.comparison.sulphurHoney.captions.galerinaRing).toBe(captionsPl.galerinaRing);
+    expect(pl.comparison.sulphurHoney.captions.galerinaZone).toBe(captionsPl.galerinaZone);
+    expect(pl.comparison.sulphurHoney.captions.galerinaCap).toBe(captionsPl.galerinaCap);
+    expect(en.comparison.sulphurHoney.captions.galerinaClump).toBe(captionsEn.galerinaClump);
+    expect(en.comparison.sulphurHoney.captions.galerinaRing).toBe(captionsEn.galerinaRing);
+    expect(en.comparison.sulphurHoney.captions.galerinaZone).toBe(captionsEn.galerinaZone);
+    expect(en.comparison.sulphurHoney.captions.galerinaCap).toBe(captionsEn.galerinaCap);
+    expect(pl.comparison.sulphurHoney).not.toHaveProperty('deadly');
+    expect(pl.comparison.sulphurHoney).not.toHaveProperty('deadlyDetail');
+    expect(pl.comparison.sulphurHoney).not.toHaveProperty('notSingle');
+    expect(en.comparison.sulphurHoney).not.toHaveProperty('deadly');
+    expect(en.comparison.sulphurHoney).not.toHaveProperty('deadlyDetail');
+    expect(en.comparison.sulphurHoney).not.toHaveProperty('notSingle');
+    expect(pl.comparison.sulphurHoney.traits.flesh).not.toHaveProperty('galerina');
+    expect(en.comparison.sulphurHoney.traits.flesh).not.toHaveProperty('galerina');
+    const flesh = COMPARISON_TRAITS.find((trait) => trait.id === 'flesh');
+    expect(flesh?.textKey.galerina).toBe('');
+    expect(flesh?.sources.galerina).toEqual([]);
+
+    const screen = await render(
+      <LanguageProvider>
+        <SulphurHoneyComparison />
+      </LanguageProvider>,
+    );
+    const comparison = within(screen.getByTestId('sulphur-honey-comparison'));
+    expect(comparison.getByTestId('comparison-warning')).toHaveTextContent(warningPl);
+    expect(comparison.getByTestId('comparison-galerina-heading-ring')).toHaveTextContent(headingPl);
+    expect(comparison.getByTestId('comparison-caption-wood-galerina-skupisko')).toHaveTextContent(
+      captionsPl.galerinaClump,
+    );
+    expect(comparison.getByTestId('comparison-caption-ring-galerina-pierscien')).toHaveTextContent(
+      captionsPl.galerinaRing,
+    );
+    expect(comparison.getByTestId('comparison-caption-stem-galerina-strefa')).toHaveTextContent(
+      captionsPl.galerinaZone,
+    );
+    expect(comparison.getByTestId('comparison-caption-cap-galerina-kapelusz')).toHaveTextContent(
+      captionsPl.galerinaCap,
+    );
+    const fleshSide = within(comparison.getByTestId('comparison-side-galerina-flesh'));
+    expect(fleshSide.getByTestId('comparison-no-claim-galerina-flesh')).toBeTruthy();
+    expect(fleshSide.queryByText(/miąższ/i)).toBeNull();
+    expect(fleshSide.queryByText(/nie opisuje/i)).toBeNull();
+  });
+
   it('shows photo pairs, credits and the expert limit, with no taste wording', async () => {
     const copy = JSON.stringify(pl.comparison) + JSON.stringify(en.comparison);
     expect(copy).not.toMatch(TASTE);
@@ -138,16 +205,11 @@ describe('sulphur tuft and honey fungus comparison', () => {
     expect(comparison.getByTestId('comparison-no-photo-armillaria-flesh')).toBeTruthy();
     expect(comparison.getByTestId('comparison-no-photo-hypholoma-spore')).toBeTruthy();
     expect(comparison.getByTestId('comparison-no-photo-galerina-spore')).toBeTruthy();
-    expect(comparison.getByTestId('comparison-no-photo-galerina-flesh')).toBeTruthy();
-    expect(comparison.getByTestId('comparison-deadly-detail')).toHaveTextContent(
-      pl.comparison.sulphurHoney.deadlyDetail,
-    );
-    expect(comparison.getByTestId('comparison-not-single')).toHaveTextContent(
-      /Pierścień nie potwierdza opieńki/,
-    );
-    expect(comparison.getByTestId('comparison-not-single')).toHaveTextContent(/Żadna pojedyncza cecha/);
-    expect(comparison.getByTestId('comparison-deadly-ring')).toHaveTextContent(
-      pl.comparison.sulphurHoney.deadly,
+    expect(comparison.queryByTestId('comparison-no-photo-galerina-flesh')).toBeNull();
+    expect(comparison.getByTestId('comparison-no-claim-galerina-flesh')).toBeTruthy();
+    expect(comparison.getByTestId('comparison-warning')).toHaveTextContent(pl.comparison.sulphurHoney.warning);
+    expect(comparison.getByTestId('comparison-galerina-heading-ring')).toHaveTextContent(
+      pl.comparison.sulphurHoney.galerinaHeading,
     );
     expect(comparison.getByTestId('comparison-side-galerina-ring')).toBeTruthy();
     expect(comparison.getByTestId('comparison-caption-cap-galerina-kapelusz')).toHaveTextContent(
@@ -165,14 +227,16 @@ describe('sulphur tuft and honey fungus comparison', () => {
     expect(galerinaSide.borderRadius).toBeGreaterThanOrEqual(3);
     expect(galerinaSide.borderRadius).toBeLessThanOrEqual(6);
     expect(galerinaSide.borderLeftWidth).toBe(galerinaSide.borderRightWidth);
-    const deadly = comparison.getByTestId('comparison-deadly-ring');
-    const deadlyStyle = StyleSheet.flatten(deadly.props.style) as {
+    const warning = comparison.getByTestId('comparison-warning');
+    const warningStyle = StyleSheet.flatten(warning.props.style) as {
       backgroundColor?: string;
       borderLeftWidth?: number;
     };
-    expect(deadlyStyle.backgroundColor).toBeUndefined();
-    expect(deadlyStyle.borderLeftWidth).toBeUndefined();
-    expect(textColor(deadly)).toBe(textColor(comparison.getByTestId('comparison-lead')));
+    expect(warningStyle.backgroundColor).toBeUndefined();
+    expect(warningStyle.borderLeftWidth).toBeUndefined();
+    expect(textColor(warning)).toBe(textColor(comparison.getByTestId('comparison-lead')));
+    const latin = comparison.getByTestId('comparison-galerina-latin-ring');
+    expect((StyleSheet.flatten(latin.props.style) as { fontStyle?: string }).fontStyle).toBe('italic');
 
     for (const photo of COMPARISON_PHOTOS) {
       const authors = comparison.getAllByTestId(new RegExp(`^comparison-author-[a-z]+-${photo.id}$`));
@@ -210,8 +274,10 @@ describe('sulphur tuft and honey fungus comparison', () => {
     expect(contrastRatio(textColor(lead), nearestBackground(lead))).toBeGreaterThanOrEqual(4.5);
     const caption = comparison.getByTestId('comparison-caption-ring-galerina-pierscien');
     expect(contrastRatio(textColor(caption), nearestBackground(caption))).toBeGreaterThanOrEqual(4.5);
-    const deadlyDetail = comparison.getByTestId('comparison-deadly-detail');
-    expect(contrastRatio(textColor(deadlyDetail), nearestBackground(deadlyDetail))).toBeGreaterThanOrEqual(4.5);
+    const warningText = comparison.getByTestId('comparison-warning');
+    expect(contrastRatio(textColor(warningText), nearestBackground(warningText))).toBeGreaterThanOrEqual(4.5);
+    const heading = comparison.getByTestId('comparison-galerina-heading-ring');
+    expect(contrastRatio(textColor(heading), nearestBackground(heading))).toBeGreaterThanOrEqual(4.5);
     const license = comparison.getByTestId('comparison-license-ring-armillaria-pierscien-trzony');
     const licenseText = within(license).getByText('CC BY 4.0');
     expect(contrastRatio(textColor(licenseText), nearestBackground(licenseText))).toBeGreaterThanOrEqual(4.5);
@@ -238,8 +304,10 @@ describe('sulphur tuft and honey fungus comparison', () => {
     const caption = screen.getByTestId('comparison-caption-cap-galerina-kapelusz');
     expect(caption).toHaveTextContent(en.comparison.sulphurHoney.captions.galerinaCap);
     expect(contrastRatio(textColor(caption), nearestBackground(caption))).toBeGreaterThanOrEqual(4.5);
-    expect(screen.getByTestId('comparison-deadly-cap')).toHaveTextContent(en.comparison.sulphurHoney.deadly);
-    expect(screen.getByTestId('comparison-not-single')).toHaveTextContent(/does not confirm honey fungus/);
+    expect(screen.getByTestId('comparison-warning')).toHaveTextContent(en.comparison.sulphurHoney.warning);
+    expect(screen.getByTestId('comparison-galerina-heading-cap')).toHaveTextContent(
+      en.comparison.sulphurHoney.galerinaHeading,
+    );
     expect(screen.queryByText(TASTE)).toBeNull();
     expect(screen.queryByText(/331784845/)).toBeNull();
   });
@@ -301,7 +369,10 @@ describe('sulphur tuft and honey fungus comparison', () => {
     expect(ring.getByTestId('comparison-photo-ring-hypholoma-strefa-trzon')).toBeTruthy();
     expect(ring.getByTestId('comparison-photo-ring-armillaria-pierscien-trzony')).toBeTruthy();
     expect(ring.getByTestId('comparison-side-galerina-ring')).toBeTruthy();
-    expect(ring.getByTestId('comparison-deadly-ring')).toHaveTextContent(/Śmiertelnie trująca/);
+    expect(ring.getByTestId('comparison-galerina-heading-ring')).toHaveTextContent(
+      /śmiertelnie trująca/,
+    );
+    expect(ring.getByTestId('comparison-warning')).toHaveTextContent(/Zawiera amatoksyny/);
     expect(ring.queryByText(/331784845/)).toBeNull();
     expect(ring.queryByText(TASTE)).toBeNull();
   });

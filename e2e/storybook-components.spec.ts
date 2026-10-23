@@ -54,8 +54,12 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.getByTestId('comparison-trait-cap')).toBeVisible();
     await page.getByTestId('comparison-side-galerina-ring').scrollIntoViewIfNeeded();
     await expect(page.getByTestId('comparison-side-galerina-ring')).toBeVisible();
-    await expect(page.getByTestId('comparison-deadly-detail')).toContainText('amatoksyny');
-    await expect(page.getByTestId('comparison-not-single')).toContainText('nie potwierdza opieńki');
+    await expect(page.getByTestId('comparison-warning')).toHaveText(
+      'Zawiera amatoksyny. Żadna pojedyncza cecha, w tym pierścień, nie potwierdza opieńki.',
+    );
+    await expect(page.getByTestId('comparison-galerina-heading-ring')).toHaveText(
+      'Hełmówka jadowita (Galerina marginata) – śmiertelnie trująca',
+    );
     await expect(page.locator('body')).not.toContainText('gorzk');
     await expect(page.locator('body')).not.toContainText('smak');
     await expect(page.locator('body')).not.toContainText('331784845');
@@ -74,14 +78,14 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     expect(arm.x).toBeLessThan(gal.x);
     await page.getByTestId('comparison-side-galerina-ring').scrollIntoViewIfNeeded();
     await expect(page.getByTestId('comparison-caption-ring-galerina-pierscien')).toBeVisible();
-    await expect(page.getByTestId('comparison-deadly-ring')).toContainText('Śmiertelnie trująca');
+    await expect(page.getByTestId('comparison-galerina-heading-ring')).toContainText('śmiertelnie trująca');
     expect(await captionContrast(page, 'comparison-caption-ring-galerina-pierscien')).toBeGreaterThanOrEqual(4.5);
   });
 
   test('funeral bell captions stay readable in the dark story', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 800 });
     await page.goto('/iframe.html?id=mushroom-sulphurhoneycomparison--dark');
-    await expect(page.getByTestId('comparison-deadly-detail')).toContainText('amatoksyny');
+    await expect(page.getByTestId('comparison-warning')).toContainText('Zawiera amatoksyny');
     expect(await captionContrast(page, 'comparison-caption-cap-galerina-kapelusz')).toBeGreaterThanOrEqual(4.5);
     const gal = await columnBox(page, 'comparison-side-galerina-cap');
     expect(gal.width).toBeGreaterThanOrEqual(148);

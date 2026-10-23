@@ -289,19 +289,15 @@ export const en: Translations = {
       lead: 'Sulphur tuft has no membranous ring. At most a faint, spore-darkened fibrous zone remains, or remnants at the cap margin. Honey fungus usually has a clear membranous ring.',
       limit: 'Photos cannot rule out a poisonous species. An expert checks the specimen.',
       scope: 'The honey-fungus photos are Armillaria mellea. The atlas card also covers other honey fungi.',
-      deadly: 'Deadly poisonous. It contains amatoxins.',
-      deadlyDetail:
-        'Funeral bell contains amatoxins, the same toxin groups as the death cap. Poisoning can damage the liver and cause death.',
-      notSingle:
-        'A ring does not confirm honey fungus. No single feature confirms it. Size ranges overlap, and a clump on wood does not decide either.',
+      galerinaHeading: 'Deadly Galerina (Galerina marginata) – deadly poisonous',
+      warning:
+        'Contains amatoxins. No single feature, including the ring, confirms honey fungus.',
       chipHint:
         'The fibrous cortina zone is easy to take for a ring, so with “Has a ring” sulphur tuft stays among the cards to be checked.',
       hypholoma: 'Sulphur tuft',
       armillaria: 'Honey fungus',
-      galerina: 'Funeral bell',
       hypholomaLatin: 'Hypholoma fasciculare',
       armillariaLatin: 'Armillaria mellea',
-      galerinaLatin: 'Galerina marginata',
       sources: 'Sources',
       noPhoto: 'No photo of this trait.',
       traits: {
@@ -347,7 +343,6 @@ export const en: Translations = {
           title: 'Flesh',
           hypholoma: 'The flesh is sulphur yellow.',
           armillaria: 'The flesh is whitish.',
-          galerina: 'This comparison does not describe the flesh of funeral bell.',
         },
         wood: {
           title: 'Wood and growth',
@@ -368,11 +363,10 @@ export const en: Translations = {
         armillariaStems: 'Two fruiting bodies with a flared ring on the stem.',
         armillariaGills: 'Whitish ring and cream gills.',
         armillariaCap: 'Cap with fine, upright scales.',
-        galerinaClump:
-          'A clump on rotting wood, with smooth brown caps. A clump on wood does not separate funeral bell from honey fungus.',
-        galerinaRing: 'A thin whitish ring and rusty-orange gills. A ring does not confirm honey fungus.',
-        galerinaZone: 'A rusty ring zone. The stem has whitish fibrils and is darker toward the base.',
-        galerinaCap: 'A smooth cap with a paler drying centre and a darker, moist margin.',
+        galerinaClump: 'Cluster on rotting wood, like honey fungus.',
+        galerinaRing: 'Thin, fragile ring; yellowish to rusty-brown gills.',
+        galerinaZone: 'Ring zone often dusted with rusty spores.',
+        galerinaCap: 'Smooth cap that fades noticeably as it dries.',
       },
     },
   },

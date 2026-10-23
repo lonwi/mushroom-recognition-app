@@ -51,17 +51,17 @@ const DARK: Tone = {
   link: colors.emerald300,
 };
 
-const SIDE_LABEL: Record<ComparisonSideId, string> = {
+const SIDE_LABEL: Record<'hypholoma' | 'armillaria', string> = {
   hypholoma: 'comparison.sulphurHoney.hypholoma',
   armillaria: 'comparison.sulphurHoney.armillaria',
-  galerina: 'comparison.sulphurHoney.galerina',
 };
 
-const SIDE_LATIN: Record<ComparisonSideId, string> = {
+const SIDE_LATIN: Record<'hypholoma' | 'armillaria', string> = {
   hypholoma: 'comparison.sulphurHoney.hypholomaLatin',
   armillaria: 'comparison.sulphurHoney.armillariaLatin',
-  galerina: 'comparison.sulphurHoney.galerinaLatin',
 };
+
+const GALERINA_LATIN = 'Galerina marginata';
 
 const COLUMN_MIN_WIDTH = 160;
 
@@ -151,6 +151,36 @@ function PhotoBlock({
   );
 }
 
+function GalerinaHeading({
+  traitId,
+  tone,
+  t,
+}: {
+  traitId: string;
+  tone: Tone;
+  t: Translate;
+}) {
+  const heading = t('comparison.sulphurHoney.galerinaHeading');
+  const at = heading.indexOf(GALERINA_LATIN);
+  const testID = `comparison-galerina-heading-${traitId}`;
+  if (at < 0) {
+    return (
+      <Text style={[styles.sideName, { color: tone.text }]} testID={testID}>
+        {heading}
+      </Text>
+    );
+  }
+  return (
+    <Text style={[styles.sideName, { color: tone.text }]} testID={testID}>
+      {heading.slice(0, at)}
+      <Text style={[styles.italic, { color: tone.text }]} testID={`comparison-galerina-latin-${traitId}`}>
+        {GALERINA_LATIN}
+      </Text>
+      {heading.slice(at + GALERINA_LATIN.length)}
+    </Text>
+  );
+}
+
 function SideColumn({
   trait,
   side,
@@ -162,7 +192,9 @@ function SideColumn({
   tone: Tone;
   t: Translate;
 }) {
-  const species = t(SIDE_LABEL[side]);
+  const species =
+    side === 'galerina' ? t('comparison.sulphurHoney.galerinaHeading') : t(SIDE_LABEL[side]);
+  const claimKey = trait.textKey[side];
   const photos = trait.photoIds[side]
     .map((id) => comparisonPhotoById(id))
     .filter((item): item is ComparisonPhoto => item != null);
@@ -171,18 +203,25 @@ function SideColumn({
       style={[styles.side, { borderColor: tone.border, backgroundColor: tone.card }]}
       testID={`comparison-side-${side}-${trait.id}`}
     >
-      <Text style={[styles.sideName, { color: tone.text }]}>{species}</Text>
-      <Text style={[styles.latin, { color: tone.muted }]}>{t(SIDE_LATIN[side])}</Text>
       {side === 'galerina' ? (
-        <Text style={[styles.mark, { color: tone.text }]} testID={`comparison-deadly-${trait.id}`}>
-          {t('comparison.sulphurHoney.deadly')}
-        </Text>
-      ) : null}
-      <Text style={[styles.body, { color: tone.text }]}>{t(trait.textKey[side])}</Text>
+        <GalerinaHeading traitId={trait.id} tone={tone} t={t} />
+      ) : (
+        <>
+          <Text style={[styles.sideName, { color: tone.text }]}>{species}</Text>
+          <Text style={[styles.latin, { color: tone.muted }]}>{t(SIDE_LATIN[side])}</Text>
+        </>
+      )}
+      {claimKey ? (
+        <Text style={[styles.body, { color: tone.text }]}>{t(claimKey)}</Text>
+      ) : (
+        <View testID={`comparison-no-claim-${side}-${trait.id}`} />
+      )}
       {photos.length === 0 ? (
-        <Text style={[styles.meta, { color: tone.muted }]} testID={`comparison-no-photo-${side}-${trait.id}`}>
-          {t('comparison.sulphurHoney.noPhoto')}
-        </Text>
+        claimKey ? (
+          <Text style={[styles.meta, { color: tone.muted }]} testID={`comparison-no-photo-${side}-${trait.id}`}>
+            {t('comparison.sulphurHoney.noPhoto')}
+          </Text>
+        ) : null
       ) : (
         photos.map((item) => (
           <PhotoBlock key={item.id} photo={item} traitId={trait.id} species={species} tone={tone} t={t} />
@@ -267,11 +306,8 @@ export const SulphurHoneyComparison: React.FC<{ colorScheme?: ComparisonScheme }
       <Text style={[styles.body, { color: tone.text }]} testID="comparison-limit">
         {t('comparison.sulphurHoney.limit')}
       </Text>
-      <Text style={[styles.mark, { color: tone.text }]} testID="comparison-deadly-detail">
-        {t('comparison.sulphurHoney.deadlyDetail')}
-      </Text>
-      <Text style={[styles.body, { color: tone.text }]} testID="comparison-not-single">
-        {t('comparison.sulphurHoney.notSingle')}
+      <Text style={[styles.mark, { color: tone.text }]} testID="comparison-warning">
+        {t('comparison.sulphurHoney.warning')}
       </Text>
       <SourceList id="safety" urls={COMPARISON_SAFETY_SOURCES} tone={tone} t={t} />
       <Text style={[styles.meta, { color: tone.muted }]} testID="comparison-scope">
@@ -346,6 +382,10 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     lineHeight: typography.lineHeightSmall,
     marginBottom: spacing.xs,
+  },
+  italic: {
+    fontStyle: 'italic',
+    fontWeight: '800',
   },
   sideName: {
     fontSize: typography.small,
