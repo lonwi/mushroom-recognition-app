@@ -257,6 +257,10 @@ export const COMPARISON_GALLERY_IMAGES: Readonly<Record<string, ImageSourcePropT
   'armillaria-pierscien-trzony.webp': require('../../assets/gallery/porownanie/armillaria-pierscien-trzony.webp') as ImageSourcePropType,
   'armillaria-blaszki.webp': require('../../assets/gallery/porownanie/armillaria-blaszki.webp') as ImageSourcePropType,
   'armillaria-luski-kapelusz.webp': require('../../assets/gallery/porownanie/armillaria-luski-kapelusz.webp') as ImageSourcePropType,
+  'galerina-skupisko.webp': require('../../assets/gallery/porownanie/galerina-skupisko.webp') as ImageSourcePropType,
+  'galerina-pierscien.webp': require('../../assets/gallery/porownanie/galerina-pierscien.webp') as ImageSourcePropType,
+  'galerina-strefa.webp': require('../../assets/gallery/porownanie/galerina-strefa.webp') as ImageSourcePropType,
+  'galerina-kapelusz.webp': require('../../assets/gallery/porownanie/galerina-kapelusz.webp') as ImageSourcePropType,
 };
 
 export function photosForSpecies(speciesId: string): GalleryPhoto[] {

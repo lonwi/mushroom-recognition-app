@@ -1,4 +1,47 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+async function captionContrast(page: Page, testId: string): Promise<number> {
+  return page.getByTestId(testId).evaluate((el) => {
+    const parse = (value: string): [number, number, number] | null => {
+      const match = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(value);
+      if (!match) {
+        return null;
+      }
+      return [Number(match[1]), Number(match[2]), Number(match[3])];
+    };
+    const channel = (value: number) => {
+      const scaled = value / 255;
+      return scaled <= 0.03928 ? scaled / 12.92 : ((scaled + 0.055) / 1.055) ** 2.4;
+    };
+    const luminance = ([red, green, blue]: [number, number, number]) =>
+      0.2126 * channel(red) + 0.7152 * channel(green) + 0.0722 * channel(blue);
+    const foreground = parse(getComputedStyle(el).color);
+    let node: Element | null = el;
+    let background: [number, number, number] | null = null;
+    while (node) {
+      const parsed = parse(getComputedStyle(node).backgroundColor);
+      if (parsed && getComputedStyle(node).backgroundColor !== 'rgba(0, 0, 0, 0)') {
+        background = parsed;
+        break;
+      }
+      node = node.parentElement;
+    }
+    if (!foreground || !background) {
+      return 0;
+    }
+    const lighter = Math.max(luminance(foreground), luminance(background));
+    const darker = Math.min(luminance(foreground), luminance(background));
+    return (lighter + 0.05) / (darker + 0.05);
+  });
+}
+
+async function columnBox(page: Page, testId: string): Promise<{ x: number; width: number }> {
+  const box = await page.getByTestId(testId).boundingBox();
+  if (!box) {
+    throw new Error(`missing column ${testId}`);
+  }
+  return box;
+}
 
 test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
   test('sulphur tuft comparison pairs the cortina with a membranous ring', async ({ page }) => {
@@ -9,8 +52,39 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.getByTestId('comparison-photo-ring-armillaria-pierscien-trzony')).toBeVisible();
     await expect(page.getByTestId('comparison-trait-gills')).toBeVisible();
     await expect(page.getByTestId('comparison-trait-cap')).toBeVisible();
+    await page.getByTestId('comparison-side-galerina-ring').scrollIntoViewIfNeeded();
+    await expect(page.getByTestId('comparison-side-galerina-ring')).toBeVisible();
+    await expect(page.getByTestId('comparison-deadly-detail')).toContainText('amatoksyny');
+    await expect(page.getByTestId('comparison-not-single')).toContainText('nie potwierdza opieńki');
     await expect(page.locator('body')).not.toContainText('gorzk');
     await expect(page.locator('body')).not.toContainText('smak');
+    await expect(page.locator('body')).not.toContainText('331784845');
+  });
+
+  test('funeral bell column stays readable on a narrow screen', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 800 });
+    await page.goto('/iframe.html?id=mushroom-sulphurhoneycomparison--light');
+    const hyph = await columnBox(page, 'comparison-side-hypholoma-ring');
+    const arm = await columnBox(page, 'comparison-side-armillaria-ring');
+    const gal = await columnBox(page, 'comparison-side-galerina-ring');
+    expect(hyph.width).toBeGreaterThanOrEqual(148);
+    expect(arm.width).toBeGreaterThanOrEqual(148);
+    expect(gal.width).toBeGreaterThanOrEqual(148);
+    expect(hyph.x).toBeLessThan(arm.x);
+    expect(arm.x).toBeLessThan(gal.x);
+    await page.getByTestId('comparison-side-galerina-ring').scrollIntoViewIfNeeded();
+    await expect(page.getByTestId('comparison-caption-ring-galerina-pierscien')).toBeVisible();
+    await expect(page.getByTestId('comparison-deadly-ring')).toContainText('Śmiertelnie trująca');
+    expect(await captionContrast(page, 'comparison-caption-ring-galerina-pierscien')).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test('funeral bell captions stay readable in the dark story', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 800 });
+    await page.goto('/iframe.html?id=mushroom-sulphurhoneycomparison--dark');
+    await expect(page.getByTestId('comparison-deadly-detail')).toContainText('amatoksyny');
+    expect(await captionContrast(page, 'comparison-caption-cap-galerina-kapelusz')).toBeGreaterThanOrEqual(4.5);
+    const gal = await columnBox(page, 'comparison-side-galerina-cap');
+    expect(gal.width).toBeGreaterThanOrEqual(148);
   });
 
   test('EdibilityBadge renders all 4 edibility levels', async ({ page }) => {

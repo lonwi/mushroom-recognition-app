@@ -3,6 +3,7 @@ import {
   Image,
   Linking,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   useColorScheme,
@@ -10,6 +11,7 @@ import {
 } from 'react-native';
 import { useLanguage, type TranslationParams } from '../contexts/LanguageContext';
 import {
+  COMPARISON_SAFETY_SOURCES,
   COMPARISON_SIDES,
   COMPARISON_TRAITS,
   comparisonPhotoById,
@@ -52,12 +54,16 @@ const DARK: Tone = {
 const SIDE_LABEL: Record<ComparisonSideId, string> = {
   hypholoma: 'comparison.sulphurHoney.hypholoma',
   armillaria: 'comparison.sulphurHoney.armillaria',
+  galerina: 'comparison.sulphurHoney.galerina',
 };
 
 const SIDE_LATIN: Record<ComparisonSideId, string> = {
   hypholoma: 'comparison.sulphurHoney.hypholomaLatin',
   armillaria: 'comparison.sulphurHoney.armillariaLatin',
+  galerina: 'comparison.sulphurHoney.galerinaLatin',
 };
+
+const COLUMN_MIN_WIDTH = 160;
 
 function toneFor(scheme: ComparisonScheme): Tone {
   return scheme === 'dark' ? DARK : LIGHT;
@@ -134,7 +140,12 @@ function PhotoBlock({
         resizeMode="cover"
         accessibilityLabel={t('gallery.photoLabel', { species, feature: caption })}
       />
-      <Text style={[styles.caption, { color: tone.text }]}>{caption}</Text>
+      <Text
+        style={[styles.caption, { color: tone.text }]}
+        testID={`comparison-caption-${traitId}-${photo.id}`}
+      >
+        {caption}
+      </Text>
       <CreditLine photo={photo} traitId={traitId} tone={tone} t={t} />
     </View>
   );
@@ -162,6 +173,11 @@ function SideColumn({
     >
       <Text style={[styles.sideName, { color: tone.text }]}>{species}</Text>
       <Text style={[styles.latin, { color: tone.muted }]}>{t(SIDE_LATIN[side])}</Text>
+      {side === 'galerina' ? (
+        <Text style={[styles.mark, { color: tone.text }]} testID={`comparison-deadly-${trait.id}`}>
+          {t('comparison.sulphurHoney.deadly')}
+        </Text>
+      ) : null}
       <Text style={[styles.body, { color: tone.text }]}>{t(trait.textKey[side])}</Text>
       {photos.length === 0 ? (
         <Text style={[styles.meta, { color: tone.muted }]} testID={`comparison-no-photo-${side}-${trait.id}`}>
@@ -176,10 +192,19 @@ function SideColumn({
   );
 }
 
-function TraitSources({ trait, tone, t }: { trait: ComparisonTrait; tone: Tone; t: Translate }) {
-  const urls = [...new Set([...trait.sources.hypholoma, ...trait.sources.armillaria])];
+function SourceList({
+  id,
+  urls,
+  tone,
+  t,
+}: {
+  id: string;
+  urls: readonly string[];
+  tone: Tone;
+  t: Translate;
+}) {
   return (
-    <View style={styles.sources} testID={`comparison-sources-${trait.id}`}>
+    <View style={styles.sources} testID={`comparison-sources-${id}`}>
       <Text style={[styles.meta, { color: tone.muted }]}>{t('comparison.sulphurHoney.sources')}</Text>
       {urls.map((url, index) => (
         <Pressable
@@ -187,7 +212,7 @@ function TraitSources({ trait, tone, t }: { trait: ComparisonTrait; tone: Tone; 
           onPress={() => openUrl(url)}
           accessibilityRole="link"
           accessibilityLabel={sourceHost(url)}
-          testID={`comparison-source-link-${trait.id}-${index}`}
+          testID={`comparison-source-link-${id}-${index}`}
         >
           <Text style={[styles.link, { color: tone.link }]}>{url}</Text>
         </Pressable>
@@ -196,15 +221,28 @@ function TraitSources({ trait, tone, t }: { trait: ComparisonTrait; tone: Tone; 
   );
 }
 
+function TraitSources({ trait, tone, t }: { trait: ComparisonTrait; tone: Tone; t: Translate }) {
+  const urls = [...new Set(COMPARISON_SIDES.flatMap((side) => trait.sources[side]))];
+  return <SourceList id={trait.id} urls={urls} tone={tone} t={t} />;
+}
+
 function TraitBlock({ trait, tone, t }: { trait: ComparisonTrait; tone: Tone; t: Translate }) {
+  const columns = COMPARISON_SIDES.map((side) => (
+    <SideColumn key={side} trait={trait} side={side} tone={tone} t={t} />
+  ));
   return (
     <View style={styles.trait} testID={`comparison-trait-${trait.id}`}>
       <Text style={[styles.traitTitle, { color: tone.text }]}>{t(trait.titleKey)}</Text>
-      <View style={styles.pair}>
-        {COMPARISON_SIDES.map((side) => (
-          <SideColumn key={side} trait={trait} side={side} tone={tone} t={t} />
-        ))}
-      </View>
+      <ScrollView
+        horizontal
+        nestedScrollEnabled
+        showsHorizontalScrollIndicator
+        style={styles.columns}
+        contentContainerStyle={styles.pair}
+        testID={`comparison-columns-${trait.id}`}
+      >
+        {columns}
+      </ScrollView>
       <TraitSources trait={trait} tone={tone} t={t} />
     </View>
   );
@@ -229,6 +267,13 @@ export const SulphurHoneyComparison: React.FC<{ colorScheme?: ComparisonScheme }
       <Text style={[styles.body, { color: tone.text }]} testID="comparison-limit">
         {t('comparison.sulphurHoney.limit')}
       </Text>
+      <Text style={[styles.mark, { color: tone.text }]} testID="comparison-deadly-detail">
+        {t('comparison.sulphurHoney.deadlyDetail')}
+      </Text>
+      <Text style={[styles.body, { color: tone.text }]} testID="comparison-not-single">
+        {t('comparison.sulphurHoney.notSingle')}
+      </Text>
+      <SourceList id="safety" urls={COMPARISON_SAFETY_SOURCES} tone={tone} t={t} />
       <Text style={[styles.meta, { color: tone.muted }]} testID="comparison-scope">
         {t('comparison.sulphurHoney.scope')}
       </Text>
@@ -277,16 +322,30 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginBottom: spacing.sm,
   },
+  columns: {
+    alignSelf: 'stretch',
+    width: '100%',
+  },
   pair: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    flexGrow: 1,
     gap: spacing.sm,
   },
   side: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 0,
+    flexBasis: COLUMN_MIN_WIDTH,
+    minWidth: COLUMN_MIN_WIDTH,
     borderWidth: 1,
     borderRadius: radius.xs,
     padding: spacing.sm,
+  },
+  mark: {
+    fontSize: typography.small,
+    fontWeight: '800',
+    lineHeight: typography.lineHeightSmall,
+    marginBottom: spacing.xs,
   },
   sideName: {
     fontSize: typography.small,

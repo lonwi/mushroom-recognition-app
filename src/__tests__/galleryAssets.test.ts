@@ -127,12 +127,24 @@ describe('atlas gallery assets', () => {
       }>;
     };
     const listedUrls = exclusion.photos.map((photo) => photo.image_url);
-    expect(new Set(listedUrls)).toEqual(new Set(credited.map((photo) => photo.imageUrl)));
-    expect(listedUrls.length).toBe(new Set(listedUrls).size);
+    const creditedUrls = new Set(credited.map((photo) => photo.imageUrl));
+    const listed = new Set(listedUrls);
+    const hiddenOnly = 'https://inaturalist-open-data.s3.amazonaws.com/photos/331784845/original.jpg';
+    expect(listedUrls.length).toBe(listed.size);
+    for (const url of creditedUrls) {
+      expect(listed.has(url)).toBe(true);
+    }
+    expect([...listed].filter((url) => !creditedUrls.has(url))).toEqual([hiddenOnly]);
 
     for (const row of exclusion.photos) {
       const match = credited.find((photo) => photo.imageUrl === row.image_url);
-      expect(match?.sourceUrl).toBe(row.source_url);
+      if (!match) {
+        expect(row.image_url).toBe(hiddenOnly);
+        expect(row.inaturalist_observation_id).toBe('189400216');
+        expect(row.source_url).toBe('https://www.inaturalist.org/photos/331784845');
+        continue;
+      }
+      expect(match.sourceUrl).toBe(row.source_url);
       if (match?.inaturalistObservationId) {
         expect(row.inaturalist_observation_id).toBe(match.inaturalistObservationId);
         expect(row.inaturalist_photo_url ?? null).toBe(match.inaturalistPhotoUrl ?? null);

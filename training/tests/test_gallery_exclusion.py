@@ -198,8 +198,13 @@ class GalleryExclusionTest(unittest.TestCase):
             ("237957448", "139156344"),
             ("54007942", "34326887"),
             ("54007897", "34326887"),
+            ("481995011", "268164012"),
+            ("29910624", "19442400"),
+            ("342884222", "194976255"),
+            ("61730025", "38807007"),
+            ("331784845", "189400216"),
         )
-        self.assertEqual(len(pairs), 9)
+        self.assertEqual(len(pairs), 14)
         for photo_id, observation_id in pairs:
             self.assertIn(photo_id, exclusion.photo_ids)
             self.assertIn(observation_id, exclusion.inat_ids)
