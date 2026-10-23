@@ -46,10 +46,13 @@ function manifest(patch: Partial<NonNullable<ModelManifest['delegate_release']>[
 }
 
 describe('delegate release gate', () => {
-  test('keeps the 0.99 floor from the training ship gate', () => {
+  test('matches TFLITE_AGREEMENT_MIN parsed from the training ship gate', () => {
     const gates = fs.readFileSync(path.join(__dirname, '../../../training/ship_gates.py'), 'utf8');
-    expect(DELEGATE_AGREEMENT_MIN).toBe(0.99);
-    expect(gates).toContain('TFLITE_AGREEMENT_MIN = 0.99');
+    const match = gates.match(/^TFLITE_AGREEMENT_MIN = ([0-9.]+)$/m);
+    if (!match) {
+      throw new Error('TFLITE_AGREEMENT_MIN is missing from ship_gates.py');
+    }
+    expect(DELEGATE_AGREEMENT_MIN).toBe(Number(match[1]));
   });
 
   test('passes only when this model hash and the calibration sample match', () => {

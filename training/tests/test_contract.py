@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from evaluate import (
     choose_threshold,
+    id_validation_energies,
     confident_toxic_as_edible,
     deadly_probe_taxa,
     image_counts,
@@ -43,7 +44,7 @@ from recognition_math import (
     energy_score,
     softmax,
 )
-from ship_gates import assess_shippable
+from ship_gates import _int8_energy_reasons, assess_shippable, sha256_file
 
 FIXTURE = ROOT / "training" / "fixtures" / "decision_cases.json"
 PREPROCESS_FIXTURE = ROOT / "training" / "fixtures" / "preprocess_2x2_to_4.json"
@@ -318,7 +319,13 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertEqual(manifest["input"]["formula"], "(pixel / 127.5) - 1")
         self.assertFalse(manifest["ood"]["calibrated"])
         self.assertIsNone(manifest["quantization"])
-        self.assertIsNone(manifest["model_sha256"])
+        model_file = ROOT / "assets" / "models" / "mushrooms_model.tflite"
+        packaged_hash = sha256_file(model_file)
+        if model_file.is_file():
+            self.assertEqual(manifest["model_sha256"], packaged_hash)
+        else:
+            self.assertIsNone(packaged_hash)
+            self.assertIsNone(manifest["model_sha256"])
         self.assertIsNone(manifest["delegate_sample_sha256"])
         self.assertFalse(manifest["delegate_release"]["android-gpu"]["passed"])
         self.assertFalse(manifest["delegate_release"]["core-ml"]["passed"])
@@ -1471,6 +1478,42 @@ class ManifestAndShipGateTest(unittest.TestCase):
             copied_ok, copied_reasons = assess_shippable(copied, artifact_dir)
             self.assertFalse(copied_ok)
             self.assertTrue(any("do not carry over" in reason or "order statistic" in reason for reason in copied_reasons))
+
+    def test_int8_threshold_matches_when_validation_includes_background(self):
+        """Export and the int8 gate share the ID-only order statistic.
+
+        A background energy above every ID energy would move the threshold if
+        it were counted. Both paths skip it, so they stay equal.
+        """
+        from recognition_math import BACKGROUND_CLASS_ID
+
+        id_rows = [{"class_id": "boletus_edulis", "energy": float(energy)} for energy in range(1, 9)]
+        val_pred = id_rows + [{"class_id": BACKGROUND_CLASS_ID, "energy": 100.0}]
+        export_threshold = choose_threshold(val_pred)
+        stored = id_validation_energies(val_pred)
+        gate_threshold = choose_threshold([{"class_id": "species", "energy": energy} for energy in stored])
+        counted_background = choose_threshold(
+            [{"class_id": "species", "energy": energy} for energy in [*stored, 100.0]]
+        )
+        self.assertEqual(stored, [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0])
+        self.assertEqual(export_threshold, gate_threshold)
+        self.assertEqual(export_threshold, 8.0)
+        self.assertEqual(counted_background, 100.0)
+        self.assertNotEqual(export_threshold, counted_background)
+        reasons = _int8_energy_reasons(
+            {
+                "tflite": {"quantization": "int8"},
+                "ood": {"energy_threshold": export_threshold},
+                "energy_recalibration": {
+                    "quantization": "int8",
+                    "source": "validation_split",
+                    "copied_from_float": False,
+                    "threshold": export_threshold,
+                    "id_validation_energies": stored,
+                },
+            }
+        )
+        self.assertEqual(reasons, [])
 
     @contextmanager
     def _installed_repo_copy(self):

@@ -13,9 +13,16 @@ import math
 from pathlib import Path
 
 from delegate_sample import calibration_sample, sample_sha256
-from manifest import LABELS_PATH, load_manifest
+from manifest import LABELS_PATH, ROOT, load_manifest
 from recognition_math import HIGH_STAKES_IDS, decide, energy_score
-from ship_gates import DELEGATE_DECISION_FIELDS, DELEGATE_PLATFORMS, assess_delegate_release
+from ship_gates import (
+    DELEGATE_DECISION_FIELDS,
+    DELEGATE_PLATFORMS,
+    assess_delegate_release,
+    sha256_file,
+)
+
+MODEL_PATH = ROOT / "assets" / "models" / "mushrooms_model.tflite"
 
 ENTRY_KEYS = (
     "passed",
@@ -78,8 +85,19 @@ def _pair_ok(cpu: list, delegate: list, classes: list, ood: dict) -> tuple[bool,
     return top1, agreed, gap
 
 
-def score_device_dump(dump: dict, manifest: dict, sample: list[dict]) -> dict:
-    """Compare delegate logits to CPU logits on the fixed val+test sample."""
+def score_device_dump(
+    dump: dict,
+    manifest: dict,
+    sample: list[dict],
+    *,
+    model_path: Path | None = None,
+) -> dict:
+    """Compare delegate logits to CPU logits on the fixed val+test sample.
+
+    When `model_path` is a real file, its sha256 is the packaged model. The
+    dump and `labels.json` must both match that file. A dump that only copies
+    the manifest hash does not pass.
+    """
     classes = manifest.get("classes") or []
     ood = manifest.get("ood") if isinstance(manifest.get("ood"), dict) else {}
     dump_images = [image for image in dump.get("images") or [] if isinstance(image, dict)]
@@ -125,14 +143,27 @@ def score_device_dump(dump: dict, manifest: dict, sample: list[dict]) -> dict:
         "images": len(sample) if files_match else len(dump_images),
         "high_risk_images": risk_images if files_match else None,
     }
+    file_hash = sha256_file(model_path) if model_path is not None else None
+    manifest_hash = manifest.get("model_sha256")
+    if isinstance(file_hash, str):
+        expected_model = file_hash
+    elif isinstance(manifest_hash, str):
+        expected_model = manifest_hash
+    else:
+        expected_model = None
     expected_risk = sum(1 for row in sample if row["class_id"] in HIGH_STAKES_IDS)
     passed, reasons = assess_delegate_release(
         measurement,
-        expected_model_sha256=manifest.get("model_sha256"),
+        expected_model_sha256=expected_model,
         expected_sample_sha256=sample_hash,
         expected_images=len(sample),
         expected_high_risk_images=expected_risk,
     )
+    if isinstance(file_hash, str) and manifest_hash != file_hash:
+        mismatch = "labels.json model_sha256 does not match the packaged model file"
+        if mismatch not in reasons:
+            reasons.insert(0, mismatch)
+        passed = False
     measurement["passed"] = passed
     measurement["reason"] = None if passed else reasons[0]
     measurement["reasons"] = reasons
@@ -166,13 +197,19 @@ def main() -> None:
     parser.add_argument("--dump", required=True, type=Path)
     parser.add_argument("--splits", required=True, type=Path, help="splits.json with val and test rows")
     parser.add_argument("--manifest", type=Path, default=LABELS_PATH)
+    parser.add_argument(
+        "--model",
+        type=Path,
+        default=MODEL_PATH,
+        help="Packaged mushrooms_model.tflite. When the file exists, its sha256 is the model hash.",
+    )
     parser.add_argument("--write", action="store_true", help="Write this platform's gate into the manifest")
     args = parser.parse_args()
     dump = json.loads(args.dump.read_text(encoding="utf-8"))
     splits = json.loads(args.splits.read_text(encoding="utf-8"))
     sample = calibration_sample(splits)
     manifest = load_manifest(args.manifest)
-    measurement = score_device_dump(dump, manifest, sample)
+    measurement = score_device_dump(dump, manifest, sample, model_path=args.model)
     if args.write:
         write_delegate_release(args.manifest, measurement, sample_sha256(sample))
     print(json.dumps({key: measurement.get(key) for key in (*ENTRY_KEYS, "reasons")}, indent=2))

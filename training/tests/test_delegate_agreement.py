@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 import tempfile
@@ -151,3 +152,48 @@ class DelegateAgreementTest(unittest.TestCase):
             path = Path(tmp) / "labels.json"
             path.write_text(json.dumps(updated), encoding="utf-8")
             self.assertIn("android-gpu", path.read_text(encoding="utf-8"))
+
+    def test_packaged_file_hash_is_not_the_manifest_copy(self):
+        sample = _sample()
+        manifest_hash = "bb" * 32
+        with tempfile.TemporaryDirectory() as tmp:
+            model = Path(tmp) / "mushrooms_model.tflite"
+            payload = b"packaged-weights"
+            model.write_bytes(payload)
+            file_hash = hashlib.sha256(payload).hexdigest()
+            self.assertNotEqual(file_hash, manifest_hash)
+
+            copied = score_device_dump(
+                _dump(sample, manifest_hash),
+                _manifest(manifest_hash),
+                sample,
+                model_path=model,
+            )
+            self.assertFalse(copied["passed"])
+            self.assertTrue(any("model" in reason and "hash" in reason for reason in copied["reasons"]))
+
+            dump_matches_file = score_device_dump(
+                _dump(sample, file_hash),
+                _manifest(manifest_hash),
+                sample,
+                model_path=model,
+            )
+            self.assertFalse(dump_matches_file["passed"])
+            self.assertTrue(any("labels.json" in reason for reason in dump_matches_file["reasons"]))
+
+            agreed = score_device_dump(
+                _dump(sample, file_hash),
+                _manifest(file_hash),
+                sample,
+                model_path=model,
+            )
+            self.assertTrue(agreed["passed"], agreed["reasons"])
+
+            missing = Path(tmp) / "missing.tflite"
+            without_file = score_device_dump(
+                _dump(sample, manifest_hash),
+                _manifest(manifest_hash),
+                sample,
+                model_path=missing,
+            )
+            self.assertTrue(without_file["passed"], without_file["reasons"])

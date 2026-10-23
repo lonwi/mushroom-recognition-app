@@ -282,7 +282,7 @@ A development build can still try the delegate before that gate has passed, so t
 python training/score_delegate_dump.py --dump delegate-calibration.json --splits training/data/splits.json --write
 ```
 
-The sample is every val and test row. Train rows are rejected. `--write` records that platform in `assets/models/labels.json`. A failed gate is stored as `passed: false`.
+The sample is every val and test row. Train rows are rejected. `--write` records that platform in `assets/models/labels.json`. A failed gate is stored as `passed: false`. When `assets/models/mushrooms_model.tflite` is on disk, the score hashes that file. The dump and `labels.json` `model_sha256` both have to match those bytes. A dump that only repeats the manifest hash does not pass. Pass `--model` to point at another copy of the same file.
 
 ## Measuring inference on a phone
 

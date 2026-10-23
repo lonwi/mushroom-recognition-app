@@ -165,20 +165,26 @@ def summarize(predictions: list[dict], class_ids: list[str], threshold: float | 
     }
 
 
+def id_validation_energies(val_predictions: list[dict]) -> list[float]:
+    """In-distribution validation energies. Background rows do not move the threshold."""
+    return [
+        float(row["energy"])
+        for row in val_predictions
+        if row["class_id"] != BACKGROUND_CLASS_ID
+    ]
+
+
 def choose_threshold(val_predictions: list[dict], keep_rate: float = ID_KEEP_FIT) -> float:
     """Smallest validation energy that keeps at least `keep_rate` of ID images.
 
     This is an order statistic, not `numpy.quantile`. The linear quantile sits
     between samples, so on a short validation split fewer than 95% of energies
     are <= that interpolated value. The threshold is fit on validation only.
+    Background rows are omitted by `id_validation_energies`.
     """
     if not 0 < keep_rate < 1:
         raise ValueError("keep_rate must be between 0 and 1")
-    energies = sorted(
-        float(row["energy"])
-        for row in val_predictions
-        if row["class_id"] != BACKGROUND_CLASS_ID
-    )
+    energies = sorted(id_validation_energies(val_predictions))
     if len(energies) < 8:
         raise RuntimeError("need at least 8 in-distribution validation images to set an energy threshold")
     keep_count = math.ceil(keep_rate * len(energies) - 1e-9)

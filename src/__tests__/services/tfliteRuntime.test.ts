@@ -2,12 +2,14 @@
 import fs from 'fs';
 import path from 'path';
 
+import * as classifiedPhotoTally from '../../services/classifiedPhotoTally';
 import { classifiedPhotoCount, resetClassifiedPhotoCountForTests } from '../../services/classifiedPhotoTally';
 import { classifyImageWithDeps } from '../../services/classifierService';
 import { decideFromLogits } from '../../services/recognitionDecision';
 import { createJournalEntryFromScan } from '../../services/journalEntry';
 import { writeDelegateCalibrationDump } from '../../services/tfliteRuntime';
 import type { ModelManifest } from '../../services/modelManifest';
+import type { SightingRecord } from '../../types/mushroom';
 
 const runtimePath = path.join(__dirname, '../../services/tfliteRuntime.ts');
 const timingPath = path.join(__dirname, '../../services/inferenceTiming.ts');
@@ -326,8 +328,11 @@ describe('tflite hardware delegate', () => {
     expect(runtimeSource()).not.toContain('recordClassifiedPhoto');
   });
 
+  // TODO(#50): once achievements land, assert the event log in achievementsStore,
+  // not classifiedPhotoTally.
   test('a CPU retry is one decision, one journal entry, and one achievement count', async () => {
     resetClassifiedPhotoCountForTests();
+    const recordClassifiedPhoto = jest.spyOn(classifiedPhotoTally, 'recordClassifiedPhoto');
     const { logits, manifest } = boleteManifest();
     const load = jest.fn(async (_source: number, delegates: string[]) => {
       if (delegates.length > 0) {
@@ -343,7 +348,7 @@ describe('tflite hardware delegate', () => {
     const { Platform } = require('react-native') as typeof import('react-native');
     Platform.OS = 'android';
     devFlag().__DEV__ = true;
-    const saves: unknown[] = [];
+    const saves: SightingRecord[] = [];
 
     const result = await classifyImageWithDeps('file://camera/cap.jpg', {
       packagedModel: 1,
@@ -360,21 +365,26 @@ describe('tflite hardware delegate', () => {
     }
     expect(result.top3[0].id).toBe(decision.top3[0].id);
     expect(result.expertVerificationRequired).toBe(decision.expertVerificationRequired);
+    expect(recordClassifiedPhoto).toHaveBeenCalledTimes(1);
     expect(classifiedPhotoCount()).toBe(1);
 
+    const save = jest.fn(async (record: SightingRecord) => {
+      saves.push(record);
+      return record;
+    });
     await createJournalEntryFromScan(result, false, {
       createId: () => 'sighting_once',
       now: () => 1,
       readLocation: async () => null,
       persistPhoto: async () => 'cap.jpg',
-      save: async (record) => {
-        saves.push(record);
-        return record;
-      },
+      save,
     });
 
+    expect(save).toHaveBeenCalledTimes(1);
     expect(saves).toHaveLength(1);
+    expect(recordClassifiedPhoto).toHaveBeenCalledTimes(1);
     expect(classifiedPhotoCount()).toBe(1);
+    recordClassifiedPhoto.mockRestore();
   });
 });
 

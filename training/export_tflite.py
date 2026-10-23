@@ -22,9 +22,16 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from evaluate import DATA_DIR, assemble_report, choose_threshold, preprocessed_batch, prediction_from_logits
+from evaluate import (
+    DATA_DIR,
+    assemble_report,
+    choose_threshold,
+    id_validation_energies,
+    preprocessed_batch,
+    prediction_from_logits,
+)
 from manifest import LABELS_PATH, ROOT, load_manifest
-from recognition_math import BACKGROUND_CLASS_ID, HIGH_STAKES_IDS
+from recognition_math import HIGH_STAKES_IDS
 from ship_gates import TFLITE_AGREEMENT_MIN, assess_shippable, blank_delegate_release, fetch_report_file, sha256_file
 
 ARTIFACTS = ROOT / "training" / "artifacts"
@@ -285,9 +292,7 @@ def score_quantization(
         and risk_agreement >= TFLITE_AGREEMENT_MIN
     )
     if quantization == "int8":
-        id_energies = [
-            float(row["energy"]) for row in val_pred if row.get("class_id") != BACKGROUND_CLASS_ID
-        ]
+        id_energies = id_validation_energies(val_pred)
         threshold = choose_threshold(val_pred)
         if report["ood"]["energy_threshold"] != threshold:
             raise RuntimeError("int8 energy threshold was not taken from its own validation logits")
