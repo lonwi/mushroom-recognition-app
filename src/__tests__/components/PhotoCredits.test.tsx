@@ -55,6 +55,24 @@ describe('PhotoCredits', () => {
     openURL.mockRestore();
   });
 
+  it('rejects an http licence URL in every creditLicenseUrl branch', () => {
+    const httpBy = 'http://creativecommons.org/licenses/by/4.0/';
+    const httpZero = 'http://creativecommons.org/publicdomain/zero/1.0/';
+    const httpsBy = 'https://creativecommons.org/licenses/by/4.0/';
+    const httpsZero = 'https://creativecommons.org/publicdomain/zero/1.0/';
+    const named = { ...credit, license: 'CC BY 4.0', licenseNormalized: 'CC BY 4.0' };
+
+    expect(creditLicenseUrl({ ...named, licenseUrl: httpBy })).toBeNull();
+    expect(creditLicenseUrl({ ...named, licenseUrl: 'HTTP://creativecommons.org/licenses/by/4.0/' })).toBeNull();
+    expect(creditLicenseUrl({ ...named, license: httpBy })).toBeNull();
+    expect(creditLicenseUrl({ ...named, license: 'HTTP://creativecommons.org/licenses/by/4.0/' })).toBeNull();
+    expect(creditLicenseUrl({ ...named, licenseNormalized: httpZero })).toBeNull();
+
+    expect(creditLicenseUrl({ ...named, licenseUrl: httpBy, license: httpsBy })).toBe(httpsBy);
+    expect(creditLicenseUrl({ ...credit, license: httpZero, licenseNormalized: 'CC0' })).toBe(httpsZero);
+    expect(creditLicenseUrl({ ...named, license: httpBy, licenseUrl: httpsBy })).not.toMatch(/^http:\/\//i);
+  });
+
   it('shows a load failure instead of the empty-model message', async () => {
     const { getByTestId, queryByTestId, getByText } = await render(
       <LanguageProvider>

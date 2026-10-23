@@ -49,7 +49,7 @@ export function creditLicenseUrl(credit: PhotoCredit): string | null {
     return explicit;
   }
   const raw = credit.license.trim();
-  if (/^https?:\/\//i.test(raw)) {
+  if (/^https:\/\//i.test(raw)) {
     return raw;
   }
   const normalized = credit.licenseNormalized.trim().toUpperCase().replace(/\s+/g, ' ');
