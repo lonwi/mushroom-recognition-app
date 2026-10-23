@@ -440,6 +440,45 @@ class ManifestAndShipGateTest(unittest.TestCase):
         # Changing this constant is Wojtek's decision only.
         self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
 
+    def test_variant_c_leaves_agreement_share_https_and_license_url(self):
+        from component_share import COMPONENT_SHARE_LIMIT
+        from import_external import photo_license_decision
+        from ship_gates import TFLITE_AGREEMENT_MIN
+        from url_safety import force_https_url
+
+        self.assertEqual(TFLITE_AGREEMENT_MIN, 0.99)
+        self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
+        self.assertEqual(
+            force_https_url("http://images.example.test/a.jpg"),
+            "https://images.example.test/a.jpg",
+        )
+        pinned = (
+            ("CC BY 4.0", "", "license_url_empty"),
+            ("CC BY-NC 4.0", "", "license_url_empty"),
+            ("CC BY-SA 4.0", "", "license_url_empty"),
+            ("CC BY-NC 4.0", "http://creativecommons.org/licenses/by-nc/4.0/", "license_url_not_https"),
+            ("CC BY-SA 4.0", "http://creativecommons.org/licenses/by-sa/4.0/", "license_url_not_https"),
+            ("CC BY-NC 4.0", "https://creativecommons.org/licenses/by/4.0/", "license_url_mismatch"),
+            ("CC BY-SA 4.0", "https://creativecommons.org/licenses/by-nc/4.0/", "license_url_mismatch"),
+            ("CC BY 4.0", "https://creativecommons.org/licenses/by/2.0/", "license_url_mismatch"),
+        )
+        for text, url, reason in pinned:
+            decision, got = photo_license_decision(text, url)
+            self.assertIsNone(decision, text)
+            self.assertEqual(got, reason, text)
+        nc, nc_reason = photo_license_decision(
+            "CC BY-NC",
+            "https://creativecommons.org/licenses/by-nc/2.0/",
+        )
+        self.assertEqual(nc_reason, "")
+        self.assertEqual((nc["license_normalized"], nc["usage"]), ("cc-by-nc-2.0", "training_only"))
+        sa, sa_reason = photo_license_decision(
+            "CC BY-SA 4.0",
+            "https://creativecommons.org/licenses/by-sa/4.0/",
+        )
+        self.assertEqual(sa_reason, "")
+        self.assertEqual((sa["license_normalized"], sa["usage"]), ("cc-by-sa-4.0", "training_only"))
+
     def test_missing_component_share_blockers_key_blocks_shipping(self):
         with tempfile.TemporaryDirectory() as tmp:
             artifact_dir = Path(tmp)

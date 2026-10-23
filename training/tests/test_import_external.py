@@ -21,6 +21,7 @@ from license_policy import (
     allowed_for_training,
     exact_license_usage,
     license_breakdown,
+    license_family,
     training_license_rank,
 )
 from export_tflite import attribution_rows_for_publication
@@ -193,10 +194,19 @@ class LicenseParseTest(unittest.TestCase):
             self.assertTrue(allowed_for_training(license_id), license_id)
             row = {**ok, "license_normalized": license_id}
             if license_id == "df20":
-                row = {**row, "image_url": "", "df20_image_id": "223-1", "usage": "training_only"}
-            elif license_id not in shown:
-                row = {**row, "usage": "training_only"}
+                row = {
+                    **row,
+                    "license": "DF20 training-only; no per-image licence",
+                    "image_url": "",
+                    "source_url": "",
+                    "usage": "training_only",
+                }
+            elif license_id == "cc-by-nc-4.0":
+                row = {**row, "license": "CC BY-NC 4.0", "license_url": _BY_NC_40, "usage": "training_only"}
+            elif license_id == "cc-by-sa-4.0":
+                row = {**row, "license": "CC BY-SA 4.0", "license_url": _BY_SA_40, "usage": "training_only"}
             self.assertTrue(attributions_complete([row]), license_id)
+            self.assertNotIn("licence_url_source", row)
         for license_id in ("cc-by-nc-4.0", "cc-by-sa-4.0", "df20"):
             self.assertFalse(publishable_license_id(license_id), license_id)
             self.assertFalse(allowed_for_display(license_id), license_id)
@@ -205,7 +215,26 @@ class LicenseParseTest(unittest.TestCase):
             self.assertFalse(attributions_complete([{**ok, "license_normalized": license_id}]), license_id)
         self.assertFalse(attributions_complete([{**ok, "unverified": True}]))
         self.assertFalse(attributions_complete([{**ok, "creator": ""}]))
-        self.assertFalse(attributions_complete([{**ok, "license_normalized": "df20", "image_url": ""}]))
+        self.assertFalse(
+            attributions_complete(
+                [{**ok, "license_normalized": "cc-by-nc-4.0", "license": "CC BY-NC 4.0", "usage": "training_only"}]
+            )
+        )
+        self.assertFalse(
+            attributions_complete(
+                [{**ok, "license_normalized": "cc-by-sa-4.0", "license": "CC BY-SA 4.0", "usage": "training_only"}]
+            )
+        )
+        df20 = {
+            **ok,
+            "license": "DF20 training-only; no per-image licence",
+            "license_normalized": "df20",
+            "image_url": "",
+            "source_url": "",
+            "usage": "training_only",
+        }
+        self.assertTrue(attributions_complete([df20]))
+        self.assertFalse(attributions_complete([{**df20, "creator": ""}]))
         self.assertEqual(training_license_rank("cc-by-nc-4.0"), 3)
         self.assertEqual(training_license_rank("cc-by-sa-4.0"), 3)
         self.assertEqual(training_license_rank("df20"), 3)
@@ -253,6 +282,105 @@ class LicenseParseTest(unittest.TestCase):
         self.assertIsNone(parse_textual_license("CC BY-SA"))
         self.assertIsNone(parse_textual_license("CC BY-ND 4.0", "https://creativecommons.org/licenses/by-nd/4.0/"))
         self.assertIsNone(parse_textual_license("CC BY-NC-ND 4.0", "https://creativecommons.org/licenses/by-nc-nd/4.0/"))
+
+    def test_unversioned_ids_are_rejected_without_prefix_matching(self):
+        policy = Path(__file__).resolve().parents[1] / "license_policy.py"
+        self.assertNotIn("startswith", policy.read_text(encoding="utf-8"))
+        for raw in (
+            "cc-by",
+            "cc-by-nc",
+            "cc-by-sa",
+            "cc-by-nc-sa",
+            "cc-by-nc-4.0-extra",
+            "cc-by-sa-4",
+            "cc-by-4.0 ",
+        ):
+            self.assertIsNone(exact_license_usage(raw), raw)
+            self.assertIsNone(license_family(raw), raw)
+            self.assertFalse(allowed_for_training(raw), raw)
+            self.assertFalse(
+                attributions_complete(
+                    [
+                        {
+                            "creator": "Ada",
+                            "license_normalized": raw,
+                            "image_url": "https://images.example.test/a.jpg",
+                            "source_url": "https://example.test/a",
+                        }
+                    ]
+                ),
+                raw,
+            )
+        self.assertIsNone(parse_textual_license("CC BY-SA"))
+        self.assertIsNone(parse_textual_license("CC BY-NC"))
+        self.assertIsNone(parse_textual_license("CC BY-NC-SA"))
+        self.assertIsNone(parse_textual_license("cc-by-sa"))
+        self.assertIsNone(parse_textual_license("cc-by-nc"))
+        self.assertIsNone(parse_textual_license("cc-by-nc-sa"))
+        self.assertEqual(license_family("cc-by-nc-4.0"), "cc-by-nc")
+        self.assertIsNone(license_family("cc-by-nc-sa-4.0"))
+        self.assertNotEqual(license_family("cc-by-sa-4.0"), "cc-by")
+
+    def test_nd_is_rejected(self):
+        credited = {
+            "creator": "Ada",
+            "image_url": "https://images.example.test/a.jpg",
+            "source_url": "https://example.test/a",
+            "license_url": "https://creativecommons.org/licenses/by-nd/4.0/",
+        }
+        for raw, license_id in (
+            ("CC BY-ND", "cc-by-nd"),
+            ("CC BY-ND 4.0", "cc-by-nd-4.0"),
+            ("CC-BY-ND-4.0", "cc-by-nd-4.0"),
+            ("https://creativecommons.org/licenses/by-nd/4.0/", "cc-by-nd-4.0"),
+        ):
+            self.assertIsNone(parse_textual_license(raw), raw)
+            self.assertIsNone(
+                parse_textual_license(raw, "https://creativecommons.org/licenses/by-nd/4.0/"),
+                raw,
+            )
+            self.assertFalse(allowed_for_training(license_id), license_id)
+            self.assertFalse(
+                attributions_complete([{**credited, "license": raw, "license_normalized": license_id}]),
+                license_id,
+            )
+
+    def test_nc_sa_is_rejected(self):
+        credited = {
+            "creator": "Ada",
+            "image_url": "https://images.example.test/a.jpg",
+            "source_url": "https://example.test/a",
+            "license_url": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+        }
+        for raw, license_id in (
+            ("CC BY-NC-SA", "cc-by-nc-sa"),
+            ("CC BY-NC-SA 4.0", "cc-by-nc-sa-4.0"),
+            ("CC-BY-NC-SA-4.0", "cc-by-nc-sa-4.0"),
+            ("https://creativecommons.org/licenses/by-nc-sa/4.0/", "cc-by-nc-sa-4.0"),
+        ):
+            self.assertIsNone(parse_textual_license(raw), raw)
+            self.assertIsNone(
+                parse_textual_license(raw, "https://creativecommons.org/licenses/by-nc-sa/4.0/"),
+                raw,
+            )
+            self.assertFalse(allowed_for_training(license_id), license_id)
+            self.assertFalse(
+                attributions_complete([{**credited, "license": raw, "license_normalized": license_id}]),
+                license_id,
+            )
+
+    def test_unknown_or_empty_licence_blocks_release(self):
+        ok = {
+            "creator": "Ada",
+            "license_normalized": "cc-by-4.0",
+            "image_url": "https://images.example.test/a.jpg",
+            "source_url": "https://example.test/a",
+        }
+        self.assertTrue(attributions_complete([ok]))
+        for raw in ("", "   ", "custom", "see license", "all rights reserved", "public domain"):
+            self.assertFalse(attributions_complete([{**ok, "license_normalized": raw}]), repr(raw))
+            self.assertFalse(allowed_for_training(raw), repr(raw))
+        self.assertFalse(attributions_complete([{**ok, "license_normalized": None}]))
 
 
 class ImportDirectoryTest(unittest.TestCase):
@@ -1135,6 +1263,9 @@ class ImportDirectoryTest(unittest.TestCase):
             ("CC BY-NC-ND 4.0", "https://creativecommons.org/licenses/by-nc-nd/4.0/"),
             ("CC BY-SA 4.0", ""),
             ("CC BY-SA 4.0", "http://creativecommons.org/licenses/by-sa/4.0/"),
+            ("CC BY-NC 4.0", ""),
+            ("CC BY-NC 4.0", "http://creativecommons.org/licenses/by-nc/4.0/"),
+            ("CC BY-NC", "https://creativecommons.org/licenses/by-sa/4.0/"),
         )
         for index, (text, url) in enumerate(rejected):
             folder = self.root / f"rejected-{index}"
@@ -1186,11 +1317,42 @@ class ImportDirectoryTest(unittest.TestCase):
         self.assertEqual(df20_rows[0]["license_normalized"], "df20")
         self.assertEqual(df20_rows[0]["usage"], "training_only")
         self.assertEqual(df20_rows[0]["source"], "df20")
+        self.assertFalse(df20_rows[0].get("license_url"))
+        self.assertNotIn("licence_url_source", df20_rows[0])
+        self.assertTrue(attributions_complete(df20_rows))
         self.assertFalse(is_publishable(df20_rows[0]))
         self.assertTrue(training_eligible(df20_rows[0]))
         self.assertEqual(rows_for_atlas_gallery(df20_rows), [])
         self.assertEqual(license_breakdown(df20_rows)["by_license"], {"df20": 1})
         self.assertEqual(license_breakdown(df20_rows)["by_source"], {"df20": 1})
+
+    def test_nc_and_sa_keep_the_https_license_url_version_from_the_row(self):
+        cases = (
+            ("CC BY-NC", "https://creativecommons.org/licenses/by-nc/2.5/", "cc-by-nc-2.5"),
+            ("CC BY-SA", "https://creativecommons.org/licenses/by-sa/3.0/", "cc-by-sa-3.0"),
+        )
+        for index, (text, url, normalized) in enumerate(cases):
+            folder = self.root / f"version-{index}"
+            _photo(
+                folder / "one.csv",
+                [
+                    self._base(
+                        license=text,
+                        license_url=url,
+                        inat_photo_id=str(index + 1),
+                        inat_observation_id=str(index + 1),
+                        image_url=f"https://images.example.test/version-{index}.jpg",
+                        source_url=f"https://www.inaturalist.org/observations/{index + 1}",
+                    )
+                ],
+            )
+            rows, report = import_directory(folder, max_per_collector=10)
+            self.assertEqual(len(rows), 1, text)
+            self.assertEqual(rows[0]["license_normalized"], normalized, text)
+            self.assertEqual(rows[0]["license_url"], url, text)
+            self.assertEqual(rows[0]["usage"], "training_only", text)
+            self.assertTrue(attributions_complete(rows), text)
+            self.assertEqual(report["rows_written"], 1, text)
 
     def test_share_alike_beats_cc_by_and_cc0(self):
         orders = (

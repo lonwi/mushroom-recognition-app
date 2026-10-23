@@ -567,9 +567,28 @@ class SplitLeakTest(unittest.TestCase):
             "source_url": "https://www.inaturalist.org/observations/1",
         }
         self.assertTrue(attributions_complete([publishable]))
-        nc = {**publishable, "license": "CC BY-NC 4.0", "license_normalized": "cc-by-nc-4.0", "usage": "training_only"}
+        nc = {
+            **publishable,
+            "license": "CC BY-NC 4.0",
+            "license_normalized": "cc-by-nc-4.0",
+            "license_url": "https://creativecommons.org/licenses/by-nc/4.0/",
+            "usage": "training_only",
+        }
         self.assertTrue(attributions_complete([nc]))
-        self.assertTrue(attributions_complete([{**publishable, "license_normalized": "cc-by-sa-4.0"}]))
+        self.assertFalse(attributions_complete([{**nc, "license_url": ""}]))
+        self.assertTrue(
+            attributions_complete(
+                [
+                    {
+                        **publishable,
+                        "license": "CC BY-SA 4.0",
+                        "license_normalized": "cc-by-sa-4.0",
+                        "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+                    }
+                ]
+            )
+        )
+        self.assertFalse(attributions_complete([{**publishable, "license_normalized": "cc-by-sa-4.0"}]))
         self.assertFalse(attributions_complete([{**publishable, "license_normalized": "cc-by-nd-4.0"}]))
         self.assertFalse(attributions_complete([{**publishable, "license_normalized": "cc-by-nc-sa-4.0"}]))
         with tempfile.TemporaryDirectory() as tmp:
@@ -608,6 +627,7 @@ class SplitLeakTest(unittest.TestCase):
             "creator": "Cyra",
             "license": "CC BY-NC 4.0",
             "license_normalized": "cc-by-nc-4.0",
+            "license_url": "https://creativecommons.org/licenses/by-nc/4.0/",
             "usage": "training_only",
             "image_url": "https://images.example.test/nc.jpg",
             "source_url": "https://example.test/nc",
@@ -618,13 +638,13 @@ class SplitLeakTest(unittest.TestCase):
             "creator": "Dora",
             "license": "CC BY-SA 4.0",
             "license_normalized": "cc-by-sa-4.0",
+            "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
             "usage": "training_only",
             "image_url": "https://images.example.test/sa.jpg",
             "source_url": "https://example.test/sa",
             "file": "images/sa.jpg",
         }
         df20 = {
-            **cc_by,
             "creator": "Benny",
             "license": "DF20 training-only; no per-image licence",
             "license_normalized": "df20",
@@ -632,7 +652,7 @@ class SplitLeakTest(unittest.TestCase):
             "image_url": "",
             "source_url": "",
             "file": "",
-            "df20_image_id": "223-1",
+            "class_id": "boletus_edulis",
         }
         rows = [cc0, cc_by, nc, sa, df20]
         with tempfile.TemporaryDirectory() as tmp:
@@ -646,7 +666,10 @@ class SplitLeakTest(unittest.TestCase):
                 self.assertTrue(line["creator"].strip())
                 self.assertEqual(line["license"], original["license"])
                 self.assertEqual(line["license_normalized"], original["license_normalized"])
-            self.assertEqual(written[-1]["df20_image_id"], "223-1")
+            self.assertEqual(written[2]["license_url"], "https://creativecommons.org/licenses/by-nc/4.0/")
+            self.assertEqual(written[3]["license_url"], "https://creativecommons.org/licenses/by-sa/4.0/")
+            self.assertNotIn("license_url", written[4])
+            self.assertNotIn("licence_url_source", written[4])
             self.assertTrue(attributions_complete(written))
             coverage = {
                 "train_images": {"boletus_edulis": 3},

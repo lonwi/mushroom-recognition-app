@@ -6,9 +6,10 @@ shown in the app (atlas gallery, ``site/``, comparison photos) stay CC0 or
 CC BY. CC BY-SA is accepted only as an exact versioned id such as
 ``cc-by-sa-4.0``, and that id is ``usage=training_only``.
 
-The ids below are whole keys. ``cc-by-nc-4.0`` is not ``cc-by-4.0``, and
-``cc-by-nc-sa-4.0`` is not ``cc-by-nc-4.0``. ND, NC-ND, and NC-SA are absent
-on purpose. Do not prefix-match.
+The ids below are a closed list of whole keys. Nothing is accepted by
+prefix. ``cc-by`` is not ``cc-by-4.0``, ``cc-by-nc`` is not ``cc-by-nc-4.0``,
+``cc-by-sa`` is not ``cc-by-sa-4.0``, and ``cc-by-nc-sa`` is not
+``cc-by-nc-4.0``. ND, NC-ND, and NC-SA are absent on purpose.
 """
 
 from __future__ import annotations
@@ -19,33 +20,34 @@ PUBLISHABLE = "publishable"
 TRAINING_ONLY = "training_only"
 
 # ``training_only`` means the photo may train the released model and must not
-# be shown. It is not a reason to refuse ``shippable``.
-EXACT_LICENSE_USAGE: dict[str, str] = {
-    "cc0-1.0": PUBLISHABLE,
-    "cc-by-1.0": PUBLISHABLE,
-    "cc-by-2.0": PUBLISHABLE,
-    "cc-by-2.5": PUBLISHABLE,
-    "cc-by-3.0": PUBLISHABLE,
-    "cc-by-4.0": PUBLISHABLE,
-    "cc-by-nc-1.0": TRAINING_ONLY,
-    "cc-by-nc-2.0": TRAINING_ONLY,
-    "cc-by-nc-2.5": TRAINING_ONLY,
-    "cc-by-nc-3.0": TRAINING_ONLY,
-    "cc-by-nc-4.0": TRAINING_ONLY,
-    "cc-by-sa-1.0": TRAINING_ONLY,
-    "cc-by-sa-2.0": TRAINING_ONLY,
-    "cc-by-sa-2.5": TRAINING_ONLY,
-    "cc-by-sa-3.0": TRAINING_ONLY,
-    "cc-by-sa-4.0": TRAINING_ONLY,
-    "df20": TRAINING_ONLY,
-}
-
-_FAMILY_ORDER = (
-    ("cc-by-nc-", "cc-by-nc"),
-    ("cc-by-sa-", "cc-by-sa"),
-    ("cc-by-", "cc-by"),
-    ("cc0-", "cc0"),
+# be shown. It is not a reason to refuse ``shippable``. Each row is one exact
+# id, its usage, and its family. There is no prefix scan.
+_LICENSE_TABLE: tuple[tuple[str, str, str], ...] = (
+    ("cc0-1.0", PUBLISHABLE, "cc0"),
+    ("cc-by-1.0", PUBLISHABLE, "cc-by"),
+    ("cc-by-2.0", PUBLISHABLE, "cc-by"),
+    ("cc-by-2.5", PUBLISHABLE, "cc-by"),
+    ("cc-by-3.0", PUBLISHABLE, "cc-by"),
+    ("cc-by-4.0", PUBLISHABLE, "cc-by"),
+    ("cc-by-nc-1.0", TRAINING_ONLY, "cc-by-nc"),
+    ("cc-by-nc-2.0", TRAINING_ONLY, "cc-by-nc"),
+    ("cc-by-nc-2.5", TRAINING_ONLY, "cc-by-nc"),
+    ("cc-by-nc-3.0", TRAINING_ONLY, "cc-by-nc"),
+    ("cc-by-nc-4.0", TRAINING_ONLY, "cc-by-nc"),
+    ("cc-by-sa-1.0", TRAINING_ONLY, "cc-by-sa"),
+    ("cc-by-sa-2.0", TRAINING_ONLY, "cc-by-sa"),
+    ("cc-by-sa-2.5", TRAINING_ONLY, "cc-by-sa"),
+    ("cc-by-sa-3.0", TRAINING_ONLY, "cc-by-sa"),
+    ("cc-by-sa-4.0", TRAINING_ONLY, "cc-by-sa"),
+    ("df20", TRAINING_ONLY, "df20"),
 )
+
+EXACT_LICENSE_USAGE: dict[str, str] = {
+    license_id: usage for license_id, usage, _family in _LICENSE_TABLE
+}
+LICENSE_FAMILY: dict[str, str] = {
+    license_id: family for license_id, _usage, family in _LICENSE_TABLE
+}
 
 
 def exact_license_usage(license_id: object) -> str | None:
@@ -58,23 +60,17 @@ def exact_license_usage(license_id: object) -> str | None:
 def license_family(license_id: object) -> str | None:
     """``cc0``, ``cc-by``, ``cc-by-nc``, ``cc-by-sa``, or ``df20``.
 
-    An id that is not in the policy table has no family, including ND,
-    NC-ND, and NC-SA.
+    Only an id in ``LICENSE_FAMILY`` has a family. Unversioned ``cc-by-sa``,
+    ``cc-by-nc``, and ``cc-by-nc-sa`` have none, and so do ND, NC-ND, and NC-SA.
     """
-    if exact_license_usage(license_id) is None:
+    if not isinstance(license_id, str):
         return None
-    if license_id == "df20":
-        return "df20"
-    text = str(license_id)
-    for prefix, family in _FAMILY_ORDER:
-        if text.startswith(prefix):
-            return family
-    return None
+    return LICENSE_FAMILY.get(license_id)
 
 
 def allowed_for_training(license_id: object) -> bool:
     """True when this exact id may be in the training set of a released model."""
-    return license_family(license_id) is not None
+    return exact_license_usage(license_id) is not None
 
 
 def allowed_for_display(license_id: object) -> bool:

@@ -70,14 +70,11 @@ def attribution_row(row: dict) -> dict:
     usage = row.get("usage")
     if isinstance(usage, str) and usage:
         slim["usage"] = usage
+    license_url = row.get("license_url")
+    if isinstance(license_url, str) and license_url.strip():
+        slim["license_url"] = license_url.strip()
     if row.get("unverified") is True:
         slim["unverified"] = True
-    # DF20 has no public image URL. The ship gate reads this file, so the
-    # image id has to survive the slim row or a credited DF20 photo fails.
-    for key in ("df20_image_id", "df20_image_path", "ImageUniqueID"):
-        value = row.get(key)
-        if isinstance(value, str) and value.strip():
-            slim[key] = value.strip()
     return slim
 
 
@@ -86,11 +83,13 @@ def write_attribution_file(rows: list[dict], path: Path) -> None:
 
     Every train, val, and test row is written, including CC BY-NC, CC BY-SA,
     and DF20. Each line keeps the author (``creator``), the licence text, and
-    ``license_normalized``. A DF20 line also keeps the image id. Those
-    licences may train a released model and do not block the ship gate. The
-    gallery check is separate and still shows only CC0 and CC BY. An image or
-    source URL that is not https is refused. Counts by licence and source are
-    written beside this file as ``license_breakdown.json``.
+    ``license_normalized``. A CC BY-NC or CC BY-SA line also keeps the https
+    ``license_url`` from that photo. A DF20 line is the dataset row: author
+    and ``df20``, with no per-photo licence URL. Those licences may train a
+    released model and do not block the ship gate. The gallery check is
+    separate and still shows only CC0 and CC BY. An image or source URL that
+    is not https is refused. Counts by licence and source are written beside
+    this file as ``license_breakdown.json``.
     """
     for row in rows:
         for field in ("image_url", "source_url"):
