@@ -22,7 +22,7 @@ export const en: Translations = {
     offlineNotice: 'Model and database run 100% offline without network connectivity.',
     dataLicenseTitle: 'Dataset photo licenses',
     dataLicenseBody:
-      'A model, if one is shipped, may be trained only on CC0 or CC-BY photos (no NC or SA). The list includes training photos, test photos, and evaluation probes. Every photo keeps its author, license, and source URL. Export writes them next to the model in assets/models/attributions.jsonl.',
+      'A shipped model may be trained on CC0, CC BY, CC BY-NC, and versioned CC BY-SA photos. Share-alike does not cover the model weights. Photos shown in the app stay CC0 or CC BY. The list includes training photos, test photos, and evaluation probes. Every photo keeps its author, license, and source URL. Export writes them next to the model in assets/models/attributions.jsonl.',
     photoCreditsOpen: 'Dataset photo credits',
     photoCreditsLoading: 'Loading photo credits…',
     photoCreditsLead:

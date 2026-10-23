@@ -528,6 +528,35 @@ class ManifestAndShipGateTest(unittest.TestCase):
                 self.assertFalse(ok, license_id)
                 self.assertTrue(any("license" in reason for reason in reasons), license_id)
 
+    def test_versioned_cc_by_sa_rows_leave_the_release_shippable(self):
+        """Share-alike does not cover weights (2026-10-23 12:17, variant B, register 0004)."""
+        from license_policy import EXACT_LICENSE_USAGE, TRAINING_ONLY, allowed_for_display
+
+        versions = ("1.0", "2.0", "2.5", "3.0", "4.0")
+        for version in versions:
+            license_id = f"cc-by-sa-{version}"
+            self.assertEqual(EXACT_LICENSE_USAGE[license_id], TRAINING_ONLY, license_id)
+            self.assertFalse(allowed_for_display(license_id), license_id)
+        policy = (ROOT / "training" / "license_policy.py").read_text(encoding="utf-8")
+        gates = (ROOT / "training" / "ship_gates.py").read_text(encoding="utf-8")
+        self.assertIn("2026-10-23 12:17", policy)
+        self.assertIn("not cover model weights", policy)
+        self.assertNotIn("cc-by-sa", gates)
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            path = artifact_dir / "attributions.jsonl"
+            lines = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+            for index, version in enumerate(versions):
+                url = f"https://creativecommons.org/licenses/by-sa/{version}/"
+                lines[index]["license"] = f"CC BY-SA {version}"
+                lines[index]["license_normalized"] = f"cc-by-sa-{version}"
+                lines[index]["license_url"] = url
+                lines[index]["usage"] = "training_only"
+            path.write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertTrue(ok, reasons)
+
     def test_any_df20_row_blocks_release_even_if_consent_is_patched(self):
         from import_external import import_directory
         from license_policy import DF20_CONSENT_CONFIRMED, EXACT_LICENSE_USAGE, TRAINING_ONLY
