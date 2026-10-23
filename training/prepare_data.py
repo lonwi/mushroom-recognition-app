@@ -1,15 +1,19 @@
-"""Dedup, write the 224px training PNGs, then split by observation.
+"""Dedup, write the 224px training PNGs, then split without identity leakage.
 
-Atlas gallery photos that match by image URL, mo_observation_id, or
-iNaturalist observation id stay out of the test split.
+Repeated photo ids are dropped first. The split groups a photographer and
+an observation into one of train, val, or test. Atlas gallery photos that
+match by image URL, mo_observation_id, or the iNaturalist observation id in
+source_url stay out of test. A match that still lands in test stops the run.
 
     python training/prepare_data.py
     python training/prepare_data.py --with-external
     python training/prepare_data.py --publishable-only
+    python training/prepare_data.py --gallery-csv /path/galeria/manifest_gallery.csv
 
 Reads ``attributions.jsonl``. ``external.jsonl`` is read only with
 ``--with-external``. Unverified rows are skipped. ``--publishable-only``
-also skips ``usage=training_only`` (CC BY-NC and Danish Fungi 2020). Corrupt files
+also skips ``usage=training_only`` (CC BY-NC and Danish Fungi 2020). The split
+salt is ``GRZYBOBRANIE_SPLIT_SALT`` or a file outside the repo. Corrupt files
 are skipped. The cached PNG is EXIF-oriented and area-resized to the
 model input, which is what the phone feeds the network.
 """
@@ -26,12 +30,20 @@ from pathlib import Path
 
 import numpy as np
 
-from dedup import dedup_records, dropped_per_class, write_jsonl
-from gallery_exclusion import gallery_test_blocked
+from dataset_manifest import build_dataset_manifest
+from dedup import dedup_by_identity, dedup_records, dropped_per_class, write_jsonl
+from gallery_exclusion import (
+    GalleryLeakError,
+    assert_gallery_absent_from_test,
+    gallery_csv_paths,
+    load_pipeline_exclusion,
+    record_matches_gallery,
+)
 from import_external import training_eligible
 from manifest import ROOT, load_manifest
 from preprocess import MODEL_INPUT_SIZE, ImageReadError, load_oriented_rgb, write_model_png
 from split import split_by_observation, split_key_summary
+from split_salt import SplitSaltError, load_split_salt
 
 DATA_DIR = ROOT / "training" / "data"
 
@@ -188,13 +200,21 @@ def _cache_model_pngs(records: list[dict], size: int) -> tuple[list[dict], list[
     return kept, skipped
 
 
-def assign_splits(records: list[dict]) -> dict[str, list[dict]]:
-    """Train/val/test split. Atlas gallery photos stay out of test."""
-    return split_by_observation(records, test_blocked=gallery_test_blocked)
+def assign_splits(records: list[dict], *, salt: str, exclusion) -> tuple[dict[str, list[dict]], list[dict]]:
+    """Train/val/test split. Identity dedup has already run. A gallery photo in test raises."""
+    withheld: list[dict] = []
+    splits = split_by_observation(
+        records,
+        salt=salt,
+        test_blocked=lambda row: record_matches_gallery(row, exclusion),
+        withheld=withheld,
+    )
+    assert_gallery_absent_from_test(splits, exclusion)
+    return splits, withheld
 
 
 def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(description="Dedup, resize, and split downloaded photos")
+    parser = argparse.ArgumentParser(description="Dedup photos and write a leak-free train/val/test split")
     parser.add_argument(
         "--with-external",
         action="store_true",
@@ -205,7 +225,30 @@ def main(argv: list[str] | None = None) -> None:
         action="store_true",
         help="Drop usage=training_only rows (CC BY-NC and DF20) before dedup and split.",
     )
+    parser.add_argument(
+        "--gallery-csv",
+        action="append",
+        default=[],
+        help="Atlas gallery CSV (image_url, source_url, mo_observation_id). Repeat to add files. A test-set match stops the run.",
+    )
+    parser.add_argument(
+        "--gallery-config",
+        help="JSON file with a gallery_csvs list. Paths are relative to that file.",
+    )
+    parser.add_argument(
+        "--component-share-config",
+        help="JSON acknowledgement list for classes over the per-class component-share limit.",
+    )
     args = parser.parse_args(argv)
+    try:
+        salt = load_split_salt()
+        csv_paths = gallery_csv_paths(args.gallery_csv, args.gallery_config)
+        exclusion = load_pipeline_exclusion(csv_paths)
+        from component_share import load_share_config
+
+        share_config = load_share_config(Path(args.component_share_config) if args.component_share_config else None)
+    except (SplitSaltError, ValueError, OSError, json.JSONDecodeError) as error:
+        raise SystemExit(str(error)) from error
     sources = _attribution_sources(with_external=args.with_external)
     if not sources:
         raise SystemExit(
@@ -215,10 +258,28 @@ def main(argv: list[str] | None = None) -> None:
     manifest = load_manifest()
     size = int(manifest["input"]["size"])
     records, skipped = _usable_records(sources, publishable_only=args.publishable_only)
+    records, identity_dropped = dedup_by_identity(records)
     kept, dropped = dedup_records(records)
     prepared, prepare_skipped = _cache_model_pngs(kept, size)
     skipped.extend(prepare_skipped)
+    try:
+        splits, withheld = assign_splits(prepared, salt=salt, exclusion=exclusion)
+    except GalleryLeakError as error:
+        raise SystemExit(str(error)) from error
     write_jsonl(DATA_DIR / "attributions.dedup.jsonl", prepared)
+    identity_reasons = dict(Counter(row.get("drop_reason") or "" for row in identity_dropped))
+    class_conflicts = [
+        {
+            "class_id": row.get("class_id"),
+            "conflict_classes": row.get("conflict_classes"),
+            "file": row.get("file"),
+            "image_url": row.get("image_url"),
+            "inat_photo_id": row.get("inat_photo_id"),
+            "inat_observation_id": row.get("inat_observation_id"),
+        }
+        for row in identity_dropped
+        if row.get("drop_reason") == "class_conflict"
+    ]
     (DATA_DIR / "dedup_report.json").write_text(
         json.dumps(
             {
@@ -226,6 +287,10 @@ def main(argv: list[str] | None = None) -> None:
                 "dropped": len(dropped),
                 "dropped_per_class": dropped_per_class(dropped),
                 "hash": "dhash_or_phash_threshold_2",
+                "identity_dropped": len(identity_dropped),
+                "identity_dropped_reasons": identity_reasons,
+                "class_conflicts": class_conflicts,
+                "held_out_withheld": len(withheld),
                 "skipped_corrupt_or_unreadable": len(skipped),
                 "model_png_size": size or MODEL_INPUT_SIZE,
             },
@@ -233,7 +298,6 @@ def main(argv: list[str] | None = None) -> None:
         ),
         encoding="utf-8",
     )
-    splits = assign_splits(prepared)
     serializable = {name: rows for name, rows in splits.items()}
     (DATA_DIR / "splits.json").write_text(json.dumps(serializable, ensure_ascii=False), encoding="utf-8")
     counts = {name: dict(Counter(row["class_id"] for row in rows)) for name, rows in splits.items()}
@@ -242,6 +306,19 @@ def main(argv: list[str] | None = None) -> None:
         json.dumps(split_key_summary(prepared), indent=2),
         encoding="utf-8",
     )
+    dataset_manifest = build_dataset_manifest(splits, salt=salt, share_config=share_config, withheld=withheld)
+    (DATA_DIR / "dataset_manifest.json").write_text(
+        json.dumps(dataset_manifest, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    hard = dataset_manifest["component_share"]["hard_stop_classes"]
+    if hard:
+        raise SystemExit(
+            "per-class component share or empty val/test stops the run for: "
+            + ", ".join(hard)
+            + ". Add an explicit acknowledgement with a reason, or widen the class. "
+            "Acknowledged classes are written into dataset_manifest.json and block shipping."
+        )
     print(json.dumps({name: len(rows) for name, rows in splits.items()}))
 
 

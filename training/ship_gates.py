@@ -418,6 +418,13 @@ def assess_shippable(report: dict, artifact_dir: Path | None = None) -> tuple[bo
     if recorded.get("fetch_report_sha256") != fetch_hash:
         reasons.append("fetch_report sha256 does not match the file used for rare-taxon evidence")
 
+    share_blockers = report.get("component_share_blockers")
+    if isinstance(share_blockers, list):
+        for item in share_blockers:
+            text = str(item).strip()
+            if text:
+                reasons.append(text)
+
     # Delegate agreement is a separate release gate (assess_delegate_release).
     # A missing device report does not change these floors. Production stays on CPU.
     reasons.extend(_int8_energy_reasons(report))

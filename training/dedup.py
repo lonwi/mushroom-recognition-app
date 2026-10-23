@@ -1,12 +1,15 @@
-"""Drop exact byte duplicates and near-duplicate photos inside one class."""
+"""Drop exact byte duplicates, repeated photo ids, and near-duplicate photos."""
 
 from __future__ import annotations
 
 import hashlib
 import json
 import math
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
+
+from publication import classify_license_column
+from split import observation_identity_keys, photo_identity_keys
 
 
 def sha256_bytes(payload: bytes) -> str:
@@ -130,6 +133,153 @@ def dedup_records(records: list[dict], hash_distance: int = 2) -> tuple[list[dic
             (None if dhash is None else int(dhash), None if phash is None else int(phash))
         )
         kept.append(record)
+    return kept, dropped
+
+
+def _license_rank(record: dict) -> int:
+    """Prefer a versioned CC0 row over CC BY, and either over a training-only row."""
+    from import_external import exact_license_usage
+
+    normalized = record.get("license_normalized")
+    usage = exact_license_usage(normalized)
+    if usage == "publishable" and str(normalized).startswith("cc0-"):
+        return 2
+    if usage == "publishable":
+        return 1
+    url = record.get("license_url")
+    kind = classify_license_column(
+        record.get("license") if isinstance(record.get("license"), str) else None,
+        url if isinstance(url, str) else None,
+    )
+    if kind == "cc0":
+        return 2
+    if kind == "cc-by":
+        return 1
+    return 0
+
+
+def _class_conflict_indexes(records: list[dict]) -> dict[int, list[str]]:
+    """Indexes whose photo or observation id is tied to more than one species.
+
+    Every row of that id is listed. File order does not pick a label.
+    """
+    count = len(records)
+    parent = list(range(count))
+
+    def find(index: int) -> int:
+        while parent[index] != index:
+            parent[index] = parent[parent[index]]
+            index = parent[index]
+        return index
+
+    def union(left: int, right: int) -> None:
+        ra, rb = find(left), find(right)
+        if ra != rb:
+            parent[rb] = ra
+
+    owner: dict[str, int] = {}
+    for index, record in enumerate(records):
+        for key in photo_identity_keys(record):
+            previous = owner.get(key)
+            if previous is None:
+                owner[key] = index
+            else:
+                union(index, previous)
+    photo_members: dict[int, list[int]] = defaultdict(list)
+    for index in range(count):
+        photo_members[find(index)].append(index)
+
+    conflict: dict[int, set[str]] = defaultdict(set)
+    for indexes in photo_members.values():
+        labels = sorted({str(records[index].get("class_id") or "") for index in indexes})
+        if len(labels) > 1:
+            for index in indexes:
+                conflict[index].update(labels)
+
+    by_observation: dict[str, list[int]] = defaultdict(list)
+    for index, record in enumerate(records):
+        for key in observation_identity_keys(record):
+            by_observation[key].append(index)
+    for indexes in by_observation.values():
+        labels = sorted({str(records[index].get("class_id") or "") for index in indexes})
+        if len(labels) > 1:
+            for index in indexes:
+                conflict[index].update(labels)
+    return {index: sorted(labels) for index, labels in conflict.items()}
+
+
+def dedup_by_identity(records: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Drop a repeated photo id before the split.
+
+    The same photo, or the same observation id, under two species drops every
+    row of that id. Those rows are listed with ``drop_reason`` ``class_conflict``.
+    Two different photos that share an observation and one species are kept.
+    A second copy of one photo keeps the versioned CC0 or CC BY row.
+    A second copy of an observation that does not add a photo id is dropped.
+    """
+    conflicts = _class_conflict_indexes(records)
+    dropped: list[dict] = []
+    remaining: list[dict] = []
+    for index, record in enumerate(records):
+        labels = conflicts.get(index)
+        if labels:
+            dropped.append({**record, "drop_reason": "class_conflict", "conflict_classes": labels})
+        else:
+            remaining.append(record)
+
+    count = len(remaining)
+    parent = list(range(count))
+
+    def find(index: int) -> int:
+        while parent[index] != index:
+            parent[index] = parent[parent[index]]
+            index = parent[index]
+        return index
+
+    def union(left: int, right: int) -> None:
+        ra, rb = find(left), find(right)
+        if ra != rb:
+            parent[rb] = ra
+
+    owner: dict[str, int] = {}
+    photos: list[list[str]] = []
+    for index, record in enumerate(remaining):
+        found = photo_identity_keys(record)
+        photos.append(found)
+        for key in found:
+            previous = owner.get(key)
+            if previous is None:
+                owner[key] = index
+            else:
+                union(index, previous)
+
+    members: dict[int, list[int]] = defaultdict(list)
+    for index in range(count):
+        members[find(index)].append(index)
+    winner_of: dict[int, int] = {}
+    for indexes in members.values():
+        winner = min(indexes, key=lambda index: (-_license_rank(remaining[index]), index))
+        for index in indexes:
+            winner_of[index] = winner
+
+    seen_observation: set[str] = set()
+    kept: list[dict] = []
+    emitted: set[int] = set()
+    for index, record in enumerate(remaining):
+        winner = winner_of[index]
+        if winner in emitted or index != winner:
+            continue
+        emitted.add(winner)
+        for other in members[find(winner)]:
+            if other != winner:
+                dropped.append({**remaining[other], "drop_reason": "duplicate_photo_id"})
+        chosen = remaining[winner]
+        observed = observation_identity_keys(chosen)
+        if not photos[winner] and any(key in seen_observation for key in observed):
+            dropped.append({**chosen, "drop_reason": "duplicate_observation_id"})
+            continue
+        seen_observation.update(observed)
+        kept.append(chosen)
     return kept, dropped
 
 
