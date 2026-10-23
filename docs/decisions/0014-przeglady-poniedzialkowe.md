@@ -12,20 +12,16 @@
 
 Każdy ma dać raport z porównaniem do poprzedniego tygodnia. Poprawki z tych przeglądów startują dopiero po OK właściciela.
 
-W `.github/workflows/` nie ma workflow z harmonogramem `cron` pod te przeglądy. Są CI, Pages, Release i Dependabot. W historii Actions do 2026-10-23 nie ma przebiegu o takiej nazwie. Przebieg z poniedziałku 2026-10-19 nie powstał w GitHub Actions tego repozytorium. Jeśli harmonogram żyje poza repozytorium, w tym git go nie widać.
-
-Następny poniedziałek po 19.10.2026 to 26.10.2026. Samo odczekanie tej daty nie utworzy przebiegu, dopóki nie ma harmonogramu w miejscu, które naprawdę uruchamia przeglądy.
+W `.github/workflows/` nie ma workflow z harmonogramem `cron` pod te przeglądy. Są CI, Pages, Release i Dependabot. W historii Actions do 2026-10-23 nie ma przebiegu o takiej nazwie. Przebieg z poniedziałku 2026-10-19 nie powstał w GitHub Actions tego repozytorium. W tym git nie widać wyzwalacza, który odpaliłby przegląd 26.10.2026. Samo odczekanie tej daty nic nie uruchomi.
 
 ## Opcje
 
-- **A.** Poczekać na przebieg 26.10.2026.
+- **A.** Naprawić harmonogram i poczekać na przebieg 26.10.2026.
 - **B.** Uruchomić oba przeglądy ręcznie teraz.
 
 ## Rekomendacja
 
-Boty: **A**.
-
-Przy A trzeba wiedzieć, co ma odpalić przebieg 26.10. W tym repozytorium takiego wyzwalacza nie ma.
+Brak. Czekanie na 26.10 bez naprawy harmonogramu nic nie da, więc nie ma podstaw, żeby rekomendować samo odczekanie. Wybór między naprawą harmonogramu a ręcznym przebiegiem zostaje przy właścicielu.
 
 ## Decyzja
 
