@@ -12,7 +12,8 @@ source_url stay out of test. A match that still lands in test stops the run.
 
 Reads ``attributions.jsonl``. ``external.jsonl`` is read only with
 ``--with-external``. Unverified rows are skipped. ``--publishable-only``
-also skips ``usage=training_only`` (CC BY-NC and Danish Fungi 2020). The split
+also skips ``usage=training_only`` (CC BY-NC, CC BY-SA, and Danish Fungi 2020).
+Without that flag those rows stay in the training set. The split
 salt is ``GRZYBOBRANIE_SPLIT_SALT`` or a file outside the repo. Corrupt files
 are skipped. The cached PNG is EXIF-oriented and area-resized to the
 model input, which is what the phone feeds the network. An unacknowledged
@@ -150,7 +151,8 @@ def _usable_records(sources: list[Path], *, publishable_only: bool = False) -> t
     """Decode every downloaded photo. Skip corrupt files instead of aborting.
 
     Unverified external rows never enter the set. ``publishable_only`` also
-    drops ``usage=training_only`` (CC BY-NC and Danish Fungi 2020).
+    drops ``usage=training_only`` (CC BY-NC, CC BY-SA, and Danish Fungi 2020).
+    Without that flag ``--with-external`` keeps those rows for training.
     """
     records = []
     skipped = []
@@ -233,7 +235,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument(
         "--publishable-only",
         action="store_true",
-        help="Drop usage=training_only rows (CC BY-NC and DF20) before dedup and split.",
+        help="Drop usage=training_only rows (CC BY-NC, CC BY-SA, and DF20) before dedup and split.",
     )
     parser.add_argument(
         "--gallery-csv",

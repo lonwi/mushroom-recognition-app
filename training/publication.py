@@ -1,5 +1,6 @@
-"""What may be published. CC BY-NC and Danish Fungi 2020 stay training-only.
+"""What may be published. CC BY-NC, CC BY-SA, and Danish Fungi 2020 are not shown.
 
+They may train a released model. The allowed ids are ``license_policy``.
 ``licenses.py`` is unchanged on purpose: its bytes are part of the GBIF cache
 key. License text is parsed by ``import_external.parse_textual_license``:
 the version comes from the cell or from ``license_url``, the id is compared
@@ -9,7 +10,8 @@ without CC0 is not CC0. CC0 with no version is ``cc0-1.0``.
 
 from __future__ import annotations
 
-from import_external import exact_license_usage, parse_textual_license
+from import_external import parse_textual_license
+from license_policy import exact_license_usage, license_family
 
 _DF20_DATASETS = frozenset({"df20", "danish fungi 2020", "danish_fungi_2020"})
 
@@ -22,8 +24,9 @@ def publishable_normalized_id(license_id: str) -> bool:
 def classify_license_column(raw: str | None, license_url: str | None = None) -> str:
     """Read the license column with the external-CSV parser.
 
-    Returns ``cc0``, ``cc-by``, ``cc-by-nc``, ``df20``, ``rejected``, or ``missing``.
-    Versionless ``CC BY`` is ``rejected`` unless ``license_url`` carries the version.
+    Returns ``cc0``, ``cc-by``, ``cc-by-nc``, ``cc-by-sa``, ``df20``,
+    ``rejected``, or ``missing``. Versionless ``CC BY`` is ``rejected`` unless
+    ``license_url`` carries the version.
     """
     if raw is None:
         return "missing"
@@ -36,13 +39,9 @@ def classify_license_column(raw: str | None, license_url: str | None = None) -> 
     decision = parse_textual_license(text, license_url)
     if decision is None:
         return "rejected"
-    usage = exact_license_usage(decision["license_normalized"])
-    if usage == "training_only":
-        return "cc-by-nc"
-    if usage == "publishable" and str(decision["license_normalized"]).startswith("cc0-"):
-        return "cc0"
-    if usage == "publishable":
-        return "cc-by"
+    family = license_family(decision["license_normalized"])
+    if family in {"cc0", "cc-by", "cc-by-nc", "cc-by-sa", "df20"}:
+        return family
     return "rejected"
 
 
@@ -67,11 +66,10 @@ def _df20_marker(row: dict) -> bool:
 
 
 def excluded_from_publication(row: dict) -> bool:
-    """One condition: CC BY-NC and Danish Fungi 2020 are training-only.
+    """CC BY-NC, CC BY-SA, and Danish Fungi 2020 are not shown.
 
-    Callers drop both with ``if excluded_from_publication(row)``.
-    A versionless or unknown license is also unpublished. The license value
-    stays on the row.
+    Callers drop them with ``if excluded_from_publication(row)``. A versionless
+    or unknown license is also unpublished. The license value stays on the row.
     """
     usage = row.get("usage")
     if isinstance(usage, str) and usage.strip().casefold() == "training_only":

@@ -567,8 +567,10 @@ class SplitLeakTest(unittest.TestCase):
         }
         self.assertTrue(attributions_complete([publishable]))
         nc = {**publishable, "license": "CC BY-NC 4.0", "license_normalized": "cc-by-nc-4.0", "usage": "training_only"}
-        self.assertFalse(attributions_complete([nc]))
-        self.assertFalse(attributions_complete([{**publishable, "license_normalized": "cc-by-sa-4.0"}]))
+        self.assertTrue(attributions_complete([nc]))
+        self.assertTrue(attributions_complete([{**publishable, "license_normalized": "cc-by-sa-4.0"}]))
+        self.assertFalse(attributions_complete([{**publishable, "license_normalized": "cc-by-nd-4.0"}]))
+        self.assertFalse(attributions_complete([{**publishable, "license_normalized": "cc-by-nc-sa-4.0"}]))
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "attributions.jsonl"
             write_attribution_file([publishable, nc], path)

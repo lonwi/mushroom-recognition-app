@@ -6,22 +6,25 @@ Wikimedia Commons, Danish Fungi 2020). It does not download images.
 
     python training/import_external.py /path/to/zdjecia --output training/data/external.jsonl
 
-``usage`` is ``publishable`` for versioned CC0 and CC BY, and ``training_only``
-for versioned CC BY-NC and for DF20. Every photo row needs an https
-``license_url`` that names the same license as the text. An empty URL, an
-``http://`` URL, or a URL for a different license drops the row, including
-when the text already says ``CC BY 4.0``. A versionless ``CC BY`` with no
-``license_url`` is rejected. NC-ND, NC-SA, BY-SA, ND, and unknown licenses
-are rejected. The normalized id is matched in full (``cc-by-4.0``), never by
-prefix. The same photo from two sources keeps the stricter license:
-CC BY-NC and DF20 beat CC BY, and CC BY beats CC0, so the attribution stays.
-A row rejected for a licence reason records that photo's keys, and every
-other copy of the photo is dropped. A Commons row and an iNaturalist row
-merge only when they share an id (``inat_photo_id`` on either row, the
+The allowed training licences live in ``license_policy.py`` (Wojtek,
+2026-10-23, variant C): versioned CC0, CC BY, CC BY-NC, CC BY-SA, and DF20.
+``usage`` is ``publishable`` for CC0 and CC BY, and ``training_only`` for
+CC BY-NC, CC BY-SA, and DF20. ``training_only`` means the photo is not shown.
+It does not block a release on licence grounds. Every CC photo row needs an
+https ``license_url`` that names the same license as the text, including
+CC BY-SA. An empty URL, an ``http://`` URL, or a URL for a different license
+drops the row, including when the text already says ``CC BY 4.0``. A
+versionless ``CC BY`` with no ``license_url`` is rejected. NC-ND, NC-SA, ND,
+and unknown licenses are rejected. DF20 has no per-image Creative Commons
+URL. The normalized id is matched in full (``cc-by-4.0``), never by prefix.
+The same photo from two sources keeps the stricter license: CC BY-NC, DF20,
+and CC BY-SA beat CC BY, and CC BY beats CC0, so the extra duty stays on
+the row. A row rejected for a licence reason records that photo's keys, and
+every other copy of the photo is dropped. A Commons row and an iNaturalist
+row merge only when they share an id (``inat_photo_id`` on either row, the
 Commons file name, or the same image URL). Every kept row has an author
-credit. ``is_publishable`` is the check for the atlas gallery,
-``site/``, and comparison photos. CC BY-NC and DF20 fail it. The ship-gate
-file is a separate decision and still lists training-only rows.
+credit. ``is_publishable`` is the check for the atlas gallery, ``site/``,
+and comparison photos. CC BY-NC, CC BY-SA, and DF20 fail it.
 
 ``_niezweryfikowane`` files set ``unverified``. ``prepare_data.py`` skips
 those rows, so they are not mixed into train, val, or test.
@@ -42,6 +45,8 @@ from collections import Counter
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
 
+from license_policy import EXACT_LICENSE_USAGE as _EXACT_LICENSE_USAGE
+from license_policy import exact_license_usage, training_license_rank
 from manifest import ROOT, load_manifest
 from url_safety import force_https_url
 
@@ -88,21 +93,6 @@ _SKIP_TOKENS = {
     "deed",
 }
 _KNOWN_TOKENS = {"by", "nc", "nd", "sa", "zero", "public", "domain", "publicdomain", "cc0"}
-# Whole ids only. CC BY-SA is absent on purpose: add ``cc-by-sa-<version>``
-# here with ``training_only`` if the owner later allows it. Do not prefix-match.
-_EXACT_LICENSE_USAGE = {
-    "cc0-1.0": "publishable",
-    "cc-by-1.0": "publishable",
-    "cc-by-2.0": "publishable",
-    "cc-by-2.5": "publishable",
-    "cc-by-3.0": "publishable",
-    "cc-by-4.0": "publishable",
-    "cc-by-nc-1.0": "training_only",
-    "cc-by-nc-2.0": "training_only",
-    "cc-by-nc-2.5": "training_only",
-    "cc-by-nc-3.0": "training_only",
-    "cc-by-nc-4.0": "training_only",
-}
 _GBIF_OCCURRENCE = re.compile(r"gbif\.org/occurrence/(\d+)", re.IGNORECASE)
 _INAT_OBSERVATION = re.compile(r"inaturalist\.org/observations/(\d+)", re.IGNORECASE)
 _INAT_PHOTO = re.compile(r"/photos/(\d+)", re.IGNORECASE)
@@ -294,18 +284,12 @@ def _code_from_tokens(text: str) -> tuple[str | None, str | None]:
     return None, None
 
 
-def exact_license_usage(license_id: object) -> str | None:
-    """``publishable`` or ``training_only`` when ``license_id`` is an exact known id."""
-    if not isinstance(license_id, str):
-        return None
-    return _EXACT_LICENSE_USAGE.get(license_id)
-
-
 def training_eligible(row: dict, *, publishable_only: bool = False) -> bool:
     """False for unverified rows, and for training-only rows when asked.
 
-    ``publishable_only`` is the one switch that drops CC BY-NC and DF20
-    together (``usage == "training_only"``).
+    ``publishable_only`` drops CC BY-NC, CC BY-SA, and DF20 together
+    (``usage == "training_only"``). Without that switch they stay in the
+    training set.
     """
     if row.get("unverified") is True:
         return False
@@ -320,9 +304,8 @@ def is_publishable(row: dict) -> bool:
     Atlas gallery photos, ``site/`` pages, and comparison photos (issue #65)
     must use this. The license id has to be an exact publishable key such as
     ``cc-by-4.0`` or ``cc0-1.0``, the row has to be verified, and the image
-    URL has to be https. CC BY-NC and DF20 stay training-only. The attribution
-    gate in ``evaluate.py`` is unchanged and still rejects a release model
-    that contains ``training_only`` rows.
+    URL has to be https. CC BY-NC, CC BY-SA, and DF20 stay out of the gallery.
+    They may still train a released model. See ``license_policy.py``.
     """
     if not isinstance(row, dict):
         return False
@@ -330,7 +313,7 @@ def is_publishable(row: dict) -> bool:
         return False
     if row.get("usage") != "publishable":
         return False
-    if _EXACT_LICENSE_USAGE.get(row.get("license_normalized")) != "publishable":
+    if exact_license_usage(row.get("license_normalized")) != "publishable":
         return False
     creator = row.get("creator") or row.get("author")
     if not isinstance(creator, str) or not creator.strip():
@@ -814,21 +797,12 @@ def _photo_keys_from_raw(raw: dict) -> list[str]:
 
 
 def _license_strictness(row: dict) -> int:
-    """Higher is stricter: NC and DF20 outrank CC BY, which outranks CC0.
+    """Rank from ``license_policy.training_license_rank``.
 
-    CC BY beats CC0 so a public-domain copy does not drop the attribution.
-    Equal ranks keep the earliest row.
+    NC, DF20, and SA outrank CC BY, which outranks CC0. Equal ranks keep
+    the earliest row.
     """
-    license_id = str(row.get("license_normalized") or "")
-    if row.get("usage") == "training_only" or license_id == "df20" or license_id.startswith("cc-by-nc"):
-        return 3
-    if license_id.startswith("cc-by-"):
-        return 2
-    if license_id.startswith("cc0"):
-        return 1
-    if row.get("usage") == "publishable":
-        return 1
-    return 0
+    return training_license_rank(row.get("license_normalized"))
 
 
 def dedupe_rows(rows: list[dict]) -> tuple[list[dict], int, int, int, list[dict]]:
@@ -837,8 +811,9 @@ def dedupe_rows(rows: list[dict]) -> tuple[list[dict], int, int, int, list[dict]
     File order must not pick the species. When one photo id or one observation
     id is tied to two species, every row of that id is removed and the report
     lists the id with both labels. The same image under two licenses keeps the
-    stricter one: CC BY-NC and DF20 beat CC BY, and CC BY beats CC0 so the
-    attribution stays. Equal licenses keep the earliest row.
+    stricter one: CC BY-NC, DF20, and CC BY-SA beat CC BY, and CC BY beats
+    CC0 so the extra duty and the attribution stay. Equal licenses keep
+    the earliest row.
     """
     labels_by_key: dict[tuple[str, str], set[str]] = {}
     for row in rows:

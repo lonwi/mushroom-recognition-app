@@ -54,25 +54,49 @@ ID_KEEP_FIT = 0.97
 def publishable_license_id(license_id: str) -> bool:
     """True only for an exact publishable id such as ``cc-by-4.0`` or ``cc0-1.0``.
 
-    The table is ``import_external._EXACT_LICENSE_USAGE``. ``cc-by-nc-4.0`` is
+    The table is ``license_policy.EXACT_LICENSE_USAGE``. ``cc-by-nc-4.0`` is
     not ``cc-by-4.0``, and a versionless ``cc-by`` is not publishable.
     """
-    from import_external import exact_license_usage
+    from license_policy import allowed_for_display
 
-    return exact_license_usage(license_id) == "publishable"
+    return allowed_for_display(license_id)
+
+
+def _df20_image_identity(row: dict) -> bool:
+    """DF20 has no public image URL. A file or image id is the photo record."""
+    for key in ("image_url", "file", "prepared_file", "df20_image_id", "df20_image_path", "ImageUniqueID"):
+        value = row.get(key)
+        if isinstance(value, str) and value.strip():
+            return True
+    return False
 
 
 def attributions_complete(records: list[dict]) -> bool:
+    """True when every training row has a creator and an allowed training licence.
+
+    CC0, CC BY, CC BY-NC, CC BY-SA, and DF20 are allowed. ND, NC-SA, NC-ND,
+    an unknown id, and an unverified row are not. A CC row still needs an
+    image URL and a source page. DF20 needs a creator and a file or image id.
+    ``usage=training_only`` does not fail this check.
+    """
+    from license_policy import allowed_for_training
+
     if not records:
         return False
     for row in records:
-        # training_only covers CC BY-NC and DF20. Unverified ids stay out of a shipped model.
-        if row.get("usage") == "training_only" or row.get("unverified") is True:
+        if row.get("unverified") is True:
             return False
         license_id = str(row.get("license_normalized") or "")
-        if not publishable_license_id(license_id):
+        if not allowed_for_training(license_id):
             return False
-        if not row.get("creator") or not row.get("image_url"):
+        creator = row.get("creator")
+        if not isinstance(creator, str) or not creator.strip():
+            return False
+        if license_id == "df20":
+            if not _df20_image_identity(row):
+                return False
+            continue
+        if not row.get("image_url"):
             return False
         if not (row.get("source_url") or row.get("gbif_occurrence")):
             return False
@@ -828,7 +852,14 @@ def assemble_report(manifest: dict, splits: dict, val_pred: list[dict], test_pre
             ),
         },
         "attributions_complete": attributions_complete(all_rows),
+        "license_breakdown": _license_breakdown_report(train_rows, val_rows, test_rows),
     }
+
+
+def _license_breakdown_report(train_rows: list[dict], val_rows: list[dict], test_rows: list[dict]) -> dict:
+    from license_policy import license_breakdown_report
+
+    return license_breakdown_report({"train": train_rows, "val": val_rows, "test": test_rows})
 
 
 def main() -> None:
