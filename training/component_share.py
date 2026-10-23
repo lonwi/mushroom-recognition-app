@@ -276,7 +276,8 @@ def component_share_blockers(manifest: dict | None) -> list[str]:
         return found
     for class_id in hard:
         text = str(class_id).strip()
-        if text and not any(text in item for item in found):
+        prefix = f"{text}:"
+        if text and not any(item.startswith(prefix) for item in found):
             found.append(
                 f"{text}: unacknowledged component-share hard stop is still recorded. The model is not shippable."
             )

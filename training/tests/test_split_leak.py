@@ -921,7 +921,7 @@ class SplitLeakTest(unittest.TestCase):
         )
         self.assertTrue(
             any(
-                "boletus_edulis" in item
+                item.startswith("boletus_edulis:")
                 for item in component_share_blockers(
                     {
                         "component_share": {
@@ -932,6 +932,36 @@ class SplitLeakTest(unittest.TestCase):
                 )
             )
         )
+
+    def test_hard_stop_is_not_hidden_by_a_class_id_prefix(self):
+        longer_already_recorded = component_share_blockers(
+            {
+                "component_share": {
+                    "ship_blockers": [
+                        "boletus_edulis: one photographer. The model is not shippable."
+                    ],
+                    "hard_stop_classes": ["boletus", "boletus_edulis"],
+                }
+            }
+        )
+        self.assertEqual(
+            [item for item in longer_already_recorded if item.startswith("boletus_edulis:")],
+            ["boletus_edulis: one photographer. The model is not shippable."],
+        )
+        self.assertTrue(any(item.startswith("boletus:") for item in longer_already_recorded))
+        shorter_already_recorded = component_share_blockers(
+            {
+                "component_share": {
+                    "ship_blockers": ["boletus: acknowledged. The model is not shippable."],
+                    "hard_stop_classes": ["boletus", "boletus_edulis"],
+                }
+            }
+        )
+        self.assertEqual(
+            [item for item in shorter_already_recorded if item.startswith("boletus:")],
+            ["boletus: acknowledged. The model is not shippable."],
+        )
+        self.assertTrue(any(item.startswith("boletus_edulis:") for item in shorter_already_recorded))
         with tempfile.TemporaryDirectory() as tmp:
             missing = Path(tmp) / "dataset_manifest.json"
             self.assertTrue(blockers_from_manifest_file(missing))
