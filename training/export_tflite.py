@@ -34,7 +34,7 @@ DEFAULT_QUANTIZATIONS = ("fp16",)
 
 def attribution_row(row: dict) -> dict:
     source = row.get("source_url") or row.get("gbif_occurrence") or ""
-    return {
+    slim = {
         "file": row.get("prepared_file") or row.get("file") or "",
         "class_id": row.get("class_id") or "",
         "creator": row.get("creator") or "",
@@ -45,6 +45,12 @@ def attribution_row(row: dict) -> dict:
         "gbif_occurrence": row.get("gbif_occurrence") or "",
         "taxon_name": row.get("taxon_name") or "",
     }
+    usage = row.get("usage")
+    if isinstance(usage, str) and usage:
+        slim["usage"] = usage
+    if row.get("unverified") is True:
+        slim["unverified"] = True
+    return slim
 
 
 def write_attribution_file(rows: list[dict], path: Path) -> None:

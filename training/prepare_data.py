@@ -4,13 +4,18 @@ Atlas gallery photos that match by image URL, mo_observation_id, or
 iNaturalist observation id stay out of the test split.
 
     python training/prepare_data.py
+    python training/prepare_data.py --publishable-only
 
-Corrupt files are skipped. The cached PNG is EXIF-oriented and area-resized
-to the model input, which is what the phone feeds the network.
+Reads ``attributions.jsonl`` and, when present, ``external.jsonl``.
+Unverified rows are skipped. ``--publishable-only`` also skips
+``usage=training_only`` (CC BY-NC and Danish Fungi 2020). Corrupt files
+are skipped. The cached PNG is EXIF-oriented and area-resized to the
+model input, which is what the phone feeds the network.
 """
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import math
@@ -22,6 +27,7 @@ import numpy as np
 
 from dedup import dedup_records, dropped_per_class, write_jsonl
 from gallery_exclusion import gallery_test_blocked
+from import_external import training_eligible
 from manifest import ROOT, load_manifest
 from preprocess import MODEL_INPUT_SIZE, ImageReadError, load_oriented_rgb, write_model_png
 from split import split_by_observation, split_key_summary
@@ -95,14 +101,42 @@ def _perceptual_hashes(rgb) -> tuple[int, int]:
     return dhash, phash
 
 
-def _usable_records(source: Path) -> tuple[list[dict], list[dict]]:
-    """Decode every downloaded photo. Skip corrupt files instead of aborting."""
+def _attribution_sources() -> list[Path]:
+    """GBIF attributions, plus external.jsonl when the importer has written one."""
+    sources = []
+    primary = DATA_DIR / "attributions.jsonl"
+    external = DATA_DIR / "external.jsonl"
+    if primary.is_file():
+        sources.append(primary)
+    if external.is_file():
+        sources.append(external)
+    return sources
+
+
+def _usable_records(sources: list[Path], *, publishable_only: bool = False) -> tuple[list[dict], list[dict]]:
+    """Decode every downloaded photo. Skip corrupt files instead of aborting.
+
+    Unverified external rows never enter the set. ``publishable_only`` also
+    drops ``usage=training_only`` (CC BY-NC and Danish Fungi 2020).
+    """
     records = []
+    skipped = []
+    for source in sources:
+        skipped.extend(_usable_records_one(source, records, publishable_only=publishable_only))
+    return records, skipped
+
+
+def _usable_records_one(source: Path, records: list[dict], *, publishable_only: bool) -> list[dict]:
     skipped = []
     for line in source.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
         row = json.loads(line)
+        if not training_eligible(row, publishable_only=publishable_only):
+            if row.get("downloaded"):
+                reason = "unverified" if row.get("unverified") is True else "training_only"
+                skipped.append({**row, "skip_reason": reason})
+            continue
         if not row.get("downloaded"):
             continue
         path = DATA_DIR / row["file"]
@@ -121,7 +155,7 @@ def _usable_records(source: Path) -> tuple[list[dict], list[dict]]:
         row["sha256"] = hashlib.sha256(payload).hexdigest()
         row["bytes"] = len(payload)
         records.append(row)
-    return records, skipped
+    return skipped
 
 
 def _cache_model_pngs(records: list[dict], size: int) -> tuple[list[dict], list[dict]]:
@@ -148,13 +182,20 @@ def assign_splits(records: list[dict]) -> dict[str, list[dict]]:
     return split_by_observation(records, test_blocked=gallery_test_blocked)
 
 
-def main() -> None:
-    source = DATA_DIR / "attributions.jsonl"
-    if not source.is_file():
-        raise SystemExit("missing training/data/attributions.jsonl. Run fetch_gbif.py first.")
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description="Dedup, resize, and split downloaded photos")
+    parser.add_argument(
+        "--publishable-only",
+        action="store_true",
+        help="Drop usage=training_only rows (CC BY-NC and DF20) before dedup and split.",
+    )
+    args = parser.parse_args(argv)
+    sources = _attribution_sources()
+    if not sources:
+        raise SystemExit("missing training/data/attributions.jsonl. Run fetch_gbif.py or import_external.py first.")
     manifest = load_manifest()
     size = int(manifest["input"]["size"])
-    records, skipped = _usable_records(source)
+    records, skipped = _usable_records(sources, publishable_only=args.publishable_only)
     kept, dropped = dedup_records(records)
     prepared, prepare_skipped = _cache_model_pngs(kept, size)
     skipped.extend(prepare_skipped)

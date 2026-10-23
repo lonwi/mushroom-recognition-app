@@ -16,6 +16,20 @@ Rejected on purpose:
 
 Every accepted photo is written to `training/data/attributions.jsonl` with the creator, the license URL, the normalized license id, the image URL, and a source page (the publisher URL or the GBIF occurrence). That file is gitignored because the fetch produces it. `export_tflite.py` copies a slim attribution file next to the model (`training/artifacts/attributions.jsonl`, and `assets/models/attributions.jsonl` when a model is installed). See `training/ATTRIBUTION.md`.
 
+The GBIF fetch is unchanged: a media license must still be a CC0 or CC-BY URL. CC BY-NC and DF20 are not accepted there.
+
+## External photo lists
+
+`training/import_external.py` reads per-species CSVs (iNaturalist / GBIF / Wikimedia Commons, plus `df20/`) and writes `training/data/external.jsonl`. It does not download images and it does not commit them. `run_pipeline.py import-external` is the same command. `all` does not run it, because the CSVs are not in this repository.
+
+The license is the cell on the row. CC0 and CC BY (any version, including `CC BY`, `CC-BY-4.0`, and `CC0`) are `usage=publishable`. Plain CC BY-NC is `usage=training_only`. Danish Fungi 2020 rows are `usage=training_only` as well, with `license_normalized` `df20`, because the table has no per-photo Creative Commons license. CC BY-NC-ND, CC BY-NC-SA, CC BY-SA, CC BY-ND, and unknown licenses are dropped. `usage == "publishable"` is the single condition that removes both NC and DF20. Every kept row has an author credit (`creator`).
+
+Files whose name contains `_niezweryfikowane` are `unverified: true`, and so are rows whose `id_confidence` is `gbif_not_validated` or `commons_category`. They stay in the jsonl so a later split can see them, and `prepare_data.py` does not put them in train, val, or test. `--publishable-only` on prepare drops training-only rows before dedup.
+
+`--max-per-collector` (default 30) caps photos of one iNaturalist observer, or of the author when that login is missing, inside one class. Whole observations are kept when they fit. Observer, author, observation id, and photo id are stored for the split (`inat_observer`, `recorded_by`, `inat_observation_id`, `inaturalist_observation_id`, `mo_observation_id`, `occurrence_key`). Image and source URLs are rewritten to https.
+
+Species names map through `assets/models/labels.json` (class `gbif_names`, unknown taxa, and toxic probes). `Inocybe erubescens` maps to `Inosperma erubescens` on `unknown_mushroom`. A name that is not in the manifest is counted and skipped. `morchella_esculenta_v2.csv` replaces `morchella_esculenta.csv` when both are present. Summary and `*_meta.csv` files are not photo rows; meta is joined onto the photo by image URL (country, date, coordinates).
+
 ## Full run on a CPU machine
 
 TensorFlow’s pip wheel is the CPU build unless you install a CUDA extra yourself. The commands below are the full fetch and train. They download up to about 500 photos per known species and up to 2500 photos for each of `unknown_mushroom` and `not_a_mushroom`, then fine-tune MobileNetV3-Small. That is a long CPU job. This repository does not run it in CI.
@@ -259,7 +273,7 @@ Low confidence (top softmax under 0.70 or top-1/top-2 margin under 0.15) still s
 | Coverage | Every class in `labels.json` has a measured top-1/top-3 and support above 0 in train and in test. | required |
 | TFLite agreement | Top-1 match between the interpreter and the float Keras model on **every** val and test photo. | ≥ 0.99 |
 | TFLite high-risk agreement | The same match, only on high-risk class photos, again the full val+test count. | ≥ 0.99 |
-| Attribution | `attributions.jsonl` beside the model has one complete row (creator, CC0 or CC-BY, image URL, source page) per train+val+test image. | complete |
+| Attribution | `attributions.jsonl` beside the model has one complete row (creator, versioned CC0 or CC-BY, image URL, source page) per train+val+test image. `cc-by-nc…`, ND, SA, `usage=training_only`, and `unverified` rows fail this check. | complete |
 | Hashes | sha256 of `model.keras`, `mushrooms_model.tflite`, and `fetch_report.json` match the files on disk. The fetch-report hash covers the file `attach_fetch_evidence` reads, and that step overwrites `accepted`, `gbif_licensed_count`, and `exhausted_reason` from the report. `accepted` in that file is verified files. `gbif_licensed_count` is the entire licensed pool, written only when the GBIF query ended below the cap, and the rare-taxon exception also requires `exhausted_reason` to be `end_of_records` and `accepted` to equal that count. `replacement_budget` omits `gbif_licensed_count` and does not open the 5-photo floor. Regenerating the report changes the hash even when every download succeeded, because the report stores `selected`, `failed`, `pool`, `shortfall`, `exhausted_reason`, and `any_taxon_pool_exhausted`. A metrics file that still has the previous hash fails this gate until export records the new file. The numeric floors are unchanged. | exact |
 
 Export builds **fp16** weights with float32 input and output. `react-native-fast-tflite` runs XNNPACK, which executes that graph. A fully integer int8 graph is not the default: XNNPACK rejects MobileNetV3 ops from `TFLITE_BUILTINS_INT8` on device, while fp16 lands near 2 MB and keeps the float preprocess. `--quantization int8` is an experiment and is not what a ship build uses. There is no force flag.
