@@ -12,7 +12,6 @@ from __future__ import annotations
 import argparse
 import json
 import math
-import re
 import sys
 import zlib
 from collections import defaultdict
@@ -20,6 +19,7 @@ from pathlib import Path
 
 import numpy as np
 
+from publication import publishable_normalized_id
 from manifest import (
     ROOT,
     _REQUIRED_EXCEPTIONS,
@@ -51,17 +51,15 @@ ARTIFACTS = ROOT / "training" / "artifacts"
 ID_KEEP_FIT = 0.97
 
 
-# NC, ND, and SA are not publishable, including when the id still starts with cc-by-.
-_NON_PUBLISHABLE_LICENSE = re.compile(r"(?:^|-)(?:nc|nd|sa)(?:-|$)")
-
-
 def publishable_license_id(license_id: str) -> bool:
-    """True for versioned CC0 and CC-BY ids. NC, ND, and SA are rejected."""
-    if not isinstance(license_id, str):
-        return False
-    if not (license_id.startswith("cc0-") or license_id.startswith("cc-by-")):
-        return False
-    return _NON_PUBLISHABLE_LICENSE.search(license_id) is None
+    """True only for an exact publishable id such as ``cc-by-4.0`` or ``cc0-1.0``.
+
+    The table is ``import_external._EXACT_LICENSE_USAGE``. ``cc-by-nc-4.0`` is
+    not ``cc-by-4.0``, and a versionless ``cc-by`` is not publishable.
+    """
+    from import_external import exact_license_usage
+
+    return exact_license_usage(license_id) == "publishable"
 
 
 def attributions_complete(records: list[dict]) -> bool:
@@ -182,20 +180,26 @@ def summarize(predictions: list[dict], class_ids: list[str], threshold: float | 
     }
 
 
+def id_validation_energies(val_predictions: list[dict]) -> list[float]:
+    """In-distribution validation energies. Background rows do not move the threshold."""
+    return [
+        float(row["energy"])
+        for row in val_predictions
+        if row["class_id"] != BACKGROUND_CLASS_ID
+    ]
+
+
 def choose_threshold(val_predictions: list[dict], keep_rate: float = ID_KEEP_FIT) -> float:
     """Smallest validation energy that keeps at least `keep_rate` of ID images.
 
     This is an order statistic, not `numpy.quantile`. The linear quantile sits
     between samples, so on a short validation split fewer than 95% of energies
     are <= that interpolated value. The threshold is fit on validation only.
+    Background rows are omitted by `id_validation_energies`.
     """
     if not 0 < keep_rate < 1:
         raise ValueError("keep_rate must be between 0 and 1")
-    energies = sorted(
-        float(row["energy"])
-        for row in val_predictions
-        if row["class_id"] != BACKGROUND_CLASS_ID
-    )
+    energies = sorted(id_validation_energies(val_predictions))
     if len(energies) < 8:
         raise RuntimeError("need at least 8 in-distribution validation images to set an energy threshold")
     keep_count = math.ceil(keep_rate * len(energies) - 1e-9)
@@ -839,9 +843,15 @@ def main() -> None:
     val_pred = _predict_rows(model, splits["val"], image_size)
     test_pred = _predict_rows(model, splits["test"], image_size)
     report = assemble_report(manifest, splits, val_pred, test_pred)
+    from component_share import blockers_from_manifest_file
+
+    report["component_share_blockers"] = blockers_from_manifest_file(DATA_DIR / "dataset_manifest.json")
     report["tflite"] = {"loaded": False, "top1_agreement_with_fp32": None, "agreement_source": None}
     report["shippable"] = False
-    report["ship_blockers"] = ["TFLite export has not scored real val/test photos yet"]
+    report["ship_blockers"] = [
+        "TFLite export has not scored real val/test photos yet",
+        *report["component_share_blockers"],
+    ]
     ARTIFACTS.mkdir(parents=True, exist_ok=True)
     (ARTIFACTS / "metrics.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     print(

@@ -20,6 +20,7 @@ from evaluate import (
     DATA_DIR,
     attach_fetch_evidence,
     attributions_complete,
+    choose_threshold,
     poisonous_sample_reasons,
     without_fetch_counts,
 )
@@ -47,6 +48,11 @@ OPEN_SET_SAFE_WILSON_LOW_MIN = 0.85
 OPEN_SET_CONFIDENT_EDIBLE_MAX = 0.02
 OPEN_SET_CONFIDENT_EDIBLE_WILSON_HIGH_MAX = 0.05
 POISONOUS_HELDOUT_SUPPORT_MIN = 300
+# Top-1 agreement floors. Export and the delegate release gate both import this.
+# Do not lower it for a quantized graph or for a hardware delegate.
+TFLITE_AGREEMENT_MIN = 0.99
+DELEGATE_PLATFORMS = ("android-gpu", "core-ml")
+DELEGATE_DECISION_FIELDS = ("status", "top1", "expertVerificationRequired")
 
 
 def sha256_file(path: Path) -> str | None:
@@ -368,8 +374,8 @@ def assess_shippable(report: dict, artifact_dir: Path | None = None) -> tuple[bo
             f"TFLite agreement covered {agreement_images} photos, not the full val+test set ({expected_agreement})"
         )
     agreement = export_ok.get("top1_agreement_with_fp32")
-    if agreement is None or agreement < 0.99:
-        reasons.append(f"TFLite vs float32 top-1 agreement {agreement} is below 0.99")
+    if agreement is None or agreement < TFLITE_AGREEMENT_MIN:
+        reasons.append(f"TFLite vs float32 top-1 agreement {agreement} is below {TFLITE_AGREEMENT_MIN}")
     high_risk_agreement = export_ok.get("high_risk_top1_agreement")
     high_risk_images = export_ok.get("high_risk_agreement_images")
     expected_risk = _high_risk_total(coverage.get("val_images"), coverage.get("test_images"))
@@ -383,8 +389,10 @@ def assess_shippable(report: dict, artifact_dir: Path | None = None) -> tuple[bo
         reasons.append(
             f"TFLite high-risk agreement covered {high_risk_images} photos, not the full high-risk val+test set ({expected_risk})"
         )
-    elif high_risk_agreement is None or high_risk_agreement < 0.99:
-        reasons.append(f"TFLite vs float32 high-risk top-1 agreement {high_risk_agreement} is below 0.99")
+    elif high_risk_agreement is None or high_risk_agreement < TFLITE_AGREEMENT_MIN:
+        reasons.append(
+            f"TFLite vs float32 high-risk top-1 agreement {high_risk_agreement} is below {TFLITE_AGREEMENT_MIN}"
+        )
     if not report.get("attributions_complete"):
         reasons.append("per-image attribution file is incomplete")
     reasons.extend(_attribution_file_reasons(directory, coverage))
@@ -410,4 +418,132 @@ def assess_shippable(report: dict, artifact_dir: Path | None = None) -> tuple[bo
     if recorded.get("fetch_report_sha256") != fetch_hash:
         reasons.append("fetch_report sha256 does not match the file used for rare-taxon evidence")
 
+    if "component_share_blockers" not in report or not isinstance(report.get("component_share_blockers"), list):
+        reasons.append(
+            "component_share_blockers is missing from the ship report, so the per-class component share was not checked"
+        )
+    else:
+        for item in report["component_share_blockers"]:
+            text = str(item).strip()
+            if text:
+                reasons.append(text)
+
+    # Delegate agreement is a separate release gate (assess_delegate_release).
+    # A missing device report does not change these floors. Production stays on CPU.
+    reasons.extend(_int8_energy_reasons(report))
+
+    return (len(reasons) == 0, reasons)
+
+
+def blank_delegate_release() -> dict:
+    """No platform has passed the on-device delegate gate."""
+    return {
+        platform: {"passed": False, "reason": "not_measured"}
+        for platform in DELEGATE_PLATFORMS
+    }
+
+
+def _agreement_met(value: object) -> bool:
+    return _finite(value) and float(value) >= TFLITE_AGREEMENT_MIN  # type: ignore[arg-type]
+
+
+def _int8_energy_reasons(report: dict) -> list[str]:
+    """int8 must recalibrate energy on its own validation logits.
+
+    An fp16 threshold copied onto the integer graph is not evidence.
+    Other quantizations keep the threshold assemble_report already fit.
+    """
+    export_ok = report.get("tflite") if isinstance(report.get("tflite"), dict) else {}
+    if export_ok.get("quantization") != "int8":
+        return []
+    block = report.get("energy_recalibration")
+    if (
+        not isinstance(block, dict)
+        or block.get("quantization") != "int8"
+        or block.get("source") != "validation_split"
+    ):
+        return ["int8 energy threshold was not recalibrated on the int8 validation logits"]
+    reasons = []
+    if block.get("copied_from_float") is not False:
+        reasons.append("int8 energy threshold was copied from a float model; fp16 thresholds do not carry over")
+    energies = block.get("id_validation_energies")
+    if not isinstance(energies, list) or any(isinstance(item, bool) or not _finite(item) for item in energies):
+        reasons.append("int8 energy recalibration is missing validation energies")
+        return reasons
+    predictions = [{"class_id": "species", "energy": float(item)} for item in energies]
+    try:
+        expected = choose_threshold(predictions)
+    except (RuntimeError, ValueError) as error:
+        reasons.append(f"int8 energy recalibration could not be checked: {error}")
+        return reasons
+    ood = report.get("ood") if isinstance(report.get("ood"), dict) else {}
+    if block.get("threshold") != expected or ood.get("energy_threshold") != expected:
+        reasons.append("int8 energy threshold does not match the validation order statistic")
+    return reasons
+
+
+def assess_delegate_release(
+    measurement: object,
+    *,
+    expected_model_sha256: str | None = None,
+    expected_sample_sha256: str | None = None,
+    expected_images: int | None = None,
+    expected_high_risk_images: int | None = None,
+) -> tuple[bool, list[str]]:
+    """Delegate logits versus CPU on the same val and test images.
+
+    Fail closed. A missing, stale, or hash-mismatched report does not pass.
+    This does not lower the 0.99 top-1 floors. The maximum energy difference
+    is required in the report; it is not a second, looser accuracy floor.
+    """
+    if not isinstance(measurement, dict) or not measurement:
+        return False, ["delegate agreement report is missing"]
+    reasons: list[str] = []
+    platform = measurement.get("platform")
+    if platform not in DELEGATE_PLATFORMS:
+        reasons.append(f"delegate platform {platform} is not android-gpu or core-ml")
+    if measurement.get("measured_on") != "device":
+        reasons.append("delegate agreement was not measured on a device")
+    if not expected_model_sha256 or measurement.get("model_sha256") != expected_model_sha256:
+        reasons.append("delegate report model hash does not match the packaged model")
+    if not expected_sample_sha256 or measurement.get("sample_sha256") != expected_sample_sha256:
+        reasons.append("delegate report is stale: the calibration sample hash does not match val and test")
+    images = measurement.get("images")
+    if not isinstance(images, int) or isinstance(images, bool) or expected_images is None or images != expected_images or images < 1:
+        reasons.append(f"delegate agreement covered {images} photos, not the full val+test sample ({expected_images})")
+    risk_images = measurement.get("high_risk_images")
+    if (
+        not isinstance(risk_images, int)
+        or isinstance(risk_images, bool)
+        or expected_high_risk_images is None
+        or risk_images != expected_high_risk_images
+        or risk_images < 1
+    ):
+        reasons.append(
+            f"delegate high-risk agreement covered {risk_images} photos, "
+            f"not the full high-risk val+test sample ({expected_high_risk_images})"
+        )
+    if not _agreement_met(measurement.get("top1_agreement")):
+        reasons.append(
+            f"delegate vs CPU top-1 agreement {measurement.get('top1_agreement')} is below {TFLITE_AGREEMENT_MIN}"
+        )
+    if not _agreement_met(measurement.get("high_risk_top1_agreement")):
+        reasons.append(
+            "delegate vs CPU high-risk top-1 agreement "
+            f"{measurement.get('high_risk_top1_agreement')} is below {TFLITE_AGREEMENT_MIN}"
+        )
+    if tuple(measurement.get("decision_fields") or ()) != DELEGATE_DECISION_FIELDS:
+        reasons.append("delegate decision agreement must compare status, top-1, and expertVerificationRequired")
+    if not _agreement_met(measurement.get("decision_agreement")):
+        reasons.append(
+            f"delegate vs CPU decision agreement {measurement.get('decision_agreement')} is below {TFLITE_AGREEMENT_MIN}"
+        )
+    if not _agreement_met(measurement.get("high_risk_decision_agreement")):
+        reasons.append(
+            "delegate vs CPU high-risk decision agreement "
+            f"{measurement.get('high_risk_decision_agreement')} is below {TFLITE_AGREEMENT_MIN}"
+        )
+    energy_gap = measurement.get("max_energy_difference")
+    if not _finite(energy_gap) or float(energy_gap) < 0:  # type: ignore[arg-type]
+        reasons.append("delegate report is missing the maximum energy difference")
     return (len(reasons) == 0, reasons)

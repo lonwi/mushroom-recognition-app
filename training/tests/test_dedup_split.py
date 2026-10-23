@@ -5,6 +5,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from dedup import average_hash_bits, dedup_records, difference_hash_bits, dropped_per_class, hamming
+from salt_fixture import FIXTURE_SALT
 from split import split_by_observation
 
 
@@ -86,7 +87,7 @@ class DedupAndSplitTest(unittest.TestCase):
                         "file": f"{occurrence}_{photo}.jpg",
                     }
                 )
-        splits = split_by_observation(records, val_ratio=0.15, test_ratio=0.15, seed=42)
+        splits = split_by_observation(records, val_ratio=0.15, test_ratio=0.15, seed=42, salt=FIXTURE_SALT)
         seen = {}
         for name, rows in splits.items():
             grouped = {}

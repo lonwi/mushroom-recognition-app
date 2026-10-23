@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from evaluate import (
     choose_threshold,
+    id_validation_energies,
     confident_toxic_as_edible,
     deadly_probe_taxa,
     image_counts,
@@ -23,7 +24,14 @@ from evaluate import (
     outcome_is_strict_top1_edible,
     poisonous_sample_reasons,
 )
-from export_tflite import DEFAULT_QUANTIZATIONS, representative_dataset
+from export_tflite import (
+    DEFAULT_QUANTIZATIONS,
+    assess_export,
+    calibration_rows,
+    choose_install_target,
+    metric_delta,
+    representative_dataset,
+)
 from manifest import ROOT, load_manifest, poisonous_heldout_taxa
 from preprocess import ImageReadError, load_oriented_rgb, model_rgb_uint8, preprocess_rgb_uint8, resize_to_width
 from recognition_math import (
@@ -36,7 +44,7 @@ from recognition_math import (
     energy_score,
     softmax,
 )
-from ship_gates import assess_shippable
+from ship_gates import _int8_energy_reasons, assess_shippable, sha256_file
 
 FIXTURE = ROOT / "training" / "fixtures" / "decision_cases.json"
 PREPROCESS_FIXTURE = ROOT / "training" / "fixtures" / "preprocess_2x2_to_4.json"
@@ -311,6 +319,17 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertEqual(manifest["input"]["formula"], "(pixel / 127.5) - 1")
         self.assertFalse(manifest["ood"]["calibrated"])
         self.assertIsNone(manifest["quantization"])
+        model_file = ROOT / "assets" / "models" / "mushrooms_model.tflite"
+        packaged_hash = sha256_file(model_file)
+        if model_file.is_file():
+            self.assertEqual(manifest["model_sha256"], packaged_hash)
+        else:
+            self.assertIsNone(packaged_hash)
+            self.assertIsNone(manifest["model_sha256"])
+        self.assertIsNone(manifest["delegate_sample_sha256"])
+        self.assertFalse(manifest["delegate_release"]["android-gpu"]["passed"])
+        self.assertFalse(manifest["delegate_release"]["core-ml"]["passed"])
+        self.assertEqual(manifest["delegate_release"]["android-gpu"]["reason"], "not_measured")
         self.assertFalse((ROOT / "assets" / "models" / "mushrooms_model.tflite").exists())
         self.assertEqual(set(DANGEROUS_GENERA), set(manifest["dangerous_genera"]))
         self.assertEqual(manifest["dangerous_genus_min_probability"], DANGEROUS_GENUS_MIN_PROBABILITY)
@@ -413,6 +432,26 @@ class ManifestAndShipGateTest(unittest.TestCase):
         ok, reasons = assess_shippable({})
         self.assertFalse(ok)
         self.assertTrue(reasons)
+        self.assertTrue(any("component_share" in reason for reason in reasons))
+
+    def test_component_share_limit_is_pinned(self):
+        from component_share import COMPONENT_SHARE_LIMIT
+
+        # Changing this constant is Wojtek's decision only.
+        self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
+
+    def test_missing_component_share_blockers_key_blocks_shipping(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            del report["component_share_blockers"]
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("component_share_blockers" in reason for reason in reasons))
+            report["component_share_blockers"] = ["boletus_edulis: acknowledged. The model is not shippable."]
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("boletus_edulis" in reason for reason in reasons))
 
     def _passing_report(self, artifact_dir: Path) -> dict:
         manifest = load_manifest()
@@ -486,6 +525,7 @@ class ManifestAndShipGateTest(unittest.TestCase):
                 "tflite_sha256": hashlib.sha256(tflite_bytes).hexdigest(),
             },
             "attributions_complete": True,
+            "component_share_blockers": [],
         }
         self._write_attributions(artifact_dir, report)
         return report
@@ -1353,6 +1393,149 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertIn('default="fp16"', source)
         self.assertNotIn('for quantization in ("int8", "fp16")', source)
 
+    def test_quantized_export_keeps_train_calibration_and_existing_floors(self):
+        source = (ROOT / "training" / "export_tflite.py").read_text(encoding="utf-8")
+        gates = (ROOT / "training" / "ship_gates.py").read_text(encoding="utf-8")
+        self.assertIn("train_rows = calibration_rows(splits)", source)
+        self.assertIn("converter.representative_dataset = representative_dataset(train_rows, image_size, data_dir)", source)
+        self.assertEqual(source.count("representative_dataset("), 2)
+        self.assertNotIn("representative_dataset(val_rows", source)
+        self.assertNotIn("representative_dataset(test_rows", source)
+        self.assertIn("TFLITE_BUILTINS_INT8", source)
+        self.assertIn("inference_input_type = tf.float32", source)
+        self.assertIn("inference_output_type = tf.float32", source)
+        self.assertIn('quantization == "dynamic"', source)
+        self.assertIn('"--also-export"', source)
+        self.assertIn('"--select-quantized"', source)
+        self.assertIn("TFLITE_AGREEMENT_MIN", source)
+        self.assertIn("agreement >= TFLITE_AGREEMENT_MIN", source)
+        self.assertNotIn("agreement >= 0.99", source)
+        self.assertNotIn("agreement >= 0.98", source)
+        self.assertIn("copied_from_float", source)
+        self.assertIn("energy_recalibration", source)
+        self.assertIn("macro_top1 < 0.80", gates)
+        self.assertIn("macro_top3 < 0.90", gates)
+        self.assertIn("TFLITE_AGREEMENT_MIN = 0.99", gates)
+        self.assertIn("agreement < TFLITE_AGREEMENT_MIN", gates)
+        self.assertIn("high_risk_agreement < TFLITE_AGREEMENT_MIN", gates)
+        self.assertIn("id_keep < 0.95", gates)
+        self.assertIn("OPEN_SET_SAFE_MIN = 0.90", gates)
+        self.assertIn("OPEN_SET_CONFIDENT_EDIBLE_MAX = 0.02", gates)
+        splits = {
+            "train": [{"file": "train.png", "split": "train"}],
+            "val": [{"file": "val.png", "split": "val"}],
+            "test": [{"file": "test.png", "split": "test"}],
+        }
+        self.assertEqual([row["file"] for row in calibration_rows(splits)], ["train.png"])
+        with self.assertRaises(RuntimeError):
+            representative_dataset([{"file": "test.png", "split": "test"}], 8, Path("."))
+        with self.assertRaises(RuntimeError):
+            representative_dataset([{"file": "val.png", "split": "val"}], 8, Path("."))
+        with self.assertRaises(RuntimeError):
+            calibration_rows({"train": [{"file": "hidden.png", "split": "test"}]})
+
+    def test_quantized_model_is_selectable_only_when_existing_gates_pass(self):
+        float_report = {"macro_top1": 0.91, "macro_top3": 0.97, "confident_toxic_as_edible": 0}
+        quantized_report = {"macro_top1": 0.90, "macro_top3": 0.96, "confident_toxic_as_edible": 0}
+        delta = metric_delta(float_report, quantized_report)
+        self.assertAlmostEqual(delta["macro_top1"], -0.01)
+        self.assertAlmostEqual(delta["macro_top3"], -0.01)
+        self.assertEqual(delta["confident_toxic_as_edible"], 0)
+        self.assertEqual(
+            choose_install_target(select_quantized=False, primary_shippable=True, quantized_shippable=True),
+            "primary",
+        )
+        self.assertEqual(
+            choose_install_target(select_quantized=True, primary_shippable=True, quantized_shippable=True),
+            "quantized",
+        )
+        self.assertEqual(
+            choose_install_target(select_quantized=True, primary_shippable=True, quantized_shippable=False),
+            "refuse",
+        )
+        self.assertEqual(
+            choose_install_target(select_quantized=False, primary_shippable=False, quantized_shippable=True),
+            "refuse",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            passing = self._passing_report(artifact_dir)
+            ok, reasons = assess_shippable(passing, artifact_dir)
+            self.assertTrue(ok, reasons)
+            payload = (artifact_dir / "mushrooms_model.tflite").read_bytes()
+            gated, gate_reasons = assess_export(passing, payload, artifact_dir)
+            self.assertTrue(gated, gate_reasons)
+            lowered = json.loads(json.dumps(passing))
+            lowered["macro_top1"] = 0.79
+            refused, refuse_reasons = assess_export(lowered, payload, artifact_dir)
+            self.assertFalse(refused)
+            self.assertTrue(any("0.80" in reason for reason in refuse_reasons))
+            still_ok, still_reasons = assess_shippable(passing, artifact_dir)
+            self.assertTrue(still_ok, still_reasons)
+            int8 = json.loads(json.dumps(passing))
+            int8["tflite"]["quantization"] = "int8"
+            int8["ood"]["energy_threshold"] = -4.0
+            refused_int8, int8_reasons = assess_shippable(int8, artifact_dir)
+            self.assertFalse(refused_int8)
+            self.assertTrue(any("recalibrat" in reason for reason in int8_reasons))
+            energies = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
+            from evaluate import choose_threshold
+
+            threshold = choose_threshold([{"class_id": "species", "energy": energy} for energy in energies])
+            int8["ood"]["energy_threshold"] = threshold
+            int8["energy_recalibration"] = {
+                "quantization": "int8",
+                "source": "validation_split",
+                "copied_from_float": False,
+                "threshold": threshold,
+                "id_validation_energies": energies,
+            }
+            recalibrated, recalibrated_reasons = assess_shippable(int8, artifact_dir)
+            self.assertTrue(recalibrated, recalibrated_reasons)
+            copied = json.loads(json.dumps(int8))
+            copied["energy_recalibration"]["copied_from_float"] = True
+            copied["energy_recalibration"]["threshold"] = -4.0
+            copied["ood"]["energy_threshold"] = -4.0
+            copied_ok, copied_reasons = assess_shippable(copied, artifact_dir)
+            self.assertFalse(copied_ok)
+            self.assertTrue(any("do not carry over" in reason or "order statistic" in reason for reason in copied_reasons))
+
+    def test_int8_threshold_matches_when_validation_includes_background(self):
+        """Export and the int8 gate share the ID-only order statistic.
+
+        A background energy above every ID energy would move the threshold if
+        it were counted. Both paths skip it, so they stay equal.
+        """
+        from recognition_math import BACKGROUND_CLASS_ID
+
+        id_rows = [{"class_id": "boletus_edulis", "energy": float(energy)} for energy in range(1, 9)]
+        val_pred = id_rows + [{"class_id": BACKGROUND_CLASS_ID, "energy": 100.0}]
+        export_threshold = choose_threshold(val_pred)
+        stored = id_validation_energies(val_pred)
+        gate_threshold = choose_threshold([{"class_id": "species", "energy": energy} for energy in stored])
+        counted_background = choose_threshold(
+            [{"class_id": "species", "energy": energy} for energy in [*stored, 100.0]]
+        )
+        self.assertEqual(stored, [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0])
+        self.assertEqual(export_threshold, gate_threshold)
+        self.assertEqual(export_threshold, 8.0)
+        self.assertEqual(counted_background, 100.0)
+        self.assertNotEqual(export_threshold, counted_background)
+        reasons = _int8_energy_reasons(
+            {
+                "tflite": {"quantization": "int8"},
+                "ood": {"energy_threshold": export_threshold},
+                "energy_recalibration": {
+                    "quantization": "int8",
+                    "source": "validation_split",
+                    "copied_from_float": False,
+                    "threshold": export_threshold,
+                    "id_validation_energies": stored,
+                },
+            }
+        )
+        self.assertEqual(reasons, [])
+
     @contextmanager
     def _installed_repo_copy(self):
         import export_tflite
@@ -1443,8 +1626,13 @@ class ManifestAndShipGateTest(unittest.TestCase):
             shutil.rmtree(parent, ignore_errors=True)
 
     def test_install_writes_jsonl_on_a_repo_copy(self):
-        with self._installed_repo_copy():
-            pass
+        with self._installed_repo_copy() as copy_root:
+            labels = json.loads((copy_root / "assets" / "models" / "labels.json").read_text(encoding="utf-8"))
+            self.assertEqual(labels["model_sha256"], hashlib.sha256(b"tflite-bytes").hexdigest())
+            self.assertIsNone(labels["delegate_sample_sha256"])
+            self.assertFalse(labels["delegate_release"]["android-gpu"]["passed"])
+            self.assertFalse(labels["delegate_release"]["core-ml"]["passed"])
+            self.assertEqual(labels["delegate_release"]["android-gpu"]["reason"], "not_measured")
 
     def test_repo_copy_ignores_training_data_and_secret_files(self):
         with tempfile.TemporaryDirectory() as tmp:

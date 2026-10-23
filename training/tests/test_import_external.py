@@ -33,6 +33,7 @@ from url_safety import force_https_url
 
 _BY_40 = "https://creativecommons.org/licenses/by/4.0/"
 _BY_NC_40 = "https://creativecommons.org/licenses/by-nc/4.0/"
+_ZERO = "https://creativecommons.org/publicdomain/zero/1.0/"
 
 _PHOTO_HEADER = [
     "species",
@@ -488,17 +489,8 @@ class ImportDirectoryTest(unittest.TestCase):
         ]
         self.assertEqual(len(ada_verified), 2)
         self.assertTrue(all(row["usage"] == "publishable" for row in ada_verified))
-        first = by_photo["1"]
-        self.assertEqual(first["image_url"], "https://inaturalist-open-data.s3.amazonaws.com/photos/1/large.jpg")
-        self.assertTrue(first["source_url"].startswith("https://"))
-        self.assertEqual(first["license_normalized"], "cc-by-4.0")
-        self.assertEqual(first["license_url"], _BY_40)
-        self.assertEqual(first["usage"], "publishable")
-        self.assertEqual(first["creator"], "Ada Łąka")
-        self.assertEqual(first["inat_observer"], "ada")
-        self.assertEqual(first["inat_observation_id"], "10")
-        self.assertEqual(first["inaturalist_observation_id"], "10")
-        self.assertEqual(first["occurrence_key"], "inat:10")
+        self.assertNotIn("1", by_photo)
+        self.assertGreaterEqual(report["dropped_looser_license"], 1)
         self.assertNotIn("9", {row["inat_photo_id"] for row in ada_verified})
 
         joined = by_photo["2"]
@@ -548,8 +540,9 @@ class ImportDirectoryTest(unittest.TestCase):
         self.assertIn("Calocybe gambosa", report["unmapped_species"])
         self.assertGreaterEqual(report["rejected_license"], 2)
         self.assertGreaterEqual(report["rejected_missing_author"], 1)
-        self.assertGreaterEqual(report["dropped_duplicate"], 1)
+        self.assertGreaterEqual(report["dropped_looser_license"], 1)
         self.assertGreaterEqual(report["dropped_collector_cap"], 1)
+        self.assertEqual(report["dropped_by_reason"]["looser_license"], report["dropped_looser_license"])
 
         df20_rows = [row for row in rows if row["source"] == "df20"]
         self.assertEqual(len(df20_rows), 1)
@@ -608,6 +601,7 @@ class ImportDirectoryTest(unittest.TestCase):
             "creator": "Ada",
             "author": "Ada",
             "license_normalized": "cc-by-4.0",
+            "license_url": _BY_40,
             "usage": "publishable",
             "unverified": False,
             "image_url": "https://images.example.test/a.jpg",
@@ -757,8 +751,230 @@ class ImportDirectoryTest(unittest.TestCase):
         )
         rows, report = import_directory(self.root, max_per_collector=30)
         self.assertEqual(rows, [])
-        self.assertGreaterEqual(report["rejected_license"], 2)
+        self.assertGreaterEqual(report["rejected_license_url_empty"], 1)
+        self.assertGreaterEqual(report["rejected_license"], 1)
         self.assertGreaterEqual(report["rejected_url"], 1)
+        self.assertEqual(
+            report["rejected_by_reason"]["license_url_empty"],
+            report["rejected_license_url_empty"],
+        )
+
+    def test_license_url_must_be_https_and_match_the_text(self):
+        _photo(
+            self.root / "urls.csv",
+            [
+                self._base(
+                    license="CC BY 4.0",
+                    license_url="",
+                    inat_photo_id="1",
+                    inat_observation_id="1",
+                    image_url="https://images.example.test/empty.jpg",
+                    source_url="https://www.inaturalist.org/observations/1",
+                ),
+                self._base(
+                    license="CC BY 4.0",
+                    license_url="http://creativecommons.org/licenses/by/4.0/",
+                    inat_photo_id="2",
+                    inat_observation_id="2",
+                    image_url="https://images.example.test/http.jpg",
+                    source_url="https://www.inaturalist.org/observations/2",
+                ),
+                self._base(
+                    license="CC BY 4.0",
+                    license_url=_BY_NC_40,
+                    inat_photo_id="3",
+                    inat_observation_id="3",
+                    image_url="https://images.example.test/mismatch.jpg",
+                    source_url="https://www.inaturalist.org/observations/3",
+                ),
+                self._base(
+                    license="CC BY",
+                    license_url="",
+                    inat_photo_id="4",
+                    inat_observation_id="4",
+                    image_url="https://images.example.test/versionless.jpg",
+                    source_url="https://www.inaturalist.org/observations/4",
+                ),
+            ],
+        )
+        rows, report = import_directory(self.root, max_per_collector=30)
+        self.assertEqual(rows, [])
+        self.assertGreaterEqual(report["rejected_license_url_empty"], 2)
+        self.assertEqual(report["rejected_license_url_not_https"], 1)
+        self.assertEqual(report["rejected_license_url_mismatch"], 1)
+        self.assertEqual(report["rejected_by_reason"]["license_url_not_https"], 1)
+        self.assertEqual(report["rejected_by_reason"]["license_url_mismatch"], 1)
+        self.assertIsNone(parse_textual_license("CC BY"))
+        self.assertIsNone(parse_textual_license("CC BY", None))
+        self.assertIsNone(parse_textual_license("CC BY", ""))
+
+    def test_stricter_license_wins_for_the_same_image(self):
+        image = "https://upload.wikimedia.org/wikipedia/commons/5/53/morel.jpg"
+        _photo(
+            self.root / "morchella_esculenta.csv",
+            [
+                self._base(
+                    species="Morchella esculenta",
+                    image_url=image,
+                    source_url="https://commons.wikimedia.org/wiki/File:morel.jpg",
+                    license="CC BY 4.0",
+                    license_url=_BY_40,
+                    inat_photo_id="",
+                    inat_observation_id="",
+                    commons_file="morel.jpg",
+                    inat_observer="",
+                    author="Jay Example",
+                )
+            ],
+        )
+        _photo(
+            self.root / "morchella_esculenta_by_nc.csv",
+            [
+                self._base(
+                    species="Morchella esculenta",
+                    image_url=image,
+                    source_url="https://www.inaturalist.org/observations/42",
+                    license="CC BY-NC 4.0",
+                    license_url=_BY_NC_40,
+                    inat_photo_id="42",
+                    inat_observation_id="42",
+                    commons_file="",
+                    inat_observer="cyra",
+                    author="Cyra",
+                )
+            ],
+        )
+        rows, report = import_directory(self.root, max_per_collector=30)
+        self.assertEqual(len(rows), 1)
+        kept = rows[0]
+        self.assertEqual(kept["license_normalized"], "cc-by-nc-4.0")
+        self.assertEqual(kept["usage"], "training_only")
+        self.assertFalse(is_publishable(kept))
+        self.assertEqual(report["dropped_looser_license"], 1)
+        self.assertEqual(report["dropped_by_reason"]["looser_license"], 1)
+        self.assertEqual(rows_for_atlas_gallery(rows), [])
+        self.assertEqual(rows_for_site(rows), [])
+        self.assertEqual(rows_for_comparison(rows), [])
+
+    def test_rejected_license_copy_drops_the_other_copy(self):
+        cases = (
+            ("empty-nc", "CC BY-NC 4.0", "", "license_url_empty"),
+            ("unknown", "CC BY-SA 4.0", "https://creativecommons.org/licenses/by-sa/4.0/", "license"),
+            ("nc-nd", "CC BY-NC-ND 4.0", "https://creativecommons.org/licenses/by-nc-nd/4.0/", "license"),
+            ("http", "CC BY 4.0", "http://creativecommons.org/licenses/by/4.0/", "license_url_not_https"),
+            ("mismatch", "CC BY 4.0", _BY_NC_40, "license_url_mismatch"),
+        )
+        for name, bad_license, bad_url, reason in cases:
+            folder = self.root / name
+            _photo(
+                folder / "pair.csv",
+                [
+                    self._base(
+                        license=bad_license,
+                        license_url=bad_url,
+                        inat_photo_id="15",
+                        inat_observation_id="15",
+                        image_url="https://static.inaturalist.org/photos/15/original.jpg",
+                        source_url="https://www.inaturalist.org/observations/15",
+                        author="Nc Author",
+                    ),
+                    self._base(
+                        license="CC BY 4.0",
+                        license_url=_BY_40,
+                        inat_photo_id="15",
+                        inat_observation_id="16",
+                        image_url="https://images.example.test/by-copy.jpg",
+                        source_url="https://www.inaturalist.org/observations/16",
+                        author="By Author",
+                    ),
+                ],
+            )
+            rows, report = import_directory(folder, max_per_collector=10)
+            self.assertEqual(rows, [], name)
+            self.assertGreaterEqual(report["rejected_by_reason"].get(reason, 0), 1, name)
+            self.assertEqual(report["dropped_rejected_license_copy"], 1, name)
+            self.assertEqual(report["dropped_by_reason"]["rejected_license_copy"], 1, name)
+
+    def test_cc_by_beats_cc0_in_either_order(self):
+        orders = (
+            ("cc0-then-by", ("CC0", _ZERO, "Zero Person"), ("CC BY 4.0", _BY_40, "By Person")),
+            ("by-then-cc0", ("CC BY 4.0", _BY_40, "By Person"), ("CC0", _ZERO, "Zero Person")),
+        )
+        for name, first, second in orders:
+            folder = self.root / name
+            _photo(
+                folder / "pair.csv",
+                [
+                    self._base(
+                        license=first[0],
+                        license_url=first[1],
+                        author=first[2],
+                        inat_photo_id="77",
+                        inat_observation_id="77",
+                        image_url="https://images.example.test/tie-a.jpg",
+                        source_url="https://www.inaturalist.org/observations/77",
+                    ),
+                    self._base(
+                        license=second[0],
+                        license_url=second[1],
+                        author=second[2],
+                        inat_photo_id="77",
+                        inat_observation_id="77",
+                        image_url="https://images.example.test/tie-b.jpg",
+                        source_url="https://www.inaturalist.org/observations/77",
+                    ),
+                ],
+            )
+            rows, report = import_directory(folder, max_per_collector=10)
+            self.assertEqual(len(rows), 1, name)
+            self.assertEqual(rows[0]["license_normalized"], "cc-by-4.0", name)
+            self.assertEqual(rows[0]["usage"], "publishable", name)
+            self.assertEqual(rows[0]["creator"], "By Person", name)
+            self.assertTrue(is_publishable(rows[0]), name)
+            self.assertEqual(report["dropped_looser_license"], 1, name)
+
+    def test_commons_and_inat_merge_on_shared_inat_photo_id(self):
+        _photo(
+            self.root / "commons.csv",
+            [
+                self._base(
+                    image_url="https://upload.wikimedia.org/wikipedia/commons/a/ab/Shared.jpg",
+                    source_url="https://commons.wikimedia.org/wiki/File:Shared.jpg",
+                    license="CC0",
+                    license_url=_ZERO,
+                    inat_photo_id="4242",
+                    inat_observation_id="",
+                    commons_file="Shared.jpg",
+                    inat_observer="",
+                    author="Commons Author",
+                )
+            ],
+        )
+        _photo(
+            self.root / "inat.csv",
+            [
+                self._base(
+                    image_url="https://static.inaturalist.org/photos/4242/original.jpg",
+                    source_url="https://www.inaturalist.org/observations/9001",
+                    license="CC BY 4.0",
+                    license_url=_BY_40,
+                    inat_photo_id="4242",
+                    inat_observation_id="9001",
+                    commons_file="",
+                    author="Inat Author",
+                    inat_observer="inat",
+                )
+            ],
+        )
+        rows, report = import_directory(self.root, max_per_collector=10)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["inat_photo_id"], "4242")
+        self.assertEqual(rows[0]["license_normalized"], "cc-by-4.0")
+        self.assertEqual(rows[0]["creator"], "Inat Author")
+        self.assertEqual(rows[0]["source"], "inat")
+        self.assertTrue(is_publishable(rows[0]))
+        self.assertEqual(report["dropped_looser_license"], 1)
+        self.assertNotEqual(rows[0]["image_url"], "https://upload.wikimedia.org/wikipedia/commons/a/ab/Shared.jpg")
 
     def test_float_rejects_non_finite(self):
         self.assertEqual(_float_or_none("52.23"), 52.23)

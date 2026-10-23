@@ -22,9 +22,11 @@ The GBIF fetch is unchanged: a media license must still be a CC0 or CC-BY URL. C
 
 `training/import_external.py` reads per-species CSVs (iNaturalist / GBIF / Wikimedia Commons, plus `df20/`) and writes `training/data/external.jsonl`. It does not download images and it does not commit them. `run_pipeline.py import-external` is the same command. `all` does not run it, because the CSVs are not in this repository.
 
-The license is the cell on the row, matched as a whole id (`cc-by-4.0`, not a prefix). CC0 and versioned CC BY are `usage=publishable`. Versioned CC BY-NC is `usage=training_only`. A versionless `CC BY` or `CC BY-NC` takes its version from the `license_url` column when that URL is the same license (for example `https://creativecommons.org/licenses/by/4.0/`). If neither the text nor `license_url` has a version, the row is dropped. CC0 without a version is `cc0-1.0`. An empty or unknown license is dropped and is never treated as CC BY, even when `license_url` is CC BY. CC BY-NC-ND, CC BY-NC-SA, CC BY-SA, and CC BY-ND are dropped. CC BY-SA stays rejected until the owner says otherwise; allowing it later means adding the exact `cc-by-sa-<version>` ids as `training_only`. Danish Fungi 2020 rows are `usage=training_only` with `license_normalized` `df20`. `is_publishable` is the check for the atlas gallery, `site/`, and comparison photos: CC BY-NC and DF20 fail it. The ship-gate attribution file still contains training-only rows, so a release model trained on them stays blocked. Every kept row has an author credit (`creator`).
+The license is the cell on the row, matched as a whole id (`cc-by-4.0`, not a prefix). CC0 and versioned CC BY are `usage=publishable`. Versioned CC BY-NC is `usage=training_only`. Every photo row also needs an https `license_url` for that same license. An empty `license_url`, an `http://` URL, or a URL that names a different license drops the row, even when the text is already `CC BY 4.0`. A versionless `CC BY` with no `license_url` is dropped. An empty or unknown license is dropped and is never treated as CC BY. CC BY-NC-ND, CC BY-NC-SA, CC BY-SA, and CC BY-ND are dropped. CC BY-SA stays rejected until the owner says otherwise; allowing it later means adding the exact `cc-by-sa-<version>` ids as `training_only`. Danish Fungi 2020 rows are `usage=training_only` with `license_normalized` `df20`. `is_publishable` is the check for the atlas gallery, `site/`, and comparison photos: CC BY-NC and DF20 fail it. The ship-gate attribution file still contains training-only rows, so a release model trained on them stays blocked. Every kept row has an author credit (`creator`).
 
-The same photo id or the same observation id under two species drops every one of those rows. The import report lists the id and both labels. `--publishable-only` on the importer removes non-publishable rows before the per-collector cap, so an NC photo does not use a slot a CC BY photo needs.
+The same photo id or the same observation id under two species drops every one of those rows. The import report lists the id and both labels. The same image under two licenses keeps the stricter one: CC BY-NC and DF20 beat CC BY, and CC BY beats CC0, so a public-domain copy does not drop the attribution. The report counts that drop as `dropped_looser_license`. A row rejected for a licence (unknown or disallowed text, including NC where that form is not allowed, or an empty, non-https, or mismatched `license_url`) records that photo's keys, and every other copy of the photo is dropped (`dropped_rejected_license_copy`). The report also counts empty, non-https, and mismatched `license_url` values separately. `--publishable-only` on the importer removes non-publishable rows before the per-collector cap, so an NC photo does not use a slot a CC BY photo needs.
+
+A Wikimedia Commons copy and an iNaturalist copy are the same photo only when the rows share an id (`inat_photo_id` on either row, including a Commons row, the Commons file name, or the same image URL). The importer does not read a Commons file description to recover an iNaturalist photo id. Follow-up: #73
 
 Files whose name contains `_niezweryfikowane` are `unverified: true`, and so are rows whose `id_confidence` is `gbif_not_validated` or `commons_category`. They stay in the jsonl so a later split can see them, and `prepare_data.py` does not put them in train, val, or test. `prepare_data.py` reads `external.jsonl` only with `--with-external`. `--publishable-only` on prepare drops training-only rows before dedup.
 
@@ -57,6 +59,16 @@ python training/run_pipeline.py export -- --install-into-app
 ```
 
 That copies the TFLite file and the attribution file, writes the calibrated thresholds into `assets/models/labels.json`, and points `src/services/modelPackage.ts` at the asset. A development build is required after that (`react-native-fast-tflite` and `react-native-nitro-modules` are native). Expo Go cannot load the interpreter. Until this step succeeds, `PACKAGED_MODEL_MODULE` stays `null`.
+
+Optional quantized graph, still under the same ship gates:
+
+```bash
+python training/export_tflite.py --quantization fp32 --also-export int8
+python training/export_tflite.py --also-export dynamic
+python training/run_pipeline.py export -- --also-export int8 --install-into-app --select-quantized
+```
+
+`--also-export int8` is full-integer ops (`TFLITE_BUILTINS_INT8`) with float32 input and output. The representative dataset is the train split only. The int8 energy threshold is fit again on that graph's validation logits. An fp16 threshold does not carry over. `dynamic` is dynamic-range quantization and does not read a representative dataset. The command also writes `mushrooms_model_float.tflite` when the primary graph is not already fp32. `metrics.json` → `quantized_export.delta_vs_float` is quantized minus that fp32 graph. Those numbers are not gates. `--select-quantized` installs the quantized file only when `assess_shippable` passes every existing floor, including int8 energy recalibration when that graph is int8. A failure leaves the app bundle unchanged.
 
 Useful limits while checking the wiring, without a full download:
 
@@ -118,7 +130,43 @@ The sample list is shuffled in full before `from_tensor_slices`. After `dataset.
 
 ## Split
 
-`training/split.py` keeps one field outing in one split. When the photo has a recorder, a finite latitude and longitude, and a date, the group is `recordedBy` (case-folded) plus a 0.01-degree grid (about 1.1 km north–south) plus the calendar day, and the taxon name so two species from the same person on the same day stay separate. Otherwise the group is the GBIF occurrence. The same file also reports a second grouping, recorder plus the 0.01-degree grid with the day left out, so a person who returns to the same square on another day is visible. That second grouping is not the split key. `prepare_data.py` writes both counts to `training/data/split_groups.json`.
+`training/split.py` keeps one photographer and one observation in one split. The split key is the HMAC-SHA256 of every identity key in a connected component. The HMAC key is a salt that is **not** stored in this repository. The salt does not change which rows go to train, val, or test: the same seed and two different salts produce the same split. The salt only pseudonymizes component ids written into manifests and reports. `dataset_manifest.json` stores `salt_fingerprint`, the first 8 hex digits of sha256 of the salt, and not the salt.
+
+Set the salt before `prepare`, and keep a backup outside the repository. A copy next to the training photos in the operator's OneDrive training-data folder is the backup; the pipeline never reads that folder unless `GRZYBOBRANIE_SPLIT_SALT_FILE` points at it.
+
+```bash
+export GRZYBOBRANIE_SPLIT_SALT="$(openssl rand -hex 32)"
+# or a file outside the repo (this path is not read from the tree):
+# mkdir -p ~/.config/grzybobranie && openssl rand -hex 32 > ~/.config/grzybobranie/split_salt
+# export GRZYBOBRANIE_SPLIT_SALT_FILE=$HOME/.config/grzybobranie/split_salt
+# backup: copy that file into the OneDrive training-data folder, not into git
+```
+
+If the variable and the file are both missing, or the file is inside the repo, prepare stops and names the variable. Unit tests pass a fixture salt and do not read a production secret.
+
+Identity keys on a row:
+
+- photographer: `inat_observer` when it is a real person; otherwise `author` / `creator`; otherwise GBIF `recordedBy` (and DF20 `photographer_rightsHolder`). Placeholder strings are missing, not a person: Unknown, Anonymous, anonim, anonimowy, nieznany, unknown author, no rights reserved, -, ?, n/a, na, iNaturalist, GBIF, Wikimedia Commons, and society-like aggregator names. Those rows group only by observation and photo id.
+- photo: iNaturalist photo id, image URL, DF20 `ImageUniqueID`, Commons file, local file
+- observation: iNaturalist observation id, Mushroom Observer `mo_observation_id`, DF20 `observationID`, GBIF occurrence. An external row keyed `inat-obs:<id>` or `inat:<id>` is the same observation as a GBIF row whose `source_url` (or photo URL) points at that iNaturalist observation, so the two copies dedupe when they are the same photo and otherwise stay in one split. The same observer string in `inat_observer`, `recorded_by`, or `collector_key` is one photographer across both sources. `usage=training_only` (CC BY-NC and DF20) stays out of anything published.
+
+Rows that share any of those keys are one component, including two classes photographed by the same person and two DF20 frames with the same `observationID`. A held-out taxon does not drag that observer's other classes into test. The component is assigned normally. If it lands in train or val, its held-out rows are dropped and counted in the manifest; they stay only when the component is already in test. The observer's remaining rows are still in exactly one split.
+
+Before that grouping, `dedup_by_identity` runs once. The same photo or the same observation id under two species drops every conflicting row, and `dedup_report.json` lists them. A repeated photo of one species keeps the versioned CC0 or CC BY copy. Distinct photos of one observation stay, and they stay in the same split.
+
+`collector_group_key` is still the field-outing report: `recordedBy` plus a 0.01-degree grid plus the calendar day. That report is not the split key. The grid without the day is still written next to it. `prepare_data.py` writes both counts to `training/data/split_groups.json`, including the largest component's size and its share of all rows. `training/data/dataset_manifest.json` has per-split totals, per-class counts, a content sha256, the salt fingerprint, and per-class component shares. Each class records the largest component's share, how many rows are placeholder authors (including `no rights reserved`), and how many are DF20, so a class dominated by one DF20 photographer stays visible. The global largest-component share is recorded and is not a gate. The per-class gate is `COMPONENT_SHARE_LIMIT` (0.20). Changing that constant is the owner's decision. A config file, including `component_share_acknowledgements.json` and `--component-share-config`, may set a lower limit and may not set a higher one. A class over the limit, or a class with an empty val or test, stops prepare before any output is written unless it is listed with a reason in `training/component_share_acknowledgements.json`. `cortinarius_orellanus` is acknowledged there. Acknowledgements are copied into the manifest and reported as ship blockers, so `shippable` stays false. The manifest does not contain the salt.
+
+The license value stays in its own `license` column. Text is parsed by `import_external.parse_textual_license`: version from the cell or `license_url`, whole-id compare, versionless and unknown rejected. `excluded_from_publication` is the one condition that drops CC BY-NC rows and Danish Fungi 2020 rows (training-only). The ship-gate attribution file lists every train, val, and test row, including training-only rows; `attributions_complete` rejects those rows, unverified rows, and any license id that is not an exact `cc0-*` or `cc-by-*` key (NC, SA, and ND fail even when the id starts with `cc-by-`). Image and source URLs in that file are https.
+
+Atlas gallery photos must not be in the test split. The checked-in `training/gallery_exclusion.json` is always applied. Extra CSVs (columns such as `app_id,feature,image_url,author,license,source_url`, and `mo_observation_id` when the file has it) match on `image_url`, `mo_observation_id`, and the iNaturalist observation number in `source_url`. A match in test stops the pipeline.
+
+```bash
+python training/prepare_data.py --gallery-csv /path/to/galeria/manifest_gallery.csv
+python training/run_pipeline.py prepare -- --gallery-csv /path/to/galeria/galeria_trujace_v2.csv
+# or a JSON config {"gallery_csvs": ["manifest_gallery.csv"]} whose paths are relative to the file:
+python training/prepare_data.py --gallery-config /path/to/gallery_csvs.json
+# GRZYBOBRANIE_GALLERY_CSV is os.pathsep-separated and is also read by `run_pipeline.py all`
+```
 
 ## Backbone
 
@@ -275,10 +323,33 @@ Low confidence (top softmax under 0.70 or top-1/top-2 margin under 0.15) still s
 | Coverage | Every class in `labels.json` has a measured top-1/top-3 and support above 0 in train and in test. | required |
 | TFLite agreement | Top-1 match between the interpreter and the float Keras model on **every** val and test photo. | ≥ 0.99 |
 | TFLite high-risk agreement | The same match, only on high-risk class photos, again the full val+test count. | ≥ 0.99 |
+| int8 energy recalibration | Only when the exported graph is int8. The energy threshold is the validation order statistic of that graph's own logits. A copied fp16 threshold fails. fp16 and dynamic graphs are unchanged. | required for int8 |
+| Delegate release | Separate from install. Android GPU and iOS Core ML must each agree with CPU on every val and test photo: top-1 ≥ 0.99, high-risk top-1 ≥ 0.99, and the same rate for the `recognitionDecision` triple (`status`, top-1, `expertVerificationRequired`). The report includes the maximum energy difference. A missing, stale, or model-hash mismatch stays on CPU. The manifest ships with both platforms `passed: false` until a device dump is scored. | ≥ 0.99, per platform |
 | Attribution | `attributions.jsonl` beside the model has one complete row (creator, versioned CC0 or CC-BY, image URL, source page) per train+val+test image. `cc-by-nc…`, ND, SA, `usage=training_only`, and `unverified` rows fail this check. | complete |
 | Hashes | sha256 of `model.keras`, `mushrooms_model.tflite`, and `fetch_report.json` match the files on disk. The fetch-report hash covers the file `attach_fetch_evidence` reads, and that step overwrites `accepted`, `gbif_licensed_count`, and `exhausted_reason` from the report. `accepted` in that file is verified files. `gbif_licensed_count` is the entire licensed pool, written only when the GBIF query ended below the cap, and the rare-taxon exception also requires `exhausted_reason` to be `end_of_records` and `accepted` to equal that count. `replacement_budget` omits `gbif_licensed_count` and does not open the 5-photo floor. Regenerating the report changes the hash even when every download succeeded, because the report stores `selected`, `failed`, `pool`, `shortfall`, `exhausted_reason`, and `any_taxon_pool_exhausted`. A metrics file that still has the previous hash fails this gate until export records the new file. The numeric floors are unchanged. | exact |
 
-Export builds **fp16** weights with float32 input and output. `react-native-fast-tflite` runs XNNPACK, which executes that graph. A fully integer int8 graph is not the default: XNNPACK rejects MobileNetV3 ops from `TFLITE_BUILTINS_INT8` on device, while fp16 lands near 2 MB and keeps the float preprocess. `--quantization int8` is an experiment and is not what a ship build uses. There is no force flag.
+Export builds **fp16** weights with float32 input and output unless `--quantization` says otherwise. A release build uses the Android GPU delegate or iOS Core ML only when `labels.json` records that platform's delegate gate as passed for the installed model hash. Otherwise it uses CPU. If the delegate throws while loading or inside `model.run`, the app loads CPU and retries that photo once. The retry is one decision: it is not a second journal entry and it does not count as a second scan. XNNPACK runs the CPU graph. A fully integer int8 graph is not the default: the GPU delegate and XNNPACK both reject some MobileNetV3 ops from `TFLITE_BUILTINS_INT8`, while fp16 keeps the float preprocess. `--also-export int8` (or `dynamic` or `fp16`) writes that graph beside the primary file and scores it with the same gates. int8 also has to pass energy recalibration on its own validation logits. It is installed only when those gates pass. There is no flag that lowers a floor.
+
+A development build can still try the delegate before that gate has passed, so the agreement dump can be collected. `writeDelegateCalibrationDump` runs each fixed val+test tensor on CPU and on the platform delegate and writes `delegate-calibration.json` in the cache directory. It does not classify, save a journal entry, or upload anything. Score that file with the same val+test list:
+
+```bash
+python training/score_delegate_dump.py --dump delegate-calibration.json --splits training/data/splits.json --write
+```
+
+The sample is every val and test row. Train rows are rejected. `--write` records that platform in `assets/models/labels.json` and hashes `assets/models/mushrooms_model.tflite`. It exits without writing if that file is not on disk, and it does not fall back to `model_sha256` in `labels.json`. The dump and the manifest hash both have to match the file bytes. A failed gate is stored as `passed: false`. Pass `--model` to point at another copy of the same file.
+
+## Measuring inference on a phone
+
+Expo Go cannot load the interpreter. The Core ML pod flag and the Android OpenCL `uses-native-library` entries come from the `react-native-fast-tflite` config plugin, so they apply only after an EAS prebuild:
+
+```bash
+npx eas-cli@24.12.0 build --profile development --platform android
+npx eas-cli@24.12.0 build --profile development --platform ios
+```
+
+Install a model that passed the ship gates, then rebuild so the `.tflite` asset is in the binary. Start Metro with `npx expo start --dev-client`. On the scanner, a dev build shows two controls: **Measure: delegate** and **Measure: CPU**. Pick one, then photograph the same subject three times. The overlay and the `[tflite]` console line report milliseconds around `model.run` only, plus the delegate that produced those logits (`android-gpu`, `core-ml`, or `cpu`). Use the median of the second and third shots. The first shot can include GPU shader compile or Core ML cache fill inside `model.run`.
+
+`fallback=true` means the chosen delegate threw and the milliseconds are the CPU retry. The iOS simulator often fails Core ML; measure Core ML on a physical iPhone. Nothing in this line is uploaded.
 
 ## What is still missing before this is safe to ship
 

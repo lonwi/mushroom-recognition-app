@@ -104,7 +104,9 @@ pip install -r training/requirements.txt
 python training/run_pipeline.py all
 ```
 
-Kopiowanie modelu do aplikacji (`export --install-into-app`) działa dopiero wtedy, gdy progi w `training/ship_gates.py` przejdą na zmierzonych liczbach. Tu ich nie ma.
+Kopiowanie modelu do aplikacji (`export --install-into-app`) działa dopiero wtedy, gdy progi w `training/ship_gates.py` przejdą na zmierzonych liczbach. Tu ich nie ma. Kwantyzacja (`--also-export int8` albo `dynamic`) jest osobnym plikiem i trafia do aplikacji tylko z `--select-quantized`, gdy te same progi przejdzie.
+
+Build deweloperski EAS (nie Expo Go) może zmierzyć delegata GPU na Androidzie i Core ML na iOS. Wersja produkcyjna używa delegata tylko wtedy, gdy manifest ma zaliczoną zgodność z CPU na tym modelu. W przeciwnym razie zostaje CPU. W buildzie deweloperskim skaner pokazuje czas samego `model.run` i pozwala zmierzyć ten sam kadr na delegacie albo na CPU. Czas zostaje na telefonie.
 
 ---
 
