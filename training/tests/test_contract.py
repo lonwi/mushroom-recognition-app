@@ -435,12 +435,22 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertFalse(ok)
         self.assertTrue(reasons)
         self.assertTrue(any("component_share" in reason for reason in reasons))
+        self.assertTrue(any("test_balance" in reason for reason in reasons))
 
     def test_component_share_limit_is_pinned(self):
         from component_share import COMPONENT_SHARE_LIMIT
 
         # Changing this constant is Wojtek's decision only.
         self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
+
+    def test_test_split_balance_thresholds_are_pinned(self):
+        from split import MIN_TEST_COUNT, TEST_SHARE_TOLERANCE, TEST_SPLIT_RATIO
+
+        # Provisional pair. Wojtek chooses the final values. Do not widen them
+        # to let a split pass.
+        self.assertEqual(TEST_SPLIT_RATIO, 0.15)
+        self.assertEqual(TEST_SHARE_TOLERANCE, 0.05)
+        self.assertEqual(MIN_TEST_COUNT, 8)
 
     def test_variant_c_leaves_agreement_share_https_and_license_url(self):
         from component_share import COMPONENT_SHARE_LIMIT
@@ -837,6 +847,15 @@ class ManifestAndShipGateTest(unittest.TestCase):
             ok, reasons = assess_shippable(report, artifact_dir)
             self.assertFalse(ok)
             self.assertTrue(any("boletus_edulis" in reason for reason in reasons))
+            report["component_share_blockers"] = []
+            del report["test_balance_blockers"]
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("test_balance_blockers" in reason for reason in reasons))
+            report["test_balance_blockers"] = ["cortinarius_orellanus: test count 3 is below the minimum 8. The model is not shippable."]
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("cortinarius_orellanus" in reason for reason in reasons))
 
     def _passing_report(self, artifact_dir: Path) -> dict:
         manifest = load_manifest()
@@ -911,6 +930,7 @@ class ManifestAndShipGateTest(unittest.TestCase):
             },
             "attributions_complete": True,
             "component_share_blockers": [],
+            "test_balance_blockers": [],
         }
         self._write_attributions(artifact_dir, report)
         return report

@@ -453,6 +453,16 @@ def assess_shippable(report: dict, artifact_dir: Path | None = None) -> tuple[bo
             if text:
                 reasons.append(text)
 
+    if "test_balance_blockers" not in report or not isinstance(report.get("test_balance_blockers"), list):
+        reasons.append(
+            "test_balance_blockers is missing from the ship report, so the per-class test split was not checked"
+        )
+    else:
+        for item in report["test_balance_blockers"]:
+            text = str(item).strip()
+            if text:
+                reasons.append(text)
+
     # Delegate agreement is a separate release gate (assess_delegate_release).
     # A missing device report does not change these floors. Production stays on CPU.
     reasons.extend(_int8_energy_reasons(report))
