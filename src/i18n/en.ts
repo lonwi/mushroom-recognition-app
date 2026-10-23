@@ -283,6 +283,62 @@ export const en: Translations = {
       undersideStem: 'Underside with the stem',
     },
   },
+  comparison: {
+    sulphurHoney: {
+      title: 'Sulphur tuft and honey fungus',
+      lead: 'Sulphur tuft has no membranous ring. At most a faint, spore-darkened fibrous zone remains, or remnants at the cap margin. Honey fungus has a clear membranous ring.',
+      limit: 'Photos cannot rule out a poisonous species. An expert checks the specimen.',
+      scope: 'The honey-fungus photos are Armillaria mellea. The atlas card also covers other honey fungi.',
+      chipHint:
+        'The fibrous cortina zone is easy to take for a ring, so with “Has a ring” sulphur tuft stays among the cards to be checked.',
+      hypholoma: 'Sulphur tuft',
+      armillaria: 'Honey fungus',
+      hypholomaLatin: 'Hypholoma fasciculare',
+      armillariaLatin: 'Armillaria mellea',
+      sources: 'Sources',
+      noPhoto: 'No photo of this trait.',
+      traits: {
+        ring: {
+          title: 'Cortina and ring',
+          hypholoma:
+            'Young fruiting bodies have a yellow, cobweb-like cortina. Later an irregular, spore-darkened fibrous zone remains on the stem, or only remnants at the cap margin.',
+          armillaria: 'The ring is thin, membranous and usually persistent: white, often with a yellowish edge.',
+        },
+        gills: {
+          title: 'Gills',
+          hypholoma: 'The gills start sulphur yellow, then become olive green, and darken as the spores mature.',
+          armillaria: 'The gills are whitish to cream, attached or slightly running down the stem.',
+        },
+        spore: {
+          title: 'Spore print',
+          hypholoma: 'The spore print is violet-brown.',
+          armillaria: 'The spore print is white to pale cream.',
+        },
+        cap: {
+          title: 'Cap surface',
+          hypholoma: 'The cap is smooth.',
+          armillaria:
+            'The cap has fine scales, clearest at the centre. On older fruiting bodies the scales can be harder to see.',
+        },
+        flesh: {
+          title: 'Flesh',
+          hypholoma: 'The flesh is sulphur yellow.',
+          armillaria: 'The flesh is whitish.',
+        },
+      },
+      captions: {
+        hypholomaStem: 'Upper stem with an irregular, rusty fibrous cortina zone.',
+        hypholomaGills: 'Greenish-yellow gills and dark fibres on the stem.',
+        hypholomaYoung: 'Young fruiting bodies with cobweb-like cortina remnants at the cap margin.',
+        hypholomaMargin: 'Dark veil remnants on the cap margin.',
+        hypholomaFlesh: 'Yellow flesh in section.',
+        armillariaRing: 'Membranous white ring with a yellowish edge.',
+        armillariaStems: 'Two fruiting bodies with a flared ring on the stem.',
+        armillariaGills: 'Whitish ring and cream gills.',
+        armillariaCap: 'Cap with fine, upright scales.',
+      },
+    },
+  },
   scanner: {
     title: 'AI Mushroom Scanner',
     takePhoto: 'Take Photo & Classify',

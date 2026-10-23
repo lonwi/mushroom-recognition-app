@@ -161,6 +161,8 @@ export const spacing = {
 } as const;
 
 export const radius = {
+  /** Comparison cards. Stay in the 3–6 px range; do not use a pill. */
+  xs: 4,
   sm: 8,
   md: 12,
   lg: 14,

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { MUSHROOMS_DATABASE } from '../data/mushrooms';
+import { COMPARISON_PHOTOS } from '../data/sulphurHoneyComparison';
 import { photosForSpecies, SPECIES_GALLERY } from '../data/speciesGallery';
 
 /** 11,559,224 bytes of gallery WebP, plus about 20%, rounded up to the next KiB. */
@@ -59,7 +60,14 @@ function webpSize(buffer: Buffer): { width: number; height: number } {
 
 describe('atlas gallery assets', () => {
   const photos = Object.values(SPECIES_GALLERY).flat();
-  const assetPaths = photos.map((photo) => photo.assetPath);
+  const assetPaths = [
+    ...photos.map((photo) => photo.assetPath),
+    ...COMPARISON_PHOTOS.map((photo) => photo.assetPath),
+  ];
+  const credited = [
+    ...photos.map((photo) => ({ imageUrl: photo.imageUrl, sourceUrl: photo.sourceUrl })),
+    ...COMPARISON_PHOTOS.map((photo) => ({ imageUrl: photo.imageUrl, sourceUrl: photo.sourceUrl })),
+  ];
 
   it('keeps every poisonous card illustrated and leaves other cards without a gallery', () => {
     for (const species of MUSHROOMS_DATABASE) {
@@ -108,11 +116,11 @@ describe('atlas gallery assets', () => {
       }>;
     };
     const listedUrls = exclusion.photos.map((photo) => photo.image_url);
-    expect(new Set(listedUrls)).toEqual(new Set(photos.map((photo) => photo.imageUrl)));
+    expect(new Set(listedUrls)).toEqual(new Set(credited.map((photo) => photo.imageUrl)));
     expect(listedUrls.length).toBe(new Set(listedUrls).size);
 
     for (const row of exclusion.photos) {
-      const match = photos.find((photo) => photo.imageUrl === row.image_url);
+      const match = credited.find((photo) => photo.imageUrl === row.image_url);
       expect(match?.sourceUrl).toBe(row.source_url);
       if (row.inaturalist_observation_id) {
         expect(match?.sourceUrl).toContain(`/observations/${row.inaturalist_observation_id}`);

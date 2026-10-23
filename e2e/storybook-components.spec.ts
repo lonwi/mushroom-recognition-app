@@ -1,6 +1,18 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
+  test('sulphur tuft comparison pairs the cortina with a membranous ring', async ({ page }) => {
+    await page.goto('/iframe.html?id=mushroom-sulphurhoneycomparison--light');
+    await expect(page.getByTestId('comparison-lead')).toContainText('nie ma błoniastego pierścienia');
+    await expect(page.getByTestId('comparison-limit')).toContainText('grzyboznawcy');
+    await expect(page.getByTestId('comparison-author-ring-hypholoma-strefa-trzon')).toContainText('Jeffrey Lee');
+    await expect(page.getByTestId('comparison-photo-ring-armillaria-pierscien-trzony')).toBeVisible();
+    await expect(page.getByTestId('comparison-trait-gills')).toBeVisible();
+    await expect(page.getByTestId('comparison-trait-cap')).toBeVisible();
+    await expect(page.locator('body')).not.toContainText('gorzk');
+    await expect(page.locator('body')).not.toContainText('smak');
+  });
+
   test('EdibilityBadge renders all 4 edibility levels', async ({ page }) => {
     await page.goto('/iframe.html?id=mushroom-edibilitybadge--all-sizes');
     await expect(page.locator('body')).toContainText('JADALNY');

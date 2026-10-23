@@ -281,6 +281,63 @@ export const pl = {
       undersideStem: 'Spód wraz z trzonem',
     },
   },
+  comparison: {
+    sulphurHoney: {
+      title: 'Maślanka wiązkowa i opieńka miodowa',
+      lead: 'Maślanka wiązkowa nie ma błoniastego pierścienia. Zostaje najwyżej słaba strefa włókien, przyciemniona zarodnikami, albo resztki na brzegu kapelusza. Opieńka miodowa ma wyraźny, błoniasty pierścień.',
+      limit: 'Zdjęcia nie pozwalają wykluczyć gatunku trującego. Ocena owocnika należy do grzyboznawcy.',
+      scope: 'Zdjęcia opieńki pokazują Armillaria mellea. Karta w atlasie obejmuje też inne opieńki.',
+      chipHint:
+        'Strefę włókien zasnówki łatwo wziąć za pierścień, dlatego przy „Jest pierścień” maślanka wiązkowa zostaje wśród kart do sprawdzenia.',
+      hypholoma: 'Maślanka wiązkowa',
+      armillaria: 'Opieńka miodowa',
+      hypholomaLatin: 'Hypholoma fasciculare',
+      armillariaLatin: 'Armillaria mellea',
+      sources: 'Źródła',
+      noPhoto: 'Brak zdjęcia tej cechy.',
+      traits: {
+        ring: {
+          title: 'Zasnówka i pierścień',
+          hypholoma:
+            'Młode owocniki mają żółtą, pajęczynowatą zasnówkę. Później na trzonie zostaje nieregularna, ciemna od zarodników strefa włókien, a u części okazów tylko resztki na brzegu kapelusza.',
+          armillaria: 'Pierścień jest cienki, błoniasty i zwykle trwały: biały, często z żółtawym brzegiem.',
+        },
+        gills: {
+          title: 'Blaszki',
+          hypholoma:
+            'Blaszki są najpierw siarkowożółte, potem oliwkowozielone, a w miarę dojrzewania zarodników ciemnieją.',
+          armillaria: 'Blaszki są białawe do kremowych, przyrośnięte albo lekko zbiegające po trzonie.',
+        },
+        spore: {
+          title: 'Wysyp zarodników',
+          hypholoma: 'Wysyp jest fioletowobrązowy.',
+          armillaria: 'Wysyp jest biały do bladokremowego.',
+        },
+        cap: {
+          title: 'Powierzchnia kapelusza',
+          hypholoma: 'Kapelusz jest gładki.',
+          armillaria:
+            'Na kapeluszu są drobne łuseczki, najwyraźniej pośrodku. U starszych owocników łuseczki bywają słabiej widoczne.',
+        },
+        flesh: {
+          title: 'Miąższ',
+          hypholoma: 'Miąższ jest siarkowożółty.',
+          armillaria: 'Miąższ jest białawy.',
+        },
+      },
+      captions: {
+        hypholomaStem: 'Górna część trzonu z nieregularnymi, rdzawymi włóknami zasnówki.',
+        hypholomaGills: 'Zielonkawożółte blaszki i ciemne włókna na trzonie.',
+        hypholomaYoung: 'Młode owocniki z pajęczynowatymi resztkami zasnówki przy brzegu kapelusza.',
+        hypholomaMargin: 'Ciemne resztki osłony na brzegu kapelusza.',
+        hypholomaFlesh: 'Żółty miąższ na przekroju.',
+        armillariaRing: 'Błoniasty, biały pierścień z żółtawą krawędzią.',
+        armillariaStems: 'Dwa owocniki z odstającym pierścieniem na trzonie.',
+        armillariaGills: 'Białawy pierścień i kremowe blaszki.',
+        armillariaCap: 'Kapelusz z drobnymi, sterczącymi łuseczkami.',
+      },
+    },
+  },
   scanner: {
     title: 'Skaner Grzybów AI',
     takePhoto: 'Zrób zdjęcie i rozpoznaj',
