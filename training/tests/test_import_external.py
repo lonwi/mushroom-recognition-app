@@ -15,7 +15,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from evaluate import attributions_complete, publishable_license_id
-from license_policy import allowed_for_display, allowed_for_training, license_breakdown, training_license_rank
+from license_policy import (
+    EXACT_LICENSE_USAGE,
+    allowed_for_display,
+    allowed_for_training,
+    exact_license_usage,
+    license_breakdown,
+    training_license_rank,
+)
 from export_tflite import attribution_rows_for_publication
 from import_external import (
     _float_or_none,
@@ -205,6 +212,47 @@ class LicenseParseTest(unittest.TestCase):
         self.assertGreater(training_license_rank("cc-by-sa-4.0"), training_license_rank("cc-by-4.0"))
         self.assertGreater(training_license_rank("cc-by-4.0"), training_license_rank("cc0-1.0"))
         self.assertEqual(training_license_rank("cc-by-nd-4.0"), 0)
+
+    def test_cc_by_sa_only_exact_versioned_ids_are_training_only(self):
+        versions = ("1.0", "2.0", "2.5", "3.0", "4.0")
+        for version in versions:
+            license_id = f"cc-by-sa-{version}"
+            self.assertEqual(exact_license_usage(license_id), "training_only", license_id)
+            self.assertEqual(EXACT_LICENSE_USAGE[license_id], "training_only", license_id)
+            self.assertTrue(allowed_for_training(license_id), license_id)
+            self.assertFalse(allowed_for_display(license_id), license_id)
+            url = f"https://creativecommons.org/licenses/by-sa/{version}/"
+            for raw in (f"CC BY-SA {version}", f"CC-BY-SA-{version}", url):
+                parsed = parse_textual_license(raw, url)
+                self.assertEqual(
+                    (parsed["license_normalized"], parsed["usage"]),
+                    (license_id, "training_only"),
+                    raw,
+                )
+        for raw in (
+            "CC BY-SA",
+            "cc-by-sa",
+            "CC-BY-SA",
+            "CC BY-ND",
+            "CC BY-ND 4.0",
+            "CC-BY-ND-4.0",
+            "CC BY-NC-ND",
+            "CC BY-NC-ND 4.0",
+            "CC-BY-NC-ND-4.0",
+            "https://creativecommons.org/licenses/by-nd/4.0/",
+            "https://creativecommons.org/licenses/by-nc-nd/4.0/",
+        ):
+            self.assertIsNone(parse_textual_license(raw), raw)
+            self.assertIsNone(exact_license_usage(raw), raw)
+            self.assertFalse(allowed_for_training(raw), raw)
+        self.assertIsNone(exact_license_usage("cc-by-sa"))
+        self.assertIsNone(exact_license_usage("cc-by-nd-4.0"))
+        self.assertIsNone(exact_license_usage("cc-by-nc-nd-4.0"))
+        derived = parse_textual_license("CC BY-SA", _BY_SA_40)
+        self.assertEqual((derived["license_normalized"], derived["usage"]), ("cc-by-sa-4.0", "training_only"))
+        self.assertIsNone(parse_textual_license("CC BY-SA"))
+        self.assertIsNone(parse_textual_license("CC BY-ND 4.0", "https://creativecommons.org/licenses/by-nd/4.0/"))
+        self.assertIsNone(parse_textual_license("CC BY-NC-ND 4.0", "https://creativecommons.org/licenses/by-nc-nd/4.0/"))
 
 
 class ImportDirectoryTest(unittest.TestCase):
@@ -626,50 +674,84 @@ class ImportDirectoryTest(unittest.TestCase):
         self.assertEqual(kept, [])
         self.assertEqual([item["skip_reason"] for item in skipped], ["training_only"])
 
-    def test_nc_and_df20_cannot_be_published(self):
-        ok = {
+    def test_nc_sa_and_df20_fail_publishable_gallery_site_and_comparison(self):
+        cc0 = {
             "creator": "Ada",
             "author": "Ada",
-            "license_normalized": "cc-by-4.0",
-            "license_url": _BY_40,
+            "license": "CC0 1.0",
+            "license_normalized": "cc0-1.0",
+            "license_url": _ZERO,
             "usage": "publishable",
             "unverified": False,
-            "image_url": "https://images.example.test/a.jpg",
-            "source_url": "https://example.test/a",
+            "image_url": "https://images.example.test/cc0.jpg",
+            "source_url": "https://example.test/cc0",
+        }
+        cc_by = {
+            **cc0,
+            "creator": "Bea",
+            "author": "Bea",
+            "license": "CC BY 4.0",
+            "license_normalized": "cc-by-4.0",
+            "license_url": _BY_40,
+            "image_url": "https://images.example.test/by.jpg",
+            "source_url": "https://example.test/by",
         }
         nc = {
-            **ok,
+            **cc_by,
             "creator": "Cyra",
+            "author": "Cyra",
+            "license": "CC BY-NC 4.0",
             "license_normalized": "cc-by-nc-4.0",
+            "license_url": _BY_NC_40,
             "usage": "training_only",
             "image_url": "https://images.example.test/nc.jpg",
+            "source_url": "https://example.test/nc",
+        }
+        sa = {
+            **cc_by,
+            "creator": "Dora",
+            "author": "Dora",
+            "license": "CC BY-SA 4.0",
+            "license_normalized": "cc-by-sa-4.0",
+            "license_url": _BY_SA_40,
+            "usage": "training_only",
+            "image_url": "https://images.example.test/sa.jpg",
+            "source_url": "https://example.test/sa",
         }
         df20 = {
-            **ok,
+            **cc_by,
             "creator": "Benny",
+            "author": "Benny",
+            "license": "DF20 training-only; no per-image licence",
             "license_normalized": "df20",
+            "license_url": "",
             "usage": "training_only",
             "image_url": "",
+            "source_url": "",
             "df20_image_id": "223-1",
         }
-        lying_sa = {**ok, "license_normalized": "cc-by-sa-4.0", "usage": "publishable"}
-        versionless = {**ok, "license_normalized": "cc-by", "usage": "publishable"}
-        rows = [nc, df20, ok, lying_sa, versionless]
+        lying_sa = {**sa, "usage": "publishable"}
+        versionless = {**cc_by, "license_normalized": "cc-by", "usage": "publishable"}
+        nd = {**cc_by, "license_normalized": "cc-by-nd-4.0", "usage": "publishable"}
+        rows = [nc, sa, df20, cc0, lying_sa, cc_by, versionless, nd]
+        shown = [cc0, cc_by]
         for selector in (rows_for_atlas_gallery, rows_for_site, rows_for_comparison):
             published = selector(rows)
-            self.assertEqual(published, [ok], selector.__name__)
+            self.assertEqual(published, shown, selector.__name__)
             self.assertTrue(all(is_publishable(row) for row in published))
+            self.assertEqual(
+                [row["license_normalized"] for row in published],
+                ["cc0-1.0", "cc-by-4.0"],
+                selector.__name__,
+            )
+        for hidden in (nc, sa, df20, lying_sa, versionless, nd):
+            self.assertFalse(is_publishable(hidden), hidden["license_normalized"])
         credits = attribution_rows_for_publication(rows)
-        self.assertEqual([row["license_normalized"] for row in credits], ["cc-by-4.0"])
-        self.assertTrue(attributions_complete([ok]))
-        self.assertTrue(attributions_complete([ok, nc]))
-        self.assertTrue(attributions_complete([ok, df20]))
-        self.assertFalse(attributions_complete([{**ok, "license_normalized": "cc-by-nd-4.0"}]))
-        self.assertFalse(attributions_complete([{**ok, "license_normalized": "cc-by-nc-sa-4.0"}]))
-        self.assertFalse(is_publishable(nc))
-        self.assertFalse(is_publishable(df20))
-        self.assertFalse(is_publishable(lying_sa))
-        self.assertFalse(is_publishable(versionless))
+        self.assertEqual([row["license_normalized"] for row in credits], ["cc0-1.0", "cc-by-4.0"])
+        self.assertTrue(attributions_complete(shown + [nc, sa, df20]))
+        self.assertFalse(attributions_complete([{**cc_by, "license_normalized": "cc-by-nd-4.0"}]))
+        self.assertFalse(attributions_complete([{**cc_by, "license_normalized": "cc-by-nc-nd-4.0"}]))
+        self.assertFalse(attributions_complete([{**cc_by, "license_normalized": "cc-by-nc-sa-4.0"}]))
 
     def test_label_conflicts_drop_every_row(self):
         _photo(

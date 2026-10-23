@@ -342,17 +342,17 @@ def published_rows(rows: list[dict]) -> list[dict]:
 
 
 def rows_for_atlas_gallery(rows: list[dict]) -> list[dict]:
-    """Atlas gallery. CC BY-NC and DF20 stay out."""
+    """Atlas gallery. CC BY-NC, CC BY-SA, and DF20 stay out."""
     return published_rows(rows)
 
 
 def rows_for_site(rows: list[dict]) -> list[dict]:
-    """Pages under ``site/``. CC BY-NC and DF20 stay out."""
+    """Pages under ``site/``. CC BY-NC, CC BY-SA, and DF20 stay out."""
     return published_rows(rows)
 
 
 def rows_for_comparison(rows: list[dict]) -> list[dict]:
-    """Comparison photos for issue #65. CC BY-NC and DF20 stay out."""
+    """Comparison photos for issue #65. CC BY-NC, CC BY-SA, and DF20 stay out."""
     return published_rows(rows)
 
 

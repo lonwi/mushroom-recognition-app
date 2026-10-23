@@ -1,9 +1,10 @@
 """Which photo licences may train a released model, and which may be shown.
 
-Owner decision (Wojtek, 2026-10-23, variant C): a released model's training
-set may include CC0, CC BY, CC BY-NC, CC BY-SA, and Danish Fungi 2020.
-Photos shown in the app (atlas gallery, ``site/``, comparison photos) stay
-CC0 or CC BY.
+Decyzja Wojtka 2026-10-23 12:02, wariant C: a released model's training set
+may include CC0, CC BY, CC BY-NC, CC BY-SA, and Danish Fungi 2020. Photos
+shown in the app (atlas gallery, ``site/``, comparison photos) stay CC0 or
+CC BY. CC BY-SA is accepted only as an exact versioned id such as
+``cc-by-sa-4.0``, and that id is ``usage=training_only``.
 
 The ids below are whole keys. ``cc-by-nc-4.0`` is not ``cc-by-4.0``, and
 ``cc-by-nc-sa-4.0`` is not ``cc-by-nc-4.0``. ND, NC-ND, and NC-SA are absent

@@ -101,11 +101,13 @@ mushroom-recognition-app/
    - A packaged model still must not show an edibility verdict. Amanita, Cortinarius, Galerina, or Gyromitra in the top 3, or low confidence, requires the expert / Sanepid warning. `not_a_mushroom` and the energy gate may reject a photo; `unknown_mushroom` shows the honest "the app does not know this mushroom" message, never a species or verdict.
    - Do not install weights that failed `training/ship_gates.py`.
 
-6. **Training data licensing**:
-   - **Today the code accepts only CC0 and CC-BY** (`training/licenses.py` rejects `by-nc`). Do not fetch NC, ND, SA, or unlicensed photos.
-   - **Approved, not yet implemented** (owner decision 2026-10-16, to be delivered by training PR 3): CC BY-NC (plain BY-NC only, not NC-ND / NC-SA) and DF20 for **training only** – never published, displayed in the app, or bundled; attribution kept; licence in its own manifest column with a filter that can exclude BY-NC / DF20; DF20 needs photographer consent confirmed by the owner before any release. Until PR 3 is merged, the CC0/CC-BY rule above is what the code enforces.
-   - A **commercial release** needs a model retrained without BY-NC and DF20 data.
-   - Planned with PR 3: split keys combine all available keys (observation id, GBIF key, collector + grid + day), an empty key is never a key, and collector ids are hashed with a salt kept outside the repo.
+6. **Training data licensing** (Decyzja Wojtka 2026-10-23 12:02, wariant C):
+   - A released model may be trained on versioned CC0, CC BY, CC BY-NC, CC BY-SA, and Danish Fungi 2020 (`training/license_policy.py`). ND, NC-ND, and NC-SA stay rejected.
+   - CC BY-SA is accepted only as an exact versioned id (`cc-by-sa-1.0`, `cc-by-sa-2.0`, `cc-by-sa-2.5`, `cc-by-sa-3.0`, `cc-by-sa-4.0`) with `usage=training_only`. A versionless `CC BY-SA` or a bare `cc-by-sa` is rejected.
+   - Photos shown in the app stay CC0 or CC BY. `is_publishable`, the atlas gallery, `site/`, and comparison photos reject CC BY-NC, CC BY-SA, and DF20.
+   - The GBIF fetch (`training/licenses.py`) still keeps only CC0 and CC-BY URLs. CC BY-NC, CC BY-SA, and DF20 enter through external CSVs (`--with-external`), not through that fetch. Do not fetch ND, NC-SA, NC-ND, or unlicensed photos.
+   - Every CC row, including CC BY-SA, needs an https `license_url` that matches the parsed licence and version. DF20 has no per-image Creative Commons URL; the dataset note is the licence.
+   - The ship gate does not block CC BY-NC, CC BY-SA, or DF20. `attributions.jsonl` still lists every train, val, and test photo with its licence and author. Whether CC BY-SA share-alike reaches the TFLite file is an open question; this note does not decide it.
 
 7. **Content rules**:
    - Stamets (and other copyrighted books): paraphrase only, always with page numbers; no quotes.

@@ -21,6 +21,7 @@ from prepare_data import write_prepare_outputs
 from dataset_manifest import build_dataset_manifest
 from evaluate import attributions_complete
 from export_tflite import write_attribution_file
+from ship_gates import _attribution_file_reasons
 from gallery_exclusion import (
     GalleryLeakError,
     assert_gallery_absent_from_test,
@@ -581,6 +582,97 @@ class SplitLeakTest(unittest.TestCase):
             with self.assertRaises(RuntimeError) as raised:
                 write_attribution_file([http_row], path)
             self.assertIn("https", str(raised.exception))
+
+    def test_ship_gate_credits_every_photo_and_accepts_nc_sa_and_df20(self):
+        cc0 = {
+            "creator": "Ada",
+            "license": "CC0 1.0",
+            "license_normalized": "cc0-1.0",
+            "usage": "publishable",
+            "image_url": "https://images.example.test/cc0.jpg",
+            "source_url": "https://example.test/cc0",
+            "class_id": "boletus_edulis",
+            "file": "images/cc0.jpg",
+        }
+        cc_by = {
+            **cc0,
+            "creator": "Bea",
+            "license": "https://creativecommons.org/licenses/by/4.0/",
+            "license_normalized": "cc-by-4.0",
+            "image_url": "https://images.example.test/by.jpg",
+            "source_url": "https://example.test/by",
+            "file": "images/by.jpg",
+        }
+        nc = {
+            **cc_by,
+            "creator": "Cyra",
+            "license": "CC BY-NC 4.0",
+            "license_normalized": "cc-by-nc-4.0",
+            "usage": "training_only",
+            "image_url": "https://images.example.test/nc.jpg",
+            "source_url": "https://example.test/nc",
+            "file": "images/nc.jpg",
+        }
+        sa = {
+            **cc_by,
+            "creator": "Dora",
+            "license": "CC BY-SA 4.0",
+            "license_normalized": "cc-by-sa-4.0",
+            "usage": "training_only",
+            "image_url": "https://images.example.test/sa.jpg",
+            "source_url": "https://example.test/sa",
+            "file": "images/sa.jpg",
+        }
+        df20 = {
+            **cc_by,
+            "creator": "Benny",
+            "license": "DF20 training-only; no per-image licence",
+            "license_normalized": "df20",
+            "usage": "training_only",
+            "image_url": "",
+            "source_url": "",
+            "file": "",
+            "df20_image_id": "223-1",
+        }
+        rows = [cc0, cc_by, nc, sa, df20]
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            path = directory / "attributions.jsonl"
+            write_attribution_file(rows, path)
+            written = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+            self.assertEqual(len(written), len(rows))
+            for original, line in zip(rows, written):
+                self.assertEqual(line["creator"], original["creator"])
+                self.assertTrue(line["creator"].strip())
+                self.assertEqual(line["license"], original["license"])
+                self.assertEqual(line["license_normalized"], original["license_normalized"])
+            self.assertEqual(written[-1]["df20_image_id"], "223-1")
+            self.assertTrue(attributions_complete(written))
+            coverage = {
+                "train_images": {"boletus_edulis": 3},
+                "val_images": {"boletus_edulis": 1},
+                "test_images": {"boletus_edulis": 1},
+            }
+            self.assertEqual(_attribution_file_reasons(directory, coverage), [])
+            nd = {
+                **cc_by,
+                "creator": "Nad",
+                "license": "CC BY-ND 4.0",
+                "license_normalized": "cc-by-nd-4.0",
+                "image_url": "https://images.example.test/nd.jpg",
+                "file": "images/nd.jpg",
+            }
+            write_attribution_file(rows + [nd], path)
+            blocked = _attribution_file_reasons(
+                directory,
+                {
+                    "train_images": {"boletus_edulis": 4},
+                    "val_images": {"boletus_edulis": 1},
+                    "test_images": {"boletus_edulis": 1},
+                },
+            )
+            self.assertTrue(blocked)
+            self.assertTrue(any("creator" in reason or "license" in reason for reason in blocked))
 
     def test_manifest_records_counts_and_a_content_hash(self):
         records = [_photo("boletus_edulis", f"login_{index}", index) for index in range(12)]
