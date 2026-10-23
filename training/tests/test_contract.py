@@ -447,7 +447,7 @@ class ManifestAndShipGateTest(unittest.TestCase):
         from person_cap import CAP_FRACTION, CAP_MAX, CAP_MIN, PERSON_CAP_SEED
         from sampling import MAX_PER_OCCURRENCE
 
-        # Pending Wojtek's confirmation. Do not raise the ceiling or the fraction.
+        # Wojtek 2026-10-23 16:55, decision A. Do not raise the ceiling or the fraction.
         self.assertEqual(CAP_MAX, 60)
         self.assertEqual(CAP_MIN, 10)
         self.assertEqual(CAP_FRACTION, 0.10)
@@ -457,6 +457,9 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertIn("CAP_MIN = 10", source)
         self.assertIn("CAP_FRACTION = 0.10", source)
         self.assertIn("PERSON_CAP_SEED = 42", source)
+        self.assertIn("2026-10-23 16:55, decision A", source)
+        self.assertIn("no grandfathering", source)
+        self.assertNotIn("pending Wojtek", source)
         self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
         self.assertEqual(MAX_PER_OCCURRENCE, 2)
 
