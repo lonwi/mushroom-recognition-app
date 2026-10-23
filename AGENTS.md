@@ -113,6 +113,8 @@ mushroom-recognition-app/
    - Every URL in code, data, and docs uses `https://`. Exception: test fixtures that check `http://` handling on purpose (e.g. `training/tests/test_fetch_gbif.py`, `training/tests/test_licenses.py`).
    - Emergency phone numbers exist only in `src/data/safetyRules.ts`. The test `src/__tests__/phoneNumbersSingleSource.test.ts` (added with the emergency-numbers PR) enforces it; cards and screens link to the emergency screen instead.
 
+8. **Per-class component share**: `COMPONENT_SHARE_LIMIT` in `training/component_share.py` is 0.50 (Decyzja Wojtka 2026-10-23 12:13). A class over that share blocks prepare unless it is named in `training/component_share_acknowledgements.json`. An acknowledgement is a ship blocker, so `shippable` stays false. CLI, environment, and config cannot raise the limit above the constant. A config file may set a lower limit.
+
 ---
 
 ## ⚡ Agent Workflow & Commands

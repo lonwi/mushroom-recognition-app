@@ -435,10 +435,88 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertTrue(any("component_share" in reason for reason in reasons))
 
     def test_component_share_limit_is_pinned(self):
-        from component_share import COMPONENT_SHARE_LIMIT
+        from component_share import (
+            COMPONENT_SHARE_LIMIT,
+            load_share_config,
+            measure_component_share,
+            require_share_limit,
+        )
+        from salt_fixture import FIXTURE_SALT
 
-        # Changing this constant is Wojtek's decision only.
-        self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
+        # Decyzja Wojtka 2026-10-23 12:13. A class over this share still blocks,
+        # and an acknowledgement still leaves the model non-shippable.
+        self.assertEqual(COMPONENT_SHARE_LIMIT, 0.50)
+        self.assertEqual(require_share_limit(COMPONENT_SHARE_LIMIT, "contract"), COMPONENT_SHARE_LIMIT)
+        with self.assertRaises(ValueError):
+            require_share_limit(COMPONENT_SHARE_LIMIT + 0.01, "contract")
+
+        def photo(observer: str, index: int) -> dict:
+            return {
+                "class_id": "boletus_edulis",
+                "inat_observer": observer,
+                "author": observer,
+                "license": "CC BY",
+                "image_url": f"https://images.example.test/boletus_edulis/{observer}/{index}.jpg",
+                "file": f"boletus_edulis_{observer}_{index}.jpg",
+                "occurrence_key": f"boletus_edulis-{observer}-{index}",
+                "inat_photo_id": f"boletus_edulis-{index}-{observer}",
+                "inat_observation_id": f"obs-boletus_edulis-{observer}-{index}",
+            }
+
+        def splits_for(train: list[dict], val: list[dict], test: list[dict]) -> dict[str, list[dict]]:
+            return {"train": train, "val": val, "test": test}
+
+        under = measure_component_share(
+            splits_for(
+                [photo("one_author", 0), photo("one_author", 1)],
+                [photo("other_author", 0)],
+                [photo("third_author", 0), photo("fourth_author", 0)],
+            ),
+            salt=FIXTURE_SALT,
+            acknowledgements={},
+            limit=COMPONENT_SHARE_LIMIT,
+        )
+        self.assertLessEqual(under["per_class"]["boletus_edulis"]["largest_component_share"], COMPONENT_SHARE_LIMIT)
+        self.assertEqual(under["hard_stop_classes"], [])
+        self.assertEqual(under["ship_blockers"], [])
+
+        over_splits = splits_for(
+            [photo("one_author", index) for index in range(3)],
+            [photo("other_author", 0)],
+            [photo("third_author", 0)],
+        )
+        blocked = measure_component_share(
+            over_splits,
+            salt=FIXTURE_SALT,
+            acknowledgements={},
+            limit=COMPONENT_SHARE_LIMIT,
+        )
+        self.assertGreater(blocked["per_class"]["boletus_edulis"]["largest_component_share"], COMPONENT_SHARE_LIMIT)
+        self.assertEqual(blocked["hard_stop_classes"], ["boletus_edulis"])
+        self.assertEqual(blocked["ship_blockers"], [])
+
+        acknowledged = measure_component_share(
+            over_splits,
+            salt=FIXTURE_SALT,
+            acknowledgements={"boletus_edulis": "one photographer until the pool is wider"},
+            limit=COMPONENT_SHARE_LIMIT,
+        )
+        self.assertEqual(acknowledged["hard_stop_classes"], [])
+        self.assertTrue(any("not shippable" in item for item in acknowledged["ship_blockers"]))
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            config = artifact_dir / "share.json"
+            config.write_text(
+                json.dumps({"limit": COMPONENT_SHARE_LIMIT + 0.01, "acknowledgements": []}),
+                encoding="utf-8",
+            )
+            with self.assertRaises(ValueError):
+                load_share_config(config)
+            report = self._passing_report(artifact_dir)
+            report["component_share_blockers"] = list(acknowledged["ship_blockers"])
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("not shippable" in reason for reason in reasons))
 
     def test_missing_component_share_blockers_key_blocks_shipping(self):
         with tempfile.TemporaryDirectory() as tmp:

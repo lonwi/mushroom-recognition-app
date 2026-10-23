@@ -1,6 +1,6 @@
 """Per-class share of the largest identity component.
 
-The gate is one number, ``COMPONENT_SHARE_LIMIT`` (0.20): the largest
+The gate is one number, ``COMPONENT_SHARE_LIMIT`` (0.50): the largest
 component's share of that class's rows. A class over the limit fails prepare
 unless it is named in the acknowledgement file. An acknowledgement is written
 into the dataset manifest and is a ship blocker, so the model stays
@@ -22,8 +22,8 @@ from manifest import ROOT
 from publication import _df20_marker
 from split import _components, normalized_person_text, person_identity_keys
 
-# Pending owner decision (20% vs 50%); do not raise.
-COMPONENT_SHARE_LIMIT = 0.20
+# Decyzja Wojtka 2026-10-23 12:13. CLI, environment, and config cannot raise this.
+COMPONENT_SHARE_LIMIT = 0.50
 ACK_PATH = ROOT / "training" / "component_share_acknowledgements.json"
 _PERSON_FIELDS = (
     "inat_observer",

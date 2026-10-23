@@ -971,7 +971,7 @@ class SplitLeakTest(unittest.TestCase):
             self.assertTrue(any("component_share" in item for item in reasons))
 
     def test_share_limit_above_the_constant_is_refused(self):
-        self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
+        self.assertEqual(COMPONENT_SHARE_LIMIT, 0.50)
         checked_in = load_share_config(ACK_PATH)
         self.assertLessEqual(checked_in["limit"], COMPONENT_SHARE_LIMIT)
         self.assertIn("cortinarius_orellanus", checked_in["acknowledgements"])
