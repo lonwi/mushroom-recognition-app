@@ -495,8 +495,8 @@ class SplitLeakTest(unittest.TestCase):
             self.assertEqual(dropped[0]["license_normalized"], "cc0-1.0")
             self.assertEqual(dropped[0]["drop_reason"], "looser_license")
             dropped_for_report = dropped
-        balanced = [_photo("cantharellus_cibarius", f"login_{index}", index) for index in range(10)]
-        clean = {"train": balanced[:6], "val": balanced[6:8], "test": balanced[8:]}
+        balanced = [_photo("cantharellus_cibarius", f"login_{index}", index) for index in range(80)]
+        clean = {"train": balanced[:56], "val": balanced[56:68], "test": balanced[68:]}
         share_config = {"limit": COMPONENT_SHARE_LIMIT, "acknowledgements": {}}
         with tempfile.TemporaryDirectory() as tmp:
             directory = Path(tmp)

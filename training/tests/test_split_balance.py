@@ -48,9 +48,17 @@ def _singletons(class_id: str, count: int, prefix: str) -> list[dict]:
     return [_photo(class_id, f"{prefix}_{index}", index) for index in range(count)]
 
 
-def _bundle(class_id: str, observer: str, count: int) -> list[dict]:
+def _bundle(
+    class_id: str,
+    observer: str,
+    count: int,
+    *,
+    start: int = 0,
+    held_out: bool = False,
+) -> list[dict]:
     """Several photos, one photographer: one component, even across classes."""
-    return [_photo(class_id, observer, index) for index in range(count)]
+    extra = {"held_out_taxon": True} if held_out else {}
+    return [_photo(class_id, observer, start + index, **extra) for index in range(count)]
 
 
 def _split(records, **kwargs):
@@ -352,6 +360,9 @@ class SplitBalanceTest(unittest.TestCase):
         self.assertEqual(report["ship_blockers"], [])
         self.assertEqual(report["tolerance"], TEST_SHARE_TOLERANCE)
         self.assertEqual(report["minimum_test_count"], MIN_TEST_COUNT)
+        info = report["per_class"]["boletus_edulis"]
+        self.assertEqual(info["val_rows"], 12)
+        self.assertEqual(info["val_share"], 12 / 80)
 
     def test_missing_test_balance_block_fails_closed(self):
         self.assertTrue(test_balance_blockers({}))
@@ -382,6 +393,129 @@ class SplitBalanceTest(unittest.TestCase):
             }
         )
         self.assertTrue(any("TEST_SHARE_TOLERANCE" in item for item in widened))
+
+    def test_held_out_rows_do_not_push_the_eligible_share_out_of_band(self):
+        """Targets and the measured share both ignore held-out rows.
+
+        Two hundred held-out photos would make the old target ``round(280 * 0.15) = 42``.
+        After those rows are withheld, 42 of the 80 eligible photos would be a
+        0.525 test share. The budget is the 80 eligible photos, so test and val
+        stay at 12. Held-out photos that ride into test with another component
+        stay in the split and still do not move the measured share.
+        """
+        records = [
+            *_singletons("boletus_edulis", 80, "solo"),
+            *_bundle("boletus_edulis", "held_author", 200, held_out=True),
+        ]
+        withheld: list[dict] = []
+        splits = _split(records, withheld=withheld)
+        self._assert_one_home(splits)
+        counts = _counts(splits, "boletus_edulis")
+        self.assertEqual(counts["test"], 12)
+        self.assertEqual(counts["val"], 12)
+        self.assertEqual(sum(counts.values()), 80)
+        self.assertNotIn("held_author", _homes(splits, lambda row: row["inat_observer"]))
+        self.assertEqual(len(withheld), 200)
+        self.assertTrue(all(row.get("held_out_taxon") is True for row in withheld))
+        report = measure_test_balance(splits)
+        info = report["per_class"]["boletus_edulis"]
+        self.assertEqual(info["rows"], 80)
+        self.assertEqual(info["test_rows"], 12)
+        self.assertEqual(info["test_share"], 12 / 80)
+        self.assertEqual(info["val_rows"], 12)
+        self.assertEqual(info["val_share"], 12 / 80)
+        self.assertEqual(report["hard_stop_classes"], [])
+
+        mixed = [
+            *_singletons("cantharellus_cibarius", 70, "solo"),
+            *_bundle("cantharellus_cibarius", "mixed_author", 10),
+            *_bundle("cantharellus_cibarius", "mixed_author", 40, held_out=True, start=10),
+        ]
+        mixed_splits = _split(mixed)
+        self.assertEqual(_homes(mixed_splits, lambda row: row["inat_observer"])["mixed_author"], {"test"})
+        held_in_test = [
+            row
+            for row in mixed_splits["test"]
+            if row["inat_observer"] == "mixed_author" and row.get("held_out_taxon") is True
+        ]
+        self.assertEqual(len(held_in_test), 40)
+        mixed_counts = _counts(mixed_splits, "cantharellus_cibarius")
+        self.assertEqual(mixed_counts["test"], 12 + 40)
+        mixed_report = measure_test_balance(mixed_splits)
+        mixed_info = mixed_report["per_class"]["cantharellus_cibarius"]
+        self.assertEqual(mixed_info["rows"], 80)
+        self.assertEqual(mixed_info["test_rows"], 12)
+        self.assertEqual(mixed_info["test_share"], 12 / 80)
+        self.assertEqual(mixed_info["val_rows"], 12)
+        self.assertEqual(mixed_info["val_share"], 12 / 80)
+        self.assertNotIn("cantharellus_cibarius", mixed_report["hard_stop_classes"])
+
+    def test_tail_that_exactly_fills_test_leaves_val_empty(self):
+        """Test is filled before val, so a tail the size of the test target leaves val empty.
+
+        Five components of 17 photos are each too big for ``round(100 * 0.15) = 15``
+        and each is 17% of the class, under the 0.20 component-share limit.
+        Fifteen singletons fill test and nothing is left for val. Without an
+        acknowledgement prepare stops. With one, prepare writes the files and
+        the ship gate stays false.
+        """
+        from component_share import measure_component_share
+        from ship_gates import assess_shippable
+
+        records = []
+        for blob in range(5):
+            records.extend(_bundle("suillus_grevillei", f"blob_{blob}", 17))
+        records.extend(_singletons("suillus_grevillei", 15, "tail"))
+        splits = _split(records)
+        counts = _counts(splits, "suillus_grevillei")
+        self.assertEqual(counts, {"train": 85, "val": 0, "test": 15})
+        balance = measure_test_balance(splits)
+        info = balance["per_class"]["suillus_grevillei"]
+        self.assertEqual(info["val_rows"], 0)
+        self.assertEqual(info["val_share"], 0.0)
+        self.assertFalse(info["outside_tolerance"])
+        self.assertFalse(info["below_minimum"])
+        self.assertEqual(balance["hard_stop_classes"], [])
+        share = measure_component_share(splits, salt=FIXTURE_SALT, acknowledgements={})
+        self.assertFalse(share["per_class"]["suillus_grevillei"]["over_limit"])
+        self.assertTrue(share["per_class"]["suillus_grevillei"]["missing_val_or_test"])
+        self.assertIn("suillus_grevillei", share["hard_stop_classes"])
+        self._assert_prepare_writes_nothing(splits, records)
+
+        reason = "the only photos that fit a split filled test, so val is empty"
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            manifest = write_prepare_outputs(
+                directory,
+                prepared=list(records),
+                splits=splits,
+                dropped=[],
+                identity_dropped=[],
+                skipped=[],
+                withheld=[],
+                salt=FIXTURE_SALT,
+                share_config={
+                    "limit": 0.20,
+                    "acknowledgements": {"suillus_grevillei": reason},
+                },
+                model_png_size=224,
+            )
+            self.assertTrue((directory / "splits.json").is_file())
+            self.assertTrue((directory / "dataset_manifest.json").is_file())
+            self.assertEqual(manifest["component_share"]["hard_stop_classes"], [])
+            self.assertEqual(manifest["test_balance"]["hard_stop_classes"], [])
+            blockers = manifest["component_share"]["ship_blockers"]
+            self.assertTrue(any("val has 0 rows" in item for item in blockers))
+            self.assertTrue(any("Acknowledged" in item and "not shippable" in item for item in blockers))
+            ok, reasons = assess_shippable(
+                {
+                    "component_share_blockers": blockers,
+                    "test_balance_blockers": manifest["test_balance"]["ship_blockers"],
+                },
+                directory,
+            )
+            self.assertFalse(ok)
+            self.assertTrue(any("val has 0 rows" in item and "not shippable" in item for item in reasons))
 
     def _assert_prepare_writes_nothing(self, splits, records) -> None:
         with tempfile.TemporaryDirectory() as tmp:

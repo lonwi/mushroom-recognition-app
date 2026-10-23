@@ -10,13 +10,16 @@ or a GBIF occurrence are one component and go to one split. Placeholder author
 strings are not a photographer. A held-out taxon does not move the component
 into test; those rows are dropped unless the component is already in test.
 
-Test and val targets are ``round(class_images * ratio)`` (default
-``TEST_SPLIT_RATIO``, 0.15). A component enters one of those splits only when
-the added rows stay inside the target of every class it contains. A component
-that fits neither split stays in train. ``TEST_SHARE_TOLERANCE`` (0.05) and
-``MIN_TEST_COUNT`` (8) are a provisional ship gate: a class whose test share
-sits outside the band, or whose test count is below the minimum, is a hard
-stop in prepare and a ship blocker. The numbers are not final.
+Test and val targets are ``round(eligible_images * ratio)`` (default
+``TEST_SPLIT_RATIO``, 0.15). Eligible images are the rows that are not a
+held-out taxon, which is also the base of the measured test share. A
+component enters one of those splits only when the added eligible rows stay
+inside the target of every class it contains. A component that fits neither
+split stays in train. ``TEST_SHARE_TOLERANCE`` (0.05) and ``MIN_TEST_COUNT``
+(8) are a provisional ship gate: a class whose test share sits outside the
+band, or whose test count is below the minimum, is a hard stop in prepare
+and a ship blocker. The numbers are not final. ``val_rows`` and ``val_share``
+are reported beside the test figures and are not a gate.
 
 `collector_group_key` is still the field-outing report (recorder, ~1 km grid,
 calendar day). It is not the split key. `prepare_data.py` writes both.
@@ -618,13 +621,18 @@ def split_by_observation(
     lands in train or val, its held-out rows are removed and appended to
     ``withheld`` with counts. They stay only when the component is in test.
 
-    Each component is placed once. It may go to test only when adding its rows
-    would not push any class past ``round(images * test_ratio)``. Val uses the
-    same check against the val ratio. Components that span more classes, and
-    then larger ones, are placed first; ``seed`` breaks the remaining ties. A
-    class with fewer than three components does not open a target and stays in
-    train unless another class places that component. The salt pseudonymizes
-    component ids. It does not change the assignment.
+    Each component is placed once. It may go to test only when adding its
+    non-held-out rows would not push any class past ``round(eligible * test_ratio)``.
+    Val uses the same check against the val ratio. Held-out rows are not part
+    of that budget: they are removed from train and val after placement, and
+    the measured test share counts the same non-held-out rows. A held-out row
+    stays in test only when its component was placed there because of the
+    other rows. A component that is only held-out rows goes to train and is
+    withheld. Components that span more classes, and then larger ones, are
+    placed first; ``seed`` breaks the remaining ties. A class with fewer than
+    three components does not open a target and stays in train unless another
+    class places that component. The salt pseudonymizes component ids. It does
+    not change the assignment.
     """
     salt = _require_salt(salt)
     if val_ratio < 0 or test_ratio < 0 or val_ratio + test_ratio >= 1:
@@ -636,6 +644,8 @@ def split_by_observation(
         component["blocked"] = any(blocked(row) for row in component["rows"])
         counts: dict[str, int] = defaultdict(int)
         for row in component["rows"]:
+            if row.get("held_out_taxon") is True:
+                continue
             counts[row["class_id"]] += 1
         component["class_counts"] = dict(counts)
 
@@ -662,16 +672,20 @@ def _test_share_outside_tolerance(test_rows: int, total: int) -> bool:
 def measure_test_balance(splits: dict[str, list[dict]]) -> dict:
     """Per-class test share and test count against the provisional gate.
 
-    A class is a hard stop when its test share is outside
+    Counts use the same rows as the split targets: a held-out row is left
+    out. A class is a hard stop when its test share is outside
     ``TEST_SPLIT_RATIO ± TEST_SHARE_TOLERANCE`` or its test count is below
     ``MIN_TEST_COUNT``. Nothing acknowledges the stop away. A component that
     cannot fit a test target stays in train; this report is what keeps the
-    resulting test set from being silently empty or tiny.
+    resulting test set from being silently empty or tiny. ``val_rows`` and
+    ``val_share`` are recorded for the same rows and are not a gate.
     """
     names = ("train", "val", "test")
     per_split: dict[str, Counter[str]] = {name: Counter() for name in names}
     for name in names:
         for row in splits.get(name) or []:
+            if row.get("held_out_taxon") is True:
+                continue
             per_split[name][str(row.get("class_id") or "")] += 1
     class_ids = sorted({class_id for counts in per_split.values() for class_id in counts})
     per_class: dict[str, dict] = {}
@@ -680,13 +694,17 @@ def measure_test_balance(splits: dict[str, list[dict]]) -> dict:
     for class_id in class_ids:
         total = sum(per_split[name][class_id] for name in names)
         test_rows = per_split["test"][class_id]
+        val_rows = per_split["val"][class_id]
         share = (test_rows / total) if total else 0.0
+        val_share = (val_rows / total) if total else 0.0
         outside = _test_share_outside_tolerance(test_rows, total)
         below = test_rows < MIN_TEST_COUNT
         info: dict = {
             "rows": total,
             "test_rows": test_rows,
             "test_share": share,
+            "val_rows": val_rows,
+            "val_share": val_share,
             "outside_tolerance": outside,
             "below_minimum": below,
         }
