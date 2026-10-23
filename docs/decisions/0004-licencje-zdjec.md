@@ -55,11 +55,13 @@ Tamta rekomendacja A była węższa niż notatka w `AGENTS.md` z 2026-10-16 i w�
 
 **DF20, wariant B** (2026-10-23, 12:15). Tylko treningi testowe, bez wydania. Wiersz DF20 zawsze blokuje `shippable`. Prośb o zgodę fotografów DF20 nie wysyłamy. README DF20 („non-commercial research purposes only”), regulamin Svampeatlas (bezpośrednie porozumienie) i raport Zbierania zostają tłem tej decyzji, nie warunkiem późniejszego otwarcia bramki.
 
-**Mushroom Observer, wariant A** (2026-10-23, 14:18). Zdjęcia CC BY-SA z Mushroom Observer zbieramy dla wszystkich gatunków z aplikacji. Tylko do treningu, nigdy do wyświetlania: model wydawany może być na nich uczony, tak jak w wariancie B z 12:17, a zdjęć nie pokazujemy. Trafiają do osobnych plików `_by_sa.csv`, z autorem i wersjonowanym `license_url`. Walidator dopuszcza CC BY-SA wyłącznie dla tych plików. Te zdjęcia mogą też służyć do dozbierania klas, które przekraczają limit udziału z [0001](0001-udzial-zbieracza.md), przy maksymalnie ok. 30 zdjęciach na autora na klasę.
+**Mushroom Observer, wariant A** (2026-10-23, 14:18). Zdjęcia CC BY-SA z Mushroom Observer zbieramy dla wszystkich gatunków z aplikacji. Tylko do treningu, nigdy do wyświetlania: model wydawany może być na nich uczony, tak jak w wariancie B z 12:17, a zdjęć nie pokazujemy. Trafiają do osobnych plików `_by_sa.csv`, z autorem i wersjonowanym `license_url`. Te zdjęcia mogą też służyć do dozbierania klas, które przekraczają limit udziału z [0001](0001-udzial-zbieracza.md), przy maksymalnie ok. 30 zdjęciach na autora na klasę.
 
-Zakres BY-SA spoza plików Mushroom Observer (tylko `_by_sa.csv` czy z każdego źródła) czeka na doprecyzowanie u Wojtka. Status: otwarte.
+Sformułowanie z 14:18 „SA tylko dla plików `_by_sa.csv`” jest **zastąpione** decyzją z 16:06. Zastąpione jest czytanie tego zdania jako ograniczenia źródła do plików Mushroom Observer.
 
-CC BY-NC i CC BY-SA mogą wejść do modelu wydawanego. Zdjęć DF20, NC i SA nie pokazujemy. Zbiór z Mushroom Observer nie otwiera tych zdjęć do wyświetlania.
+**Zakres źródeł CC BY-SA, opcja A** (2026-10-23, 16:06). Zdjęcia CC BY-SA mogą pochodzić z dowolnego źródła, nie tylko z Mushroom Observer. Odrzucone **B**: tylko pliki MO `_by_sa.csv`. Konwencja plików zostaje: BY-SA tylko w `_by_sa.csv`, niezależnie od źródła. [#75](https://github.com/lonwi/mushroom-recognition-app/pull/75) nie wymaga zmian.
+
+CC BY-NC i CC BY-SA mogą wejść do modelu wydawanego. Zdjęć DF20, NC i SA nie pokazujemy. Źródło zdjęcia CC BY-SA nie otwiera go do wyświetlania.
 
 ## Data
 
@@ -67,12 +69,13 @@ Zestaw licencji (wariant C, z CC BY-SA do modelu wydawanego): 2026-10-23, 12:02 
 DF20, wariant B: 2026-10-23, 12:15 czasu polskiego.
 CC BY-SA, wariant B (share-alike nie obejmuje wag): 2026-10-23, 12:17 czasu polskiego.
 Mushroom Observer, wariant A: 2026-10-23, 14:18 czasu polskiego.
+Zakres źródeł CC BY-SA, opcja A: 2026-10-23, 16:06 czasu polskiego. Sformułowanie z 14:18 „SA tylko dla plików `_by_sa.csv`” zastąpione tą decyzją.
 
 ## Uzasadnienie
 
 Właściciel wybrał CC0, CC BY, CC BY-NC i CC BY-SA do uczenia modelu wydawanego w aplikacji i zostawił przy CC0 albo CC BY tylko zdjęcia pokazywane użytkownikowi. DF20 zostawił przy treningach testowych.
 
-Mushroom Observer, wariant A z 14:18: CC BY-SA z tego źródła jest zbiorem treningowym dla wszystkich gatunków z aplikacji i nie wchodzi do wyświetlania. Osobne pliki `_by_sa.csv` oraz walidator, który puszcza SA tylko tam, opisują ten zbiór. Przy dozbieraniu klas ponad próg z 0001 zostaje maksymalnie ok. 30 zdjęć na autora na klasę. Zakres BY-SA spoza plików Mushroom Observer (tylko `_by_sa.csv` czy z każdego źródła) jest otwarty i czeka na doprecyzowanie u Wojtka.
+Mushroom Observer, wariant A z 14:18: CC BY-SA z tego źródła jest zbiorem treningowym dla wszystkich gatunków z aplikacji i nie wchodzi do wyświetlania. Osobne pliki `_by_sa.csv` opisują ten zbiór. Przy dozbieraniu klas ponad próg z 0001 zostaje maksymalnie ok. 30 zdjęć na autora na klasę. Sformułowanie z 14:18 „SA tylko dla plików `_by_sa.csv`” jest zastąpione. Od 16:06, opcja A: CC BY-SA może pochodzić z dowolnego źródła, nie tylko z Mushroom Observer. Odrzucone B (tylko pliki MO `_by_sa.csv`). Konwencja plików zostaje: BY-SA tylko w `_by_sa.csv`, niezależnie od źródła. [#75](https://github.com/lonwi/mushroom-recognition-app/pull/75) nie wymaga zmian.
 
 Świadomie przyjęte ryzyka:
 
@@ -87,7 +90,7 @@ W toku. Zostaje:
 - zmiana bramki wydania (`ship_gates`, obsługa atrybucji `training_only`) przez PR Trenowania: CC BY-NC i CC BY-SA mogą wejść do modelu wydawanego; DF20 zawsze blokuje `shippable` (wariant B: tylko treningi testowe, bez wydania; prośb o zgodę nie wysyłamy),
 - aktualizacja `AGENTS.md` (notatka o retreningu bez NC/DF20),
 - aktualizacja `settings.dataLicenseBody`,
-- zbiór zdjęć CC BY-SA z Mushroom Observer dla wszystkich gatunków z aplikacji: osobne pliki `_by_sa.csv` z autorem i wersjonowanym `license_url`; walidator dopuszcza CC BY-SA wyłącznie dla tych plików; zdjęć nie pokazujemy; przy dozbieraniu klas ponad limit z [0001](0001-udzial-zbieracza.md) maksymalnie ok. 30 zdjęć na autora na klasę. Zakres BY-SA spoza plików Mushroom Observer (tylko `_by_sa.csv` czy z każdego źródła) jest otwarty.
+- zbiór zdjęć CC BY-SA dla wszystkich gatunków z aplikacji, z dowolnego źródła, nie tylko z Mushroom Observer: osobne pliki `_by_sa.csv` z autorem i wersjonowanym `license_url`; konwencja zostaje, że BY-SA jest tylko w tych plikach, niezależnie od źródła; zdjęć nie pokazujemy; przy dozbieraniu klas ponad limit z [0001](0001-udzial-zbieracza.md) maksymalnie ok. 30 zdjęć na autora na klasę. Sformułowanie z 14:18 „SA tylko dla plików `_by_sa.csv`” jest zastąpione. [#75](https://github.com/lonwi/mushroom-recognition-app/pull/75) nie wymaga zmian.
 
 Na `main` importer zewnętrznych CSV już zapisuje wersjonowane CC BY-NC i DF20 jako `training_only`. CC BY-SA nadal odpada w `training/import_external.py` i w `training/licenses.py`. Fetch GBIF nadal przyjmuje tylko CC0 i CC BY. Bramka wydania nadal nie oznacza modelu jako `shippable`, gdy w atrybucji są wiersze `training_only`. To jest stan sprzed tej decyzji, opisany też w [0002](0002-license-url-trening.md).
 
@@ -95,4 +98,4 @@ Przebieg z [0002](0002-license-url-trening.md) dalej idzie bez zewnętrznych CSV
 
 ## Weryfikacja
 
-Decyzja zapisana w tym wpisie. Na `main` nie ma kodu, który przyjmuje CC BY-SA do treningu i puszcza przez bramkę wydania model z wierszami CC BY-NC albo CC BY-SA, przy tym że DF20 zawsze blokuje `shippable`. Nie ma też plików `_by_sa.csv` ani walidatora, który dopuszcza CC BY-SA wyłącznie w tych plikach.
+Decyzja zapisana w tym wpisie. Zakres źródeł CC BY-SA nie jest już otwarty: od 16:06 wolno każde źródło, a BY-SA zostaje w `_by_sa.csv`. Na `main` nie ma kodu, który przyjmuje CC BY-SA do treningu i puszcza przez bramkę wydania model z wierszami CC BY-NC albo CC BY-SA, przy tym że DF20 zawsze blokuje `shippable`. Nie ma też plików `_by_sa.csv`. [#75](https://github.com/lonwi/mushroom-recognition-app/pull/75) przy tej decyzji się nie zmienia.
