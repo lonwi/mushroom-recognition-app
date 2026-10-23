@@ -1,6 +1,6 @@
 # 0001. Udział jednego zbieracza w klasie (20% czy 50%)
 
-- **Status:** Oczekuje na decyzję
+- **Status:** Podjęta (wdrożenie w toku)
 - **Data wpisu:** 2026-10-23
 
 ## Kontekst
@@ -22,24 +22,26 @@ Test `training/tests/test_split_leak.py` sprawdza, że stała jest równa 0.20.
 
 ## Rekomendacja
 
-Boty: **A** (20%).
+Boty wskazywały **A** (20%). Obowiązuje decyzja poniżej: **B** (0.50).
 
 ## Decyzja
 
-Brak.
+**B.** `COMPONENT_SHARE_LIMIT` = **0.50**.
+
+Próg na klasę to udział największego komponentu równy 50%. Plik konfiguracji nadal może zejść poniżej stałej. Wartość powyżej stałej zostaje błędem.
 
 ## Data
 
-—
+2026-10-23, 12:13 czasu polskiego.
 
 ## Uzasadnienie
 
-—
+Właściciel podniósł próg z 0.20 do 0.50. Rekomendacja botów była przy 20%.
 
 ## Wdrożenie
 
-Mechanizm podziału i bramka przy 0.20 są na `main` przez #69 / `8ac95c4`. Wybór 20% albo 50% nie jest zamknięty. Samo podniesienie stałej bez tego wpisu byłoby zmianą wbrew komentarzowi w `component_share.py`.
+W toku, w osobnym PR Trenowania. Na `main` stała w `training/component_share.py` nadal wynosi **0.20** (komentarz: decyzji 20% albo 50% nie wolno realizować podniesieniem progu w innym miejscu). Testy `training/tests/test_split_leak.py` i `training/tests/test_contract.py` sprawdzają 0.20. Plik `component_share_acknowledgements.json` nie podniesie progu: limit wyższy niż stała jest odrzucany. Mechanizm podziału z [#69](https://github.com/lonwi/mushroom-recognition-app/pull/69) / `8ac95c4` zostaje.
 
 ## Weryfikacja
 
-—
+Decyzja zapisana w tym wpisie. W kodzie na `main` nadal jest 0.20.
