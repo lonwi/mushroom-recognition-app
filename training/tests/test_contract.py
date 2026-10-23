@@ -460,6 +460,8 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertIn("2026-10-23 16:55, decision A", source)
         self.assertIn("no grandfathering", source)
         self.assertNotIn("pending Wojtek", source)
+        self.assertIn('for field in ("creator", "rights_holder")', source)
+        self.assertIn("occupies a slot only for the author", source)
         self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
         self.assertEqual(MAX_PER_OCCURRENCE, 2)
 
