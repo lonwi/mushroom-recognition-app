@@ -57,6 +57,51 @@ async function expectColumnsFitViewport(page: Page, width: number): Promise<void
   await expectTextFits(page.getByTestId('comparison-warning'));
 }
 
+const SCROLL_EDGE_SLACK = 1;
+
+async function openComparison(page: Page, width: number, theme: 'light' | 'dark'): Promise<void> {
+  await page.setViewportSize({ width, height: 800 });
+  await page.goto(`/iframe.html?id=mushroom-sulphurhoneycomparison--${theme}`);
+  await page.getByTestId('comparison-columns-ring').evaluate((el) => {
+    el.scrollLeft = 0;
+  });
+}
+
+async function ringScrollEdges(page: Page): Promise<{
+  viewLeft: number;
+  viewRight: number;
+  firstRight: number;
+  headingLeft: number;
+  headingRight: number;
+}> {
+  return page.evaluate(() => {
+    const box = (testId: string) => {
+      const node = document.querySelector(`[data-testid="${testId}"]`);
+      if (!node) {
+        throw new Error(testId);
+      }
+      const rect = node.getBoundingClientRect();
+      return { left: rect.left, right: rect.right };
+    };
+    const view = box('comparison-columns-ring');
+    const first = box('comparison-side-hypholoma-ring');
+    const heading = box('comparison-galerina-heading-ring');
+    return {
+      viewLeft: view.left,
+      viewRight: view.right,
+      firstRight: first.right,
+      headingLeft: heading.left,
+      headingRight: heading.right,
+    };
+  });
+}
+
+async function scrollGalerinaColumnToStart(page: Page): Promise<void> {
+  await page.getByTestId('comparison-side-galerina-ring').evaluate((el) => {
+    el.scrollIntoView({ block: 'nearest', inline: 'start' });
+  });
+}
+
 async function columnBox(page: Page, testId: string): Promise<{ x: number; width: number }> {
   const box = await page.getByTestId(testId).boundingBox();
   if (!box) {
@@ -107,6 +152,36 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
   test('comparison columns stay within a narrow viewport', async ({ page }) => {
     await expectColumnsFitViewport(page, 320);
     await expectColumnsFitViewport(page, 375);
+  });
+
+  test('first comparison column stays inside the scroll view', async ({ page }) => {
+    for (const width of [320, 375]) {
+      await openComparison(page, width, 'light');
+      const edges = await ringScrollEdges(page);
+      expect(edges.firstRight).toBeLessThanOrEqual(edges.viewRight + SCROLL_EDGE_SLACK);
+    }
+  });
+
+  test('Galerina heading sits inside the scroll view after scrolling', async ({ page }) => {
+    for (const width of [320, 375]) {
+      await openComparison(page, width, 'light');
+      await scrollGalerinaColumnToStart(page);
+      const edges = await ringScrollEdges(page);
+      expect(edges.headingLeft).toBeGreaterThanOrEqual(edges.viewLeft - SCROLL_EDGE_SLACK);
+      expect(edges.headingRight).toBeLessThanOrEqual(edges.viewRight + SCROLL_EDGE_SLACK);
+    }
+  });
+
+  test('dark comparison columns stay inside the scroll view', async ({ page }) => {
+    for (const width of [320, 375]) {
+      await openComparison(page, width, 'dark');
+      const before = await ringScrollEdges(page);
+      expect(before.firstRight).toBeLessThanOrEqual(before.viewRight + SCROLL_EDGE_SLACK);
+      await scrollGalerinaColumnToStart(page);
+      const after = await ringScrollEdges(page);
+      expect(after.headingLeft).toBeGreaterThanOrEqual(after.viewLeft - SCROLL_EDGE_SLACK);
+      expect(after.headingRight).toBeLessThanOrEqual(after.viewRight + SCROLL_EDGE_SLACK);
+    }
   });
 
   test('funeral bell captions stay readable in the dark story', async ({ page }) => {

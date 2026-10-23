@@ -7,8 +7,8 @@ import {
   StyleSheet,
   Text,
   useColorScheme,
-  useWindowDimensions,
   View,
+  type LayoutChangeEvent,
 } from 'react-native';
 import { useLanguage, type TranslationParams } from '../contexts/LanguageContext';
 import {
@@ -65,12 +65,13 @@ const SIDE_LATIN: Record<'hypholoma' | 'armillaria', string> = {
 const GALERINA_LATIN = 'Galerina marginata';
 
 const COLUMN_MIN_WIDTH = 160;
-/** Card padding on both sides, so a column stays inside the window. */
-const COLUMN_SCREEN_PADDING = spacing.md * 2;
+/** A wide window must not stretch one column toward the full screen. */
+const COLUMN_MAX_WIDTH = 360;
 
-function comparisonColumnWidth(windowWidth: number): number {
-  const available = Math.max(0, windowWidth - COLUMN_SCREEN_PADDING);
-  return Math.min(Math.max(COLUMN_MIN_WIDTH, available * 0.8), available || COLUMN_MIN_WIDTH);
+function comparisonColumnWidth(trackWidth: number): number {
+  const width = trackWidth > 0 ? trackWidth : COLUMN_MIN_WIDTH;
+  const scaled = Math.max(COLUMN_MIN_WIDTH, width * 0.8);
+  return Math.min(scaled, width, COLUMN_MAX_WIDTH);
 }
 
 function toneFor(scheme: ComparisonScheme): Tone {
@@ -286,17 +287,13 @@ function TraitSources({ trait, tone, t }: { trait: ComparisonTrait; tone: Tone; 
   return <SourceList id={trait.id} urls={urls} tone={tone} t={t} />;
 }
 
-function TraitBlock({
-  trait,
-  tone,
-  t,
-  columnWidth,
-}: {
-  trait: ComparisonTrait;
-  tone: Tone;
-  t: Translate;
-  columnWidth: number;
-}) {
+function TraitBlock({ trait, tone, t }: { trait: ComparisonTrait; tone: Tone; t: Translate }) {
+  const [trackWidth, setTrackWidth] = React.useState(0);
+  const columnWidth = comparisonColumnWidth(trackWidth);
+  const onTrackLayout = (event: LayoutChangeEvent) => {
+    const next = event.nativeEvent.layout.width;
+    setTrackWidth((current) => (Math.abs(current - next) < 0.5 ? current : next));
+  };
   const columns = COMPARISON_SIDES.map((side) => (
     <SideColumn key={side} trait={trait} side={side} tone={tone} t={t} columnWidth={columnWidth} />
   ));
@@ -307,6 +304,7 @@ function TraitBlock({
         horizontal
         nestedScrollEnabled
         showsHorizontalScrollIndicator
+        onLayout={onTrackLayout}
         style={styles.columns}
         contentContainerStyle={styles.pair}
         testID={`comparison-columns-${trait.id}`}
@@ -321,8 +319,6 @@ function TraitBlock({
 export const SulphurHoneyComparison: React.FC<{ colorScheme?: ComparisonScheme }> = ({ colorScheme }) => {
   const { t } = useLanguage();
   const system = useColorScheme();
-  const { width: windowWidth } = useWindowDimensions();
-  const columnWidth = comparisonColumnWidth(windowWidth);
   const scheme: ComparisonScheme = colorScheme ?? (system === 'dark' ? 'dark' : 'light');
   const tone = toneFor(scheme);
   return (
@@ -347,7 +343,7 @@ export const SulphurHoneyComparison: React.FC<{ colorScheme?: ComparisonScheme }
         {t('comparison.sulphurHoney.scope')}
       </Text>
       {COMPARISON_TRAITS.map((trait) => (
-        <TraitBlock key={trait.id} trait={trait} tone={tone} t={t} columnWidth={columnWidth} />
+        <TraitBlock key={trait.id} trait={trait} tone={tone} t={t} />
       ))}
     </View>
   );
