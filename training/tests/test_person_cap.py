@@ -1,9 +1,9 @@
-"""Per-person cap inside one class, applied by prepare before the split.
+"""Per-author cap inside one class, applied by prepare before the split.
 
 N is the number of rows of that class after dedup and before the cap.
-The limit is min(60, max(10, round(0.10 * N))). On main, before this cap,
-one person can hold 61 of 72 rows. prepare must keep that person at or
-under the cap, counted with split.person_identity_keys.
+The limit is min(60, max(10, round(0.10 * N))). The cap counts one key:
+creator, otherwise rights_holder, normalized by split.person_identity_keys.
+A co-collector on the same row does not take a slot.
 """
 
 import json
@@ -28,6 +28,7 @@ from person_cap import (
     MISSING_PERSON_KEY,
     PERSON_CAP_SEED,
     apply_person_class_cap,
+    cap_author_key,
     person_row_cap,
 )
 from prepare_data import _usable_records, main, records_for_split
@@ -43,6 +44,7 @@ def _row(class_id: str, observer: str, index: int, *, observation: str, **extra)
     row = {
         "class_id": class_id,
         "inat_observer": observer,
+        "creator": observer,
         "author": "",
         "license": "CC BY 4.0",
         "image_url": f"https://images.example.test/{class_id}/{observer}/{index}.jpg",
@@ -171,6 +173,49 @@ class PersonCapContractTest(unittest.TestCase):
         self.assertIs(person_cap.person_identity_keys, split.person_identity_keys)
         self.assertIs(person_cap.observation_identity_keys, observation_identity_keys)
         self.assertIs(person_cap.photo_identity_keys, photo_identity_keys)
+        row = _row(
+            "boletus_edulis",
+            "Bea Collector",
+            1,
+            observation="shared-outing",
+            creator="Ada Hunter",
+            recorded_by="Cy Recorder",
+            rights_holder="Dee Holder",
+        )
+        self.assertEqual(cap_author_key(row), ("person:ada hunter", False))
+        self.assertEqual(
+            person_identity_keys({"creator": "ADA HUNTER"}),
+            ["person:ada hunter"],
+        )
+        self.assertCountEqual(
+            person_identity_keys(row),
+            [
+                "person:ada hunter",
+                "person:bea collector",
+                "person:cy recorder",
+                "person:dee holder",
+            ],
+        )
+        holder_only = _row(
+            "boletus_edulis",
+            "Bea Collector",
+            2,
+            observation="holder-only",
+            creator="",
+            rights_holder="Ada Hunter",
+        )
+        self.assertEqual(cap_author_key(holder_only), ("person:ada hunter", False))
+        placeholder = _row(
+            "boletus_edulis",
+            "",
+            3,
+            observation="placeholder",
+            creator="Unknown",
+            rights_holder="ADA HUNTER",
+            inat_observer="",
+        )
+        self.assertEqual(cap_author_key(placeholder), ("person:ada hunter", False))
+        self.assertIn("occupies a slot only for the author", person_cap.MISSING_PERSON_RULE)
 
     def test_prepare_caps_after_merge_and_before_the_split(self):
         text = (ROOT / "training" / "prepare_data.py").read_text(encoding="utf-8")
@@ -302,7 +347,7 @@ class PersonCapContractTest(unittest.TestCase):
         self.assertEqual(report["seed"], PERSON_CAP_SEED)
         self.assertEqual(len(removed), 51)
 
-    def test_spellings_and_collector_key_are_one_person(self):
+    def test_creator_spellings_share_one_cap_key_and_collector_key_does_not(self):
         rows = []
         for index in range(6):
             rows.append(
@@ -312,27 +357,30 @@ class PersonCapContractTest(unittest.TestCase):
                     index,
                     observation=f"spell-{index}",
                     inat_observer="",
-                    recordedBy="ADA HUNTER",
+                    creator="ADA HUNTER",
+                    recordedBy="Bea Collector",
                 )
             )
         for index in range(6):
             rows.append(
                 _row(
                     "suillus_grevillei",
-                    "ada hunter",
+                    "Cy Collector",
                     100 + index,
                     observation=f"spell-b-{index}",
+                    creator="ada hunter",
                 )
             )
-        self.assertEqual(
-            {tuple(person_identity_keys(row)) for row in rows},
-            {("person:ada hunter",)},
-        )
+        self.assertTrue(all(cap_author_key(row) == ("person:ada hunter", False) for row in rows))
         capped, _removed, report = apply_person_class_cap(rows)
         self.assertEqual(len(capped), 10)
-        self.assertEqual(_counts(capped)["suillus_grevillei"]["person:ada hunter"], 10)
+        self.assertEqual(sum(1 for row in capped if cap_author_key(row)[0] == "person:ada hunter"), 10)
         self.assertEqual(report["classes"][0]["n"], 12)
         self.assertEqual(report["classes"][0]["cap"], 10)
+        self.assertEqual(
+            [item["person_key"] for item in report["author_cap_report"]],
+            ["person:ada hunter"],
+        )
 
         collector_rows = []
         for index in range(11):
@@ -343,61 +391,71 @@ class PersonCapContractTest(unittest.TestCase):
                     200 + index,
                     observation=f"ck-{index}",
                     inat_observer="",
+                    creator="",
                     collector_key="author:Ada Hunter",
                 )
             )
         self.assertTrue(all(person_identity_keys(row) == ["person:ada hunter"] for row in collector_rows))
+        self.assertTrue(all(cap_author_key(row) == (None, False) for row in collector_rows))
         capped_collector, _dropped, collector_report = apply_person_class_cap(collector_rows)
         self.assertEqual(len(capped_collector), 10)
+        self.assertEqual(collector_report["removed"][0]["person_key"], MISSING_PERSON_KEY)
+        self.assertEqual(collector_report["removed"][0]["reason"], "no_person_key")
         self.assertEqual(collector_report["removed"][0]["count"], 1)
 
-    def test_co_collector_cannot_bypass_either_cap(self):
-        rows = []
-        for index in range(12):
-            rows.append(
+    def test_two_people_on_one_row_count_only_the_author(self):
+        shared = []
+        for index in range(11):
+            shared.append(
                 _row(
                     "macrolepiota_procera",
                     "Bea Collector",
                     index,
-                    observation=f"bea-{index}",
-                    recorded_by="Ada Hunter",
+                    observation=f"shared-{index}",
+                    creator="Ada Hunter",
+                    recorded_by="Bea Collector",
                 )
             )
-        for index in range(18):
-            rows.append(
+        bea_own = []
+        for index in range(11):
+            bea_own.append(
                 _row(
                     "macrolepiota_procera",
-                    f"other-{index}",
+                    "Bea Collector",
                     100 + index,
-                    observation=f"other-{index}",
+                    observation=f"bea-{index}",
+                    creator="Bea Collector",
                 )
             )
-        self.assertEqual(person_row_cap(30), 10)
-        for row in rows[:12]:
+        rows = shared + bea_own
+        self.assertEqual(person_row_cap(22), 10)
+        for row in shared:
+            self.assertEqual(cap_author_key(row), ("person:ada hunter", False))
             self.assertCountEqual(
                 person_identity_keys(row),
-                ["person:bea collector", "person:ada hunter"],
+                ["person:ada hunter", "person:bea collector"],
             )
-        capped, _removed, report = apply_person_class_cap(rows)
-        post = _counts(capped)["macrolepiota_procera"]
-        self.assertLessEqual(post["person:bea collector"], 10)
-        self.assertLessEqual(post["person:ada hunter"], 10)
-        self.assertEqual(post["person:bea collector"], post["person:ada hunter"])
-        self.assertEqual(sum(1 for row in capped if str(row["inat_observer"]).startswith("other-")), 18)
-        kept_bea = post["person:bea collector"]
-        for person_key in ("person:ada hunter", "person:bea collector"):
-            dropped = sum(
-                item["count"]
-                for item in report["removed"]
-                if item["person_key"] == person_key
-            )
-            self.assertEqual(dropped, 12 - kept_bea)
-        for row in capped:
-            if row["inat_observer"] == "Bea Collector":
-                self.assertEqual(
-                    person_identity_keys(row),
-                    person_identity_keys(rows[int(row["inat_photo_id"].rsplit("-", 1)[-1])]),
-                )
+        capped, removed, report = apply_person_class_cap(rows)
+        ada_kept = [row for row in capped if cap_author_key(row)[0] == "person:ada hunter"]
+        bea_kept = [row for row in capped if cap_author_key(row)[0] == "person:bea collector"]
+        self.assertEqual(len(ada_kept), 10)
+        self.assertEqual(len(bea_kept), 10)
+        self.assertTrue(all(row["recorded_by"] == "Bea Collector" for row in ada_kept))
+        self.assertEqual(sum(1 for row in capped if "person:bea collector" in person_identity_keys(row)), 20)
+        charged = {item["person_key"] for item in report["author_cap_report"]}
+        self.assertEqual(charged, {"person:ada hunter", "person:bea collector"})
+        for item in report["author_cap_report"]:
+            self.assertEqual(item["count"], 1)
+            self.assertEqual(item["n"], 22)
+            self.assertEqual(item["limit"], 10)
+            self.assertEqual(len(item["ids"]), 1)
+        ada_cut = [row for row in removed if row.get("creator") == "Ada Hunter"]
+        self.assertEqual(len(ada_cut), 1)
+        self.assertEqual(ada_cut[0]["recorded_by"], "Bea Collector")
+        self.assertEqual(ada_cut[0]["drop_reason"], "person_cap")
+        ada_photo = ada_cut[0]["inat_photo_id"]
+        listed_for = [item["person_key"] for item in report["author_cap_report"] if ada_photo in item["ids"]]
+        self.assertEqual(listed_for, ["person:ada hunter"])
 
     def test_three_photos_of_one_observation_stay_when_the_person_is_under_the_cap(self):
         rows = [
@@ -433,7 +491,7 @@ class PersonCapContractTest(unittest.TestCase):
         real = person_identity_keys
 
         def flaky(record):
-            if record.get("file") == "bad.jpg":
+            if record.get("file") == "bad.jpg" or record.get("creator") == "other-bad":
                 raise RuntimeError("key failed")
             return real(record)
 
@@ -529,7 +587,9 @@ class PersonCapContractTest(unittest.TestCase):
                         "file": f"images/boletus_edulis/{name}",
                         "image_url": f"https://images.example.test/cap/{name}",
                         "license": "CC BY 4.0",
-                        "inat_observer": "Ada Hunter",
+                        "creator": "Ada Hunter",
+                        "inat_observer": "Bea Collector",
+                        "recordedBy": "Bea Collector",
                         "inat_photo_id": f"ada-photo-{index}",
                         "inat_observation_id": f"ada-obs-{index}",
                     }
@@ -555,7 +615,9 @@ class PersonCapContractTest(unittest.TestCase):
                     "file": f"images/boletus_edulis/missing-{index}.png",
                     "image_url": f"https://images.example.test/cap/missing-{index}.png",
                     "license": "CC BY 4.0",
-                    "inat_observer": "Ada Hunter",
+                    "creator": "Ada Hunter",
+                    "inat_observer": "Bea Collector",
+                    "recordedBy": "Bea Collector",
                     "inat_photo_id": f"unverified-{index}",
                     "inat_observation_id": f"unverified-obs-{index}",
                 }
@@ -584,6 +646,7 @@ class PersonCapContractTest(unittest.TestCase):
             cut = report["author_cap_report"]
             self.assertEqual(len(cut), 1)
             self.assertEqual(cut[0]["person_key"], "person:ada hunter")
+            self.assertNotIn("person:bea collector", [item["person_key"] for item in cut])
             self.assertEqual(cut[0]["n"], 12)
             self.assertEqual(cut[0]["limit"], 10)
             self.assertEqual(cut[0]["count"], 2)
@@ -619,6 +682,7 @@ class PersonCapContractTest(unittest.TestCase):
                     "image_url": f"https://images.example.test/prepare/{name}",
                     "license": "CC BY 4.0",
                     "inat_observer": observer,
+                    "creator": recorded_by or observer,
                     "author": observer,
                     "recordedBy": recorded_by,
                     "inat_photo_id": f"prepare-{index}",

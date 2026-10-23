@@ -7,10 +7,15 @@ per class. The cap is retroactive. Every eligible row already in the
 merged sources is counted, including rows collected before that decision.
 Nothing is grandfathered.
 
-The person is ``split.person_identity_keys``. This module calls that
-function. It does not parse author strings itself, and it does not write a
-person key back onto the row, so co-collector links in the split stay as
-they are.
+A row may carry several person keys. The cap counts one of them: the photo
+author in ``creator``, and when that is missing, ``rights_holder``. The
+string is normalized by ``split.person_identity_keys``, the same function
+the split uses, called on that field alone. ``inat_observer``, ``author``,
+``recordedBy``, ``collector_key``, and any other co-collector stay on the
+row and still link split components. They do not take a cap slot. A row
+with two people occupies a slot only for the author. This module does not
+parse author strings itself and does not write a person key back onto the
+row.
 
 Which rows survive is a seeded round-robin over observations: one photo
 from each observation, in stable-hash order, before a second photo from
@@ -59,14 +64,19 @@ N_DEFINITION = (
     "capped with the same N. There is no grandfathering."
 )
 MISSING_PERSON_RULE = (
-    "person_identity_keys is the split's photographer key. An empty list "
-    "does not skip the cap: those rows share the sentinel person key "
-    '"none" for this cap only. The sentinel is not written onto the row and '
-    "is not an identity key, so placeholder authors stay unlinked in the "
-    "split. A row whose key cannot be computed (the call fails, or the "
-    "result is not a list of non-empty strings) is removed and reported as "
-    "person_key_error. It still counts toward N. It does not take a slot in "
-    "the sentinel."
+    "The cap counts one key: creator, otherwise rights_holder. "
+    "person_identity_keys normalizes that field, the same function the "
+    "split uses, and it is called on that field alone. inat_observer, "
+    "author, recordedBy, collector_key, and any other co-collector do not "
+    "take a cap slot. A row with two people occupies a slot only for the "
+    "author. Those other keys still link split components. An empty creator "
+    "and an empty rights_holder do not skip the cap: those rows share the "
+    'sentinel person key "none" for this cap only. The sentinel is not '
+    "written onto the row and is not an identity key, so placeholder authors "
+    "stay unlinked in the split. A row whose key cannot be computed (the "
+    "call fails, or the result is not a list of non-empty strings) is "
+    "removed and reported as person_key_error. It still counts toward N. "
+    "It does not take a slot in the sentinel."
 )
 
 
@@ -123,22 +133,45 @@ def _emission_key(seed: int, row: dict) -> tuple[str, str, str]:
     return (_rank(seed, "emit", stable, content), stable, content)
 
 
-def _person_keys(record: dict) -> tuple[list[str] | None, bool]:
-    """Split person keys, and whether the key could not be computed.
+def cap_author_key(record: dict) -> tuple[str | None, bool]:
+    """The one person key that counts toward the cap.
 
-    ``None`` with failed False is a computed empty key (no photographer).
-    ``None`` with failed True is removed rather than passed through.
+    ``creator``, otherwise ``rights_holder``. ``person_identity_keys``
+    normalizes the field, and the call sees that field alone, so a
+    co-collector on the same row is not a second cap key. ``None`` with
+    failed False means neither field names a person. ``None`` with failed
+    True means the key could not be computed.
     """
+    if not isinstance(record, dict):
+        return None, True
     try:
-        keys = person_identity_keys(record)
+        for field in ("creator", "rights_holder"):
+            found = person_identity_keys({field: record.get(field)})
+            if not isinstance(found, list) or any(not isinstance(key, str) or not key for key in found):
+                return None, True
+            if not found:
+                continue
+            if len(found) != 1:
+                return None, True
+            return found[0], False
+        return None, False
     except Exception:
         return None, True
-    if not isinstance(keys, list) or any(not isinstance(key, str) or not key for key in keys):
+
+
+def _person_keys(record: dict) -> tuple[list[str] | None, bool]:
+    """The cap author, as a one-item list, and whether the key failed.
+
+    ``None`` with failed False is a computed empty author. ``None`` with
+    failed True is removed rather than passed through. Co-collectors are
+    not included.
+    """
+    key, failed = cap_author_key(record)
+    if failed:
         return None, True
-    unique = list(dict.fromkeys(keys))
-    if not unique:
+    if key is None:
         return None, False
-    return unique, False
+    return [key], False
 
 
 def _group_observations(indexed: list[tuple[int, dict]]) -> list[tuple[str, list[tuple[int, dict]]]]:
@@ -365,9 +398,10 @@ def apply_person_class_cap(
             "count is how many of that person's rows were not kept. A row with "
             "two person keys is listed under both, so the counts can add up to "
             "more than removed_rows. person_cap: this person was over the cap "
-            "and this row was not selected. co_collector: this person kept the "
-            "row in their own selection, and another person key on the row did "
-            "not. no_person_key: the empty-key sentinel was over the cap. "
+            "and this row was not selected. The cap key is only creator, or "
+            "rights_holder when creator is empty. A co-collector is not "
+            "listed here and does not take a slot. no_person_key: the "
+            "empty-key sentinel was over the cap. "
             "person_key_error: the person key could not be computed."
         ),
         "classes": class_info,
