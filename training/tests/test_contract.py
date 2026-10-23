@@ -442,6 +442,24 @@ class ManifestAndShipGateTest(unittest.TestCase):
         # Changing this constant is Wojtek's decision only.
         self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
 
+    def test_person_class_cap_constants_are_pinned(self):
+        from component_share import COMPONENT_SHARE_LIMIT
+        from person_cap import CAP_FRACTION, CAP_MAX, CAP_MIN, PERSON_CAP_SEED
+        from sampling import MAX_PER_OCCURRENCE
+
+        # Pending Wojtek's confirmation. Do not raise the ceiling or the fraction.
+        self.assertEqual(CAP_MAX, 60)
+        self.assertEqual(CAP_MIN, 10)
+        self.assertEqual(CAP_FRACTION, 0.10)
+        self.assertEqual(PERSON_CAP_SEED, 42)
+        source = (ROOT / "training" / "person_cap.py").read_text(encoding="utf-8")
+        self.assertIn("CAP_MAX = 60", source)
+        self.assertIn("CAP_MIN = 10", source)
+        self.assertIn("CAP_FRACTION = 0.10", source)
+        self.assertIn("PERSON_CAP_SEED = 42", source)
+        self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
+        self.assertEqual(MAX_PER_OCCURRENCE, 2)
+
     def test_variant_c_leaves_agreement_share_https_and_license_url(self):
         from component_share import COMPONENT_SHARE_LIMIT
         from import_external import photo_license_decision
