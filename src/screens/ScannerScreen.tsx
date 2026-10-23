@@ -13,6 +13,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { classifierService, ClassificationResult } from '../services/classifierService';
 import { SKIP_PROCESSING_CAPTURE, uprightCaptureWidth, widthForCapture } from '../services/photoPixels';
+import { DevInferenceOverlay } from '../components/DevInferenceOverlay';
 import { ResultModal } from '../components/ResultModal';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getSpecies } from '../data/speciesCatalog';
@@ -165,6 +166,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
             <Text style={styles.galleryBtnAltText}>{t('scanner.galleryAlt')}</Text>
           </TouchableOpacity>
         </View>
+        <DevInferenceOverlay />
         {resultModal}
       </View>
     );
@@ -274,6 +276,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
         </View>
       </View>
 
+      <DevInferenceOverlay />
       {resultModal}
     </View>
   );

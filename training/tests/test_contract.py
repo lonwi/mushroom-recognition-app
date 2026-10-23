@@ -23,7 +23,14 @@ from evaluate import (
     outcome_is_strict_top1_edible,
     poisonous_sample_reasons,
 )
-from export_tflite import DEFAULT_QUANTIZATIONS, representative_dataset
+from export_tflite import (
+    DEFAULT_QUANTIZATIONS,
+    assess_export,
+    calibration_rows,
+    choose_install_target,
+    metric_delta,
+    representative_dataset,
+)
 from manifest import ROOT, load_manifest, poisonous_heldout_taxa
 from preprocess import ImageReadError, load_oriented_rgb, model_rgb_uint8, preprocess_rgb_uint8, resize_to_width
 from recognition_math import (
@@ -1352,6 +1359,81 @@ class ManifestAndShipGateTest(unittest.TestCase):
         source = (ROOT / "training" / "export_tflite.py").read_text(encoding="utf-8")
         self.assertIn('default="fp16"', source)
         self.assertNotIn('for quantization in ("int8", "fp16")', source)
+
+    def test_quantized_export_keeps_train_calibration_and_existing_floors(self):
+        source = (ROOT / "training" / "export_tflite.py").read_text(encoding="utf-8")
+        gates = (ROOT / "training" / "ship_gates.py").read_text(encoding="utf-8")
+        self.assertIn("train_rows = calibration_rows(splits)", source)
+        self.assertIn("converter.representative_dataset = representative_dataset(train_rows, image_size, data_dir)", source)
+        self.assertEqual(source.count("representative_dataset("), 2)
+        self.assertNotIn("representative_dataset(val_rows", source)
+        self.assertNotIn("representative_dataset(test_rows", source)
+        self.assertIn("TFLITE_BUILTINS_INT8", source)
+        self.assertIn("inference_input_type = tf.float32", source)
+        self.assertIn("inference_output_type = tf.float32", source)
+        self.assertIn('quantization == "dynamic"', source)
+        self.assertIn('"--also-export"', source)
+        self.assertIn('"--select-quantized"', source)
+        self.assertIn("agreement >= 0.99", source)
+        self.assertNotIn("agreement >= 0.98", source)
+        self.assertIn("macro_top1 < 0.80", gates)
+        self.assertIn("macro_top3 < 0.90", gates)
+        self.assertIn("agreement < 0.99", gates)
+        self.assertIn("high_risk_agreement < 0.99", gates)
+        self.assertIn("id_keep < 0.95", gates)
+        self.assertIn("OPEN_SET_SAFE_MIN = 0.90", gates)
+        self.assertIn("OPEN_SET_CONFIDENT_EDIBLE_MAX = 0.02", gates)
+        splits = {
+            "train": [{"file": "train.png", "split": "train"}],
+            "val": [{"file": "val.png", "split": "val"}],
+            "test": [{"file": "test.png", "split": "test"}],
+        }
+        self.assertEqual([row["file"] for row in calibration_rows(splits)], ["train.png"])
+        with self.assertRaises(RuntimeError):
+            representative_dataset([{"file": "test.png", "split": "test"}], 8, Path("."))
+        with self.assertRaises(RuntimeError):
+            representative_dataset([{"file": "val.png", "split": "val"}], 8, Path("."))
+        with self.assertRaises(RuntimeError):
+            calibration_rows({"train": [{"file": "hidden.png", "split": "test"}]})
+
+    def test_quantized_model_is_selectable_only_when_existing_gates_pass(self):
+        float_report = {"macro_top1": 0.91, "macro_top3": 0.97, "confident_toxic_as_edible": 0}
+        quantized_report = {"macro_top1": 0.90, "macro_top3": 0.96, "confident_toxic_as_edible": 0}
+        delta = metric_delta(float_report, quantized_report)
+        self.assertAlmostEqual(delta["macro_top1"], -0.01)
+        self.assertAlmostEqual(delta["macro_top3"], -0.01)
+        self.assertEqual(delta["confident_toxic_as_edible"], 0)
+        self.assertEqual(
+            choose_install_target(select_quantized=False, primary_shippable=True, quantized_shippable=True),
+            "primary",
+        )
+        self.assertEqual(
+            choose_install_target(select_quantized=True, primary_shippable=True, quantized_shippable=True),
+            "quantized",
+        )
+        self.assertEqual(
+            choose_install_target(select_quantized=True, primary_shippable=True, quantized_shippable=False),
+            "refuse",
+        )
+        self.assertEqual(
+            choose_install_target(select_quantized=False, primary_shippable=False, quantized_shippable=True),
+            "refuse",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            passing = self._passing_report(artifact_dir)
+            ok, reasons = assess_shippable(passing, artifact_dir)
+            self.assertTrue(ok, reasons)
+            payload = (artifact_dir / "mushrooms_model.tflite").read_bytes()
+            gated, gate_reasons = assess_export(passing, payload, artifact_dir)
+            self.assertTrue(gated, gate_reasons)
+            lowered = json.loads(json.dumps(passing))
+            lowered["macro_top1"] = 0.79
+            refused, refuse_reasons = assess_export(lowered, payload, artifact_dir)
+            self.assertFalse(refused)
+            self.assertTrue(any("0.80" in reason for reason in refuse_reasons))
+            still_ok, still_reasons = assess_shippable(passing, artifact_dir)
+            self.assertTrue(still_ok, still_reasons)
 
     @contextmanager
     def _installed_repo_copy(self):

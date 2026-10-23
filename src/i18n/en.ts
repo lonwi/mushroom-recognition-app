@@ -236,6 +236,10 @@ export const en: Translations = {
     torchOffShort: '🔦 Torch',
     aimGuide: 'Point the camera at the cap and the underside',
     gallery: 'Gallery',
+    devInference: 'Inference {ms} ms · {delegate}',
+    devInferenceFallback: 'Inference {ms} ms · CPU after the delegate failed',
+    devDelegateAuto: 'Measure: delegate',
+    devDelegateCpu: 'Measure: CPU',
   },
   journal: {
     title: 'Forest Finds Journal',

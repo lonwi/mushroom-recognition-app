@@ -42,6 +42,16 @@ python training/run_pipeline.py export -- --install-into-app
 
 That copies the TFLite file and the attribution file, writes the calibrated thresholds into `assets/models/labels.json`, and points `src/services/modelPackage.ts` at the asset. A development build is required after that (`react-native-fast-tflite` and `react-native-nitro-modules` are native). Expo Go cannot load the interpreter. Until this step succeeds, `PACKAGED_MODEL_MODULE` stays `null`.
 
+Optional quantized graph, still under the same ship gates:
+
+```bash
+python training/export_tflite.py --quantization fp32 --also-export int8
+python training/export_tflite.py --also-export dynamic
+python training/run_pipeline.py export -- --also-export int8 --install-into-app --select-quantized
+```
+
+`--also-export int8` is full-integer ops (`TFLITE_BUILTINS_INT8`) with float32 input and output. The representative dataset is the train split only. `dynamic` is dynamic-range quantization and does not read a representative dataset. The command also writes `mushrooms_model_float.tflite` when the primary graph is not already fp32. `metrics.json` → `quantized_export.delta_vs_float` is quantized minus that fp32 graph. Those numbers are not gates. `--select-quantized` installs the quantized file only when `assess_shippable` passes every existing floor. A failure leaves the app bundle unchanged.
+
 Useful limits while checking the wiring, without a full download:
 
 ```bash
@@ -262,7 +272,20 @@ Low confidence (top softmax under 0.70 or top-1/top-2 margin under 0.15) still s
 | Attribution | `attributions.jsonl` beside the model has one complete row (creator, CC0 or CC-BY, image URL, source page) per train+val+test image. | complete |
 | Hashes | sha256 of `model.keras`, `mushrooms_model.tflite`, and `fetch_report.json` match the files on disk. The fetch-report hash covers the file `attach_fetch_evidence` reads, and that step overwrites `accepted`, `gbif_licensed_count`, and `exhausted_reason` from the report. `accepted` in that file is verified files. `gbif_licensed_count` is the entire licensed pool, written only when the GBIF query ended below the cap, and the rare-taxon exception also requires `exhausted_reason` to be `end_of_records` and `accepted` to equal that count. `replacement_budget` omits `gbif_licensed_count` and does not open the 5-photo floor. Regenerating the report changes the hash even when every download succeeded, because the report stores `selected`, `failed`, `pool`, `shortfall`, `exhausted_reason`, and `any_taxon_pool_exhausted`. A metrics file that still has the previous hash fails this gate until export records the new file. The numeric floors are unchanged. | exact |
 
-Export builds **fp16** weights with float32 input and output. `react-native-fast-tflite` runs XNNPACK, which executes that graph. A fully integer int8 graph is not the default: XNNPACK rejects MobileNetV3 ops from `TFLITE_BUILTINS_INT8` on device, while fp16 lands near 2 MB and keeps the float preprocess. `--quantization int8` is an experiment and is not what a ship build uses. There is no force flag.
+Export builds **fp16** weights with float32 input and output unless `--quantization` says otherwise. On device, Android tries the GPU delegate and iOS tries Core ML; if the delegate fails to load or `model.run` throws, the app loads the CPU delegate and retries once. XNNPACK runs the CPU graph. A fully integer int8 graph is not the default: the GPU delegate and XNNPACK both reject some MobileNetV3 ops from `TFLITE_BUILTINS_INT8`, while fp16 keeps the float preprocess. `--also-export int8` (or `dynamic` or `fp16`) writes that graph beside the primary file and scores it with the same gates. It is installed only when those gates pass. There is no flag that lowers a floor.
+
+## Measuring inference on a phone
+
+Expo Go cannot load the interpreter. The Core ML pod flag and the Android OpenCL `uses-native-library` entries come from the `react-native-fast-tflite` config plugin, so they apply only after an EAS prebuild:
+
+```bash
+npx eas-cli@24.12.0 build --profile development --platform android
+npx eas-cli@24.12.0 build --profile development --platform ios
+```
+
+Install a model that passed the ship gates, then rebuild so the `.tflite` asset is in the binary. Start Metro with `npx expo start --dev-client`. On the scanner, a dev build shows two controls: **Measure: delegate** and **Measure: CPU**. Pick one, then photograph the same subject three times. The overlay and the `[tflite]` console line report milliseconds around `model.run` only, plus the delegate that produced those logits (`android-gpu`, `core-ml`, or `cpu`). Use the median of the second and third shots. The first shot can include GPU shader compile or Core ML cache fill inside `model.run`.
+
+`fallback=true` means the chosen delegate threw and the milliseconds are the CPU retry. The iOS simulator often fails Core ML; measure Core ML on a physical iPhone. Nothing in this line is uploaded.
 
 ## What is still missing before this is safe to ship
 
