@@ -345,6 +345,30 @@ class LicenseParseTest(unittest.TestCase):
                 license_id,
             )
 
+    def test_nc_nd_is_rejected(self):
+        credited = {
+            "creator": "Ada",
+            "image_url": "https://images.example.test/a.jpg",
+            "source_url": "https://example.test/a",
+            "license_url": "https://creativecommons.org/licenses/by-nc-nd/4.0/",
+        }
+        for raw, license_id in (
+            ("CC BY-NC-ND", "cc-by-nc-nd"),
+            ("CC BY-NC-ND 4.0", "cc-by-nc-nd-4.0"),
+            ("CC-BY-NC-ND-4.0", "cc-by-nc-nd-4.0"),
+            ("https://creativecommons.org/licenses/by-nc-nd/4.0/", "cc-by-nc-nd-4.0"),
+        ):
+            self.assertIsNone(parse_textual_license(raw), raw)
+            self.assertIsNone(
+                parse_textual_license(raw, "https://creativecommons.org/licenses/by-nc-nd/4.0/"),
+                raw,
+            )
+            self.assertFalse(allowed_for_training(license_id), license_id)
+            self.assertFalse(
+                attributions_complete([{**credited, "license": raw, "license_normalized": license_id}]),
+                license_id,
+            )
+
     def test_nc_sa_is_rejected(self):
         credited = {
             "creator": "Ada",

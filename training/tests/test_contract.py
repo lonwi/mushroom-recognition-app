@@ -450,6 +450,11 @@ class ManifestAndShipGateTest(unittest.TestCase):
 
         self.assertEqual(TFLITE_AGREEMENT_MIN, 0.99)
         self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
+        gates = (ROOT / "training" / "ship_gates.py").read_text(encoding="utf-8")
+        share = (ROOT / "training" / "component_share.py").read_text(encoding="utf-8")
+        self.assertIn("TFLITE_AGREEMENT_MIN = 0.99", gates)
+        self.assertIn("COMPONENT_SHARE_LIMIT = 0.20", share)
+        self.assertNotIn("COMPONENT_SHARE_LIMIT = 0.50", share)
         self.assertEqual(
             force_https_url("http://images.example.test/a.jpg"),
             "https://images.example.test/a.jpg",
@@ -480,6 +485,48 @@ class ManifestAndShipGateTest(unittest.TestCase):
         )
         self.assertEqual(sa_reason, "")
         self.assertEqual((sa["license_normalized"], sa["usage"]), ("cc-by-sa-4.0", "training_only"))
+
+    def test_nc_sa_nd_and_nc_nd_are_rejected_for_training(self):
+        from evaluate import attributions_complete
+        from license_policy import allowed_for_training
+
+        rejected = (
+            ("cc-by-nc-sa-4.0", "CC BY-NC-SA 4.0", "https://creativecommons.org/licenses/by-nc-sa/4.0/"),
+            ("cc-by-nd-4.0", "CC BY-ND 4.0", "https://creativecommons.org/licenses/by-nd/4.0/"),
+            ("cc-by-nc-nd-4.0", "CC BY-NC-ND 4.0", "https://creativecommons.org/licenses/by-nc-nd/4.0/"),
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertTrue(ok, reasons)
+            path = artifact_dir / "attributions.jsonl"
+            lines = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+            for license_id, text, url in rejected:
+                self.assertFalse(allowed_for_training(license_id), license_id)
+                self.assertFalse(
+                    attributions_complete(
+                        [
+                            {
+                                "creator": "Ada",
+                                "license": text,
+                                "license_normalized": license_id,
+                                "license_url": url,
+                                "image_url": "https://images.example.test/a.jpg",
+                                "source_url": "https://example.test/a",
+                            }
+                        ]
+                    ),
+                    license_id,
+                )
+                blocked = [dict(line) for line in lines]
+                blocked[0]["license"] = text
+                blocked[0]["license_normalized"] = license_id
+                blocked[0]["license_url"] = url
+                path.write_text("".join(json.dumps(line) + "\n" for line in blocked), encoding="utf-8")
+                ok, reasons = assess_shippable(report, artifact_dir)
+                self.assertFalse(ok, license_id)
+                self.assertTrue(any("license" in reason for reason in reasons), license_id)
 
     def test_df20_blocks_release_until_consent_is_confirmed(self):
         from import_external import import_directory
