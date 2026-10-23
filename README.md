@@ -3,6 +3,8 @@
 
 Aplikacja stworzona z myślą o miłośnikach leśnych wypraw i zbierania grzybów w Polsce i Europie Środkowej. Działa w **100% offline** (w głębi lasu, bez dostępu do Internetu ani zasięgu GSM).
 
+Decyzje właściciela (co wybrano, kiedy, dlaczego i czy jest już wdrożone) są w [rejestrze decyzji](docs/decisions/README.md).
+
 ---
 
 ## 🌟 Kluczowe Funkcjonalności
