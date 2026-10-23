@@ -151,8 +151,14 @@ describe('sulphur tuft and honey fungus comparison', () => {
       galerinaZone: 'Ring zone often dusted with rusty spores.',
       galerinaCap: 'Smooth cap that fades noticeably as it dries.',
     };
+    const leadPl =
+      'Maślanka wiązkowa nie ma błoniastego pierścienia. Zostaje najwyżej słaba strefa włókien, przyciemniona zarodnikami, albo resztki na brzegu kapelusza. Opieńka miodowa zwykle ma wyraźny, błoniasty pierścień. Hełmówka jadowita też może mieć cienki, nietrwały pierścień, więc sam pierścień nie odróżnia jej od opieńki.';
+    const leadEn =
+      'Sulphur tuft has no membranous ring. At most a faint, spore-darkened fibrous zone remains, or remnants at the cap margin. Honey fungus usually has a clear membranous ring. Deadly Galerina can also have a thin, short-lived ring, so a ring alone does not tell it apart from honey fungus.';
     expect(pl.comparison.sulphurHoney.title).toBe('Maślanka wiązkowa, opieńka i hełmówka jadowita');
     expect(en.comparison.sulphurHoney.title).toBe('Sulphur tuft, honey fungus and Deadly Galerina');
+    expect(pl.comparison.sulphurHoney.lead).toBe(leadPl);
+    expect(en.comparison.sulphurHoney.lead).toBe(leadEn);
     expect(pl.comparison.sulphurHoney.galerinaHeading).toBe(headingPl);
     expect(en.comparison.sulphurHoney.galerinaHeading).toBe(headingEn);
     expect(pl.comparison.sulphurHoney.warning).toBe(warningPl);
@@ -190,6 +196,7 @@ describe('sulphur tuft and honey fungus comparison', () => {
     );
     const comparison = within(screen.getByTestId('sulphur-honey-comparison'));
     expect(comparison.getByText('Maślanka wiązkowa, opieńka i hełmówka jadowita')).toBeTruthy();
+    expect(comparison.getByTestId('comparison-lead')).toHaveTextContent(leadPl);
     expect(comparison.getByTestId('comparison-warning')).toHaveTextContent(warningPl);
     expect(comparison.getByTestId('comparison-galerina-heading-ring')).toHaveTextContent(headingPl);
     expect(comparison.getByTestId('comparison-caption-wood-galerina-skupisko')).toHaveTextContent(

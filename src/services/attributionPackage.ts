@@ -14,13 +14,40 @@ export interface PhotoCredit {
   sourceUrl: string;
   classId: string;
   taxonName: string;
-  /** Deed for this file. A CC BY credit without this URL has no version to open. */
+  /** Deed for this file. A CC BY credit without an https URL has no version to open. */
   licenseUrl?: string;
   /** Set for atlas gallery photos, which were resized and saved as WebP. */
   modified?: boolean;
 }
 
 const PACKAGED_PHOTO_CREDITS: PhotoCredit[] | null = null;
+
+function firstText(row: Record<string, string>, keys: readonly string[]): string {
+  for (const key of keys) {
+    const value = row[key];
+    if (value && value.trim()) {
+      return value.trim();
+    }
+  }
+  return '';
+}
+
+function creditFromRow(row: Record<string, string>): PhotoCredit {
+  const licenseUrl = firstText(row, ['license_url', 'licenseUrl']);
+  const credit: PhotoCredit = {
+    creator: firstText(row, ['creator']),
+    license: firstText(row, ['license']),
+    licenseNormalized: firstText(row, ['license_normalized', 'licenseNormalized']),
+    imageUrl: firstText(row, ['image_url', 'imageUrl']),
+    sourceUrl: firstText(row, ['source_url', 'sourceUrl']),
+    classId: firstText(row, ['class_id', 'classId']),
+    taxonName: firstText(row, ['taxon_name', 'taxonName']),
+  };
+  if (licenseUrl) {
+    credit.licenseUrl = licenseUrl;
+  }
+  return credit;
+}
 
 export function creditsFromJsonl(text: string): PhotoCredit[] {
   const credits: PhotoCredit[] = [];
@@ -29,16 +56,7 @@ export function creditsFromJsonl(text: string): PhotoCredit[] {
     if (!trimmed) {
       continue;
     }
-    const row = JSON.parse(trimmed) as Record<string, string>;
-    credits.push({
-      creator: row.creator || '',
-      license: row.license || '',
-      licenseNormalized: row.license_normalized || row.licenseNormalized || '',
-      imageUrl: row.image_url || row.imageUrl || '',
-      sourceUrl: row.source_url || row.sourceUrl || '',
-      classId: row.class_id || row.classId || '',
-      taxonName: row.taxon_name || row.taxonName || '',
-    });
+    credits.push(creditFromRow(JSON.parse(trimmed) as Record<string, string>));
   }
   return credits;
 }

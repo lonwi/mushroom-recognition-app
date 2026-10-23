@@ -10,7 +10,8 @@ Required fields:
 | --- | --- |
 | `creator` | Photographer or rights holder. CC-BY needs this. |
 | `license` | License string from the GBIF media object. |
-| `license_normalized` | `cc0-…` or `cc-by-…` for a shipped model. `cc-by-nc…`, ND, SA, and `df20` are not publishable. |
+| `license_normalized` | `cc0-…` or `cc-by-…` for a photo shown in the app. `cc-by-nc…`, ND, SA, and `df20` are not publishable. |
+| `license_url` | Copied from that row's own `license_url`. It is not rebuilt from the licence id. Empty when the row has none, including DF20. |
 | `image_url` | Direct photo URL that was downloaded. |
 | `source_url` | Publisher page, usually an iNaturalist observation. |
 | `gbif_occurrence` | `https://www.gbif.org/occurrence/{key}` |
@@ -19,6 +20,6 @@ Required fields:
 | `country` | ISO country when GBIF has one. |
 | `region_scope` | `central_europe` or `global_fill`. |
 
-The ship gate refuses to copy a model into the app if any training image is missing a creator, a CC0/CC-BY license, an image URL, or a source page. Ship the jsonl next to any released model.
+The ship gate refuses to copy a model into the app if any training image is missing a creator, an allowed licence, an image URL, or a source page. Training data for a released model may include CC BY-NC and versioned CC BY-SA photos as well as CC0 and CC BY; photos shown in the app stay CC0 or CC BY. Ship the jsonl next to any released model.
 
 Installing a model that passed the ship gates rewrites `src/services/attributionPackage.ts` from that jsonl. Settings has a photo-credits control (`btn-photo-credits`) that lists creator, license, taxon, and source page. Until a model is installed the module stays `null` and the screen says there is no credit list. Polish is the default; English uses the same keys.

@@ -54,25 +54,59 @@ ID_KEEP_FIT = 0.97
 def publishable_license_id(license_id: str) -> bool:
     """True only for an exact publishable id such as ``cc-by-4.0`` or ``cc0-1.0``.
 
-    The table is ``import_external._EXACT_LICENSE_USAGE``. ``cc-by-nc-4.0`` is
+    The table is ``license_policy.EXACT_LICENSE_USAGE``. ``cc-by-nc-4.0`` is
     not ``cc-by-4.0``, and a versionless ``cc-by`` is not publishable.
     """
-    from import_external import exact_license_usage
+    from license_policy import allowed_for_display
 
-    return exact_license_usage(license_id) == "publishable"
+    return allowed_for_display(license_id)
+
+
+def _nc_or_sa_license_url(row: dict, license_id: str) -> bool:
+    """#72 rule for CC BY-NC and CC BY-SA: https URL, version from that URL.
+
+    The version has to be the one on this photo's ``license_url``. An empty
+    URL, an ``http://`` URL, or a URL for a different licence fails the row.
+    """
+    from import_external import photo_license_decision
+
+    text = str(row.get("license") or license_id)
+    url = str(row.get("license_url") or "")
+    decision, _reason = photo_license_decision(text, url)
+    if decision is None:
+        return False
+    return decision["license_normalized"] == license_id
 
 
 def attributions_complete(records: list[dict]) -> bool:
+    """True when every training row has a creator and an exact allowed licence.
+
+    The allowed ids are the closed list in ``license_policy``. An empty id,
+    an unknown id, an unversioned id, ND, NC-SA, NC-ND, and an unverified row
+    fail. CC BY-NC and CC BY-SA also need an https ``license_url`` whose
+    version matches that id. A CC0 or CC BY row still needs an image URL and
+    a source page. DF20 is the dataset row already written on main: a creator
+    and the exact id ``df20``. It has no per-photo licence URL, and this check
+    does not add one. ``usage=training_only`` does not fail this check.
+    """
+    from license_policy import allowed_for_training, license_family
+
     if not records:
         return False
     for row in records:
-        # training_only covers CC BY-NC and DF20. Unverified ids stay out of a shipped model.
-        if row.get("usage") == "training_only" or row.get("unverified") is True:
+        if row.get("unverified") is True:
             return False
-        license_id = str(row.get("license_normalized") or "")
-        if not publishable_license_id(license_id):
+        license_id = row.get("license_normalized")
+        if not isinstance(license_id, str) or not allowed_for_training(license_id):
             return False
-        if not row.get("creator") or not row.get("image_url"):
+        creator = row.get("creator")
+        if not isinstance(creator, str) or not creator.strip():
+            return False
+        if license_id == "df20":
+            continue
+        if license_family(license_id) in {"cc-by-nc", "cc-by-sa"} and not _nc_or_sa_license_url(row, license_id):
+            return False
+        if not row.get("image_url"):
             return False
         if not (row.get("source_url") or row.get("gbif_occurrence")):
             return False
@@ -828,7 +862,14 @@ def assemble_report(manifest: dict, splits: dict, val_pred: list[dict], test_pre
             ),
         },
         "attributions_complete": attributions_complete(all_rows),
+        "license_breakdown": _license_breakdown_report(train_rows, val_rows, test_rows),
     }
+
+
+def _license_breakdown_report(train_rows: list[dict], val_rows: list[dict], test_rows: list[dict]) -> dict:
+    from license_policy import license_breakdown_report
+
+    return license_breakdown_report({"train": train_rows, "val": val_rows, "test": test_rows})
 
 
 def main() -> None:

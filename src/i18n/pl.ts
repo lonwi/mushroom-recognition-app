@@ -20,7 +20,7 @@ export const pl = {
     offlineNotice: 'Model i baza danych działają w 100% offline bez połączenia z siecią.',
     dataLicenseTitle: 'Licencje zdjęć zbioru',
     dataLicenseBody:
-      'Model, jeśli zostanie dołączony, wolno trenować tylko na zdjęciach CC0 albo CC-BY (bez NC i SA). Lista obejmuje zdjęcia treningowe, testowe i sondy oceniające. Przy każdym zapisujemy autora, licencję i adres źródła. Eksport zapisuje je obok modelu w assets/models/attributions.jsonl.',
+      'Model wydany wolno trenować na zdjęciach CC0, CC BY, CC BY-NC i wersjonowanych CC BY-SA. Share-alike nie obejmuje wag modelu. Zdjęcia pokazywane w aplikacji zostają CC0 albo CC BY. Lista obejmuje zdjęcia treningowe, testowe i sondy oceniające. Przy każdym zapisujemy autora, licencję i adres źródła. Eksport zapisuje je obok modelu w assets/models/attributions.jsonl.',
     photoCreditsOpen: 'Autorzy zdjęć zbioru',
     photoCreditsLoading: 'Wczytywanie listy autorów…',
     photoCreditsLead:
@@ -284,7 +284,7 @@ export const pl = {
   comparison: {
     sulphurHoney: {
       title: 'Maślanka wiązkowa, opieńka i hełmówka jadowita',
-      lead: 'Maślanka wiązkowa nie ma błoniastego pierścienia. Zostaje najwyżej słaba strefa włókien, przyciemniona zarodnikami, albo resztki na brzegu kapelusza. Opieńka miodowa zwykle ma wyraźny, błoniasty pierścień.',
+      lead: 'Maślanka wiązkowa nie ma błoniastego pierścienia. Zostaje najwyżej słaba strefa włókien, przyciemniona zarodnikami, albo resztki na brzegu kapelusza. Opieńka miodowa zwykle ma wyraźny, błoniasty pierścień. Hełmówka jadowita też może mieć cienki, nietrwały pierścień, więc sam pierścień nie odróżnia jej od opieńki.',
       limit: 'Zdjęcia nie pozwalają wykluczyć gatunku trującego. Ocena owocnika należy do grzyboznawcy.',
       scope: 'Zdjęcia opieńki pokazują Armillaria mellea. Karta w atlasie obejmuje też inne opieńki.',
       galerinaHeading: 'Hełmówka jadowita (Galerina marginata) – śmiertelnie trująca',
