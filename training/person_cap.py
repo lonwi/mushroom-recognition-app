@@ -276,17 +276,24 @@ def apply_person_class_cap(
     records: list[dict],
     *,
     seed: int = PERSON_CAP_SEED,
+    limit: int | None = None,
 ) -> tuple[list[dict], list[dict], dict]:
-    """Drop rows that put one person over the cap in a class.
+    """Drop rows that put one author over the cap in a class.
 
     Returns the same row objects, ordered by the seeded photo-id hash,
     plus removed copies and the report. Input order is not kept. The input
     list and the kept dicts are not modified. Removed copies are not written
     back to the source files. ``author_cap_report`` lists each cut bucket
     with the class, person key, N, limit, count, reason, and photo ids.
+
+    ``limit`` None uses ``person_row_cap``. A positive int is the same
+    selector with that ceiling on every class. The importer passes one
+    only when ``--max-per-collector`` is set.
     """
     if isinstance(seed, bool) or not isinstance(seed, int):
         raise ValueError("person cap seed must be an int")
+    if limit is not None and (isinstance(limit, bool) or not isinstance(limit, int) or limit < 1):
+        raise ValueError("person cap limit override must be a positive int")
 
     by_class: dict[str, list[tuple[int, dict]]] = defaultdict(list)
     for index, record in enumerate(records):
@@ -303,7 +310,7 @@ def apply_person_class_cap(
     for class_id in sorted(by_class):
         items = by_class[class_id]
         n = len(items)
-        cap = person_row_cap(n)
+        cap = person_row_cap(n) if limit is None else limit
         class_n_cap[class_id] = (n, cap)
         keys_of: dict[int, list[str]] = {}
         failed: set[int] = set()
@@ -391,6 +398,7 @@ def apply_person_class_cap(
         "cap_min": CAP_MIN,
         "cap_fraction": CAP_FRACTION,
         "seed": seed,
+        "limit_override": limit,
         "missing_person_key": MISSING_PERSON_KEY,
         "removed_rows": len(removed),
         "person_key_errors": key_errors,

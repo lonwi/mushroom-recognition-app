@@ -462,6 +462,10 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertNotIn("pending Wojtek", source)
         self.assertIn('for field in ("creator", "rights_holder")', source)
         self.assertIn("occupies a slot only for the author", source)
+        importer = (ROOT / "training" / "import_external.py").read_text(encoding="utf-8")
+        self.assertNotIn("DEFAULT_MAX_PER_COLLECTOR", importer)
+        self.assertIn("apply_person_class_cap", importer)
+        self.assertNotIn("= 30", importer)
         self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
         self.assertEqual(MAX_PER_OCCURRENCE, 2)
 
