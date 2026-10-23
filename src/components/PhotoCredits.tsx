@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { useLanguage } from '../contexts/LanguageContext';
+import { comparisonPhotoCredits } from '../data/sulphurHoneyComparison';
 import { galleryPhotoCredits } from '../data/speciesGallery';
 import { creditLicenseUrl, type PhotoCredit } from '../services/attributionPackage';
 
@@ -27,7 +28,10 @@ export const PhotoCredits: React.FC<{
 }> = ({ credits, loading = false, loadFailed = false, onClose }) => {
   const { t } = useLanguage();
   const [query, setQuery] = useState('');
-  const atlasCredits = useMemo(() => galleryPhotoCredits(), []);
+  const atlasCredits = useMemo(
+    () => [...galleryPhotoCredits(), ...comparisonPhotoCredits()],
+    [],
+  );
   const rows = useMemo(() => {
     if (loading) {
       return [];

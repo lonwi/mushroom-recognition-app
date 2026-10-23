@@ -1,6 +1,198 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
+
+async function captionContrast(page: Page, testId: string): Promise<number> {
+  return page.getByTestId(testId).evaluate((el) => {
+    const parse = (value: string): [number, number, number] | null => {
+      const match = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(value);
+      if (!match) {
+        return null;
+      }
+      return [Number(match[1]), Number(match[2]), Number(match[3])];
+    };
+    const channel = (value: number) => {
+      const scaled = value / 255;
+      return scaled <= 0.03928 ? scaled / 12.92 : ((scaled + 0.055) / 1.055) ** 2.4;
+    };
+    const luminance = ([red, green, blue]: [number, number, number]) =>
+      0.2126 * channel(red) + 0.7152 * channel(green) + 0.0722 * channel(blue);
+    const foreground = parse(getComputedStyle(el).color);
+    let node: Element | null = el;
+    let background: [number, number, number] | null = null;
+    while (node) {
+      const parsed = parse(getComputedStyle(node).backgroundColor);
+      if (parsed && getComputedStyle(node).backgroundColor !== 'rgba(0, 0, 0, 0)') {
+        background = parsed;
+        break;
+      }
+      node = node.parentElement;
+    }
+    if (!foreground || !background) {
+      return 0;
+    }
+    const lighter = Math.max(luminance(foreground), luminance(background));
+    const darker = Math.min(luminance(foreground), luminance(background));
+    return (lighter + 0.05) / (darker + 0.05);
+  });
+}
+
+async function expectTextFits(locator: Locator): Promise<void> {
+  const fits = await locator.evaluate((el) => el.scrollWidth <= el.clientWidth);
+  expect(fits).toBe(true);
+}
+
+const COMPARISON_SIDES = ['hypholoma', 'armillaria', 'galerina'] as const;
+const COMPARISON_TRAITS = ['ring', 'gills', 'spore', 'cap', 'stem', 'flesh', 'wood'] as const;
+
+async function expectColumnsFitViewport(page: Page, width: number): Promise<void> {
+  await page.setViewportSize({ width, height: 800 });
+  await page.goto('/iframe.html?id=mushroom-sulphurhoneycomparison--light');
+  for (const trait of COMPARISON_TRAITS) {
+    for (const side of COMPARISON_SIDES) {
+      const box = await columnBox(page, `comparison-side-${side}-${trait}`);
+      expect(box.width).toBeGreaterThanOrEqual(148);
+      expect(box.width).toBeLessThanOrEqual(width);
+    }
+    await expectTextFits(page.getByTestId(`comparison-galerina-heading-${trait}`));
+  }
+  await expectTextFits(page.getByTestId('comparison-warning'));
+}
+
+const SCROLL_EDGE_SLACK = 1;
+
+async function openComparison(page: Page, width: number, theme: 'light' | 'dark'): Promise<void> {
+  await page.setViewportSize({ width, height: 800 });
+  await page.goto(`/iframe.html?id=mushroom-sulphurhoneycomparison--${theme}`);
+  await page.getByTestId('comparison-columns-ring').evaluate((el) => {
+    el.scrollLeft = 0;
+  });
+}
+
+async function ringScrollEdges(page: Page): Promise<{
+  viewLeft: number;
+  viewRight: number;
+  firstRight: number;
+  headingLeft: number;
+  headingRight: number;
+}> {
+  return page.evaluate(() => {
+    const box = (testId: string) => {
+      const node = document.querySelector(`[data-testid="${testId}"]`);
+      if (!node) {
+        throw new Error(testId);
+      }
+      const rect = node.getBoundingClientRect();
+      return { left: rect.left, right: rect.right };
+    };
+    const view = box('comparison-columns-ring');
+    const first = box('comparison-side-hypholoma-ring');
+    const heading = box('comparison-galerina-heading-ring');
+    return {
+      viewLeft: view.left,
+      viewRight: view.right,
+      firstRight: first.right,
+      headingLeft: heading.left,
+      headingRight: heading.right,
+    };
+  });
+}
+
+async function scrollGalerinaColumnToStart(page: Page): Promise<void> {
+  await page.getByTestId('comparison-side-galerina-ring').evaluate((el) => {
+    el.scrollIntoView({ block: 'nearest', inline: 'start' });
+  });
+}
+
+async function columnBox(page: Page, testId: string): Promise<{ x: number; width: number }> {
+  const box = await page.getByTestId(testId).boundingBox();
+  if (!box) {
+    throw new Error(`missing column ${testId}`);
+  }
+  return box;
+}
 
 test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
+  test('sulphur tuft comparison pairs the cortina with a membranous ring', async ({ page }) => {
+    await page.goto('/iframe.html?id=mushroom-sulphurhoneycomparison--light');
+    await expect(page.getByTestId('comparison-lead')).toContainText('nie ma błoniastego pierścienia');
+    await expect(page.getByTestId('comparison-limit')).toContainText('grzyboznawcy');
+    await expect(page.getByTestId('comparison-author-ring-hypholoma-strefa-trzon')).toContainText('Jeffrey Lee');
+    await expect(page.getByTestId('comparison-photo-ring-armillaria-pierscien-trzony')).toBeVisible();
+    await expect(page.getByTestId('comparison-trait-gills')).toBeVisible();
+    await expect(page.getByTestId('comparison-trait-cap')).toBeVisible();
+    await page.getByTestId('comparison-side-galerina-ring').scrollIntoViewIfNeeded();
+    await expect(page.getByTestId('comparison-side-galerina-ring')).toBeVisible();
+    await expect(page.getByTestId('comparison-warning')).toHaveText(
+      'Zawiera amatoksyny. Żadna pojedyncza cecha, w tym pierścień, nie potwierdza opieńki.',
+    );
+    await expect(page.getByTestId('comparison-galerina-heading-ring')).toHaveText(
+      'Hełmówka jadowita (Galerina marginata) – śmiertelnie trująca',
+    );
+    await expect(page.locator('body')).not.toContainText('gorzk');
+    await expect(page.locator('body')).not.toContainText('smak');
+    await expect(page.locator('body')).not.toContainText('331784845');
+  });
+
+  test('funeral bell column stays readable on a narrow screen', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 800 });
+    await page.goto('/iframe.html?id=mushroom-sulphurhoneycomparison--light');
+    const hyph = await columnBox(page, 'comparison-side-hypholoma-ring');
+    const arm = await columnBox(page, 'comparison-side-armillaria-ring');
+    const gal = await columnBox(page, 'comparison-side-galerina-ring');
+    expect(hyph.width).toBeGreaterThanOrEqual(148);
+    expect(arm.width).toBeGreaterThanOrEqual(148);
+    expect(gal.width).toBeGreaterThanOrEqual(148);
+    expect(hyph.x).toBeLessThan(arm.x);
+    expect(arm.x).toBeLessThan(gal.x);
+    await page.getByTestId('comparison-side-galerina-ring').scrollIntoViewIfNeeded();
+    await expect(page.getByTestId('comparison-caption-ring-galerina-pierscien')).toBeVisible();
+    await expect(page.getByTestId('comparison-galerina-heading-ring')).toContainText('śmiertelnie trująca');
+    expect(await captionContrast(page, 'comparison-caption-ring-galerina-pierscien')).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test('comparison columns stay within a narrow viewport', async ({ page }) => {
+    await expectColumnsFitViewport(page, 320);
+    await expectColumnsFitViewport(page, 375);
+  });
+
+  test('first comparison column stays inside the scroll view', async ({ page }) => {
+    for (const width of [320, 375]) {
+      await openComparison(page, width, 'light');
+      const edges = await ringScrollEdges(page);
+      expect(edges.firstRight).toBeLessThanOrEqual(edges.viewRight + SCROLL_EDGE_SLACK);
+    }
+  });
+
+  test('Galerina heading sits inside the scroll view after scrolling', async ({ page }) => {
+    for (const width of [320, 375]) {
+      await openComparison(page, width, 'light');
+      await scrollGalerinaColumnToStart(page);
+      const edges = await ringScrollEdges(page);
+      expect(edges.headingLeft).toBeGreaterThanOrEqual(edges.viewLeft - SCROLL_EDGE_SLACK);
+      expect(edges.headingRight).toBeLessThanOrEqual(edges.viewRight + SCROLL_EDGE_SLACK);
+    }
+  });
+
+  test('dark comparison columns stay inside the scroll view', async ({ page }) => {
+    for (const width of [320, 375]) {
+      await openComparison(page, width, 'dark');
+      const before = await ringScrollEdges(page);
+      expect(before.firstRight).toBeLessThanOrEqual(before.viewRight + SCROLL_EDGE_SLACK);
+      await scrollGalerinaColumnToStart(page);
+      const after = await ringScrollEdges(page);
+      expect(after.headingLeft).toBeGreaterThanOrEqual(after.viewLeft - SCROLL_EDGE_SLACK);
+      expect(after.headingRight).toBeLessThanOrEqual(after.viewRight + SCROLL_EDGE_SLACK);
+    }
+  });
+
+  test('funeral bell captions stay readable in the dark story', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 800 });
+    await page.goto('/iframe.html?id=mushroom-sulphurhoneycomparison--dark');
+    await expect(page.getByTestId('comparison-warning')).toContainText('Zawiera amatoksyny');
+    expect(await captionContrast(page, 'comparison-caption-cap-galerina-kapelusz')).toBeGreaterThanOrEqual(4.5);
+    const gal = await columnBox(page, 'comparison-side-galerina-cap');
+    expect(gal.width).toBeGreaterThanOrEqual(148);
+  });
+
   test('EdibilityBadge renders all 4 edibility levels', async ({ page }) => {
     await page.goto('/iframe.html?id=mushroom-edibilitybadge--all-sizes');
     await expect(page.locator('body')).toContainText('JADALNY');

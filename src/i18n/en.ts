@@ -283,6 +283,94 @@ export const en: Translations = {
       undersideStem: 'Underside with the stem',
     },
   },
+  comparison: {
+    sulphurHoney: {
+      title: 'Sulphur tuft, honey fungus and Deadly Galerina',
+      lead: 'Sulphur tuft has no membranous ring. At most a faint, spore-darkened fibrous zone remains, or remnants at the cap margin. Honey fungus usually has a clear membranous ring. Deadly Galerina can also have a thin, short-lived ring, so a ring alone does not tell it apart from honey fungus.',
+      limit: 'Photos cannot rule out a poisonous species. An expert checks the specimen.',
+      scope: 'The honey-fungus photos are Armillaria mellea. The atlas card also covers other honey fungi.',
+      galerinaHeading: 'Deadly Galerina (Galerina marginata) – deadly poisonous',
+      warning:
+        'Contains amatoxins. No single feature, including the ring, confirms honey fungus.',
+      chipHint:
+        'The fibrous cortina zone is easy to take for a ring, so with “Has a ring” sulphur tuft stays among the cards to be checked.',
+      hypholoma: 'Sulphur tuft',
+      armillaria: 'Honey fungus',
+      hypholomaLatin: 'Hypholoma fasciculare',
+      armillariaLatin: 'Armillaria mellea',
+      sources: 'Sources',
+      noPhoto: 'No photo of this trait.',
+      traits: {
+        ring: {
+          title: 'Cortina and ring',
+          hypholoma:
+            'Young fruiting bodies have a yellow, cobweb-like cortina. Later an irregular, spore-darkened fibrous zone remains on the stem, or only remnants at the cap margin.',
+          armillaria: 'The ring is thin, membranous and usually persistent: white, often with a yellowish edge.',
+          galerina:
+            'The ring may be a thin membrane or only a fibrous zone. It is often whitish and dusted rusty by spores, and it can disappear with age.',
+        },
+        gills: {
+          title: 'Gills',
+          hypholoma: 'The gills start sulphur yellow, then become olive green, and darken as the spores mature.',
+          armillaria: 'The gills are whitish to cream, attached or slightly running down the stem.',
+          galerina:
+            'The gills are attached or slightly run down the stem. They start yellowish to cream-ochre and later turn rusty brown.',
+        },
+        spore: {
+          title: 'Spore print',
+          hypholoma: 'The spore print is purple-brown.',
+          armillaria: 'The spore print is white to pale cream.',
+          galerina:
+            'The spore print is rusty brown. Without a comparison it is easy to mix up with the purple-brown print of sulphur tuft. A white print points to honey fungus.',
+        },
+        cap: {
+          title: 'Cap surface',
+          hypholoma: 'The cap is smooth.',
+          armillaria:
+            'The cap has fine scales, clearest at the centre. On older fruiting bodies the scales can be harder to see.',
+          galerina:
+            'The cap is smooth, and sticky when moist. Colour runs from honey yellow to cinnamon and red-brown. It pales as it dries, so it can look two-toned. The margin is sometimes faintly striate.',
+        },
+        stem: {
+          title: 'Stem below the ring',
+          hypholoma: 'The stem is yellow to buff and stains rusty brown from the base upward.',
+          armillaria:
+            'The stem is thicker and fairly tough. Young fruiting bodies can be flocculose from veil remnants, and greyish to brownish toward the base.',
+          galerina:
+            'The stem is thin and often curved. Below the ring it is longitudinally fibrous, with whitish fibrils, and it darkens from the base upward.',
+        },
+        flesh: {
+          title: 'Flesh',
+          hypholoma: 'The flesh is sulphur yellow.',
+          armillaria: 'The flesh is whitish.',
+        },
+        wood: {
+          title: 'Wood and growth',
+          hypholoma: 'A saprobe in clumps on stumps and logs. It can grow from buried roots and look terrestrial.',
+          armillaria:
+            'A parasite and saprobe on wood, mainly hardwood, often in large clumps. Black rhizomorphs can occur under the bark.',
+          galerina:
+            'A saprobe on rotting conifer and hardwood, usually in clumps. Wood and a clump alone do not separate it from honey fungus.',
+        },
+      },
+      captions: {
+        hypholomaStem: 'Upper stem with an irregular, rusty fibrous cortina zone.',
+        hypholomaGills: 'Greenish-yellow gills and dark fibres on the stem.',
+        hypholomaYoung: 'Young fruiting bodies with cobweb-like cortina remnants at the cap margin.',
+        hypholomaMargin: 'Dark veil remnants on the cap margin.',
+        hypholomaFlesh: 'Yellow flesh in section.',
+        armillariaRing: 'Membranous white ring with a yellowish edge.',
+        armillariaStems: 'Two fruiting bodies with a flared ring on the stem.',
+        armillariaGills: 'Whitish ring and cream gills.',
+        armillariaCap: 'Cap with fine, upright scales.',
+        galerinaClump: 'Cluster on rotting wood, like honey fungus.',
+        galerinaRing: 'Thin, fragile ring; yellowish to rusty-brown gills.',
+        galerinaZone: 'Ring zone often dusted with rusty spores.',
+        galerinaCap: 'Smooth cap that fades noticeably as it dries.',
+        galerinaSpore: 'Rusty-brown spore print of Galerina marginata.',
+      },
+    },
+  },
   scanner: {
     title: 'AI Mushroom Scanner',
     takePhoto: 'Take Photo & Classify',
