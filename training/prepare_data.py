@@ -27,7 +27,11 @@ model input, which is what the phone feeds the network. An unacknowledged
 class over the per-class component-share limit, or with an empty val or test,
 stops the run before any split file or dataset manifest is written.
 ``person_cap_report.json`` is written with the other prepare outputs and is
-removed with them when that hard stop fires.
+removed with them when that hard stop fires. Its ``author_cap_report``
+lists every cut row: class, person key, N, limit, count, reason, and ids.
+Unverified rows and both dedup passes run before the cap, so those rows
+are not in N and do not take a slot. Kept rows are ordered by the seeded
+photo-id hash, not by the order of the source files.
 """
 
 from __future__ import annotations
@@ -431,6 +435,7 @@ def write_prepare_outputs(
                 ),
                 "model_png_size": model_png_size,
                 "person_cap_removed": 0 if not cap_report else int(cap_report.get("removed_rows") or 0),
+                "author_cap_report": None if cap_report is None else "person_cap_report.json",
             },
             indent=2,
         ),
