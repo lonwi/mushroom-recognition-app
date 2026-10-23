@@ -43,6 +43,21 @@ function textColor(node: { props?: { style?: unknown } }): string {
   return flat.color;
 }
 
+function expectGalerinaSporePrintCredit(): void {
+  const sporePrint = COMPARISON_PHOTOS.find((photo) => photo.id === 'galerina-wysyp');
+  if (!sporePrint) {
+    throw new Error('missing Galerina spore print');
+  }
+  expect(sporePrint.author).toBe('Shirley Zundell');
+  expect(sporePrint.license).toBe('CC BY 4.0');
+  expect(sporePrint.licenseUrl).toBe('https://creativecommons.org/licenses/by/4.0/');
+  expect(sporePrint.sourceUrl).toBe('https://www.inaturalist.org/photos/170500861');
+  expect(sporePrint.imageUrl).toBe(
+    'https://inaturalist-open-data.s3.amazonaws.com/photos/170500861/original.jpeg',
+  );
+  expect(sporePrint.inaturalistObservationId).toBe('102041261');
+}
+
 describe('sulphur tuft and honey fungus comparison', () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
@@ -92,7 +107,8 @@ describe('sulphur tuft and honey fungus comparison', () => {
     expect(COMPARISON_PHOTOS.some((photo) => `${photo.imageUrl} ${photo.sourceUrl}`.includes('331784845'))).toBe(
       false,
     );
-    expect(COMPARISON_PHOTOS.filter((photo) => photo.license === 'CC BY 4.0')).toHaveLength(7);
+    expect(COMPARISON_PHOTOS.filter((photo) => photo.license === 'CC BY 4.0')).toHaveLength(8);
+    expectGalerinaSporePrintCredit();
     const formerCommons = COMPARISON_PHOTOS.filter((photo) => photo.inaturalistPhotoUrl);
     expect(formerCommons.map((photo) => photo.author).sort()).toEqual(['Gabriel Mayrhofer', 'sugarsnap_t']);
     for (const photo of formerCommons) {
@@ -139,6 +155,12 @@ describe('sulphur tuft and honey fungus comparison', () => {
     expect(en.comparison.sulphurHoney.captions.galerinaRing).toBe(captionsEn.galerinaRing);
     expect(en.comparison.sulphurHoney.captions.galerinaZone).toBe(captionsEn.galerinaZone);
     expect(en.comparison.sulphurHoney.captions.galerinaCap).toBe(captionsEn.galerinaCap);
+    expect(pl.comparison.sulphurHoney.captions.galerinaSpore).toBe(
+      'Rdzawobrązowy wysyp zarodników hełmówki jadowitej (Galerina marginata).',
+    );
+    expect(en.comparison.sulphurHoney.captions.galerinaSpore).toBe(
+      'Rusty-brown spore print of Galerina marginata.',
+    );
     expect(pl.comparison.sulphurHoney).not.toHaveProperty('deadly');
     expect(pl.comparison.sulphurHoney).not.toHaveProperty('deadlyDetail');
     expect(pl.comparison.sulphurHoney).not.toHaveProperty('notSingle');
@@ -241,7 +263,16 @@ describe('sulphur tuft and honey fungus comparison', () => {
     expect(comparison.getByTestId('comparison-trait-wood')).toBeTruthy();
     expect(comparison.getByTestId('comparison-no-photo-armillaria-flesh')).toBeTruthy();
     expect(comparison.getByTestId('comparison-no-photo-hypholoma-spore')).toBeTruthy();
-    expect(comparison.getByTestId('comparison-no-photo-galerina-spore')).toBeTruthy();
+    expect(comparison.queryByTestId('comparison-no-photo-galerina-spore')).toBeNull();
+    expect(comparison.getByTestId('comparison-photo-spore-galerina-wysyp')).toBeTruthy();
+    expect(comparison.getByTestId('comparison-caption-spore-galerina-wysyp')).toHaveTextContent(
+      pl.comparison.sulphurHoney.captions.galerinaSpore,
+    );
+    expect(comparison.getByLabelText(pl.comparison.sulphurHoney.captions.galerinaSpore)).toBeTruthy();
+    expect(comparison.getByTestId('comparison-author-spore-galerina-wysyp')).toHaveTextContent(
+      /Shirley Zundell/,
+    );
+    expect(comparison.getByText(pl.comparison.sulphurHoney.traits.spore.galerina)).toBeTruthy();
     expect(comparison.queryByTestId('comparison-no-photo-galerina-flesh')).toBeNull();
     expect(comparison.getByTestId('comparison-no-claim-galerina-flesh')).toBeTruthy();
     expect(comparison.getByTestId('comparison-warning')).toHaveTextContent(pl.comparison.sulphurHoney.warning);
@@ -439,6 +470,12 @@ describe('sulphur tuft and honey fungus comparison', () => {
     expect(screen.getByText('Peter Boyer')).toBeTruthy();
     expect(screen.getByText('CC BY 4.0')).toBeTruthy();
     expect(screen.getByText('https://www.inaturalist.org/photos/61730025')).toBeTruthy();
+    await fireEvent.changeText(screen.getByTestId('photo-credits-search'), 'Shirley Zundell');
+    expect(screen.getByText('Shirley Zundell')).toBeTruthy();
+    expect(screen.getByText('CC BY 4.0')).toBeTruthy();
+    expect(screen.getByText('https://www.inaturalist.org/photos/170500861')).toBeTruthy();
+    expect(screen.queryByText('CC0')).toBeNull();
+    expect(screen.queryByText(/331784845/)).toBeNull();
     await fireEvent.changeText(screen.getByTestId('photo-credits-search'), 'Bethany Teigen');
     expect(screen.getByText('Bethany Teigen')).toBeTruthy();
     expect(screen.getByText('CC0')).toBeTruthy();

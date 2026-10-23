@@ -928,6 +928,13 @@
     },
     {
       "species_id": "galerina_marginata",
+      "image_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/170500861/original.jpeg",
+      "inaturalist_observation_id": "102041261",
+      "mo_observation_id": null,
+      "source_url": "https://www.inaturalist.org/photos/170500861"
+    },
+    {
+      "species_id": "galerina_marginata",
       "image_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/331784845/original.jpg",
       "inaturalist_observation_id": "189400216",
       "mo_observation_id": null,

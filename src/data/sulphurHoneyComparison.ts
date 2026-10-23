@@ -62,6 +62,8 @@ export interface ComparisonPhoto {
   /** Earlier Commons CC0 record. Stored with the credit and not shown as the licence. */
   sourceNote?: string;
   captionKey: string;
+  /** Plain image description. Used as the accessibility label when set. */
+  altKey?: string;
 }
 
 export interface ComparisonTrait {
@@ -92,6 +94,7 @@ const GAL_RING = 'galerina-pierscien';
 const GAL_ZONE = 'galerina-strefa';
 const GAL_CLUMP = 'galerina-skupisko';
 const GAL_CAP = 'galerina-kapelusz';
+const GAL_SPORE = 'galerina-wysyp';
 const ARM_STEMS = 'armillaria-pierscien-trzony';
 const S3 = 'https://inaturalist-open-data.s3.amazonaws.com/photos';
 
@@ -109,6 +112,7 @@ function photo(
   inaturalistObservationId: string,
   inaturalistPhotoUrl?: string,
   sourceNote?: string,
+  altKey?: string,
 ): ComparisonPhoto {
   const assetPath = `assets/gallery/porownanie/${fileName}`;
   return {
@@ -126,6 +130,7 @@ function photo(
     inaturalistPhotoUrl,
     sourceNote,
     captionKey,
+    altKey,
   };
 }
 
@@ -314,6 +319,22 @@ export const COMPARISON_PHOTOS: readonly ComparisonPhoto[] = [
     `${CAPTION}.galerinaCap`,
     '38807007',
   ),
+  photo(
+    GAL_SPORE,
+    FUNERAL_BELL_ID,
+    GAL_LATIN,
+    'galerina-wysyp.webp',
+    'Shirley Zundell',
+    CC_BY,
+    DEED_BY_40,
+    'https://www.inaturalist.org/photos/170500861',
+    `${S3}/170500861/original.jpeg`,
+    `${CAPTION}.galerinaSpore`,
+    '102041261',
+    undefined,
+    undefined,
+    `${CAPTION}.galerinaSpore`,
+  ),
 ];
 
 const TRAIT = 'comparison.sulphurHoney.traits';
@@ -384,7 +405,7 @@ export const COMPARISON_TRAITS: readonly ComparisonTrait[] = [
       armillaria: [FN_ARM, ME_ARM],
       galerina: [ME_GAL, FN_GAL, ME_ARM],
     },
-    photoIds: { hypholoma: [], armillaria: [], galerina: [] },
+    photoIds: { hypholoma: [], armillaria: [], galerina: [GAL_SPORE] },
   },
   {
     id: 'cap',

@@ -367,6 +367,7 @@ export const pl = {
         galerinaRing: 'Cienki, nietrwały pierścień; blaszki żółtawe do rdzawobrązowych.',
         galerinaZone: 'Strefa pierścienia często z rdzawym nalotem zarodników.',
         galerinaCap: 'Gładki kapelusz, wyraźnie jaśniejący przy wysychaniu.',
+        galerinaSpore: 'Rdzawobrązowy wysyp zarodników hełmówki jadowitej (Galerina marginata).',
       },
     },
   },

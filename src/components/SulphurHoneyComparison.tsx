@@ -138,7 +138,9 @@ function PhotoBlock({
         source={photo.image}
         style={[styles.photo, { backgroundColor: tone.photo }]}
         resizeMode="cover"
-        accessibilityLabel={t('gallery.photoLabel', { species, feature: caption })}
+        accessibilityLabel={
+          photo.altKey ? t(photo.altKey) : t('gallery.photoLabel', { species, feature: caption })
+        }
       />
       <Text
         style={[styles.caption, { color: tone.text }]}

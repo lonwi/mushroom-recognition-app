@@ -367,6 +367,7 @@ export const en: Translations = {
         galerinaRing: 'Thin, fragile ring; yellowish to rusty-brown gills.',
         galerinaZone: 'Ring zone often dusted with rusty spores.',
         galerinaCap: 'Smooth cap that fades noticeably as it dries.',
+        galerinaSpore: 'Rusty-brown spore print of Galerina marginata.',
       },
     },
   },

@@ -261,6 +261,7 @@ export const COMPARISON_GALLERY_IMAGES: Readonly<Record<string, ImageSourcePropT
   'galerina-pierscien.webp': require('../../assets/gallery/porownanie/galerina-pierscien.webp') as ImageSourcePropType,
   'galerina-strefa.webp': require('../../assets/gallery/porownanie/galerina-strefa.webp') as ImageSourcePropType,
   'galerina-kapelusz.webp': require('../../assets/gallery/porownanie/galerina-kapelusz.webp') as ImageSourcePropType,
+  'galerina-wysyp.webp': require('../../assets/gallery/porownanie/galerina-wysyp.webp') as ImageSourcePropType,
 };
 
 export function photosForSpecies(speciesId: string): GalleryPhoto[] {
