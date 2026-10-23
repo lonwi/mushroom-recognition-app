@@ -643,6 +643,60 @@ class ManifestAndShipGateTest(unittest.TestCase):
             self.assertFalse(ok)
             self.assertTrue(any("experimental" in reason for reason in reasons))
 
+    def test_marker_only_df20_row_blocks_release_after_write_attribution_file(self):
+        """A DF20 marker must still block after the real export writer, not only a hand-edited jsonl."""
+        from component_share import is_df20_row
+        from export_tflite import write_attribution_file
+
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            coverage = report["coverage"]
+            count = (
+                sum(coverage["train_images"].values())
+                + sum(coverage["val_images"].values())
+                + sum(coverage["test_images"].values())
+            )
+            rows = []
+            for index in range(count):
+                rows.append(
+                    {
+                        "creator": "Ada",
+                        "license": "CC BY 4.0",
+                        "license_normalized": "cc-by-4.0",
+                        "license_url": "https://creativecommons.org/licenses/by/4.0/",
+                        "image_url": f"https://example.test/{index}.jpg",
+                        "source_url": f"https://example.test/source/{index}",
+                        "gbif_occurrence": f"https://www.gbif.org/occurrence/{index}",
+                        "class_id": "boletus_edulis",
+                        "file": f"images/{index}.jpg",
+                    }
+                )
+            path = artifact_dir / "attributions.jsonl"
+            write_attribution_file(rows, path)
+            self.assertEqual(_df20_release_reasons(artifact_dir), [])
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertTrue(ok, reasons)
+
+            marker = dict(rows[0])
+            marker["ImageUniqueID"] = "2237858559-1"
+            self.assertNotEqual(marker.get("source"), "df20")
+            self.assertNotEqual(marker.get("license_normalized"), "df20")
+            self.assertIsNone(marker.get("df20_image_id"))
+            self.assertIsNone(marker.get("df20_image_path"))
+            self.assertIsNone(marker.get("licence_note"))
+            self.assertIsNone(marker.get("license_note"))
+            self.assertIsNone(marker.get("dataset"))
+            self.assertIsNone(marker.get("collection"))
+            self.assertTrue(is_df20_row(marker))
+            exported_rows = [marker, *rows[1:]]
+            write_attribution_file(exported_rows, path)
+            df20_reasons = _df20_release_reasons(artifact_dir)
+            self.assertTrue(any("experimental" in reason for reason in df20_reasons), df20_reasons)
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("experimental" in reason for reason in reasons), reasons)
+
     def test_missing_component_share_blockers_key_blocks_shipping(self):
         with tempfile.TemporaryDirectory() as tmp:
             artifact_dir = Path(tmp)
