@@ -10,7 +10,7 @@ Required fields:
 | --- | --- |
 | `creator` | Photographer or rights holder. CC-BY needs this. |
 | `license` | License string from the GBIF media object. |
-| `license_normalized` | `cc0-…` or `cc-by-…`. Anything else is not written. |
+| `license_normalized` | `cc0-…` or `cc-by-…` for a shipped model. `cc-by-nc…`, ND, SA, and `df20` are not publishable. |
 | `image_url` | Direct photo URL that was downloaded. |
 | `source_url` | Publisher page, usually an iNaturalist observation. |
 | `gbif_occurrence` | `https://www.gbif.org/occurrence/{key}` |

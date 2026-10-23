@@ -12,7 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from delegate_sample import calibration_sample, sample_sha256
-from score_delegate_dump import apply_delegate_release, score_device_dump
+from score_delegate_dump import apply_delegate_release, main, score_device_dump
 from ship_gates import TFLITE_AGREEMENT_MIN, assess_delegate_release
 
 
@@ -197,3 +197,31 @@ class DelegateAgreementTest(unittest.TestCase):
                 model_path=missing,
             )
             self.assertTrue(without_file["passed"], without_file["reasons"])
+
+    def test_write_refuses_a_missing_model_file(self):
+        """--write must not record a gate from the hash copied into labels.json."""
+        model_hash = "ab" * 32
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            manifest_path = root / "labels.json"
+            manifest_path.write_text('{"model_sha256": "%s"}\n' % model_hash, encoding="utf-8")
+            missing = root / "mushrooms_model.tflite"
+            before = manifest_path.read_text(encoding="utf-8")
+            with self.assertRaises(SystemExit) as raised:
+                main(
+                    [
+                        "--dump",
+                        str(root / "delegate-calibration.json"),
+                        "--splits",
+                        str(root / "splits.json"),
+                        "--manifest",
+                        str(manifest_path),
+                        "--model",
+                        str(missing),
+                        "--write",
+                    ]
+                )
+            self.assertIn("not on disk", str(raised.exception))
+            self.assertIn("labels.json", str(raised.exception))
+            self.assertEqual(manifest_path.read_text(encoding="utf-8"), before)
+            self.assertFalse(missing.is_file())

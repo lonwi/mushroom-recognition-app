@@ -192,7 +192,7 @@ def write_delegate_release(manifest_path: Path, measurement: dict, sample_hash: 
     return updated
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Score a device delegate-vs-CPU dump")
     parser.add_argument("--dump", required=True, type=Path)
     parser.add_argument("--splits", required=True, type=Path, help="splits.json with val and test rows")
@@ -201,10 +201,14 @@ def main() -> None:
         "--model",
         type=Path,
         default=MODEL_PATH,
-        help="Packaged mushrooms_model.tflite. When the file exists, its sha256 is the model hash.",
+        help="Packaged mushrooms_model.tflite. --write hashes this file and refuses a missing file.",
     )
     parser.add_argument("--write", action="store_true", help="Write this platform's gate into the manifest")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
+    if args.write and sha256_file(args.model) is None:
+        raise SystemExit(
+            f"{args.model} is not on disk; --write refuses the hash copied from labels.json"
+        )
     dump = json.loads(args.dump.read_text(encoding="utf-8"))
     splits = json.loads(args.splits.read_text(encoding="utf-8"))
     sample = calibration_sample(splits)
