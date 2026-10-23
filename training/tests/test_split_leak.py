@@ -223,8 +223,9 @@ class SplitLeakTest(unittest.TestCase):
         ]
         kept, dropped = dedup_by_identity(repeated)
         self.assertEqual(len(kept), 1)
-        self.assertEqual(kept[0]["license"], "CC BY 4.0")
-        self.assertEqual(dropped[0]["drop_reason"], "duplicate_photo_id")
+        self.assertEqual(kept[0]["license"], "CC BY-NC 4.0")
+        self.assertEqual(dropped[0]["license"], "CC BY 4.0")
+        self.assertEqual(dropped[0]["drop_reason"], "looser_license")
         self.assertNotEqual(kept[0]["license"], kept[0]["author"])
 
         pair = [
@@ -341,8 +342,9 @@ class SplitLeakTest(unittest.TestCase):
         self.assertIn("person:ada hunter", person_identity_keys(external_same_photo))
         kept_photo, dropped_photo = dedup_by_identity([gbif_photo, external_same_photo])
         self.assertEqual(len(kept_photo), 1)
-        self.assertEqual(kept_photo[0]["usage"], "publishable")
-        self.assertEqual(dropped_photo[0]["drop_reason"], "duplicate_photo_id")
+        self.assertEqual(kept_photo[0]["license_normalized"], "cc-by-nc-4.0")
+        self.assertEqual(dropped_photo[0]["license_normalized"], "cc-by-4.0")
+        self.assertEqual(dropped_photo[0]["drop_reason"], "looser_license")
 
         gbif_other_photo = {
             "class_id": "boletus_edulis",
@@ -454,6 +456,66 @@ class SplitLeakTest(unittest.TestCase):
                 if any(row.get("file") == filename for row in split_rows)
             }
             self.assertEqual(len(homes), 1)
+
+    def test_commons_cc0_cannot_override_an_inat_nc_copy(self):
+        """A shared iNat photo id keeps the NC row, in either input order."""
+        inat = {
+            "class_id": "boletus_edulis",
+            "source": "inat",
+            "inat_photo_id": "88001",
+            "license": "CC BY-NC 4.0",
+            "license_normalized": "cc-by-nc-4.0",
+            "license_url": "https://creativecommons.org/licenses/by-nc/4.0/",
+            "image_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/88001/original.jpg",
+            "file": "inat-88001.jpg",
+            "usage": "training_only",
+        }
+        commons = {
+            "class_id": "boletus_edulis",
+            "source": "commons",
+            "inat_photo_id": "88001",
+            "commons_file": "Boletus_edulis.jpg",
+            "license": "CC0 1.0",
+            "license_normalized": "cc0-1.0",
+            "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+            "image_url": "https://upload.wikimedia.org/wikipedia/commons/a/ab/Boletus_edulis.jpg",
+            "file": "commons-boletus.jpg",
+            "usage": "publishable",
+        }
+        self.assertIn("inat_photo:88001", photo_identity_keys(commons))
+        self.assertIn("inat_photo:88001", photo_identity_keys(inat))
+        dropped_for_report: list[dict] = []
+        for rows in ([commons, inat], [inat, commons]):
+            kept, dropped = dedup_by_identity(rows)
+            self.assertEqual(len(kept), 1)
+            self.assertEqual(kept[0]["source"], "inat")
+            self.assertEqual(kept[0]["license_normalized"], "cc-by-nc-4.0")
+            self.assertEqual(len(dropped), 1)
+            self.assertEqual(dropped[0]["source"], "commons")
+            self.assertEqual(dropped[0]["license_normalized"], "cc0-1.0")
+            self.assertEqual(dropped[0]["drop_reason"], "looser_license")
+            dropped_for_report = dropped
+        balanced = [_photo("cantharellus_cibarius", f"login_{index}", index) for index in range(10)]
+        clean = {"train": balanced[:6], "val": balanced[6:8], "test": balanced[8:]}
+        share_config = {"limit": COMPONENT_SHARE_LIMIT, "acknowledgements": {}}
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            write_prepare_outputs(
+                directory,
+                prepared=balanced,
+                splits=clean,
+                dropped=[],
+                identity_dropped=dropped_for_report,
+                skipped=[],
+                withheld=[],
+                salt=FIXTURE_SALT,
+                share_config=share_config,
+                model_png_size=224,
+            )
+            report = json.loads((directory / "dedup_report.json").read_text(encoding="utf-8"))
+        self.assertEqual(report["dropped_looser_license"], 1)
+        self.assertEqual(report["identity_dropped_reasons"]["looser_license"], 1)
+        self.assertEqual(report["identity_dropped"], 1)
 
     def test_gallery_gate_fails_on_a_planted_leak(self):
         exclusion = load_gallery_csv(FIXTURE_CSV)
@@ -613,11 +675,13 @@ class SplitLeakTest(unittest.TestCase):
             "class_id": "boletus_edulis",
             "file": "images/cc0.jpg",
         }
+        cc0["license_url"] = "https://creativecommons.org/publicdomain/zero/1.0/"
         cc_by = {
             **cc0,
             "creator": "Bea",
-            "license": "https://creativecommons.org/licenses/by/4.0/",
-            "license_normalized": "cc-by-4.0",
+            "license": "CC BY 2.0",
+            "license_normalized": "cc-by-2.0",
+            "license_url": "https://creativecommons.org/licenses/by/2.0/",
             "image_url": "https://images.example.test/by.jpg",
             "source_url": "https://example.test/by",
             "file": "images/by.jpg",
@@ -666,9 +730,14 @@ class SplitLeakTest(unittest.TestCase):
                 self.assertTrue(line["creator"].strip())
                 self.assertEqual(line["license"], original["license"])
                 self.assertEqual(line["license_normalized"], original["license_normalized"])
+            for original, line in zip(rows, written):
+                stored = original.get("license_url") if isinstance(original.get("license_url"), str) else ""
+                self.assertEqual(line["license_url"], stored)
+            self.assertEqual(written[1]["license_url"], "https://creativecommons.org/licenses/by/2.0/")
+            self.assertNotEqual(written[1]["license_url"], "https://creativecommons.org/licenses/by/4.0/")
             self.assertEqual(written[2]["license_url"], "https://creativecommons.org/licenses/by-nc/4.0/")
             self.assertEqual(written[3]["license_url"], "https://creativecommons.org/licenses/by-sa/4.0/")
-            self.assertNotIn("license_url", written[4])
+            self.assertEqual(written[4]["license_url"], "")
             self.assertNotIn("licence_url_source", written[4])
             self.assertTrue(attributions_complete(written))
             coverage = {

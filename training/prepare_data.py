@@ -396,6 +396,9 @@ def write_prepare_outputs(
                 "hash": "dhash_or_phash_threshold_2",
                 "identity_dropped": len(identity_dropped),
                 "identity_dropped_reasons": identity_reasons,
+                "dropped_looser_license": sum(
+                    1 for row in identity_dropped if row.get("drop_reason") == "looser_license"
+                ),
                 "class_conflicts": class_conflicts,
                 "held_out_withheld": len(withheld),
                 "skipped_corrupt_or_unreadable": len(skipped),

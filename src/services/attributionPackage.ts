@@ -14,6 +14,11 @@ export interface PhotoCredit {
   sourceUrl: string;
   classId: string;
   taxonName: string;
+  /**
+   * Deed URL copied from the training row's own license_url.
+   * NC, SA, and CC BY versions other than 4.0 link here.
+   */
+  licenseUrl?: string;
   /** Set for atlas gallery photos, which were resized and saved as WebP. */
   modified?: boolean;
 }
@@ -28,7 +33,8 @@ export function creditsFromJsonl(text: string): PhotoCredit[] {
       continue;
     }
     const row = JSON.parse(trimmed) as Record<string, string>;
-    credits.push({
+    const licenseUrl = (row.license_url || row.licenseUrl || '').trim();
+    const credit: PhotoCredit = {
       creator: row.creator || '',
       license: row.license || '',
       licenseNormalized: row.license_normalized || row.licenseNormalized || '',
@@ -36,12 +42,20 @@ export function creditsFromJsonl(text: string): PhotoCredit[] {
       sourceUrl: row.source_url || row.sourceUrl || '',
       classId: row.class_id || row.classId || '',
       taxonName: row.taxon_name || row.taxonName || '',
-    });
+    };
+    if (licenseUrl) {
+      credit.licenseUrl = licenseUrl;
+    }
+    credits.push(credit);
   }
   return credits;
 }
 
 export function creditLicenseUrl(credit: PhotoCredit): string | null {
+  const stored = credit.licenseUrl?.trim() ?? '';
+  if (/^https?:\/\//i.test(stored)) {
+    return stored;
+  }
   const raw = credit.license.trim();
   if (/^https?:\/\//i.test(raw)) {
     return raw;

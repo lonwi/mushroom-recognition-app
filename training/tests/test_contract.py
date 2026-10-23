@@ -1,4 +1,5 @@
 import hashlib
+import inspect
 import json
 import math
 import os
@@ -481,10 +482,17 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertEqual((sa["license_normalized"], sa["usage"]), ("cc-by-sa-4.0", "training_only"))
 
     def test_df20_blocks_release_until_consent_is_confirmed(self):
-        from license_policy import DF20_CONSENT_CONFIRMED
+        from import_external import import_directory
+        from license_policy import DF20_CONSENT_CONFIRMED, EXACT_LICENSE_USAGE, TRAINING_ONLY
+        from prepare_data import _usable_records
 
         policy = (ROOT / "training" / "license_policy.py").read_text(encoding="utf-8")
         self.assertFalse(DF20_CONSENT_CONFIRMED)
+        self.assertEqual(EXACT_LICENSE_USAGE["df20"], TRAINING_ONLY)
+        self.assertEqual(EXACT_LICENSE_USAGE["cc-by-nc-4.0"], TRAINING_ONLY)
+        self.assertEqual(EXACT_LICENSE_USAGE["cc-by-sa-4.0"], TRAINING_ONLY)
+        self.assertIs(inspect.signature(import_directory).parameters["include_df20"].default, False)
+        self.assertIs(inspect.signature(_usable_records).parameters["include_df20"].default, False)
         self.assertIn("DF20_CONSENT_CONFIRMED = False", policy)
         self.assertIn("pending", policy.casefold())
         self.assertIn("Svampeatlas", policy)
@@ -495,9 +503,22 @@ class ManifestAndShipGateTest(unittest.TestCase):
             self.assertTrue(ok, reasons)
             path = artifact_dir / "attributions.jsonl"
             lines = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
-            lines[0]["license_normalized"] = "df20"
-            lines[0]["license"] = "DF20 training-only; no per-image licence"
-            lines[0]["source"] = "df20"
+            lines[0]["license"] = "CC BY-NC 4.0"
+            lines[0]["license_normalized"] = "cc-by-nc-4.0"
+            lines[0]["license_url"] = "https://creativecommons.org/licenses/by-nc/4.0/"
+            lines[0]["usage"] = "training_only"
+            lines[1]["license"] = "CC BY-SA 4.0"
+            lines[1]["license_normalized"] = "cc-by-sa-4.0"
+            lines[1]["license_url"] = "https://creativecommons.org/licenses/by-sa/4.0/"
+            lines[1]["usage"] = "training_only"
+            path.write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertTrue(ok, reasons)
+            lines[2]["license_normalized"] = "df20"
+            lines[2]["license"] = "DF20 training-only; no per-image licence"
+            lines[2]["source"] = "df20"
+            lines[2]["usage"] = "training_only"
+            lines[2]["license_url"] = ""
             path.write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
             ok, reasons = assess_shippable(report, artifact_dir)
             self.assertFalse(ok)

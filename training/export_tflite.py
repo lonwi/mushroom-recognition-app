@@ -67,12 +67,11 @@ def attribution_row(row: dict) -> dict:
         "gbif_occurrence": row.get("gbif_occurrence") or "",
         "taxon_name": row.get("taxon_name") or "",
     }
+    raw_url = row.get("license_url")
+    slim["license_url"] = raw_url.strip() if isinstance(raw_url, str) else ""
     usage = row.get("usage")
     if isinstance(usage, str) and usage:
         slim["usage"] = usage
-    license_url = row.get("license_url")
-    if isinstance(license_url, str) and license_url.strip():
-        slim["license_url"] = license_url.strip()
     if row.get("unverified") is True:
         slim["unverified"] = True
     return slim
@@ -82,12 +81,14 @@ def write_attribution_file(rows: list[dict], path: Path) -> None:
     """One JSON line per image: author, license, and source URL.
 
     Every train, val, and test row is written, including CC BY-NC, CC BY-SA,
-    and DF20. Each line keeps the author (``creator``), the licence text, and
-    ``license_normalized``. A CC BY-NC or CC BY-SA line also keeps the https
-    ``license_url`` from that photo. A DF20 line is the dataset row: author
-    and ``df20``, with no per-photo licence URL. CC BY-NC and CC BY-SA may
-    train a released model and do not block the ship gate. DF20 is written
-    only when the run opted in, and the ship gate stays closed until
+    and DF20. Each line keeps the author (``creator``), the licence text,
+    ``license_normalized``, and ``license_url`` copied from that row. The URL
+    is not rebuilt from the licence id, so a CC BY 2.0 row keeps its own
+    deed, and so do CC BY-NC and CC BY-SA. A DF20 line is the dataset row:
+    author and ``df20``. It has no per-photo licence URL, so the copied
+    field is empty. CC BY-NC and CC BY-SA may train a released model and do
+    not block the ship gate. DF20 is written only when the run opted in, and
+    any DF20 row keeps the ship gate closed until
     ``DF20_CONSENT_CONFIRMED`` is true. The gallery check is
     separate and still shows only CC0 and CC BY. An image or source URL that
     is not https is refused. Counts by licence and source are written beside

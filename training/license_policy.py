@@ -24,8 +24,11 @@ PUBLISHABLE = "publishable"
 TRAINING_ONLY = "training_only"
 
 # ``training_only`` means the photo may train the released model and must not
-# be shown. It is not a reason to refuse ``shippable``. Each row is one exact
-# id, its usage, and its family. There is no prefix scan.
+# be shown. For CC BY-NC and CC BY-SA that usage does not refuse ``shippable``.
+# ``df20`` is listed here so an opted-in run can train on it. That usage does
+# not make a DF20 row shippable: any DF20 row in the attribution file sets
+# ``shippable`` false while ``DF20_CONSENT_CONFIRMED`` is false. Each row is
+# one exact id, its usage, and its family. There is no prefix scan.
 _LICENSE_TABLE: tuple[tuple[str, str, str], ...] = (
     ("cc0-1.0", PUBLISHABLE, "cc0"),
     ("cc-by-1.0", PUBLISHABLE, "cc-by"),
