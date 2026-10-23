@@ -7,13 +7,17 @@ Wikimedia Commons, Danish Fungi 2020). It does not download images.
     python training/import_external.py /path/to/zdjecia --output training/data/external.jsonl
 
 ``usage`` is ``publishable`` for versioned CC0 and CC BY, and ``training_only``
-for versioned CC BY-NC and for DF20. A versionless ``CC BY`` or ``CC BY-NC``
-is kept only when ``license_url`` carries the version. Otherwise it is
-rejected, same as NC-ND, NC-SA, BY-SA, ND, and unknown licenses. The normalized
-id is matched in full (``cc-by-4.0``), never by prefix. Every kept row has an
-author credit. ``is_publishable`` is the check for the atlas gallery, ``site/``,
-and comparison photos. CC BY-NC and DF20 fail it. The ship-gate file is a
-separate decision and still lists training-only rows.
+for versioned CC BY-NC and for DF20. Every photo row needs an https
+``license_url`` that names the same license as the text. An empty URL, an
+``http://`` URL, or a URL for a different license drops the row, including
+when the text already says ``CC BY 4.0``. A versionless ``CC BY`` with no
+``license_url`` is rejected. NC-ND, NC-SA, BY-SA, ND, and unknown licenses
+are rejected. The normalized id is matched in full (``cc-by-4.0``), never by
+prefix. The same photo from two sources keeps the stricter license, so CC
+BY-NC beats CC BY and the row stays training-only. Every kept row has an
+author credit. ``is_publishable`` is the check for the atlas gallery,
+``site/``, and comparison photos. CC BY-NC and DF20 fail it. The ship-gate
+file is a separate decision and still lists training-only rows.
 
 ``_niezweryfikowane`` files set ``unverified``. ``prepare_data.py`` skips
 those rows, so they are not mixed into train, val, or test.
@@ -154,6 +158,42 @@ def parse_textual_license(raw: str | None, license_url: str | None = None) -> di
     return {"license_normalized": license_id, "usage": usage}
 
 
+def _https_license_url(license_url: str) -> bool:
+    return urlsplit(license_url).scheme.lower() == "https"
+
+
+def photo_license_decision(license_text: str, license_url: str) -> tuple[dict | None, str]:
+    """Accept a photo only when ``license_url`` is https and matches the text.
+
+    An empty URL and an ``http://`` URL are rejected even if the text already
+    contains a version. A URL whose license code or version disagrees with
+    the text is ``license_url_mismatch``. Empty or unknown text stays
+    ``license`` and is never promoted by the URL.
+    """
+    text = license_text.strip()
+    url = license_url.strip()
+    if not text:
+        return None, "license"
+    if not url:
+        return None, "license_url_empty"
+    if not _https_license_url(url):
+        return None, "license_url_not_https"
+    text_code, text_version = _code_from_text(text)
+    url_code, url_version = _code_from_text(url)
+    if text_code is None:
+        return None, "license"
+    if url_code is None or url_code != text_code:
+        return None, "license_url_mismatch"
+    if text_version and url_version and text_version != url_version:
+        return None, "license_url_mismatch"
+    if text_version and not url_version:
+        return None, "license_url_mismatch"
+    decision = parse_textual_license(text, url)
+    if decision is None:
+        return None, "license"
+    return decision, ""
+
+
 def _from_url_match(match: re.Match) -> tuple[str | None, str]:
     kind = match.group(1).lower()
     version = match.group(3)
@@ -281,6 +321,18 @@ def is_publishable(row: dict) -> bool:
         return False
     image_url = str(row.get("image_url") or "")
     if urlsplit(image_url).scheme != "https":
+        return False
+    license_url = str(row.get("license_url") or "")
+    if not _https_license_url(license_url):
+        return False
+    url_code, url_version = _code_from_text(license_url)
+    if not url_code or not url_version:
+        return False
+    if url_code == "cc0":
+        url_id = "cc0-1.0" if url_version == "1.0" else ""
+    else:
+        url_id = f"cc-{url_code}-{url_version}"
+    if url_id != row.get("license_normalized"):
         return False
     return True
 
@@ -534,9 +586,9 @@ def _row_from_photo(
         return None, "unmapped"
     license_text = _cell(raw, "license")
     license_url = _cell(raw, "license_url")
-    decision = parse_textual_license(license_text, license_url or None)
+    decision, reason = photo_license_decision(license_text, license_url)
     if decision is None:
-        return None, "license"
+        return None, reason
     author = _located(_cell(raw, "author"))
     if not author:
         return None, "author"
@@ -546,7 +598,7 @@ def _row_from_photo(
     source_url = force_https_url(_cell(raw, "source_url"))
     if source_url and urlsplit(source_url).scheme != "https":
         return None, "url"
-    stored_license_url = force_https_url(license_url) if license_url else ""
+    stored_license_url = license_url
     confidence = _cell(raw, "id_confidence")
     unverified = unverified_file or confidence in _UNVERIFIED_CONFIDENCE
     ids = _blank_ids()
@@ -695,13 +747,39 @@ def _conflict_keys(row: dict) -> list[tuple[str, str]]:
     return keys
 
 
-def dedupe_rows(rows: list[dict]) -> tuple[list[dict], int, int, list[dict]]:
-    """Drop every row that shares a photo or observation with another species.
+def _photo_keys(row: dict) -> list[str]:
+    """Ids that mean one image, including the same file on two hosts."""
+    keys: list[str] = []
+    if row.get("inat_photo_id"):
+        keys.append(f"inat-photo:{row['inat_photo_id']}")
+    if row.get("commons_file"):
+        keys.append(f"commons:{row['commons_file']}")
+    if row.get("df20_image_id"):
+        keys.append(f"df20-image:{row['df20_image_id']}")
+    if row.get("_image_key"):
+        keys.append(f"url:{row['_image_key']}")
+    if not keys:
+        keys.append(f"row:{row.get('_order')}")
+    return keys
 
-    File order must not pick the label. When one photo id or one observation
+
+def _license_strictness(row: dict) -> int:
+    """Higher is stricter. CC BY-NC and DF20 outrank a publishable CC BY or CC0."""
+    if row.get("usage") == "training_only":
+        return 2
+    if row.get("usage") == "publishable":
+        return 1
+    return 0
+
+
+def dedupe_rows(rows: list[dict]) -> tuple[list[dict], int, int, int, list[dict]]:
+    """Drop label conflicts, then keep the stricter license of one photo.
+
+    File order must not pick the species. When one photo id or one observation
     id is tied to two species, every row of that id is removed and the report
-    lists the id with both labels. Identical photos of the same species still
-    keep the first row.
+    lists the id with both labels. The same image under two licenses keeps the
+    stricter one: CC BY-NC beats CC BY, so the kept row is training-only.
+    Equal licenses keep the earliest row.
     """
     labels_by_key: dict[tuple[str, str], set[str]] = {}
     for row in rows:
@@ -714,17 +792,62 @@ def dedupe_rows(rows: list[dict]) -> tuple[list[dict], int, int, list[dict]]:
         for kind, ident in sorted(conflict_keys)
     ]
     surviving = [row for row in rows if not any(key in conflict_keys for key in _conflict_keys(row))]
-    seen: set[str] = set()
+    parent = list(range(len(surviving)))
+
+    def find(index: int) -> int:
+        while parent[index] != index:
+            parent[index] = parent[parent[index]]
+            index = parent[index]
+        return index
+
+    def union(left: int, right: int) -> None:
+        left_root = find(left)
+        right_root = find(right)
+        if left_root != right_root:
+            parent[right_root] = left_root
+
+    owner: dict[str, int] = {}
+    for index, row in enumerate(surviving):
+        for key in _photo_keys(row):
+            previous = owner.get(key)
+            if previous is None:
+                owner[key] = index
+            else:
+                union(index, previous)
+    groups: dict[int, list[dict]] = {}
+    for index, row in enumerate(surviving):
+        groups.setdefault(find(index), []).append(row)
     kept: list[dict] = []
-    dropped = 0
-    for row in surviving:
-        key = _identity(row)
-        if key in seen:
-            dropped += 1
+    duplicate_dropped = 0
+    looser_dropped = 0
+    extra_conflicts = 0
+    for group in groups.values():
+        labels = {_label_text(row) for row in group}
+        if len(labels) > 1:
+            extra_conflicts += len(group)
+            conflicts.append(
+                {
+                    "kind": "photo",
+                    "id": _photo_keys(group[0])[0],
+                    "labels": sorted(labels),
+                }
+            )
             continue
-        seen.add(key)
-        kept.append(row)
-    return kept, dropped, len(rows) - len(surviving), conflicts
+        ranked = sorted(
+            group,
+            key=lambda row: (-_license_strictness(row), int(row.get("_order") or 0)),
+        )
+        winner = ranked[0]
+        kept.append(winner)
+        winner_rank = _license_strictness(winner)
+        for row in ranked[1:]:
+            if _license_strictness(row) < winner_rank:
+                looser_dropped += 1
+            else:
+                duplicate_dropped += 1
+    kept.sort(key=lambda row: int(row.get("_order") or 0))
+    conflict_dropped = len(rows) - len(surviving) + extra_conflicts
+    return kept, duplicate_dropped, looser_dropped, conflict_dropped, conflicts
 
 
 def apply_collector_cap(rows: list[dict], max_per_collector: int) -> tuple[list[dict], list[dict]]:
@@ -864,7 +987,7 @@ def import_directory(
                 continue
             rows.append(row)
     rows_read = order
-    rows, duplicate_dropped, conflict_dropped, label_conflicts = dedupe_rows(rows)
+    rows, duplicate_dropped, looser_dropped, conflict_dropped, label_conflicts = dedupe_rows(rows)
     # publishable_only runs before the cap so a CC BY-NC photo does not
     # consume a collector's slot that a CC BY photo of the same person needs.
     if publishable_only:
@@ -887,10 +1010,23 @@ def import_directory(
         "rejected_missing_author": int(rejected["author"]),
         "unmapped_species": dict(sorted(unmapped.items())),
         "dropped_duplicate": duplicate_dropped,
+        "dropped_looser_license": looser_dropped,
         "dropped_label_conflict": conflict_dropped,
         "duplicate_class_conflicts": len(label_conflicts),
         "label_conflicts": label_conflicts,
         "rejected_url": int(rejected["url"]),
+        "rejected_license_url_empty": int(rejected["license_url_empty"]),
+        "rejected_license_url_not_https": int(rejected["license_url_not_https"]),
+        "rejected_license_url_mismatch": int(rejected["license_url_mismatch"]),
+        "rejected_by_reason": {key: int(rejected[key]) for key in sorted(rejected)},
+        "dropped_by_reason": {
+            "duplicate": duplicate_dropped,
+            "looser_license": looser_dropped,
+            "label_conflict": conflict_dropped,
+            "collector_cap": len(cap_dropped),
+            "publishable_only": int(rejected["publishable_only"]),
+            "exclude_unverified": int(rejected["exclude_unverified"]),
+        },
         "dropped_collector_cap": len(cap_dropped),
         "meta_rows_joined": meta_joined,
         "unverified": sum(1 for row in written if row.get("unverified") is True),
