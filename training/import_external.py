@@ -17,9 +17,15 @@ training only: any DF20 row keeps ``shippable`` false, and
 https ``license_url`` that names the same license as the text, including
 CC BY-SA. An empty URL, an ``http://`` URL, or a URL for a different license
 drops the row, including when the text already says ``CC BY 4.0``. A
-versionless ``CC BY`` with no ``license_url`` is rejected. NC-ND, NC-SA, ND,
-and unknown licenses are rejected. DF20 has no per-image Creative Commons
-URL. The normalized id is matched in full (``cc-by-4.0``), never by prefix.
+versionless ``CC BY`` with no ``license_url`` is rejected. A national port
+such as ``https://creativecommons.org/licenses/by-sa/3.0/de/`` or
+``CC BY-SA 3.0 de`` is the same versioned id (``cc-by-sa-3.0``). The row
+keeps that photo's original ``license_url``. The allowed-id list does not
+grow, so a ported ND or NC-SA licence is still rejected. ``public domain``
+with an empty ``license_url`` is rejected: a missing URL is not CC0.
+NC-ND, NC-SA, ND, and unknown licenses are rejected. DF20 has no per-image
+Creative Commons URL. The normalized id is matched in full (``cc-by-4.0``),
+never by prefix.
 The same photo from two sources keeps the stricter license: CC BY-NC, DF20,
 and CC BY-SA beat CC BY, and CC BY beats CC0, so the extra duty stays on
 the row. A row rejected for a licence reason records that photo's keys, and
@@ -31,6 +37,12 @@ and comparison photos. CC BY-NC, CC BY-SA, and DF20 fail it.
 
 ``_niezweryfikowane`` files set ``unverified``. ``prepare_data.py`` skips
 those rows, so they are not mixed into train, val, or test.
+
+In one directory, ``species_v10.csv`` replaces ``species_v3.csv``,
+``species_v2.csv``, and ``species.csv``. ``species_by_nc.csv`` is a
+different file, and a file in another directory is its own family. Each
+older file is listed in the report as ``superseded_version``. Every
+rejected row is listed with its reason.
 
 ``--max-per-collector`` limits how many photos one observer or author can
 contribute to one class. Observation and photo ids are kept so a later
@@ -95,6 +107,144 @@ _SKIP_TOKENS = {
     "legalcode",
     "deed",
 }
+# CC 3.0 and earlier were also published as jurisdiction ports. The port is
+# the same licence family and version. An unknown extra word still rejects
+# the row, and this set does not add ND, NC-SA, or NC-ND to the policy.
+_JURISDICTION_TOKENS = frozenset(
+    {
+        "ar",
+        "at",
+        "au",
+        "az",
+        "be",
+        "bg",
+        "br",
+        "ca",
+        "ch",
+        "cl",
+        "cn",
+        "co",
+        "cr",
+        "cz",
+        "de",
+        "dk",
+        "ec",
+        "ee",
+        "eg",
+        "es",
+        "fi",
+        "fr",
+        "gr",
+        "gt",
+        "hk",
+        "hr",
+        "hu",
+        "ie",
+        "il",
+        "in",
+        "igo",
+        "it",
+        "jp",
+        "kr",
+        "lu",
+        "mk",
+        "mt",
+        "mx",
+        "my",
+        "nl",
+        "no",
+        "nz",
+        "pe",
+        "ph",
+        "pl",
+        "pr",
+        "pt",
+        "ro",
+        "rs",
+        "scotland",
+        "se",
+        "sg",
+        "si",
+        "th",
+        "tw",
+        "ug",
+        "uk",
+        "us",
+        "ve",
+        "vn",
+        "za",
+        "argentina",
+        "australia",
+        "austria",
+        "azerbaijan",
+        "belgium",
+        "brazil",
+        "bulgaria",
+        "canada",
+        "chile",
+        "china",
+        "colombia",
+        "croatia",
+        "denmark",
+        "deutschland",
+        "ecuador",
+        "egypt",
+        "england",
+        "estonia",
+        "finland",
+        "france",
+        "germany",
+        "greece",
+        "guatemala",
+        "hungary",
+        "india",
+        "ireland",
+        "israel",
+        "italy",
+        "japan",
+        "korea",
+        "luxembourg",
+        "macedonia",
+        "malaysia",
+        "malta",
+        "mexico",
+        "netherlands",
+        "norway",
+        "peru",
+        "philippines",
+        "poland",
+        "polska",
+        "portugal",
+        "ported",
+        "romania",
+        "serbia",
+        "singapore",
+        "slovenia",
+        "spain",
+        "sweden",
+        "switzerland",
+        "taiwan",
+        "thailand",
+        "uganda",
+        "venezuela",
+        "vietnam",
+        "wales",
+    }
+)
+_JURISDICTION_PAIRS = frozenset(
+    {
+        ("costa", "rica"),
+        ("czech", "republic"),
+        ("hong", "kong"),
+        ("new", "zealand"),
+        ("puerto", "rico"),
+        ("south", "africa"),
+        ("south", "korea"),
+        ("united", "kingdom"),
+        ("united", "states"),
+    }
+)
+_VERSION_SUFFIX = re.compile(r"_v([1-9]\d*)$")
 _KNOWN_TOKENS = {"by", "nc", "nd", "sa", "zero", "public", "domain", "publicdomain", "cc0"}
 _GBIF_OCCURRENCE = re.compile(r"gbif\.org/occurrence/(\d+)", re.IGNORECASE)
 _INAT_OBSERVATION = re.compile(r"inaturalist\.org/observations/(\d+)", re.IGNORECASE)
@@ -125,8 +275,9 @@ def parse_textual_license(raw: str | None, license_url: str | None = None) -> di
     CC BY, even when ``license_url`` points at CC BY. A versionless ``CC BY``
     or ``CC BY-NC`` takes the version from ``license_url`` when that URL is
     the same license. If neither side has a version, the row is rejected.
-    CC0 without a version is ``cc0-1.0``, the only CC0 version. This does not
-    change the GBIF URL filter.
+    CC0 without a version is ``cc0-1.0``, the only CC0 version. A jurisdiction
+    port (``CC BY-SA 3.0 de``, ``cc-by-sa-3.0-de``) is that same versioned id.
+    ``public domain`` is not CC0. This does not change the GBIF URL filter.
     """
     if raw is None or not str(raw).strip():
         return None
@@ -245,8 +396,11 @@ def _code_from_tokens(text: str) -> tuple[str | None, str | None]:
     index = 0
     while index < len(raw_tokens):
         token = raw_tokens[index]
-        if token in _SKIP_TOKENS:
+        if token in _SKIP_TOKENS or token in _JURISDICTION_TOKENS:
             index += 1
+            continue
+        if index + 1 < len(raw_tokens) and (token, raw_tokens[index + 1]) in _JURISDICTION_PAIRS:
+            index += 2
             continue
         if token == "non" and index + 1 < len(raw_tokens) and raw_tokens[index + 1].startswith("commercial"):
             mapped.append("nc")
@@ -278,7 +432,13 @@ def _code_from_tokens(text: str) -> tuple[str | None, str | None]:
         return None, None
     if "cc0" in mapped or ("zero" in mapped and "public" in mapped and "domain" in mapped):
         return "cc0", version
-    if not re.search(r"\bcc\b", text) and "creativecommons" not in text and "cc0" not in mapped:
+    has_cc = (
+        re.search(r"\bcc\b", text) is not None
+        or "creativecommons" in text
+        or "creative commons" in text
+        or "cc0" in mapped
+    )
+    if not has_cc:
         return None, None
     core = tuple(token for token in mapped if token in {"by", "nc", "nd", "sa"})
     for name, phrase in _CODE_PHRASES:
@@ -468,12 +628,37 @@ def _is_df20(path: Path, fieldnames: set[str]) -> bool:
     return "df20_image_path" in fieldnames or ("observationID" in fieldnames and "licence_note" in fieldnames)
 
 
-def _photo_files(root: Path) -> tuple[list[Path], list[Path]]:
-    """Photo CSVs and meta CSVs. Summaries and a superseded v1 file are omitted."""
+def _csv_family(stem: str) -> tuple[str, int]:
+    """Base name and version. A file without ``_vN`` is version 1 of itself."""
+    match = _VERSION_SUFFIX.search(stem)
+    if match is None:
+        return stem, 1
+    base = stem[: match.start()]
+    if not base:
+        return stem, 1
+    return base, int(match.group(1))
+
+
+def _csv_data_rows(path: Path) -> int:
+    with path.open(encoding="utf-8-sig", newline="") as handle:
+        reader = csv.reader(handle)
+        next(reader, None)
+        return sum(1 for row in reader if any(str(cell).strip() for cell in row))
+
+
+def _photo_files(root: Path) -> tuple[list[Path], list[Path], list[dict]]:
+    """Photo CSVs, meta CSVs, and older ``_vN`` files the highest version replaces.
+
+    ``species_v10.csv`` wins over ``species_v3.csv``, ``species_v2.csv``, and
+    ``species.csv`` in the same directory. ``species_by_nc.csv`` is not a
+    version of ``species.csv``. A same stem in another directory is its own
+    family. Summaries are omitted. Each older file is reported; its rows are
+    not read.
+    """
     candidates = [path for path in root.rglob("*.csv") if path.is_file()]
-    stems = {path.stem for path in candidates}
     photos: list[Path] = []
     metas: list[Path] = []
+    versioned: list[Path] = []
     for path in candidates:
         name = path.name
         if name.startswith("_") or "grupa_toksyczna" in name:
@@ -481,12 +666,33 @@ def _photo_files(root: Path) -> tuple[list[Path], list[Path]]:
         if name.endswith("_meta.csv"):
             metas.append(path)
             continue
-        if path.stem.endswith("_v2"):
-            pass
-        elif f"{path.stem}_v2" in stems:
-            continue
-        photos.append(path)
-    return photos, metas
+        versioned.append(path)
+    groups: dict[tuple[Path, str], list[tuple[int, Path]]] = {}
+    for path in versioned:
+        base, version = _csv_family(path.stem)
+        groups.setdefault((path.parent, base), []).append((version, path))
+    skipped: list[dict] = []
+    for members in groups.values():
+        highest = max(version for version, _path in members)
+        winners = sorted(
+            (path for version, path in members if version == highest),
+            key=lambda path: path.name,
+        )
+        kept = [path.relative_to(root).as_posix() for path in winners]
+        for version, path in members:
+            if version == highest:
+                photos.append(path)
+                continue
+            skipped.append(
+                {
+                    "file": path.relative_to(root).as_posix(),
+                    "reason": "superseded_version",
+                    "kept": kept,
+                    "rows": _csv_data_rows(path),
+                }
+            )
+    skipped.sort(key=lambda item: item["file"])
+    return photos, metas, skipped
 
 
 def _file_sort_key(path: Path) -> tuple:
@@ -990,9 +1196,10 @@ def import_directory(
     if not root.is_dir():
         raise FileNotFoundError(f"not a directory: {root}")
     index = species_index(manifest)
-    photos, metas = _photo_files(root)
+    photos, metas, skipped_files = _photo_files(root)
     rows: list[dict] = []
     rejected = Counter()
+    rejected_rows: list[dict] = []
     unmapped: Counter[str] = Counter()
     poisoned: set[str] = set()
     order = 0
@@ -1021,6 +1228,16 @@ def import_directory(
                 )
             if row is None:
                 rejected[reason] += 1
+                rejected_rows.append(
+                    {
+                        "reason": reason,
+                        "file": path.relative_to(root).as_posix(),
+                        "species": _cell(raw, "species") or _cell(raw, "df20_name_used"),
+                        "license": _cell(raw, "license"),
+                        "license_url": _cell(raw, "license_url"),
+                        "image_url": _cell(raw, "image_url"),
+                    }
+                )
                 if reason in _LICENSE_POISON_REASONS:
                     poisoned.update(_photo_keys_from_raw(raw))
                 if reason == "unmapped":
@@ -1073,6 +1290,8 @@ def import_directory(
         "rejected_license_url_not_https": int(rejected["license_url_not_https"]),
         "rejected_license_url_mismatch": int(rejected["license_url_mismatch"]),
         "rejected_by_reason": {key: int(rejected[key]) for key in sorted(rejected)},
+        "rejected_rows": rejected_rows,
+        "skipped_files": skipped_files,
         "dropped_by_reason": {
             "duplicate": duplicate_dropped,
             "looser_license": looser_dropped,
