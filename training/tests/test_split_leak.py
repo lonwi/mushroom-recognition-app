@@ -495,8 +495,8 @@ class SplitLeakTest(unittest.TestCase):
             self.assertEqual(dropped[0]["license_normalized"], "cc0-1.0")
             self.assertEqual(dropped[0]["drop_reason"], "looser_license")
             dropped_for_report = dropped
-        balanced = [_photo("cantharellus_cibarius", f"login_{index}", index) for index in range(10)]
-        clean = {"train": balanced[:6], "val": balanced[6:8], "test": balanced[8:]}
+        balanced = [_photo("cantharellus_cibarius", f"login_{index}", index) for index in range(80)]
+        clean = {"train": balanced[:56], "val": balanced[56:68], "test": balanced[68:]}
         share_config = {"limit": COMPONENT_SHARE_LIMIT, "acknowledgements": {}}
         with tempfile.TemporaryDirectory() as tmp:
             directory = Path(tmp)
@@ -1017,12 +1017,12 @@ class SplitLeakTest(unittest.TestCase):
         self.assertNotIn(FIXTURE_SALT, json.dumps(manifest))
 
     def test_prepare_writes_nothing_on_an_unacknowledged_hard_stop(self):
-        dominated = [_photo("boletus_edulis", "one_author", index) for index in range(8)]
-        others = [_photo("boletus_edulis", f"login_{index}", index) for index in range(2)]
+        dominated = [_photo("boletus_edulis", "one_author", index) for index in range(30)]
+        others = [_photo("boletus_edulis", f"login_{index}", index) for index in range(90)]
         over_limit = {
-            "train": dominated,
-            "val": others[:1],
-            "test": others[1:],
+            "train": dominated + others[:54],
+            "val": others[54:72],
+            "test": others[72:],
         }
         empty_val = {
             "train": [_photo("amanita_muscaria", f"ada_{index}", index) for index in range(8)],
@@ -1054,8 +1054,8 @@ class SplitLeakTest(unittest.TestCase):
                 self.assertFalse((directory / "dataset_manifest.json").exists())
                 self.assertFalse((directory / "dedup_report.json").exists())
                 self.assertFalse((directory / "attributions.dedup.jsonl").exists())
-        balanced = [_photo("cantharellus_cibarius", f"login_{index}", index) for index in range(10)]
-        clean = {"train": balanced[:6], "val": balanced[6:8], "test": balanced[8:]}
+        balanced = [_photo("cantharellus_cibarius", f"login_{index}", index) for index in range(80)]
+        clean = {"train": balanced[:56], "val": balanced[56:68], "test": balanced[68:]}
         with tempfile.TemporaryDirectory() as tmp:
             directory = Path(tmp)
             manifest = write_prepare_outputs(
@@ -1071,6 +1071,7 @@ class SplitLeakTest(unittest.TestCase):
                 model_png_size=224,
             )
             self.assertEqual(manifest["component_share"]["hard_stop_classes"], [])
+            self.assertEqual(manifest["test_balance"]["hard_stop_classes"], [])
             self.assertTrue((directory / "splits.json").is_file())
             self.assertTrue((directory / "dataset_manifest.json").is_file())
         acknowledged = {
@@ -1092,6 +1093,7 @@ class SplitLeakTest(unittest.TestCase):
                 model_png_size=224,
             )
             self.assertEqual(manifest["component_share"]["hard_stop_classes"], [])
+            self.assertEqual(manifest["test_balance"]["hard_stop_classes"], [])
             self.assertTrue(manifest["component_share"]["ship_blockers"])
             written = json.loads((directory / "dataset_manifest.json").read_text(encoding="utf-8"))
             self.assertTrue(written["component_share"]["ship_blockers"])

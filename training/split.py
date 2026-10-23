@@ -10,6 +10,18 @@ or a GBIF occurrence are one component and go to one split. Placeholder author
 strings are not a photographer. A held-out taxon does not move the component
 into test; those rows are dropped unless the component is already in test.
 
+Test and val targets are ``round(eligible_images * ratio)``. The defaults are
+``TEST_SPLIT_RATIO`` and ``VAL_SPLIT_RATIO``, both 0.15, and they are
+separate so one ratio does not move the other. Eligible images are the rows that are not a
+held-out taxon, which is also the base of the measured test share. A
+component enters one of those splits only when the added eligible rows stay
+inside the target of every class it contains. A component that fits neither
+split stays in train. ``TEST_SHARE_TOLERANCE`` (0.05) and ``MIN_TEST_COUNT``
+(8) are a provisional ship gate: a class whose test share sits outside the
+band, or whose test count is below the minimum, is a hard stop in prepare
+and a ship blocker. The numbers are not final. ``val_rows`` and ``val_share``
+are reported beside the test figures and are not a gate.
+
 `collector_group_key` is still the field-outing report (recorder, ~1 km grid,
 calendar day). It is not the split key. `prepare_data.py` writes both.
 """
@@ -18,16 +30,30 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import json
 import math
 import random
 import re
-from collections import defaultdict
+from collections import Counter, defaultdict
+from pathlib import Path
 
 from gallery_exclusion import _INAT_OBS, _INAT_PHOTO, _MO_OBS, canonical_url
 from split_salt import SplitSaltError
 
 _GBIF_OCCURRENCE = re.compile(r"gbif\.org/occurrence/(\d+)", re.IGNORECASE)
 _EMPTY_ID = frozenset({"none", "null", "nan"})
+# A class with fewer components than this stays in train. Another class may
+# still place a shared component; this class then follows that placement.
+_MIN_CLASS_COMPONENTS = 3
+# Provisional ship gate (owner chooses the final pair). Admission never uses
+# the tolerance as slack: a component that would push any class past
+# ``round(images * ratio)`` is refused. The gate then reports a class whose
+# test set is still outside the band or below the minimum, so a component
+# that fitted nowhere cannot leave a silently empty or tiny test set.
+TEST_SPLIT_RATIO = 0.15
+VAL_SPLIT_RATIO = 0.15
+TEST_SHARE_TOLERANCE = 0.05
+MIN_TEST_COUNT = 8
 # Author strings that are not a person. They must not glue two observations
 # into one component. Matching is case-insensitive after trimming.
 _PLACEHOLDER_PERSONS = frozenset(
@@ -490,10 +516,100 @@ def _require_salt(salt: str | None) -> str:
     return salt.strip()
 
 
+def _class_targets(totals: dict[str, int], ratio: float) -> dict[str, int]:
+    return {class_id: round(total * ratio) for class_id, total in totals.items()}
+
+
+def _fits_split(
+    component: dict,
+    split_name: str,
+    *,
+    assigned: dict[str, dict[str, int]],
+    targets: dict[str, dict[str, int]],
+    totals: dict[str, int],
+    splittable: set[str],
+) -> bool:
+    """True when every class in the component can still afford these rows.
+
+    Gallery-blocked components never fit test. A class with fewer than three
+    components has no target and does not vote. At least one image of each
+    voting class must remain outside test and val.
+    """
+    if split_name == "test" and component["blocked"]:
+        return False
+    constraining = [class_id for class_id in component["class_counts"] if class_id in splittable]
+    if not constraining:
+        return False
+    for class_id in constraining:
+        added = component["class_counts"][class_id]
+        if assigned[split_name][class_id] + added > targets[split_name][class_id]:
+            return False
+        remaining = totals[class_id] - assigned["test"][class_id] - assigned["val"][class_id] - added
+        if remaining <= 0:
+            return False
+    return True
+
+
+def _place_components(
+    components: list[dict],
+    val_ratio: float,
+    test_ratio: float,
+    seed: int,
+) -> dict[str, list[dict]]:
+    """Place each component once, largest and most multi-class first.
+
+    ``seed`` only orders components that have the same class count and size.
+    It does not use the salted component id, so the salt cannot move a row.
+    """
+    totals: dict[str, int] = defaultdict(int)
+    component_count: dict[str, int] = defaultdict(int)
+    for component in components:
+        for class_id, count in component["class_counts"].items():
+            totals[class_id] += count
+            component_count[class_id] += 1
+    splittable = {class_id for class_id, count in component_count.items() if count >= _MIN_CLASS_COMPONENTS}
+    targets = {
+        "test": _class_targets(totals, test_ratio),
+        "val": _class_targets(totals, val_ratio),
+    }
+    assigned: dict[str, dict[str, int]] = {
+        "test": defaultdict(int),
+        "val": defaultdict(int),
+    }
+    rng = random.Random(seed)
+    order = list(range(len(components)))
+    rng.shuffle(order)
+    rank = {index: position for position, index in enumerate(order)}
+    sequence = sorted(
+        range(len(components)),
+        key=lambda index: (
+            -len(components[index]["class_counts"]),
+            -len(components[index]["rows"]),
+            rank[index],
+        ),
+    )
+    splits: dict[str, list[dict]] = {"train": [], "val": [], "test": []}
+    for index in sequence:
+        component = components[index]
+        if _fits_split(component, "test", assigned=assigned, targets=targets, totals=totals, splittable=splittable):
+            dest = "test"
+        elif _fits_split(component, "val", assigned=assigned, targets=targets, totals=totals, splittable=splittable):
+            dest = "val"
+        else:
+            dest = "train"
+        if dest == "test" and component["blocked"]:
+            raise RuntimeError(f"gallery-blocked group {component['id']} was locked to test")
+        if dest in assigned:
+            for class_id, count in component["class_counts"].items():
+                assigned[dest][class_id] += count
+        splits[dest].extend(component["rows"])
+    return splits
+
+
 def split_by_observation(
     records: list[dict],
-    val_ratio: float = 0.15,
-    test_ratio: float = 0.15,
+    val_ratio: float = VAL_SPLIT_RATIO,
+    test_ratio: float = TEST_SPLIT_RATIO,
     seed: int = 42,
     test_blocked=None,
     *,
@@ -506,7 +622,19 @@ def split_by_observation(
     does not pull the rest of that component into test. When the component
     lands in train or val, its held-out rows are removed and appended to
     ``withheld`` with counts. They stay only when the component is in test.
-    The salt pseudonymizes component ids. It does not change the assignment.
+
+    Each component is placed once. It may go to test only when adding its
+    non-held-out rows would not push any class past ``round(eligible * test_ratio)``.
+    Val uses the same check against the val ratio. Held-out rows are not part
+    of that budget: they are removed from train and val after placement, and
+    the measured test share counts the same non-held-out rows. A held-out row
+    stays in test only when its component was placed there because of the
+    other rows. A component that is only held-out rows goes to train and is
+    withheld. Components that span more classes, and then larger ones, are
+    placed first; ``seed`` breaks the remaining ties. A class with fewer than
+    three components does not open a target and stays in train unless another
+    class places that component. The salt pseudonymizes component ids. It does
+    not change the assignment.
     """
     salt = _require_salt(salt)
     if val_ratio < 0 or test_ratio < 0 or val_ratio + test_ratio >= 1:
@@ -516,68 +644,14 @@ def split_by_observation(
     components = _components(records, salt)
     for component in components:
         component["blocked"] = any(blocked(row) for row in component["rows"])
-
-    splits: dict[str, list[dict]] = {"train": [], "val": [], "test": []}
-    locked: dict[str, str] = {}
-    ratio = components
-
-    by_class: dict[str, list[dict]] = defaultdict(list)
-    for component in ratio:
-        rows_by_class: dict[str, list[dict]] = defaultdict(list)
+        counts: dict[str, int] = defaultdict(int)
         for row in component["rows"]:
-            rows_by_class[row["class_id"]].append(row)
-        for class_id, rows in rows_by_class.items():
-            by_class[class_id].append({"id": component["id"], "rows": rows, "blocked": component["blocked"]})
-
-    for class_id in sorted(by_class):
-        observations = by_class[class_id]
-        rng = random.Random(f"{seed}:{class_id}")
-        rng.shuffle(observations)
-        total_images = sum(len(group["rows"]) for group in observations)
-        test_target = round(total_images * test_ratio)
-        val_target = round(total_images * val_ratio)
-        test_count = 0
-        val_count = 0
-        # Fewer than three observations: keep everything in train and let the
-        # ship gate fail for lack of a real held-out set. A component already
-        # locked by another class stays in that split.
-        if len(observations) < 3:
-            for group in observations:
-                dest = locked.get(group["id"], "train")
-                if group["blocked"] and dest == "test":
-                    raise RuntimeError(f"gallery-blocked group {group['id']} was locked to test")
-                locked[group["id"]] = dest
-                splits[dest].extend(group["rows"])
-            continue
-        for index, group in enumerate(observations):
-            rows = group["rows"]
-            if group["id"] in locked:
-                dest = locked[group["id"]]
-                if group["blocked"] and dest == "test":
-                    raise RuntimeError(f"gallery-blocked group {group['id']} was locked to test")
-                splits[dest].extend(rows)
-                if dest == "test":
-                    test_count += len(rows)
-                elif dest == "val":
-                    val_count += len(rows)
+            if row.get("held_out_taxon") is True:
                 continue
-            remaining = observations[index:]
-            remaining_images = sum(len(item["rows"]) for item in remaining)
-            group_blocked = group["blocked"]
-            if (
-                not group_blocked
-                and test_count < test_target
-                and (total_images - test_count - len(rows)) > 0
-            ):
-                dest = "test"
-                test_count += len(rows)
-            elif val_count < val_target and remaining_images > len(rows):
-                dest = "val"
-                val_count += len(rows)
-            else:
-                dest = "train"
-            locked[group["id"]] = dest
-            splits[dest].extend(rows)
+            counts[row["class_id"]] += 1
+        component["class_counts"] = dict(counts)
+
+    splits = _place_components(components, val_ratio, test_ratio, seed)
     dropped = _drop_held_out_outside_test(splits)
     if withheld is not None:
         withheld.extend(dropped)
@@ -587,6 +661,133 @@ def split_by_observation(
     if placed != len(records):
         raise RuntimeError(f"split placed {placed} rows, not {len(records)}")
     return splits
+
+
+def _test_share_outside_tolerance(test_rows: int, total: int) -> bool:
+    if total <= 0:
+        return True
+    # The extra 1e-9 keeps a share that lands on the boundary (0.20 for a
+    # 0.05 band) inside the band when binary division prints as 0.05000000000000002.
+    return abs(test_rows / total - TEST_SPLIT_RATIO) > TEST_SHARE_TOLERANCE + 1e-9
+
+
+def measure_test_balance(splits: dict[str, list[dict]]) -> dict:
+    """Per-class test share and test count against the provisional gate.
+
+    Counts use the same rows as the split targets: a held-out row is left
+    out. A class is a hard stop when its test share is outside
+    ``TEST_SPLIT_RATIO ± TEST_SHARE_TOLERANCE`` or its test count is below
+    ``MIN_TEST_COUNT``. Nothing acknowledges the stop away. A component that
+    cannot fit a test target stays in train; this report is what keeps the
+    resulting test set from being silently empty or tiny. ``val_rows`` and
+    ``val_share`` are recorded for the same rows and are not a gate.
+    """
+    names = ("train", "val", "test")
+    per_split: dict[str, Counter[str]] = {name: Counter() for name in names}
+    for name in names:
+        for row in splits.get(name) or []:
+            if row.get("held_out_taxon") is True:
+                continue
+            per_split[name][str(row.get("class_id") or "")] += 1
+    class_ids = sorted({class_id for counts in per_split.values() for class_id in counts})
+    per_class: dict[str, dict] = {}
+    hard: list[str] = []
+    blockers: list[str] = []
+    for class_id in class_ids:
+        total = sum(per_split[name][class_id] for name in names)
+        test_rows = per_split["test"][class_id]
+        val_rows = per_split["val"][class_id]
+        share = (test_rows / total) if total else 0.0
+        val_share = (val_rows / total) if total else 0.0
+        outside = _test_share_outside_tolerance(test_rows, total)
+        below = test_rows < MIN_TEST_COUNT
+        info: dict = {
+            "rows": total,
+            "test_rows": test_rows,
+            "test_share": share,
+            "val_rows": val_rows,
+            "val_share": val_share,
+            "outside_tolerance": outside,
+            "below_minimum": below,
+        }
+        per_class[class_id] = info
+        if not outside and not below:
+            continue
+        info["hard_stop"] = True
+        hard.append(class_id)
+        parts: list[str] = []
+        if outside:
+            parts.append(
+                f"test share {share:.3f} is outside {TEST_SPLIT_RATIO:.2f} ± {TEST_SHARE_TOLERANCE:.2f}"
+            )
+        if below:
+            parts.append(f"test count {test_rows} is below the minimum {MIN_TEST_COUNT}")
+        blockers.append(f"{class_id}: " + "; ".join(parts) + ". The model is not shippable.")
+    return {
+        "ratio": TEST_SPLIT_RATIO,
+        "tolerance": TEST_SHARE_TOLERANCE,
+        "minimum_test_count": MIN_TEST_COUNT,
+        "per_class": per_class,
+        "hard_stop_classes": hard,
+        "ship_blockers": blockers,
+    }
+
+
+def balance_blockers(manifest: dict | None) -> list[str]:
+    """Ship-blocker strings for the per-class test split.
+
+    A manifest with no ``test_balance`` block is a blocker, the same as a
+    missing file. Thresholds that do not match the current constants are a
+    blocker too, so a hand-edited wider band cannot ship.
+    """
+    if not isinstance(manifest, dict):
+        return ["dataset manifest is missing, so the per-class test split was not checked"]
+    block = manifest.get("test_balance")
+    if not isinstance(block, dict):
+        return [
+            "dataset manifest has no test_balance block, so the per-class test split was not checked"
+        ]
+    reasons = block.get("ship_blockers")
+    if not isinstance(reasons, list):
+        return [
+            "dataset manifest test_balance has no ship_blockers list, so the per-class test split was not checked"
+        ]
+    found = [str(item) for item in reasons if str(item).strip()]
+    if (
+        block.get("tolerance") != TEST_SHARE_TOLERANCE
+        or block.get("minimum_test_count") != MIN_TEST_COUNT
+        or block.get("ratio") != TEST_SPLIT_RATIO
+    ):
+        found.append(
+            "test_balance thresholds do not match TEST_SHARE_TOLERANCE, MIN_TEST_COUNT, "
+            "and TEST_SPLIT_RATIO. The model is not shippable."
+        )
+    hard = block.get("hard_stop_classes")
+    if not isinstance(hard, list):
+        found.append(
+            "dataset manifest test_balance has no hard_stop_classes list, so the per-class test split was not checked"
+        )
+        return found
+    for class_id in hard:
+        text = str(class_id).strip()
+        prefix = f"{text}:"
+        if text and not any(item.startswith(prefix) for item in found):
+            found.append(
+                f"{text}: unacknowledged test-split hard stop is still recorded. The model is not shippable."
+            )
+    return found
+
+
+def balance_blockers_from_manifest_file(path: Path) -> list[str]:
+    """Blockers recorded in ``dataset_manifest.json``. A missing file is itself a blocker."""
+    file = Path(path)
+    if not file.is_file():
+        return ["dataset_manifest.json is missing, so the per-class test split was not checked"]
+    try:
+        payload = json.loads(file.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return ["dataset_manifest.json is not valid JSON, so the per-class test split was not checked"]
+    return balance_blockers(payload)
 
 
 def _drop_held_out_outside_test(splits: dict[str, list[dict]]) -> list[dict]:
