@@ -19,7 +19,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 from manifest import ROOT
-from publication import _df20_marker
+from publication import DF20_NORMALIZED_LICENSE_FIELD, DF20_SOURCE_FIELD, _df20_marker
 from split import _components, normalized_person_text, person_identity_keys
 
 # Pending owner decision (20% vs 50%); do not raise.
@@ -61,18 +61,16 @@ def is_placeholder_row(row: dict) -> bool:
 
 
 def is_df20_row(row: dict) -> bool:
-    """One DF20 check: source, normalised id, or a DF20 marker field.
+    """DF20 when the source, the normalised licence id, or a marker says so.
 
-    ``_df20_marker`` covers ``ImageUniqueID``, ``df20_image_id``,
-    ``df20_image_path``, a licence note that names DF20, and the dataset
-    names. A row with only that marker is still DF20.
+    The fields are ``publication.DF20_DETECTION_FIELDS``. A marker alone is enough.
     """
     if not isinstance(row, dict):
         return False
-    source = str(row.get("source") or "").casefold()
-    if source == "df20":
+    source = row.get(DF20_SOURCE_FIELD)
+    if str(source or "").casefold() == "df20":
         return True
-    normalized = row.get("license_normalized")
+    normalized = row.get(DF20_NORMALIZED_LICENSE_FIELD)
     if isinstance(normalized, str) and normalized.strip().casefold() == "df20":
         return True
     return _df20_marker(row)
