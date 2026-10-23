@@ -1,11 +1,11 @@
 # 0003. Ostrzeżenie o hełmówce w porównaniu maślanki i opieńki
 
-- **Status:** Podjęta (wdrożenie w toku)
+- **Status:** Wdrożona
 - **Data wpisu:** 2026-10-23
 
 ## Kontekst
 
-[PR #71](https://github.com/lonwi/mushroom-recognition-app/pull/71) jest otwarty jako szkic. Tytuł: „Porównanie graficzne: maślanka wiązkowa i opieńka miodowa”. CI na ostatnim przebiegu tego PR jest zielone (Actions [run 39929579877](https://github.com/lonwi/mushroom-recognition-app/actions/runs/39929579877)). PR nie jest zmergowany. Na `main` nie ma `src/components/SulphurHoneyComparison.tsx` ani `src/data/sulphurHoneyComparison.ts`.
+[PR #71](https://github.com/lonwi/mushroom-recognition-app/pull/71) w chwili otwarcia tego wpisu był szkicem. Tytuł wtedy: „Porównanie graficzne: maślanka wiązkowa i opieńka miodowa”. CI na przebiegu [run 39929579877](https://github.com/lonwi/mushroom-recognition-app/actions/runs/39929579877) było zielone. PR nie był wtedy zmergowany. Na `main` nie było `src/components/SulphurHoneyComparison.tsx` ani `src/data/sulphurHoneyComparison.ts`. Merge jest w decyzji z 16:57.
 
 PR dokłada zestawienie zdjęć maślanki wiązkowej i opieńki miodowej (pierścień, blaszki, łuski) oraz podpowiedź przy chipie „Jest pierścień”. Opis PR mówi wprost, że sformułowania o hełmówce zostają bez zmian względem [#63](https://github.com/lonwi/mushroom-recognition-app/issues/63).
 
@@ -101,6 +101,8 @@ Odrzucone **A**: bez „nietrwały”. Źródła, sprawdzone przez Zbieranie: [M
 
 Zdjęcie jest w [#71](https://github.com/lonwi/mushroom-recognition-app/pull/71) na headzie [`58466fa`](https://github.com/lonwi/mushroom-recognition-app/commit/58466faef63d98a2de47bf11a061152fa3610e0e) (`58466faef63d98a2de47bf11a061152fa3610e0e`), plik `assets/gallery/porownanie/galerina-wysyp.webp`. Podpisy na tym headzie są takie, jak wyżej.
 
+**Merge [#71](https://github.com/lonwi/mushroom-recognition-app/pull/71)** (2026-10-23, 16:57). Wojtek zatwierdził merge. Squash na `main`: [`b6e38d1aab7eab59c4341f5551d5b45c240f2f95`](https://github.com/lonwi/mushroom-recognition-app/commit/b6e38d1aab7eab59c4341f5551d5b45c240f2f95). Czas tego commita to 17:10 czasu polskiego. Head PR: `92dbad10556b71ccf1fa1697a99bfdecc5ed9d3a`. To [`e0173d9`](https://github.com/lonwi/mushroom-recognition-app/commit/e0173d94e5e1f262df345673ff3c3c5dcac7b757) (`e0173d94e5e1f262df345673ff3c3c5dcac7b757`) plus aktualizacja do `main` [`f33bccf`](https://github.com/lonwi/mushroom-recognition-app/commit/f33bccf2bf4c32d78cd026abd9243af5729e4b16). CI 4/4 zielone na headzie `92dbad1` ([run 39974043685](https://github.com/lonwi/mushroom-recognition-app/actions/runs/39974043685)): check, Code quality, python, End-to-end. Approve od PR Review i Quality na `e0173d9`. Ta poprawka układa kolumny przy 320 px przez `onLayout`. Teksty bez zmian względem tego, co zatwierdził Wojtek.
+
 ## Data
 
 Kolumna ze zdjęciami: 2026-10-23, 11:56 czasu polskiego.
@@ -112,15 +114,18 @@ Tytuł PL bez zmian i EN „Deadly Galerina”: 2026-10-23, 16:18 czasu polskieg
 Lead, opcja B: 2026-10-23, 16:18 czasu polskiego.
 Dopisek leadu, wariant B (z „nietrwały”): 2026-10-23, 16:31 czasu polskiego. Odrzucone A bez „nietrwały”. Wszystkie teksty #71 zatwierdzone.
 Podpis `galerinaSpore`: 2026-10-23, 16:19 czasu polskiego. Zdjęcie na headzie `58466fa`.
+Merge #71: 2026-10-23, 16:57 czasu polskiego. Squash `b6e38d1` na `main` o 17:10. Head `92dbad1` (`e0173d9` plus aktualizacja do `f33bccf`). Approve PR Review i Quality na `e0173d9`. Teksty bez zmian.
 
 ## Uzasadnienie
 
-Właściciel wybrał kolumnę ze zdjęciami zamiast jednego zdania (opcja A) i zamiast własnego tekstu bez zdjęć (opcja C). Licencja zdjęć w kolumnie jest węższa niż zakres treningu z [0004](0004-licencje-zdjec.md): do wyświetlenia w aplikacji zostają CC0 i CC BY. Teksty z 14:15 są przyjęte dosłownie. Wysyp ma być osobnym zdjęciem, nie zastępuje strefy pierścienia na zdjęciu 3. O 16:06 właściciel wybrał zdjęcie A (zdjęcie iNaturalist 170500861, obserwacja 102041261, Shirley Zundell, CC BY 4.0) i odrzucił B oraz dalsze szukanie. O 16:07 zaakceptował bez zmian teksty cech hełmówki i zdanie „Wysyp jest purpurowobrązowy.” z heada `dfdf15f`. O 16:18 zamknął tytuł: PL bez zmian, EN „Sulphur tuft, honey fungus and Deadly Galerina” zamiast „funeral bell”, i wybrał lead B (obecny lead PL plus jedno zdanie o hełmówce). O 16:19 zaakceptował bez zmian podpis `galerinaSpore`. O 16:31 wybrał wariant B treści dopisku, ze słowem „nietrwały”, po sprawdzeniu źródeł przez Zbieranie. Odrzucił wariant A bez „nietrwały”. Tym samym wszystkie teksty #71 są zatwierdzone.
+Właściciel wybrał kolumnę ze zdjęciami zamiast jednego zdania (opcja A) i zamiast własnego tekstu bez zdjęć (opcja C). Licencja zdjęć w kolumnie jest węższa niż zakres treningu z [0004](0004-licencje-zdjec.md): do wyświetlenia w aplikacji zostają CC0 i CC BY. Teksty z 14:15 są przyjęte dosłownie. Wysyp ma być osobnym zdjęciem, nie zastępuje strefy pierścienia na zdjęciu 3. O 16:06 właściciel wybrał zdjęcie A (zdjęcie iNaturalist 170500861, obserwacja 102041261, Shirley Zundell, CC BY 4.0) i odrzucił B oraz dalsze szukanie. O 16:07 zaakceptował bez zmian teksty cech hełmówki i zdanie „Wysyp jest purpurowobrązowy.” z heada `dfdf15f`. O 16:18 zamknął tytuł: PL bez zmian, EN „Sulphur tuft, honey fungus and Deadly Galerina” zamiast „funeral bell”, i wybrał lead B (obecny lead PL plus jedno zdanie o hełmówce). O 16:19 zaakceptował bez zmian podpis `galerinaSpore`. O 16:31 wybrał wariant B treści dopisku, ze słowem „nietrwały”, po sprawdzeniu źródeł przez Zbieranie. Odrzucił wariant A bez „nietrwały”. Tym samym wszystkie teksty #71 są zatwierdzone. O 16:57 zatwierdził merge #71. Teksty na squashu są bez zmian względem tych akceptacji. Poprawka układu przy 320 px przez `onLayout` jest na `e0173d9` i weszła w ten squash.
 
 ## Wdrożenie
 
-W toku. [PR #71](https://github.com/lonwi/mushroom-recognition-app/pull/71) jest szkicem („Porównanie graficzne: maślanka, opieńka i hełmówka jadowita”). W gałęzi są już pliki `galerina-skupisko.webp`, `galerina-pierscien.webp`, `galerina-strefa.webp` i `galerina-kapelusz.webp`. Wszystkie teksty #71 są zatwierdzone, łącznie z dopiskiem leadu z 16:31. Wdrożenie w [#71](https://github.com/lonwi/mushroom-recognition-app/pull/71) jest w toku, razem z poprawką układu przy 320 px. Na headzie `58466fa` tytuł EN to jeszcze odrzucone „and funeral bell”, a dopisku leadu nie ma. Zdjęcie 3 zostaje strefą pierścienia. Osobne zdjęcie wysypu (zdjęcie iNaturalist 170500861, obserwacja 102041261, Shirley Zundell, CC BY 4.0) jest w #71 na `58466fa` jako `galerina-wysyp.webp`.
+Na `main` od squashu [#71](https://github.com/lonwi/mushroom-recognition-app/pull/71) (`b6e38d1`). Tytuł PR po merge: „Porównanie graficzne: maślanka, opieńka i hełmówka jadowita”. W squashu są `galerina-skupisko.webp`, `galerina-pierscien.webp`, `galerina-strefa.webp`, `galerina-kapelusz.webp` i `galerina-wysyp.webp`. Zdjęcie 3 zostaje strefą pierścienia. Osobne zdjęcie wysypu to zdjęcie iNaturalist 170500861 (obserwacja 102041261, Shirley Zundell, CC BY 4.0).
+
+Na headzie `58466fa` tytuł EN był jeszcze odrzuconym „and funeral bell”, a dopisku leadu nie było. Późniejsze commity gałęzi #71 wniosły zatwierdzony tytuł EN, dopisek leadu i poprawkę `onLayout` (`e0173d9`). Head `92dbad1` dokłada do tego aktualizację do `main` `f33bccf`. Squash z 17:10 zawiera te zmiany.
 
 ## Weryfikacja
 
-Wszystkie teksty #71 są zapisane jako zatwierdzone, łącznie z dopiskiem leadu z 16:31. Na headzie `58466fa` podpis `galerinaSpore` i plik `galerina-wysyp.webp` są, tytuł EN to nadal „funeral bell”, a dopisku leadu nie ma. Poprawki układu przy 320 px w tym wpisie nie sprawdzano.
+Squash `b6e38d1aab7eab59c4341f5551d5b45c240f2f95` jest na `main`. Rodzic: `f33bccf2bf4c32d78cd026abd9243af5729e4b16`. Head PR `92dbad10556b71ccf1fa1697a99bfdecc5ed9d3a` ma rodziców `e0173d94e5e1f262df345673ff3c3c5dcac7b757` i `f33bccf`. CI 4/4 na tym headzie: [run 39974043685](https://github.com/lonwi/mushroom-recognition-app/actions/runs/39974043685). Approve PR Review i Quality są częścią OK z 16:57 i dotyczą `e0173d9`. W `src/components/SulphurHoneyComparison.tsx` z squashu jest `onLayout`. Teksty porównania na squashu są takie, jak zatwierdził Wojtek: tytuł PL i EN, dopisek leadu z „nietrwały”, podpis `galerinaSpore` i adres zdjęcia 170500861. Słowo „funeral bell” zostaje w komentarzu `src/data/sulphurHoneyComparison.ts` i w nazwach testów e2e, nie w tytule porównania.
