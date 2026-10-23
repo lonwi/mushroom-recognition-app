@@ -190,6 +190,7 @@ class PersonCapContractTest(unittest.TestCase):
         self.assertEqual(report["cap_fraction"], 0.10)
         self.assertEqual(report["seed"], PERSON_CAP_SEED)
         self.assertIn("after both dedup passes", report["n_definition"])
+        self.assertIn("no grandfathering", report["n_definition"])
 
         by_class = {item["class_id"]: item for item in report["classes"]}
         self.assertEqual(by_class["cortinarius_orellanus"], {

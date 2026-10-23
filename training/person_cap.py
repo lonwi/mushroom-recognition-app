@@ -1,8 +1,11 @@
 """Cap how many rows one person can contribute to one class.
 
 Prepare calls this after every source has been merged and after both dedup
-passes, and before the split. The three numbers are pending Wojtek's
-confirmation. Do not change them here until that decision is recorded.
+passes, and before the split. Wojtek confirmed the numbers on 2026-10-23
+at 16:55, decision A: ``min(60, max(10, round(0.10 * N)))`` per person
+per class. The cap is retroactive. Every eligible row already in the
+merged sources is counted, including rows collected before that decision.
+Nothing is grandfathered.
 
 The person is ``split.person_identity_keys``. This module calls that
 function. It does not parse author strings itself, and it does not write a
@@ -14,11 +17,13 @@ from each observation, in stable-hash order, before a second photo from
 any observation. ``PERSON_CAP_SEED`` is not the split salt. Changing the
 salt does not change this selection.
 
-This step does not change how many photos one observation may contribute
-when the person is inside the cap. The GBIF fetch still stops at
-``sampling.MAX_PER_OCCURRENCE`` (2). Distinct photos of one observation
-still survive identity dedup. Round-robin only chooses among a person's
-rows when that person is over the cap.
+Decision A leaves the existing per-observation photo limit unchanged.
+The GBIF fetch still stops at ``sampling.MAX_PER_OCCURRENCE`` (2). This
+step does not add another per-observation cap. Distinct photos of one
+observation still survive identity dedup. An observation that fits under
+the person cap is left whole, including when it already has three photos.
+Round-robin only chooses among a person's rows when that person is over
+the cap.
 """
 
 from __future__ import annotations
@@ -29,8 +34,7 @@ from collections import Counter, defaultdict
 
 from split import observation_identity_keys, person_identity_keys, photo_identity_keys
 
-# Pending owner confirmation. A higher ceiling or fraction lets one person
-# contribute more rows. Do not change these until Wojtek confirms the limit.
+# Wojtek 2026-10-23 16:55, decision A. Do not raise the ceiling or the fraction.
 CAP_MAX = 60
 CAP_MIN = 10
 CAP_FRACTION = 0.10
@@ -47,7 +51,8 @@ N_DEFINITION = (
     "--publishable-only, missing file, corrupt) are not in N. The 224px PNG "
     "cache runs after the cap and can still drop a kept row; that drop does "
     "not change N or the cap. A person's rows in other classes are not added "
-    "to N."
+    "to N. The cap is retroactive: rows collected before 2026-10-23 are "
+    "capped with the same N. There is no grandfathering."
 )
 MISSING_PERSON_RULE = (
     "person_identity_keys is the split's photographer key. An empty list "
