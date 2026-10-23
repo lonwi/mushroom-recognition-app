@@ -59,7 +59,7 @@ Odrzucone:
 - **B.** [iNaturalist, obserwacja 457520866](https://www.inaturalist.org/observations/457520866), Ben Mitchell, CC BY 4.0.
 - **C.** Szukamy dalej.
 
-**Teksty cech, bez zmian** (2026-10-23, 16:07). Właściciel zaakceptował bez zmian teksty kolumny hełmówki z heada [`dfdf15f`](https://github.com/lonwi/mushroom-recognition-app/commit/dfdf15f0a803d6b98407254efe1a84a29edfc3d8) (`dfdf15f0a803d6b98407254efe1a84a29edfc3d8`): pierścień, blaszki, wysyp, kapelusz, trzon i drewno. Ten sam head: wysyp maślanki „Wysyp jest purpurowobrązowy.” Title i lead w tej decyzji zostają otwarte. Tytuł zamyka 16:18, a lead wtedy wybiera dopisek bez ustalonej treści.
+**Teksty cech, bez zmian** (2026-10-23, 16:07). Właściciel zaakceptował bez zmian teksty kolumny hełmówki z heada [`dfdf15f`](https://github.com/lonwi/mushroom-recognition-app/commit/dfdf15f0a803d6b98407254efe1a84a29edfc3d8) (`dfdf15f0a803d6b98407254efe1a84a29edfc3d8`): pierścień, blaszki, wysyp, kapelusz, trzon i drewno. Ten sam head: wysyp maślanki „Wysyp jest purpurowobrązowy.” Title i lead w tej decyzji zostają otwarte. Tytuł zamyka 16:18. Lead wtedy wybiera dopisek, a jego treść zamyka 16:31.
 
 Hełmówka, PL (`comparison.sulphurHoney.traits.*.galerina`):
 
@@ -81,11 +81,18 @@ Hełmówka, EN:
 
 Wysyp maślanki (`comparison.sulphurHoney.traits.spore.hypholoma`): PL „Wysyp jest purpurowobrązowy.” EN "The spore print is purple-brown."
 
-Title i lead nie wchodzą w decyzję z 16:07. Tytuł zamyka decyzja z 16:18. Lead z 16:18 wybiera dopisek, którego treści jeszcze nie ma.
+Title i lead nie wchodzą w decyzję z 16:07. Tytuł zamyka decyzja z 16:18. Lead z 16:18 wybiera dopisek. Treść dopisku zamyka 16:31.
 
 **Tytuł** (2026-10-23, 16:18). PL bez zmian: „Maślanka wiązkowa, opieńka i hełmówka jadowita”. EN: "Sulphur tuft, honey fungus and Deadly Galerina". Odrzucone EN: "Sulphur tuft, honey fungus and funeral bell".
 
-**Lead, opcja B** (2026-10-23, 16:18). Obecny lead PL zostaje: „Maślanka wiązkowa nie ma błoniastego pierścienia. Zostaje najwyżej słaba strefa włókien, przyciemniona zarodnikami, albo resztki na brzegu kapelusza. Opieńka miodowa zwykle ma wyraźny, błoniasty pierścień.” Na końcu dochodzi jedno zdanie o hełmówce jadowitej. Treści tego zdania jeszcze nie ma: czeka na sprawdzenie źródeł przez Zbieranie i na akceptację Wojtka. Odrzucone **A**: lead bez zmian.
+**Lead, opcja B** (2026-10-23, 16:18). Obecny lead PL zostaje: „Maślanka wiązkowa nie ma błoniastego pierścienia. Zostaje najwyżej słaba strefa włókien, przyciemniona zarodnikami, albo resztki na brzegu kapelusza. Opieńka miodowa zwykle ma wyraźny, błoniasty pierścień.” Na końcu dochodzi jedno zdanie o hełmówce jadowitej. Odrzucone wtedy **A**: lead bez zmian. Treść zdania jest w decyzji z 16:31.
+
+**Dopisek leadu, wariant B** (2026-10-23, 16:31). Wojtek wybrał treść zdania dopisywanego na końcu leadu.
+
+- PL: „Hełmówka jadowita też może mieć cienki, nietrwały pierścień, więc sam pierścień nie odróżnia jej od opieńki.”
+- EN: "Deadly Galerina can also have a thin, short-lived ring, so a ring alone does not tell it apart from honey fungus."
+
+Odrzucone **A**: bez „nietrwały”. Źródła, sprawdzone przez Zbieranie: [MushroomExpert, Galerina marginata](https://www.mushroomexpert.com/galerina_marginata.html) (`ME_GAL`) i [First Nature, Galerina marginata](https://www.first-nature.com/fungi/galerina-marginata.php). Wszystkie teksty [#71](https://github.com/lonwi/mushroom-recognition-app/pull/71) są teraz zatwierdzone.
 
 **Podpis zdjęcia wysypu** (2026-10-23, 16:19). Klucz `galerinaSpore` zaakceptowany bez zmian.
 
@@ -102,17 +109,18 @@ Wysyp, wariant B: 2026-10-23, 14:16 czasu polskiego.
 Zdjęcie wysypu, opcja A: 2026-10-23, 16:06 czasu polskiego. 170500861 to numer zdjęcia, obserwacja to 102041261.
 Teksty cech hełmówki i wysyp maślanki: 2026-10-23, 16:07 czasu polskiego.
 Tytuł PL bez zmian i EN „Deadly Galerina”: 2026-10-23, 16:18 czasu polskiego. Odrzucone „funeral bell”.
-Lead, opcja B: 2026-10-23, 16:18 czasu polskiego. Treść dopisku o hełmówce czeka na Zbieranie i na Wojtka.
+Lead, opcja B: 2026-10-23, 16:18 czasu polskiego.
+Dopisek leadu, wariant B (z „nietrwały”): 2026-10-23, 16:31 czasu polskiego. Odrzucone A bez „nietrwały”. Wszystkie teksty #71 zatwierdzone.
 Podpis `galerinaSpore`: 2026-10-23, 16:19 czasu polskiego. Zdjęcie na headzie `58466fa`.
 
 ## Uzasadnienie
 
-Właściciel wybrał kolumnę ze zdjęciami zamiast jednego zdania (opcja A) i zamiast własnego tekstu bez zdjęć (opcja C). Licencja zdjęć w kolumnie jest węższa niż zakres treningu z [0004](0004-licencje-zdjec.md): do wyświetlenia w aplikacji zostają CC0 i CC BY. Teksty z 14:15 są przyjęte dosłownie. Wysyp ma być osobnym zdjęciem, nie zastępuje strefy pierścienia na zdjęciu 3. O 16:06 właściciel wybrał zdjęcie A (zdjęcie iNaturalist 170500861, obserwacja 102041261, Shirley Zundell, CC BY 4.0) i odrzucił B oraz dalsze szukanie. O 16:07 zaakceptował bez zmian teksty cech hełmówki i zdanie „Wysyp jest purpurowobrązowy.” z heada `dfdf15f`. O 16:18 zamknął tytuł: PL bez zmian, EN „Sulphur tuft, honey fungus and Deadly Galerina” zamiast „funeral bell”, i wybrał lead B (obecny lead PL plus jedno zdanie o hełmówce, treść zdania jeszcze bez akceptacji). O 16:19 zaakceptował bez zmian podpis `galerinaSpore`.
+Właściciel wybrał kolumnę ze zdjęciami zamiast jednego zdania (opcja A) i zamiast własnego tekstu bez zdjęć (opcja C). Licencja zdjęć w kolumnie jest węższa niż zakres treningu z [0004](0004-licencje-zdjec.md): do wyświetlenia w aplikacji zostają CC0 i CC BY. Teksty z 14:15 są przyjęte dosłownie. Wysyp ma być osobnym zdjęciem, nie zastępuje strefy pierścienia na zdjęciu 3. O 16:06 właściciel wybrał zdjęcie A (zdjęcie iNaturalist 170500861, obserwacja 102041261, Shirley Zundell, CC BY 4.0) i odrzucił B oraz dalsze szukanie. O 16:07 zaakceptował bez zmian teksty cech hełmówki i zdanie „Wysyp jest purpurowobrązowy.” z heada `dfdf15f`. O 16:18 zamknął tytuł: PL bez zmian, EN „Sulphur tuft, honey fungus and Deadly Galerina” zamiast „funeral bell”, i wybrał lead B (obecny lead PL plus jedno zdanie o hełmówce). O 16:19 zaakceptował bez zmian podpis `galerinaSpore`. O 16:31 wybrał wariant B treści dopisku, ze słowem „nietrwały”, po sprawdzeniu źródeł przez Zbieranie. Odrzucił wariant A bez „nietrwały”. Tym samym wszystkie teksty #71 są zatwierdzone.
 
 ## Wdrożenie
 
-W toku. [PR #71](https://github.com/lonwi/mushroom-recognition-app/pull/71) jest szkicem („Porównanie graficzne: maślanka, opieńka i hełmówka jadowita”). W gałęzi są już pliki `galerina-skupisko.webp`, `galerina-pierscien.webp`, `galerina-strefa.webp` i `galerina-kapelusz.webp`. Teksty z 14:15, teksty cech hełmówki i wysyp maślanki z `dfdf15f` (16:07) oraz podpis `galerinaSpore` (16:19) mają zostać bez zmian. Tytuł EN ma być „Sulphur tuft, honey fungus and Deadly Galerina”; na headzie `58466fa` jest jeszcze odrzucone „and funeral bell”. Lead PL zostaje, a dopisek o hełmówce czeka na źródła Zbierania i na akceptację Wojtka. Zdjęcie 3 zostaje strefą pierścienia. Osobne zdjęcie wysypu (zdjęcie iNaturalist 170500861, obserwacja 102041261, Shirley Zundell, CC BY 4.0) jest w #71 na `58466fa` jako `galerina-wysyp.webp`.
+W toku. [PR #71](https://github.com/lonwi/mushroom-recognition-app/pull/71) jest szkicem („Porównanie graficzne: maślanka, opieńka i hełmówka jadowita”). W gałęzi są już pliki `galerina-skupisko.webp`, `galerina-pierscien.webp`, `galerina-strefa.webp` i `galerina-kapelusz.webp`. Wszystkie teksty #71 są zatwierdzone, łącznie z dopiskiem leadu z 16:31. Wdrożenie w [#71](https://github.com/lonwi/mushroom-recognition-app/pull/71) jest w toku, razem z poprawką układu przy 320 px. Na headzie `58466fa` tytuł EN to jeszcze odrzucone „and funeral bell”, a dopisku leadu nie ma. Zdjęcie 3 zostaje strefą pierścienia. Osobne zdjęcie wysypu (zdjęcie iNaturalist 170500861, obserwacja 102041261, Shirley Zundell, CC BY 4.0) jest w #71 na `58466fa` jako `galerina-wysyp.webp`.
 
 ## Weryfikacja
 
-Teksty z 14:15, cechy hełmówki, wysyp maślanki i podpis `galerinaSpore` są zapisane jako zaakceptowane. Na headzie `58466fa` podpis PL i EN jest taki, jak w decyzji z 16:19, a plik `galerina-wysyp.webp` jest w commicie. Tytuł EN na tym headzie to nadal „Sulphur tuft, honey fungus and funeral bell”. Dopisku o hełmówce w leadzie jeszcze nie ma.
+Wszystkie teksty #71 są zapisane jako zatwierdzone, łącznie z dopiskiem leadu z 16:31. Na headzie `58466fa` podpis `galerinaSpore` i plik `galerina-wysyp.webp` są, tytuł EN to nadal „funeral bell”, a dopisku leadu nie ma. Poprawki układu przy 320 px w tym wpisie nie sprawdzano.
