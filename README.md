@@ -97,6 +97,8 @@ Rozpoznawanie jest wyłączone, dopóki w repozytorium nie ma skalibrowanego `as
 
 Trening opisuje `training/README.md`. Wagi z ImageNet (Keras MobileNetV3-Small, Apache-2.0) służą tylko jako inicjalizacja. Kod dziś przyjmuje zdjęcia treningowe wyłącznie z CC0 i CC-BY. Zatwierdzoną zmianę (BY-NC i DF20 tylko do treningu, nigdy do publikacji) opisuje `AGENTS.md`, który jest dokumentem nadrzędnym. Fetch zapisuje atrybucję w `training/data/attributions.jsonl` (katalog roboczy, gitignore). Eksport, który przejdzie bramki, kopiuje ją do `assets/models/attributions.jsonl` obok modelu.
 
+Próg `COMPONENT_SHARE_LIMIT` (udział największego komponentu w jednej klasie) wynosi 0.50 — Decyzja Wojtka 2026-10-23 12:13. CLI, zmienna środowiska i plik konfiguracji nie podniosą go ponad tę stałą. Klasa ponad progiem zatrzymuje prepare, a wpis w `training/component_share_acknowledgements.json` zostawia `shippable` równe false.
+
 Na maszynie z GPU:
 
 ```bash
