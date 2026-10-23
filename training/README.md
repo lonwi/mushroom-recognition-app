@@ -58,6 +58,16 @@ python training/run_pipeline.py export -- --install-into-app
 
 That copies the TFLite file and the attribution file, writes the calibrated thresholds into `assets/models/labels.json`, and points `src/services/modelPackage.ts` at the asset. A development build is required after that (`react-native-fast-tflite` and `react-native-nitro-modules` are native). Expo Go cannot load the interpreter. Until this step succeeds, `PACKAGED_MODEL_MODULE` stays `null`.
 
+Optional quantized graph, still under the same ship gates:
+
+```bash
+python training/export_tflite.py --quantization fp32 --also-export int8
+python training/export_tflite.py --also-export dynamic
+python training/run_pipeline.py export -- --also-export int8 --install-into-app --select-quantized
+```
+
+`--also-export int8` is full-integer ops (`TFLITE_BUILTINS_INT8`) with float32 input and output. The representative dataset is the train split only. The int8 energy threshold is fit again on that graph's validation logits. An fp16 threshold does not carry over. `dynamic` is dynamic-range quantization and does not read a representative dataset. The command also writes `mushrooms_model_float.tflite` when the primary graph is not already fp32. `metrics.json` → `quantized_export.delta_vs_float` is quantized minus that fp32 graph. Those numbers are not gates. `--select-quantized` installs the quantized file only when `assess_shippable` passes every existing floor, including int8 energy recalibration when that graph is int8. A failure leaves the app bundle unchanged.
+
 Useful limits while checking the wiring, without a full download:
 
 ```bash
@@ -275,10 +285,33 @@ Low confidence (top softmax under 0.70 or top-1/top-2 margin under 0.15) still s
 | Coverage | Every class in `labels.json` has a measured top-1/top-3 and support above 0 in train and in test. | required |
 | TFLite agreement | Top-1 match between the interpreter and the float Keras model on **every** val and test photo. | ≥ 0.99 |
 | TFLite high-risk agreement | The same match, only on high-risk class photos, again the full val+test count. | ≥ 0.99 |
+| int8 energy recalibration | Only when the exported graph is int8. The energy threshold is the validation order statistic of that graph's own logits. A copied fp16 threshold fails. fp16 and dynamic graphs are unchanged. | required for int8 |
+| Delegate release | Separate from install. Android GPU and iOS Core ML must each agree with CPU on every val and test photo: top-1 ≥ 0.99, high-risk top-1 ≥ 0.99, and the same rate for the `recognitionDecision` triple (`status`, top-1, `expertVerificationRequired`). The report includes the maximum energy difference. A missing, stale, or model-hash mismatch stays on CPU. The manifest ships with both platforms `passed: false` until a device dump is scored. | ≥ 0.99, per platform |
 | Attribution | `attributions.jsonl` beside the model has one complete row (creator, versioned CC0 or CC-BY, image URL, source page) per train+val+test image. `cc-by-nc…`, ND, SA, `usage=training_only`, and `unverified` rows fail this check. | complete |
 | Hashes | sha256 of `model.keras`, `mushrooms_model.tflite`, and `fetch_report.json` match the files on disk. The fetch-report hash covers the file `attach_fetch_evidence` reads, and that step overwrites `accepted`, `gbif_licensed_count`, and `exhausted_reason` from the report. `accepted` in that file is verified files. `gbif_licensed_count` is the entire licensed pool, written only when the GBIF query ended below the cap, and the rare-taxon exception also requires `exhausted_reason` to be `end_of_records` and `accepted` to equal that count. `replacement_budget` omits `gbif_licensed_count` and does not open the 5-photo floor. Regenerating the report changes the hash even when every download succeeded, because the report stores `selected`, `failed`, `pool`, `shortfall`, `exhausted_reason`, and `any_taxon_pool_exhausted`. A metrics file that still has the previous hash fails this gate until export records the new file. The numeric floors are unchanged. | exact |
 
-Export builds **fp16** weights with float32 input and output. `react-native-fast-tflite` runs XNNPACK, which executes that graph. A fully integer int8 graph is not the default: XNNPACK rejects MobileNetV3 ops from `TFLITE_BUILTINS_INT8` on device, while fp16 lands near 2 MB and keeps the float preprocess. `--quantization int8` is an experiment and is not what a ship build uses. There is no force flag.
+Export builds **fp16** weights with float32 input and output unless `--quantization` says otherwise. A release build uses the Android GPU delegate or iOS Core ML only when `labels.json` records that platform's delegate gate as passed for the installed model hash. Otherwise it uses CPU. If the delegate throws while loading or inside `model.run`, the app loads CPU and retries that photo once. The retry is one decision: it is not a second journal entry and it does not count as a second scan. XNNPACK runs the CPU graph. A fully integer int8 graph is not the default: the GPU delegate and XNNPACK both reject some MobileNetV3 ops from `TFLITE_BUILTINS_INT8`, while fp16 keeps the float preprocess. `--also-export int8` (or `dynamic` or `fp16`) writes that graph beside the primary file and scores it with the same gates. int8 also has to pass energy recalibration on its own validation logits. It is installed only when those gates pass. There is no flag that lowers a floor.
+
+A development build can still try the delegate before that gate has passed, so the agreement dump can be collected. `writeDelegateCalibrationDump` runs each fixed val+test tensor on CPU and on the platform delegate and writes `delegate-calibration.json` in the cache directory. It does not classify, save a journal entry, or upload anything. Score that file with the same val+test list:
+
+```bash
+python training/score_delegate_dump.py --dump delegate-calibration.json --splits training/data/splits.json --write
+```
+
+The sample is every val and test row. Train rows are rejected. `--write` records that platform in `assets/models/labels.json` and hashes `assets/models/mushrooms_model.tflite`. It exits without writing if that file is not on disk, and it does not fall back to `model_sha256` in `labels.json`. The dump and the manifest hash both have to match the file bytes. A failed gate is stored as `passed: false`. Pass `--model` to point at another copy of the same file.
+
+## Measuring inference on a phone
+
+Expo Go cannot load the interpreter. The Core ML pod flag and the Android OpenCL `uses-native-library` entries come from the `react-native-fast-tflite` config plugin, so they apply only after an EAS prebuild:
+
+```bash
+npx eas-cli@24.12.0 build --profile development --platform android
+npx eas-cli@24.12.0 build --profile development --platform ios
+```
+
+Install a model that passed the ship gates, then rebuild so the `.tflite` asset is in the binary. Start Metro with `npx expo start --dev-client`. On the scanner, a dev build shows two controls: **Measure: delegate** and **Measure: CPU**. Pick one, then photograph the same subject three times. The overlay and the `[tflite]` console line report milliseconds around `model.run` only, plus the delegate that produced those logits (`android-gpu`, `core-ml`, or `cpu`). Use the median of the second and third shots. The first shot can include GPU shader compile or Core ML cache fill inside `model.run`.
+
+`fallback=true` means the chosen delegate threw and the milliseconds are the CPU retry. The iOS simulator often fails Core ML; measure Core ML on a physical iPhone. Nothing in this line is uploaded.
 
 ## What is still missing before this is safe to ship
 

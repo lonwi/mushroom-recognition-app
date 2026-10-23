@@ -341,6 +341,10 @@ export const pl = {
     torchOffShort: '🔦 Latarka',
     aimGuide: 'Skieruj aparat na kapelusz i spód grzyba',
     gallery: 'Galeria',
+    devInference: 'Inferencja {ms} ms · {delegate}',
+    devInferenceFallback: 'Inferencja {ms} ms · CPU po błędzie delegata',
+    devDelegateAuto: 'Pomiar: delegat',
+    devDelegateCpu: 'Pomiar: CPU',
   },
   journal: {
     title: 'Dziennik Leśnych Zbiorów',

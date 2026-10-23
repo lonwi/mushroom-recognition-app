@@ -180,3 +180,21 @@ export const typography = {
 export const sizing = {
   galleryPhotoHeight: 220,
 } as const;
+
+/** Dev-only inference overlay. Light and dark, no separate side accent. */
+export const devOverlayColors = {
+  light: {
+    background: colors.surface,
+    text: colors.slate800,
+    border: colors.outline,
+    selected: colors.primaryContainer,
+    selectedText: colors.onPrimaryContainer,
+  },
+  dark: {
+    background: colors.slate900,
+    text: colors.slate200,
+    border: colors.slate700,
+    selected: colors.slate700,
+    selectedText: colors.slate200,
+  },
+} as const;
