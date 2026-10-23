@@ -15,13 +15,17 @@ const EN_RULE =
 
 /**
  * A taste quality stated about a poisonous or deadly species.
- * "Nie sprawdzaj smakiem" and "Smaku ta karta nie podaje" are refusals, not a taste.
+ * The only allowed wording is the rule sentence itself (Polish or English).
  * "goryczak" is a species name, not the noun "gorycz".
  */
 const TASTE_QUALITY =
   /\b(?:smak\p{L}*|smakuj\p{L}*|piekąc\p{L}*|kwaskowat\p{L}*|gorzk\p{L}*|gorycz(?!ak)\p{L}*)\b/iu;
 
-const ALLOWED_TASTE_REFUSAL = /Nie sprawdzaj smakiem\.?|Smaku ta karta nie podaje\.?/g;
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+const ALLOWED_TASTE_SENTENCE = new RegExp(`${escapeRegExp(PL_RULE)}|${escapeRegExp(EN_RULE)}`, 'g');
 
 const STATED_TASTE =
   /łagodny i przyjemny|smak łagodny|ma smak|mild, pleasant|pleasant taste|has a mild|smak słodkawy|nie smakują|smak opisywany jako|Łagodny smak nie oznacza|silnie piekąc|piekąc\p{L}* mleczk|jak trucizna|Smak jest opisywany jako gorzki|Gorycz nie jest dowodem|nie traktuj goryczy/iu;
@@ -43,8 +47,8 @@ function cardCopy(species: MushroomSpecies): string {
   ].join('\n');
 }
 
-function withoutTasteRefusal(text: string): string {
-  return text.replace(ALLOWED_TASTE_REFUSAL, '');
+function withoutAllowedTasteSentence(text: string): string {
+  return text.replace(ALLOWED_TASTE_SENTENCE, '');
 }
 
 function filesUnder(dir: string): string[] {
@@ -94,21 +98,21 @@ describe('taste of poisonous species', () => {
   test('poisonous and deadly cards, and lines about them, state no taste', () => {
     for (const species of MUSHROOMS_DATABASE) {
       if (!POISONOUS.has(species.status)) continue;
-      const copy = withoutTasteRefusal(cardCopy(species));
+      const copy = withoutAllowedTasteSentence(cardCopy(species));
       expect(copy).not.toMatch(TASTE_QUALITY);
     }
 
     for (const species of MUSHROOMS_DATABASE) {
       for (const risk of species.confusionRisks) {
         if (!POISONOUS.has(risk.confusedWithStatus)) continue;
-        const copy = withoutTasteRefusal(risk.keyDifferences.join('\n'));
+        const copy = withoutAllowedTasteSentence(risk.keyDifferences.join('\n'));
         expect(copy).not.toMatch(TASTE_QUALITY);
       }
     }
 
     for (const entry of Object.values(LOOKALIKES_WITHOUT_CARD)) {
       if (!POISONOUS.has(entry.status)) continue;
-      expect(withoutTasteRefusal(entry.note)).not.toMatch(TASTE_QUALITY);
+      expect(withoutAllowedTasteSentence(entry.note)).not.toMatch(TASTE_QUALITY);
     }
   });
 

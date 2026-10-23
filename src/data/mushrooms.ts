@@ -64,7 +64,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Blaszki ZAWSZE BIAŁE (u starych okazów lekko zielonkawe), gęste, wolne, nie dochodzą do trzonu. Nigdy nie różowieją ani nie brązowieją!',
     stemDescription: 'Wysokość do około 15 cm. Smukły, walcowaty, biały, oliwkowy lub lekko zielonawy, często z mniej lub bardziej wyraźnym zygzakowatym wzorem. U dołu bulwa w wyraźnej, luźnej, białej pochwie. Pod kapeluszem duży, przyrośnięty, zwieszający się, prążkowany pierścień.',
     fleshDescription: 'Biały, pod skórką kapelusza nieco zielonkawy, niezmienny po przełamaniu.',
-    tasteAndSmell: 'Młode mają zapach słaby, starsze mdły, miodowo-duszący. Nie sprawdzaj smakiem.',
+    tasteAndSmell: 'Młode mają zapach słaby, starsze mdły, miodowo-duszący. Smak ani zapach nie pozwalają odróżnić grzyba trującego od jadalnego.',
     culinaryValue: 'Śmiertelnie trujący. Może zabić jeden owocnik, a nawet jego część; dla dzieci dawka jest mniejsza. Objawy zwykle po 6–24 h, czasem później; nie czekaj na objawy, dzwoń 112 lub do ośrodka toksykologii. Po dobie bywa złudna poprawa, a potem wraca uszkodzenie wątroby.',
     confusionRisks: [
       {
@@ -353,7 +353,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Blaszki czysto białe, gęste, wolne.',
     stemDescription: 'Wysokość 10-20 cm, biały, z wyraźnym wiszącym białym pierścieniem i bulwiastą podstawą otoczoną rzędami brodawek.',
     fleshDescription: 'Biały, pod skórką kapelusza żółtopomarańczowy.',
-    tasteAndSmell: 'Bez wyraźnego zapachu. Nie sprawdzaj smakiem.',
+    tasteAndSmell: 'Bez wyraźnego zapachu. Smak ani zapach nie pozwalają odróżnić grzyba trującego od jadalnego.',
     culinaryValue: 'Trujący. Zawiera kwas ibotenowy i muscymol; muskaryna występuje tylko śladowo. Po spożyciu: halucynacje, pobudzenie, wymioty, silne bicie serca. W skrajnych przypadkach opisywano utratę przytomności.',
     confusionRisks: [
       {
@@ -440,7 +440,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Zewnętrzna pofałdowana powierzchnia główki pełni rolę hymenium.',
     stemDescription: 'Krótki, białawy, z bruzdami.',
     fleshDescription: 'Biały, woskowaty. Młode owocniki bywają w środku pełne, starsze puste. To nie jest jedna gładka komora jak u smardza.',
-    tasteAndSmell: 'Zapach grzybowy. Nie sprawdzaj smakiem.',
+    tasteAndSmell: 'Zapach grzybowy. Smak ani zapach nie pozwalają odróżnić grzyba trującego od jadalnego.',
     culinaryValue: 'Śmiertelnie trujący. Zawiera gyromitrynę, substancję lotną. Suszenie i gotowanie nie są sposobem na bezpieczne danie. W Polsce tego grzyba się nie je.',
     confusionRisks: [
       {
@@ -470,7 +470,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Blaszki żółtawe do ochrowych, po dotknięciu natychmiast ciemnobrązowieją.',
     stemDescription: 'Krótki, cylindryczny, barwy kapelusza.',
     fleshDescription: 'Żółtawy, brązowiejący po przekrojeniu.',
-    tasteAndSmell: 'Nie sprawdzaj smakiem.',
+    tasteAndSmell: 'Smak ani zapach nie pozwalają odróżnić grzyba trującego od jadalnego.',
     culinaryValue: 'Śmiertelnie trujący przy wielokrotnym spożyciu. Dawniej uchodził za jadalny po obgotowaniu. Może wywołać rozpad własnych krwinek i niewydolność nerek. Obgotowanie tego nie załatwia.',
     warningNotes: 'NIGDY NIE ZBIERAJ OLSZÓWEK. Dawniej uchodził za jadalny. Zatrucie wiąże się z wielokrotnym spożyciem: może dojść do rozpadu krwinek i niewydolności nerek, także ze skutkiem śmiertelnym.',
     confusionRisks: [
@@ -589,7 +589,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Blaszki białe lub kremowe, wolne. Po uszkodzeniu czerwienieją.',
     stemDescription: 'Do około 15 cm, u dołu z wyraźną bulwą. Pierścień jest ruchomy, nieprzyrośnięty do trzonu. Na trzonie nie ma łusek wężowej skóry kani.',
     fleshDescription: 'Miąższ białawy. Po uszkodzeniu przebarwia się na żółtopomarańczowo, a trzon szybko czerwienieje. Czerwienienie nie jest dowodem bezpieczeństwa.',
-    tasteAndSmell: 'Nie sprawdzaj smakiem.',
+    tasteAndSmell: 'Smak ani zapach nie pozwalają odróżnić grzyba trującego od jadalnego.',
     culinaryValue: 'W części źródeł nadal opisywany jako jadalny; u części osób powoduje poważne dolegliwości żołądkowo-jelitowe; łatwo pomylić z trującymi czubajnikami o podobnych łuskach i czerwieniejącym miąższu. Ta karta nie podaje sposobu przyrządzania i nie zaleca spożycia.',
     confusionRisks: [
       {
@@ -629,7 +629,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Prawdziwe blaszki: cienkie, gęste, wiotkie, często rozwidlone. To nie są grube listewki kurki.',
     stemDescription: 'Trzon w barwie kapelusza, zwykle smukły.',
     fleshDescription: 'Miąższ cienki, wiotki, bez morelowego zapachu kurki.',
-    tasteAndSmell: 'Nie sprawdzaj smakiem. Brak wyraźnego owocowego zapachu kurki.',
+    tasteAndSmell: 'Brak wyraźnego owocowego zapachu kurki. Smak ani zapach nie pozwalają odróżnić grzyba trującego od jadalnego.',
     culinaryValue: 'Nie jedz. Opracowania nie są zgodne: bywa nazywana niejadalną albo lekko trującą. Owocniki zawierają arabitol, który u części osób wywołuje zaburzenia trawienne. Ta karta nie podaje przepisu.',
     confusionRisks: [
       {
@@ -660,7 +660,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Blaszki jasne, ściekające mleczkiem po uszkodzeniu.',
     stemDescription: 'Trzon jasny, kruchy, bez pierścienia.',
     fleshDescription: 'Wydziela białe mleczko. Mleczko rydza jest marchewkowo-pomarańczowe.',
-    tasteAndSmell: 'Nie sprawdzaj smakiem. Mleczko jest białe.',
+    tasteAndSmell: 'Smak ani zapach nie pozwalają odróżnić grzyba trującego od jadalnego.',
     culinaryValue: 'Nie jedz. W tej bazie gatunek jest trujący. Ta karta nie podaje obróbki, która miałaby go przygotować do spożycia.',
     confusionRisks: [
       {
@@ -757,7 +757,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Blaszki białe, gęste, wolne.',
     stemDescription: 'Smukły, biały, gładki, z przyrośniętym, gładkim pierścieniem. Nasada bulwiasta, z pochwą w postaci równego kołnierza i często dodatkowych wałeczków.',
     fleshDescription: 'Biały, kruchy, nie zmienia barwy po uszkodzeniu.',
-    tasteAndSmell: 'Zapach rzodkiewki. Nie sprawdzaj smakiem.',
+    tasteAndSmell: 'Zapach rzodkiewki. Smak ani zapach nie pozwalają odróżnić grzyba trującego od jadalnego.',
     culinaryValue: 'Silnie trujący. Zawiera kwas ibotenowy i muscymol. Zatrucie przypomina muchomora czerwonego, ale bywa cięższe: wymioty, biegunka, halucynacje, drgawki. Nie jedz.',
     confusionRisks: [
       {
@@ -811,7 +811,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Blaszki białe, gęste, wolne. Nie różowieją.',
     stemDescription: 'Biały, z włóknistymi łuskami i bulwiastą nasadą w postrzępionej pochwie. Pierścień przyrośnięty, u starszych owocników może zanikać.',
     fleshDescription: 'Biały, kruchy.',
-    tasteAndSmell: 'Zapach bywa przyjemny albo rzodkiewkowy. Nie sprawdzaj smakiem.',
+    tasteAndSmell: 'Zapach bywa przyjemny albo rzodkiewkowy. Smak ani zapach nie pozwalają odróżnić grzyba trującego od jadalnego.',
     culinaryValue: 'Śmiertelnie trujący, z tej samej grupy co muchomor sromotnikowy. Objawy zwykle po 6–24 h, czasem później; nie czekaj na objawy, dzwoń 112 lub do ośrodka toksykologii. Nie ma kuchennego sposobu, żeby go „odtruć”.',
     confusionRisks: [
       {
@@ -854,7 +854,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Blaszki różowoszare, z wiekiem ciemniejsze. To nie są trwale białe blaszki muchomora.',
     stemDescription: 'Białawy, z szerokim, wyraźnym, zwisającym pierścieniem i bulwiastą podstawą. Brak pochwy.',
     fleshDescription: 'Miąższ biały. Po potarciu, a najmocniej po nacięciu nasady trzonu, szybko żółknie chromowo.',
-    tasteAndSmell: 'Zapach fenolu, karbolu albo atramentu, najmocniejszy przy naciętej nasadzie i przy podgrzaniu. Nie sprawdzaj smakiem.',
+    tasteAndSmell: 'Zapach fenolu, karbolu albo atramentu, najmocniejszy przy naciętej nasadzie i przy podgrzaniu. Smak ani zapach nie pozwalają odróżnić grzyba trującego od jadalnego.',
     culinaryValue: 'Trująca. Żółknięcie i zapach karbolu nie znikają od „dobrego przepisu”. Nie jedz.',
     confusionRisks: [
       {
@@ -896,7 +896,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Prawdziwe blaszki, najpierw białe, potem brązowawe, gęste. Po uszkodzeniu czerwienieją. To nie są grube listewki kurki.',
     stemDescription: 'Biały, z wiekiem ceglasty, walcowaty, pełny, często krzywy i zgrubiały u nasady. Bez pierścienia i bez pochwy.',
     fleshDescription: 'Mięsisty. Po przekrojeniu czerwienieje.',
-    tasteAndSmell: 'Zapach bywa słodkawy, owocowy. Nie sprawdzaj smakiem.',
+    tasteAndSmell: 'Zapach bywa słodkawy, owocowy. Smak ani zapach nie pozwalają odróżnić grzyba trującego od jadalnego.',
     culinaryValue: 'Śmiertelnie trujący. Zawiera dużo muskaryny. Nie ma obróbki, która robi z niego grzyb do jedzenia.',
     confusionRisks: [
       {
@@ -939,7 +939,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Blaszki gęste, najpierw siarkowożółte, potem zielonkawe, na końcu ciemnobrązowe od zarodników. Nie są cynamonowobrązowe jak u hełmówki.',
     stemDescription: 'Cienki, siarkowożółty, bez trwałego pierścienia. Owocniki zrastają się trzonami w wiązkę.',
     fleshDescription: 'Cienki, żółty.',
-    tasteAndSmell: 'Nie sprawdzaj smakiem.',
+    tasteAndSmell: 'Smak ani zapach nie pozwalają odróżnić grzyba trującego od jadalnego.',
     culinaryValue: 'Trująca. Powoduje dolegliwości żołądkowo-jelitowe. Nie jedz.',
     confusionRisks: [
       {
@@ -1004,7 +1004,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Blaszki siarkowożółte, gęste, wycięte ząbkiem. Nie są białe jak u muchomora.',
     stemDescription: 'Żółty, pełny, bez pierścienia i bez pochwy. Nasada nie ma bulwy w pochwie.',
     fleshDescription: 'Biały albo żółtawy, pod skórką kapelusza żółty.',
-    tasteAndSmell: 'Nie sprawdzaj smakiem.',
+    tasteAndSmell: 'Smak ani zapach nie pozwalają odróżnić grzyba trującego od jadalnego.',
     culinaryValue: 'W tej aplikacji trująca. Opisywano rabdomiolizę po wielokrotnym spożyciu. Francja zakazała sprzedaży w 2005 r. W Polsce gatunek jest wciąż na wykazie grzybów dopuszczonych do obrotu (rozporządzenie MZ, tekst jednolity Dz.U. 2026 poz. 258). Ta karta nie jest zgodą na zbiór ani sprzedaż.',
     confusionRisks: [
       {
@@ -1443,7 +1443,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Blaszki cynamonowobrązowe, dość rzadkie.',
     stemDescription: 'Cienki, z wąskim, często zanikającym pierścieniem. Pod pierścieniem włóknisty, bez odstających łuseczek. Nie ma pochwy.',
     fleshDescription: 'Cienki, brązowy. Zawiera amatoksyny, jak muchomor sromotnikowy.',
-    tasteAndSmell: 'Zapach bywa mączny. Nie sprawdzaj smakiem.',
+    tasteAndSmell: 'Zapach bywa mączny. Smak ani zapach nie pozwalają odróżnić grzyba trującego od jadalnego.',
     culinaryValue: 'Śmiertelnie trująca. Objawy zwykle po 6–24 h, czasem później; nie czekaj na objawy, dzwoń 112 lub do ośrodka toksykologii. Nie ma kuchennego sposobu, żeby ją „odtruć”.',
     confusionRisks: [
       {
@@ -1548,7 +1548,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Blaszki białe albo blade, gęste, wolne. Nie różowieją.',
     stemDescription: 'Biały albo żółtawy, z pierścieniem. Nasada bulwiasta, z rąbkiem, nie z luźną workowatą pochwą.',
     fleshDescription: 'Biały, pod skórką żółtawy. Zapach bywa surowy, ziemniaczany.',
-    tasteAndSmell: 'Zapach surowych ziemniaków. Nie sprawdzaj smakiem.',
+    tasteAndSmell: 'Zapach surowych ziemniaków. Smak ani zapach nie pozwalają odróżnić grzyba trującego od jadalnego.',
     culinaryValue: 'Trujący. Nie jedz. Kolor kapelusza nie rozstrzyga: muchomor sromotnikowy bywa bladozielony albo biały i jest śmiertelny.',
     confusionRisks: [
       {
@@ -1580,7 +1580,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Blaszki rdzawe, dość rzadkie. U młodych owocników zasnówka pajęczynowata, nie pierścień.',
     stemDescription: 'Żółtawy do rdzawego, włóknisty, bez pierścienia i bez pochwy. Nasada zwężona.',
     fleshDescription: 'Żółtawy. Zawiera orellaninę. Objawy mogą przyjść po kilku dniach albo tygodniach.',
-    tasteAndSmell: 'Zapach bywa rzodkiewkowy. Nie sprawdzaj smakiem.',
+    tasteAndSmell: 'Zapach bywa rzodkiewkowy. Smak ani zapach nie pozwalają odróżnić grzyba trującego od jadalnego.',
     culinaryValue: 'Śmiertelnie trujący. Uszkodzenie nerek. Objawy późne; nie czekaj na objawy, dzwoń 112 lub do ośrodka toksykologii.',
     confusionRisks: [
       {
@@ -1634,7 +1634,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Blaszki rdzawe. Młode owocniki łączy z trzonem żółtawa zasnówka, nie pierścień.',
     stemDescription: 'Żółtopomarańczowy, z jaśniejszymi włókienkami, bez pierścienia i bez pochwy.',
     fleshDescription: 'Żółtawy. Zawiera orellaninę. Uszkodzenie nerek może ujawnić się po tygodniach.',
-    tasteAndSmell: 'Nie sprawdzaj smakiem.',
+    tasteAndSmell: 'Smak ani zapach nie pozwalają odróżnić grzyba trującego od jadalnego.',
     culinaryValue: 'Śmiertelnie trujący. Objawy późne; nie czekaj na objawy, dzwoń 112 lub do ośrodka toksykologii.',
     confusionRisks: [
       {
@@ -1794,7 +1794,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Rurki żółtawe, pory pomarańczowe do czerwonych. Mocno sinieją. Wysyp zarodników oliwkowy.',
     stemDescription: 'Baryłkowaty, potem wydłużony, żółtawy do czerwonawego, z wyraźną brązowawą do czerwonej siateczką o podłużnych oczkach.',
     fleshDescription: 'Żółtawy, u nasady trzonu czerwonawy. Po przekrojeniu szybko sinieje.',
-    tasteAndSmell: 'Zapach niewyraźny. Smaku ta karta nie podaje.',
+    tasteAndSmell: 'Zapach niewyraźny. Smak ani zapach nie pozwalają odróżnić grzyba trującego od jadalnego.',
     culinaryValue: 'Trujący. W źródłach są tylko ogólne dolegliwości żołądkowo-jelitowe. Nie figuruje w wykazie grzybów dopuszczonych do obrotu (rozporządzenie MZ z 17.05.2011, Dz.U. 2011 nr 115 poz. 672; t.j. Dz.U. 2026 poz. 258). Nazwa ludowa „goryczak” nie oznacza goryczaka żółciowego. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
@@ -1879,7 +1879,7 @@ export const MUSHROOMS_DATABASE: MushroomSpecies[] = [
     hymenophoreDescription: 'Rurki żółte, pory czerwone. Po ucisku sinieją. Wysyp zarodników oliwkowobrązowy.',
     stemDescription: 'Bardzo gruby, beczułkowaty, żółty u góry, w środku czerwony, pokryty czerwoną siateczką.',
     fleshDescription: 'Białawy do żółtawego. Po przekrojeniu słabo sinieje.',
-    tasteAndSmell: 'Starsze okazy pachną nieprzyjemnie, padliną. Smaku ta karta nie podaje.',
+    tasteAndSmell: 'Starsze okazy pachną nieprzyjemnie, padliną. Smak ani zapach nie pozwalają odróżnić grzyba trującego od jadalnego.',
     culinaryValue: 'Trujący. Ta karta podaje rozpoznawanie, sobowtóry i ochronę ścisłą. Objawów zatrucia nie opisuje. Ta karta nie uprawnia do zbioru ani spożycia.',
     confusionRisks: [
       {
