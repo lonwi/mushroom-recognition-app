@@ -16,13 +16,13 @@ Import zewnętrznych CSV (`training/import_external.py`, na `main` od [#68](http
 - Danish Fungi 2020: `usage=training_only`, `license_normalized` `df20`.
 - CC BY-SA, CC BY-ND, CC BY-NC-ND i CC BY-NC-SA: wiersz odpada. `training/README.md` pisze, że CC BY-SA zostaje odrzucone, dopóki właściciel nie powie inaczej. Późniejsze dopuszczenie oznacza dopisanie dokładnych id `cc-by-sa-<wersja>` jako `training_only`.
 
-`is_publishable` (galeria atlasu, `site/`, zdjęcia porównań) nie przepuszcza CC BY-NC ani DF20. Na `main` sprzed tej decyzji bramka wydania nie oznacza modelu jako `shippable`, gdy w atrybucji są wiersze `training_only`. `AGENTS.md` wymaga przy wydaniu komercyjnym retreningu bez BY-NC i DF20. Oba te zapisy opisują kod sprzed wyboru poniżej. Wybór je zmienia: model wydawany w aplikacji może być uczony na CC BY-NC, DF20 i CC BY-SA.
+`is_publishable` (galeria atlasu, `site/`, zdjęcia porównań) nie przepuszcza CC BY-NC ani DF20. Na `main` sprzed tej decyzji bramka wydania nie oznacza modelu jako `shippable`, gdy w atrybucji są wiersze `training_only`. `AGENTS.md` wymaga przy wydaniu komercyjnym retreningu bez BY-NC i DF20. Oba te zapisy opisują kod sprzed wyboru poniżej. Wybór je zmienia dla CC BY-NC i CC BY-SA: model wydawany w aplikacji może być na nich uczony. DF20 jest w zestawie licencji, ale do czasu doprecyzowania przez właściciela zostaje fail-closed w bramce wydania.
 
 `AGENTS.md` zapisuje też decyzję właściciela z 2026-10-16: CC BY-NC (samo BY-NC, bez NC-ND i NC-SA) oraz DF20 są zatwierdzone tylko do treningu, nigdy do publikacji zdjęć w aplikacji. Ta notatka nadal opisuje to jako „jeszcze nie wdrożone” i nie obejmuje CC BY-SA. Importer z #68 już przyjmuje BY-NC i DF20 jako `training_only`. Fetch GBIF ich nie przyjmuje. Tekst ustawień w `src/i18n/pl.ts` (`settings.dataLicenseBody`) mówi, że model wolno trenować tylko na CC0 albo CC-BY, bez NC i SA.
 
 CC BY-SA (między innymi część zdjęć Mushroom Observer) jest odrzucone na obu ścieżkach. Testy w `training/tests/test_import_external.py` pilnują, że `CC BY-SA` nie jest mylone z `CC BY`.
 
-[Issue #51](https://github.com/lonwi/mushroom-recognition-app/issues/51) nadal ma otwarty punkt: regulamin Svampeatlas wymaga zgody fotografów, a licencji per zdjęcie w DF20 nie ma. Zgoda nie jest jeszcze ustalona. Sprawdza to Zbieranie. Szkice próśb do autorów spoza DF20 są w [0008](0008-prosby-o-zgode.md) i nadal czekają na decyzję.
+DF20 wymaga **pisemnej** zgody fotografów. README DF20 mówi „non-commercial research purposes only”. Regulamin Svampeatlas wymaga bezpośredniego porozumienia z fotografem. Raport Zbierania to potwierdza. [Issue #51](https://github.com/lonwi/mushroom-recognition-app/issues/51) ma ten sam punkt: licencji per zdjęcie w DF20 nie ma. Zgoda nie jest jeszcze ustalona. Szkice próśb do autorów spoza DF20 są w [0008](0008-prosby-o-zgode.md) i nadal czekają na decyzję.
 
 ## Opcje
 
@@ -49,11 +49,11 @@ Tamta rekomendacja A była węższa niż notatka w `AGENTS.md` z 2026-10-16 i w�
 
 **C.** Do treningu modelu wydawanego w aplikacji wolno użyć CC0, CC BY, CC BY-NC, DF20 i CC BY-SA.
 
-„Tylko do treningu” przy CC BY-NC, DF20 i CC BY-SA oznacza, że tych zdjęć nie pokazujemy. Galeria, `site/` i porównania zostają przy CC0 albo CC BY. Model nauczony na zdjęciach CC BY-NC, DF20 albo CC BY-SA może być modelem wydanym w aplikacji.
+„Tylko do treningu” przy CC BY-NC, DF20 i CC BY-SA oznacza, że tych zdjęć nie pokazujemy. Galeria, `site/` i porównania zostają przy CC0 albo CC BY. Model nauczony na zdjęciach CC BY-NC albo CC BY-SA może być modelem wydanym w aplikacji.
 
 CC BY-SA (wariant SA-B) ma status **Podjęta**: jest dopuszczona do treningu modelu wydaniowego jako część tej decyzji, nie jako osobny plik.
 
-Właściciel potwierdził wariant C świadomie po informacji, że DF20 wymaga zgody fotografów (regulamin Svampeatlas, brak licencji per zdjęcie).
+DF20 też jest w wariancie C, i wymaga pisemnej zgody fotografów. README DF20 ogranicza użycie do „non-commercial research purposes only”. Regulamin Svampeatlas wymaga bezpośredniego porozumienia z fotografem. Raport Zbierania opisuje ten sam warunek. Do czasu doprecyzowania przez właściciela DF20 zostaje **fail-closed** w bramce wydania: wiersz `df20` nie puszcza modelu jako `shippable`. CC BY-NC i CC BY-SA mogą wejść do modelu wydawanego. Zdjęć DF20, NC i SA nadal nie pokazujemy.
 
 ## Data
 
@@ -67,13 +67,13 @@ Właściciel wybrał najszerszy zestaw zdjęć do uczenia modelu wydawanego w ap
 
 - CC BY-NC ogranicza komercyjne użycie aplikacji.
 - Przy CC BY-SA nie wiadomo, czy share-alike obejmuje wagi modelu.
-- Przy DF20 zgoda fotografów nie jest jeszcze ustalona. Sprawdza to Zbieranie.
+- Przy DF20 potrzebna jest pisemna zgoda fotografów. README DF20 mówi „non-commercial research purposes only”, regulamin Svampeatlas wymaga bezpośredniego porozumienia, a raport Zbierania to stwierdza. Zgoda nie jest jeszcze ustalona. Do czasu doprecyzowania przez właściciela bramka wydania zostaje na DF20 fail-closed. NC i SA mogą wejść.
 
 ## Wdrożenie
 
 W toku. Zostaje:
 
-- zmiana bramki wydania (`ship_gates`, obsługa atrybucji `training_only`) przez PR Trenowania,
+- zmiana bramki wydania (`ship_gates`, obsługa atrybucji `training_only`) przez PR Trenowania: CC BY-NC i CC BY-SA mogą wejść do modelu wydawanego; DF20 zostaje fail-closed, dopóki właściciel nie doprecyzuje pisemnej zgody fotografów,
 - aktualizacja `AGENTS.md` (notatka o retreningu bez NC/DF20),
 - aktualizacja `settings.dataLicenseBody`.
 
@@ -83,4 +83,4 @@ Przebieg z [0002](0002-license-url-trening.md) dalej idzie bez zewnętrznych CSV
 
 ## Weryfikacja
 
-Decyzja zapisana w tym wpisie. Kodu, który przyjmuje CC BY-SA do treningu i puszcza model z wierszami `training_only` przez bramkę wydania, na `main` nie ma.
+Decyzja zapisana w tym wpisie. Na `main` nie ma kodu, który przyjmuje CC BY-SA do treningu i puszcza przez bramkę wydania model z wierszami CC BY-NC albo CC BY-SA, przy fail-closed dla DF20.
