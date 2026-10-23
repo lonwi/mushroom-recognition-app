@@ -246,6 +246,19 @@ export const SPECIES_GALLERY: Record<string, GalleryPhoto[]> = {
   ],
 };
 
+/** Offline comparison photos. Metro bundles each literal require() in this manifest. */
+export const COMPARISON_GALLERY_IMAGES: Readonly<Record<string, ImageSourcePropType>> = {
+  'hypholoma-strefa-trzon.webp': require('../../assets/gallery/porownanie/hypholoma-strefa-trzon.webp') as ImageSourcePropType,
+  'hypholoma-blaszki.webp': require('../../assets/gallery/porownanie/hypholoma-blaszki.webp') as ImageSourcePropType,
+  'hypholoma-mlode-zasnowa.webp': require('../../assets/gallery/porownanie/hypholoma-mlode-zasnowa.webp') as ImageSourcePropType,
+  'hypholoma-brzeg-kapelusza.webp': require('../../assets/gallery/porownanie/hypholoma-brzeg-kapelusza.webp') as ImageSourcePropType,
+  'hypholoma-miazsz.webp': require('../../assets/gallery/porownanie/hypholoma-miazsz.webp') as ImageSourcePropType,
+  'armillaria-pierscien-blaszki.webp': require('../../assets/gallery/porownanie/armillaria-pierscien-blaszki.webp') as ImageSourcePropType,
+  'armillaria-pierscien-trzony.webp': require('../../assets/gallery/porownanie/armillaria-pierscien-trzony.webp') as ImageSourcePropType,
+  'armillaria-blaszki.webp': require('../../assets/gallery/porownanie/armillaria-blaszki.webp') as ImageSourcePropType,
+  'armillaria-luski-kapelusz.webp': require('../../assets/gallery/porownanie/armillaria-luski-kapelusz.webp') as ImageSourcePropType,
+};
+
 export function photosForSpecies(speciesId: string): GalleryPhoto[] {
   return SPECIES_GALLERY[speciesId] ?? [];
 }

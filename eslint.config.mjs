@@ -379,7 +379,7 @@ export default tseslint.config(
     // Metro bundles offline images from a string literal require(). This file
     // is the gallery manifest, so the import rule stays off without a new
     // suppression entry.
-    files: ['src/data/speciesGallery.ts', 'src/data/sulphurHoneyComparison.ts'],
+    files: ['src/data/speciesGallery.ts'],
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
     },

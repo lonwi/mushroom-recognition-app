@@ -1,4 +1,5 @@
 import type { ImageSourcePropType } from 'react-native';
+import { COMPARISON_GALLERY_IMAGES } from './speciesGallery';
 
 /**
  * Visual comparison of sulphur tuft and honey fungus.
@@ -115,28 +116,11 @@ function photo(
 }
 
 function comparisonImage(fileName: string): ImageSourcePropType {
-  switch (fileName) {
-    case 'hypholoma-strefa-trzon.webp':
-      return require('../../assets/gallery/porownanie/hypholoma-strefa-trzon.webp') as ImageSourcePropType;
-    case 'hypholoma-blaszki.webp':
-      return require('../../assets/gallery/porownanie/hypholoma-blaszki.webp') as ImageSourcePropType;
-    case 'hypholoma-mlode-zasnowa.webp':
-      return require('../../assets/gallery/porownanie/hypholoma-mlode-zasnowa.webp') as ImageSourcePropType;
-    case 'hypholoma-brzeg-kapelusza.webp':
-      return require('../../assets/gallery/porownanie/hypholoma-brzeg-kapelusza.webp') as ImageSourcePropType;
-    case 'hypholoma-miazsz.webp':
-      return require('../../assets/gallery/porownanie/hypholoma-miazsz.webp') as ImageSourcePropType;
-    case 'armillaria-pierscien-blaszki.webp':
-      return require('../../assets/gallery/porownanie/armillaria-pierscien-blaszki.webp') as ImageSourcePropType;
-    case 'armillaria-pierscien-trzony.webp':
-      return require('../../assets/gallery/porownanie/armillaria-pierscien-trzony.webp') as ImageSourcePropType;
-    case 'armillaria-blaszki.webp':
-      return require('../../assets/gallery/porownanie/armillaria-blaszki.webp') as ImageSourcePropType;
-    case 'armillaria-luski-kapelusz.webp':
-      return require('../../assets/gallery/porownanie/armillaria-luski-kapelusz.webp') as ImageSourcePropType;
-    default:
-      throw new Error(`Unknown comparison photo ${fileName}`);
+  const image = COMPARISON_GALLERY_IMAGES[fileName];
+  if (!image) {
+    throw new Error(`Unknown comparison photo ${fileName}`);
   }
+  return image;
 }
 
 const CAPTION = 'comparison.sulphurHoney.captions';
