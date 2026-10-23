@@ -50,22 +50,30 @@ Uwaga:
 - PL: „Zawiera amatoksyny. Żadna pojedyncza cecha, w tym pierścień, nie potwierdza opieńki.”
 - EN: "Contains amatoxins. No single feature, including the ring, confirms honey fungus."
 
-**Wysyp zarodników, wariant B** (2026-10-23, 14:16). Szukamy osobnego zdjęcia wysypu na licencji CC0 albo CC BY. Zdjęcie 3 zostaje podpisem strefy pierścienia. [#71](https://github.com/lonwi/mushroom-recognition-app/pull/71) czeka na to zdjęcie i do tego czasu się nie merguje.
+**Wysyp zarodników, wariant B** (2026-10-23, 14:16). Osobne zdjęcie wysypu na licencji CC0 albo CC BY. Zdjęcie 3 zostaje podpisem strefy pierścienia.
+
+**Zdjęcie wysypu** (2026-10-23, 16:06). Właściciel wybrał **A**: [iNaturalist, obserwacja 170500861](https://www.inaturalist.org/observations/170500861), autorka Shirley Zundell, CC BY 4.0. To osobne zdjęcie wysypu. Zdjęcie 3 zostaje strefą pierścienia.
+
+Odrzucone:
+
+- **B.** [iNaturalist, obserwacja 457520866](https://www.inaturalist.org/observations/457520866), Ben Mitchell, CC BY 4.0.
+- **C.** Szukamy dalej.
 
 ## Data
 
 Kolumna ze zdjęciami: 2026-10-23, 11:56 czasu polskiego.
 Teksty 1:1: 2026-10-23, 14:15 czasu polskiego.
 Wysyp, wariant B: 2026-10-23, 14:16 czasu polskiego.
+Zdjęcie wysypu, opcja A: 2026-10-23, 16:06 czasu polskiego.
 
 ## Uzasadnienie
 
-Właściciel wybrał kolumnę ze zdjęciami zamiast jednego zdania (opcja A) i zamiast własnego tekstu bez zdjęć (opcja C). Licencja zdjęć w kolumnie jest węższa niż zakres treningu z [0004](0004-licencje-zdjec.md): do wyświetlenia w aplikacji zostają CC0 i CC BY. Teksty z 14:15 są przyjęte dosłownie. Wysyp ma być osobnym zdjęciem, nie zastępuje strefy pierścienia na zdjęciu 3.
+Właściciel wybrał kolumnę ze zdjęciami zamiast jednego zdania (opcja A) i zamiast własnego tekstu bez zdjęć (opcja C). Licencja zdjęć w kolumnie jest węższa niż zakres treningu z [0004](0004-licencje-zdjec.md): do wyświetlenia w aplikacji zostają CC0 i CC BY. Teksty z 14:15 są przyjęte dosłownie. Wysyp ma być osobnym zdjęciem, nie zastępuje strefy pierścienia na zdjęciu 3. O 16:06 właściciel wybrał zdjęcie A (iNaturalist 170500861, Shirley Zundell, CC BY 4.0) i odrzucił B oraz dalsze szukanie.
 
 ## Wdrożenie
 
-W toku. [PR #71](https://github.com/lonwi/mushroom-recognition-app/pull/71) jest szkicem („Porównanie graficzne: maślanka, opieńka i hełmówka jadowita”). W gałęzi są już pliki `galerina-skupisko.webp`, `galerina-pierscien.webp`, `galerina-strefa.webp` i `galerina-kapelusz.webp`. Teksty z 14:15 mają wejść 1:1. Brakuje osobnego zdjęcia wysypu (CC0 albo CC BY). Zdjęcie 3 zostaje strefą pierścienia. Merge czeka na to zdjęcie.
+W toku. [PR #71](https://github.com/lonwi/mushroom-recognition-app/pull/71) jest szkicem („Porównanie graficzne: maślanka, opieńka i hełmówka jadowita”). W gałęzi są już pliki `galerina-skupisko.webp`, `galerina-pierscien.webp`, `galerina-strefa.webp` i `galerina-kapelusz.webp`. Teksty z 14:15 mają wejść 1:1. Zdjęcie 3 zostaje strefą pierścienia. Grzybobranie dodaje osobne zdjęcie wysypu (iNaturalist 170500861, Shirley Zundell, CC BY 4.0) do #71. Jeszcze nie zrobione.
 
 ## Weryfikacja
 
-Teksty są zapisane w tym wpisie jako zaakceptowane. Nie sprawdzano, czy gałąź #71 ma już dokładnie te zdania. Zdjęcia wysypu w tym PR nie ma: cztery pliki hełmówki to kępa, pierścień, strefa i kapelusz.
+Teksty są zapisane w tym wpisie jako zaakceptowane. Nie sprawdzano, czy gałąź #71 ma już dokładnie te zdania. Wybrane zdjęcie wysypu nie jest jeszcze w #71. Cztery pliki hełmówki na gałęzi to kępa, pierścień, strefa i kapelusz.
