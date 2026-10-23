@@ -13,9 +13,13 @@ for versioned CC BY-NC and for DF20. Every photo row needs an https
 when the text already says ``CC BY 4.0``. A versionless ``CC BY`` with no
 ``license_url`` is rejected. NC-ND, NC-SA, BY-SA, ND, and unknown licenses
 are rejected. The normalized id is matched in full (``cc-by-4.0``), never by
-prefix. The same photo from two sources keeps the stricter license, so CC
-BY-NC beats CC BY and the row stays training-only. Every kept row has an
-author credit. ``is_publishable`` is the check for the atlas gallery,
+prefix. The same photo from two sources keeps the stricter license:
+CC BY-NC and DF20 beat CC BY, and CC BY beats CC0, so the attribution stays.
+A row rejected for a licence reason records that photo's keys, and every
+other copy of the photo is dropped. A Commons row and an iNaturalist row
+merge only when they share an id (``inat_photo_id`` on either row, the
+Commons file name, or the same image URL). Every kept row has an author
+credit. ``is_publishable`` is the check for the atlas gallery,
 ``site/``, and comparison photos. CC BY-NC and DF20 fail it. The ship-gate
 file is a separate decision and still lists training-only rows.
 
@@ -192,6 +196,18 @@ def photo_license_decision(license_text: str, license_url: str) -> tuple[dict | 
     if decision is None:
         return None, "license"
     return decision, ""
+
+
+# A rejected licence taints every other copy of that photo. A missing author,
+# an unmapped name, or a bad image URL does not.
+_LICENSE_POISON_REASONS = frozenset(
+    {
+        "license",
+        "license_url_empty",
+        "license_url_not_https",
+        "license_url_mismatch",
+    }
+)
 
 
 def _from_url_match(match: re.Match) -> tuple[str | None, str]:
@@ -748,7 +764,12 @@ def _conflict_keys(row: dict) -> list[tuple[str, str]]:
 
 
 def _photo_keys(row: dict) -> list[str]:
-    """Ids that mean one image, including the same file on two hosts."""
+    """Ids that mean one image, including the same file on two hosts.
+
+    ``inat_photo_id`` is a key for every source that carries it, including a
+    Wikimedia Commons row. Two hosts merge only when they share one of these
+    ids. A Commons file description is not parsed for an iNaturalist photo id.
+    """
     keys: list[str] = []
     if row.get("inat_photo_id"):
         keys.append(f"inat-photo:{row['inat_photo_id']}")
@@ -763,10 +784,48 @@ def _photo_keys(row: dict) -> list[str]:
     return keys
 
 
+def _stable_photo_keys(row: dict) -> list[str]:
+    """Photo keys that can match another row. The per-row fallback does not."""
+    return [key for key in _photo_keys(row) if not key.startswith("row:")]
+
+
+def _photo_keys_from_raw(raw: dict) -> list[str]:
+    """Photo keys of a CSV row that never became a kept record.
+
+    Uses the same ids as an accepted row, including ``inat_photo_id`` on a
+    Commons row, so a rejected licence can drop the other copies.
+    """
+    image_url = force_https_url(_cell(raw, "image_url"))
+    source_url = force_https_url(_cell(raw, "source_url"))
+    ids = _blank_ids()
+    ids["inat_photo_id"] = _cell(raw, "inat_photo_id")
+    ids["commons_file"] = _cell(raw, "commons_file")
+    ids["df20_image_id"] = _cell(raw, "ImageUniqueID") or _cell(raw, "df20_image_id")
+    https_image = image_url if urlsplit(image_url).scheme == "https" else ""
+    https_source = source_url if urlsplit(source_url).scheme == "https" else ""
+    _fill_ids_from_urls(ids, https_image, https_source)
+    stub = {
+        "inat_photo_id": ids["inat_photo_id"],
+        "commons_file": ids["commons_file"],
+        "df20_image_id": ids["df20_image_id"],
+        "_image_key": canonical_image_url(https_image) if https_image else "",
+    }
+    return _stable_photo_keys(stub)
+
+
 def _license_strictness(row: dict) -> int:
-    """Higher is stricter. CC BY-NC and DF20 outrank a publishable CC BY or CC0."""
-    if row.get("usage") == "training_only":
+    """Higher is stricter: NC and DF20 outrank CC BY, which outranks CC0.
+
+    CC BY beats CC0 so a public-domain copy does not drop the attribution.
+    Equal ranks keep the earliest row.
+    """
+    license_id = str(row.get("license_normalized") or "")
+    if row.get("usage") == "training_only" or license_id == "df20" or license_id.startswith("cc-by-nc"):
+        return 3
+    if license_id.startswith("cc-by-"):
         return 2
+    if license_id.startswith("cc0"):
+        return 1
     if row.get("usage") == "publishable":
         return 1
     return 0
@@ -778,8 +837,8 @@ def dedupe_rows(rows: list[dict]) -> tuple[list[dict], int, int, int, list[dict]
     File order must not pick the species. When one photo id or one observation
     id is tied to two species, every row of that id is removed and the report
     lists the id with both labels. The same image under two licenses keeps the
-    stricter one: CC BY-NC beats CC BY, so the kept row is training-only.
-    Equal licenses keep the earliest row.
+    stricter one: CC BY-NC and DF20 beat CC BY, and CC BY beats CC0 so the
+    attribution stays. Equal licenses keep the earliest row.
     """
     labels_by_key: dict[tuple[str, str], set[str]] = {}
     for row in rows:
@@ -956,6 +1015,7 @@ def import_directory(
     rows: list[dict] = []
     rejected = Counter()
     unmapped: Counter[str] = Counter()
+    poisoned: set[str] = set()
     order = 0
     files_read = 0
     for path in sorted(photos, key=_file_sort_key):
@@ -982,11 +1042,22 @@ def import_directory(
                 )
             if row is None:
                 rejected[reason] += 1
+                if reason in _LICENSE_POISON_REASONS:
+                    poisoned.update(_photo_keys_from_raw(raw))
                 if reason == "unmapped":
                     unmapped[_cell(raw, "species") or _cell(raw, "df20_name_used") or "(blank)"] += 1
                 continue
             rows.append(row)
     rows_read = order
+    tainted = 0
+    if poisoned:
+        kept_rows: list[dict] = []
+        for row in rows:
+            if poisoned.intersection(_stable_photo_keys(row)):
+                tainted += 1
+                continue
+            kept_rows.append(row)
+        rows = kept_rows
     rows, duplicate_dropped, looser_dropped, conflict_dropped, label_conflicts = dedupe_rows(rows)
     # publishable_only runs before the cap so a CC BY-NC photo does not
     # consume a collector's slot that a CC BY photo of the same person needs.
@@ -1011,6 +1082,7 @@ def import_directory(
         "unmapped_species": dict(sorted(unmapped.items())),
         "dropped_duplicate": duplicate_dropped,
         "dropped_looser_license": looser_dropped,
+        "dropped_rejected_license_copy": tainted,
         "dropped_label_conflict": conflict_dropped,
         "duplicate_class_conflicts": len(label_conflicts),
         "label_conflicts": label_conflicts,
@@ -1022,6 +1094,7 @@ def import_directory(
         "dropped_by_reason": {
             "duplicate": duplicate_dropped,
             "looser_license": looser_dropped,
+            "rejected_license_copy": tainted,
             "label_conflict": conflict_dropped,
             "collector_cap": len(cap_dropped),
             "publishable_only": int(rejected["publishable_only"]),
