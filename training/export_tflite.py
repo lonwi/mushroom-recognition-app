@@ -32,6 +32,7 @@ from evaluate import (
 )
 from import_external import published_rows
 from manifest import LABELS_PATH, ROOT, load_manifest
+from publication import DF20_DETECTION_FIELDS, DF20_NORMALIZED_LICENSE_FIELD
 from recognition_math import HIGH_STAKES_IDS
 from ship_gates import TFLITE_AGREEMENT_MIN, assess_shippable, blank_delegate_release, fetch_report_file, sha256_file
 
@@ -61,7 +62,7 @@ def attribution_row(row: dict) -> dict:
         "class_id": row.get("class_id") or "",
         "creator": row.get("creator") or "",
         "license": row.get("license") or "",
-        "license_normalized": row.get("license_normalized") or "",
+        DF20_NORMALIZED_LICENSE_FIELD: row.get(DF20_NORMALIZED_LICENSE_FIELD) or "",
         "image_url": row.get("image_url") or "",
         "source_url": source,
         "gbif_occurrence": row.get("gbif_occurrence") or "",
@@ -74,6 +75,14 @@ def attribution_row(row: dict) -> dict:
         slim["usage"] = usage
     if row.get("unverified") is True:
         slim["unverified"] = True
+    # Same tuple is_df20_row reads. Dropping one lets a marker-only DF20 row ship.
+    for field in DF20_DETECTION_FIELDS:
+        if field in slim or field not in row:
+            continue
+        value = row[field]
+        if value is None or value == "":
+            continue
+        slim[field] = value
     return slim
 
 
@@ -86,10 +95,13 @@ def write_attribution_file(rows: list[dict], path: Path) -> None:
     is not rebuilt from the licence id, so a CC BY 2.0 row keeps its own
     deed, and so do CC BY-NC and CC BY-SA. A DF20 line is the dataset row:
     author and ``df20``. It has no per-photo licence URL, so the copied
-    field is empty. CC BY-NC and CC BY-SA may train a released model and do
-    not block the ship gate. DF20 is written only when the run opted in for
-    an experiment. Any DF20 row keeps ``shippable`` false, and
-    ``DF20_CONSENT_CONFIRMED`` cannot clear that. The gallery check is
+    field is empty. The line also keeps every set field in
+    ``DF20_DETECTION_FIELDS`` (``source``, the normalised id, and the DF20
+    markers). The release gate reads this file, so a marker-only DF20 row
+    still leaves ``shippable`` false. CC BY-NC and CC BY-SA may train a
+    released model and do not block the ship gate. DF20 is written only when
+    the run opted in for an experiment. Any DF20 row keeps ``shippable``
+    false, and ``DF20_CONSENT_CONFIRMED`` cannot clear that. The gallery check is
     separate and still shows only CC0 and CC BY. An image or source URL that
     is not https is refused. Counts by licence and source are written beside
     this file as ``license_breakdown.json``.

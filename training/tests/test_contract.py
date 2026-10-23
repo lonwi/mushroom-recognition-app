@@ -697,6 +697,134 @@ class ManifestAndShipGateTest(unittest.TestCase):
             self.assertFalse(ok)
             self.assertTrue(any("experimental" in reason for reason in reasons), reasons)
 
+    def test_attribution_row_preserves_every_field_is_df20_row_reads(self):
+        """Export and the DF20 check share one field tuple, so a new marker cannot be dropped."""
+        import ast
+        import textwrap
+
+        from component_share import is_df20_row
+        from export_tflite import attribution_row
+        from publication import (
+            DF20_DATASET_FIELDS,
+            DF20_DETECTION_FIELDS,
+            DF20_NORMALIZED_LICENSE_FIELD,
+            DF20_NOTE_FIELDS,
+            DF20_PRESENT_FIELDS,
+            DF20_SOURCE_FIELD,
+            _df20_marker,
+        )
+
+        def body_nodes(func):
+            source = textwrap.dedent(inspect.getsource(func))
+            func_def = ast.parse(source).body[0]
+            body = func_def.body
+            if (
+                body
+                and isinstance(body[0], ast.Expr)
+                and isinstance(body[0].value, ast.Constant)
+                and isinstance(body[0].value.value, str)
+            ):
+                body = body[1:]
+            return body
+
+        def code_strings(func) -> set[str]:
+            found = set()
+            for node in body_nodes(func):
+                for child in ast.walk(node):
+                    if isinstance(child, ast.Constant) and isinstance(child.value, str):
+                        found.add(child.value)
+            return found
+
+        def code_names(func) -> set[str]:
+            found = set()
+            for node in body_nodes(func):
+                for child in ast.walk(node):
+                    if isinstance(child, ast.Name):
+                        found.add(child.id)
+            return found
+
+        self.assertEqual(
+            DF20_DETECTION_FIELDS,
+            (
+                *DF20_PRESENT_FIELDS,
+                *DF20_NOTE_FIELDS,
+                *DF20_DATASET_FIELDS,
+                DF20_NORMALIZED_LICENSE_FIELD,
+            ),
+        )
+        self.assertEqual(len(DF20_DETECTION_FIELDS), len(set(DF20_DETECTION_FIELDS)))
+        self.assertIn(DF20_SOURCE_FIELD, DF20_DATASET_FIELDS)
+        self.assertEqual(code_strings(is_df20_row), {"", "df20"})
+        self.assertEqual(code_strings(_df20_marker), {"df20"})
+        self.assertEqual(
+            code_names(is_df20_row),
+            {
+                "isinstance",
+                "row",
+                "dict",
+                "source",
+                "DF20_SOURCE_FIELD",
+                "str",
+                "normalized",
+                "DF20_NORMALIZED_LICENSE_FIELD",
+                "_df20_marker",
+            },
+        )
+        self.assertEqual(
+            code_names(_df20_marker),
+            {
+                "any",
+                "row",
+                "field",
+                "DF20_PRESENT_FIELDS",
+                "value",
+                "DF20_NOTE_FIELDS",
+                "isinstance",
+                "str",
+                "DF20_DATASET_FIELDS",
+                "_DF20_DATASETS",
+            },
+        )
+        export_source = inspect.getsource(attribution_row)
+        self.assertIn("DF20_DETECTION_FIELDS", export_source)
+        for field in DF20_DETECTION_FIELDS:
+            self.assertNotIn(f'"{field}"', export_source)
+            self.assertNotIn(f"'{field}'", export_source)
+
+        def marker_value(field: str) -> str:
+            if field in DF20_PRESENT_FIELDS:
+                return "2237858559-1"
+            if field in DF20_NOTE_FIELDS:
+                return "DF20 training-only; no per-image licence"
+            if field == DF20_SOURCE_FIELD:
+                return "df20"
+            if field in DF20_DATASET_FIELDS:
+                return "Danish Fungi 2020"
+            if field == DF20_NORMALIZED_LICENSE_FIELD:
+                return "df20"
+            raise AssertionError(field)
+
+        base = {
+            "creator": "Ada",
+            "license": "CC BY 4.0",
+            "license_normalized": "cc-by-4.0",
+            "license_url": "https://creativecommons.org/licenses/by/4.0/",
+            "image_url": "https://example.test/a.jpg",
+            "source_url": "https://example.test/a",
+            "file": "images/a.jpg",
+            "class_id": "boletus_edulis",
+        }
+        self.assertFalse(is_df20_row(base))
+        self.assertFalse(is_df20_row(attribution_row(base)))
+        for field in DF20_DETECTION_FIELDS:
+            row = dict(base)
+            value = marker_value(field)
+            row[field] = value
+            self.assertTrue(is_df20_row(row), field)
+            exported = attribution_row(row)
+            self.assertEqual(exported.get(field), value, field)
+            self.assertTrue(is_df20_row(exported), field)
+
     def test_missing_component_share_blockers_key_blocks_shipping(self):
         with tempfile.TemporaryDirectory() as tmp:
             artifact_dir = Path(tmp)
