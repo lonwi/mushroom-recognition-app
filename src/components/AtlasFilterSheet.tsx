@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ATLAS_PANEL_GROUPS } from '../data/atlasFilterModel';
 import { AtlasFilterChipList } from './AtlasFilterChip';
+import { RingFilterHint } from './SulphurHoneyComparison';
 import { useLanguage } from '../contexts/LanguageContext';
 import { colors, spacing } from '../theme/tokens';
 
@@ -82,6 +83,7 @@ export const AtlasFilterSheet: React.FC<Props> = ({
                 <View style={styles.chips}>
                   <AtlasFilterChipList chips={group.chips} chipIds={chipIds} onToggle={onToggle} />
                 </View>
+                {group.id === 'ring' ? <RingFilterHint /> : null}
               </View>
             ))}
           </ScrollView>

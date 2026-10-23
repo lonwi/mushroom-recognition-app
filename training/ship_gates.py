@@ -130,6 +130,30 @@ def _attribution_file_reasons(directory: Path, coverage: dict) -> list[str]:
     return reasons
 
 
+def _df20_release_reasons(directory: Path) -> list[str]:
+    """DF20 may train an experiment. It is never part of a released model.
+
+    Any DF20 attribution row sets ``shippable`` false. ``DF20_CONSENT_CONFIRMED``
+    stays false as documentation of the pending Svampeatlas consent and does
+    not unlock this gate. A missing or unreadable attribution file also blocks:
+    this check does not assume the file is free of DF20.
+    """
+    from component_share import is_df20_row
+
+    path = directory / "attributions.jsonl"
+    if not path.is_file():
+        return ["attribution file is missing, so a DF20 photo cannot be ruled out"]
+    try:
+        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    except json.JSONDecodeError:
+        return ["attribution file is not valid jsonl, so a DF20 photo cannot be ruled out"]
+    if any(is_df20_row(row) for row in rows):
+        return [
+            "DF20 photos are experimental training only and are never part of a released model"
+        ]
+    return []
+
+
 def fetch_report_file(directory: Path | None = None) -> Path | None:
     """The fetch report whose hash the ship gate checks.
 
@@ -396,6 +420,7 @@ def assess_shippable(report: dict, artifact_dir: Path | None = None) -> tuple[bo
     if not report.get("attributions_complete"):
         reasons.append("per-image attribution file is incomplete")
     reasons.extend(_attribution_file_reasons(directory, coverage))
+    reasons.extend(_df20_release_reasons(directory))
 
     recorded = report.get("artifacts") or {}
     keras_hash = recorded.get("model_keras_sha256")

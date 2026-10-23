@@ -32,6 +32,7 @@ from evaluate import (
 )
 from import_external import published_rows
 from manifest import LABELS_PATH, ROOT, load_manifest
+from publication import DF20_DETECTION_FIELDS, DF20_NORMALIZED_LICENSE_FIELD
 from recognition_math import HIGH_STAKES_IDS
 from ship_gates import TFLITE_AGREEMENT_MIN, assess_shippable, blank_delegate_release, fetch_report_file, sha256_file
 
@@ -61,26 +62,49 @@ def attribution_row(row: dict) -> dict:
         "class_id": row.get("class_id") or "",
         "creator": row.get("creator") or "",
         "license": row.get("license") or "",
-        "license_normalized": row.get("license_normalized") or "",
+        DF20_NORMALIZED_LICENSE_FIELD: row.get(DF20_NORMALIZED_LICENSE_FIELD) or "",
         "image_url": row.get("image_url") or "",
         "source_url": source,
         "gbif_occurrence": row.get("gbif_occurrence") or "",
         "taxon_name": row.get("taxon_name") or "",
     }
+    raw_url = row.get("license_url")
+    slim["license_url"] = raw_url.strip() if isinstance(raw_url, str) else ""
     usage = row.get("usage")
     if isinstance(usage, str) and usage:
         slim["usage"] = usage
     if row.get("unverified") is True:
         slim["unverified"] = True
+    # Same tuple is_df20_row reads. Dropping one lets a marker-only DF20 row ship.
+    for field in DF20_DETECTION_FIELDS:
+        if field in slim or field not in row:
+            continue
+        value = row[field]
+        if value is None or value == "":
+            continue
+        slim[field] = value
     return slim
 
 
 def write_attribution_file(rows: list[dict], path: Path) -> None:
     """One JSON line per image: author, license, and source URL.
 
-    Every train, val, and test row is written, including ``training_only``.
-    The attribution gate reads this file and still blocks a release model
-    that contains those rows. An image or source URL that is not https is refused.
+    Every train, val, and test row is written, including CC BY-NC, CC BY-SA,
+    and DF20. Each line keeps the author (``creator``), the licence text,
+    ``license_normalized``, and ``license_url`` copied from that row. The URL
+    is not rebuilt from the licence id, so a CC BY 2.0 row keeps its own
+    deed, and so do CC BY-NC and CC BY-SA. A DF20 line is the dataset row:
+    author and ``df20``. It has no per-photo licence URL, so the copied
+    field is empty. The line also keeps every set field in
+    ``DF20_DETECTION_FIELDS`` (``source``, the normalised id, and the DF20
+    markers). The release gate reads this file, so a marker-only DF20 row
+    still leaves ``shippable`` false. CC BY-NC and CC BY-SA may train a
+    released model and do not block the ship gate. DF20 is written only when
+    the run opted in for an experiment. Any DF20 row keeps ``shippable``
+    false, and ``DF20_CONSENT_CONFIRMED`` cannot clear that. The gallery check is
+    separate and still shows only CC0 and CC BY. An image or source URL that
+    is not https is refused. Counts by licence and source are written beside
+    this file as ``license_breakdown.json``.
     """
     for row in rows:
         for field in ("image_url", "source_url"):
@@ -91,6 +115,13 @@ def write_attribution_file(rows: list[dict], path: Path) -> None:
     with path.open("w", encoding="utf-8") as handle:
         for row in rows:
             handle.write(json.dumps(attribution_row(row), ensure_ascii=False) + "\n")
+    from license_policy import license_breakdown
+
+    summary = {"train_val_test": license_breakdown(rows)}
+    path.with_name("license_breakdown.json").write_text(
+        json.dumps(summary, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
 
 
 def calibration_rows(splits: dict) -> list[dict]:
@@ -111,7 +142,7 @@ def calibration_rows(splits: dict) -> list[dict]:
 def attribution_rows_for_publication(rows: list[dict]) -> list[dict]:
     """Credits for the atlas gallery, ``site/``, and comparison photos.
 
-    CC BY-NC and DF20 are omitted. This is not the ship-gate file.
+    CC BY-NC, CC BY-SA, and DF20 are omitted. This is not the ship-gate file.
     """
     return [attribution_row(row) for row in published_rows(rows)]
 
@@ -466,12 +497,20 @@ def install_calibrated_model(payload: bytes, quantization: str, metrics: dict) -
         "Packaged by training/export_tflite.py after the ship gates passed. "
         "The scanner must still refuse an edibility verdict. "
         "unknown_mushroom is not a species and not an edibility verdict. "
-        "Per-image CC0/CC-BY attribution is assets/models/attributions.jsonl."
+        "Per-image attribution is assets/models/attributions.jsonl. "
+        "Licence counts are assets/models/license_breakdown.json. "
+        "Photos shown in the app stay CC0 or CC BY."
     )
+    breakdown = metrics.get("license_breakdown")
+    if isinstance(breakdown, dict):
+        manifest["license_breakdown"] = breakdown
     MODEL_DEST.write_bytes(payload)
     # Credits stay in the jsonl asset. Do not rewrite attributionPackage.ts:
     # that module loads the jsonl and inlining the rows deletes the loader.
     shutil.copyfile(ARTIFACTS / "attributions.jsonl", ATTRIBUTION_DEST)
+    breakdown_path = ARTIFACTS / "license_breakdown.json"
+    if breakdown_path.is_file():
+        shutil.copyfile(breakdown_path, ATTRIBUTION_DEST.with_name("license_breakdown.json"))
     LABELS_PATH.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     write_packaged_module(True)
 

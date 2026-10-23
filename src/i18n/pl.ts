@@ -20,7 +20,7 @@ export const pl = {
     offlineNotice: 'Model i baza danych działają w 100% offline bez połączenia z siecią.',
     dataLicenseTitle: 'Licencje zdjęć zbioru',
     dataLicenseBody:
-      'Model, jeśli zostanie dołączony, wolno trenować tylko na zdjęciach CC0 albo CC-BY (bez NC i SA). Lista obejmuje zdjęcia treningowe, testowe i sondy oceniające. Przy każdym zapisujemy autora, licencję i adres źródła. Eksport zapisuje je obok modelu w assets/models/attributions.jsonl.',
+      'Model wydany wolno trenować na zdjęciach CC0, CC BY, CC BY-NC i wersjonowanych CC BY-SA. Share-alike nie obejmuje wag modelu. Zdjęcia pokazywane w aplikacji zostają CC0 albo CC BY. Lista obejmuje zdjęcia treningowe, testowe i sondy oceniające. Przy każdym zapisujemy autora, licencję i adres źródła. Eksport zapisuje je obok modelu w assets/models/attributions.jsonl.',
     photoCreditsOpen: 'Autorzy zdjęć zbioru',
     photoCreditsLoading: 'Wczytywanie listy autorów…',
     photoCreditsLead:
@@ -279,6 +279,96 @@ export const pl = {
       gillsCortina: 'Blaszki i zasnówka od spodu',
       young: 'Młody owocnik',
       undersideStem: 'Spód wraz z trzonem',
+    },
+  },
+  comparison: {
+    sulphurHoney: {
+      title: 'Maślanka wiązkowa, opieńka i hełmówka jadowita',
+      lead: 'Maślanka wiązkowa nie ma błoniastego pierścienia. Zostaje najwyżej słaba strefa włókien, przyciemniona zarodnikami, albo resztki na brzegu kapelusza. Opieńka miodowa zwykle ma wyraźny, błoniasty pierścień. Hełmówka jadowita też może mieć cienki, nietrwały pierścień, więc sam pierścień nie odróżnia jej od opieńki.',
+      limit: 'Zdjęcia nie pozwalają wykluczyć gatunku trującego. Ocena owocnika należy do grzyboznawcy.',
+      scope: 'Zdjęcia opieńki pokazują Armillaria mellea. Karta w atlasie obejmuje też inne opieńki.',
+      galerinaHeading: 'Hełmówka jadowita (Galerina marginata) – śmiertelnie trująca',
+      warning:
+        'Zawiera amatoksyny. Żadna pojedyncza cecha, w tym pierścień, nie potwierdza opieńki.',
+      chipHint:
+        'Strefę włókien zasnówki łatwo wziąć za pierścień, dlatego przy „Jest pierścień” maślanka wiązkowa zostaje wśród kart do sprawdzenia.',
+      hypholoma: 'Maślanka wiązkowa',
+      armillaria: 'Opieńka miodowa',
+      hypholomaLatin: 'Hypholoma fasciculare',
+      armillariaLatin: 'Armillaria mellea',
+      sources: 'Źródła',
+      noPhoto: 'Brak zdjęcia tej cechy.',
+      traits: {
+        ring: {
+          title: 'Zasnówka i pierścień',
+          hypholoma:
+            'Młode owocniki mają żółtą, pajęczynowatą zasnówkę. Później na trzonie zostaje nieregularna, ciemna od zarodników strefa włókien, a u części okazów tylko resztki na brzegu kapelusza.',
+          armillaria: 'Pierścień jest cienki, błoniasty i zwykle trwały: biały, często z żółtawym brzegiem.',
+          galerina:
+            'Pierścień bywa cienki i błoniasty albo tylko włóknista strefa. Często jest białawy i rdzawo przyprószony zarodnikami, a z wiekiem może zniknąć.',
+        },
+        gills: {
+          title: 'Blaszki',
+          hypholoma:
+            'Blaszki są najpierw siarkowożółte, potem oliwkowozielone, a w miarę dojrzewania zarodników ciemnieją.',
+          armillaria: 'Blaszki są białawe do kremowych, przyrośnięte albo lekko zbiegające po trzonie.',
+          galerina:
+            'Blaszki są przyrośnięte albo lekko zbiegające. Zaczynają jako żółtawe do kremowo-ochrowych, a później stają się rdzawobrązowe.',
+        },
+        spore: {
+          title: 'Wysyp zarodników',
+          hypholoma: 'Wysyp jest purpurowobrązowy.',
+          armillaria: 'Wysyp jest biały do bladokremowego.',
+          galerina:
+            'Wysyp jest rdzawobrązowy. Bez porównania łatwo pomylić go z purpurowobrązowym wysypem maślanki. Biały wysyp wskazuje opieńkę.',
+        },
+        cap: {
+          title: 'Powierzchnia kapelusza',
+          hypholoma: 'Kapelusz jest gładki.',
+          armillaria:
+            'Na kapeluszu są drobne łuseczki, najwyraźniej pośrodku. U starszych owocników łuseczki bywają słabiej widoczne.',
+          galerina:
+            'Kapelusz jest gładki, a wilgotny bywa lepki. Barwa od miodowożółtej do cynamonowej i rudobrązowej. Przy wysychaniu blednie, więc wygląda dwubarwnie. Brzeg czasem jest delikatnie prążkowany.',
+        },
+        stem: {
+          title: 'Trzon poniżej pierścienia',
+          hypholoma: 'Trzon jest żółty do płowego i od podstawy w górę przebarwia się rdzawobrązowo.',
+          armillaria:
+            'Trzon jest grubszy i dość twardy. U młodych owocników bywa kłaczkowaty od resztek osłony, a ku dołowi szarawy do brązowawego.',
+          galerina:
+            'Trzon jest cienki i często wygięty. Poniżej pierścienia jest podłużnie włóknisty, z białawymi włókienkami, i ciemnieje od podstawy w górę.',
+        },
+        flesh: {
+          title: 'Miąższ',
+          hypholoma: 'Miąższ jest siarkowożółty.',
+          armillaria: 'Miąższ jest białawy.',
+        },
+        wood: {
+          title: 'Drewno i wzrost',
+          hypholoma:
+            'Saprotrof w kępkach na pniakach i kłodach. Może wyrastać z zagrzebanych korzeni, pozornie z ziemi.',
+          armillaria:
+            'Pasożyt i saprotrof na drewnie, głównie liściastym, często w dużych kępach. Pod korą bywają czarne ryzomorfy.',
+          galerina:
+            'Saprotrof na butwiejącym drewnie iglastym i liściastym, zwykle w kępkach. Samo drewno i kępka nie odróżniają jej od opieńki.',
+        },
+      },
+      captions: {
+        hypholomaStem: 'Górna część trzonu z nieregularnymi, rdzawymi włóknami zasnówki.',
+        hypholomaGills: 'Zielonkawożółte blaszki i ciemne włókna na trzonie.',
+        hypholomaYoung: 'Młode owocniki z pajęczynowatymi resztkami zasnówki przy brzegu kapelusza.',
+        hypholomaMargin: 'Ciemne resztki osłony na brzegu kapelusza.',
+        hypholomaFlesh: 'Żółty miąższ na przekroju.',
+        armillariaRing: 'Błoniasty, biały pierścień z żółtawą krawędzią.',
+        armillariaStems: 'Dwa owocniki z odstającym pierścieniem na trzonie.',
+        armillariaGills: 'Białawy pierścień i kremowe blaszki.',
+        armillariaCap: 'Kapelusz z drobnymi, sterczącymi łuseczkami.',
+        galerinaClump: 'Kępa na próchniejącym drewnie, jak u opieńki.',
+        galerinaRing: 'Cienki, nietrwały pierścień; blaszki żółtawe do rdzawobrązowych.',
+        galerinaZone: 'Strefa pierścienia często z rdzawym nalotem zarodników.',
+        galerinaCap: 'Gładki kapelusz, wyraźnie jaśniejący przy wysychaniu.',
+        galerinaSpore: 'Rdzawobrązowy wysyp zarodników hełmówki jadowitej (Galerina marginata).',
+      },
     },
   },
   scanner: {

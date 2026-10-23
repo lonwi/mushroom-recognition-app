@@ -12,7 +12,12 @@ source_url stay out of test. A match that still lands in test stops the run.
 
 Reads ``attributions.jsonl``. ``external.jsonl`` is read only with
 ``--with-external``. Unverified rows are skipped. ``--publishable-only``
-also skips ``usage=training_only`` (CC BY-NC and Danish Fungi 2020). The split
+also skips ``usage=training_only`` (CC BY-NC, CC BY-SA, and Danish Fungi 2020).
+Without that flag CC BY-NC and CC BY-SA stay in the training set. Danish
+Fungi 2020 stays out unless ``--include-df20`` is also set; those rows are
+counted as ``excluded_df20``. Those rows are experimental training only:
+any DF20 row keeps ``shippable`` false, and ``DF20_CONSENT_CONFIRMED``
+cannot clear that. The split
 salt is ``GRZYBOBRANIE_SPLIT_SALT`` or a file outside the repo. Corrupt files
 are skipped. The cached PNG is EXIF-oriented and area-resized to the
 model input, which is what the phone feeds the network. An unacknowledged
@@ -146,25 +151,51 @@ def _attribution_sources(data_dir: Path | None = None, *, with_external: bool = 
     return sources
 
 
-def _usable_records(sources: list[Path], *, publishable_only: bool = False) -> tuple[list[dict], list[dict]]:
+def _usable_records(
+    sources: list[Path],
+    *,
+    publishable_only: bool = False,
+    include_df20: bool = False,
+) -> tuple[list[dict], list[dict]]:
     """Decode every downloaded photo. Skip corrupt files instead of aborting.
 
     Unverified external rows never enter the set. ``publishable_only`` also
-    drops ``usage=training_only`` (CC BY-NC and Danish Fungi 2020).
+    drops ``usage=training_only`` (CC BY-NC, CC BY-SA, and Danish Fungi 2020).
+    Without that flag ``--with-external`` keeps CC BY-NC and CC BY-SA.
+    DF20 is kept only with ``include_df20`` (``--include-df20``). Otherwise
+    each DF20 row is skipped and counted as ``df20_opt_out``.
     """
     records = []
     skipped = []
     for source in sources:
-        skipped.extend(_usable_records_one(source, records, publishable_only=publishable_only))
+        skipped.extend(
+            _usable_records_one(
+                source,
+                records,
+                publishable_only=publishable_only,
+                include_df20=include_df20,
+            )
+        )
     return records, skipped
 
 
-def _usable_records_one(source: Path, records: list[dict], *, publishable_only: bool) -> list[dict]:
+def _usable_records_one(
+    source: Path,
+    records: list[dict],
+    *,
+    publishable_only: bool,
+    include_df20: bool = False,
+) -> list[dict]:
+    from component_share import is_df20_row
+
     skipped = []
     for line in source.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
         row = json.loads(line)
+        if not include_df20 and is_df20_row(row):
+            skipped.append({**row, "skip_reason": "df20_opt_out"})
+            continue
         if not training_eligible(row, publishable_only=publishable_only):
             if row.get("downloaded"):
                 reason = "unverified" if row.get("unverified") is True else "training_only"
@@ -233,7 +264,16 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument(
         "--publishable-only",
         action="store_true",
-        help="Drop usage=training_only rows (CC BY-NC and DF20) before dedup and split.",
+        help="Drop usage=training_only rows (CC BY-NC, CC BY-SA, and DF20) before dedup and split.",
+    )
+    parser.add_argument(
+        "--include-df20",
+        action="store_true",
+        help=(
+            "With --with-external, keep Danish Fungi 2020 rows. The default excludes "
+            "them and counts excluded_df20. CC BY-NC and CC BY-SA are unaffected. "
+            "DF20 is experimental only: any such row keeps shippable false."
+        ),
     )
     parser.add_argument(
         "--gallery-csv",
@@ -267,7 +307,11 @@ def main(argv: list[str] | None = None) -> None:
         )
     manifest = load_manifest()
     size = int(manifest["input"]["size"])
-    records, skipped = _usable_records(sources, publishable_only=args.publishable_only)
+    records, skipped = _usable_records(
+        sources,
+        publishable_only=args.publishable_only,
+        include_df20=args.include_df20,
+    )
     records, identity_dropped = dedup_by_identity(records)
     kept, dropped = dedup_records(records)
     prepared, prepare_skipped = _cache_model_pngs(kept, size)
@@ -353,9 +397,15 @@ def write_prepare_outputs(
                 "hash": "dhash_or_phash_threshold_2",
                 "identity_dropped": len(identity_dropped),
                 "identity_dropped_reasons": identity_reasons,
+                "dropped_looser_license": sum(
+                    1 for row in identity_dropped if row.get("drop_reason") == "looser_license"
+                ),
                 "class_conflicts": class_conflicts,
                 "held_out_withheld": len(withheld),
                 "skipped_corrupt_or_unreadable": len(skipped),
+                "excluded_df20": sum(
+                    1 for row in skipped if isinstance(row, dict) and row.get("skip_reason") == "df20_opt_out"
+                ),
                 "model_png_size": model_png_size,
             },
             indent=2,
