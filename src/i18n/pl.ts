@@ -317,10 +317,10 @@ export const pl = {
         },
         spore: {
           title: 'Wysyp zarodników',
-          hypholoma: 'Wysyp jest fioletowobrązowy.',
+          hypholoma: 'Wysyp jest purpurowobrązowy.',
           armillaria: 'Wysyp jest biały do bladokremowego.',
           galerina:
-            'Wysyp jest rdzawobrązowy. Bez porównania łatwo pomylić go z fioletowobrązowym wysypem maślanki. Biały wysyp wskazuje opieńkę.',
+            'Wysyp jest rdzawobrązowy. Bez porównania łatwo pomylić go z purpurowobrązowym wysypem maślanki. Biały wysyp wskazuje opieńkę.',
         },
         cap: {
           title: 'Powierzchnia kapelusza',

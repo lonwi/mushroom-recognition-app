@@ -318,10 +318,10 @@ export const en: Translations = {
         },
         spore: {
           title: 'Spore print',
-          hypholoma: 'The spore print is violet-brown.',
+          hypholoma: 'The spore print is purple-brown.',
           armillaria: 'The spore print is white to pale cream.',
           galerina:
-            'The spore print is rusty brown. Without a comparison it is easy to mix up with the violet-brown print of sulphur tuft. A white print points to honey fungus.',
+            'The spore print is rusty brown. Without a comparison it is easy to mix up with the purple-brown print of sulphur tuft. A white print points to honey fungus.',
         },
         cap: {
           title: 'Cap surface',

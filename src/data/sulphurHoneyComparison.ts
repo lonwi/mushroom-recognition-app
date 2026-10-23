@@ -382,7 +382,7 @@ export const COMPARISON_TRAITS: readonly ComparisonTrait[] = [
       // MushroomExpert compares that print with Galerina there.
       hypholoma: [FN_HYPH, ME_HYPH, ME_GAL],
       armillaria: [FN_ARM, ME_ARM],
-      galerina: [ME_GAL, FN_GAL],
+      galerina: [ME_GAL, FN_GAL, ME_ARM],
     },
     photoIds: { hypholoma: [], armillaria: [], galerina: [] },
   },

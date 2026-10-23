@@ -177,6 +177,43 @@ describe('sulphur tuft and honey fungus comparison', () => {
     expect(fleshSide.queryByText(/nie opisuje/i)).toBeNull();
   });
 
+  it('pins purple-brown spore strings and keeps violet-brown out of the comparison', async () => {
+    const sporePl = {
+      hypholoma: 'Wysyp jest purpurowobrązowy.',
+      galerina:
+        'Wysyp jest rdzawobrązowy. Bez porównania łatwo pomylić go z purpurowobrązowym wysypem maślanki. Biały wysyp wskazuje opieńkę.',
+    };
+    const sporeEn = {
+      hypholoma: 'The spore print is purple-brown.',
+      galerina:
+        'The spore print is rusty brown. Without a comparison it is easy to mix up with the purple-brown print of sulphur tuft. A white print points to honey fungus.',
+    };
+    expect(pl.comparison.sulphurHoney.traits.spore.hypholoma).toBe(sporePl.hypholoma);
+    expect(pl.comparison.sulphurHoney.traits.spore.galerina).toBe(sporePl.galerina);
+    expect(en.comparison.sulphurHoney.traits.spore.hypholoma).toBe(sporeEn.hypholoma);
+    expect(en.comparison.sulphurHoney.traits.spore.galerina).toBe(sporeEn.galerina);
+    const spore = COMPARISON_TRAITS.find((trait) => trait.id === 'spore');
+    expect(spore?.sources.galerina).toEqual([
+      'https://www.mushroomexpert.com/galerina_marginata.html',
+      'https://www.first-nature.com/fungi/galerina-marginata.php',
+      'https://www.mushroomexpert.com/armillaria_mellea.html',
+    ]);
+    const comparisonCopy = JSON.stringify(pl.comparison) + JSON.stringify(en.comparison);
+    expect(comparisonCopy).not.toMatch(/fioletowobrąz/i);
+    expect(comparisonCopy).not.toMatch(/violet-brown/i);
+
+    const screen = await render(
+      <LanguageProvider>
+        <SulphurHoneyComparison />
+      </LanguageProvider>,
+    );
+    const comparison = within(screen.getByTestId('sulphur-honey-comparison'));
+    expect(comparison.getByText(sporePl.hypholoma)).toBeTruthy();
+    expect(comparison.getByText(sporePl.galerina)).toBeTruthy();
+    expect(comparison.queryByText(/fioletowobrąz/i)).toBeNull();
+    expect(comparison.queryByText(/violet-brown/i)).toBeNull();
+  });
+
   it('shows photo pairs, credits and the expert limit, with no taste wording', async () => {
     const copy = JSON.stringify(pl.comparison) + JSON.stringify(en.comparison);
     expect(copy).not.toMatch(TASTE);
