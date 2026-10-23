@@ -74,9 +74,9 @@ Stan na 2026-10-23.
 
 | Nr | Wpis | Status |
 |---|---|---|
-| 0001 | [Udział jednego zbieracza w klasie (20% czy 50%)](0001-udzial-zbieracza.md) | Oczekuje na decyzję (0.50 wstrzymane 12:14) |
+| 0001 | [Udział jednego zbieracza w klasie (20% czy 50%)](0001-udzial-zbieracza.md) | Oczekuje na decyzję (limit 0.20; #76 wstrzymany; liczby 14:17) |
 | 0002 | [https `license_url`, surowsza licencja duplikatu i trening](0002-license-url-trening.md) | Wdrożona (trening w toku) |
-| 0003 | [Ostrzeżenie o hełmówce w porównaniu maślanki i opieńki](0003-ostrzezenie-helmowki.md) | Podjęta (wdrożenie w toku) |
+| 0003 | [Ostrzeżenie o hełmówce w porównaniu maślanki i opieńki](0003-ostrzezenie-helmowki.md) | Podjęta (wdrożenie w toku; teksty 14:15; #71 czeka na wysyp) |
 | 0004 | [Dopuszczalne licencje zdjęć w treningu, w tym CC BY-SA](0004-licencje-zdjec.md) | Podjęta (wdrożenie w toku) |
 | 0005 | [Prototyp UI](0005-prototyp-ui.md) | Oczekuje na decyzję |
 | 0006 | [GitHub Pages: źródło GitHub Actions](0006-github-pages.md) | Wdrożona |
