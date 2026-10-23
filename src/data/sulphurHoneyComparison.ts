@@ -19,9 +19,12 @@ const HYPH_LATIN = 'Hypholoma fasciculare';
 const ARM_LATIN = 'Armillaria mellea';
 const CC_BY = 'CC BY 4.0';
 const CC0 = 'CC0';
-/** GBIF media[].license for the four CC BY files, checked 2026-10-23. */
+/** GBIF media[].license for the CC BY files, checked 2026-10-23. */
 const DEED_BY_40 = 'https://creativecommons.org/licenses/by/4.0/';
 const DEED_CC0 = 'https://creativecommons.org/publicdomain/zero/1.0/';
+/** Not shown. Commons verified CC0 before the authors changed the licence. */
+const COMMONS_CC0_NOTE =
+  'Commons listed this file as CC0 before the author changed the licence to CC BY 4.0 on iNaturalist and GBIF.';
 
 export type ComparisonSideId = 'hypholoma' | 'armillaria';
 type ComparisonTraitId = 'ring' | 'gills' | 'spore' | 'cap' | 'flesh';
@@ -48,6 +51,8 @@ export interface ComparisonPhoto {
    * Training exclusion reads this so the photo id is still matched.
    */
   inaturalistPhotoUrl?: string;
+  /** Earlier Commons CC0 record. Stored with the credit and not shown as the licence. */
+  sourceNote?: string;
   captionKey: string;
 }
 
@@ -69,6 +74,7 @@ interface ComparisonCredit {
   classId: string;
   taxonName: string;
   modified: true;
+  sourceNote?: string;
 }
 
 const SIDE_HYPH: ComparisonSideId = 'hypholoma';
@@ -87,6 +93,7 @@ function photo(
   captionKey: string,
   inaturalistObservationId: string,
   inaturalistPhotoUrl?: string,
+  sourceNote?: string,
 ): ComparisonPhoto {
   const assetPath = `assets/gallery/porownanie/${fileName}`;
   return {
@@ -102,6 +109,7 @@ function photo(
     imageUrl,
     inaturalistObservationId,
     inaturalistPhotoUrl,
+    sourceNote,
     captionKey,
   };
 }
@@ -179,14 +187,15 @@ export const COMPARISON_PHOTOS: readonly ComparisonPhoto[] = [
     SULPHUR_TUFT_ID,
     HYPH_LATIN,
     'hypholoma-brzeg-kapelusza.webp',
-    'sugarsnap_t (via iNaturalist photo 313452639)',
-    CC0,
-    DEED_CC0,
+    'sugarsnap_t',
+    CC_BY,
+    DEED_BY_40,
     'https://commons.wikimedia.org/wiki/File:Hypholoma_fasciculare_313452639.jpg',
     'https://upload.wikimedia.org/wikipedia/commons/f/f5/Hypholoma_fasciculare_313452639.jpg',
     `${CAPTION}.hypholomaMargin`,
     '179992253',
     'https://www.inaturalist.org/photos/313452639',
+    COMMONS_CC0_NOTE,
   ),
   photo(
     'hypholoma-miazsz',
@@ -194,13 +203,14 @@ export const COMPARISON_PHOTOS: readonly ComparisonPhoto[] = [
     HYPH_LATIN,
     'hypholoma-miazsz.webp',
     'Gabriel Mayrhofer',
-    CC0,
-    DEED_CC0,
+    CC_BY,
+    DEED_BY_40,
     'https://commons.wikimedia.org/wiki/File:Hypholoma_fasciculare_101886055.jpg',
     'https://upload.wikimedia.org/wikipedia/commons/d/d3/Hypholoma_fasciculare_101886055.jpg',
     `${CAPTION}.hypholomaFlesh`,
     '63498273',
     'https://www.inaturalist.org/photos/101886055',
+    COMMONS_CC0_NOTE,
   ),
   photo(
     'armillaria-pierscien-blaszki',
@@ -355,6 +365,7 @@ export function comparisonPhotoCredits(): ComparisonCredit[] {
     classId: item.speciesId,
     taxonName: item.taxonName,
     modified: true,
+    sourceNote: item.sourceNote,
   }));
 }
 

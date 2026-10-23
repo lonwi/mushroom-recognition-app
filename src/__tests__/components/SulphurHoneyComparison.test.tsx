@@ -60,6 +60,7 @@ describe('sulphur tuft and honey fungus comparison', () => {
       expect(photo.license).not.toMatch(/NC|SA/);
       expect(photo.inaturalistObservationId).toMatch(/^\d+$/);
       expect(credit?.licenseUrl).toBe(photo.licenseUrl);
+      expect(credit?.sourceNote).toBe(photo.sourceNote);
       expect(credit?.modified).toBe(true);
       if (photo.license.startsWith('CC BY')) {
         const version = /^CC BY (\d+\.\d+)$/.exec(photo.license);
@@ -84,6 +85,16 @@ describe('sulphur tuft and honey fungus comparison', () => {
     expect(photosForSpecies(SULPHUR_TUFT_ID).some((item) => item.assetPath.includes('porownanie'))).toBe(
       false,
     );
+    expect(COMPARISON_PHOTOS.filter((photo) => photo.license === 'CC BY 4.0')).toHaveLength(6);
+    const formerCommons = COMPARISON_PHOTOS.filter((photo) => photo.inaturalistPhotoUrl);
+    expect(formerCommons.map((photo) => photo.author).sort()).toEqual(['Gabriel Mayrhofer', 'sugarsnap_t']);
+    for (const photo of formerCommons) {
+      expect(photo.license).toBe('CC BY 4.0');
+      expect(photo.licenseUrl).toBe('https://creativecommons.org/licenses/by/4.0/');
+      expect(photo.sourceNote).toMatch(/Commons/);
+      expect(photo.sourceNote).toMatch(/CC0/);
+      expect(photo.license).not.toBe('CC0');
+    }
     expect(POISONOUS_MISS_ALLOWLIST).toEqual([]);
     expect(JSON.stringify(COMPARISON_TRAITS)).not.toMatch(/cortina present|bald; dry|Spore print:/i);
   });
@@ -126,6 +137,15 @@ describe('sulphur tuft and honey fungus comparison', () => {
     await fireEvent.press(comparison.getByTestId('comparison-license-ring-hypholoma-strefa-trzon'));
     expect(openURL).toHaveBeenCalledWith('https://creativecommons.org/licenses/by/4.0/');
     await fireEvent.press(comparison.getByTestId('comparison-license-ring-hypholoma-brzeg-kapelusza'));
+    expect(openURL).toHaveBeenCalledWith('https://creativecommons.org/licenses/by/4.0/');
+    expect(comparison.getByTestId('comparison-author-ring-hypholoma-brzeg-kapelusza')).toHaveTextContent(
+      /sugarsnap_t/,
+    );
+    expect(comparison.getByTestId('comparison-author-flesh-hypholoma-miazsz')).toHaveTextContent(
+      /Gabriel Mayrhofer/,
+    );
+    expect(comparison.queryByText(/Commons listed this file as CC0/)).toBeNull();
+    await fireEvent.press(comparison.getByTestId('comparison-license-ring-armillaria-pierscien-blaszki'));
     expect(openURL).toHaveBeenCalledWith('https://creativecommons.org/publicdomain/zero/1.0/');
     await fireEvent.press(comparison.getByTestId('comparison-source-link-ring-0'));
     expect(openURL).toHaveBeenCalledWith('https://www.mushroomexpert.com/hypholoma_fasciculare.html');
@@ -217,7 +237,14 @@ describe('sulphur tuft and honey fungus comparison', () => {
     expect(screen.getByText(/Jeffrey Lee \(he\/him\/his\)/)).toBeTruthy();
     expect(screen.getByText('https://www.inaturalist.org/photos/57083848')).toBeTruthy();
     await fireEvent.changeText(screen.getByTestId('photo-credits-search'), 'Gabriel Mayrhofer');
-    expect(screen.getByText('CC0')).toBeTruthy();
+    expect(screen.getByText('Gabriel Mayrhofer')).toBeTruthy();
+    expect(screen.getByText('CC BY 4.0')).toBeTruthy();
+    expect(screen.queryByText('CC0')).toBeNull();
+    expect(screen.queryByText(/Commons listed this file as CC0/)).toBeNull();
     expect(screen.getByText('https://commons.wikimedia.org/wiki/File:Hypholoma_fasciculare_101886055.jpg')).toBeTruthy();
+    await fireEvent.changeText(screen.getByTestId('photo-credits-search'), 'sugarsnap_t');
+    expect(screen.getByText('sugarsnap_t')).toBeTruthy();
+    expect(screen.getByText('CC BY 4.0')).toBeTruthy();
+    expect(screen.queryByText('CC0')).toBeNull();
   });
 });
