@@ -20,7 +20,7 @@ export const pl = {
     offlineNotice: 'Model i baza danych działają w 100% offline bez połączenia z siecią.',
     dataLicenseTitle: 'Licencje zdjęć zbioru',
     dataLicenseBody:
-      'Model, jeśli zostanie dołączony, wolno trenować tylko na zdjęciach CC0 albo CC-BY (bez NC i SA). Lista obejmuje zdjęcia treningowe, testowe i sondy oceniające. Przy każdym zapisujemy autora, licencję i adres źródła. Eksport zapisuje je obok modelu w assets/models/attributions.jsonl.',
+      'Model wydany wolno trenować na zdjęciach CC0, CC BY, CC BY-NC i wersjonowanych CC BY-SA. Share-alike nie obejmuje wag modelu. Zdjęcia pokazywane w aplikacji zostają CC0 albo CC BY. Lista obejmuje zdjęcia treningowe, testowe i sondy oceniające. Przy każdym zapisujemy autora, licencję i adres źródła. Eksport zapisuje je obok modelu w assets/models/attributions.jsonl.',
     photoCreditsOpen: 'Autorzy zdjęć zbioru',
     photoCreditsLoading: 'Wczytywanie listy autorów…',
     photoCreditsLead:

@@ -1,4 +1,5 @@
 import hashlib
+import inspect
 import json
 import math
 import os
@@ -6,6 +7,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -44,7 +46,7 @@ from recognition_math import (
     energy_score,
     softmax,
 )
-from ship_gates import _int8_energy_reasons, assess_shippable, sha256_file
+from ship_gates import _df20_release_reasons, _int8_energy_reasons, assess_shippable, sha256_file
 
 FIXTURE = ROOT / "training" / "fixtures" / "decision_cases.json"
 PREPROCESS_FIXTURE = ROOT / "training" / "fixtures" / "preprocess_2x2_to_4.json"
@@ -439,6 +441,207 @@ class ManifestAndShipGateTest(unittest.TestCase):
 
         # Changing this constant is Wojtek's decision only.
         self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
+
+    def test_variant_c_leaves_agreement_share_https_and_license_url(self):
+        from component_share import COMPONENT_SHARE_LIMIT
+        from import_external import photo_license_decision
+        from ship_gates import TFLITE_AGREEMENT_MIN
+        from url_safety import force_https_url
+
+        self.assertEqual(TFLITE_AGREEMENT_MIN, 0.99)
+        self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
+        gates = (ROOT / "training" / "ship_gates.py").read_text(encoding="utf-8")
+        share = (ROOT / "training" / "component_share.py").read_text(encoding="utf-8")
+        self.assertIn("TFLITE_AGREEMENT_MIN = 0.99", gates)
+        self.assertIn("COMPONENT_SHARE_LIMIT = 0.20", share)
+        self.assertNotIn("COMPONENT_SHARE_LIMIT = 0.50", share)
+        self.assertEqual(
+            force_https_url("http://images.example.test/a.jpg"),
+            "https://images.example.test/a.jpg",
+        )
+        pinned = (
+            ("CC BY 4.0", "", "license_url_empty"),
+            ("CC BY-NC 4.0", "", "license_url_empty"),
+            ("CC BY-SA 4.0", "", "license_url_empty"),
+            ("CC BY-NC 4.0", "http://creativecommons.org/licenses/by-nc/4.0/", "license_url_not_https"),
+            ("CC BY-SA 4.0", "http://creativecommons.org/licenses/by-sa/4.0/", "license_url_not_https"),
+            ("CC BY-NC 4.0", "https://creativecommons.org/licenses/by/4.0/", "license_url_mismatch"),
+            ("CC BY-SA 4.0", "https://creativecommons.org/licenses/by-nc/4.0/", "license_url_mismatch"),
+            ("CC BY 4.0", "https://creativecommons.org/licenses/by/2.0/", "license_url_mismatch"),
+        )
+        for text, url, reason in pinned:
+            decision, got = photo_license_decision(text, url)
+            self.assertIsNone(decision, text)
+            self.assertEqual(got, reason, text)
+        nc, nc_reason = photo_license_decision(
+            "CC BY-NC",
+            "https://creativecommons.org/licenses/by-nc/2.0/",
+        )
+        self.assertEqual(nc_reason, "")
+        self.assertEqual((nc["license_normalized"], nc["usage"]), ("cc-by-nc-2.0", "training_only"))
+        sa, sa_reason = photo_license_decision(
+            "CC BY-SA 4.0",
+            "https://creativecommons.org/licenses/by-sa/4.0/",
+        )
+        self.assertEqual(sa_reason, "")
+        self.assertEqual((sa["license_normalized"], sa["usage"]), ("cc-by-sa-4.0", "training_only"))
+
+    def test_nc_sa_nd_and_nc_nd_are_rejected_for_training(self):
+        from evaluate import attributions_complete
+        from license_policy import allowed_for_training
+
+        rejected = (
+            ("cc-by-nc-sa-4.0", "CC BY-NC-SA 4.0", "https://creativecommons.org/licenses/by-nc-sa/4.0/"),
+            ("cc-by-nd-4.0", "CC BY-ND 4.0", "https://creativecommons.org/licenses/by-nd/4.0/"),
+            ("cc-by-nc-nd-4.0", "CC BY-NC-ND 4.0", "https://creativecommons.org/licenses/by-nc-nd/4.0/"),
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertTrue(ok, reasons)
+            path = artifact_dir / "attributions.jsonl"
+            lines = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+            for license_id, text, url in rejected:
+                self.assertFalse(allowed_for_training(license_id), license_id)
+                self.assertFalse(
+                    attributions_complete(
+                        [
+                            {
+                                "creator": "Ada",
+                                "license": text,
+                                "license_normalized": license_id,
+                                "license_url": url,
+                                "image_url": "https://images.example.test/a.jpg",
+                                "source_url": "https://example.test/a",
+                            }
+                        ]
+                    ),
+                    license_id,
+                )
+                blocked = [dict(line) for line in lines]
+                blocked[0]["license"] = text
+                blocked[0]["license_normalized"] = license_id
+                blocked[0]["license_url"] = url
+                path.write_text("".join(json.dumps(line) + "\n" for line in blocked), encoding="utf-8")
+                ok, reasons = assess_shippable(report, artifact_dir)
+                self.assertFalse(ok, license_id)
+                self.assertTrue(any("license" in reason for reason in reasons), license_id)
+
+    def test_versioned_cc_by_sa_rows_leave_the_release_shippable(self):
+        """Share-alike does not cover weights (2026-10-23 12:17, variant B, register 0004)."""
+        from license_policy import EXACT_LICENSE_USAGE, TRAINING_ONLY, allowed_for_display
+
+        versions = ("1.0", "2.0", "2.5", "3.0", "4.0")
+        for version in versions:
+            license_id = f"cc-by-sa-{version}"
+            self.assertEqual(EXACT_LICENSE_USAGE[license_id], TRAINING_ONLY, license_id)
+            self.assertFalse(allowed_for_display(license_id), license_id)
+        policy = (ROOT / "training" / "license_policy.py").read_text(encoding="utf-8")
+        gates = (ROOT / "training" / "ship_gates.py").read_text(encoding="utf-8")
+        self.assertIn("2026-10-23 12:17", policy)
+        self.assertIn("not cover model weights", policy)
+        self.assertNotIn("cc-by-sa", gates)
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            path = artifact_dir / "attributions.jsonl"
+            lines = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+            for index, version in enumerate(versions):
+                url = f"https://creativecommons.org/licenses/by-sa/{version}/"
+                lines[index]["license"] = f"CC BY-SA {version}"
+                lines[index]["license_normalized"] = f"cc-by-sa-{version}"
+                lines[index]["license_url"] = url
+                lines[index]["usage"] = "training_only"
+            path.write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertTrue(ok, reasons)
+
+    def test_any_df20_row_blocks_release_even_if_consent_is_patched(self):
+        from import_external import import_directory
+        from license_policy import DF20_CONSENT_CONFIRMED, EXACT_LICENSE_USAGE, TRAINING_ONLY
+        from prepare_data import _usable_records
+
+        policy = (ROOT / "training" / "license_policy.py").read_text(encoding="utf-8")
+        gates = (ROOT / "training" / "ship_gates.py").read_text(encoding="utf-8")
+        self.assertFalse(DF20_CONSENT_CONFIRMED)
+        self.assertEqual(EXACT_LICENSE_USAGE["df20"], TRAINING_ONLY)
+        self.assertEqual(EXACT_LICENSE_USAGE["cc-by-nc-4.0"], TRAINING_ONLY)
+        self.assertEqual(EXACT_LICENSE_USAGE["cc-by-sa-4.0"], TRAINING_ONLY)
+        self.assertIs(inspect.signature(import_directory).parameters["include_df20"].default, False)
+        self.assertIs(inspect.signature(_usable_records).parameters["include_df20"].default, False)
+        self.assertIn("DF20_CONSENT_CONFIRMED = False", policy)
+        self.assertIn("pending", policy.casefold())
+        self.assertIn("Svampeatlas", policy)
+        self.assertNotIn("if DF20_CONSENT_CONFIRMED", gates)
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertTrue(ok, reasons)
+            path = artifact_dir / "attributions.jsonl"
+            lines = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+            lines[0]["license"] = "CC BY-NC 4.0"
+            lines[0]["license_normalized"] = "cc-by-nc-4.0"
+            lines[0]["license_url"] = "https://creativecommons.org/licenses/by-nc/4.0/"
+            lines[0]["usage"] = "training_only"
+            lines[1]["license"] = "CC BY-SA 4.0"
+            lines[1]["license_normalized"] = "cc-by-sa-4.0"
+            lines[1]["license_url"] = "https://creativecommons.org/licenses/by-sa/4.0/"
+            lines[1]["usage"] = "training_only"
+            path.write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertTrue(ok, reasons)
+            lines[2]["license_normalized"] = "df20"
+            lines[2]["license"] = "DF20 training-only; no per-image licence"
+            lines[2]["source"] = "df20"
+            lines[2]["usage"] = "training_only"
+            lines[2]["license_url"] = ""
+            path.write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("experimental" in reason for reason in reasons))
+            with patch("license_policy.DF20_CONSENT_CONFIRMED", True):
+                ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("experimental" in reason for reason in reasons))
+
+    def test_df20_gate_blocks_when_the_attribution_file_cannot_be_read(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertTrue(ok, reasons)
+            path = artifact_dir / "attributions.jsonl"
+            path.unlink()
+            missing = _df20_release_reasons(artifact_dir)
+            self.assertTrue(any("missing" in reason for reason in missing))
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("missing" in reason for reason in reasons))
+            path.write_text("{not json\n", encoding="utf-8")
+            broken = _df20_release_reasons(artifact_dir)
+            self.assertTrue(any("not valid jsonl" in reason for reason in broken))
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("not valid jsonl" in reason for reason in reasons))
+
+    def test_df20_marker_alone_blocks_release(self):
+        from component_share import is_df20_row
+
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            path = artifact_dir / "attributions.jsonl"
+            lines = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+            lines[0]["ImageUniqueID"] = "2237858559-1"
+            self.assertNotEqual(lines[0].get("source"), "df20")
+            self.assertNotEqual(lines[0].get("license_normalized"), "df20")
+            self.assertTrue(is_df20_row(lines[0]))
+            path.write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("experimental" in reason for reason in reasons))
 
     def test_missing_component_share_blockers_key_blocks_shipping(self):
         with tempfile.TemporaryDirectory() as tmp:
