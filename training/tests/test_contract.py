@@ -318,6 +318,11 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertEqual(manifest["input"]["formula"], "(pixel / 127.5) - 1")
         self.assertFalse(manifest["ood"]["calibrated"])
         self.assertIsNone(manifest["quantization"])
+        self.assertIsNone(manifest["model_sha256"])
+        self.assertIsNone(manifest["delegate_sample_sha256"])
+        self.assertFalse(manifest["delegate_release"]["android-gpu"]["passed"])
+        self.assertFalse(manifest["delegate_release"]["core-ml"]["passed"])
+        self.assertEqual(manifest["delegate_release"]["android-gpu"]["reason"], "not_measured")
         self.assertFalse((ROOT / "assets" / "models" / "mushrooms_model.tflite").exists())
         self.assertEqual(set(DANGEROUS_GENERA), set(manifest["dangerous_genera"]))
         self.assertEqual(manifest["dangerous_genus_min_probability"], DANGEROUS_GENUS_MIN_PROBABILITY)
@@ -1374,12 +1379,17 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertIn('quantization == "dynamic"', source)
         self.assertIn('"--also-export"', source)
         self.assertIn('"--select-quantized"', source)
-        self.assertIn("agreement >= 0.99", source)
+        self.assertIn("TFLITE_AGREEMENT_MIN", source)
+        self.assertIn("agreement >= TFLITE_AGREEMENT_MIN", source)
+        self.assertNotIn("agreement >= 0.99", source)
         self.assertNotIn("agreement >= 0.98", source)
+        self.assertIn("copied_from_float", source)
+        self.assertIn("energy_recalibration", source)
         self.assertIn("macro_top1 < 0.80", gates)
         self.assertIn("macro_top3 < 0.90", gates)
-        self.assertIn("agreement < 0.99", gates)
-        self.assertIn("high_risk_agreement < 0.99", gates)
+        self.assertIn("TFLITE_AGREEMENT_MIN = 0.99", gates)
+        self.assertIn("agreement < TFLITE_AGREEMENT_MIN", gates)
+        self.assertIn("high_risk_agreement < TFLITE_AGREEMENT_MIN", gates)
         self.assertIn("id_keep < 0.95", gates)
         self.assertIn("OPEN_SET_SAFE_MIN = 0.90", gates)
         self.assertIn("OPEN_SET_CONFIDENT_EDIBLE_MAX = 0.02", gates)
@@ -1434,6 +1444,33 @@ class ManifestAndShipGateTest(unittest.TestCase):
             self.assertTrue(any("0.80" in reason for reason in refuse_reasons))
             still_ok, still_reasons = assess_shippable(passing, artifact_dir)
             self.assertTrue(still_ok, still_reasons)
+            int8 = json.loads(json.dumps(passing))
+            int8["tflite"]["quantization"] = "int8"
+            int8["ood"]["energy_threshold"] = -4.0
+            refused_int8, int8_reasons = assess_shippable(int8, artifact_dir)
+            self.assertFalse(refused_int8)
+            self.assertTrue(any("recalibrat" in reason for reason in int8_reasons))
+            energies = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
+            from evaluate import choose_threshold
+
+            threshold = choose_threshold([{"class_id": "species", "energy": energy} for energy in energies])
+            int8["ood"]["energy_threshold"] = threshold
+            int8["energy_recalibration"] = {
+                "quantization": "int8",
+                "source": "validation_split",
+                "copied_from_float": False,
+                "threshold": threshold,
+                "id_validation_energies": energies,
+            }
+            recalibrated, recalibrated_reasons = assess_shippable(int8, artifact_dir)
+            self.assertTrue(recalibrated, recalibrated_reasons)
+            copied = json.loads(json.dumps(int8))
+            copied["energy_recalibration"]["copied_from_float"] = True
+            copied["energy_recalibration"]["threshold"] = -4.0
+            copied["ood"]["energy_threshold"] = -4.0
+            copied_ok, copied_reasons = assess_shippable(copied, artifact_dir)
+            self.assertFalse(copied_ok)
+            self.assertTrue(any("do not carry over" in reason or "order statistic" in reason for reason in copied_reasons))
 
     @contextmanager
     def _installed_repo_copy(self):
@@ -1525,8 +1562,13 @@ class ManifestAndShipGateTest(unittest.TestCase):
             shutil.rmtree(parent, ignore_errors=True)
 
     def test_install_writes_jsonl_on_a_repo_copy(self):
-        with self._installed_repo_copy():
-            pass
+        with self._installed_repo_copy() as copy_root:
+            labels = json.loads((copy_root / "assets" / "models" / "labels.json").read_text(encoding="utf-8"))
+            self.assertEqual(labels["model_sha256"], hashlib.sha256(b"tflite-bytes").hexdigest())
+            self.assertIsNone(labels["delegate_sample_sha256"])
+            self.assertFalse(labels["delegate_release"]["android-gpu"]["passed"])
+            self.assertFalse(labels["delegate_release"]["core-ml"]["passed"])
+            self.assertEqual(labels["delegate_release"]["android-gpu"]["reason"], "not_measured")
 
     def test_repo_copy_ignores_training_data_and_secret_files(self):
         with tempfile.TemporaryDirectory() as tmp:

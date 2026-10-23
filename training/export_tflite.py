@@ -15,16 +15,17 @@ graph are reported. They are not thresholds, and no gate is lowered.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import shutil
 import tempfile
 from pathlib import Path
 
-from evaluate import DATA_DIR, assemble_report, preprocessed_batch, prediction_from_logits
+from evaluate import DATA_DIR, assemble_report, choose_threshold, preprocessed_batch, prediction_from_logits
 from manifest import LABELS_PATH, ROOT, load_manifest
-from recognition_math import HIGH_STAKES_IDS
-from ship_gates import assess_shippable, fetch_report_file, sha256_file
+from recognition_math import BACKGROUND_CLASS_ID, HIGH_STAKES_IDS
+from ship_gates import TFLITE_AGREEMENT_MIN, assess_shippable, blank_delegate_release, fetch_report_file, sha256_file
 
 ARTIFACTS = ROOT / "training" / "artifacts"
 MODEL_DEST = ROOT / "assets" / "models" / "mushrooms_model.tflite"
@@ -276,9 +277,27 @@ def score_quantization(
         "high_risk_agreement_images": risk_images,
         "errors": [],
     }
-    # Same 0.99 floor as training/ship_gates.py. Not a lower bar. Install still
-    # calls assess_shippable, which repeats this check with the other gates.
-    meets_agreement_floor = agreement >= 0.99 and risk_agreement is not None and risk_agreement >= 0.99
+    # Same floor as TFLITE_AGREEMENT_MIN in training/ship_gates.py. Not a lower bar.
+    # Install still calls assess_shippable, which repeats this check with the other gates.
+    meets_agreement_floor = (
+        agreement >= TFLITE_AGREEMENT_MIN
+        and risk_agreement is not None
+        and risk_agreement >= TFLITE_AGREEMENT_MIN
+    )
+    if quantization == "int8":
+        id_energies = [
+            float(row["energy"]) for row in val_pred if row.get("class_id") != BACKGROUND_CLASS_ID
+        ]
+        threshold = choose_threshold(val_pred)
+        if report["ood"]["energy_threshold"] != threshold:
+            raise RuntimeError("int8 energy threshold was not taken from its own validation logits")
+        report["energy_recalibration"] = {
+            "quantization": "int8",
+            "source": "validation_split",
+            "copied_from_float": False,
+            "threshold": threshold,
+            "id_validation_energies": id_energies,
+        }
     return {
         "ok": True,
         "quantization": quantization,
@@ -395,6 +414,10 @@ def install_calibrated_model(payload: bytes, quantization: str, metrics: dict) -
     manifest["model_packaged"] = True
     manifest["recognition_available"] = True
     manifest["quantization"] = quantization
+    manifest["model_sha256"] = hashlib.sha256(payload).hexdigest()
+    # A new file invalidates every on-device delegate measurement.
+    manifest["delegate_sample_sha256"] = None
+    manifest["delegate_release"] = blank_delegate_release()
     manifest["ood"].update(
         {
             "calibrated": True,

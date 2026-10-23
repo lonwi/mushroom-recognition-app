@@ -1,5 +1,7 @@
 import { Platform } from 'react-native';
+import * as FileSystem from 'expo-file-system/legacy';
 
+import { delegateReleasePassed } from './delegateRelease';
 import {
   ANDROID_GPU,
   CORE_ML,
@@ -11,7 +13,17 @@ import {
   recordInferenceTiming,
   setDevDelegateModeListener,
 } from './inferenceTiming';
+import { modelManifest } from './modelManifest';
 import { PACKAGED_MODEL_MODULE } from './modelPackage';
+
+const CALIBRATION_DUMP = 'delegate-calibration.json';
+
+export interface DelegateCalibrationItem {
+  file: string;
+  split: 'val' | 'test';
+  classId: string;
+  input: Float32Array;
+}
 
 type TensorflowModel = {
   run: (inputs: ArrayBuffer[]) => Promise<ArrayBuffer[]>;
@@ -27,6 +39,9 @@ let cpuLoad: Promise<LoadedModel> | null = null;
 
 /**
  * Android GPU (OpenCL) or iOS Core ML, then CPU if that delegate throws.
+ * Production loads the delegate only after the manifest release gate passes.
+ * A missing, stale, or hash-mismatched report stays on CPU. Dev builds can
+ * still try the delegate so a calibration dump can be measured.
  * Unsupported ops are partitioned to CPU inside the delegate and do not throw.
  * Fully integer graphs often fail that partition; fp16 and fp32 are the graphs
  * these delegates are built to run. Web stays on CPU.
@@ -76,9 +91,22 @@ function clearLoadedModels(): void {
 
 setDevDelegateModeListener(clearLoadedModels);
 
+function hardwareAllowed(os: string): HardwareDelegateName | null {
+  if (getDevDelegateMode() === CPU_RUNTIME) {
+    return null;
+  }
+  const hardware = preferredHardwareDelegate(os);
+  if (!hardware) {
+    return null;
+  }
+  if (!isDevBuild() && !delegateReleasePassed(modelManifest, hardware)) {
+    return null;
+  }
+  return hardware;
+}
+
 async function loadWithFallback(os: string): Promise<LoadedModel> {
-  const forcedCpu = getDevDelegateMode() === CPU_RUNTIME;
-  const hardware = forcedCpu ? null : preferredHardwareDelegate(os);
+  const hardware = hardwareAllowed(os);
   if (!hardware) {
     return loadCpu();
   }
@@ -115,23 +143,71 @@ function clockMs(): number {
 }
 
 function cpuFallback(delegate: ActiveDelegate): boolean {
-  const wantedHardware = getDevDelegateMode() !== CPU_RUNTIME && preferredHardwareDelegate() !== null;
-  return delegate === CPU_RUNTIME && wantedHardware;
+  return delegate === CPU_RUNTIME && hardwareAllowed(Platform.OS) !== null;
 }
 
-async function invoke(loaded: LoadedModel, input: Float32Array, fellBackToCpu: boolean): Promise<Float32Array> {
-  const started = clockMs();
-  const outputs = await loaded.model.run([cloneInput(input)]);
+function logitsFromOutput(outputs: ArrayBuffer[]): Float32Array {
   const output = outputs[0];
   if (!output) {
     throw new Error('output_missing');
   }
+  return new Float32Array(output);
+}
+
+async function runInterpreterOnce(input: Float32Array, delegates: HardwareDelegateName[]): Promise<Float32Array> {
+  const model = await loadTensorflowModel(delegates);
+  return logitsFromOutput(await model.run([cloneInput(input)]));
+}
+
+async function invoke(loaded: LoadedModel, input: Float32Array, fellBackToCpu: boolean): Promise<Float32Array> {
+  const started = clockMs();
+  const logits = logitsFromOutput(await loaded.model.run([cloneInput(input)]));
   recordInferenceTiming({
     inferenceMs: Math.max(0, Math.round(clockMs() - started)),
     delegate: loaded.delegate,
     fellBackToCpu,
   });
-  return new Float32Array(output);
+  return logits;
+}
+
+/**
+ * Dev-only dump of delegate and CPU logits for the fixed val+test sample.
+ * This does not classify, journal, or count a scan. Production returns null
+ * without loading a delegate.
+ */
+export async function writeDelegateCalibrationDump(
+  sample: readonly DelegateCalibrationItem[],
+): Promise<string | null> {
+  if (!isDevBuild()) {
+    return null;
+  }
+  const hardware = preferredHardwareDelegate();
+  const directory = FileSystem.cacheDirectory;
+  if (!hardware || PACKAGED_MODEL_MODULE == null || !directory) {
+    return null;
+  }
+  const images = [];
+  for (const item of sample) {
+    const cpu = await runInterpreterOnce(item.input, []);
+    const delegate = await runInterpreterOnce(item.input, [hardware]);
+    images.push({
+      file: item.file,
+      split: item.split,
+      class_id: item.classId,
+      cpu_logits: Array.from(cpu),
+      delegate_logits: Array.from(delegate),
+    });
+  }
+  const body = JSON.stringify({
+    measured_on: 'device',
+    platform: hardware,
+    model_sha256: modelManifest.model_sha256,
+    images,
+  });
+  const path = `${directory}${CALIBRATION_DUMP}`;
+  await FileSystem.writeAsStringAsync(path, body);
+  console.info(`[tflite] delegate calibration dump ${images.length} images`);
+  return path;
 }
 
 async function replaceWithCpu(): Promise<LoadedModel> {

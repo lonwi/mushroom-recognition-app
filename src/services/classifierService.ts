@@ -14,6 +14,7 @@
  * to the call and the native runtime owns its own buffers.
  */
 
+import { recordClassifiedPhoto } from './classifiedPhotoTally';
 import { decodePngToRgb } from './decodePng';
 import { preprocessRgbToMobileNetV3 } from './imagePreprocess';
 import { ModelManifest, modelManifest } from './modelManifest';
@@ -126,6 +127,8 @@ export async function classifyImageWithDeps(
   if (decision.status === 'unavailable') {
     return unavailable(imageUri, decision.reason);
   }
+  // One photo, one decision. runLogits may already have retried on CPU.
+  recordClassifiedPhoto();
   if (decision.status === 'rejected') {
     return {
       status: 'rejected',

@@ -24,7 +24,7 @@ export function isDevBuild(): boolean {
   return typeof __DEV__ !== 'undefined' && __DEV__;
 }
 
-/** Production always uses the platform delegate. The CPU choice is dev-only. */
+/** The CPU measurement switch is dev-only. Production ignores it. */
 export function getDevDelegateMode(): DevDelegateMode {
   if (!isDevBuild()) {
     return AUTO_DELEGATE;
