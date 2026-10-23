@@ -13,6 +13,7 @@ from gallery_exclusion import (
 )
 from gallery_exclusion import GalleryExclusion
 from prepare_data import assign_splits
+from salt_fixture import FIXTURE_SALT
 from split import split_by_observation
 
 DEATH_CAP = "https://inaturalist-open-data.s3.amazonaws.com/photos/318776310/original.jpg"
@@ -130,6 +131,7 @@ class GalleryExclusionTest(unittest.TestCase):
         splits = split_by_observation(
             records,
             test_blocked=lambda row: record_matches_gallery(row, exclusion),
+            salt=FIXTURE_SALT,
         )
         test_keys = {row["occurrence_key"] for row in splits["test"]}
         self.assertNotIn(4, test_keys)
@@ -153,13 +155,17 @@ class GalleryExclusionTest(unittest.TestCase):
             "occurrence_key": 2,
             "image_url": "https://images.example.test/other.jpg",
         }
+        withheld: list[dict] = []
         splits = split_by_observation(
             [gallery, other],
             test_blocked=lambda row: record_matches_gallery(row, exclusion),
+            salt=FIXTURE_SALT,
+            withheld=withheld,
         )
-        self.assertIn(other, splits["test"])
+        self.assertNotIn(other, splits["test"])
         self.assertNotIn(gallery, splits["test"])
-        self.assertIn(gallery, splits["train"])
+        self.assertNotIn(gallery, splits["train"])
+        self.assertEqual({row["occurrence_key"] for row in withheld}, {1, 2})
 
     def test_prepare_keeps_the_checked_in_photos_out_of_test(self):
         exclusion = load_gallery_exclusion()
@@ -174,7 +180,7 @@ class GalleryExclusionTest(unittest.TestCase):
             "recorded_by": "person 101",
         }
         records.extend([listed, mirrored])
-        splits = assign_splits(records)
+        splits, _dropped = assign_splits(records, salt=FIXTURE_SALT, exclusion=exclusion)
         test_urls = {row["image_url"] for row in splits["test"]}
         self.assertNotIn(sample_url, test_urls)
         self.assertNotIn(mirrored["image_url"], test_urls)
