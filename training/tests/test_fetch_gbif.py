@@ -277,6 +277,25 @@ class DownloadRetryTest(FetchCase):
         self.assertTrue(fetch_gbif._is_timeout_error(socket.timeout("timed out")))
         self.assertTrue(fetch_gbif._is_transient_download_error(socket.timeout("timed out")))
 
+    def test_retry_stops_at_max_attempts_and_does_not_fall_back_to_http(self):
+        seen: list[str] = []
+
+        def urlopen(request, timeout=40):
+            seen.append(request.full_url)
+            raise urllib.error.URLError(socket.timeout("timed out"))
+
+        sleeps: list[float] = []
+        with patch("fetch_gbif.urllib.request.urlopen", side_effect=urlopen), patch(
+            "fetch_gbif.random.uniform", return_value=0.25
+        ), patch("fetch_gbif.time.sleep", side_effect=sleeps.append):
+            with self.assertRaises(urllib.error.URLError):
+                fetch_gbif.download_image("http://images.example.test/a.jpg", self._dest, attempts=2)
+        self.assertEqual(seen, ["https://images.example.test/a.jpg", "https://images.example.test/a.jpg"])
+        self.assertTrue(all(url.startswith("https://") for url in seen))
+        self.assertEqual(sleeps, [fetch_gbif.DOWNLOAD_BACKOFF_SECONDS + 0.25])
+        self.assertEqual(fetch_gbif.DOWNLOAD_ATTEMPTS, 3)
+        self.assertLessEqual(fetch_gbif.DOWNLOAD_ATTEMPTS, 5)
+
     def test_stored_image_url_is_https(self):
         row = {
             "occurrence_key": 7,
@@ -2925,6 +2944,11 @@ class MediaUrlSafetyTest(FetchCase):
             request, None, 302, "Found", EmailMessage(), "https://cdn.example.test/b.jpg"
         )
         self.assertEqual(allowed.full_url, "https://cdn.example.test/b.jpg")
+        rewritten = handler.redirect_request(
+            request, None, 302, "Found", EmailMessage(), "http://cdn.example.test/b.jpg"
+        )
+        self.assertEqual(rewritten.full_url, "https://cdn.example.test/b.jpg")
+        self.assertTrue(rewritten.full_url.startswith("https://"))
         for target in (
             "http://127.0.0.1/secret",
             "http://169.254.169.254/latest",

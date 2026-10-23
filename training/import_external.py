@@ -6,10 +6,14 @@ Wikimedia Commons, Danish Fungi 2020). It does not download images.
 
     python training/import_external.py /path/to/zdjecia --output training/data/external.jsonl
 
-``usage`` is ``publishable`` for CC0 and CC BY, and ``training_only`` for
-plain CC BY-NC and for DF20. ``usage == "publishable"`` drops both of those
-with one condition. NC-ND, NC-SA, BY-SA, ND, and unknown licenses are
-rejected. Every kept row has an author credit.
+``usage`` is ``publishable`` for versioned CC0 and CC BY, and ``training_only``
+for versioned CC BY-NC and for DF20. A versionless ``CC BY`` or ``CC BY-NC``
+is kept only when ``license_url`` carries the version. Otherwise it is
+rejected, same as NC-ND, NC-SA, BY-SA, ND, and unknown licenses. The normalized
+id is matched in full (``cc-by-4.0``), never by prefix. Every kept row has an
+author credit. ``is_publishable`` is the check for the atlas gallery, ``site/``,
+and comparison photos. CC BY-NC and DF20 fail it. The ship-gate file is a
+separate decision and still lists training-only rows.
 
 ``_niezweryfikowane`` files set ``unverified``. ``prepare_data.py`` skips
 those rows, so they are not mixed into train, val, or test.
@@ -24,6 +28,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 import re
 from collections import Counter
 from pathlib import Path
@@ -50,6 +55,46 @@ _CC_URL = re.compile(
     re.IGNORECASE,
 )
 _VERSION = re.compile(r"(\d+\.\d+)")
+_HTTP_URL = re.compile(r"https?://\S+", re.IGNORECASE)
+# Longest code first. Equality is the whole token list, so "by-sa" is not "by".
+_CODE_PHRASES = (
+    ("by-nc-nd", ("by", "nc", "nd")),
+    ("by-nc-sa", ("by", "nc", "sa")),
+    ("by-nd", ("by", "nd")),
+    ("by-sa", ("by", "sa")),
+    ("by-nc", ("by", "nc")),
+    ("by", ("by",)),
+    ("nc", ("nc",)),
+    ("nd", ("nd",)),
+    ("sa", ("sa",)),
+)
+_SKIP_TOKENS = {
+    "cc",
+    "creative",
+    "commons",
+    "license",
+    "licence",
+    "international",
+    "unported",
+    "legalcode",
+    "deed",
+}
+_KNOWN_TOKENS = {"by", "nc", "nd", "sa", "zero", "public", "domain", "publicdomain", "cc0"}
+# Whole ids only. CC BY-SA is absent on purpose: add ``cc-by-sa-<version>``
+# here with ``training_only`` if the owner later allows it. Do not prefix-match.
+_EXACT_LICENSE_USAGE = {
+    "cc0-1.0": "publishable",
+    "cc-by-1.0": "publishable",
+    "cc-by-2.0": "publishable",
+    "cc-by-2.5": "publishable",
+    "cc-by-3.0": "publishable",
+    "cc-by-4.0": "publishable",
+    "cc-by-nc-1.0": "training_only",
+    "cc-by-nc-2.0": "training_only",
+    "cc-by-nc-2.5": "training_only",
+    "cc-by-nc-3.0": "training_only",
+    "cc-by-nc-4.0": "training_only",
+}
 _GBIF_OCCURRENCE = re.compile(r"gbif\.org/occurrence/(\d+)", re.IGNORECASE)
 _INAT_OBSERVATION = re.compile(r"inaturalist\.org/observations/(\d+)", re.IGNORECASE)
 _INAT_PHOTO = re.compile(r"/photos/(\d+)", re.IGNORECASE)
@@ -69,75 +114,128 @@ _PHOTO_FIELDS = (
 )
 
 
-def parse_textual_license(raw: str | None) -> dict | None:
-    """Parse a photo license cell.
+def parse_textual_license(raw: str | None, license_url: str | None = None) -> dict | None:
+    """Parse a photo license cell, optionally completed by ``license_url``.
 
     Returns ``license_normalized`` and ``usage`` (``publishable`` or
-    ``training_only``). NC-ND, NC-SA, BY-SA, ND, and anything unrecognized
-    return None. This does not change the GBIF URL filter.
+    ``training_only``). The id is an exact key such as ``cc-by-4.0``.
+    ``cc-by-sa-4.0`` is not ``cc-by-4.0``, and ``cc-by-nc-sa-4.0`` is not
+    ``cc-by-nc-4.0``. An empty or unknown cell is None and is never read as
+    CC BY, even when ``license_url`` points at CC BY. A versionless ``CC BY``
+    or ``CC BY-NC`` takes the version from ``license_url`` when that URL is
+    the same license. If neither side has a version, the row is rejected.
+    CC0 without a version is ``cc0-1.0``, the only CC0 version. This does not
+    change the GBIF URL filter.
     """
-    if raw is None:
+    if raw is None or not str(raw).strip():
         return None
-    text = str(raw).strip()
+    code, version = _code_from_text(str(raw))
+    if code is None:
+        return None
+    if license_url is not None and str(license_url).strip():
+        url_code, url_version = _code_from_text(str(license_url))
+        if url_code is not None and url_code != code:
+            return None
+        if url_version and version and url_version != version:
+            return None
+        if url_code is not None:
+            version = version or url_version
+    if code == "cc0":
+        if version not in (None, "1.0"):
+            return None
+        license_id = "cc0-1.0"
+    elif not version:
+        return None
+    else:
+        license_id = f"cc-{code}-{version}"
+    usage = _EXACT_LICENSE_USAGE.get(license_id)
+    if usage is None:
+        return None
+    return {"license_normalized": license_id, "usage": usage}
+
+
+def _from_url_match(match: re.Match) -> tuple[str | None, str]:
+    kind = match.group(1).lower()
+    version = match.group(3)
+    if kind == "publicdomain/zero":
+        return "cc0", version
+    code = (match.group(2) or "").lower()
+    return (code or None), version
+
+
+def _code_from_text(raw: str) -> tuple[str | None, str | None]:
+    """License code and version from prose or a Creative Commons URL.
+
+    The code is the whole phrase (``by-nc-sa``, not a prefix of it).
+    """
+    text = raw.strip().lower().replace("–", "-").replace("—", "-")
     if not text:
-        return None
-    lowered = text.lower().replace("–", "-").replace("—", "-")
-    url_match = _CC_URL.search(lowered)
+        return None, None
+    url_match = _CC_URL.search(text)
+    url_code: str | None = None
+    url_version: str | None = None
     if url_match:
-        return _from_cc_url(url_match.group(1), url_match.group(2), url_match.group(3))
-    tokens = [token for token in re.split(r"[^a-z0-9.]+", lowered.replace("_", " ")) if token]
-    token_set = set(tokens)
-    if _has_rejected_term(token_set):
-        return None
-    version = _VERSION.search(lowered)
-    version_text = version.group(1) if version else None
-    has_cc = (
-        "cc" in token_set
-        or "cc0" in token_set
-        or "creativecommons" in token_set
-        or "creative commons" in lowered
-    )
-    has_nc = "nc" in token_set or "noncommercial" in token_set or {"non", "commercial"} <= token_set
-    has_by = "by" in token_set or "attribution" in token_set
-    has_cc0 = "cc0" in token_set or (
-        "zero" in token_set and ("cc" in token_set or "publicdomain" in token_set or {"public", "domain"} <= token_set)
-    )
-    if not has_cc and not has_cc0:
-        return None
-    if has_cc0 and has_nc:
-        return None
-    if has_cc0:
-        return _license_decision(f"cc0-{version_text or '1.0'}", "publishable")
-    if has_by and has_nc:
-        suffix = f"-{version_text}" if version_text else ""
-        return _license_decision(f"cc-by-nc{suffix}", "training_only")
-    if has_by:
-        suffix = f"-{version_text}" if version_text else ""
-        return _license_decision(f"cc-by{suffix}", "publishable")
-    return None
+        url_code, url_version = _from_url_match(url_match)
+    prose = _HTTP_URL.sub(" ", text)
+    token_code, token_version = _code_from_tokens(prose)
+    if token_code and url_code and token_code != url_code:
+        return None, None
+    if token_version and url_version and token_version != url_version:
+        return None, None
+    return token_code or url_code, token_version or url_version
 
 
-def _from_cc_url(kind: str, code: str | None, version: str) -> dict | None:
-    if kind.lower() == "publicdomain/zero":
-        return _license_decision(f"cc0-{version}", "publishable")
-    name = (code or "").lower()
-    if name in {"by-nc-nd", "by-nc-sa", "by-sa", "by-nd", "nc", "nd", "sa"}:
-        return None
-    if name == "by-nc":
-        return _license_decision(f"cc-by-nc-{version}", "training_only")
-    if name == "by":
-        return _license_decision(f"cc-by-{version}", "publishable")
-    return None
-
-
-def _has_rejected_term(tokens: set[str]) -> bool:
-    if tokens & {"nd", "sa", "noderivs", "noderivatives", "noderivative", "sharealike"}:
-        return True
-    return "share" in tokens and "alike" in tokens
-
-
-def _license_decision(license_normalized: str, usage: str) -> dict:
-    return {"license_normalized": license_normalized, "usage": usage}
+def _code_from_tokens(text: str) -> tuple[str | None, str | None]:
+    if not text.strip():
+        return None, None
+    version_match = _VERSION.search(text)
+    version = version_match.group(1) if version_match else None
+    body = text.replace(version, " ") if version else text
+    raw_tokens = [token for token in re.split(r"[^a-z0-9]+", body) if token]
+    mapped: list[str] = []
+    index = 0
+    while index < len(raw_tokens):
+        token = raw_tokens[index]
+        if token in _SKIP_TOKENS:
+            index += 1
+            continue
+        if token == "non" and index + 1 < len(raw_tokens) and raw_tokens[index + 1].startswith("commercial"):
+            mapped.append("nc")
+            index += 2
+            continue
+        if token in {"noncommercial", "noncommercialuse"}:
+            mapped.append("nc")
+            index += 1
+            continue
+        if token == "attribution":
+            mapped.append("by")
+            index += 1
+            continue
+        if token in {"noderivs", "noderivatives", "noderivative"}:
+            mapped.append("nd")
+            index += 1
+            continue
+        if token == "sharealike":
+            mapped.append("sa")
+            index += 1
+            continue
+        if token == "share" and index + 1 < len(raw_tokens) and raw_tokens[index + 1] == "alike":
+            mapped.append("sa")
+            index += 2
+            continue
+        mapped.append(token)
+        index += 1
+    if any(token not in _KNOWN_TOKENS for token in mapped):
+        return None, None
+    if "cc0" in mapped or ("zero" in mapped and "public" in mapped and "domain" in mapped):
+        return "cc0", version
+    if not re.search(r"\bcc\b", text) and "creativecommons" not in text and "cc0" not in mapped:
+        return None, None
+    core = tuple(token for token in mapped if token in {"by", "nc", "nd", "sa"})
+    for name, phrase in _CODE_PHRASES:
+        if core == phrase:
+            return name, version
+    return None, None
 
 
 def training_eligible(row: dict, *, publishable_only: bool = False) -> bool:
@@ -151,6 +249,53 @@ def training_eligible(row: dict, *, publishable_only: bool = False) -> bool:
     if publishable_only and row.get("usage") == "training_only":
         return False
     return True
+
+
+def is_publishable(row: dict) -> bool:
+    """True for a credited, verified, versioned CC0 or CC BY row.
+
+    Atlas gallery photos, ``site/`` pages, and comparison photos (issue #65)
+    must use this. The license id has to be an exact publishable key such as
+    ``cc-by-4.0`` or ``cc0-1.0``, the row has to be verified, and the image
+    URL has to be https. CC BY-NC and DF20 stay training-only. The attribution
+    gate in ``evaluate.py`` is unchanged and still rejects a release model
+    that contains ``training_only`` rows.
+    """
+    if not isinstance(row, dict):
+        return False
+    if row.get("unverified") is True:
+        return False
+    if row.get("usage") != "publishable":
+        return False
+    if _EXACT_LICENSE_USAGE.get(row.get("license_normalized")) != "publishable":
+        return False
+    creator = row.get("creator") or row.get("author")
+    if not isinstance(creator, str) or not creator.strip():
+        return False
+    image_url = str(row.get("image_url") or "")
+    if urlsplit(image_url).scheme != "https":
+        return False
+    return True
+
+
+def published_rows(rows: list[dict]) -> list[dict]:
+    """Rows that may be shown outside the training set."""
+    return [row for row in rows if is_publishable(row)]
+
+
+def rows_for_atlas_gallery(rows: list[dict]) -> list[dict]:
+    """Atlas gallery. CC BY-NC and DF20 stay out."""
+    return published_rows(rows)
+
+
+def rows_for_site(rows: list[dict]) -> list[dict]:
+    """Pages under ``site/``. CC BY-NC and DF20 stay out."""
+    return published_rows(rows)
+
+
+def rows_for_comparison(rows: list[dict]) -> list[dict]:
+    """Comparison photos for issue #65. CC BY-NC and DF20 stay out."""
+    return published_rows(rows)
 
 
 def _name_key(name: str) -> str:
@@ -381,14 +526,20 @@ def _row_from_photo(
     if target is None:
         return None, "unmapped"
     license_text = _cell(raw, "license")
-    decision = parse_textual_license(license_text)
+    license_url = _cell(raw, "license_url")
+    decision = parse_textual_license(license_text, license_url or None)
     if decision is None:
         return None, "license"
     author = _located(_cell(raw, "author"))
     if not author:
         return None, "author"
     image_url = force_https_url(_cell(raw, "image_url"))
+    if urlsplit(image_url).scheme != "https":
+        return None, "url"
     source_url = force_https_url(_cell(raw, "source_url"))
+    if source_url and urlsplit(source_url).scheme != "https":
+        return None, "url"
+    stored_license_url = force_https_url(license_url) if license_url else ""
     confidence = _cell(raw, "id_confidence")
     unverified = unverified_file or confidence in _UNVERIFIED_CONFIDENCE
     ids = _blank_ids()
@@ -416,6 +567,7 @@ def _row_from_photo(
         "creator": author,
         "author": author,
         "license": license_text,
+        "license_url": stored_license_url,
         "license_normalized": decision["license_normalized"],
         "usage": decision["usage"],
         "unverified": unverified,
@@ -506,27 +658,66 @@ def _identity(row: dict) -> str:
     return f"row:{row['_order']}"
 
 
-def dedupe_rows(rows: list[dict]) -> tuple[list[dict], int, int]:
-    """Keep the first row for each photo. Input order is best-license first.
+def _label_text(row: dict) -> str:
+    class_id = str(row.get("class_id") or "")
+    taxon = str(row.get("taxon_name") or row.get("species") or "")
+    if taxon:
+        return f"{class_id} ({taxon})"
+    return class_id
 
-    The same photo id under two class ids counts as a conflict and the later
-    row is dropped, so one file cannot train as two species.
+
+def _conflict_keys(row: dict) -> list[tuple[str, str]]:
+    """Photo and observation ids that must not carry two species labels."""
+    keys: list[tuple[str, str]] = []
+    if row.get("inat_photo_id"):
+        keys.append(("photo", f"inat-photo:{row['inat_photo_id']}"))
+    if row.get("commons_file"):
+        keys.append(("photo", f"commons:{row['commons_file']}"))
+    if row.get("df20_image_id"):
+        keys.append(("photo", f"df20-image:{row['df20_image_id']}"))
+    if row.get("_image_key"):
+        keys.append(("photo", f"url:{row['_image_key']}"))
+    if row.get("inat_observation_id"):
+        keys.append(("observation", f"inat-obs:{row['inat_observation_id']}"))
+    if row.get("mo_observation_id"):
+        keys.append(("observation", f"mo:{row['mo_observation_id']}"))
+    if row.get("df20_observation_id"):
+        keys.append(("observation", f"df20-obs:{row['df20_observation_id']}"))
+    elif row.get("gbif_id") and not row.get("inat_observation_id"):
+        keys.append(("observation", f"gbif:{row['gbif_id']}"))
+    return keys
+
+
+def dedupe_rows(rows: list[dict]) -> tuple[list[dict], int, int, list[dict]]:
+    """Drop every row that shares a photo or observation with another species.
+
+    File order must not pick the label. When one photo id or one observation
+    id is tied to two species, every row of that id is removed and the report
+    lists the id with both labels. Identical photos of the same species still
+    keep the first row.
     """
-    seen: dict[str, dict] = {}
+    labels_by_key: dict[tuple[str, str], set[str]] = {}
+    for row in rows:
+        label = _label_text(row)
+        for key in _conflict_keys(row):
+            labels_by_key.setdefault(key, set()).add(label)
+    conflict_keys = {key for key, labels in labels_by_key.items() if len(labels) > 1}
+    conflicts = [
+        {"kind": kind, "id": ident, "labels": sorted(labels_by_key[(kind, ident)])}
+        for kind, ident in sorted(conflict_keys)
+    ]
+    surviving = [row for row in rows if not any(key in conflict_keys for key in _conflict_keys(row))]
+    seen: set[str] = set()
     kept: list[dict] = []
     dropped = 0
-    conflicts = 0
-    for row in rows:
+    for row in surviving:
         key = _identity(row)
-        previous = seen.get(key)
-        if previous is None:
-            seen[key] = row
-            kept.append(row)
+        if key in seen:
+            dropped += 1
             continue
-        dropped += 1
-        if previous.get("class_id") != row.get("class_id"):
-            conflicts += 1
-    return kept, dropped, conflicts
+        seen.add(key)
+        kept.append(row)
+    return kept, dropped, len(rows) - len(surviving), conflicts
 
 
 def apply_collector_cap(rows: list[dict], max_per_collector: int) -> tuple[list[dict], list[dict]]:
@@ -609,7 +800,7 @@ def _float_or_none(value: str) -> float | None:
         number = float(value)
     except ValueError:
         return None
-    if number != number:  # NaN
+    if not math.isfinite(number):
         return None
     return number
 
@@ -666,12 +857,15 @@ def import_directory(
                 continue
             rows.append(row)
     rows_read = order
-    rows, duplicate_dropped, duplicate_conflicts = dedupe_rows(rows)
+    rows, duplicate_dropped, conflict_dropped, label_conflicts = dedupe_rows(rows)
+    # publishable_only runs before the cap so a CC BY-NC photo does not
+    # consume a collector's slot that a CC BY photo of the same person needs.
+    if publishable_only:
+        before = len(rows)
+        rows = published_rows(rows)
+        rejected["publishable_only"] += before - len(rows)
     meta_joined = _join_meta(rows, metas)
     rows, cap_dropped = apply_collector_cap(rows, max_per_collector)
-    if publishable_only:
-        rejected["publishable_only"] += sum(1 for row in rows if row.get("usage") == "training_only")
-        rows = [row for row in rows if row.get("usage") != "training_only"]
     if exclude_unverified:
         rejected["exclude_unverified"] += sum(1 for row in rows if row.get("unverified") is True)
         rows = [row for row in rows if row.get("unverified") is not True]
@@ -686,7 +880,10 @@ def import_directory(
         "rejected_missing_author": int(rejected["author"]),
         "unmapped_species": dict(sorted(unmapped.items())),
         "dropped_duplicate": duplicate_dropped,
-        "duplicate_class_conflicts": duplicate_conflicts,
+        "dropped_label_conflict": conflict_dropped,
+        "duplicate_class_conflicts": len(label_conflicts),
+        "label_conflicts": label_conflicts,
+        "rejected_url": int(rejected["url"]),
         "dropped_collector_cap": len(cap_dropped),
         "meta_rows_joined": meta_joined,
         "unverified": sum(1 for row in written if row.get("unverified") is True),
@@ -722,7 +919,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--publishable-only",
         action="store_true",
-        help="Write only usage=publishable rows. Drops CC BY-NC and DF20.",
+        help=(
+            "Write only rows that pass is_publishable, before the collector cap. "
+            "Drops CC BY-NC, DF20, unverified rows, and anything without a versioned CC0 or CC BY id."
+        ),
     )
     parser.add_argument(
         "--exclude-unverified",

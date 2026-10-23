@@ -4,11 +4,12 @@ Atlas gallery photos that match by image URL, mo_observation_id, or
 iNaturalist observation id stay out of the test split.
 
     python training/prepare_data.py
+    python training/prepare_data.py --with-external
     python training/prepare_data.py --publishable-only
 
-Reads ``attributions.jsonl`` and, when present, ``external.jsonl``.
-Unverified rows are skipped. ``--publishable-only`` also skips
-``usage=training_only`` (CC BY-NC and Danish Fungi 2020). Corrupt files
+Reads ``attributions.jsonl``. ``external.jsonl`` is read only with
+``--with-external``. Unverified rows are skipped. ``--publishable-only``
+also skips ``usage=training_only`` (CC BY-NC and Danish Fungi 2020). Corrupt files
 are skipped. The cached PNG is EXIF-oriented and area-resized to the
 model input, which is what the phone feeds the network.
 """
@@ -101,15 +102,25 @@ def _perceptual_hashes(rgb) -> tuple[int, int]:
     return dhash, phash
 
 
-def _attribution_sources() -> list[Path]:
-    """GBIF attributions, plus external.jsonl when the importer has written one."""
+def _attribution_sources(data_dir: Path | None = None, *, with_external: bool = False) -> list[Path]:
+    """GBIF attributions. ``external.jsonl`` is included only when asked.
+
+    A present ``external.jsonl`` is not loaded by itself. ``--with-external``
+    is the switch, and a missing file is then an error.
+    """
+    directory = DATA_DIR if data_dir is None else data_dir
     sources = []
-    primary = DATA_DIR / "attributions.jsonl"
-    external = DATA_DIR / "external.jsonl"
+    primary = directory / "attributions.jsonl"
     if primary.is_file():
         sources.append(primary)
-    if external.is_file():
-        sources.append(external)
+    if not with_external:
+        return sources
+    external = directory / "external.jsonl"
+    if not external.is_file():
+        raise SystemExit(
+            "missing training/data/external.jsonl. Run import_external.py before --with-external."
+        )
+    sources.append(external)
     return sources
 
 
@@ -185,14 +196,22 @@ def assign_splits(records: list[dict]) -> dict[str, list[dict]]:
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Dedup, resize, and split downloaded photos")
     parser.add_argument(
+        "--with-external",
+        action="store_true",
+        help="Also read training/data/external.jsonl. Without this flag that file is ignored.",
+    )
+    parser.add_argument(
         "--publishable-only",
         action="store_true",
         help="Drop usage=training_only rows (CC BY-NC and DF20) before dedup and split.",
     )
     args = parser.parse_args(argv)
-    sources = _attribution_sources()
+    sources = _attribution_sources(with_external=args.with_external)
     if not sources:
-        raise SystemExit("missing training/data/attributions.jsonl. Run fetch_gbif.py or import_external.py first.")
+        raise SystemExit(
+            "missing training/data/attributions.jsonl. Run fetch_gbif.py first. "
+            "External rows need --with-external after import_external.py."
+        )
     manifest = load_manifest()
     size = int(manifest["input"]["size"])
     records, skipped = _usable_records(sources, publishable_only=args.publishable_only)

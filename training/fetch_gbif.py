@@ -1307,8 +1307,11 @@ class _PublicRedirectHandler(urllib.request.HTTPRedirectHandler):
     """
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
-        validate_media_url(newurl)
-        return super().redirect_request(req, fp, code, msg, headers, newurl)
+        rewritten = force_https_url(newurl) if isinstance(newurl, str) else newurl
+        if not isinstance(rewritten, str) or urllib.parse.urlsplit(rewritten).scheme != "https":
+            raise UnsafeMediaUrl("redirect target must be https")
+        validate_media_url(rewritten)
+        return super().redirect_request(req, fp, code, msg, headers, rewritten)
 
 
 class _RedirectMediaOpener:
@@ -1429,15 +1432,19 @@ def download_image(
 ) -> int:
     """Download one photo. A verified image already at `destination` is skipped.
 
-    The URL must be http or https on port 80 or 443, and every resolved
+    The image URL must be https on port 443 after ``force_https_url``. An
+    http URL is rewritten to https and is never requested as http, including
+    when https times out. A redirect to http is rewritten to https before it
+    is followed. Anything that is still not https is refused. Every resolved
     address must be public. Each redirect is checked the same way. urllib
     resolves the host again after that check, and an HTTP proxy is not
     forced onto the address that was accepted.
 
-    An http image URL is rewritten to https before the request. Bytes land in
-    a temporary file in the same directory and are renamed into
-    place. The bytes are decoded in memory first. Timeouts are retried with
-    exponential backoff. HTTP 429 honors Retry-After
+    Bytes land in a temporary file in the same directory and are renamed into
+    place. The bytes are decoded in memory first. Timeouts are retried at
+    most ``attempts`` times (default ``DOWNLOAD_ATTEMPTS``, which is 3) on
+    the same https URL, with exponential backoff. There is no further loop.
+    HTTP 429 honors Retry-After
     plus a short random offset. Other transient errors use exponential backoff
     with the same offset. HTTP 403, 404, certificate errors, and undecodable
     bodies are not retried. A truncated body is retried once. A file already
@@ -1446,6 +1453,8 @@ def download_image(
     file that fails them is quarantined and is not accepted.
     """
     url = force_https_url(url)
+    if urllib.parse.urlsplit(url).scheme != "https":
+        raise UnsafeMediaUrl("image URL must be https")
     destination.parent.mkdir(parents=True, exist_ok=True)
     root = _data_dir_for(destination, data_dir)
     index = _verified_index(root)
