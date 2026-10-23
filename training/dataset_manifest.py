@@ -86,7 +86,7 @@ def build_dataset_manifest(
             "per_class": {class_id: counts.get(class_id, 0) for class_id in ordered},
         }
     digest = hashlib.sha256("\n".join(sorted(lines)).encode("utf-8")).hexdigest()
-    from component_share import load_share_config, measure_component_share
+    from component_share import COMPONENT_SHARE_LIMIT, load_share_config, measure_component_share
     from split import held_out_withheld_report
     from split_salt import salt_fingerprint
 
@@ -95,7 +95,7 @@ def build_dataset_manifest(
         splits,
         salt=salt,
         acknowledgements=config.get("acknowledgements") or {},
-        limit=float(config.get("limit", 0.20)),
+        limit=config.get("limit", COMPONENT_SHARE_LIMIT),
     )
     return {
         "splits": report,

@@ -15,7 +15,9 @@ Reads ``attributions.jsonl``. ``external.jsonl`` is read only with
 also skips ``usage=training_only`` (CC BY-NC and Danish Fungi 2020). The split
 salt is ``GRZYBOBRANIE_SPLIT_SALT`` or a file outside the repo. Corrupt files
 are skipped. The cached PNG is EXIF-oriented and area-resized to the
-model input, which is what the phone feeds the network.
+model input, which is what the phone feeds the network. An unacknowledged
+class over the per-class component-share limit, or with an empty val or test,
+stops the run before any split file or dataset manifest is written.
 """
 
 from __future__ import annotations
@@ -46,6 +48,14 @@ from split import split_by_observation, split_key_summary
 from split_salt import SplitSaltError, load_split_salt
 
 DATA_DIR = ROOT / "training" / "data"
+_PREPARE_OUTPUTS = (
+    "attributions.dedup.jsonl",
+    "dedup_report.json",
+    "splits.json",
+    "split_counts.json",
+    "split_groups.json",
+    "dataset_manifest.json",
+)
 
 
 _DCT32: np.ndarray | None = None
@@ -266,7 +276,61 @@ def main(argv: list[str] | None = None) -> None:
         splits, withheld = assign_splits(prepared, salt=salt, exclusion=exclusion)
     except GalleryLeakError as error:
         raise SystemExit(str(error)) from error
-    write_jsonl(DATA_DIR / "attributions.dedup.jsonl", prepared)
+    write_prepare_outputs(
+        DATA_DIR,
+        prepared=prepared,
+        splits=splits,
+        dropped=dropped,
+        identity_dropped=identity_dropped,
+        skipped=skipped,
+        withheld=withheld,
+        salt=salt,
+        share_config=share_config,
+        model_png_size=size or MODEL_INPUT_SIZE,
+    )
+    print(json.dumps({name: len(rows) for name, rows in splits.items()}))
+
+
+def write_prepare_outputs(
+    directory: Path,
+    *,
+    prepared: list[dict],
+    splits: dict[str, list[dict]],
+    dropped: list[dict],
+    identity_dropped: list[dict],
+    skipped: list,
+    withheld: list[dict],
+    salt: str,
+    share_config: dict,
+    model_png_size: int,
+) -> dict:
+    """Write split artifacts after the per-class hard stop.
+
+    The manifest is built in memory first. An unacknowledged class over the
+    component-share limit, or with an empty val or test, raises ``SystemExit``
+    and leaves the directory without ``splits.json`` or ``dataset_manifest.json``.
+    """
+    dataset_manifest = build_dataset_manifest(
+        splits,
+        salt=salt,
+        share_config=share_config,
+        withheld=withheld,
+    )
+    hard = list(dataset_manifest["component_share"]["hard_stop_classes"])
+    if hard:
+        for name in _PREPARE_OUTPUTS:
+            path = directory / name
+            if path.is_file():
+                path.unlink()
+        raise SystemExit(
+            "per-class component share or empty val/test stops the run for: "
+            + ", ".join(hard)
+            + ". No split files were written. "
+            "Add an explicit acknowledgement with a reason, or widen the class. "
+            "Acknowledged classes are recorded in the manifest as ship blockers, so the model is not shippable."
+        )
+    directory.mkdir(parents=True, exist_ok=True)
+    write_jsonl(directory / "attributions.dedup.jsonl", prepared)
     identity_reasons = dict(Counter(row.get("drop_reason") or "" for row in identity_dropped))
     class_conflicts = [
         {
@@ -280,7 +344,7 @@ def main(argv: list[str] | None = None) -> None:
         for row in identity_dropped
         if row.get("drop_reason") == "class_conflict"
     ]
-    (DATA_DIR / "dedup_report.json").write_text(
+    (directory / "dedup_report.json").write_text(
         json.dumps(
             {
                 "kept": len(prepared),
@@ -292,34 +356,25 @@ def main(argv: list[str] | None = None) -> None:
                 "class_conflicts": class_conflicts,
                 "held_out_withheld": len(withheld),
                 "skipped_corrupt_or_unreadable": len(skipped),
-                "model_png_size": size or MODEL_INPUT_SIZE,
+                "model_png_size": model_png_size,
             },
             indent=2,
         ),
         encoding="utf-8",
     )
     serializable = {name: rows for name, rows in splits.items()}
-    (DATA_DIR / "splits.json").write_text(json.dumps(serializable, ensure_ascii=False), encoding="utf-8")
+    (directory / "splits.json").write_text(json.dumps(serializable, ensure_ascii=False), encoding="utf-8")
     counts = {name: dict(Counter(row["class_id"] for row in rows)) for name, rows in splits.items()}
-    (DATA_DIR / "split_counts.json").write_text(json.dumps(counts, indent=2), encoding="utf-8")
-    (DATA_DIR / "split_groups.json").write_text(
+    (directory / "split_counts.json").write_text(json.dumps(counts, indent=2), encoding="utf-8")
+    (directory / "split_groups.json").write_text(
         json.dumps(split_key_summary(prepared), indent=2),
         encoding="utf-8",
     )
-    dataset_manifest = build_dataset_manifest(splits, salt=salt, share_config=share_config, withheld=withheld)
-    (DATA_DIR / "dataset_manifest.json").write_text(
+    (directory / "dataset_manifest.json").write_text(
         json.dumps(dataset_manifest, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
-    hard = dataset_manifest["component_share"]["hard_stop_classes"]
-    if hard:
-        raise SystemExit(
-            "per-class component share or empty val/test stops the run for: "
-            + ", ".join(hard)
-            + ". Add an explicit acknowledgement with a reason, or widen the class. "
-            "Acknowledged classes are written into dataset_manifest.json and block shipping."
-        )
-    print(json.dumps({name: len(rows) for name, rows in splits.items()}))
+    return dataset_manifest
 
 
 if __name__ == "__main__":

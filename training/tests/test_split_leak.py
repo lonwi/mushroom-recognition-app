@@ -9,7 +9,15 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from dedup import dedup_by_identity
-from component_share import COMPONENT_SHARE_LIMIT, measure_component_share
+from component_share import (
+    ACK_PATH,
+    COMPONENT_SHARE_LIMIT,
+    blockers_from_manifest_file,
+    component_share_blockers,
+    load_share_config,
+    measure_component_share,
+)
+from prepare_data import write_prepare_outputs
 from dataset_manifest import build_dataset_manifest
 from evaluate import attributions_complete
 from export_tflite import write_attribution_file
@@ -821,6 +829,136 @@ class SplitLeakTest(unittest.TestCase):
         )
         self.assertIn("boletus_edulis", json.dumps(manifest["component_share"]["acknowledgements"]))
         self.assertNotIn(FIXTURE_SALT, json.dumps(manifest))
+
+    def test_prepare_writes_nothing_on_an_unacknowledged_hard_stop(self):
+        dominated = [_photo("boletus_edulis", "one_author", index) for index in range(8)]
+        others = [_photo("boletus_edulis", f"login_{index}", index) for index in range(2)]
+        over_limit = {
+            "train": dominated,
+            "val": others[:1],
+            "test": others[1:],
+        }
+        empty_val = {
+            "train": [_photo("amanita_muscaria", f"ada_{index}", index) for index in range(8)],
+            "val": [],
+            "test": [_photo("amanita_muscaria", f"bea_{index}", index) for index in range(2)],
+        }
+        share_config = {"limit": COMPONENT_SHARE_LIMIT, "acknowledgements": {}}
+        for splits in (over_limit, empty_val):
+            with tempfile.TemporaryDirectory() as tmp:
+                directory = Path(tmp)
+                (directory / "splits.json").write_text("{}", encoding="utf-8")
+                (directory / "dataset_manifest.json").write_text("{}", encoding="utf-8")
+                prepared = [row for rows in splits.values() for row in rows]
+                with self.assertRaises(SystemExit) as raised:
+                    write_prepare_outputs(
+                        directory,
+                        prepared=prepared,
+                        splits=splits,
+                        dropped=[],
+                        identity_dropped=[],
+                        skipped=[],
+                        withheld=[],
+                        salt=FIXTURE_SALT,
+                        share_config=share_config,
+                        model_png_size=224,
+                    )
+                self.assertIn("No split files were written", str(raised.exception))
+                self.assertFalse((directory / "splits.json").exists())
+                self.assertFalse((directory / "dataset_manifest.json").exists())
+                self.assertFalse((directory / "dedup_report.json").exists())
+                self.assertFalse((directory / "attributions.dedup.jsonl").exists())
+        balanced = [_photo("cantharellus_cibarius", f"login_{index}", index) for index in range(10)]
+        clean = {"train": balanced[:6], "val": balanced[6:8], "test": balanced[8:]}
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            manifest = write_prepare_outputs(
+                directory,
+                prepared=balanced,
+                splits=clean,
+                dropped=[],
+                identity_dropped=[],
+                skipped=[],
+                withheld=[],
+                salt=FIXTURE_SALT,
+                share_config=share_config,
+                model_png_size=224,
+            )
+            self.assertEqual(manifest["component_share"]["hard_stop_classes"], [])
+            self.assertTrue((directory / "splits.json").is_file())
+            self.assertTrue((directory / "dataset_manifest.json").is_file())
+        acknowledged = {
+            "limit": COMPONENT_SHARE_LIMIT,
+            "acknowledgements": {"boletus_edulis": "one photographer until the pool is wider"},
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            manifest = write_prepare_outputs(
+                directory,
+                prepared=[row for rows in over_limit.values() for row in rows],
+                splits=over_limit,
+                dropped=[],
+                identity_dropped=[],
+                skipped=[],
+                withheld=[],
+                salt=FIXTURE_SALT,
+                share_config=acknowledged,
+                model_png_size=224,
+            )
+            self.assertEqual(manifest["component_share"]["hard_stop_classes"], [])
+            self.assertTrue(manifest["component_share"]["ship_blockers"])
+            written = json.loads((directory / "dataset_manifest.json").read_text(encoding="utf-8"))
+            self.assertTrue(written["component_share"]["ship_blockers"])
+
+    def test_missing_component_share_measurement_is_a_blocker(self):
+        self.assertTrue(component_share_blockers({}))
+        self.assertTrue(component_share_blockers({"splits": {"train": {"rows": 1}}}))
+        self.assertEqual(
+            component_share_blockers(
+                {"component_share": {"ship_blockers": [], "hard_stop_classes": []}}
+            ),
+            [],
+        )
+        self.assertTrue(
+            any(
+                "boletus_edulis" in item
+                for item in component_share_blockers(
+                    {
+                        "component_share": {
+                            "ship_blockers": [],
+                            "hard_stop_classes": ["boletus_edulis"],
+                        }
+                    }
+                )
+            )
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            missing = Path(tmp) / "dataset_manifest.json"
+            self.assertTrue(blockers_from_manifest_file(missing))
+            present = Path(tmp) / "old.json"
+            present.write_text(json.dumps({"content_sha256": "abc"}), encoding="utf-8")
+            reasons = blockers_from_manifest_file(present)
+            self.assertTrue(any("component_share" in item for item in reasons))
+
+    def test_share_limit_above_the_constant_is_refused(self):
+        self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
+        checked_in = load_share_config(ACK_PATH)
+        self.assertLessEqual(checked_in["limit"], COMPONENT_SHARE_LIMIT)
+        self.assertIn("cortinarius_orellanus", checked_in["acknowledgements"])
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "share.json"
+            path.write_text(json.dumps({"limit": 0.9, "acknowledgements": []}), encoding="utf-8")
+            with self.assertRaises(ValueError) as raised:
+                load_share_config(path)
+            self.assertIn("0.9", str(raised.exception))
+            path.write_text(json.dumps({"limit": 0.1, "acknowledgements": []}), encoding="utf-8")
+            self.assertEqual(load_share_config(path)["limit"], 0.1)
+        with self.assertRaises(ValueError):
+            measure_component_share(
+                {"train": [], "val": [], "test": []},
+                salt=FIXTURE_SALT,
+                limit=0.9,
+            )
 
     def test_external_jsonl_rows_get_a_collector_key(self):
         import csv

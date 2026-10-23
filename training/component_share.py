@@ -1,10 +1,11 @@
 """Per-class share of the largest identity component.
 
-The gate is one number, ``COMPONENT_SHARE_LIMIT`` (default 0.20): the largest
+The gate is one number, ``COMPONENT_SHARE_LIMIT`` (0.20): the largest
 component's share of that class's rows. A class over the limit fails prepare
 unless it is named in the acknowledgement file. An acknowledgement is written
 into the dataset manifest and is a ship blocker, so the model stays
 non-shippable. The global largest-component share is recorded and is not a gate.
+A config file may set a lower limit. A limit above the constant is an error.
 
 Every class also needs a non-empty val and a non-empty test. An acknowledged
 class that fails either check is the same kind of ship blocker. Other classes
@@ -21,7 +22,7 @@ from manifest import ROOT
 from publication import _df20_marker
 from split import _components, normalized_person_text, person_identity_keys
 
-# Single configurable constant. Pending an owner decision between 0.20 and 0.50.
+# Owner decision (Wojtek). Do not raise this constant.
 COMPONENT_SHARE_LIMIT = 0.20
 ACK_PATH = ROOT / "training" / "component_share_acknowledgements.json"
 _PERSON_FIELDS = (
@@ -66,10 +67,32 @@ def is_df20_row(row: dict) -> bool:
     return _df20_marker(row)
 
 
+def require_share_limit(limit: object, source: str) -> float:
+    """Refuse any limit wider than ``COMPONENT_SHARE_LIMIT``. A lower limit is allowed.
+
+    Acknowledgements are the only exception, and those keep the model non-shippable.
+    """
+    if isinstance(limit, bool):
+        raise ValueError(f"{source} limit must be a number")
+    try:
+        value = float(limit)  # type: ignore[arg-type]
+    except (TypeError, ValueError) as error:
+        raise ValueError(f"{source} limit must be a number") from error
+    if value != value or value <= 0:
+        raise ValueError(f"{source} limit must be greater than 0 and at most {COMPONENT_SHARE_LIMIT}")
+    if value > COMPONENT_SHARE_LIMIT:
+        raise ValueError(
+            f"{source} limit {value} is above COMPONENT_SHARE_LIMIT ({COMPONENT_SHARE_LIMIT}). "
+            "A wider gate is refused. The only exception is an acknowledgement, which keeps the model non-shippable."
+        )
+    return value
+
+
 def load_share_config(path: Path | None = None) -> dict:
     """Limit plus the explicit per-class acknowledgement list.
 
     A missing file uses the default limit and acknowledges nobody.
+    A file limit above ``COMPONENT_SHARE_LIMIT`` is an error. A lower limit is kept.
     """
     file = ACK_PATH if path is None else Path(path)
     if not file.is_file():
@@ -77,13 +100,7 @@ def load_share_config(path: Path | None = None) -> dict:
     payload = json.loads(file.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError(f"{file} must be a JSON object")
-    raw_limit = payload.get("limit", COMPONENT_SHARE_LIMIT)
-    try:
-        limit = float(raw_limit)
-    except (TypeError, ValueError) as error:
-        raise ValueError(f"{file} limit must be a number") from error
-    if not 0 < limit < 1:
-        raise ValueError(f"{file} limit must be between 0 and 1")
+    limit = require_share_limit(payload.get("limit", COMPONENT_SHARE_LIMIT), str(file))
     acknowledgements: dict[str, str] = {}
     raw = payload.get("acknowledgements") or []
     if not isinstance(raw, list):
@@ -109,7 +126,10 @@ def measure_component_share(
     """Per-class component share, placeholder share, and DF20 share.
 
     ``salt`` pseudonymizes the largest component id. It does not change the sizes.
+    ``limit`` above ``COMPONENT_SHARE_LIMIT`` is refused, including a value passed
+    in directly rather than through a config file.
     """
+    limit = require_share_limit(limit, "component share")
     names = ("train", "val", "test")
     rows: list[dict] = []
     per_split: dict[str, Counter[str]] = {name: Counter() for name in names}
@@ -229,13 +249,35 @@ def blockers_from_manifest_file(path: Path) -> list[str]:
 
 
 def component_share_blockers(manifest: dict | None) -> list[str]:
-    """Ship-blocker strings recorded on a dataset manifest. Missing data adds none."""
+    """Ship-blocker strings recorded on a dataset manifest.
+
+    A manifest with no ``component_share`` block is a blocker, the same as a
+    missing file. An unacknowledged hard stop recorded in the block is a blocker
+    too, so a leftover manifest cannot ship.
+    """
     if not isinstance(manifest, dict):
-        return []
+        return ["dataset manifest is missing, so the per-class component share was not recorded"]
     block = manifest.get("component_share")
     if not isinstance(block, dict):
-        return []
+        return [
+            "dataset manifest has no component_share block, so the per-class component share was not recorded"
+        ]
     reasons = block.get("ship_blockers")
     if not isinstance(reasons, list):
-        return []
-    return [str(item) for item in reasons if str(item).strip()]
+        return [
+            "dataset manifest component_share has no ship_blockers list, so the per-class component share was not recorded"
+        ]
+    found = [str(item) for item in reasons if str(item).strip()]
+    hard = block.get("hard_stop_classes")
+    if not isinstance(hard, list):
+        found.append(
+            "dataset manifest component_share has no hard_stop_classes list, so the per-class component share was not recorded"
+        )
+        return found
+    for class_id in hard:
+        text = str(class_id).strip()
+        if text and not any(text in item for item in found):
+            found.append(
+                f"{text}: unacknowledged component-share hard stop is still recorded. The model is not shippable."
+            )
+    return found
