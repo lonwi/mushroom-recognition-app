@@ -15,6 +15,21 @@ from license_policy import exact_license_usage, license_family
 
 _DF20_DATASETS = frozenset({"df20", "danish fungi 2020", "danish_fungi_2020"})
 
+# Every field ``is_df20_row`` reads. ``attribution_row`` copies this tuple onto
+# ``attributions.jsonl``. A new check has to use these tuples: a field named only
+# inside the detector would not survive export, and the release gate would miss it.
+DF20_SOURCE_FIELD = "source"
+DF20_PRESENT_FIELDS = ("df20_image_path", "ImageUniqueID", "df20_image_id")
+DF20_NOTE_FIELDS = ("licence_note", "license_note")
+DF20_DATASET_FIELDS = ("dataset", DF20_SOURCE_FIELD, "collection")
+DF20_NORMALIZED_LICENSE_FIELD = "license_normalized"
+DF20_DETECTION_FIELDS = (
+    *DF20_PRESENT_FIELDS,
+    *DF20_NOTE_FIELDS,
+    *DF20_DATASET_FIELDS,
+    DF20_NORMALIZED_LICENSE_FIELD,
+)
+
 
 def publishable_normalized_id(license_id: str) -> bool:
     """True when the id is an exact publishable key, such as ``cc-by-4.0``."""
@@ -52,13 +67,14 @@ def license_column(row: dict) -> str:
 
 
 def _df20_marker(row: dict) -> bool:
-    if row.get("df20_image_path") or row.get("ImageUniqueID") or row.get("df20_image_id"):
+    """True when a present id, a note, or a dataset field marks Danish Fungi 2020."""
+    if any(row.get(field) for field in DF20_PRESENT_FIELDS):
         return True
-    for field in ("licence_note", "license_note"):
+    for field in DF20_NOTE_FIELDS:
         value = row.get(field)
         if isinstance(value, str) and "df20" in value.casefold():
             return True
-    for field in ("dataset", "source", "collection"):
+    for field in DF20_DATASET_FIELDS:
         value = row.get(field)
         if isinstance(value, str) and value.strip().casefold() in _DF20_DATASETS:
             return True
