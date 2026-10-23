@@ -14,7 +14,7 @@ Po [#69](https://github.com/lonwi/mushroom-recognition-app/pull/69) to samo jest
 - `class_id`: `cortinarius_orellanus`
 - powód: 23 z 24 zdjęć należy do jednego fotografa; klasa zostaje blokerem statku, dopóki pula nie jest szersza.
 
-Potwierdzenie pozwala skończyć `prepare`. Trafia do manifestu i do `component_share_blockers`, więc `shippable` zostaje false (`training/ship_gates.py` czyta tę listę). Próg udziału opisuje [0001](0001-udzial-zbieracza.md). Pomiar z 2026-10-23, 14:17, zapisany w 0001: udział największego komponentu w `cortinarius_orellanus` to 84,7%. Treść karty atlasu opisuje [0010](0010-drobne-atlas-51.md).
+Potwierdzenie pozwala skończyć `prepare`. Trafia do manifestu i do `component_share_blockers`, więc `shippable` zostaje false (`training/ship_gates.py` czyta tę listę). Próg udziału opisuje [0001](0001-udzial-zbieracza.md). Pomiar z runu Trenowania na `main` `1e6f6e7` (`prepare` fail-closed), zapisany w 0001: udział największego komponentu w `cortinarius_orellanus` to 84,7%. Wojtek o 14:17 zdecydował na podstawie tego raportu. Brak wyliczony przez Trenowanie przy 0.20: +233 zdjęć od nowych autorów i z nowych obserwacji (cel ≥ 305); zapas Zbierania ok. 10% to +255. Treść karty atlasu opisuje [0010](0010-drobne-atlas-51.md).
 
 Issue #51 jest nadal otwarte. Nie ma nowszej puli zdjęć w repozytorium.
 
