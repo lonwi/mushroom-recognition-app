@@ -257,7 +257,11 @@ describe('AtlasScreen RTL Tests', () => {
       expect(unverified.getByText('Gęśnica wiosenna')).toBeTruthy();
       expect(unverified.getByText('Maślanka łagodna')).toBeTruthy();
       expect(unverified.getByText('Kolczak obłączasty')).toBeTruthy();
-      expect(unverified.getByText(/nie oznacza, że grzyb jest jadalny/)).toBeTruthy();
+      expect(
+        unverified.getByText(
+          'Gatunki z tej sekcji nie pasują do wszystkich wybranych cech albo brakuje dla nich danych. Są tu też gatunki trujące i śmiertelnie trujące, których nie da się wykluczyć na podstawie tych cech, bo pochwa, pierścień, kolor czy rozmiar mogą być u okazu niewidoczne albo inne niż w opisie.',
+        ),
+      ).toBeTruthy();
       expect(screen.queryByTestId('atlas-condition-armillaria_mellea')).toBeNull();
     });
   });
@@ -274,14 +278,44 @@ describe('AtlasScreen RTL Tests', () => {
     await waitFor(() => {
       const matches = within(screen.getByTestId('atlas-matches'));
       expect(matches.getByText('Czubajka kania')).toBeTruthy();
-      expect(matches.queryByText('Prawdziwki')).toBeNull();
+      expect(matches.queryByText('Zasłonak rudy')).toBeNull();
       const unverified = within(screen.getByTestId('atlas-unverified'));
-      expect(unverified.getByText('Prawdziwki')).toBeTruthy();
+      expect(unverified.getByText('Zasłonak rudy')).toBeTruthy();
       expect(screen.queryByText('Gęśnica wiosenna')).toBeNull();
+      expect(screen.queryByText('Prawdziwki')).toBeNull();
       const listed = screen.getAllByTestId(/^atlas-card-[a-z0-9_]+$/);
       const matchCount = within(screen.getByTestId('atlas-matches')).getAllByTestId(/^atlas-card-[a-z0-9_]+$/).length;
       expect(screen.getByTestId('atlas-result-count').props.children).toBe(`Pasujące karty: ${matchCount}`);
       expect(listed.length).toBeGreaterThan(matchCount);
+    });
+  });
+
+  it('keeps a toxic species with a ring that can fall off under verification', async () => {
+    const screen = await render(
+      <LanguageProvider>
+        <AtlasScreen onSelectSpecies={() => {}} />
+      </LanguageProvider>
+    );
+
+    await fireEvent.press(screen.getByTestId('atlas-filter-open'));
+    await fireEvent.press(screen.getByTestId('filter-chip-ring-absent'));
+    await waitFor(() => {
+      const unverified = within(screen.getByTestId('atlas-unverified'));
+      expect(unverified.getByTestId('atlas-card-amanita_phalloides')).toBeTruthy();
+      expect(unverified.getByTestId('atlas-card-amanita_virosa')).toBeTruthy();
+      expect(unverified.getByTestId('atlas-card-galerina_marginata')).toBeTruthy();
+      expect(screen.queryByTestId('atlas-card-amanita_rubescens')).toBeNull();
+    });
+
+    await fireEvent.press(screen.getByTestId('filter-chip-ring-absent'));
+    await fireEvent.press(screen.getByTestId('filter-chip-volva-brak'));
+    await waitFor(() => {
+      const unverified = within(screen.getByTestId('atlas-unverified'));
+      expect(unverified.getByTestId('atlas-card-amanita_phalloides')).toBeTruthy();
+      expect(unverified.getByTestId('atlas-card-amanita_virosa')).toBeTruthy();
+      const matches = within(screen.getByTestId('atlas-matches'));
+      expect(matches.getByTestId('atlas-card-galerina_marginata')).toBeTruthy();
+      expect(screen.queryByTestId('atlas-card-amanita_rubescens')).toBeNull();
     });
   });
 

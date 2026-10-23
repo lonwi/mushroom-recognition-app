@@ -255,7 +255,9 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.getByTestId('atlas-matches').getByText('Kolczak obłączasty')).toBeVisible();
     await expect(page.getByTestId('atlas-result-count')).toContainText('Pasujące karty: 1');
     await expect(page.getByTestId('atlas-unverified').getByText('Zasłonak rudawy')).toBeVisible();
-    await expect(page.getByTestId('atlas-unverified')).toContainText('nie oznacza, że grzyb jest jadalny');
+    await expect(page.getByTestId('atlas-unverified')).toContainText(
+      'Są tu też gatunki trujące i śmiertelnie trujące, których nie da się wykluczyć na podstawie tych cech',
+    );
 
     await page.getByPlaceholder('Szukaj grzyba (np. borowik, kania, kurka)...').fill('brak-takiego-grzyba');
     await expect(page.getByTestId('atlas-empty')).toContainText('Brak karty nie oznacza, że grzyb jest jadalny');
