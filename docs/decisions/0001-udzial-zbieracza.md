@@ -1,7 +1,8 @@
 # 0001. Udział jednego zbieracza w klasie (20% czy 50%)
 
-- **Status:** Podjęta (wdrożenie w toku)
+- **Status:** Oczekuje na decyzję
 - **Data wpisu:** 2026-10-23
+- **Notka:** Wybór 0.50 z 12:13 został wstrzymany 2026-10-23 o 12:14. Właściciel chce najpierw zobaczyć liczby per klasa. W kodzie zostaje 0.20.
 
 ## Kontekst
 
@@ -22,26 +23,27 @@ Test `training/tests/test_split_leak.py` sprawdza, że stała jest równa 0.20.
 
 ## Rekomendacja
 
-Boty wskazywały **A** (20%). Obowiązuje decyzja poniżej: **B** (0.50).
+Boty: **A** (20%). Wybór 0.50 z 12:13 jest wstrzymany i nie obowiązuje.
 
 ## Decyzja
 
-**B.** `COMPONENT_SHARE_LIMIT` = **0.50**.
+Brak obowiązującego wyboru między 0.20 a 0.50.
 
-Próg na klasę to udział największego komponentu równy 50%. Plik konfiguracji nadal może zejść poniżej stałej. Wartość powyżej stałej zostaje błędem.
+2026-10-23 o 12:13 właściciel wskazał `COMPONENT_SHARE_LIMIT` = 0.50. O 12:14 tę decyzję **wstrzymał**. Najpierw chce zobaczyć liczby per klasa. Do tego czasu próg w kodzie zostaje 0.20. PR Trenowania pod 0.50 nie startuje z tego wpisu.
 
 ## Data
 
-2026-10-23, 12:13 czasu polskiego.
+Wskazanie 0.50: 2026-10-23, 12:13 czasu polskiego.
+Wstrzymanie: 2026-10-23, 12:14 czasu polskiego.
 
 ## Uzasadnienie
 
-Właściciel podniósł próg z 0.20 do 0.50. Rekomendacja botów była przy 20%.
+Wstrzymanie: bez liczb per klasa próg 0.50 nie wchodzi.
 
 ## Wdrożenie
 
-W toku, w osobnym PR Trenowania. Na `main` stała w `training/component_share.py` nadal wynosi **0.20** (komentarz: decyzji 20% albo 50% nie wolno realizować podniesieniem progu w innym miejscu). Testy `training/tests/test_split_leak.py` i `training/tests/test_contract.py` sprawdzają 0.20. Plik `component_share_acknowledgements.json` nie podniesie progu: limit wyższy niż stała jest odrzucany. Mechanizm podziału z [#69](https://github.com/lonwi/mushroom-recognition-app/pull/69) / `8ac95c4` zostaje.
+Brak. Na `main` stała w `training/component_share.py` wynosi **0.20**. Testy `training/tests/test_split_leak.py` i `training/tests/test_contract.py` sprawdzają 0.20. Plik konfiguracji nie podniesie progu powyżej stałej. Mechanizm podziału z [#69](https://github.com/lonwi/mushroom-recognition-app/pull/69) / `8ac95c4` zostaje.
 
 ## Weryfikacja
 
-Decyzja zapisana w tym wpisie. W kodzie na `main` nadal jest 0.20.
+W kodzie na `main` jest 0.20. Liczb per klasa ten wpis nie zawiera.
