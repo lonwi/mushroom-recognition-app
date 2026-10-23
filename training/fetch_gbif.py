@@ -87,7 +87,7 @@ from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 from licenses import normalize_cc_license
-from url_safety import UnsafeMediaUrl, listed_media_records, validate_media_url
+from url_safety import UnsafeMediaUrl, force_https_url, listed_media_records, validate_media_url
 from manifest import CENTRAL_EUROPE, LABELS_PATH, ROOT, load_manifest
 from sampling import (
     MAX_PER_OCCURRENCE,
@@ -891,12 +891,25 @@ def _reason_is_transient(reason: object) -> bool:
     return _text_is_transient(str(reason))
 
 
+def _is_timeout_error(error: BaseException) -> bool:
+    """Socket and read timeouts, including those wrapped in URLError."""
+    if isinstance(error, TimeoutError):
+        return True
+    reason = getattr(error, "reason", None)
+    if isinstance(reason, TimeoutError):
+        return True
+    blob = f"{error} {reason}".lower()
+    return "timed out" in blob or "timeout" in blob
+
+
 def _is_transient_download_error(error: BaseException) -> bool:
     """DNS, timeout, reset, HTTP 429/5xx, and SSL handshake. Not 403, 404, or a bad certificate."""
     if _is_certificate_failure(error):
         return False
     if isinstance(error, urllib.error.HTTPError):
         return error.code == 429 or 500 <= int(error.code) <= 599
+    if _is_timeout_error(error):
+        return True
     if isinstance(error, urllib.error.URLError):
         return _reason_is_transient(error.reason)
     return _reason_is_transient(error)
@@ -1421,8 +1434,10 @@ def download_image(
     resolves the host again after that check, and an HTTP proxy is not
     forced onto the address that was accepted.
 
-    Bytes land in a temporary file in the same directory and are renamed into
-    place. The bytes are decoded in memory first. HTTP 429 honors Retry-After
+    An http image URL is rewritten to https before the request. Bytes land in
+    a temporary file in the same directory and are renamed into
+    place. The bytes are decoded in memory first. Timeouts are retried with
+    exponential backoff. HTTP 429 honors Retry-After
     plus a short random offset. Other transient errors use exponential backoff
     with the same offset. HTTP 403, 404, certificate errors, and undecodable
     bodies are not retried. A truncated body is retried once. A file already
@@ -1430,6 +1445,7 @@ def download_image(
     checks as a new download. Those checks finish before it is remembered. A
     file that fails them is quarantined and is not accepted.
     """
+    url = force_https_url(url)
     destination.parent.mkdir(parents=True, exist_ok=True)
     root = _data_dir_for(destination, data_dir)
     index = _verified_index(root)
@@ -1797,6 +1813,9 @@ def _occurrence_key_for_filename(value: object) -> str:
 
 
 def _attach_file(row: dict, folder: str) -> Path:
+    image_url = row.get("image_url")
+    if isinstance(image_url, str):
+        row["image_url"] = force_https_url(image_url)
     filename = (
         f"{_occurrence_key_for_filename(row.get('occurrence_key'))}"
         f"_{row['media_index']}{suffix_for(row['image_url'])}"
