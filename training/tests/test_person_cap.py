@@ -8,6 +8,7 @@ under the cap, counted with split.person_identity_keys.
 
 import json
 import os
+import random
 import sys
 import tempfile
 import unittest
@@ -29,7 +30,7 @@ from person_cap import (
     apply_person_class_cap,
     person_row_cap,
 )
-from prepare_data import main, records_for_split
+from prepare_data import _usable_records, main, records_for_split
 from salt_fixture import FIXTURE_SALT
 from sampling import MAX_PER_OCCURRENCE
 from split import component_ids, observation_identity_keys, person_identity_keys, photo_identity_keys
@@ -178,6 +179,13 @@ class PersonCapContractTest(unittest.TestCase):
         self.assertLess(body.index("_usable_records("), body.index("records_for_split("))
         self.assertLess(body.index("records_for_split("), body.index("_cache_model_pngs("))
         self.assertLess(body.index("_cache_model_pngs("), body.index("assign_splits("))
+        usable = text.split("def _usable_records_one(", 1)[1].split("\ndef ", 1)[0]
+        appended = usable.index("records.append(row)")
+        self.assertLess(usable.index("training_eligible("), appended)
+        self.assertLess(usable.index('"unverified"'), appended)
+        cap_step = text.split("def records_for_split(", 1)[1].split("\ndef ", 1)[0]
+        self.assertLess(cap_step.index("dedup_by_identity("), cap_step.index("dedup_records("))
+        self.assertLess(cap_step.index("dedup_records("), cap_step.index("apply_person_class_cap("))
 
     def test_prepare_caps_one_person_at_61_of_72_rows(self):
         rows = _merged_fixture()
@@ -197,6 +205,7 @@ class PersonCapContractTest(unittest.TestCase):
             "class_id": "cortinarius_orellanus",
             "n": 72,
             "cap": 10,
+            "limit": 10,
             "kept": 21,
             "removed": 51,
         })
@@ -208,6 +217,7 @@ class PersonCapContractTest(unittest.TestCase):
             "class_id": "amanita_muscaria",
             "n": 15,
             "cap": 10,
+            "limit": 10,
             "kept": 10,
             "removed": 5,
         })
@@ -225,23 +235,44 @@ class PersonCapContractTest(unittest.TestCase):
         self.assertEqual(post["amanita_muscaria"][MISSING_PERSON_KEY], 10)
         self.assertEqual(sum(post["cortinarius_orellanus"].values()) - post["cortinarius_orellanus"]["person:ada hunter"], 11)
 
+        self.assertEqual(report["author_cap_report"], report["removed"])
         ada_removed = [
             item
-            for item in report["removed"]
+            for item in report["author_cap_report"]
             if item["class_id"] == "cortinarius_orellanus" and item["person_key"] == "person:ada hunter"
         ]
+        ada_ids = sorted(
+            row["inat_photo_id"]
+            for row in removed
+            if row.get("class_id") == "cortinarius_orellanus" and row.get("inat_observer") == "Ada Hunter"
+        )
         self.assertEqual(ada_removed, [
-            {"class_id": "cortinarius_orellanus", "person_key": "person:ada hunter", "count": 51, "reason": "person_cap"}
+            {
+                "class_id": "cortinarius_orellanus",
+                "person_key": "person:ada hunter",
+                "n": 72,
+                "limit": 10,
+                "count": 51,
+                "reason": "person_cap",
+                "ids": ada_ids,
+            }
         ])
+        self.assertEqual(len(ada_ids), 51)
+        unknown_ids = sorted(
+            row["inat_photo_id"] for row in removed if row.get("class_id") == "amanita_muscaria"
+        )
         unknown_removed = [
-            item for item in report["removed"] if item["class_id"] == "amanita_muscaria"
+            item for item in report["author_cap_report"] if item["class_id"] == "amanita_muscaria"
         ]
         self.assertEqual(unknown_removed, [
             {
                 "class_id": "amanita_muscaria",
                 "person_key": MISSING_PERSON_KEY,
+                "n": 15,
+                "limit": 10,
                 "count": 5,
                 "reason": "no_person_key",
+                "ids": unknown_ids,
             }
         ])
         for row in _class_rows(capped, "amanita_muscaria"):
@@ -259,12 +290,9 @@ class PersonCapContractTest(unittest.TestCase):
         self.assertEqual(len(set(observations)), 10)
         self.assertEqual(max(Counter(observations).values()), 1)
         photo_ids = [row["inat_photo_id"] for row in capped]
-        self.assertEqual(photo_ids, [row["inat_photo_id"] for row in rows if row["inat_photo_id"] in set(photo_ids)])
-        reversed_kept, _reversed_removed, _reversed_report = apply_person_class_cap(list(reversed(rows)))
-        self.assertEqual(
-            {row["inat_photo_id"] for row in reversed_kept},
-            {row["inat_photo_id"] for row in capped},
-        )
+        reversed_kept, _reversed_removed, reversed_report = apply_person_class_cap(list(reversed(rows)))
+        self.assertEqual([row["inat_photo_id"] for row in reversed_kept], photo_ids)
+        self.assertEqual(reversed_report["author_cap_report"], report["author_cap_report"])
         other_seed, _other_removed, other_report = apply_person_class_cap(rows, seed=PERSON_CAP_SEED + 1)
         self.assertNotEqual(
             {row["inat_photo_id"] for row in other_seed if row["inat_observer"] == "Ada Hunter"},
@@ -421,8 +449,11 @@ class PersonCapContractTest(unittest.TestCase):
                 {
                     "class_id": "boletus_edulis",
                     "person_key": MISSING_PERSON_KEY,
+                    "n": 12,
+                    "limit": 10,
                     "count": 1,
                     "reason": "person_key_error",
+                    "ids": ["boletus_edulis-99"],
                 }
             ],
         )
@@ -461,6 +492,108 @@ class PersonCapContractTest(unittest.TestCase):
         self.assertIs(by_photo["boletus_edulis-1"], left)
         self.assertEqual(person_identity_keys(by_photo["boletus_edulis-1"]), person_identity_keys(left))
         self.assertEqual(person_identity_keys(by_photo["boletus_edulis-2"]), person_identity_keys(right))
+
+    def test_shuffled_rows_keep_the_same_photos_in_the_same_order(self):
+        rows = _merged_fixture()
+        capped, _removed, report = apply_person_class_cap(rows)
+        photo_ids = [row["inat_photo_id"] for row in capped]
+        for salt in (1, 2, 99):
+            shuffled = list(rows)
+            random.Random(salt).shuffle(shuffled)
+            self.assertNotEqual([row["inat_photo_id"] for row in shuffled], [row["inat_photo_id"] for row in rows])
+            again, _again_removed, again_report = apply_person_class_cap(shuffled)
+            self.assertEqual([row["inat_photo_id"] for row in again], photo_ids)
+            self.assertEqual(again_report["author_cap_report"], report["author_cap_report"])
+            for entry in again_report["author_cap_report"]:
+                self.assertEqual(entry["ids"], sorted(entry["ids"]))
+                self.assertEqual(entry["count"], len(entry["ids"]))
+                self.assertEqual(entry["limit"], person_row_cap(entry["n"]))
+
+    def test_unverified_and_duplicates_do_not_take_cap_slots(self):
+        from PIL import Image
+
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            image_dir = directory / "images" / "boletus_edulis"
+            image_dir.mkdir(parents=True)
+            unique = []
+            for index in range(12):
+                name = f"ada-{index}.png"
+                pixels = np.random.default_rng(4_000 + index).integers(0, 256, size=(24, 24, 3), dtype=np.uint8)
+                Image.fromarray(pixels, mode="RGB").save(image_dir / name)
+                unique.append(
+                    {
+                        "class_id": "boletus_edulis",
+                        "downloaded": True,
+                        "unverified": False,
+                        "file": f"images/boletus_edulis/{name}",
+                        "image_url": f"https://images.example.test/cap/{name}",
+                        "license": "CC BY 4.0",
+                        "inat_observer": "Ada Hunter",
+                        "inat_photo_id": f"ada-photo-{index}",
+                        "inat_observation_id": f"ada-obs-{index}",
+                    }
+                )
+            duplicates = []
+            for copy in range(20):
+                source = unique[copy % 12]
+                name = f"dup-{copy}.png"
+                pixels = np.random.default_rng(8_000 + copy).integers(0, 256, size=(24, 24, 3), dtype=np.uint8)
+                Image.fromarray(pixels, mode="RGB").save(image_dir / name)
+                duplicates.append(
+                    {
+                        **source,
+                        "file": f"images/boletus_edulis/{name}",
+                        "image_url": f"https://images.example.test/cap/{name}",
+                    }
+                )
+            unverified = [
+                {
+                    "class_id": "boletus_edulis",
+                    "downloaded": True,
+                    "unverified": True,
+                    "file": f"images/boletus_edulis/missing-{index}.png",
+                    "image_url": f"https://images.example.test/cap/missing-{index}.png",
+                    "license": "CC BY 4.0",
+                    "inat_observer": "Ada Hunter",
+                    "inat_photo_id": f"unverified-{index}",
+                    "inat_observation_id": f"unverified-obs-{index}",
+                }
+                for index in range(30)
+            ]
+            (directory / "attributions.jsonl").write_text(
+                "".join(json.dumps(row) + "\n" for row in unique + duplicates + unverified),
+                encoding="utf-8",
+            )
+            with patch("prepare_data.DATA_DIR", directory):
+                records, skipped = _usable_records([directory / "attributions.jsonl"])
+            self.assertEqual(sum(1 for row in skipped if row.get("skip_reason") == "unverified"), 30)
+            self.assertEqual(len(records), 32)
+            capped, _near, identity, removed, report = records_for_split(records)
+            self.assertGreaterEqual(len(identity), 20)
+            info = report["classes"][0]
+            self.assertEqual(info["class_id"], "boletus_edulis")
+            self.assertEqual(info["n"], 12)
+            self.assertEqual(info["limit"], 10)
+            self.assertEqual(len(capped), 10)
+            self.assertEqual(report["removed_rows"], 2)
+            kept_ids = {row["inat_photo_id"] for row in capped}
+            self.assertEqual(len(kept_ids), 10)
+            self.assertTrue(kept_ids <= {f"ada-photo-{index}" for index in range(12)})
+            self.assertTrue(all("/dup-" not in row["file"] for row in capped))
+            cut = report["author_cap_report"]
+            self.assertEqual(len(cut), 1)
+            self.assertEqual(cut[0]["person_key"], "person:ada hunter")
+            self.assertEqual(cut[0]["n"], 12)
+            self.assertEqual(cut[0]["limit"], 10)
+            self.assertEqual(cut[0]["count"], 2)
+            self.assertEqual(cut[0]["reason"], "person_cap")
+            self.assertEqual(cut[0]["ids"], sorted(cut[0]["ids"]))
+            self.assertEqual(len(cut[0]["ids"]), 2)
+            self.assertTrue(set(cut[0]["ids"]) <= {f"ada-photo-{index}" for index in range(12)})
+            self.assertTrue(set(cut[0]["ids"]).isdisjoint(kept_ids))
+            self.assertTrue(all(not str(row["inat_photo_id"]).startswith("unverified-") for row in capped))
+            self.assertTrue(all(row["inat_photo_id"] in set(cut[0]["ids"]) for row in removed))
 
     def test_prepare_main_merges_sources_writes_the_report_and_leaves_files(self):
         from PIL import Image
@@ -530,23 +663,48 @@ class PersonCapContractTest(unittest.TestCase):
                 for item in report["removed"]
                 if item["person_key"] == "person:ada hunter" and item["reason"] == "person_cap"
             ]
-            self.assertEqual(ada, [
-                {
-                    "class_id": "boletus_edulis",
-                    "person_key": "person:ada hunter",
-                    "count": 6,
-                    "reason": "person_cap",
-                }
-            ])
+            self.assertEqual(report["author_cap_report"], report["removed"])
+            self.assertEqual(len(ada), 1)
+            self.assertEqual(ada[0]["class_id"], "boletus_edulis")
+            self.assertEqual(ada[0]["person_key"], "person:ada hunter")
+            self.assertEqual(ada[0]["n"], 56)
+            self.assertEqual(ada[0]["limit"], 10)
+            self.assertEqual(ada[0]["count"], 6)
+            self.assertEqual(ada[0]["reason"], "person_cap")
+            self.assertEqual(ada[0]["ids"], sorted(ada[0]["ids"]))
+            self.assertEqual(len(ada[0]["ids"]), 6)
             dedup_report = json.loads((directory / "dedup_report.json").read_text(encoding="utf-8"))
             self.assertEqual(dedup_report["person_cap_removed"], report["removed_rows"])
-            splits = json.loads((directory / "splits.json").read_text(encoding="utf-8"))
+            self.assertEqual(dedup_report["author_cap_report"], "person_cap_report.json")
+            first_splits = (directory / "splits.json").read_bytes()
+            first_cap_report = (directory / "person_cap_report.json").read_bytes()
+            splits = json.loads(first_splits.decode("utf-8"))
             placed = [row for name in ("train", "val", "test") for row in splits[name]]
+            placed_ada = {
+                row["inat_photo_id"]
+                for row in placed
+                if "person:ada hunter" in person_identity_keys(row)
+            }
+            self.assertTrue(set(ada[0]["ids"]).isdisjoint(placed_ada))
             self.assertEqual(_counts(placed)["boletus_edulis"]["person:ada hunter"], 10)
             self.assertLessEqual(
                 max(_counts(placed)["boletus_edulis"].values()),
                 person_row_cap(ore[0]["n"]),
             )
+            for name in ("attributions.jsonl", "external.jsonl"):
+                path = directory / name
+                lines = path.read_text(encoding="utf-8").splitlines(keepends=True)
+                shuffled_lines = list(lines)
+                random.Random(7).shuffle(shuffled_lines)
+                self.assertNotEqual(shuffled_lines, lines)
+                path.write_text("".join(shuffled_lines), encoding="utf-8")
+            with patch("prepare_data.DATA_DIR", directory), patch.dict(
+                os.environ,
+                {SALT_ENV: FIXTURE_SALT, "GRZYBOBRANIE_GALLERY_CSV": ""},
+            ):
+                main(["--with-external"])
+            self.assertEqual((directory / "splits.json").read_bytes(), first_splits)
+            self.assertEqual((directory / "person_cap_report.json").read_bytes(), first_cap_report)
 
 
 if __name__ == "__main__":

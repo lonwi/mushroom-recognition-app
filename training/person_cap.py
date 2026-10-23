@@ -14,8 +14,10 @@ they are.
 
 Which rows survive is a seeded round-robin over observations: one photo
 from each observation, in stable-hash order, before a second photo from
-any observation. ``PERSON_CAP_SEED`` is not the split salt. Changing the
-salt does not change this selection.
+any observation. The hash is SHA-256 of ``PERSON_CAP_SEED`` and the photo
+id. Input position is not a key, so a shuffled source file keeps the same
+rows and the same order. ``PERSON_CAP_SEED`` is not the split salt.
+Changing the salt does not change this selection.
 
 Decision A leaves the existing per-observation photo limit unchanged.
 The GBIF fetch still stops at ``sampling.MAX_PER_OCCURRENCE`` (2). This
@@ -48,7 +50,9 @@ N_DEFINITION = (
     "every source has been merged and after both dedup passes (identity, then "
     "perceptual hash), and before this cap. Rows skipped before dedup (not "
     "downloaded, unverified, DF20 left out, training_only under "
-    "--publishable-only, missing file, corrupt) are not in N. The 224px PNG "
+    "--publishable-only, missing file, corrupt) are not in N. Identity "
+    "duplicates and perceptual near-duplicates are not in N and do not take "
+    "a person's slot. The 224px PNG "
     "cache runs after the cap and can still drop a kept row; that drop does "
     "not change N or the cap. A person's rows in other classes are not added "
     "to N. The cap is retroactive: rows collected before 2026-10-23 are "
@@ -90,8 +94,33 @@ def _row_stable_id(row: dict) -> str:
         value = row.get(field)
         if isinstance(value, str) and value.strip():
             return f"{field}:{value.strip()}"
+    return _content_token(row)
+
+
+def _content_token(row: dict) -> str:
     payload = json.dumps(row, sort_keys=True, default=str, ensure_ascii=False)
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def report_row_id(row: dict) -> str:
+    """Photo id written into ``author_cap_report``. Not the input position."""
+    if not isinstance(row, dict):
+        return "invalid"
+    for field in ("inat_photo_id", "file", "image_url", "identifier", "sha256"):
+        value = row.get(field)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return _row_stable_id(row)
+
+
+def _emission_key(seed: int, row: dict) -> tuple[str, str, str]:
+    """Order kept and cut rows. The input index is not part of the key."""
+    if not isinstance(row, dict):
+        token = "invalid"
+        return (_rank(seed, "emit", token), token, token)
+    stable = _row_stable_id(row)
+    content = _content_token(row)
+    return (_rank(seed, "emit", stable, content), stable, content)
 
 
 def _person_keys(record: dict) -> tuple[list[str] | None, bool]:
@@ -115,8 +144,9 @@ def _person_keys(record: dict) -> tuple[list[str] | None, bool]:
 def _group_observations(indexed: list[tuple[int, dict]]) -> list[tuple[str, list[tuple[int, dict]]]]:
     """Group one person's rows by the split's observation keys.
 
-    The group id is the sorted keys, not the input position, so a shuffle
-    does not change which observation is visited first. A row with no
+    The group id is the sorted keys. A shuffle does not change which
+    observation is visited first, and the input index is not a sort key.
+    A row with no
     observation key is its own group. A failure while reading observation
     keys leaves that row as its own group; the row is still capped.
     """
@@ -184,13 +214,7 @@ def _select_indexes(
     groups.sort(key=lambda item: (_rank(seed, class_id, person_key, "obs", item[0]), item[0]))
     ordered: list[list[tuple[int, dict]]] = []
     for obs_id, rows in groups:
-        rows_sorted = sorted(
-            rows,
-            key=lambda item: (
-                _rank(seed, class_id, person_key, "row", obs_id, _row_stable_id(item[1])),
-                item[0],
-            ),
-        )
+        rows_sorted = sorted(rows, key=lambda item: _emission_key(seed, item[1]))
         ordered.append(rows_sorted)
     chosen: list[int] = []
     depth = 0
@@ -222,9 +246,11 @@ def apply_person_class_cap(
 ) -> tuple[list[dict], list[dict], dict]:
     """Drop rows that put one person over the cap in a class.
 
-    Returns kept rows in input order (the same objects), removed copies,
-    and the report. The input list and the kept dicts are not modified.
-    Removed copies are not written back to the source files.
+    Returns the same row objects, ordered by the seeded photo-id hash,
+    plus removed copies and the report. Input order is not kept. The input
+    list and the kept dicts are not modified. Removed copies are not written
+    back to the source files. ``author_cap_report`` lists each cut bucket
+    with the class, person key, N, limit, count, reason, and photo ids.
     """
     if isinstance(seed, bool) or not isinstance(seed, int):
         raise ValueError("person cap seed must be an int")
@@ -236,6 +262,8 @@ def apply_person_class_cap(
     kept_indexes: set[int] = set()
     removed_by_index: dict[int, dict] = {}
     removed_counts: Counter[tuple[str, str, str]] = Counter()
+    removed_ids: dict[tuple[str, str, str], list[str]] = defaultdict(list)
+    class_n_cap: dict[str, tuple[int, int]] = {}
     class_info: list[dict] = []
     key_errors = 0
 
@@ -243,6 +271,7 @@ def apply_person_class_cap(
         items = by_class[class_id]
         n = len(items)
         cap = person_row_cap(n)
+        class_n_cap[class_id] = (n, cap)
         keys_of: dict[int, list[str]] = {}
         failed: set[int] = set()
         persons: dict[str, list[tuple[int, dict]]] = defaultdict(list)
@@ -268,7 +297,9 @@ def apply_person_class_cap(
         for index, record in items:
             if index in failed:
                 removed_by_index[index] = _removed_copy(record, "person_key_error")
-                removed_counts[(class_id, MISSING_PERSON_KEY, "person_key_error")] += 1
+                bucket = (class_id, MISSING_PERSON_KEY, "person_key_error")
+                removed_counts[bucket] += 1
+                removed_ids[bucket].append(report_row_id(record))
                 continue
             row_keys = keys_of[index]
             if all(index in selected[key] for key in row_keys):
@@ -284,20 +315,39 @@ def apply_person_class_cap(
                 else:
                     reason = "person_cap"
                 reasons.append(reason)
-                removed_counts[(class_id, key, reason)] += 1
+                bucket = (class_id, key, reason)
+                removed_counts[bucket] += 1
+                removed_ids[bucket].append(report_row_id(record))
             removed_by_index[index] = _removed_copy(record, _primary_reason(reasons))
         class_info.append(
             {
                 "class_id": class_id,
                 "n": n,
                 "cap": cap,
+                "limit": cap,
                 "kept": kept_here,
                 "removed": n - kept_here,
             }
         )
 
     kept = [record for index, record in enumerate(records) if index in kept_indexes]
-    removed = [removed_by_index[index] for index in range(len(records)) if index in removed_by_index]
+    kept.sort(key=lambda row: _emission_key(seed, row))
+    removed = sorted(
+        (removed_by_index[index] for index in removed_by_index),
+        key=lambda row: _emission_key(seed, row),
+    )
+    author_cap_report = [
+        {
+            "class_id": class_id,
+            "person_key": person_key,
+            "n": class_n_cap[class_id][0],
+            "limit": class_n_cap[class_id][1],
+            "count": count,
+            "reason": reason,
+            "ids": sorted(removed_ids[(class_id, person_key, reason)]),
+        }
+        for (class_id, person_key, reason), count in sorted(removed_counts.items())
+    ]
     report = {
         "applied": True,
         "n_definition": N_DEFINITION,
@@ -321,10 +371,8 @@ def apply_person_class_cap(
             "person_key_error: the person key could not be computed."
         ),
         "classes": class_info,
-        "removed": [
-            {"class_id": class_id, "person_key": person_key, "count": count, "reason": reason}
-            for (class_id, person_key, reason), count in sorted(removed_counts.items())
-        ],
+        "removed": author_cap_report,
+        "author_cap_report": author_cap_report,
     }
     return kept, removed, report
 
