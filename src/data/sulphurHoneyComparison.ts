@@ -17,8 +17,11 @@ const WIKI_HYPH = 'https://en.wikipedia.org/wiki/Hypholoma_fasciculare';
 
 const HYPH_LATIN = 'Hypholoma fasciculare';
 const ARM_LATIN = 'Armillaria mellea';
-const CC_BY = 'CC BY';
+const CC_BY = 'CC BY 4.0';
 const CC0 = 'CC0';
+/** GBIF media[].license for the four CC BY files, checked 2026-10-23. */
+const DEED_BY_40 = 'https://creativecommons.org/licenses/by/4.0/';
+const DEED_CC0 = 'https://creativecommons.org/publicdomain/zero/1.0/';
 
 export type ComparisonSideId = 'hypholoma' | 'armillaria';
 type ComparisonTraitId = 'ring' | 'gills' | 'spore' | 'cap' | 'flesh';
@@ -32,10 +35,19 @@ export interface ComparisonPhoto {
   assetPath: string;
   author: string;
   license: ComparisonLicense;
+  /** Deed for this file. Not inferred from the licence name. */
+  licenseUrl: string;
   /** Page given with the photo. Shown as the credit link. */
   sourceUrl: string;
   /** File or page URL used to keep this photo out of the training split. */
   imageUrl: string;
+  /** iNaturalist observation that contains this photo. */
+  inaturalistObservationId: string;
+  /**
+   * iNaturalist photo page when imageUrl is a Commons file.
+   * Training exclusion reads this so the photo id is still matched.
+   */
+  inaturalistPhotoUrl?: string;
   captionKey: string;
 }
 
@@ -51,6 +63,7 @@ interface ComparisonCredit {
   creator: string;
   license: string;
   licenseNormalized: string;
+  licenseUrl: string;
   imageUrl: string;
   sourceUrl: string;
   classId: string;
@@ -68,9 +81,12 @@ function photo(
   fileName: string,
   author: string,
   license: ComparisonLicense,
+  licenseUrl: string,
   sourceUrl: string,
   imageUrl: string,
   captionKey: string,
+  inaturalistObservationId: string,
+  inaturalistPhotoUrl?: string,
 ): ComparisonPhoto {
   const assetPath = `assets/gallery/porownanie/${fileName}`;
   return {
@@ -81,8 +97,11 @@ function photo(
     assetPath,
     author,
     license,
+    licenseUrl,
     sourceUrl,
     imageUrl,
+    inaturalistObservationId,
+    inaturalistPhotoUrl,
     captionKey,
   };
 }
@@ -123,9 +142,11 @@ export const COMPARISON_PHOTOS: readonly ComparisonPhoto[] = [
     'hypholoma-strefa-trzon.webp',
     'Jeffrey Lee (he/him/his)',
     CC_BY,
+    DEED_BY_40,
     'https://www.inaturalist.org/photos/57083848',
     'https://www.inaturalist.org/photos/57083848',
     `${CAPTION}.hypholomaStem`,
+    '36134920',
   ),
   photo(
     'hypholoma-blaszki',
@@ -134,9 +155,11 @@ export const COMPARISON_PHOTOS: readonly ComparisonPhoto[] = [
     'hypholoma-blaszki.webp',
     'Caroline Kane',
     CC_BY,
+    DEED_BY_40,
     'https://www.inaturalist.org/photos/585781642',
     'https://www.inaturalist.org/photos/585781642',
     `${CAPTION}.hypholomaGills`,
+    '323712901',
   ),
   photo(
     YOUNG_CAP,
@@ -145,9 +168,11 @@ export const COMPARISON_PHOTOS: readonly ComparisonPhoto[] = [
     'hypholoma-mlode-zasnowa.webp',
     'Mandy Hackney',
     CC_BY,
+    DEED_BY_40,
     'https://www.inaturalist.org/photos/334051112',
     'https://www.inaturalist.org/photos/334051112',
     `${CAPTION}.hypholomaYoung`,
+    '190539437',
   ),
   photo(
     'hypholoma-brzeg-kapelusza',
@@ -156,9 +181,12 @@ export const COMPARISON_PHOTOS: readonly ComparisonPhoto[] = [
     'hypholoma-brzeg-kapelusza.webp',
     'sugarsnap_t (via iNaturalist photo 313452639)',
     CC0,
+    DEED_CC0,
     'https://commons.wikimedia.org/wiki/File:Hypholoma_fasciculare_313452639.jpg',
     'https://upload.wikimedia.org/wikipedia/commons/f/f5/Hypholoma_fasciculare_313452639.jpg',
     `${CAPTION}.hypholomaMargin`,
+    '179992253',
+    'https://www.inaturalist.org/photos/313452639',
   ),
   photo(
     'hypholoma-miazsz',
@@ -167,9 +195,12 @@ export const COMPARISON_PHOTOS: readonly ComparisonPhoto[] = [
     'hypholoma-miazsz.webp',
     'Gabriel Mayrhofer',
     CC0,
+    DEED_CC0,
     'https://commons.wikimedia.org/wiki/File:Hypholoma_fasciculare_101886055.jpg',
     'https://upload.wikimedia.org/wikipedia/commons/d/d3/Hypholoma_fasciculare_101886055.jpg',
     `${CAPTION}.hypholomaFlesh`,
+    '63498273',
+    'https://www.inaturalist.org/photos/101886055',
   ),
   photo(
     'armillaria-pierscien-blaszki',
@@ -178,9 +209,11 @@ export const COMPARISON_PHOTOS: readonly ComparisonPhoto[] = [
     'armillaria-pierscien-blaszki.webp',
     'Stuart (sturuss)',
     CC0,
+    DEED_CC0,
     'https://www.inaturalist.org/photos/334304961',
     'https://www.inaturalist.org/photos/334304961',
     `${CAPTION}.armillariaRing`,
+    '190671820',
   ),
   photo(
     'armillaria-pierscien-trzony',
@@ -189,9 +222,11 @@ export const COMPARISON_PHOTOS: readonly ComparisonPhoto[] = [
     'armillaria-pierscien-trzony.webp',
     'MichellePrice_CJBG',
     CC_BY,
+    DEED_BY_40,
     'https://www.inaturalist.org/photos/237957448',
     'https://www.inaturalist.org/photos/237957448',
     `${CAPTION}.armillariaStems`,
+    '139156344',
   ),
   photo(
     'armillaria-blaszki',
@@ -200,9 +235,11 @@ export const COMPARISON_PHOTOS: readonly ComparisonPhoto[] = [
     'armillaria-blaszki.webp',
     'Peter Gabler',
     CC0,
+    DEED_CC0,
     'https://www.inaturalist.org/photos/54007942',
     'https://www.inaturalist.org/photos/54007942',
     `${CAPTION}.armillariaGills`,
+    '34326887',
   ),
   photo(
     'armillaria-luski-kapelusz',
@@ -211,9 +248,11 @@ export const COMPARISON_PHOTOS: readonly ComparisonPhoto[] = [
     'armillaria-luski-kapelusz.webp',
     'Peter Gabler',
     CC0,
+    DEED_CC0,
     'https://www.inaturalist.org/photos/54007897',
     'https://www.inaturalist.org/photos/54007897',
     `${CAPTION}.armillariaCap`,
+    '34326887',
   ),
 ];
 
@@ -310,6 +349,7 @@ export function comparisonPhotoCredits(): ComparisonCredit[] {
     creator: item.author,
     license: item.license,
     licenseNormalized: item.license,
+    licenseUrl: item.licenseUrl,
     imageUrl: item.imageUrl,
     sourceUrl: item.sourceUrl,
     classId: item.speciesId,

@@ -286,7 +286,7 @@ export const en: Translations = {
   comparison: {
     sulphurHoney: {
       title: 'Sulphur tuft and honey fungus',
-      lead: 'Sulphur tuft has no membranous ring. At most a faint, spore-darkened fibrous zone remains, or remnants at the cap margin. Honey fungus has a clear membranous ring.',
+      lead: 'Sulphur tuft has no membranous ring. At most a faint, spore-darkened fibrous zone remains, or remnants at the cap margin. Honey fungus usually has a clear membranous ring.',
       limit: 'Photos cannot rule out a poisonous species. An expert checks the specimen.',
       scope: 'The honey-fungus photos are Armillaria mellea. The atlas card also covers other honey fungi.',
       chipHint:

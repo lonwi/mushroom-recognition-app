@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import React from 'react';
 import { Linking, StyleSheet } from 'react-native';
 import { fireEvent, render, waitFor, within } from '@testing-library/react-native';
@@ -20,6 +22,7 @@ import { en } from '../../i18n/en';
 import { pl } from '../../i18n/pl';
 import { SpeciesDetailScreen } from '../../screens/SpeciesDetailScreen';
 import { contrastRatio, nearestBackground } from '../helpers/contrast';
+import { creditLicenseUrl } from '../../services/attributionPackage';
 
 const TASTE = /gorzk|smak|bitter|\btaste\b|kwask|acidic/i;
 
@@ -54,10 +57,29 @@ describe('sulphur tuft and honey fungus comparison', () => {
       expect(credit?.sourceUrl).toBe(photo.sourceUrl);
       expect(photo.sourceUrl.startsWith('https://')).toBe(true);
       expect(photo.author.length).toBeGreaterThan(0);
-      expect(photo.license).toMatch(/^(CC BY|CC0)$/);
       expect(photo.license).not.toMatch(/NC|SA/);
+      expect(photo.inaturalistObservationId).toMatch(/^\d+$/);
+      expect(credit?.licenseUrl).toBe(photo.licenseUrl);
       expect(credit?.modified).toBe(true);
+      if (photo.license.startsWith('CC BY')) {
+        const version = /^CC BY (\d+\.\d+)$/.exec(photo.license);
+        expect(version).not.toBeNull();
+        expect(photo.licenseUrl).toBe(`https://creativecommons.org/licenses/by/${version?.[1]}/`);
+      } else {
+        expect(photo.license).toBe('CC0');
+        expect(photo.licenseUrl).toBe('https://creativecommons.org/publicdomain/zero/1.0/');
+      }
+      expect(creditLicenseUrl({ ...credit!, licenseUrl: undefined })).toBe(
+        photo.license === 'CC0' ? photo.licenseUrl : null,
+      );
     }
+    const root = path.resolve(__dirname, '../../..');
+    expect(fs.readFileSync(path.join(root, 'src/services/attributionPackage.ts'), 'utf8')).not.toMatch(
+      /licenses\/by\//,
+    );
+    expect(fs.readFileSync(path.join(root, 'src/components/SulphurHoneyComparison.tsx'), 'utf8')).not.toMatch(
+      /licenses\/by\//,
+    );
     expect(photosForSpecies(HONEY_FUNGUS_ID)).toEqual([]);
     expect(photosForSpecies(SULPHUR_TUFT_ID).some((item) => item.assetPath.includes('porownanie'))).toBe(
       false,
@@ -113,7 +135,7 @@ describe('sulphur tuft and honey fungus comparison', () => {
     const lead = comparison.getByTestId('comparison-lead');
     expect(contrastRatio(textColor(lead), nearestBackground(lead))).toBeGreaterThanOrEqual(4.5);
     const license = comparison.getByTestId('comparison-license-ring-armillaria-pierscien-trzony');
-    const licenseText = within(license).getByText('CC BY');
+    const licenseText = within(license).getByText('CC BY 4.0');
     expect(contrastRatio(textColor(licenseText), nearestBackground(licenseText))).toBeGreaterThanOrEqual(4.5);
     openURL.mockRestore();
   });
@@ -131,7 +153,9 @@ describe('sulphur tuft and honey fungus comparison', () => {
       return node;
     });
     expect(contrastRatio(textColor(lead), nearestBackground(lead))).toBeGreaterThanOrEqual(4.5);
-    const license = within(screen.getByTestId('comparison-license-gills-hypholoma-blaszki')).getByText('CC BY');
+    const license = within(screen.getByTestId('comparison-license-gills-hypholoma-blaszki')).getByText(
+      'CC BY 4.0',
+    );
     expect(contrastRatio(textColor(license), nearestBackground(license))).toBeGreaterThanOrEqual(4.5);
     expect(screen.queryByText(TASTE)).toBeNull();
   });

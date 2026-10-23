@@ -14,6 +14,8 @@ export interface PhotoCredit {
   sourceUrl: string;
   classId: string;
   taxonName: string;
+  /** Deed for this file. A CC BY credit without this URL has no version to open. */
+  licenseUrl?: string;
   /** Set for atlas gallery photos, which were resized and saved as WebP. */
   modified?: boolean;
 }
@@ -42,6 +44,10 @@ export function creditsFromJsonl(text: string): PhotoCredit[] {
 }
 
 export function creditLicenseUrl(credit: PhotoCredit): string | null {
+  const explicit = credit.licenseUrl?.trim() ?? '';
+  if (/^https:\/\//i.test(explicit)) {
+    return explicit;
+  }
   const raw = credit.license.trim();
   if (/^https?:\/\//i.test(raw)) {
     return raw;
@@ -49,14 +55,6 @@ export function creditLicenseUrl(credit: PhotoCredit): string | null {
   const normalized = credit.licenseNormalized.trim().toUpperCase().replace(/\s+/g, ' ');
   if (normalized === 'CC0' || normalized === 'CC0 1.0') {
     return 'https://creativecommons.org/publicdomain/zero/1.0/';
-  }
-  if (
-    normalized === 'CC-BY' ||
-    normalized === 'CC BY' ||
-    normalized === 'CC BY 4.0' ||
-    normalized === 'CC-BY-4.0'
-  ) {
-    return 'https://creativecommons.org/licenses/by/4.0/';
   }
   return null;
 }

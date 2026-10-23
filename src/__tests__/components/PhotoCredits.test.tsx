@@ -32,6 +32,16 @@ describe('PhotoCredits', () => {
     expect(creditLicenseUrl({ ...credit, license: 'CC-BY', licenseNormalized: 'CC0' })).toBe(
       'https://creativecommons.org/publicdomain/zero/1.0/',
     );
+    expect(creditLicenseUrl({ ...credit, license: 'CC BY', licenseNormalized: 'CC BY' })).toBeNull();
+    expect(creditLicenseUrl({ ...credit, license: 'CC BY 4.0', licenseNormalized: 'CC BY 4.0' })).toBeNull();
+    expect(
+      creditLicenseUrl({
+        ...credit,
+        license: 'CC BY 4.0',
+        licenseNormalized: 'CC BY 4.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
+      }),
+    ).toBe('https://creativecommons.org/licenses/by/4.0/');
 
     const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(true as never);
     const { getByTestId, getByText } = await render(

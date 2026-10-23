@@ -64,9 +64,19 @@ describe('atlas gallery assets', () => {
     ...photos.map((photo) => photo.assetPath),
     ...COMPARISON_PHOTOS.map((photo) => photo.assetPath),
   ];
-  const credited = [
+  const credited: Array<{
+    imageUrl: string;
+    sourceUrl: string;
+    inaturalistObservationId?: string;
+    inaturalistPhotoUrl?: string;
+  }> = [
     ...photos.map((photo) => ({ imageUrl: photo.imageUrl, sourceUrl: photo.sourceUrl })),
-    ...COMPARISON_PHOTOS.map((photo) => ({ imageUrl: photo.imageUrl, sourceUrl: photo.sourceUrl })),
+    ...COMPARISON_PHOTOS.map((photo) => ({
+      imageUrl: photo.imageUrl,
+      sourceUrl: photo.sourceUrl,
+      inaturalistObservationId: photo.inaturalistObservationId,
+      inaturalistPhotoUrl: photo.inaturalistPhotoUrl,
+    })),
   ];
 
   it('keeps every poisonous card illustrated and leaves other cards without a gallery', () => {
@@ -112,6 +122,7 @@ describe('atlas gallery assets', () => {
       photos: Array<{
         image_url: string;
         inaturalist_observation_id: string | null;
+        inaturalist_photo_url?: string;
         source_url: string;
       }>;
     };
@@ -122,7 +133,10 @@ describe('atlas gallery assets', () => {
     for (const row of exclusion.photos) {
       const match = credited.find((photo) => photo.imageUrl === row.image_url);
       expect(match?.sourceUrl).toBe(row.source_url);
-      if (row.inaturalist_observation_id) {
+      if (match?.inaturalistObservationId) {
+        expect(row.inaturalist_observation_id).toBe(match.inaturalistObservationId);
+        expect(row.inaturalist_photo_url ?? null).toBe(match.inaturalistPhotoUrl ?? null);
+      } else if (row.inaturalist_observation_id) {
         expect(match?.sourceUrl).toContain(`/observations/${row.inaturalist_observation_id}`);
       }
     }

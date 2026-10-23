@@ -72,13 +72,6 @@ function sourceHost(url: string): string {
   return host.replace(/^www\./, '');
 }
 
-function licenseDeed(license: ComparisonPhoto['license']): string {
-  if (license === 'CC0') {
-    return 'https://creativecommons.org/publicdomain/zero/1.0/';
-  }
-  return 'https://creativecommons.org/licenses/by/4.0/';
-}
-
 function CreditLine({
   photo,
   traitId,
@@ -100,7 +93,7 @@ function CreditLine({
         {t('gallery.modified')}
       </Text>
       <Pressable
-        onPress={() => openUrl(licenseDeed(photo.license))}
+        onPress={() => openUrl(photo.licenseUrl)}
         accessibilityRole="link"
         accessibilityLabel={photo.license}
         testID={`comparison-license-${key}`}

@@ -70,6 +70,10 @@ def load_gallery_exclusion(path: Path | None = None) -> GalleryExclusion:
             raise ValueError(f"{file} photo is missing image_url")
         image_urls.add(canonical_url(image_url))
         photo_ids.update(_INAT_PHOTO.findall(image_url))
+        inat_photo = row.get("inaturalist_photo_url")
+        if isinstance(inat_photo, str) and inat_photo.strip():
+            image_urls.add(canonical_url(inat_photo))
+            photo_ids.update(_INAT_PHOTO.findall(inat_photo))
         inat = row.get("inaturalist_observation_id")
         if isinstance(inat, str) and inat.strip():
             inat_ids.add(inat.strip())

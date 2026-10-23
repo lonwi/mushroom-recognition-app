@@ -836,63 +836,65 @@
     {
       "species_id": "hypholoma_fasciculare",
       "image_url": "https://www.inaturalist.org/photos/57083848",
-      "inaturalist_observation_id": null,
+      "inaturalist_observation_id": "36134920",
       "mo_observation_id": null,
       "source_url": "https://www.inaturalist.org/photos/57083848"
     },
     {
       "species_id": "hypholoma_fasciculare",
       "image_url": "https://www.inaturalist.org/photos/585781642",
-      "inaturalist_observation_id": null,
+      "inaturalist_observation_id": "323712901",
       "mo_observation_id": null,
       "source_url": "https://www.inaturalist.org/photos/585781642"
     },
     {
       "species_id": "hypholoma_fasciculare",
       "image_url": "https://www.inaturalist.org/photos/334051112",
-      "inaturalist_observation_id": null,
+      "inaturalist_observation_id": "190539437",
       "mo_observation_id": null,
       "source_url": "https://www.inaturalist.org/photos/334051112"
     },
     {
       "species_id": "hypholoma_fasciculare",
       "image_url": "https://upload.wikimedia.org/wikipedia/commons/f/f5/Hypholoma_fasciculare_313452639.jpg",
-      "inaturalist_observation_id": null,
+      "inaturalist_photo_url": "https://www.inaturalist.org/photos/313452639",
+      "inaturalist_observation_id": "179992253",
       "mo_observation_id": null,
       "source_url": "https://commons.wikimedia.org/wiki/File:Hypholoma_fasciculare_313452639.jpg"
     },
     {
       "species_id": "hypholoma_fasciculare",
       "image_url": "https://upload.wikimedia.org/wikipedia/commons/d/d3/Hypholoma_fasciculare_101886055.jpg",
-      "inaturalist_observation_id": null,
+      "inaturalist_photo_url": "https://www.inaturalist.org/photos/101886055",
+      "inaturalist_observation_id": "63498273",
       "mo_observation_id": null,
       "source_url": "https://commons.wikimedia.org/wiki/File:Hypholoma_fasciculare_101886055.jpg"
     },
     {
       "species_id": "armillaria_mellea",
       "image_url": "https://www.inaturalist.org/photos/334304961",
-      "inaturalist_observation_id": null,
+      "inaturalist_observation_id": "190671820",
       "mo_observation_id": null,
       "source_url": "https://www.inaturalist.org/photos/334304961"
     },
     {
       "species_id": "armillaria_mellea",
       "image_url": "https://www.inaturalist.org/photos/237957448",
-      "inaturalist_observation_id": null,
+      "inaturalist_observation_id": "139156344",
       "mo_observation_id": null,
       "source_url": "https://www.inaturalist.org/photos/237957448"
     },
     {
       "species_id": "armillaria_mellea",
       "image_url": "https://www.inaturalist.org/photos/54007942",
-      "inaturalist_observation_id": null,
+      "inaturalist_observation_id": "34326887",
       "mo_observation_id": null,
       "source_url": "https://www.inaturalist.org/photos/54007942"
     },
     {
       "species_id": "armillaria_mellea",
       "image_url": "https://www.inaturalist.org/photos/54007897",
-      "inaturalist_observation_id": null,
+      "inaturalist_observation_id": "34326887",
       "mo_observation_id": null,
       "source_url": "https://www.inaturalist.org/photos/54007897"
     }

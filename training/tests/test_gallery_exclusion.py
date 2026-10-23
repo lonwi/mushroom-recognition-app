@@ -180,6 +180,39 @@ class GalleryExclusionTest(unittest.TestCase):
         self.assertNotIn(mirrored["image_url"], test_urls)
         self.assertGreater(len(splits["test"]), 0)
 
+    def test_comparison_photos_are_excluded_by_photo_and_by_observation(self):
+        exclusion = load_gallery_exclusion()
+        pairs = (
+            ("57083848", "36134920"),
+            ("585781642", "323712901"),
+            ("334051112", "190539437"),
+            ("313452639", "179992253"),
+            ("101886055", "63498273"),
+            ("334304961", "190671820"),
+            ("237957448", "139156344"),
+            ("54007942", "34326887"),
+            ("54007897", "34326887"),
+        )
+        self.assertEqual(len(pairs), 9)
+        for photo_id, observation_id in pairs:
+            self.assertIn(photo_id, exclusion.photo_ids)
+            self.assertIn(observation_id, exclusion.inat_ids)
+            self.assertTrue(
+                record_matches_gallery(
+                    {"image_url": f"https://static.inaturalist.org/photos/{photo_id}/original.jpg"},
+                    exclusion,
+                )
+            )
+            self.assertTrue(
+                record_matches_gallery(
+                    {
+                        "image_url": "https://gbif.example/other-photo.jpg",
+                        "source_url": f"https://www.inaturalist.org/observations/{observation_id}",
+                    },
+                    exclusion,
+                )
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

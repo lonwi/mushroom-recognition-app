@@ -20,6 +20,7 @@ export interface GalleryCredit {
   creator: string;
   license: string;
   licenseNormalized: string;
+  licenseUrl: string;
   imageUrl: string;
   sourceUrl: string;
   classId: string;
@@ -264,6 +265,7 @@ export function galleryPhotoCredits(): GalleryCredit[] {
         creator: item.author,
         license: item.license,
         licenseNormalized: item.license,
+        licenseUrl: galleryLicenseUrl(item.license),
         imageUrl: item.imageUrl,
         sourceUrl: item.sourceUrl,
         classId: speciesId,
