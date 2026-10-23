@@ -6,12 +6,17 @@
 import fs from 'fs';
 import path from 'path';
 
+import { EMERGENCY_CALLS, TOXICOLOGY_CENTERS } from '../data/safetyRules';
+
 const ROOT = path.resolve(__dirname, '../..');
 const SCAN_DIRS = ['src', 'assets', 'locales'];
+const PUBLIC_DIRS = ['site', 'scripts'];
 const TEXT_EXT = new Set(['.ts', '.tsx', '.js', '.json', '.jsonl', '.md']);
+const PUBLIC_EXT = new Set(['.html', '.css', '.svg', '.mjs', '.js', '.cjs', '.md']);
 const SINGLE_SOURCE = path.join('src', 'data', 'safetyRules.ts');
 // Tests may name forbidden numbers on purpose.
 const SKIP_DIRS = new Set(['__tests__', 'node_modules']);
+const EMERGENCY_DIGITS = new Set(EMERGENCY_CALLS.map((call) => call.number.replace(/\D/g, '')));
 
 // Polish phone formats with separators: (22) 619 66 54, 22 619 66 54,
 // 22-619-66-54, 661 442 576, 661-442-576, +48 ..., and any tel: link.
@@ -27,19 +32,42 @@ const PHONE = new RegExp(
   ].join('|'),
 );
 
-function walk(dir: string, out: string[]): void {
+// Same shapes as PHONE, but the whole number, so tel:112 is 112 and not just the first digit.
+const PUBLIC_PHONE = new RegExp(
+  [
+    String.raw`tel:\s*\+?\d[\d\s()-]*`,
+    String.raw`\(\d{2}\)\s?\d{3}[ -]?\d{2}[ -]?\d{2}`,
+    String.raw`(?<![\d.])\d{2}[ -]\d{3}[ -]\d{2}[ -]\d{2}(?![\d.])`,
+    String.raw`(?<![\d.])\d{3}[ -]\d{3}[ -]\d{3}(?![\d.])`,
+    String.raw`\+48[ -]?\d[\d\s()-]*`,
+  ].join('|'),
+  'g',
+);
+
+function walk(dir: string, out: string[], extensions: Set<string>): void {
   if (!fs.existsSync(dir)) return;
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (SKIP_DIRS.has(entry.name)) continue;
     const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) walk(full, out);
-    else if (TEXT_EXT.has(path.extname(entry.name))) out.push(full);
+    if (entry.isDirectory()) walk(full, out, extensions);
+    else if (extensions.has(path.extname(entry.name))) out.push(full);
   }
+}
+
+function phonesIn(text: string): string[] {
+  PUBLIC_PHONE.lastIndex = 0;
+  return [...text.matchAll(PUBLIC_PHONE)].map((match) => match[0].replace(/\D/g, ''));
+}
+
+/** Icon geometry is space-separated triples. Drop path data; keep text and attributes. */
+function textForPhoneScan(rel: string, text: string): string {
+  if (!rel.endsWith('.svg')) return text;
+  return text.replace(/\sd=(?:"[^"]*"|'[^']*')/g, ' ');
 }
 
 describe('emergency phone numbers have a single source', () => {
   const files: string[] = [];
-  SCAN_DIRS.forEach((d) => walk(path.join(ROOT, d), files));
+  SCAN_DIRS.forEach((d) => walk(path.join(ROOT, d), files, TEXT_EXT));
 
   const topDir = (file: string) => path.relative(ROOT, file).split(path.sep)[0];
 
@@ -92,5 +120,30 @@ describe('emergency phone numbers have a single source', () => {
         });
     }
     expect(offenders).toEqual([]);
+  });
+
+  it('site and scripts contain only EMERGENCY_CALLS', () => {
+    const publicFiles: string[] = [];
+    PUBLIC_DIRS.forEach((dir) => walk(path.join(ROOT, dir), publicFiles, PUBLIC_EXT));
+    const relative = publicFiles.map((file) => path.relative(ROOT, file).split(path.sep).join('/'));
+    expect(relative.some((file) => file.startsWith('site/') && file.endsWith('.html'))).toBe(true);
+    expect(relative.some((file) => file.startsWith('scripts/') && file.endsWith('.mjs'))).toBe(true);
+
+    const siteNumbers = new Set<string>();
+    const offenders: string[] = [];
+    for (const file of publicFiles) {
+      const rel = path.relative(ROOT, file).split(path.sep).join('/');
+      for (const digits of phonesIn(textForPhoneScan(rel, fs.readFileSync(file, 'utf8')))) {
+        if (rel.startsWith('site/')) siteNumbers.add(digits);
+        if (!EMERGENCY_DIGITS.has(digits)) offenders.push(`${rel}: ${digits}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+    expect([...siteNumbers].sort()).toEqual([...EMERGENCY_DIGITS].sort());
+
+    const centre = TOXICOLOGY_CENTERS[0].phones[0];
+    const leaked = phonesIn(`<a href="tel:${centre.replace(/\D/g, '')}">${centre}</a>`);
+    expect(leaked.some((digits) => EMERGENCY_DIGITS.has(digits))).toBe(false);
+    expect(leaked.length).toBeGreaterThan(0);
   });
 });
