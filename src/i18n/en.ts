@@ -397,6 +397,10 @@ export const en: Translations = {
     torchOffShort: '🔦 Torch',
     aimGuide: 'Point the camera at the cap and the underside',
     gallery: 'Gallery',
+    devInference: 'Inference {ms} ms · {delegate}',
+    devInferenceFallback: 'Inference {ms} ms · CPU after the delegate failed',
+    devDelegateAuto: 'Measure: delegate',
+    devDelegateCpu: 'Measure: CPU',
   },
   journal: {
     title: 'Forest Finds Journal',
@@ -561,7 +565,7 @@ export const en: Translations = {
       rule_no_taste_test: {
         title: 'Never taste-test mushrooms!',
         description:
-          'The myth that poisonous mushrooms are bitter or peppery is deadly dangerous. The death cap has a mild, pleasant taste!',
+          'The myth that poisonous mushrooms are bitter or peppery is deadly dangerous. Neither taste nor smell can tell a poisonous mushroom from an edible one.',
       },
       rule_avoid_young_buttons: {
         title: 'Avoid very young fruiting bodies (“eggs / buttons”)',

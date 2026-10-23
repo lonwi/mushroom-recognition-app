@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 import sys
 import zlib
 from collections import defaultdict
@@ -50,12 +51,28 @@ ARTIFACTS = ROOT / "training" / "artifacts"
 ID_KEEP_FIT = 0.97
 
 
+# NC, ND, and SA are not publishable, including when the id still starts with cc-by-.
+_NON_PUBLISHABLE_LICENSE = re.compile(r"(?:^|-)(?:nc|nd|sa)(?:-|$)")
+
+
+def publishable_license_id(license_id: str) -> bool:
+    """True for versioned CC0 and CC-BY ids. NC, ND, and SA are rejected."""
+    if not isinstance(license_id, str):
+        return False
+    if not (license_id.startswith("cc0-") or license_id.startswith("cc-by-")):
+        return False
+    return _NON_PUBLISHABLE_LICENSE.search(license_id) is None
+
+
 def attributions_complete(records: list[dict]) -> bool:
     if not records:
         return False
     for row in records:
+        # training_only covers CC BY-NC and DF20. Unverified ids stay out of a shipped model.
+        if row.get("usage") == "training_only" or row.get("unverified") is True:
+            return False
         license_id = str(row.get("license_normalized") or "")
-        if not (license_id.startswith("cc0-") or license_id.startswith("cc-by-")):
+        if not publishable_license_id(license_id):
             return False
         if not row.get("creator") or not row.get("image_url"):
             return False
@@ -165,20 +182,26 @@ def summarize(predictions: list[dict], class_ids: list[str], threshold: float | 
     }
 
 
+def id_validation_energies(val_predictions: list[dict]) -> list[float]:
+    """In-distribution validation energies. Background rows do not move the threshold."""
+    return [
+        float(row["energy"])
+        for row in val_predictions
+        if row["class_id"] != BACKGROUND_CLASS_ID
+    ]
+
+
 def choose_threshold(val_predictions: list[dict], keep_rate: float = ID_KEEP_FIT) -> float:
     """Smallest validation energy that keeps at least `keep_rate` of ID images.
 
     This is an order statistic, not `numpy.quantile`. The linear quantile sits
     between samples, so on a short validation split fewer than 95% of energies
     are <= that interpolated value. The threshold is fit on validation only.
+    Background rows are omitted by `id_validation_energies`.
     """
     if not 0 < keep_rate < 1:
         raise ValueError("keep_rate must be between 0 and 1")
-    energies = sorted(
-        float(row["energy"])
-        for row in val_predictions
-        if row["class_id"] != BACKGROUND_CLASS_ID
-    )
+    energies = sorted(id_validation_energies(val_predictions))
     if len(energies) < 8:
         raise RuntimeError("need at least 8 in-distribution validation images to set an energy threshold")
     keep_count = math.ceil(keep_rate * len(energies) - 1e-9)

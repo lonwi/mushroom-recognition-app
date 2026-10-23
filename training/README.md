@@ -16,6 +16,22 @@ Rejected on purpose:
 
 Every accepted photo is written to `training/data/attributions.jsonl` with the creator, the license URL, the normalized license id, the image URL, and a source page (the publisher URL or the GBIF occurrence). That file is gitignored because the fetch produces it. `export_tflite.py` copies a slim attribution file next to the model (`training/artifacts/attributions.jsonl`, and `assets/models/attributions.jsonl` when a model is installed). See `training/ATTRIBUTION.md`.
 
+The GBIF fetch is unchanged: a media license must still be a CC0 or CC-BY URL. CC BY-NC and DF20 are not accepted there.
+
+## External photo lists
+
+`training/import_external.py` reads per-species CSVs (iNaturalist / GBIF / Wikimedia Commons, plus `df20/`) and writes `training/data/external.jsonl`. It does not download images and it does not commit them. `run_pipeline.py import-external` is the same command. `all` does not run it, because the CSVs are not in this repository.
+
+The license is the cell on the row, matched as a whole id (`cc-by-4.0`, not a prefix). CC0 and versioned CC BY are `usage=publishable`. Versioned CC BY-NC is `usage=training_only`. A versionless `CC BY` or `CC BY-NC` takes its version from the `license_url` column when that URL is the same license (for example `https://creativecommons.org/licenses/by/4.0/`). If neither the text nor `license_url` has a version, the row is dropped. CC0 without a version is `cc0-1.0`. An empty or unknown license is dropped and is never treated as CC BY, even when `license_url` is CC BY. CC BY-NC-ND, CC BY-NC-SA, CC BY-SA, and CC BY-ND are dropped. CC BY-SA stays rejected until the owner says otherwise; allowing it later means adding the exact `cc-by-sa-<version>` ids as `training_only`. Danish Fungi 2020 rows are `usage=training_only` with `license_normalized` `df20`. `is_publishable` is the check for the atlas gallery, `site/`, and comparison photos: CC BY-NC and DF20 fail it. The ship-gate attribution file still contains training-only rows, so a release model trained on them stays blocked. Every kept row has an author credit (`creator`).
+
+The same photo id or the same observation id under two species drops every one of those rows. The import report lists the id and both labels. `--publishable-only` on the importer removes non-publishable rows before the per-collector cap, so an NC photo does not use a slot a CC BY photo needs.
+
+Files whose name contains `_niezweryfikowane` are `unverified: true`, and so are rows whose `id_confidence` is `gbif_not_validated` or `commons_category`. They stay in the jsonl so a later split can see them, and `prepare_data.py` does not put them in train, val, or test. `prepare_data.py` reads `external.jsonl` only with `--with-external`. `--publishable-only` on prepare drops training-only rows before dedup.
+
+`--max-per-collector` (default 30) caps photos of one iNaturalist observer, or of the author when that login is missing, inside one class. Whole observations are kept when they fit. Observer, author, observation id, and photo id are stored for the split (`inat_observer`, `recorded_by`, `inat_observation_id`, `inaturalist_observation_id`, `mo_observation_id`, `occurrence_key`). Image and source URLs are rewritten to https.
+
+Species names map through `assets/models/labels.json` (class `gbif_names`, unknown taxa, and toxic probes). `Inocybe erubescens` maps to `Inosperma erubescens` on `unknown_mushroom`. A name that is not in the manifest is counted and skipped. `morchella_esculenta_v2.csv` replaces `morchella_esculenta.csv` when both are present. Summary and `*_meta.csv` files are not photo rows; meta is joined onto the photo by image URL (country, date, coordinates).
+
 ## Full run on a CPU machine
 
 TensorFlow’s pip wheel is the CPU build unless you install a CUDA extra yourself. The commands below are the full fetch and train. They download up to about 500 photos per known species and up to 2500 photos for each of `unknown_mushroom` and `not_a_mushroom`, then fine-tune MobileNetV3-Small. That is a long CPU job. This repository does not run it in CI.
@@ -42,6 +58,16 @@ python training/run_pipeline.py export -- --install-into-app
 
 That copies the TFLite file and the attribution file, writes the calibrated thresholds into `assets/models/labels.json`, and points `src/services/modelPackage.ts` at the asset. A development build is required after that (`react-native-fast-tflite` and `react-native-nitro-modules` are native). Expo Go cannot load the interpreter. Until this step succeeds, `PACKAGED_MODEL_MODULE` stays `null`.
 
+Optional quantized graph, still under the same ship gates:
+
+```bash
+python training/export_tflite.py --quantization fp32 --also-export int8
+python training/export_tflite.py --also-export dynamic
+python training/run_pipeline.py export -- --also-export int8 --install-into-app --select-quantized
+```
+
+`--also-export int8` is full-integer ops (`TFLITE_BUILTINS_INT8`) with float32 input and output. The representative dataset is the train split only. The int8 energy threshold is fit again on that graph's validation logits. An fp16 threshold does not carry over. `dynamic` is dynamic-range quantization and does not read a representative dataset. The command also writes `mushrooms_model_float.tflite` when the primary graph is not already fp32. `metrics.json` → `quantized_export.delta_vs_float` is quantized minus that fp32 graph. Those numbers are not gates. `--select-quantized` installs the quantized file only when `assess_shippable` passes every existing floor, including int8 energy recalibration when that graph is int8. A failure leaves the app bundle unchanged.
+
 Useful limits while checking the wiring, without a full download:
 
 ```bash
@@ -63,7 +89,7 @@ python training/fetch_gbif.py --verify-existing
 
 That scan does not use the network. It full-decodes every file under `training/data/images` in a spawn process pool, one process per CPU, quarantines the broken ones, rewrites `verified.jsonl`, drops matching rows from `attributions.jsonl` without reordering the rest, and prints ok / quarantined counts per class plus how many attribution rows were dropped. If the process pool cannot start (`PermissionError`, `OSError`, `NotImplementedError`) or a worker dies (`BrokenProcessPool`), the scan prints a warning and uses a thread pool instead.
 
-Transient transfer errors are retried three times: DNS failure, timeout, connection reset, HTTP 5xx, and SSL handshake or a broken connection (EOF, wrong version). Each wait is the backoff plus a short random offset, so the 16 workers do not wake together. HTTP 429 waits for `Retry-After` (capped at 120 seconds) plus that same offset, or uses the jittered backoff when the header is missing. HTTP 403 and 404 are not retried. Certificate errors (`SSLCertVerificationError`, `CERTIFICATE_VERIFY_FAILED`, `certificate verify failed`) are not retried. The per-URL `skip` line is printed once, after the retries are exhausted.
+Image URLs that GBIF still publishes as `http://` are rewritten to `https://` before the download and in the attribution row. An explicit port 80 or 443 is dropped. The download then stays on that https URL: a timeout is not retried over http, and an http redirect is rewritten to https before it is followed. A URL that is still not https is refused. Transient transfer errors are retried at most three times (`DOWNLOAD_ATTEMPTS`) and then stop: DNS failure, timeout (including a socket timeout and a read timeout), connection reset, HTTP 5xx, and SSL handshake or a broken connection (EOF, wrong version). Each wait is the backoff plus a short random offset, so the 16 workers do not wake together. The first timeout waits the base backoff, then the wait doubles. HTTP 429 waits for `Retry-After` (capped at 120 seconds) plus that same offset, or uses the jittered backoff when the header is missing. HTTP 403 and 404 are not retried. Certificate errors (`SSLCertVerificationError`, `CERTIFICATE_VERIFY_FAILED`, `certificate verify failed`) are not retried. The per-URL `skip` line is printed once, after the retries are exhausted.
 
 GBIF occurrence search and species match stay one request at a time, with at least 0.2 seconds between calls. After every class and every toxic-probe taxon the script rewrites `training/data/attributions.jsonl` and `training/data/fetch_report.json`. Candidate pools are cached in `training/data/gbif_cache/`. The cache key is the class or probe, the fetch arguments other than the download cap, a pool-format version, and a hash of `licenses.py` and `sampling.py`, so a change to either file misses the old files. The cap stays out of the key so a later run with a different cap continues from the same cursor. Version 3 stores the rows fetched so far and that cursor, including a GBIF page that was only partly consumed. A version 1 or version 2 file misses the key. The next fetch of that class or probe parses the cache filename and deletes older files for that exact identity, not files for a longer name such as `aa-v2` when the class is `aa`. Loading a cache still runs every row through `normalize_cc_license` and drops a licence that is no longer CC0 or CC-BY. Delete `training/data/gbif_cache/` when you want every class queried again without waiting for the next fetch: a hand-edited cache, a corrupt file, a fresh page of occurrences, or the old version 1 and version 2 files. A code change to the licence filter or the sampling rules does not need that delete.
 
@@ -259,10 +285,33 @@ Low confidence (top softmax under 0.70 or top-1/top-2 margin under 0.15) still s
 | Coverage | Every class in `labels.json` has a measured top-1/top-3 and support above 0 in train and in test. | required |
 | TFLite agreement | Top-1 match between the interpreter and the float Keras model on **every** val and test photo. | ≥ 0.99 |
 | TFLite high-risk agreement | The same match, only on high-risk class photos, again the full val+test count. | ≥ 0.99 |
-| Attribution | `attributions.jsonl` beside the model has one complete row (creator, CC0 or CC-BY, image URL, source page) per train+val+test image. | complete |
+| int8 energy recalibration | Only when the exported graph is int8. The energy threshold is the validation order statistic of that graph's own logits. A copied fp16 threshold fails. fp16 and dynamic graphs are unchanged. | required for int8 |
+| Delegate release | Separate from install. Android GPU and iOS Core ML must each agree with CPU on every val and test photo: top-1 ≥ 0.99, high-risk top-1 ≥ 0.99, and the same rate for the `recognitionDecision` triple (`status`, top-1, `expertVerificationRequired`). The report includes the maximum energy difference. A missing, stale, or model-hash mismatch stays on CPU. The manifest ships with both platforms `passed: false` until a device dump is scored. | ≥ 0.99, per platform |
+| Attribution | `attributions.jsonl` beside the model has one complete row (creator, versioned CC0 or CC-BY, image URL, source page) per train+val+test image. `cc-by-nc…`, ND, SA, `usage=training_only`, and `unverified` rows fail this check. | complete |
 | Hashes | sha256 of `model.keras`, `mushrooms_model.tflite`, and `fetch_report.json` match the files on disk. The fetch-report hash covers the file `attach_fetch_evidence` reads, and that step overwrites `accepted`, `gbif_licensed_count`, and `exhausted_reason` from the report. `accepted` in that file is verified files. `gbif_licensed_count` is the entire licensed pool, written only when the GBIF query ended below the cap, and the rare-taxon exception also requires `exhausted_reason` to be `end_of_records` and `accepted` to equal that count. `replacement_budget` omits `gbif_licensed_count` and does not open the 5-photo floor. Regenerating the report changes the hash even when every download succeeded, because the report stores `selected`, `failed`, `pool`, `shortfall`, `exhausted_reason`, and `any_taxon_pool_exhausted`. A metrics file that still has the previous hash fails this gate until export records the new file. The numeric floors are unchanged. | exact |
 
-Export builds **fp16** weights with float32 input and output. `react-native-fast-tflite` runs XNNPACK, which executes that graph. A fully integer int8 graph is not the default: XNNPACK rejects MobileNetV3 ops from `TFLITE_BUILTINS_INT8` on device, while fp16 lands near 2 MB and keeps the float preprocess. `--quantization int8` is an experiment and is not what a ship build uses. There is no force flag.
+Export builds **fp16** weights with float32 input and output unless `--quantization` says otherwise. A release build uses the Android GPU delegate or iOS Core ML only when `labels.json` records that platform's delegate gate as passed for the installed model hash. Otherwise it uses CPU. If the delegate throws while loading or inside `model.run`, the app loads CPU and retries that photo once. The retry is one decision: it is not a second journal entry and it does not count as a second scan. XNNPACK runs the CPU graph. A fully integer int8 graph is not the default: the GPU delegate and XNNPACK both reject some MobileNetV3 ops from `TFLITE_BUILTINS_INT8`, while fp16 keeps the float preprocess. `--also-export int8` (or `dynamic` or `fp16`) writes that graph beside the primary file and scores it with the same gates. int8 also has to pass energy recalibration on its own validation logits. It is installed only when those gates pass. There is no flag that lowers a floor.
+
+A development build can still try the delegate before that gate has passed, so the agreement dump can be collected. `writeDelegateCalibrationDump` runs each fixed val+test tensor on CPU and on the platform delegate and writes `delegate-calibration.json` in the cache directory. It does not classify, save a journal entry, or upload anything. Score that file with the same val+test list:
+
+```bash
+python training/score_delegate_dump.py --dump delegate-calibration.json --splits training/data/splits.json --write
+```
+
+The sample is every val and test row. Train rows are rejected. `--write` records that platform in `assets/models/labels.json` and hashes `assets/models/mushrooms_model.tflite`. It exits without writing if that file is not on disk, and it does not fall back to `model_sha256` in `labels.json`. The dump and the manifest hash both have to match the file bytes. A failed gate is stored as `passed: false`. Pass `--model` to point at another copy of the same file.
+
+## Measuring inference on a phone
+
+Expo Go cannot load the interpreter. The Core ML pod flag and the Android OpenCL `uses-native-library` entries come from the `react-native-fast-tflite` config plugin, so they apply only after an EAS prebuild:
+
+```bash
+npx eas-cli@24.12.0 build --profile development --platform android
+npx eas-cli@24.12.0 build --profile development --platform ios
+```
+
+Install a model that passed the ship gates, then rebuild so the `.tflite` asset is in the binary. Start Metro with `npx expo start --dev-client`. On the scanner, a dev build shows two controls: **Measure: delegate** and **Measure: CPU**. Pick one, then photograph the same subject three times. The overlay and the `[tflite]` console line report milliseconds around `model.run` only, plus the delegate that produced those logits (`android-gpu`, `core-ml`, or `cpu`). Use the median of the second and third shots. The first shot can include GPU shader compile or Core ML cache fill inside `model.run`.
+
+`fallback=true` means the chosen delegate threw and the milliseconds are the CPU retry. The iOS simulator often fails Core ML; measure Core ML on a physical iPhone. Nothing in this line is uploaded.
 
 ## What is still missing before this is safe to ship
 
