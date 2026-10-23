@@ -14,10 +14,7 @@ export interface PhotoCredit {
   sourceUrl: string;
   classId: string;
   taxonName: string;
-  /**
-   * Deed URL copied from the training row's own license_url.
-   * NC, SA, and CC BY versions other than 4.0 link here.
-   */
+  /** Deed for this file. A CC BY credit without an https URL has no version to open. */
   licenseUrl?: string;
   /** Set for atlas gallery photos, which were resized and saved as WebP. */
   modified?: boolean;
@@ -65,25 +62,17 @@ export function creditsFromJsonl(text: string): PhotoCredit[] {
 }
 
 export function creditLicenseUrl(credit: PhotoCredit): string | null {
-  const stored = credit.licenseUrl?.trim() ?? '';
-  if (/^https?:\/\//i.test(stored)) {
-    return stored;
+  const explicit = credit.licenseUrl?.trim() ?? '';
+  if (/^https:\/\//i.test(explicit)) {
+    return explicit;
   }
   const raw = credit.license.trim();
-  if (/^https?:\/\//i.test(raw)) {
+  if (/^https:\/\//i.test(raw)) {
     return raw;
   }
   const normalized = credit.licenseNormalized.trim().toUpperCase().replace(/\s+/g, ' ');
   if (normalized === 'CC0' || normalized === 'CC0 1.0') {
     return 'https://creativecommons.org/publicdomain/zero/1.0/';
-  }
-  if (
-    normalized === 'CC-BY' ||
-    normalized === 'CC BY' ||
-    normalized === 'CC BY 4.0' ||
-    normalized === 'CC-BY-4.0'
-  ) {
-    return 'https://creativecommons.org/licenses/by/4.0/';
   }
   return null;
 }

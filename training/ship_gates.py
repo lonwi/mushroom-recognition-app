@@ -135,18 +135,19 @@ def _df20_release_reasons(directory: Path) -> list[str]:
 
     Any DF20 attribution row sets ``shippable`` false. ``DF20_CONSENT_CONFIRMED``
     stays false as documentation of the pending Svampeatlas consent and does
-    not unlock this gate. A training set with no DF20 rows is not blocked here.
+    not unlock this gate. A missing or unreadable attribution file also blocks:
+    this check does not assume the file is free of DF20.
     """
-    from license_policy import is_df20_training_row
+    from component_share import is_df20_row
 
     path = directory / "attributions.jsonl"
     if not path.is_file():
-        return []
+        return ["attribution file is missing, so a DF20 photo cannot be ruled out"]
     try:
         rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
     except json.JSONDecodeError:
-        return []
-    if any(is_df20_training_row(row) for row in rows):
+        return ["attribution file is not valid jsonl, so a DF20 photo cannot be ruled out"]
+    if any(is_df20_row(row) for row in rows):
         return [
             "DF20 photos are experimental training only and are never part of a released model"
         ]

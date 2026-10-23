@@ -186,14 +186,14 @@ def _usable_records_one(
     publishable_only: bool,
     include_df20: bool = False,
 ) -> list[dict]:
-    from license_policy import is_df20_training_row
+    from component_share import is_df20_row
 
     skipped = []
     for line in source.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
         row = json.loads(line)
-        if not include_df20 and is_df20_training_row(row):
+        if not include_df20 and is_df20_row(row):
             skipped.append({**row, "skip_reason": "df20_opt_out"})
             continue
         if not training_eligible(row, publishable_only=publishable_only):

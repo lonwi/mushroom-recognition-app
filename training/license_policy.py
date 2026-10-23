@@ -67,27 +67,20 @@ LICENSE_FAMILY: dict[str, str] = {
 DF20_CONSENT_CONFIRMED = False
 
 
-def is_df20_training_row(row: dict) -> bool:
-    """True for a Danish Fungi 2020 photo row. Not a new licence-URL rule."""
-    if not isinstance(row, dict):
-        return False
-    if row.get("source") == "df20" or row.get("license_normalized") == "df20":
-        return True
-    return False
-
-
 def exclude_df20_unless_requested(rows: list[dict], *, include_df20: bool) -> tuple[list[dict], int]:
     """Drop DF20 rows unless this run passed ``--include-df20``.
 
     The default is off, so ``--with-external`` does not pull DF20. The count
-    is the number of excluded rows.
+    is the number of excluded rows. Detection is ``component_share.is_df20_row``.
     """
+    from component_share import is_df20_row
+
     if include_df20:
         return rows, 0
     kept: list[dict] = []
     excluded = 0
     for row in rows:
-        if is_df20_training_row(row):
+        if is_df20_row(row):
             excluded += 1
             continue
         kept.append(row)

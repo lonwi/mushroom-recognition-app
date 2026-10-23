@@ -1,6 +1,6 @@
 import React from 'react';
 import { BackHandler, Linking, Platform } from 'react-native';
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { PhotoCredits } from '../../components/PhotoCredits';
 import { LanguageProvider } from '../../contexts/LanguageContext';
 import { creditLicenseUrl, creditsFromJsonl, type PhotoCredit } from '../../services/attributionPackage';
@@ -32,6 +32,17 @@ describe('PhotoCredits', () => {
     expect(creditLicenseUrl({ ...credit, license: 'CC-BY', licenseNormalized: 'CC0' })).toBe(
       'https://creativecommons.org/publicdomain/zero/1.0/',
     );
+    expect(
+      creditLicenseUrl({ ...credit, license: 'CC BY 4.0', licenseNormalized: 'CC BY 4.0', licenseUrl: undefined }),
+    ).toBeNull();
+    expect(
+      creditLicenseUrl({
+        ...credit,
+        license: 'CC BY 4.0',
+        licenseNormalized: 'CC-BY-4.0',
+        licenseUrl: 'http://creativecommons.org/licenses/by/4.0/',
+      }),
+    ).toBeNull();
     const stored = creditsFromJsonl(
       `${JSON.stringify({
         creator: 'Ada',
@@ -88,6 +99,10 @@ describe('PhotoCredits', () => {
       </LanguageProvider>,
     );
     expect(getByText(/trening, test i sondy/)).toBeTruthy();
+    await fireEvent.changeText(getByTestId('photo-credits-search'), 'Ada');
+    await waitFor(() => {
+      expect(getByText('Ada')).toBeTruthy();
+    });
     fireEvent.press(getByTestId('photo-credit-license-0'));
     expect(openURL).toHaveBeenCalledWith('https://creativecommons.org/licenses/by/4.0/');
     openURL.mockRestore();

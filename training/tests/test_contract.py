@@ -46,7 +46,7 @@ from recognition_math import (
     energy_score,
     softmax,
 )
-from ship_gates import _int8_energy_reasons, assess_shippable, sha256_file
+from ship_gates import _df20_release_reasons, _int8_energy_reasons, assess_shippable, sha256_file
 
 FIXTURE = ROOT / "training" / "fixtures" / "decision_cases.json"
 PREPROCESS_FIXTURE = ROOT / "training" / "fixtures" / "preprocess_2x2_to_4.json"
@@ -603,6 +603,43 @@ class ManifestAndShipGateTest(unittest.TestCase):
             self.assertTrue(any("experimental" in reason for reason in reasons))
             with patch("license_policy.DF20_CONSENT_CONFIRMED", True):
                 ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("experimental" in reason for reason in reasons))
+
+    def test_df20_gate_blocks_when_the_attribution_file_cannot_be_read(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertTrue(ok, reasons)
+            path = artifact_dir / "attributions.jsonl"
+            path.unlink()
+            missing = _df20_release_reasons(artifact_dir)
+            self.assertTrue(any("missing" in reason for reason in missing))
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("missing" in reason for reason in reasons))
+            path.write_text("{not json\n", encoding="utf-8")
+            broken = _df20_release_reasons(artifact_dir)
+            self.assertTrue(any("not valid jsonl" in reason for reason in broken))
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("not valid jsonl" in reason for reason in reasons))
+
+    def test_df20_marker_alone_blocks_release(self):
+        from component_share import is_df20_row
+
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            path = artifact_dir / "attributions.jsonl"
+            lines = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+            lines[0]["ImageUniqueID"] = "2237858559-1"
+            self.assertNotEqual(lines[0].get("source"), "df20")
+            self.assertNotEqual(lines[0].get("license_normalized"), "df20")
+            self.assertTrue(is_df20_row(lines[0]))
+            path.write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
+            ok, reasons = assess_shippable(report, artifact_dir)
             self.assertFalse(ok)
             self.assertTrue(any("experimental" in reason for reason in reasons))
 

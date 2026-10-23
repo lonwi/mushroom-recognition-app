@@ -61,8 +61,19 @@ def is_placeholder_row(row: dict) -> bool:
 
 
 def is_df20_row(row: dict) -> bool:
+    """One DF20 check: source, normalised id, or a DF20 marker field.
+
+    ``_df20_marker`` covers ``ImageUniqueID``, ``df20_image_id``,
+    ``df20_image_path``, a licence note that names DF20, and the dataset
+    names. A row with only that marker is still DF20.
+    """
+    if not isinstance(row, dict):
+        return False
     source = str(row.get("source") or "").casefold()
     if source == "df20":
+        return True
+    normalized = row.get("license_normalized")
+    if isinstance(normalized, str) and normalized.strip().casefold() == "df20":
         return True
     return _df20_marker(row)
 
