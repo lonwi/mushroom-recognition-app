@@ -52,7 +52,7 @@ Changing any of these needs an explicit decision by the repo owner, written in t
 ## PR process
 
 1. Work on a branch, one topic per PR. Run the commands from `AGENTS.md` → "Agent Workflow & Commands" locally.
-2. Open a PR with a short description: what changed, why, how it was tested, and any gate or baseline change (baselines may only go down).
+2. Open a PR with a short description: what changed, why, how it was tested, and any gate or baseline change (baselines may only go down). Deferred items go in a Follow-ups section as `Follow-up: #N`. Rules: "Tracking deferred work".
 3. CI green.
 4. Review by the PR Review agent (checklist in `docs/REVIEW.md` once it exists). Requested changes are fixed in the same PR.
 5. Merge, as a squash merge:
@@ -63,3 +63,25 @@ Changing any of these needs an explicit decision by the repo owner, written in t
 ## Weekly reviews
 
 Two automated reviews run every Monday morning (Europe/Warsaw) on `main`: a SOLID/DRY code review and a security review (npm and Python dependencies, CI/CD, app permissions and data, training pipeline, new code). Each produces a report with a comparison to the previous week. Fixes from these reviews start only after the owner's OK.
+
+The SOLID/DRY report includes "open follow-ups": issues with no activity for more than 7 days. Tracking rules are in "Tracking deferred work".
+
+## Tracking deferred work
+
+1. Every deferred item ("in a separate PR", "after merge", "the repo owner's decision") gets an issue before the PR or review is closed, or a bullet on an existing issue. Nothing deferred stays only in the PR description.
+2. The PR description has a "Follow-ups" section with a `#N` link for each deferred item. Review does not approve when the review said "in a separate PR" and the description has no `Follow-up: #N` line.
+3. A `TODO` in code always includes an issue number, for example `TODO(#50)`. `TODO(#N)` is not enforced yet (enforcement tracked in [#56](https://github.com/lonwi/mushroom-recognition-app/issues/56)).
+4. Use only labels that already exist in the repository.
+
+| Label | When |
+|---|---|
+| `needs-decision` | Waiting for the repo owner's decision. |
+| `deferred` | Deferred for later. |
+| `safety` | Safety content, emergency numbers, poisoning. Always a priority. |
+| `data` | Species data, training photos, licenses. |
+| `code` | App code, CI, and quality gates. |
+| `ui` | Interface, copy, and accessibility. |
+
+5. Work required before the public release gets the milestone "Przed wydaniem".
+6. One parent issue: [#52](https://github.com/lonwi/mushroom-recognition-app/issues/52). Smaller issues are its sub-issues. Details are checked off on the smaller issues.
+7. The Monday SOLID/DRY review ("Weekly reviews") includes an "open follow-ups" section: issues with no activity for more than 7 days.
