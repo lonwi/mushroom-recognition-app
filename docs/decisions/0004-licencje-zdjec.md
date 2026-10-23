@@ -64,7 +64,7 @@ DF20, wariant B: 2026-10-23, 12:15 czasu polskiego.
 
 ## Uzasadnienie
 
-Właściciel wybrał najszerszy zestaw zdjęć do uczenia modelu wydawanego w aplikacji i zostawił przy CC0 albo CC BY tylko zdjęcia pokazywane użytkownikowi.
+Właściciel wybrał CC0, CC BY, CC BY-NC i CC BY-SA do uczenia modelu wydawanego w aplikacji i zostawił przy CC0 albo CC BY tylko zdjęcia pokazywane użytkownikowi. DF20 zostawił przy treningach testowych.
 
 Świadomie przyjęte ryzyka:
 
