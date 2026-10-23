@@ -74,7 +74,7 @@ Stan na 2026-10-23.
 
 | Nr | Wpis | Status |
 |---|---|---|
-| 0001 | [Udział jednego zbieracza w klasie (20% czy 50%)](0001-udzial-zbieracza.md) | Oczekuje na decyzję |
+| 0001 | [Udział jednego zbieracza w klasie (20% czy 50%)](0001-udzial-zbieracza.md) | Podjęta (wdrożenie w toku) |
 | 0002 | [https `license_url`, surowsza licencja duplikatu i trening](0002-license-url-trening.md) | Wdrożona (trening w toku) |
 | 0003 | [Ostrzeżenie o hełmówce w porównaniu maślanki i opieńki](0003-ostrzezenie-helmowki.md) | Podjęta (wdrożenie w toku) |
 | 0004 | [Dopuszczalne licencje zdjęć w treningu, w tym CC BY-SA](0004-licencje-zdjec.md) | Podjęta (wdrożenie w toku) |
