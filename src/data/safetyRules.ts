@@ -27,7 +27,7 @@ export const GOLDEN_RULES: SafetyRule[] = [
   {
     id: 'rule_no_taste_test',
     title: 'Nigdy nie sprawdzaj grzybów "na smak"!',
-    description: 'Mit o tym, że grzyby trujące są gorzkie lub piekące, jest śmiertelnie niebezpieczny. Muchomor sromotnikowy (zielonawy) ma smak łagodny i przyjemny!',
+    description: 'Mit o tym, że grzyby trujące są gorzkie lub piekące, jest śmiertelnie niebezpieczny. Smak ani zapach nie pozwalają odróżnić grzyba trującego od jadalnego.',
     critical: true
   },
   {
