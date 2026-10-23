@@ -82,6 +82,6 @@ The SOLID/DRY report includes "open follow-ups": issues with no activity for mor
 | `code` | App code, CI, and quality gates. |
 | `ui` | Interface, copy, and accessibility. |
 
-5. Work required before the public release gets the milestone „Przed wydaniem”.
+5. Work required before the public release gets the milestone "Przed wydaniem".
 6. One parent issue: [#52](https://github.com/lonwi/mushroom-recognition-app/issues/52). Smaller issues are its sub-issues. Details are checked off on the smaller issues.
 7. The Monday SOLID/DRY review ("Weekly reviews") includes an "open follow-ups" section: issues with no activity for more than 7 days.
