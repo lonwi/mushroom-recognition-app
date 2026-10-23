@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 import sys
 import zlib
 from collections import defaultdict
@@ -50,12 +51,28 @@ ARTIFACTS = ROOT / "training" / "artifacts"
 ID_KEEP_FIT = 0.97
 
 
+# NC, ND, and SA are not publishable, including when the id still starts with cc-by-.
+_NON_PUBLISHABLE_LICENSE = re.compile(r"(?:^|-)(?:nc|nd|sa)(?:-|$)")
+
+
+def publishable_license_id(license_id: str) -> bool:
+    """True for versioned CC0 and CC-BY ids. NC, ND, and SA are rejected."""
+    if not isinstance(license_id, str):
+        return False
+    if not (license_id.startswith("cc0-") or license_id.startswith("cc-by-")):
+        return False
+    return _NON_PUBLISHABLE_LICENSE.search(license_id) is None
+
+
 def attributions_complete(records: list[dict]) -> bool:
     if not records:
         return False
     for row in records:
+        # training_only covers CC BY-NC and DF20. Unverified ids stay out of a shipped model.
+        if row.get("usage") == "training_only" or row.get("unverified") is True:
+            return False
         license_id = str(row.get("license_normalized") or "")
-        if not (license_id.startswith("cc0-") or license_id.startswith("cc-by-")):
+        if not publishable_license_id(license_id):
             return False
         if not row.get("creator") or not row.get("image_url"):
             return False

@@ -20,6 +20,7 @@ import shutil
 from pathlib import Path
 
 from evaluate import DATA_DIR, assemble_report, preprocessed_batch, prediction_from_logits
+from import_external import published_rows
 from manifest import LABELS_PATH, ROOT, load_manifest
 from recognition_math import HIGH_STAKES_IDS
 from ship_gates import assess_shippable, fetch_report_file, sha256_file
@@ -34,7 +35,7 @@ DEFAULT_QUANTIZATIONS = ("fp16",)
 
 def attribution_row(row: dict) -> dict:
     source = row.get("source_url") or row.get("gbif_occurrence") or ""
-    return {
+    slim = {
         "file": row.get("prepared_file") or row.get("file") or "",
         "class_id": row.get("class_id") or "",
         "creator": row.get("creator") or "",
@@ -45,14 +46,33 @@ def attribution_row(row: dict) -> dict:
         "gbif_occurrence": row.get("gbif_occurrence") or "",
         "taxon_name": row.get("taxon_name") or "",
     }
+    usage = row.get("usage")
+    if isinstance(usage, str) and usage:
+        slim["usage"] = usage
+    if row.get("unverified") is True:
+        slim["unverified"] = True
+    return slim
 
 
 def write_attribution_file(rows: list[dict], path: Path) -> None:
-    """One JSON line per image: author, license, and source URL."""
+    """One JSON line per image: author, license, and source URL.
+
+    Every train, val, and test row is written, including ``training_only``.
+    The attribution gate reads this file and still blocks a release model
+    that contains those rows.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as handle:
         for row in rows:
             handle.write(json.dumps(attribution_row(row), ensure_ascii=False) + "\n")
+
+
+def attribution_rows_for_publication(rows: list[dict]) -> list[dict]:
+    """Credits for the atlas gallery, ``site/``, and comparison photos.
+
+    CC BY-NC and DF20 are omitted. This is not the ship-gate file.
+    """
+    return [attribution_row(row) for row in published_rows(rows)]
 
 
 def representative_dataset(rows: list[dict], image_size: int, data_dir: Path):
