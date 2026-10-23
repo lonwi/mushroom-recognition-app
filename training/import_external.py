@@ -6,11 +6,13 @@ Wikimedia Commons, Danish Fungi 2020). It does not download images.
 
     python training/import_external.py /path/to/zdjecia --output training/data/external.jsonl
 
-The allowed training licences live in ``license_policy.py`` (Wojtek,
-2026-10-23, variant C): versioned CC0, CC BY, CC BY-NC, CC BY-SA, and DF20.
-``usage`` is ``publishable`` for CC0 and CC BY, and ``training_only`` for
-CC BY-NC, CC BY-SA, and DF20. ``training_only`` means the photo is not shown.
-It does not block a release on licence grounds. Every CC photo row needs an
+The allowed training licences live in ``license_policy.py`` (Decyzja Wojtka
+2026-10-23 12:02, wariant C): versioned CC0, CC BY, CC BY-NC, CC BY-SA, and
+DF20. ``usage`` is ``publishable`` for CC0 and CC BY, and ``training_only``
+for CC BY-NC, CC BY-SA, and DF20. ``training_only`` means the photo is not
+shown. CC BY-NC and CC BY-SA do not block a release on licence grounds.
+DF20 is excluded unless ``--include-df20`` is set, and the release gate stays
+closed until ``DF20_CONSENT_CONFIRMED`` is true. Every CC photo row needs an
 https ``license_url`` that names the same license as the text, including
 CC BY-SA. An empty URL, an ``http://`` URL, or a URL for a different license
 drops the row, including when the text already says ``CC BY 4.0``. A
@@ -979,6 +981,7 @@ def import_directory(
     max_per_collector: int = DEFAULT_MAX_PER_COLLECTOR,
     publishable_only: bool = False,
     exclude_unverified: bool = False,
+    include_df20: bool = False,
     manifest: dict | None = None,
 ) -> tuple[list[dict], dict]:
     """Read a ``zdjecia`` directory and return dataset rows plus a count report."""
@@ -1033,6 +1036,9 @@ def import_directory(
                 continue
             kept_rows.append(row)
         rows = kept_rows
+    from license_policy import exclude_df20_unless_requested
+
+    rows, excluded_df20 = exclude_df20_unless_requested(rows, include_df20=include_df20)
     rows, duplicate_dropped, looser_dropped, conflict_dropped, label_conflicts = dedupe_rows(rows)
     # publishable_only runs before the cap so a CC BY-NC photo does not
     # consume a collector's slot that a CC BY photo of the same person needs.
@@ -1074,7 +1080,10 @@ def import_directory(
             "collector_cap": len(cap_dropped),
             "publishable_only": int(rejected["publishable_only"]),
             "exclude_unverified": int(rejected["exclude_unverified"]),
+            "df20_opt_out": excluded_df20,
         },
+        "excluded_df20": excluded_df20,
+        "include_df20": include_df20,
         "dropped_collector_cap": len(cap_dropped),
         "meta_rows_joined": meta_joined,
         "unverified": sum(1 for row in written if row.get("unverified") is True),
@@ -1120,6 +1129,15 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Omit unverified rows from the jsonl. The default keeps them flagged.",
     )
+    parser.add_argument(
+        "--include-df20",
+        action="store_true",
+        help=(
+            "Keep Danish Fungi 2020 rows. The default excludes them and counts "
+            "excluded_df20. CC BY-NC and CC BY-SA are unaffected. The release "
+            "gate still blocks until DF20_CONSENT_CONFIRMED is true."
+        ),
+    )
     return parser
 
 
@@ -1133,13 +1151,15 @@ def main(argv: list[str] | None = None) -> int:
         max_per_collector=args.max_per_collector,
         publishable_only=args.publishable_only,
         exclude_unverified=args.exclude_unverified,
+        include_df20=args.include_df20,
     )
     write_import(rows, report, args.output, args.report)
     print(
         f"wrote {report['rows_written']} rows to {args.output} "
         f"(publishable {report['publishable']}, training_only {report['training_only']}, "
         f"unverified {report['unverified']}, rejected license {report['rejected_license']}, "
-        f"unmapped {report['rejected_unmapped']}, cap {report['dropped_collector_cap']})"
+        f"unmapped {report['rejected_unmapped']}, cap {report['dropped_collector_cap']}, "
+        f"excluded df20 {report['excluded_df20']})"
     )
     return 0
 

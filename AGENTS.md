@@ -102,7 +102,8 @@ mushroom-recognition-app/
    - Do not install weights that failed `training/ship_gates.py`.
 
 6. **Training data licensing** (Decyzja Wojtka 2026-10-23 12:02, wariant C):
-   - A released model may be trained on versioned CC0, CC BY, CC BY-NC, CC BY-SA, and Danish Fungi 2020 (`training/license_policy.py`). ND, NC-ND, and NC-SA stay rejected.
+   - A released model may be trained on versioned CC0, CC BY, CC BY-NC, and CC BY-SA (`training/license_policy.py`). ND, NC-ND, and NC-SA stay rejected.
+   - Danish Fungi 2020 is not pulled by `--with-external`. `--include-df20` opts in and defaults to off; excluded rows are counted as `excluded_df20`. `DF20_CONSENT_CONFIRMED` defaults to false (non-commercial research only, Svampeatlas photographer consent still pending). While it is false, a training set that contains DF20 is not shippable.
    - Allowed training ids are an explicit list. Do not prefix-match. Unversioned `cc-by`, `cc-by-nc`, `cc-by-sa`, and `cc-by-nc-sa` are rejected. An empty or unknown licence blocks release. CC BY-SA is accepted only as `cc-by-sa-1.0`, `cc-by-sa-2.0`, `cc-by-sa-2.5`, `cc-by-sa-3.0`, or `cc-by-sa-4.0`, with `usage=training_only`. ND and NC-SA stay rejected.
    - Photos shown in the app stay CC0 or CC BY. `is_publishable`, the atlas gallery, `site/`, and comparison photos reject CC BY-NC, CC BY-SA, and DF20.
    - The GBIF fetch (`training/licenses.py`) still keeps only CC0 and CC-BY URLs. CC BY-NC, CC BY-SA, and DF20 enter through external CSVs (`--with-external`), not through that fetch. Do not fetch ND, NC-SA, NC-ND, or unlicensed photos.

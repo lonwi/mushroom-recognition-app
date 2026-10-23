@@ -10,6 +10,10 @@ The ids below are a closed list of whole keys. Nothing is accepted by
 prefix. ``cc-by`` is not ``cc-by-4.0``, ``cc-by-nc`` is not ``cc-by-nc-4.0``,
 ``cc-by-sa`` is not ``cc-by-sa-4.0``, and ``cc-by-nc-sa`` is not
 ``cc-by-nc-4.0``. ND, NC-ND, and NC-SA are absent on purpose.
+
+Danish Fungi 2020 is on the list, but it is not pulled by ``--with-external``.
+Inclusion is ``--include-df20``, default off. Shipping still waits on
+``DF20_CONSENT_CONFIRMED``.
 """
 
 from __future__ import annotations
@@ -48,6 +52,40 @@ EXACT_LICENSE_USAGE: dict[str, str] = {
 LICENSE_FAMILY: dict[str, str] = {
     license_id: family for license_id, _usage, family in _LICENSE_TABLE
 }
+
+# Pending decision. Danish Fungi 2020 is licensed for non-commercial research
+# only, and Svampeatlas requires each photographer's direct consent. The owner
+# is being asked again. Leave this False until that consent is confirmed.
+# ``--include-df20`` may add the rows to a training run. The release gate stays
+# closed while this constant is False.
+DF20_CONSENT_CONFIRMED = False
+
+
+def is_df20_training_row(row: dict) -> bool:
+    """True for a Danish Fungi 2020 photo row. Not a new licence-URL rule."""
+    if not isinstance(row, dict):
+        return False
+    if row.get("source") == "df20" or row.get("license_normalized") == "df20":
+        return True
+    return False
+
+
+def exclude_df20_unless_requested(rows: list[dict], *, include_df20: bool) -> tuple[list[dict], int]:
+    """Drop DF20 rows unless this run passed ``--include-df20``.
+
+    The default is off, so ``--with-external`` does not pull DF20. The count
+    is the number of excluded rows.
+    """
+    if include_df20:
+        return rows, 0
+    kept: list[dict] = []
+    excluded = 0
+    for row in rows:
+        if is_df20_training_row(row):
+            excluded += 1
+            continue
+        kept.append(row)
+    return kept, excluded
 
 
 def exact_license_usage(license_id: object) -> str | None:

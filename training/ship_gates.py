@@ -130,6 +130,33 @@ def _attribution_file_reasons(directory: Path, coverage: dict) -> list[str]:
     return reasons
 
 
+def _df20_consent_reasons(directory: Path) -> list[str]:
+    """Block a release that trained on DF20 before the owner confirms consent.
+
+    ``DF20_CONSENT_CONFIRMED`` defaults to false. Danish Fungi 2020 is
+    non-commercial research only, and Svampeatlas requires the photographers'
+    direct consent. That decision is still pending. A training set with no
+    DF20 rows is not blocked by this check.
+    """
+    from license_policy import DF20_CONSENT_CONFIRMED, is_df20_training_row
+
+    if DF20_CONSENT_CONFIRMED:
+        return []
+    path = directory / "attributions.jsonl"
+    if not path.is_file():
+        return []
+    try:
+        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    except json.JSONDecodeError:
+        return []
+    if any(is_df20_training_row(row) for row in rows):
+        return [
+            "DF20 photos are in the training set but DF20_CONSENT_CONFIRMED is false; "
+            "Svampeatlas requires the photographers' direct consent and the terms are non-commercial research only"
+        ]
+    return []
+
+
 def fetch_report_file(directory: Path | None = None) -> Path | None:
     """The fetch report whose hash the ship gate checks.
 
@@ -396,6 +423,7 @@ def assess_shippable(report: dict, artifact_dir: Path | None = None) -> tuple[bo
     if not report.get("attributions_complete"):
         reasons.append("per-image attribution file is incomplete")
     reasons.extend(_attribution_file_reasons(directory, coverage))
+    reasons.extend(_df20_consent_reasons(directory))
 
     recorded = report.get("artifacts") or {}
     keras_hash = recorded.get("model_keras_sha256")

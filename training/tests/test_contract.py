@@ -6,6 +6,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -478,6 +479,32 @@ class ManifestAndShipGateTest(unittest.TestCase):
         )
         self.assertEqual(sa_reason, "")
         self.assertEqual((sa["license_normalized"], sa["usage"]), ("cc-by-sa-4.0", "training_only"))
+
+    def test_df20_blocks_release_until_consent_is_confirmed(self):
+        from license_policy import DF20_CONSENT_CONFIRMED
+
+        policy = (ROOT / "training" / "license_policy.py").read_text(encoding="utf-8")
+        self.assertFalse(DF20_CONSENT_CONFIRMED)
+        self.assertIn("DF20_CONSENT_CONFIRMED = False", policy)
+        self.assertIn("pending", policy.casefold())
+        self.assertIn("Svampeatlas", policy)
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertTrue(ok, reasons)
+            path = artifact_dir / "attributions.jsonl"
+            lines = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+            lines[0]["license_normalized"] = "df20"
+            lines[0]["license"] = "DF20 training-only; no per-image licence"
+            lines[0]["source"] = "df20"
+            path.write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("DF20_CONSENT_CONFIRMED" in reason for reason in reasons))
+            with patch("license_policy.DF20_CONSENT_CONFIRMED", True):
+                ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertTrue(ok, reasons)
 
     def test_missing_component_share_blockers_key_blocks_shipping(self):
         with tempfile.TemporaryDirectory() as tmp:

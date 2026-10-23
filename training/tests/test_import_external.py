@@ -681,7 +681,9 @@ class ImportDirectoryTest(unittest.TestCase):
             ],
         )
 
-        rows, report = import_directory(self.root, max_per_collector=2)
+        rows, report = import_directory(self.root, max_per_collector=2, include_df20=True)
+        self.assertEqual(report["excluded_df20"], 0)
+        self.assertTrue(report["include_df20"])
         by_photo = {row.get("inat_photo_id") or row.get("commons_file") or row.get("df20_image_id"): row for row in rows}
 
         ada_verified = [
@@ -1312,7 +1314,13 @@ class ImportDirectoryTest(unittest.TestCase):
                 }
             ],
         )
-        df20_rows, _df20_report = import_directory(df20, max_per_collector=10)
+        held_out, held_report = import_directory(df20, max_per_collector=10)
+        self.assertEqual(held_out, [])
+        self.assertEqual(held_report["excluded_df20"], 1)
+        self.assertEqual(held_report["dropped_by_reason"]["df20_opt_out"], 1)
+        self.assertFalse(held_report["include_df20"])
+        df20_rows, _df20_report = import_directory(df20, max_per_collector=10, include_df20=True)
+        self.assertEqual(_df20_report["excluded_df20"], 0)
         self.assertEqual(len(df20_rows), 1)
         self.assertEqual(df20_rows[0]["license_normalized"], "df20")
         self.assertEqual(df20_rows[0]["usage"], "training_only")
@@ -1325,6 +1333,100 @@ class ImportDirectoryTest(unittest.TestCase):
         self.assertEqual(rows_for_atlas_gallery(df20_rows), [])
         self.assertEqual(license_breakdown(df20_rows)["by_license"], {"df20": 1})
         self.assertEqual(license_breakdown(df20_rows)["by_source"], {"df20": 1})
+
+    def test_with_external_keeps_nc_and_sa_and_counts_excluded_df20(self):
+        _photo(
+            self.root / "mixed.csv",
+            [
+                self._base(
+                    license="CC BY-NC 4.0",
+                    license_url=_BY_NC_40,
+                    inat_photo_id="1",
+                    inat_observation_id="1",
+                    image_url="https://images.example.test/nc.jpg",
+                    source_url="https://www.inaturalist.org/observations/1",
+                    author="Cyra",
+                ),
+                self._base(
+                    license="CC BY-SA 4.0",
+                    license_url=_BY_SA_40,
+                    inat_photo_id="2",
+                    inat_observation_id="2",
+                    image_url="https://images.example.test/sa.jpg",
+                    source_url="https://www.inaturalist.org/observations/2",
+                    author="Dora",
+                ),
+            ],
+        )
+        _write_csv(
+            self.root / "df20" / "boletus_edulis.csv",
+            [
+                "species",
+                "ImageUniqueID",
+                "observationID",
+                "photographer_rightsHolder",
+                "licence_note",
+            ],
+            [
+                {
+                    "species": "Boletus edulis",
+                    "ImageUniqueID": "223-1",
+                    "observationID": "223",
+                    "photographer_rightsHolder": "Benny Example",
+                    "licence_note": "DF20 training-only; no per-image licence",
+                },
+                {
+                    "species": "Boletus edulis",
+                    "ImageUniqueID": "224-1",
+                    "observationID": "224",
+                    "photographer_rightsHolder": "Benny Example",
+                    "licence_note": "DF20 training-only; no per-image licence",
+                },
+            ],
+        )
+        rows, report = import_directory(self.root, max_per_collector=10)
+        self.assertEqual(sorted(row["license_normalized"] for row in rows), ["cc-by-nc-4.0", "cc-by-sa-4.0"])
+        self.assertEqual(report["excluded_df20"], 2)
+        self.assertEqual(report["dropped_by_reason"]["df20_opt_out"], 2)
+        self.assertFalse(report["include_df20"])
+        self.assertTrue(all(row["source"] != "df20" for row in rows))
+        opted, opted_report = import_directory(self.root, max_per_collector=10, include_df20=True)
+        self.assertEqual(opted_report["excluded_df20"], 0)
+        self.assertEqual(sum(1 for row in opted if row["source"] == "df20"), 2)
+        self.assertEqual(sum(1 for row in opted if row["license_normalized"] == "cc-by-nc-4.0"), 1)
+        self.assertEqual(sum(1 for row in opted if row["license_normalized"] == "cc-by-sa-4.0"), 1)
+
+    def test_prepare_with_external_counts_df20_opt_out(self):
+        folder = self.root / "prepared"
+        folder.mkdir()
+        path = folder / "external.jsonl"
+        rows = [
+            {
+                "downloaded": False,
+                "unverified": False,
+                "usage": "training_only",
+                "license_normalized": "cc-by-nc-4.0",
+                "source": "inat",
+                "class_id": "a",
+                "file": "images/nc.jpg",
+            },
+            {
+                "downloaded": False,
+                "unverified": False,
+                "usage": "training_only",
+                "license_normalized": "df20",
+                "source": "df20",
+                "class_id": "a",
+                "file": "images/df.jpg",
+            },
+        ]
+        path.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+        kept, skipped = _usable_records([path])
+        self.assertEqual(kept, [])
+        self.assertEqual([item["skip_reason"] for item in skipped], ["df20_opt_out"])
+        kept_on, skipped_on = _usable_records([path], include_df20=True)
+        self.assertEqual(kept_on, [])
+        self.assertEqual(skipped_on, [])
 
     def test_nc_and_sa_keep_the_https_license_url_version_from_the_row(self):
         cases = (
