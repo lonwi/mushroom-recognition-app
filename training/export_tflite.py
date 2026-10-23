@@ -87,9 +87,9 @@ def write_attribution_file(rows: list[dict], path: Path) -> None:
     deed, and so do CC BY-NC and CC BY-SA. A DF20 line is the dataset row:
     author and ``df20``. It has no per-photo licence URL, so the copied
     field is empty. CC BY-NC and CC BY-SA may train a released model and do
-    not block the ship gate. DF20 is written only when the run opted in, and
-    any DF20 row keeps the ship gate closed until
-    ``DF20_CONSENT_CONFIRMED`` is true. The gallery check is
+    not block the ship gate. DF20 is written only when the run opted in for
+    an experiment. Any DF20 row keeps ``shippable`` false, and
+    ``DF20_CONSENT_CONFIRMED`` cannot clear that. The gallery check is
     separate and still shows only CC0 and CC BY. An image or source URL that
     is not https is refused. Counts by licence and source are written beside
     this file as ``license_breakdown.json``.

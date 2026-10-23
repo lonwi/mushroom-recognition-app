@@ -528,12 +528,13 @@ class ManifestAndShipGateTest(unittest.TestCase):
                 self.assertFalse(ok, license_id)
                 self.assertTrue(any("license" in reason for reason in reasons), license_id)
 
-    def test_df20_blocks_release_until_consent_is_confirmed(self):
+    def test_any_df20_row_blocks_release_even_if_consent_is_patched(self):
         from import_external import import_directory
         from license_policy import DF20_CONSENT_CONFIRMED, EXACT_LICENSE_USAGE, TRAINING_ONLY
         from prepare_data import _usable_records
 
         policy = (ROOT / "training" / "license_policy.py").read_text(encoding="utf-8")
+        gates = (ROOT / "training" / "ship_gates.py").read_text(encoding="utf-8")
         self.assertFalse(DF20_CONSENT_CONFIRMED)
         self.assertEqual(EXACT_LICENSE_USAGE["df20"], TRAINING_ONLY)
         self.assertEqual(EXACT_LICENSE_USAGE["cc-by-nc-4.0"], TRAINING_ONLY)
@@ -543,6 +544,7 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertIn("DF20_CONSENT_CONFIRMED = False", policy)
         self.assertIn("pending", policy.casefold())
         self.assertIn("Svampeatlas", policy)
+        self.assertNotIn("if DF20_CONSENT_CONFIRMED", gates)
         with tempfile.TemporaryDirectory() as tmp:
             artifact_dir = Path(tmp)
             report = self._passing_report(artifact_dir)
@@ -569,10 +571,11 @@ class ManifestAndShipGateTest(unittest.TestCase):
             path.write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
             ok, reasons = assess_shippable(report, artifact_dir)
             self.assertFalse(ok)
-            self.assertTrue(any("DF20_CONSENT_CONFIRMED" in reason for reason in reasons))
+            self.assertTrue(any("experimental" in reason for reason in reasons))
             with patch("license_policy.DF20_CONSENT_CONFIRMED", True):
                 ok, reasons = assess_shippable(report, artifact_dir)
-            self.assertTrue(ok, reasons)
+            self.assertFalse(ok)
+            self.assertTrue(any("experimental" in reason for reason in reasons))
 
     def test_missing_component_share_blockers_key_blocks_shipping(self):
         with tempfile.TemporaryDirectory() as tmp:

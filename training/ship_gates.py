@@ -130,18 +130,15 @@ def _attribution_file_reasons(directory: Path, coverage: dict) -> list[str]:
     return reasons
 
 
-def _df20_consent_reasons(directory: Path) -> list[str]:
-    """Block a release that trained on DF20 before the owner confirms consent.
+def _df20_release_reasons(directory: Path) -> list[str]:
+    """DF20 may train an experiment. It is never part of a released model.
 
-    ``DF20_CONSENT_CONFIRMED`` defaults to false. Danish Fungi 2020 is
-    non-commercial research only, and Svampeatlas requires the photographers'
-    direct consent. That decision is still pending. A training set with no
-    DF20 rows is not blocked by this check.
+    Any DF20 attribution row sets ``shippable`` false. ``DF20_CONSENT_CONFIRMED``
+    stays false as documentation of the pending Svampeatlas consent and does
+    not unlock this gate. A training set with no DF20 rows is not blocked here.
     """
-    from license_policy import DF20_CONSENT_CONFIRMED, is_df20_training_row
+    from license_policy import is_df20_training_row
 
-    if DF20_CONSENT_CONFIRMED:
-        return []
     path = directory / "attributions.jsonl"
     if not path.is_file():
         return []
@@ -151,8 +148,7 @@ def _df20_consent_reasons(directory: Path) -> list[str]:
         return []
     if any(is_df20_training_row(row) for row in rows):
         return [
-            "DF20 photos are in the training set but DF20_CONSENT_CONFIRMED is false; "
-            "Svampeatlas requires the photographers' direct consent and the terms are non-commercial research only"
+            "DF20 photos are experimental training only and are never part of a released model"
         ]
     return []
 
@@ -423,7 +419,7 @@ def assess_shippable(report: dict, artifact_dir: Path | None = None) -> tuple[bo
     if not report.get("attributions_complete"):
         reasons.append("per-image attribution file is incomplete")
     reasons.extend(_attribution_file_reasons(directory, coverage))
-    reasons.extend(_df20_consent_reasons(directory))
+    reasons.extend(_df20_release_reasons(directory))
 
     recorded = report.get("artifacts") or {}
     keras_hash = recorded.get("model_keras_sha256")

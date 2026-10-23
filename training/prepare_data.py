@@ -15,8 +15,9 @@ Reads ``attributions.jsonl``. ``external.jsonl`` is read only with
 also skips ``usage=training_only`` (CC BY-NC, CC BY-SA, and Danish Fungi 2020).
 Without that flag CC BY-NC and CC BY-SA stay in the training set. Danish
 Fungi 2020 stays out unless ``--include-df20`` is also set; those rows are
-counted as ``excluded_df20``. The release gate still blocks DF20 until
-``DF20_CONSENT_CONFIRMED`` is true. The split
+counted as ``excluded_df20``. Those rows are experimental training only:
+any DF20 row keeps ``shippable`` false, and ``DF20_CONSENT_CONFIRMED``
+cannot clear that. The split
 salt is ``GRZYBOBRANIE_SPLIT_SALT`` or a file outside the repo. Corrupt files
 are skipped. The cached PNG is EXIF-oriented and area-resized to the
 model input, which is what the phone feeds the network. An unacknowledged
@@ -271,7 +272,7 @@ def main(argv: list[str] | None = None) -> None:
         help=(
             "With --with-external, keep Danish Fungi 2020 rows. The default excludes "
             "them and counts excluded_df20. CC BY-NC and CC BY-SA are unaffected. "
-            "The release gate still blocks until DF20_CONSENT_CONFIRMED is true."
+            "DF20 is experimental only: any such row keeps shippable false."
         ),
     )
     parser.add_argument(

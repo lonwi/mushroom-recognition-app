@@ -11,9 +11,10 @@ prefix. ``cc-by`` is not ``cc-by-4.0``, ``cc-by-nc`` is not ``cc-by-nc-4.0``,
 ``cc-by-sa`` is not ``cc-by-sa-4.0``, and ``cc-by-nc-sa`` is not
 ``cc-by-nc-4.0``. ND, NC-ND, and NC-SA are absent on purpose.
 
-Danish Fungi 2020 is on the list, but it is not pulled by ``--with-external``.
-Inclusion is ``--include-df20``, default off. Shipping still waits on
-``DF20_CONSENT_CONFIRMED``.
+Danish Fungi 2020 is on the list for experimental training only. It is not
+pulled by ``--with-external``. Inclusion is ``--include-df20``, default off.
+A released model never includes it: any DF20 row sets ``shippable`` false.
+``DF20_CONSENT_CONFIRMED`` stays false and does not unlock that gate.
 """
 
 from __future__ import annotations
@@ -23,12 +24,12 @@ from collections import Counter
 PUBLISHABLE = "publishable"
 TRAINING_ONLY = "training_only"
 
-# ``training_only`` means the photo may train the released model and must not
-# be shown. For CC BY-NC and CC BY-SA that usage does not refuse ``shippable``.
-# ``df20`` is listed here so an opted-in run can train on it. That usage does
-# not make a DF20 row shippable: any DF20 row in the attribution file sets
-# ``shippable`` false while ``DF20_CONSENT_CONFIRMED`` is false. Each row is
-# one exact id, its usage, and its family. There is no prefix scan.
+# ``training_only`` means the photo may train and must not be shown. For CC
+# BY-NC and CC BY-SA that usage does not refuse ``shippable``. ``df20`` is
+# listed so an opted-in experimental run can train on it. Any DF20 attribution
+# row still sets ``shippable`` false, and ``DF20_CONSENT_CONFIRMED`` cannot
+# clear that. Each row is one exact id, its usage, and its family. There is
+# no prefix scan.
 _LICENSE_TABLE: tuple[tuple[str, str, str], ...] = (
     ("cc0-1.0", PUBLISHABLE, "cc0"),
     ("cc-by-1.0", PUBLISHABLE, "cc-by"),
@@ -56,11 +57,11 @@ LICENSE_FAMILY: dict[str, str] = {
     license_id: family for license_id, _usage, family in _LICENSE_TABLE
 }
 
-# Pending decision. Danish Fungi 2020 is licensed for non-commercial research
-# only, and Svampeatlas requires each photographer's direct consent. The owner
-# is being asked again. Leave this False until that consent is confirmed.
-# ``--include-df20`` may add the rows to a training run. The release gate stays
-# closed while this constant is False.
+# Documentation only. Danish Fungi 2020 is licensed for non-commercial research
+# only, and Svampeatlas photographer consent is still pending. Leave this
+# False. It does not unlock a release: any DF20 row keeps ``shippable`` false
+# even if this constant is changed. ``--include-df20`` may add the rows to an
+# experimental training run only.
 DF20_CONSENT_CONFIRMED = False
 
 

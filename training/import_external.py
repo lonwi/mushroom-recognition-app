@@ -11,8 +11,9 @@ The allowed training licences live in ``license_policy.py`` (Decyzja Wojtka
 DF20. ``usage`` is ``publishable`` for CC0 and CC BY, and ``training_only``
 for CC BY-NC, CC BY-SA, and DF20. ``training_only`` means the photo is not
 shown. CC BY-NC and CC BY-SA do not block a release on licence grounds.
-DF20 is excluded unless ``--include-df20`` is set, and the release gate stays
-closed until ``DF20_CONSENT_CONFIRMED`` is true. Every CC photo row needs an
+DF20 is excluded unless ``--include-df20`` is set. It is experimental
+training only: any DF20 row keeps ``shippable`` false, and
+``DF20_CONSENT_CONFIRMED`` does not unlock a release. Every CC photo row needs an
 https ``license_url`` that names the same license as the text, including
 CC BY-SA. An empty URL, an ``http://`` URL, or a URL for a different license
 drops the row, including when the text already says ``CC BY 4.0``. A
@@ -1134,8 +1135,8 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help=(
             "Keep Danish Fungi 2020 rows. The default excludes them and counts "
-            "excluded_df20. CC BY-NC and CC BY-SA are unaffected. The release "
-            "gate still blocks until DF20_CONSENT_CONFIRMED is true."
+            "excluded_df20. CC BY-NC and CC BY-SA are unaffected. DF20 is "
+            "experimental only: any such row keeps shippable false."
         ),
     )
     return parser
