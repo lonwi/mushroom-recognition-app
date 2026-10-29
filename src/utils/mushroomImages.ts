@@ -1,4 +1,9 @@
 import type { ImageSourcePropType } from 'react-native';
+
+// Note: These are imported as JPEG files for now, but they will be converted to WebP
+// Update the import paths after running scripts/convert-mushroom-images.js
+
+// Importing JPEG files (will be updated to WebP)
 import boletusEdulis from '../../assets/mushrooms/boletus_edulis.jpg';
 import amanitaPhalloides from '../../assets/mushrooms/amanita_phalloides.jpg';
 import macrolepiotaProcera from '../../assets/mushrooms/macrolepiota_procera.jpg';
