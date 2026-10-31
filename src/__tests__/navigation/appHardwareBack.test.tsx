@@ -1,5 +1,5 @@
 import React from 'react';
-import { BackHandler, Platform } from 'react-native';
+import { BackHandler, Dimensions, Platform, StyleSheet } from 'react-native';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import App from '../../../App';
@@ -60,6 +60,14 @@ function speciesCardScrollHost(anchor: HostNode): HostNode {
     throw new Error('Species card ScrollView host was not found');
   }
   return current;
+}
+
+function galleryPageWidth(style: Parameters<typeof StyleSheet.flatten>[0]): number {
+  const flat: unknown = StyleSheet.flatten(style);
+  if (typeof flat !== 'object' || flat === null || !('width' in flat) || typeof flat.width !== 'number') {
+    throw new Error('Gallery page width is not a number');
+  }
+  return flat.width;
 }
 
 describe('Android hardware back', () => {
@@ -214,6 +222,21 @@ describe('Android hardware back', () => {
       expect(screen.queryByText('Amanita phalloides')).toBeNull();
       const scrollAfterBack = speciesCardScrollHost(screen.getByTestId('species-family-label'));
       expect(scrollAfterBack).not.toBe(scrollLookAlike);
+
+      await fireEvent.press(screen.getByTestId('lookalike-link-amanita_phalloides'));
+      expect(screen.getByText('Amanita phalloides')).toBeTruthy();
+      const parkedWidth = 417;
+      expect(parkedWidth).not.toBe(Dimensions.get('window').width);
+      await fireEvent(screen.getByTestId('species-gallery'), 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: parkedWidth, height: 120 } },
+      });
+      expect(galleryPageWidth(screen.getByTestId('species-gallery-slide-0').props.style)).toBe(parkedWidth);
+
+      await fireEvent.press(screen.getByTestId('lookalike-link-amanita_citrina'));
+      expect(screen.getByText('Amanita citrina')).toBeTruthy();
+      expect(galleryPageWidth(screen.getByTestId('species-gallery-slide-0').props.style)).toBe(
+        Dimensions.get('window').width,
+      );
     } finally {
       back.restore();
     }
