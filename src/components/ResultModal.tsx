@@ -99,7 +99,7 @@ export const ResultModal: React.FC<Props> = ({
   const titleTestId = chrome.testID;
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={false}>
+    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
           <View style={styles.navBar}>
