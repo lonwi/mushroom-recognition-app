@@ -28,11 +28,13 @@ from person_cap import (
     MISSING_PERSON_KEY,
     N_DEFINITION,
     PERSON_CAP_SEED,
+    ROUNDING,
     apply_person_class_cap,
     cap_author_key,
+    cap_for_n,
     person_row_cap,
 )
-from prepare_data import _usable_records, main, records_for_split
+from prepare_data import _cache_model_pngs, _usable_records, main, prepare_rows_before_cap, records_for_split
 from salt_fixture import FIXTURE_SALT
 from sampling import MAX_PER_OCCURRENCE
 from import_external import apply_collector_cap
@@ -142,6 +144,28 @@ def _counts(rows: list[dict]) -> dict[str, Counter[str]]:
     return found
 
 
+# Variant B, frozen until the owner chooses A (half up). Flip this table
+# together with the one expression in cap_for_n. Variant A would be
+# 105 -> 11 and 125 -> 13.
+CAP_FOR_N_CASES = (
+    (0, 10),
+    (9, 10),
+    (72, 10),
+    (95, 10),
+    (100, 10),
+    (104, 10),
+    (105, 10),
+    (115, 12),
+    (125, 12),
+    (146, 15),
+    (150, 15),
+    (500, 50),
+    (595, 60),
+    (605, 60),
+    (700, 60),
+)
+
+
 def _class_rows(rows: list[dict], class_id: str) -> list[dict]:
     return [row for row in rows if row.get("class_id") == class_id]
 
@@ -170,16 +194,10 @@ class PersonCapContractTest(unittest.TestCase):
         self.assertEqual(CAP_MIN, 10)
         self.assertEqual(CAP_FRACTION, 0.10)
         self.assertEqual(PERSON_CAP_SEED, 42)
-        self.assertEqual(person_row_cap(72), 10)
-        self.assertEqual(person_row_cap(100), 10)
-        self.assertEqual(person_row_cap(105), 10)
-        self.assertEqual(person_row_cap(115), 12)
-        self.assertEqual(person_row_cap(150), 15)
-        self.assertEqual(person_row_cap(500), 50)
-        self.assertEqual(person_row_cap(595), 60)
-        self.assertEqual(person_row_cap(605), 60)
-        self.assertEqual(person_row_cap(700), 60)
-        self.assertEqual(person_row_cap(0), 10)
+        self.assertEqual(ROUNDING, "round half to even (Python round)")
+        for n_rows, expected in CAP_FOR_N_CASES:
+            self.assertEqual(cap_for_n(n_rows), expected, n_rows)
+            self.assertEqual(person_row_cap(n_rows), expected, n_rows)
         source = (ROOT / "training" / "person_cap.py").read_text(encoding="utf-8")
         self.assertIn("CAP_MAX = 60", source)
         self.assertIn("CAP_MIN = 10", source)
@@ -257,7 +275,8 @@ class PersonCapContractTest(unittest.TestCase):
         self.assertNotIn("inat_observer", cap_fn)
         importer = (ROOT / "training" / "import_external.py").read_text(encoding="utf-8")
         collector_fn = importer.split("def apply_collector_cap(", 1)[1].split("\ndef ", 1)[0]
-        self.assertIn("apply_person_class_cap", collector_fn)
+        self.assertNotIn("apply_person_class_cap", collector_fn)
+        self.assertIn("does not apply the author cap", collector_fn)
         self.assertNotIn("inat_observer", collector_fn)
         self.assertNotIn("person_identity_keys", collector_fn)
         self.assertNotIn("30", collector_fn)
@@ -309,28 +328,137 @@ class PersonCapContractTest(unittest.TestCase):
             )
             for index in range(12)
         ]
-        with patch("person_cap.cap_author_key", wraps=cap_author_key) as spy:
-            kept, dropped = apply_collector_cap(crowd)
-        self.assertGreaterEqual(spy.call_count, len(crowd))
-        self.assertEqual(len(kept), 10)
-        self.assertEqual(len(dropped), 2)
+        kept, dropped = apply_collector_cap(crowd)
+        self.assertEqual(len(kept), len(crowd))
+        self.assertEqual(dropped, [])
+        kept_flag, dropped_flag = apply_collector_cap(crowd, 3)
+        self.assertEqual(len(kept_flag), len(crowd))
+        self.assertEqual(dropped_flag, [])
         self.assertTrue(all(cap_author_key(row) == ("person:ada hunter", False) for row in kept))
         self.assertTrue(all("person:bea collector" in person_identity_keys(row) for row in kept))
+
+    def test_placeholder_author_falls_back_to_the_observation_key(self):
+        """Each observation of a placeholder author is its own cap key.
+
+        Fixtures use placeholder strings and observation ids only.
+        """
+        self.assertIs(person_cap.is_placeholder_person, split.is_placeholder_person)
+        for label in ("Unknown Subject", "unknown subject", "UNKNOWN", "anonymous", "-"):
+            self.assertTrue(person_cap.is_placeholder_person(label), label)
+        labels = ("Unknown Subject", "anonymous", "-", "UNKNOWN SUBJECT")
+        separate = []
+        for index in range(12):
+            row = _row(
+                "class_a",
+                "",
+                index,
+                observation=f"obs-{index}",
+                creator=labels[index % len(labels)],
+                rights_holder="",
+                inat_observer="",
+                author="",
+            )
+            row["occurrence_key"] = ""
+            separate.append(row)
+        keys = []
+        for row in separate:
+            observed = observation_identity_keys(row)
+            self.assertEqual(len(observed), 1)
+            self.assertEqual(cap_author_key(row), (observed[0], False))
+            self.assertNotEqual(cap_author_key(row)[0], MISSING_PERSON_KEY)
+            keys.append(cap_author_key(row)[0])
+        self.assertEqual(len(set(keys)), 12)
+        capped, removed, report = apply_person_class_cap(separate)
+        self.assertEqual(removed, [])
+        self.assertEqual(len(capped), 12)
+        entry = _author_class(report, "class_a")
+        self.assertEqual(entry["n"], 12)
+        self.assertEqual(entry["cap"], 10)
+        self.assertEqual(len(entry["persons"]), 12)
+        self.assertTrue(all(item["kept"] == 1 and item["cut"] == 0 for item in entry["persons"]))
+        self.assertNotIn(MISSING_PERSON_KEY, {item["person_key"] for item in entry["persons"]})
+
+        shared = []
+        for index in range(2):
+            row = _row(
+                "class_a",
+                "",
+                100 + index,
+                observation="same-obs",
+                creator="Unknown Subject",
+                rights_holder="anonymous",
+                inat_observer="",
+                author="",
+            )
+            row["occurrence_key"] = ""
+            shared.append(row)
+        self.assertEqual(cap_author_key(shared[0])[0], cap_author_key(shared[1])[0])
+        self.assertEqual(cap_author_key(shared[0])[0], observation_identity_keys(shared[0])[0])
+
+    def test_unreadable_file_is_not_in_n(self):
+        from PIL import Image
+
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            image_dir = directory / "images" / "class_a"
+            image_dir.mkdir(parents=True)
+            rows = []
+            for index in range(12):
+                name = f"row-{index}.png"
+                pixels = np.random.default_rng(index + 3).integers(0, 256, size=(16, 16, 3), dtype=np.uint8)
+                Image.fromarray(pixels, mode="RGB").save(image_dir / name)
+                rows.append(
+                    {
+                        "class_id": "class_a",
+                        "downloaded": True,
+                        "unverified": False,
+                        "file": f"images/class_a/{name}",
+                        "image_url": f"https://images.example.test/row-{index}.jpg",
+                        "license": "CC BY 4.0",
+                        "creator": "Unknown Subject",
+                        "rights_holder": "",
+                        "inat_observer": "",
+                        "inat_photo_id": f"photo-{index}",
+                        "inat_observation_id": f"obs-{index}",
+                        "sha256": f"sha-{index}",
+                        "bytes": 100 + index,
+                    }
+                )
+            with patch("prepare_data.DATA_DIR", directory):
+                kept, _near, _identity = prepare_rows_before_cap(rows)
+                real_write = __import__("prepare_data", fromlist=["write_model_png"]).write_model_png
+
+                def flaky(rgb, destination, size):
+                    if destination.name == "row-0.png":
+                        raise OSError("unreadable")
+                    real_write(rgb, destination, size)
+
+                with patch("prepare_data.write_model_png", side_effect=flaky):
+                    readable, skipped = _cache_model_pngs(kept, 8)
+            self.assertEqual(len(skipped), 1)
+            self.assertEqual(skipped[0]["inat_photo_id"], "photo-0")
+            self.assertEqual(len(readable), 11)
+            _capped, removed, report = apply_person_class_cap(readable)
+            info = report["classes"][0]
+            self.assertEqual(info["n"], 11)
+            self.assertNotIn("photo-0", [row["inat_photo_id"] for row in readable])
+            self.assertTrue(all(row["inat_photo_id"] != "photo-0" for row in removed))
 
     def test_prepare_caps_after_merge_and_before_the_split(self):
         text = (ROOT / "training" / "prepare_data.py").read_text(encoding="utf-8")
         body = text.split("def main(", 1)[1].split("\ndef ", 1)[0]
-        self.assertLess(body.index("_attribution_sources("), body.index("records_for_split("))
-        self.assertLess(body.index("_usable_records("), body.index("records_for_split("))
-        self.assertLess(body.index("records_for_split("), body.index("_cache_model_pngs("))
-        self.assertLess(body.index("_cache_model_pngs("), body.index("assign_splits("))
+        self.assertLess(body.index("_attribution_sources("), body.index("_usable_records("))
+        self.assertLess(body.index("_usable_records("), body.index("prepare_rows_before_cap("))
+        self.assertLess(body.index("prepare_rows_before_cap("), body.index("_cache_model_pngs("))
+        self.assertLess(body.index("_cache_model_pngs("), body.index("apply_person_class_cap("))
+        self.assertLess(body.index("apply_person_class_cap("), body.index("assign_splits("))
         usable = text.split("def _usable_records_one(", 1)[1].split("\ndef ", 1)[0]
         appended = usable.index("records.append(row)")
         self.assertLess(usable.index("training_eligible("), appended)
         self.assertLess(usable.index('"unverified"'), appended)
-        cap_step = text.split("def records_for_split(", 1)[1].split("\ndef ", 1)[0]
+        cap_step = text.split("def prepare_rows_before_cap(", 1)[1].split("\ndef ", 1)[0]
         self.assertLess(cap_step.index("dedup_by_identity("), cap_step.index("dedup_records("))
-        self.assertLess(cap_step.index("dedup_records("), cap_step.index("apply_person_class_cap("))
+        self.assertNotIn("apply_person_class_cap(", cap_step)
 
     def test_n_146_caps_at_15_and_n_95_caps_at_10(self):
         """N is the class size after the unverified filter and both dedups.
@@ -445,8 +573,8 @@ class PersonCapContractTest(unittest.TestCase):
             "n": 15,
             "cap": 10,
             "limit": 10,
-            "kept": 10,
-            "removed": 5,
+            "kept": 15,
+            "removed": 0,
         })
         self.assertEqual(by_class["cantharellus_cibarius"]["removed"], 0)
         self.assertEqual(by_class["cantharellus_cibarius"]["kept"], 4)
@@ -456,10 +584,20 @@ class PersonCapContractTest(unittest.TestCase):
         for class_id, counts in post.items():
             cap = person_row_cap(sum(pre[class_id].values()))
             for person_key, count in counts.items():
+                if person_key == MISSING_PERSON_KEY:
+                    continue
                 self.assertLessEqual(count, cap, f"{class_id} {person_key}")
+        cap_counts: dict[str, Counter[str]] = defaultdict(Counter)
+        for row in capped:
+            key, failed = cap_author_key(row)
+            self.assertFalse(failed)
+            cap_counts[str(row["class_id"])][key or ""] += 1
+        for class_id, counts in cap_counts.items():
+            for person_key, count in counts.items():
+                self.assertLessEqual(count, by_class[class_id]["cap"], f"{class_id} {person_key}")
         self.assertEqual(post["cortinarius_orellanus"]["person:ada hunter"], 10)
         self.assertEqual(post["boletus_edulis"]["person:boa"], 15)
-        self.assertEqual(post["amanita_muscaria"][MISSING_PERSON_KEY], 10)
+        self.assertEqual(post["amanita_muscaria"][MISSING_PERSON_KEY], 15)
         self.assertEqual(sum(post["cortinarius_orellanus"].values()) - post["cortinarius_orellanus"]["person:ada hunter"], 11)
 
         orellanus = _author_class(report, "cortinarius_orellanus")
@@ -486,22 +624,17 @@ class PersonCapContractTest(unittest.TestCase):
             self.assertEqual(item["cut"], 0)
             self.assertIsNone(item["reason"])
             self.assertEqual(item["ids"], [])
-        unknown_ids = sorted(
-            row["inat_photo_id"] for row in removed if row.get("class_id") == "amanita_muscaria"
-        )
         muscaria = _author_class(report, "amanita_muscaria")
         self.assertEqual(muscaria["n"], 15)
         self.assertEqual(muscaria["cap"], 10)
-        self.assertEqual(_author_person(muscaria, MISSING_PERSON_KEY), {
-            "person_key": MISSING_PERSON_KEY,
-            "kept": 10,
-            "cut": 5,
-            "reason": "no_person_key",
-            "ids": unknown_ids,
-        })
+        self.assertEqual(len(muscaria["persons"]), 15)
+        self.assertTrue(all(item["kept"] == 1 and item["cut"] == 0 for item in muscaria["persons"]))
+        self.assertNotIn(MISSING_PERSON_KEY, {item["person_key"] for item in muscaria["persons"]})
         for row in _class_rows(capped, "amanita_muscaria"):
             self.assertEqual(person_identity_keys(row), [])
-        self.assertEqual(len(removed), 51 + 25 + 5)
+            self.assertIn(row["inat_observation_id"], cap_author_key(row)[0])
+            self.assertNotEqual(cap_author_key(row)[0], MISSING_PERSON_KEY)
+        self.assertEqual(len(removed), 51 + 25)
         self.assertTrue(all(row.get("drop_reason") for row in removed))
         self.assertNotIn("drop_reason", rows[0])
 
@@ -576,12 +709,16 @@ class PersonCapContractTest(unittest.TestCase):
                 )
             )
         self.assertTrue(all(person_identity_keys(row) == ["person:ada hunter"] for row in collector_rows))
-        self.assertTrue(all(cap_author_key(row) == (None, False) for row in collector_rows))
-        capped_collector, _dropped, collector_report = apply_person_class_cap(collector_rows)
-        self.assertEqual(len(capped_collector), 10)
-        self.assertEqual(collector_report["removed"][0]["person_key"], MISSING_PERSON_KEY)
-        self.assertEqual(collector_report["removed"][0]["reason"], "no_person_key")
-        self.assertEqual(collector_report["removed"][0]["count"], 1)
+        self.assertTrue(all(cap_author_key(row)[0] != "person:ada hunter" for row in collector_rows))
+        self.assertTrue(all(cap_author_key(row)[0] != MISSING_PERSON_KEY for row in collector_rows))
+        self.assertTrue(
+            all(row["inat_observation_id"] in cap_author_key(row)[0] for row in collector_rows)
+        )
+        self.assertEqual(len({cap_author_key(row)[0] for row in collector_rows}), 11)
+        capped_collector, dropped_collector, collector_report = apply_person_class_cap(collector_rows)
+        self.assertEqual(dropped_collector, [])
+        self.assertEqual(len(capped_collector), 11)
+        self.assertEqual(collector_report["removed"], [])
 
     def test_two_people_on_one_row_count_only_the_author(self):
         shared = []

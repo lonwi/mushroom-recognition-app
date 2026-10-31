@@ -39,7 +39,7 @@ import hashlib
 import json
 from collections import Counter, defaultdict
 
-from split import observation_identity_keys, person_identity_keys, photo_identity_keys
+from split import is_placeholder_person, observation_identity_keys, person_identity_keys, photo_identity_keys
 
 # Wojtek 2026-10-23 16:55, decision A. Do not raise the ceiling or the fraction.
 CAP_MAX = 60
@@ -50,51 +50,62 @@ PERSON_CAP_SEED = 42
 # Report key only. It is not written onto the row and it does not link components.
 MISSING_PERSON_KEY = "none"
 FORMULA = "min(CAP_MAX, max(CAP_MIN, round(CAP_FRACTION * N)))"
+# Variant B is frozen until the owner chooses. Variant A (half up) is
+# `(N + 5) // 10` in place of `round(CAP_FRACTION * N)` inside cap_for_n.
+ROUNDING = "round half to even (Python round)"
 N_DEFINITION = (
     "N is the number of rows of one class still eligible for training after "
-    "every source has been merged, after the unverified filter, and after "
-    "both dedup passes (identity, then perceptual hash), and before this "
-    "author cap. Order: merge, unverified filter (and the other pre-dedup "
-    "skips), identity dedup, perceptual dedup, count N, author cap. Prepare "
-    "does not apply a per-observation cap of 3. The only per-occurrence cap "
-    "is sampling.MAX_PER_OCCURRENCE (2), and it runs in the GBIF fetch, "
-    "before prepare, so it is not a step between dedup and this cap. Three "
-    "distinct photos of one observation that remain after dedup all count "
-    "in N. Rows skipped before dedup (not downloaded, unverified, DF20 left "
-    "out, training_only under --publishable-only, missing file, corrupt) "
-    "are not in N. Identity duplicates and perceptual near-duplicates are "
-    "not in N and do not take a person's slot. The 224px PNG cache runs "
-    "after the cap and can still drop a kept row; that drop does not change "
-    "N or the cap. A person's rows in other classes are not added to N. The "
-    "cap is retroactive: rows collected before 2026-10-23 are capped with "
-    "the same N. There is no grandfathering."
+    "every source has been merged, after the unverified filter, after both "
+    "dedup passes (identity, then perceptual hash), and after the model-PNG "
+    "readability check, and before this author cap. Order: merge, unverified "
+    "filter (and the other pre-dedup skips), identity dedup, perceptual "
+    "dedup, readability, count N, author cap, split. Prepare does not apply "
+    "a per-observation cap of 3. The only per-occurrence cap is "
+    "sampling.MAX_PER_OCCURRENCE (2), and it runs in the GBIF fetch, before "
+    "prepare, so it is not a step between dedup and this cap. Three distinct "
+    "photos of one observation that remain after dedup all count in N. Rows "
+    "skipped before dedup (not downloaded, unverified, DF20 left out, "
+    "training_only under --publishable-only, missing file, corrupt) are not "
+    "in N. Identity duplicates, perceptual near-duplicates, and rows that "
+    "cannot be read or written as the model PNG are not in N and do not take "
+    "a person's slot. A person's rows in other classes are not added to N. "
+    "The cap is retroactive: rows collected before 2026-10-23 are capped "
+    "with the same N. There is no grandfathering."
 )
 MISSING_PERSON_RULE = (
-    "The cap counts one key: creator, otherwise rights_holder. "
-    "person_identity_keys normalizes that field, the same function the "
-    "split uses, and it is called on that field alone. inat_observer, "
+    "The cap counts one key: creator, otherwise rights_holder, when that "
+    "field names a person. person_identity_keys normalizes that field, the "
+    "same function the split uses, and it is called on that field alone. "
+    "A blank or a placeholder (split.is_placeholder_person, including "
+    "Unknown, anonymous, '-', and Unknown subject) is not an author. The "
+    "cap then uses that row's observation identity, so anonymous photos "
+    "from different observations do not share a bucket. inat_observer, "
     "author, recordedBy, collector_key, and any other co-collector do not "
     "take a cap slot. A row with two people occupies a slot only for the "
-    "author. Those other keys still link split components. An empty creator "
-    "and an empty rights_holder do not skip the cap: those rows share the "
-    'sentinel person key "none" for this cap only. The sentinel is not '
-    "written onto the row and is not an identity key, so placeholder authors "
-    "stay unlinked in the split. A row whose key cannot be computed (the "
-    "call fails, or the result is not a list of non-empty strings) is "
-    "removed and reported as person_key_error. It still counts toward N. "
-    "It does not take a slot in the sentinel."
+    "author. Those other keys still link split components. A row with no "
+    "author and no observation key shares the sentinel \"none\" for this "
+    "cap only. The sentinel is not written onto the row. A row whose key "
+    "cannot be computed is removed and reported as person_key_error. It "
+    "still counts toward N and does not take a sentinel slot."
 )
 
 
-def person_row_cap(n: int) -> int:
-    """How many rows one person may keep in a class of ``n`` eligible rows.
+def cap_for_n(n: int) -> int:
+    """How many rows one author may keep in a class of ``n`` eligible rows.
 
-    ``round`` is the built-in round (half to even), the same function the
-    split uses when it turns a ratio into a count.
+    Variant B, frozen until the owner decides between A (half up) and B
+    (half to even). ``round`` is Python's round, half to even. Variant A
+    replaces the next line with ``(n + 5) // 10``.
     """
     if isinstance(n, bool) or not isinstance(n, int) or n < 0:
         raise ValueError("N must be a non-negative int")
-    return min(CAP_MAX, max(CAP_MIN, round(CAP_FRACTION * n)))
+    rounded = round(CAP_FRACTION * n)  # variant B; variant A: (n + 5) // 10
+    return min(CAP_MAX, max(CAP_MIN, rounded))
+
+
+def person_row_cap(n: int) -> int:
+    """Same number as ``cap_for_n``. The rounding lives in that function."""
+    return cap_for_n(n)
 
 
 def _rank(seed: int, *parts: str) -> str:
@@ -139,28 +150,39 @@ def _emission_key(seed: int, row: dict) -> tuple[str, str, str]:
     return (_rank(seed, "emit", stable, content), stable, content)
 
 
-def cap_author_key(record: dict) -> tuple[str | None, bool]:
-    """The one person key that counts toward the cap.
+def _one_identity_key(found: object) -> tuple[str | None, bool]:
+    """One stable key from an identity-key list. Empty is not a failure."""
+    if not isinstance(found, list) or any(not isinstance(key, str) or not key for key in found):
+        return None, True
+    unique = list(dict.fromkeys(found))
+    if not unique:
+        return None, False
+    if len(unique) == 1:
+        return unique[0], False
+    return "\x1e".join(sorted(unique)), False
 
-    ``creator``, otherwise ``rights_holder``. ``person_identity_keys``
-    normalizes the field, and the call sees that field alone, so a
-    co-collector on the same row is not a second cap key. ``None`` with
-    failed False means neither field names a person. ``None`` with failed
-    True means the key could not be computed.
+
+def cap_author_key(record: dict) -> tuple[str | None, bool]:
+    """The one key that counts toward the cap.
+
+    ``creator``, otherwise ``rights_holder``, when that field is a person.
+    Placeholders come from ``split.is_placeholder_person`` (one list, case
+    insensitive), including ``Unknown Subject``. A placeholder or a blank
+    is not an author. The cap then uses the row's observation identity, so
+    each observation is its own key. ``None`` with failed False means there
+    is neither an author nor an observation key. ``None`` with failed True
+    means the key could not be computed.
     """
     if not isinstance(record, dict):
         return None, True
     try:
         for field in ("creator", "rights_holder"):
-            found = person_identity_keys({field: record.get(field)})
-            if not isinstance(found, list) or any(not isinstance(key, str) or not key for key in found):
-                return None, True
-            if not found:
+            if is_placeholder_person(record.get(field)):
                 continue
-            if len(found) != 1:
-                return None, True
-            return found[0], False
-        return None, False
+            key, failed = _one_identity_key(person_identity_keys({field: record.get(field)}))
+            if failed or key:
+                return key, failed
+        return _one_identity_key(observation_identity_keys(record))
     except Exception:
         return None, True
 

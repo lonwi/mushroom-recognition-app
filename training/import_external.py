@@ -32,12 +32,13 @@ and comparison photos. CC BY-NC, CC BY-SA, and DF20 fail it.
 ``_niezweryfikowane`` files set ``unverified``. ``prepare_data.py`` skips
 those rows, so they are not mixed into train, val, or test.
 
-``--max-per-collector`` overrides the shared author cap from
-``person_cap.py``. The default is ``min(60, max(10, round(0.10 * N)))``
-per class, the same function prepare uses. The cap key is ``creator``,
-then ``rights_holder``. Zbierania CSVs store both in the ``author``
-column. ``collector_key`` is still written for the split and is not the
-cap key. Observation and photo ids are kept so a later split can group
+The author cap runs only in ``prepare_data.py``, after dedup. This importer
+does not drop rows for it. ``--max-per-collector`` is optional and only
+writes a diagnostic of how many rows that ceiling would remove. Zbierania
+CSVs store the photo credit in the ``author`` column, copied into
+``creator`` and ``rights_holder``. ``collector_key`` is still written
+(``inat:`` login, otherwise ``author:``) so the split can link the same
+person. Observation and photo ids are kept so a later split can group
 by observer and deduplicate by id.
 """
 
@@ -55,7 +56,7 @@ from urllib.parse import urlsplit, urlunsplit
 from license_policy import EXACT_LICENSE_USAGE as _EXACT_LICENSE_USAGE
 from license_policy import exact_license_usage, training_license_rank
 from manifest import ROOT, load_manifest
-from person_cap import FORMULA, apply_person_class_cap
+from person_cap import apply_person_class_cap
 from url_safety import force_https_url
 
 DATA_DIR = ROOT / "training" / "data"
@@ -899,29 +900,25 @@ def apply_collector_cap(
     rows: list[dict],
     max_per_collector: int | None = None,
 ) -> tuple[list[dict], list[dict]]:
-    """Cap authors with ``apply_person_class_cap``. There is no second selector.
+    """Return every row. Import does not apply the author cap.
 
-    The cap key is ``creator``, otherwise ``rights_holder``. ``collector_key``
-    stays on the row for the split and does not decide this cap. ``None``
-    uses ``min(60, max(10, round(0.10 * N)))``. A positive int is that same
-    selector with a fixed ceiling. Below 1 disables the cap. Verified and
-    unverified rows are capped apart, so an unverified photo does not take
-    a verified slot. Kept rows stay in input order.
+    ``max_per_collector`` is ignored here. Prepare cuts after dedup.
+    ``collector_cap_diagnostic`` is the only use of a passed ceiling, and
+    it does not drop rows.
     """
-    if max_per_collector is not None and max_per_collector < 1:
-        return list(rows), []
-    kept_ids: set[int] = set()
-    for pool in (
-        [row for row in rows if row.get("unverified") is not True],
-        [row for row in rows if row.get("unverified") is True],
-    ):
-        if not pool:
-            continue
-        kept, _removed, _report = apply_person_class_cap(pool, limit=max_per_collector)
-        kept_ids.update(id(row) for row in kept)
-    kept_rows = [row for row in rows if id(row) in kept_ids]
-    dropped = [row for row in rows if id(row) not in kept_ids]
-    return kept_rows, dropped
+    del max_per_collector
+    return list(rows), []
+
+
+def collector_cap_diagnostic(rows: list[dict], limit: int) -> dict:
+    """How many verified rows a fixed ceiling would remove. Nothing is dropped."""
+    verified = [row for row in rows if row.get("unverified") is not True]
+    _kept, removed, _report = apply_person_class_cap(verified, limit=limit)
+    return {
+        "limit": limit,
+        "would_drop": len(removed),
+        "note": "diagnostic only; import does not drop rows. The cap runs in prepare.",
+    }
 
 
 def _join_meta(rows: list[dict], meta_paths: list[Path]) -> int:
@@ -1038,6 +1035,9 @@ def import_directory(
         rows = published_rows(rows)
         rejected["publishable_only"] += before - len(rows)
     meta_joined = _join_meta(rows, metas)
+    diagnostic = None
+    if isinstance(max_per_collector, int) and not isinstance(max_per_collector, bool) and max_per_collector >= 1:
+        diagnostic = collector_cap_diagnostic(rows, max_per_collector)
     rows, cap_dropped = apply_collector_cap(rows, max_per_collector)
     if exclude_unverified:
         rejected["exclude_unverified"] += sum(1 for row in rows if row.get("unverified") is True)
@@ -1082,7 +1082,8 @@ def import_directory(
         "publishable": sum(1 for row in written if row.get("usage") == "publishable"),
         "by_class": dict(sorted(by_class.items())),
         "max_per_collector": max_per_collector,
-        "author_cap_formula": None if max_per_collector is not None else FORMULA,
+        "author_cap_formula": None,
+        "collector_cap_diagnostic": diagnostic,
         "publishable_only": publishable_only,
         "exclude_unverified": exclude_unverified,
     }
@@ -1107,9 +1108,9 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=None,
         help=(
-            "Override the per-author cap. The default is "
-            "min(60, max(10, round(0.10*N))) per class, shared with prepare. "
-            "The author is creator, otherwise rights_holder. Below 1 disables the cap."
+            "Do not drop rows. When set to a positive integer, write a diagnostic "
+            "of how many verified rows that ceiling would remove. The author cap "
+            "runs only in prepare."
         ),
     )
     parser.add_argument(

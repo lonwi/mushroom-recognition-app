@@ -36,6 +36,7 @@ _PLACEHOLDER_PERSONS = frozenset(
         "null",
         "nan",
         "unknown",
+        "unknown subject",
         "anonymous",
         "anonim",
         "anonimowy",

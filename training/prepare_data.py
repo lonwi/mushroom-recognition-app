@@ -26,12 +26,15 @@ are skipped. The cached PNG is EXIF-oriented and area-resized to the
 model input, which is what the phone feeds the network. An unacknowledged
 class over the per-class component-share limit, or with an empty val or test,
 stops the run before any split file or dataset manifest is written.
-``person_cap_report.json`` is written with the other prepare outputs and is
-removed with them when that hard stop fires. Its ``author_cap_report``
-is one entry per class: N, the computed cap, and each person's kept and
-cut counts. Cut rows still list a reason and photo ids.
-Unverified rows and both dedup passes run before the cap, so those rows
-are not in N and do not take a slot. Kept rows are ordered by the seeded
+``person_cap_report.json`` is written under ``training/data/`` (gitignored).
+It holds plaintext author names in ``author_cap_report`` and must not be
+committed, packed into a data release, or copied to OneDrive. It is removed
+with the other prepare outputs when a component-share hard stop fires.
+``author_cap_report`` is one entry per class: N, the computed cap, and each
+person's kept and cut counts. Cut rows still list a reason and photo ids.
+Order: unverified filter, both dedup passes, model-PNG readability, then N
+and the author cap. A file that cannot be read or written as that PNG is
+not in N and does not take a slot. Kept rows are ordered by the seeded
 photo-id hash, not by the order of the source files.
 """
 
@@ -253,17 +256,24 @@ def _cache_model_pngs(records: list[dict], size: int) -> tuple[list[dict], list[
     return kept, skipped
 
 
+def prepare_rows_before_cap(
+    records: list[dict],
+) -> tuple[list[dict], list[dict], list[dict]]:
+    """Identity dedup, then perceptual dedup. Readability and the cap come next."""
+    deduped, identity_dropped = dedup_by_identity(records)
+    kept, dropped = dedup_records(deduped)
+    return kept, dropped, identity_dropped
+
+
 def records_for_split(
     records: list[dict],
 ) -> tuple[list[dict], list[dict], list[dict], list[dict], dict]:
-    """Identity dedup, perceptual dedup, then the per-person cap.
+    """Dedup, then the per-person cap, without the model-PNG readability check.
 
-    Call this after sources are merged (``_usable_records``) and before the
-    PNG cache and ``assign_splits``. N is defined in ``person_cap.N_DEFINITION``:
-    the rows of one class that remain after both dedup passes.
+    ``main`` runs ``_cache_model_pngs`` between ``prepare_rows_before_cap``
+    and ``apply_person_class_cap``, so an unreadable file is not in N.
     """
-    deduped, identity_dropped = dedup_by_identity(records)
-    kept, dropped = dedup_records(deduped)
+    kept, dropped, identity_dropped = prepare_rows_before_cap(records)
     capped, cap_removed, cap_report = apply_person_class_cap(kept)
     return capped, dropped, identity_dropped, cap_removed, cap_report
 
@@ -339,9 +349,20 @@ def main(argv: list[str] | None = None) -> None:
         publishable_only=args.publishable_only,
         include_df20=args.include_df20,
     )
-    capped, dropped, identity_dropped, _cap_removed, cap_report = records_for_split(records)
-    prepared, prepare_skipped = _cache_model_pngs(capped, size)
-    skipped.extend(prepare_skipped)
+    deduped, dropped, identity_dropped = prepare_rows_before_cap(records)
+    readable, unreadable = _cache_model_pngs(deduped, size)
+    skipped.extend(unreadable)
+    capped, _cap_removed, cap_report = apply_person_class_cap(readable)
+    kept_ids = {id(row) for row in capped}
+    for row in readable:
+        if id(row) in kept_ids:
+            continue
+        relative = row.get("prepared_file")
+        if isinstance(relative, str) and relative:
+            path = DATA_DIR / relative
+            if path.is_file():
+                path.unlink()
+    prepared = capped
     try:
         splits, withheld = assign_splits(prepared, salt=salt, exclusion=exclusion)
     except GalleryLeakError as error:

@@ -1558,12 +1558,13 @@ class ImportDirectoryTest(unittest.TestCase):
         _photo(self.root / "amanita_phalloides.csv", rows)
         written, report = import_directory(self.root)
         self.assertIsNone(report["max_per_collector"])
-        self.assertEqual(report["author_cap_formula"], "min(CAP_MAX, max(CAP_MIN, round(CAP_FRACTION * N)))")
-        self.assertEqual(len(written), 10)
+        self.assertIsNone(report["author_cap_formula"])
+        self.assertIsNone(report["collector_cap_diagnostic"])
+        self.assertEqual(len(written), 12)
         self.assertTrue(all(row["creator"] == "Ada Hunter" for row in written))
         self.assertTrue(all(row["rights_holder"] == "Ada Hunter" for row in written))
         self.assertTrue(all(row["collector_key"] == "inat:bea" for row in written))
-        self.assertEqual(report["dropped_collector_cap"], 2)
+        self.assertEqual(report["dropped_collector_cap"], 0)
         source = Path(__file__).resolve().parents[1].joinpath("import_external.py").read_text(encoding="utf-8")
         self.assertNotIn("DEFAULT_MAX_PER_COLLECTOR", source)
         self.assertIn("apply_person_class_cap", source)
@@ -1602,6 +1603,33 @@ class ImportDirectoryTest(unittest.TestCase):
         self.assertNotEqual(cap_author_key(row)[0], "person:bea")
 
 
+    def test_default_import_does_not_cut_and_the_flag_is_diagnostic_only(self):
+        from import_external import collector_cap_diagnostic
+
+        rows = [
+            self._base(
+                author="Ada Hunter",
+                inat_observer="bea",
+                inat_photo_id=str(8000 + index),
+                inat_observation_id=str(9000 + index),
+                image_url=f"https://images.example.test/diag-{index}.jpg",
+                source_url=f"https://www.inaturalist.org/observations/{9000 + index}",
+            )
+            for index in range(12)
+        ]
+        _photo(self.root / "amanita_phalloides.csv", rows)
+        written, report = import_directory(self.root)
+        self.assertEqual(len(written), 12)
+        self.assertEqual(report["dropped_collector_cap"], 0)
+        self.assertIsNone(report["collector_cap_diagnostic"])
+        flagged, flagged_report = import_directory(self.root, max_per_collector=3)
+        self.assertEqual(len(flagged), 12)
+        self.assertEqual(flagged_report["dropped_collector_cap"], 0)
+        self.assertEqual(flagged_report["collector_cap_diagnostic"]["limit"], 3)
+        self.assertGreater(flagged_report["collector_cap_diagnostic"]["would_drop"], 0)
+        self.assertEqual(collector_cap_diagnostic(written, 3)["would_drop"], flagged_report["collector_cap_diagnostic"]["would_drop"])
+
+
 class CollectorCapTest(unittest.TestCase):
     def test_whole_observations_and_per_class(self):
         rows = []
@@ -1635,11 +1663,12 @@ class CollectorCapTest(unittest.TestCase):
             }
         )
         kept, dropped = apply_collector_cap(rows, 3)
+        self.assertEqual(dropped, [])
+        self.assertEqual(len(kept), len(rows))
         phalloides = [row for row in kept if row["class_id"] == "amanita_phalloides"]
-        self.assertEqual(len(phalloides), 3)
+        self.assertEqual(len(phalloides), 5)
         self.assertEqual({row["occurrence_key"] for row in phalloides}, {"obs-a", "obs-b", "obs-c"})
-        self.assertEqual(len(dropped), 2)
-        self.assertTrue(all(row["occurrence_key"] in {"obs-a", "obs-b"} for row in dropped))
+        self.assertEqual(len(dropped), 0)
         self.assertEqual([row for row in kept if row["class_id"] == "boletus_edulis"], [rows[-1]])
         self.assertEqual([row["_order"] for row in kept], sorted(row["_order"] for row in kept))
 
@@ -1663,9 +1692,11 @@ class CollectorCapTest(unittest.TestCase):
                 )
                 order += 1
         kept, dropped = apply_collector_cap(rows)
-        self.assertEqual(sum(1 for row in kept if row["creator"] == "Ada Hunter"), 10)
-        self.assertEqual(sum(1 for row in kept if row["creator"] == "Cara Hunter"), 10)
-        self.assertEqual(len(dropped), 4)
+        self.assertEqual(dropped, [])
+        self.assertEqual(len(kept), 24)
+        flagged, flagged_dropped = apply_collector_cap(rows, 10)
+        self.assertEqual(flagged_dropped, [])
+        self.assertEqual(len(flagged), 24)
         self.assertTrue(all(row["collector_key"] == "inat:bea" for row in kept))
 
     def test_missing_creator_uses_rights_holder(self):
@@ -1683,8 +1714,8 @@ class CollectorCapTest(unittest.TestCase):
             for index in range(12)
         ]
         kept, dropped = apply_collector_cap(rows)
-        self.assertEqual(len(kept), 10)
-        self.assertEqual(len(dropped), 2)
+        self.assertEqual(len(kept), 12)
+        self.assertEqual(dropped, [])
 
     def test_https_rewrites_port_80(self):
         self.assertEqual(
