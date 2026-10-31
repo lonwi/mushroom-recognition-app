@@ -190,6 +190,10 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
             style={[styles.toolBtn, torchEnabled && styles.toolBtnActive]}
             onPress={() => setTorchEnabled(!torchEnabled)}
             activeOpacity={0.7}
+            testID="scanner-torch"
+            accessibilityRole="switch"
+            accessibilityLabel={torchEnabled ? t('scanner.torchOn') : t('scanner.torchOff')}
+            accessibilityState={{ checked: torchEnabled }}
           >
             <Text style={styles.toolIcon}>
               {torchEnabled ? t('scanner.torchOnShort') : t('scanner.torchOffShort')}
@@ -251,8 +255,13 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
             disabled={isAnalyzing}
             activeOpacity={0.7}
             testID="scanner-gallery"
+            accessibilityRole="button"
+            accessibilityLabel={t('scanner.gallery')}
+            accessibilityState={{ disabled: isAnalyzing }}
           >
-            <Text style={styles.galleryIcon}>🖼</Text>
+            <Text style={styles.galleryIcon} importantForAccessibility="no" accessibilityElementsHidden>
+              🖼
+            </Text>
             <Text style={styles.galleryText}>{t('scanner.gallery')}</Text>
           </TouchableOpacity>
 
@@ -262,6 +271,9 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
             disabled={isAnalyzing}
             activeOpacity={0.8}
             testID="scanner-shutter"
+            accessibilityRole="button"
+            accessibilityLabel={t('scanner.takePhoto')}
+            accessibilityState={{ disabled: isAnalyzing, busy: isAnalyzing }}
           >
             <View style={styles.shutterInner}>
               {isAnalyzing ? (

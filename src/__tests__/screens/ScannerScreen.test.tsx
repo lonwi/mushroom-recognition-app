@@ -118,6 +118,22 @@ describe('ScannerScreen does not invent a recognition result', () => {
     expect(queryByText(pl.app.offline)).toBeNull();
   });
 
+  it('names the shutter, exposes torch state, and hides the gallery glyph', async () => {
+    const screen = await renderScanner();
+
+    const shutter = screen.getByRole('button', { name: pl.scanner.takePhoto });
+    expect(shutter.props.testID).toBe('scanner-shutter');
+
+    const torch = screen.getByTestId('scanner-torch');
+    expect(torch.props.accessibilityState).toEqual({ checked: false });
+    await fireEvent.press(torch);
+    expect(screen.getByTestId('scanner-torch').props.accessibilityState).toEqual({ checked: true });
+
+    expect(screen.getByText('🖼', { includeHiddenElements: true }).props.importantForAccessibility).toBe(
+      'no',
+    );
+  });
+
   it('does not fall back to a stock photo when the camera fails', async () => {
     takePictureAsync.mockRejectedValue(new Error('camera failed'));
     const { getByTestId, queryByText } = await renderScanner();
