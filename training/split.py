@@ -12,11 +12,20 @@ into test; those rows are dropped unless the component is already in test.
 
 Test and val targets are ``round(eligible_images * ratio)``. The defaults are
 ``TEST_SPLIT_RATIO`` and ``VAL_SPLIT_RATIO``, both 0.15, and they are
-separate so one ratio does not move the other. Eligible images are the rows that are not a
-held-out taxon, which is also the base of the measured test share. A
-component enters one of those splits only when the added eligible rows stay
-inside the target of every class it contains. A component that fits neither
-split stays in train. ``TEST_SHARE_TOLERANCE`` (0.05) and ``MIN_TEST_COUNT``
+separate so one ratio does not move the other. Eligible images are the rows
+that are not a held-out taxon and not train-only, which is also the base of
+the measured test share. A Wikimedia Commons category row
+(``source=commons_category``, owner decision A in #74) is train-only: it may
+stay in train, and it does not count toward a val or test budget. The
+component is still assigned as a whole. When that assignment is val or test,
+the train-only rows are dropped (``train_only_in_heldout_component``) instead
+of being moved to train, so a shared author or observation is never in two
+splits. A component enters val or test only when the added eligible rows stay
+inside the target of every class it contains. Components with fewer
+train-only rows are placed first, so a component that is mostly Commons
+category photos does not take a val or test slot while other photos can
+fill that budget. A component that fits neither split stays in train.
+``TEST_SHARE_TOLERANCE`` (0.05) and ``MIN_TEST_COUNT``
 (8) are a provisional ship gate: a class whose test share sits outside the
 band, or whose test count is below the minimum, is a hard stop in prepare
 and a ship blocker. The numbers are not final. ``val_rows`` and ``val_share``
@@ -54,6 +63,11 @@ TEST_SPLIT_RATIO = 0.15
 VAL_SPLIT_RATIO = 0.15
 TEST_SHARE_TOLERANCE = 0.05
 MIN_TEST_COUNT = 8
+# Wikimedia Commons category rows (owner decision A, #74). They may train.
+# They are not a val or test budget. A row whose component lands in val or
+# test is dropped; it is not moved to train.
+COMMONS_CATEGORY_SOURCE = "commons_category"
+TRAIN_ONLY_HELDOUT_DROP_REASON = "train_only_in_heldout_component"
 # Author strings that are not a person. They must not glue two observations
 # into one component. Matching is case-insensitive after trimming.
 _PLACEHOLDER_PERSONS = frozenset(
@@ -516,6 +530,46 @@ def _require_salt(salt: str | None) -> str:
     return salt.strip()
 
 
+def train_only_reason_for(record: dict) -> str | None:
+    """Reason a row may train but must not remain in val or test.
+
+    ``source=commons_category`` is the Commons category pull. An explicit
+    ``train_only_reason`` already on the row is kept. Linking keys are not read.
+    """
+    reason = record.get("train_only_reason")
+    if isinstance(reason, str) and reason.strip():
+        return reason.strip()
+    source = record.get("source")
+    if isinstance(source, str) and source.strip().casefold() == COMMONS_CATEGORY_SOURCE:
+        return COMMONS_CATEGORY_SOURCE
+    return None
+
+
+def mark_train_only_rows(records: list[dict]) -> list[dict]:
+    """Return rows with ``train_only_reason`` set, without modifying the input.
+
+    A row that already carries the reason is reused. A row that needs the
+    stamp is copied. Call this once, on the list the splitter walks.
+    """
+    marked: list[dict] = []
+    for record in records:
+        reason = train_only_reason_for(record)
+        if not reason or record.get("train_only_reason") == reason:
+            marked.append(record)
+            continue
+        marked.append({**record, "train_only_reason": reason})
+    return marked
+
+
+def _counts_toward_budget(row: dict) -> bool:
+    """Held-out and train-only rows do not enlarge val or test targets."""
+    if row.get("held_out_taxon") is True:
+        return False
+    if row.get("train_only_reason"):
+        return False
+    return True
+
+
 def _class_targets(totals: dict[str, int], ratio: float) -> dict[str, int]:
     return {class_id: round(total * ratio) for class_id, total in totals.items()}
 
@@ -556,10 +610,16 @@ def _place_components(
     test_ratio: float,
     seed: int,
 ) -> dict[str, list[dict]]:
-    """Place each component once, largest and most multi-class first.
+    """Place each component once. Fewer train-only rows go first.
 
-    ``seed`` only orders components that have the same class count and size.
-    It does not use the salted component id, so the salt cannot move a row.
+    Val and test budgets count eligible rows only (not held-out, not
+    train-only). Among components that fit, a component with fewer train-only
+    rows is placed first, so one normal photo tied to many Commons category
+    photos does not take a slot that cleaner components can fill. The cleaner
+    components then fill the budget and the commons-heavy component stays in
+    train. Within the same train-only count, components that span more classes
+    go first, then larger ones. ``seed`` only breaks those ties. It does not
+    use the salted component id, so the salt cannot move a row.
     """
     totals: dict[str, int] = defaultdict(int)
     component_count: dict[str, int] = defaultdict(int)
@@ -583,6 +643,7 @@ def _place_components(
     sequence = sorted(
         range(len(components)),
         key=lambda index: (
+            components[index].get("train_only_rows", 0),
             -len(components[index]["class_counts"]),
             -len(components[index]["rows"]),
             rank[index],
@@ -615,6 +676,7 @@ def split_by_observation(
     *,
     salt: str | None = None,
     withheld: list | None = None,
+    train_only_dropped: list | None = None,
 ) -> dict[str, list[dict]]:
     """Split by identity component. ``test_blocked`` rows never enter test.
 
@@ -624,40 +686,55 @@ def split_by_observation(
     ``withheld`` with counts. They stay only when the component is in test.
 
     Each component is placed once. It may go to test only when adding its
-    non-held-out rows would not push any class past ``round(eligible * test_ratio)``.
-    Val uses the same check against the val ratio. Held-out rows are not part
-    of that budget: they are removed from train and val after placement, and
-    the measured test share counts the same non-held-out rows. A held-out row
-    stays in test only when its component was placed there because of the
-    other rows. A component that is only held-out rows goes to train and is
-    withheld. Components that span more classes, and then larger ones, are
-    placed first; ``seed`` breaks the remaining ties. A class with fewer than
-    three components does not open a target and stays in train unless another
-    class places that component. The salt pseudonymizes component ids. It does
-    not change the assignment.
+    eligible rows would not push any class past ``round(eligible * test_ratio)``.
+    Val uses the same check against the val ratio. Held-out rows and train-only
+    rows are not part of that budget. The measured test share counts the same
+    eligible rows. A held-out row stays in test only when its component was
+    placed there because of the other rows. A component that is only held-out
+    rows goes to train and is withheld.
+
+    A train-only row (``train_only_reason``, including ``source=commons_category``)
+    stays in the component's split when that split is train. When the component
+    lands in val or test, the row is removed and appended to ``train_only_dropped``
+    with reason ``train_only_in_heldout_component``. It is not moved to train.
+    Components with fewer train-only rows are placed first; within that,
+    components that span more classes, and then larger ones. ``seed`` breaks
+    the remaining ties. A class with fewer than three components does not open
+    a target and stays in train unless another class places that component.
+    The salt pseudonymizes component ids. It does not change the assignment
+    or the linking keys. ``source=commons_expert_described`` is not train-only.
     """
     salt = _require_salt(salt)
     if val_ratio < 0 or test_ratio < 0 or val_ratio + test_ratio >= 1:
         raise ValueError("val and test ratios must leave a non-empty train share")
 
+    records = mark_train_only_rows(records)
     blocked = test_blocked or (lambda _record: False)
     components = _components(records, salt)
     for component in components:
         component["blocked"] = any(blocked(row) for row in component["rows"])
         counts: dict[str, int] = defaultdict(int)
+        train_only_rows = 0
         for row in component["rows"]:
-            if row.get("held_out_taxon") is True:
+            if row.get("train_only_reason"):
+                train_only_rows += 1
+            if not _counts_toward_budget(row):
                 continue
             counts[row["class_id"]] += 1
         component["class_counts"] = dict(counts)
+        component["train_only_rows"] = train_only_rows
 
     splits = _place_components(components, val_ratio, test_ratio, seed)
-    dropped = _drop_held_out_outside_test(splits)
+    removed_train_only = _drop_train_only_outside_train(splits)
+    if train_only_dropped is not None:
+        train_only_dropped.extend(removed_train_only)
+    removed_held_out = _drop_held_out_outside_test(splits)
     if withheld is not None:
-        withheld.extend(dropped)
+        withheld.extend(removed_held_out)
+    _assert_train_only_absent_from_val_and_test(splits)
     _assert_occurrence_integrity(splits)
     _assert_identity_integrity(splits, salt)
-    placed = sum(len(rows) for rows in splits.values()) + len(dropped)
+    placed = sum(len(rows) for rows in splits.values()) + len(removed_train_only) + len(removed_held_out)
     if placed != len(records):
         raise RuntimeError(f"split placed {placed} rows, not {len(records)}")
     return splits
@@ -675,21 +752,30 @@ def measure_test_balance(splits: dict[str, list[dict]]) -> dict:
     """Per-class test share and test count against the provisional gate.
 
     Counts use the same rows as the split targets: a held-out row is left
-    out. A class is a hard stop when its test share is outside
-    ``TEST_SPLIT_RATIO ± TEST_SHARE_TOLERANCE`` or its test count is below
-    ``MIN_TEST_COUNT``. Nothing acknowledges the stop away. A component that
-    cannot fit a test target stays in train; this report is what keeps the
-    resulting test set from being silently empty or tiny. ``val_rows`` and
-    ``val_share`` are recorded for the same rows and are not a gate.
+    out, and so is a train-only row. A class is a hard stop when its test
+    share is outside ``TEST_SPLIT_RATIO ± TEST_SHARE_TOLERANCE`` or its test
+    count is below ``MIN_TEST_COUNT``. Nothing acknowledges the stop away. A
+    component that cannot fit a test target stays in train; this report is
+    what keeps the resulting test set from being silently empty or tiny.
+    ``val_rows`` and ``val_share`` are recorded for the same eligible rows
+    and are not a gate. ``train_only_rows`` counts train-only rows still in
+    the splits (they sit in train) and is not part of the share.
     """
     names = ("train", "val", "test")
     per_split: dict[str, Counter[str]] = {name: Counter() for name in names}
+    train_only_rows: Counter[str] = Counter()
     for name in names:
         for row in splits.get(name) or []:
             if row.get("held_out_taxon") is True:
                 continue
-            per_split[name][str(row.get("class_id") or "")] += 1
-    class_ids = sorted({class_id for counts in per_split.values() for class_id in counts})
+            class_id = str(row.get("class_id") or "")
+            if row.get("train_only_reason"):
+                train_only_rows[class_id] += 1
+                continue
+            per_split[name][class_id] += 1
+    class_ids = sorted(
+        {class_id for counts in per_split.values() for class_id in counts} | set(train_only_rows)
+    )
     per_class: dict[str, dict] = {}
     hard: list[str] = []
     blockers: list[str] = []
@@ -709,6 +795,7 @@ def measure_test_balance(splits: dict[str, list[dict]]) -> dict:
             "val_share": val_share,
             "outside_tolerance": outside,
             "below_minimum": below,
+            "train_only_rows": train_only_rows[class_id],
         }
         per_class[class_id] = info
         if not outside and not below:
@@ -812,6 +899,81 @@ def held_out_withheld_report(rows: list[dict]) -> dict:
     return {"rows": len(rows), "per_class": dict(sorted(counts.items()))}
 
 
+def train_only_report(splits: dict[str, list[dict]], dropped: list[dict] | None = None) -> dict:
+    """Train-only rows kept in train, and those dropped from val or test.
+
+    ``per_class`` counts every train-only row in either bucket. Dropped rows
+    use ``train_only_in_heldout_component`` and are not in the splits.
+    """
+    in_train: Counter[str] = Counter()
+    reasons: Counter[str] = Counter()
+    for row in splits.get("train") or []:
+        reason = row.get("train_only_reason")
+        if not isinstance(reason, str) or not reason.strip():
+            continue
+        class_id = str(row.get("class_id") or "")
+        in_train[class_id] += 1
+        reasons[reason.strip()] += 1
+    dropped_counts: Counter[str] = Counter()
+    for row in dropped or []:
+        class_id = str(row.get("class_id") or "")
+        dropped_counts[class_id] += 1
+        reason = row.get("train_only_reason")
+        if isinstance(reason, str) and reason.strip():
+            reasons[reason.strip()] += 1
+    per_class = {
+        class_id: in_train[class_id] + dropped_counts[class_id]
+        for class_id in sorted(set(in_train) | set(dropped_counts))
+    }
+    return {
+        "rows": sum(per_class.values()),
+        "per_class": per_class,
+        "reasons": dict(sorted(reasons.items())),
+        "in_train": {
+            "rows": sum(in_train.values()),
+            "per_class": {class_id: in_train[class_id] for class_id in sorted(in_train)},
+        },
+        "dropped": {
+            "reason": TRAIN_ONLY_HELDOUT_DROP_REASON,
+            "rows": sum(dropped_counts.values()),
+            "per_class": {class_id: dropped_counts[class_id] for class_id in sorted(dropped_counts)},
+        },
+    }
+
+
+def _drop_train_only_outside_train(splits: dict[str, list[dict]]) -> list[dict]:
+    """Drop train-only rows whose component was assigned to val or test.
+
+    The rest of the component stays in that split. Moving the row to train
+    would put a shared author or observation in two splits.
+    """
+    dropped: list[dict] = []
+    for name in ("val", "test"):
+        kept: list[dict] = []
+        for row in splits.get(name) or []:
+            if row.get("train_only_reason"):
+                dropped.append(
+                    {
+                        **row,
+                        "drop_reason": TRAIN_ONLY_HELDOUT_DROP_REASON,
+                        "assigned_split": name,
+                    }
+                )
+            else:
+                kept.append(row)
+        splits[name] = kept
+    return dropped
+
+
+def _assert_train_only_absent_from_val_and_test(splits: dict[str, list[dict]]) -> None:
+    for name in ("val", "test"):
+        for row in splits.get(name) or []:
+            if row.get("train_only_reason"):
+                raise RuntimeError(
+                    f"train-only row ({row.get('train_only_reason')}) landed in {name}"
+                )
+
+
 def _assert_occurrence_integrity(splits: dict[str, list[dict]]) -> None:
     seen: dict[str, str] = {}
     for name, records in splits.items():
@@ -844,3 +1006,10 @@ def _assert_identity_integrity(splits: dict[str, list[dict]], salt: str) -> None
             if previous is not None and previous != name:
                 raise RuntimeError(f"observer {key} leaked into both {previous} and {name}")
             people[key] = name
+    linked: dict[str, str] = {}
+    for name, record in flat:
+        for key in identity_keys(record):
+            previous = linked.get(key)
+            if previous is not None and previous != name:
+                raise RuntimeError(f"split key {key} leaked into both {previous} and {name}")
+            linked[key] = name

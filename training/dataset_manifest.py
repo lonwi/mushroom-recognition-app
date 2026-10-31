@@ -37,6 +37,7 @@ _HASH_FIELDS = (
     "gbifID",
     "commons_file",
     "licence_note",
+    "train_only_reason",
 )
 
 
@@ -58,6 +59,7 @@ def build_dataset_manifest(
     salt: str,
     share_config: dict | None = None,
     withheld: list[dict] | None = None,
+    train_only_dropped: list[dict] | None = None,
 ) -> dict:
     """Per-split totals, per-class counts, component shares, and a content sha256.
 
@@ -87,7 +89,7 @@ def build_dataset_manifest(
         }
     digest = hashlib.sha256("\n".join(sorted(lines)).encode("utf-8")).hexdigest()
     from component_share import COMPONENT_SHARE_LIMIT, load_share_config, measure_component_share
-    from split import held_out_withheld_report, measure_test_balance
+    from split import held_out_withheld_report, measure_test_balance, train_only_report
     from split_salt import salt_fingerprint
 
     config = load_share_config() if share_config is None else share_config
@@ -104,4 +106,5 @@ def build_dataset_manifest(
         "component_share": share,
         "test_balance": measure_test_balance(splits),
         "held_out_withheld": held_out_withheld_report(withheld or []),
+        "train_only": train_only_report(splits, train_only_dropped or []),
     }

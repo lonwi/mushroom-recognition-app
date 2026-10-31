@@ -180,7 +180,7 @@ class GalleryExclusionTest(unittest.TestCase):
             "recorded_by": "person 101",
         }
         records.extend([listed, mirrored])
-        splits, _dropped = assign_splits(records, salt=FIXTURE_SALT, exclusion=exclusion)
+        splits, _withheld, _train_only_dropped = assign_splits(records, salt=FIXTURE_SALT, exclusion=exclusion)
         test_urls = {row["image_url"] for row in splits["test"]}
         self.assertNotIn(sample_url, test_urls)
         self.assertNotIn(mirrored["image_url"], test_urls)

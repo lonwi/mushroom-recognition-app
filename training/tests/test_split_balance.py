@@ -44,8 +44,8 @@ def _photo(class_id: str, observer: str, index: int, **extra) -> dict:
     return row
 
 
-def _singletons(class_id: str, count: int, prefix: str) -> list[dict]:
-    return [_photo(class_id, f"{prefix}_{index}", index) for index in range(count)]
+def _singletons(class_id: str, count: int, prefix: str, **extra) -> list[dict]:
+    return [_photo(class_id, f"{prefix}_{index}", index, **extra) for index in range(count)]
 
 
 def _bundle(

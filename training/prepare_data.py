@@ -24,7 +24,9 @@ model input, which is what the phone feeds the network. An unacknowledged
 class over the per-class component-share limit, with an empty val or test,
 or with a test share outside the provisional band or a test count below
 ``MIN_TEST_COUNT``, stops the run before any split file or dataset manifest
-is written.
+is written. A ``commons_category`` row is train-only: it does not count
+toward val or test budgets, and it is dropped when its component lands in
+val or test instead of being moved to train.
 """
 
 from __future__ import annotations
@@ -243,17 +245,26 @@ def _cache_model_pngs(records: list[dict], size: int) -> tuple[list[dict], list[
     return kept, skipped
 
 
-def assign_splits(records: list[dict], *, salt: str, exclusion) -> tuple[dict[str, list[dict]], list[dict]]:
-    """Train/val/test split. Identity dedup has already run. A gallery photo in test raises."""
+def assign_splits(
+    records: list[dict], *, salt: str, exclusion
+) -> tuple[dict[str, list[dict]], list[dict], list[dict]]:
+    """Train/val/test split. Identity dedup has already run. A gallery photo in test raises.
+
+    The splitter stamps train-only copies itself, once. A train-only row whose
+    component lands in val or test is returned in the third list and is not
+    part of either split.
+    """
     withheld: list[dict] = []
+    train_only_dropped: list[dict] = []
     splits = split_by_observation(
         records,
         salt=salt,
         test_blocked=lambda row: record_matches_gallery(row, exclusion),
         withheld=withheld,
+        train_only_dropped=train_only_dropped,
     )
     assert_gallery_absent_from_test(splits, exclusion)
-    return splits, withheld
+    return splits, withheld, train_only_dropped
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -319,7 +330,7 @@ def main(argv: list[str] | None = None) -> None:
     prepared, prepare_skipped = _cache_model_pngs(kept, size)
     skipped.extend(prepare_skipped)
     try:
-        splits, withheld = assign_splits(prepared, salt=salt, exclusion=exclusion)
+        splits, withheld, train_only_dropped = assign_splits(prepared, salt=salt, exclusion=exclusion)
     except GalleryLeakError as error:
         raise SystemExit(str(error)) from error
     write_prepare_outputs(
@@ -330,6 +341,7 @@ def main(argv: list[str] | None = None) -> None:
         identity_dropped=identity_dropped,
         skipped=skipped,
         withheld=withheld,
+        train_only_dropped=train_only_dropped,
         salt=salt,
         share_config=share_config,
         model_png_size=size or MODEL_INPUT_SIZE,
@@ -349,6 +361,7 @@ def write_prepare_outputs(
     salt: str,
     share_config: dict,
     model_png_size: int,
+    train_only_dropped: list[dict] | None = None,
 ) -> dict:
     """Write split artifacts after the per-class hard stop.
 
@@ -362,6 +375,7 @@ def write_prepare_outputs(
         salt=salt,
         share_config=share_config,
         withheld=withheld,
+        train_only_dropped=train_only_dropped,
     )
     hard = list(
         dict.fromkeys(
@@ -413,6 +427,7 @@ def write_prepare_outputs(
                 ),
                 "class_conflicts": class_conflicts,
                 "held_out_withheld": len(withheld),
+                "train_only_dropped": len(train_only_dropped or []),
                 "skipped_corrupt_or_unreadable": len(skipped),
                 "excluded_df20": sum(
                     1 for row in skipped if isinstance(row, dict) and row.get("skip_reason") == "df20_opt_out"
