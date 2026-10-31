@@ -466,6 +466,13 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertNotIn("DEFAULT_MAX_PER_COLLECTOR", importer)
         self.assertIn("apply_person_class_cap", importer)
         self.assertNotIn("= 30", importer)
+        collector_fn = importer.split("def apply_collector_cap(", 1)[1].split("\ndef ", 1)[0]
+        self.assertIn("apply_person_class_cap", collector_fn)
+        self.assertNotIn("inat_observer", collector_fn)
+        self.assertNotIn("30", collector_fn)
+        importer_tests = (ROOT / "training" / "tests" / "test_import_external.py").read_text(encoding="utf-8")
+        self.assertNotIn("max_per_collector=30", importer_tests)
+        self.assertNotIn("max_per_collector = 30", importer_tests)
         self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
         self.assertEqual(MAX_PER_OCCURRENCE, 2)
 

@@ -34,6 +34,7 @@ from person_cap import (
 from prepare_data import _usable_records, main, records_for_split
 from salt_fixture import FIXTURE_SALT
 from sampling import MAX_PER_OCCURRENCE
+from import_external import apply_collector_cap
 from split import component_ids, observation_identity_keys, person_identity_keys, photo_identity_keys
 from split_salt import SALT_ENV
 import person_cap
@@ -216,6 +217,86 @@ class PersonCapContractTest(unittest.TestCase):
         )
         self.assertEqual(cap_author_key(placeholder), ("person:ada hunter", False))
         self.assertIn("occupies a slot only for the author", person_cap.MISSING_PERSON_RULE)
+
+    def test_cap_key_and_split_link_keys_are_separate_functions(self):
+        """The cap reads creator, then rights_holder. The split still links co-collectors.
+
+        ``cap_author_key`` and ``person_identity_keys`` are different functions.
+        ``apply_collector_cap`` calls the cap function. It does not link rows,
+        and it does not count ``inat_observer``.
+        """
+        self.assertIsNot(cap_author_key, person_identity_keys)
+        self.assertIsNot(cap_author_key, split.person_identity_keys)
+        link_source = (ROOT / "training" / "split.py").read_text(encoding="utf-8")
+        link_body = link_source.split("def person_identity_keys(", 1)[1].split("\ndef ", 1)[0]
+        self.assertLess(link_body.index("inat_observer"), link_body.index('"creator"'))
+        self.assertIn("recordedBy", link_body)
+        self.assertIn("collector_key", link_body)
+        cap_body = (ROOT / "training" / "person_cap.py").read_text(encoding="utf-8")
+        cap_fn = cap_body.split("def cap_author_key(", 1)[1].split("\ndef ", 1)[0]
+        self.assertIn('for field in ("creator", "rights_holder")', cap_fn)
+        self.assertNotIn("inat_observer", cap_fn)
+        importer = (ROOT / "training" / "import_external.py").read_text(encoding="utf-8")
+        collector_fn = importer.split("def apply_collector_cap(", 1)[1].split("\ndef ", 1)[0]
+        self.assertIn("apply_person_class_cap", collector_fn)
+        self.assertNotIn("inat_observer", collector_fn)
+        self.assertNotIn("person_identity_keys", collector_fn)
+        self.assertNotIn("30", collector_fn)
+
+        ada = _row(
+            "boletus_edulis",
+            "Bea Collector",
+            1,
+            observation="bea-left",
+            creator="Ada Hunter",
+            recorded_by="Cy Recorder",
+            collector_key="inat:bea collector",
+        )
+        cara = _row(
+            "boletus_edulis",
+            "Bea Collector",
+            2,
+            observation="bea-right",
+            creator="Cara Hunter",
+            collector_key="inat:bea collector",
+        )
+        ada_other_observer = _row(
+            "boletus_edulis",
+            "Dee Collector",
+            3,
+            observation="dee-obs",
+            creator="Ada Hunter",
+            collector_key="inat:dee collector",
+        )
+        self.assertEqual(cap_author_key(ada), ("person:ada hunter", False))
+        self.assertEqual(cap_author_key(cara), ("person:cara hunter", False))
+        self.assertEqual(cap_author_key(ada), cap_author_key(ada_other_observer))
+        self.assertIn("person:bea collector", person_identity_keys(ada))
+        self.assertIn("person:cy recorder", person_identity_keys(ada))
+        self.assertNotEqual(person_identity_keys(ada), person_identity_keys(ada_other_observer))
+        linked = component_ids([ada, cara], FIXTURE_SALT)
+        self.assertEqual(linked[0], linked[1])
+        unlinked = component_ids([ada_other_observer, cara], FIXTURE_SALT)
+        self.assertNotEqual(unlinked[0], unlinked[1])
+
+        crowd = [
+            _row(
+                "boletus_edulis",
+                "Bea Collector",
+                10 + index,
+                observation=f"crowd-{index}",
+                creator="Ada Hunter",
+                collector_key="inat:bea collector",
+            )
+            for index in range(12)
+        ]
+        with patch("person_cap.cap_author_key", wraps=cap_author_key) as spy:
+            kept, dropped = apply_collector_cap(crowd)
+        self.assertGreaterEqual(spy.call_count, len(crowd))
+        self.assertEqual(len(kept), 10)
+        self.assertEqual(len(dropped), 2)
+        self.assertTrue(all(cap_author_key(row) == ("person:ada hunter", False) for row in kept))
+        self.assertTrue(all("person:bea collector" in person_identity_keys(row) for row in kept))
 
     def test_prepare_caps_after_merge_and_before_the_split(self):
         text = (ROOT / "training" / "prepare_data.py").read_text(encoding="utf-8")

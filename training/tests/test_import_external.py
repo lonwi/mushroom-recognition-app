@@ -960,7 +960,7 @@ class ImportDirectoryTest(unittest.TestCase):
                 ),
             ],
         )
-        rows, report = import_directory(self.root, max_per_collector=30)
+        rows, report = import_directory(self.root)
         self.assertEqual([row["inat_photo_id"] for row in rows], ["10"])
         by_id = {item["id"]: item for item in report["label_conflicts"]}
         self.assertEqual(by_id["inat-photo:7"]["kind"], "photo")
@@ -1019,7 +1019,7 @@ class ImportDirectoryTest(unittest.TestCase):
                 ),
             ],
         )
-        rows, report = import_directory(self.root, max_per_collector=30)
+        rows, report = import_directory(self.root)
         self.assertEqual(rows, [])
         self.assertGreaterEqual(report["rejected_license_url_empty"], 1)
         self.assertGreaterEqual(report["rejected_license"], 1)
@@ -1067,7 +1067,7 @@ class ImportDirectoryTest(unittest.TestCase):
                 ),
             ],
         )
-        rows, report = import_directory(self.root, max_per_collector=30)
+        rows, report = import_directory(self.root)
         self.assertEqual(rows, [])
         self.assertGreaterEqual(report["rejected_license_url_empty"], 2)
         self.assertEqual(report["rejected_license_url_not_https"], 1)
@@ -1114,7 +1114,7 @@ class ImportDirectoryTest(unittest.TestCase):
                 )
             ],
         )
-        rows, report = import_directory(self.root, max_per_collector=30)
+        rows, report = import_directory(self.root)
         self.assertEqual(len(rows), 1)
         kept = rows[0]
         self.assertEqual(kept["license_normalized"], "cc-by-nc-4.0")
@@ -1567,6 +1567,39 @@ class ImportDirectoryTest(unittest.TestCase):
         source = Path(__file__).resolve().parents[1].joinpath("import_external.py").read_text(encoding="utf-8")
         self.assertNotIn("DEFAULT_MAX_PER_COLLECTOR", source)
         self.assertIn("apply_person_class_cap", source)
+
+    def test_csv_author_column_has_the_same_cap_key_as_creator_and_rights_holder(self):
+        from person_cap import cap_author_key
+        from split import person_identity_keys
+
+        _photo(
+            self.root / "amanita_phalloides.csv",
+            [
+                self._base(
+                    author="Ada Hunter",
+                    inat_observer="bea",
+                    inat_photo_id="501",
+                    inat_observation_id="601",
+                    image_url="https://images.example.test/csv-ada.jpg",
+                    source_url="https://www.inaturalist.org/observations/601",
+                )
+            ],
+        )
+        written, report = import_directory(self.root)
+        self.assertEqual(len(written), 1)
+        self.assertIsNone(report["max_per_collector"])
+        row = written[0]
+        self.assertEqual(row["author"], "Ada Hunter")
+        self.assertEqual(row["creator"], row["author"])
+        self.assertEqual(row["rights_holder"], row["author"])
+        self.assertEqual(row["collector_key"], "inat:bea")
+        author_only = {"creator": row["author"], "rights_holder": row["author"]}
+        self.assertEqual(cap_author_key(row), cap_author_key(author_only))
+        self.assertEqual(cap_author_key(row), cap_author_key({"creator": row["author"]}))
+        self.assertEqual(cap_author_key(row), cap_author_key({"rights_holder": row["author"]}))
+        self.assertEqual(cap_author_key(row), ("person:ada hunter", False))
+        self.assertIn("person:bea", person_identity_keys(row))
+        self.assertNotEqual(cap_author_key(row)[0], "person:bea")
 
 
 class CollectorCapTest(unittest.TestCase):
