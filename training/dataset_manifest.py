@@ -58,6 +58,8 @@ def build_dataset_manifest(
     salt: str,
     share_config: dict | None = None,
     withheld: list[dict] | None = None,
+    gbif_fetch_report_sha256: str | None = None,
+    gbif_rows_sha256: str | None = None,
 ) -> dict:
     """Per-split totals, per-class counts, component shares, and a content sha256.
 
@@ -103,4 +105,6 @@ def build_dataset_manifest(
         "salt_fingerprint": salt_fingerprint(salt),
         "component_share": share,
         "held_out_withheld": held_out_withheld_report(withheld or []),
+        "gbif_fetch_report_sha256": gbif_fetch_report_sha256,
+        "gbif_rows_sha256": gbif_rows_sha256,
     }

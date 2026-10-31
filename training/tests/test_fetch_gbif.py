@@ -245,17 +245,14 @@ class DownloadRetryTest(FetchCase):
         self.assertEqual(calls["n"], 2)
         self.assertEqual(sleeps, [fetch_gbif.DOWNLOAD_BACKOFF_SECONDS + 0.25])
 
-    def test_http_image_url_is_fetched_as_https(self):
-        seen = {}
-
+    def test_unverified_http_image_url_is_not_fetched(self):
         def urlopen(request, timeout=40):
-            seen["url"] = request.full_url
-            return _Response(self.jpeg)
+            raise AssertionError("urlopen")
 
         with patch("fetch_gbif.urllib.request.urlopen", side_effect=urlopen):
-            size = fetch_gbif.download_image("http://images.example.test:80/a.jpg", self._dest)
-        self.assertEqual(size, len(self.jpeg))
-        self.assertEqual(seen["url"], "https://images.example.test/a.jpg")
+            with self.assertRaises(url_safety.UnsafeMediaUrl) as raised:
+                fetch_gbif.download_image("http://images.example.test:80/a.jpg", self._dest)
+        self.assertIn("http_host_not_allowlisted", str(raised.exception))
 
     def test_timeout_is_retried_with_backoff(self):
         calls = {"n": 0}
@@ -289,22 +286,27 @@ class DownloadRetryTest(FetchCase):
             "fetch_gbif.random.uniform", return_value=0.25
         ), patch("fetch_gbif.time.sleep", side_effect=sleeps.append):
             with self.assertRaises(urllib.error.URLError):
-                fetch_gbif.download_image("http://images.example.test/a.jpg", self._dest, attempts=2)
+                fetch_gbif.download_image("https://images.example.test/a.jpg", self._dest, attempts=2)
         self.assertEqual(seen, ["https://images.example.test/a.jpg", "https://images.example.test/a.jpg"])
         self.assertTrue(all(url.startswith("https://") for url in seen))
         self.assertEqual(sleeps, [fetch_gbif.DOWNLOAD_BACKOFF_SECONDS + 0.25])
         self.assertEqual(fetch_gbif.DOWNLOAD_ATTEMPTS, 3)
         self.assertLessEqual(fetch_gbif.DOWNLOAD_ATTEMPTS, 5)
 
-    def test_stored_image_url_is_https(self):
+    def test_attach_file_does_not_rewrite_an_unverified_http_url(self):
         row = {
             "occurrence_key": 7,
             "media_index": 0,
             "image_url": "http://images.example.test/photo.jpg",
+            "source_url": "http://images.example.test/page",
+            "creator": "Ada http://images.example.test/credit",
         }
-        fetch_gbif._attach_file(row, "boletus_edulis")
-        self.assertEqual(row["image_url"], "https://images.example.test/photo.jpg")
-        self.assertTrue(row["file"].endswith(".jpg"))
+        reason = fetch_gbif.prepare_attribution_urls(row)
+        self.assertEqual(reason, "http_host_not_allowlisted")
+        self.assertEqual(row["image_url"], "http://images.example.test/photo.jpg")
+        self.assertEqual(row["source_url"], "http://images.example.test/page")
+        self.assertEqual(row["creator"], "Ada http://images.example.test/credit")
+        self.assertNotIn("file", row)
 
     def test_dns_timeout_reset_and_ssl_are_retried(self):
         reasons = [
