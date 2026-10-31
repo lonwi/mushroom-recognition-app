@@ -265,6 +265,22 @@ class InputPackageHashTest(unittest.TestCase):
             (root / "attributions.jsonl").write_bytes(b'{"source":"changed"}\n')
             self.assertNotEqual(input_tree_sha256(root), without_attributions)
 
+    def test_listed_file_outside_zdjecia_with_a_wrong_hash_still_stops(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _write(root, "attributions.jsonl", b'{"source":"fetch"}\n')
+            _write(root, "side.csv", b"outside,1\n")
+            _write(root, "zdjecia/a.csv", b"alpha,1\n")
+            _write(root, "zdjecia/script.py", b"print('synthetic')\n")
+            text = (
+                _sums_line(root, "zdjecia/a.csv")
+                + _sums_line(root, "zdjecia/script.py")
+                + _sums_line(root, "side.csv", digest=_EMPTY_SHA256)
+            )
+            (root / "zdjecia" / "SHA256SUMS").write_text(text, encoding="utf-8")
+            _seed_old_outputs(root)
+            _assert_hard_stop(self, root, "SHA256SUMS hash mismatch: side.csv")
+
     def test_unlisted_csv_inside_zdjecia_still_stops(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

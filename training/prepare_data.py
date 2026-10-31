@@ -461,6 +461,9 @@ def verify_input_package_sums(root: Path) -> dict[str, object]:
         listed[relative] = digest
     if not saw_entry:
         raise SystemExit("SHA256SUMS has no file lines")
+    # Every listed path is checked against base, including files that sit
+    # outside the directory that holds SHA256SUMS. Only the unlisted-file
+    # scan below is limited to that directory.
     base_resolved = base.resolve()
     for relative, expected in listed.items():
         candidate = (base / relative).resolve()
