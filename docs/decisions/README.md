@@ -88,3 +88,8 @@ Stan na 2026-10-23.
 | 0012 | [Backend i powiadomienia (#58)](0012-backend-58.md) | Odłożona |
 | 0013 | [Timeout 15 s w testach ekranów (#54)](0013-timeout-testow-54.md) | Oczekuje na decyzję |
 | 0014 | [Poniedziałkowe przeglądy SOLID/DRY i bezpieczeństwa](0014-przeglady-poniedzialkowe.md) | Oczekuje na decyzję |
+| 0015 | [Własne zdjęcia Wojciecha w treningu: później](0015-wlasne-zdjecia-pozniej.md) | Odłożona |
+| 0016 | [Proporcje train/val/test w training/split.py](0016-proporcje-splitu.md) | Podjęta |
+| 0017 | [React Doctor](0017-react-doctor.md) | Zatwierdzona, czeka na wdrożenie |
+| 0018 | [Limit autora i Wikimedia Commons](0018-limit-autora-commons.md) | Podjęta (wdrożenie w toku) |
+| 0019 | [Adresy http z GBIF (#84)](0019-adresy-http-gbif.md) | Zatwierdzona, czeka na wdrożenie |
