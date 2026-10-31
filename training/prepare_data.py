@@ -23,6 +23,10 @@ are skipped. The cached PNG is EXIF-oriented and area-resized to the
 model input, which is what the phone feeds the network. An unacknowledged
 class over the per-class component-share limit, or with an empty val or test,
 stops the run before any split file or dataset manifest is written.
+The input package (CSV files, ``attributions.jsonl``, and ``external.jsonl``)
+is hashed before those outputs are written. ``*.bak``, ``__pycache__``, and
+logs are left out. A ``SHA256SUMS`` file in the data directory must name that
+hash; a mismatch stops the run and removes any previous split files.
 """
 
 from __future__ import annotations
@@ -53,6 +57,8 @@ from split import split_by_observation, split_key_summary
 from split_salt import SplitSaltError, load_split_salt
 
 DATA_DIR = ROOT / "training" / "data"
+_CHECKSUM_FILE = "SHA256SUMS"
+_PACKAGE_SKIP_DIRS = frozenset({"__pycache__", "logs"})
 _PREPARE_OUTPUTS = (
     "attributions.dedup.jsonl",
     "dedup_report.json",
@@ -241,6 +247,86 @@ def _cache_model_pngs(records: list[dict], size: int) -> tuple[list[dict], list[
     return kept, skipped
 
 
+def _package_relative(path: Path, root: Path) -> str:
+    return path.relative_to(root).as_posix()
+
+
+def _is_input_package_file(path: Path, root: Path) -> bool:
+    """CSV and attribution inputs. Outputs, backups, caches, and logs are not."""
+    relative = _package_relative(path, root)
+    parts = relative.split("/")
+    if any(part in _PACKAGE_SKIP_DIRS for part in parts[:-1]):
+        return False
+    name = parts[-1]
+    if name in {_CHECKSUM_FILE, "attributions.dedup.jsonl"}:
+        return False
+    if name.endswith(".bak") or name.endswith(".log"):
+        return False
+    if name.endswith(".csv"):
+        return True
+    return name in {"attributions.jsonl", "external.jsonl"}
+
+
+def input_package_files(root: Path) -> list[Path]:
+    """Package files in relative-path order. Missing directory means no files."""
+    if not root.is_dir():
+        return []
+    found = [path for path in root.rglob("*") if path.is_file() and _is_input_package_file(path, root)]
+    return sorted(found, key=lambda path: _package_relative(path, root))
+
+
+def input_package_sha256(root: Path) -> str:
+    """SHA-256 of sorted relative paths plus each file's bytes.
+
+    File order on disk does not change the digest. One changed byte does.
+    """
+    digest = hashlib.sha256()
+    for path in input_package_files(root):
+        payload = path.read_bytes()
+        relative = _package_relative(path, root).encode("utf-8")
+        digest.update(relative)
+        digest.update(b"\0")
+        digest.update(len(payload).to_bytes(8, "big"))
+        digest.update(payload)
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def verify_input_package_sums(root: Path, package_digest: str) -> None:
+    """Fail closed when ``SHA256SUMS`` is present and is not this package digest.
+
+    Absent file: nothing to check. One line, 64 hex digits, optional label
+    after the digest. Any other shape, or a different digest, stops prepare.
+    """
+    path = root / _CHECKSUM_FILE
+    if not path.is_file():
+        return
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as error:
+        raise SystemExit(f"SHA256SUMS could not be read: {error}") from error
+    lines = [line.strip() for line in text.splitlines() if line.strip() and not line.strip().startswith("#")]
+    if len(lines) != 1:
+        raise SystemExit("SHA256SUMS must be one line with the input package sha256")
+    token = lines[0].split()[0].lower()
+    if len(token) != 64 or any(character not in "0123456789abcdef" for character in token):
+        raise SystemExit("SHA256SUMS is not a sha256 digest")
+    if token != package_digest:
+        raise SystemExit(
+            "SHA256SUMS does not match the input package "
+            f"(file says {token}, computed {package_digest})"
+        )
+
+
+def _clear_prepare_outputs(directory: Path) -> None:
+    if not directory.is_dir():
+        return
+    for name in _PREPARE_OUTPUTS:
+        path = directory / name
+        if path.is_file():
+            path.unlink()
+
+
 def _rejected_per_class(*groups: list) -> dict[str, dict[str, int]]:
     """Count every skipped or dropped prepare row by class and reason.
 
@@ -377,19 +463,25 @@ def write_prepare_outputs(
     The manifest is built in memory first. An unacknowledged class over the
     component-share limit, or with an empty val or test, raises ``SystemExit``
     and leaves the directory without ``splits.json`` or ``dataset_manifest.json``.
+    ``SHA256SUMS``, when present, is checked before that write. A mismatch
+    removes any previous split files and stops.
     """
+    package_digest = input_package_sha256(directory)
+    try:
+        verify_input_package_sums(directory, package_digest)
+    except SystemExit:
+        _clear_prepare_outputs(directory)
+        raise
     dataset_manifest = build_dataset_manifest(
         splits,
         salt=salt,
         share_config=share_config,
         withheld=withheld,
+        input_package_sha256=package_digest,
     )
     hard = list(dataset_manifest["component_share"]["hard_stop_classes"])
     if hard:
-        for name in _PREPARE_OUTPUTS:
-            path = directory / name
-            if path.is_file():
-                path.unlink()
+        _clear_prepare_outputs(directory)
         raise SystemExit(
             "per-class component share or empty val/test stops the run for: "
             + ", ".join(hard)
@@ -429,6 +521,7 @@ def write_prepare_outputs(
                 "held_out_withheld": len(withheld),
                 "skipped_corrupt_or_unreadable": len(skipped),
                 "rejected_per_class": rejected_per_class,
+                "input_package_sha256": package_digest,
                 "excluded_df20": sum(
                     1 for row in skipped if isinstance(row, dict) and row.get("skip_reason") == "df20_opt_out"
                 ),

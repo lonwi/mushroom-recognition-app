@@ -58,6 +58,7 @@ def build_dataset_manifest(
     salt: str,
     share_config: dict | None = None,
     withheld: list[dict] | None = None,
+    input_package_sha256: str | None = None,
 ) -> dict:
     """Per-split totals, per-class counts, component shares, and a content sha256.
 
@@ -97,10 +98,13 @@ def build_dataset_manifest(
         acknowledgements=config.get("acknowledgements") or {},
         limit=config.get("limit", COMPONENT_SHARE_LIMIT),
     )
-    return {
+    manifest = {
         "splits": report,
         "content_sha256": digest,
         "salt_fingerprint": salt_fingerprint(salt),
         "component_share": share,
         "held_out_withheld": held_out_withheld_report(withheld or []),
     }
+    if input_package_sha256 is not None:
+        manifest["input_package_sha256"] = input_package_sha256
+    return manifest
