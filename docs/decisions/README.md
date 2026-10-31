@@ -94,3 +94,4 @@ Stan na 2026-10-31.
 | 0018 | [Limit autora i Wikimedia Commons](0018-limit-autora-commons.md) | Podjęta (wdrożenie w toku) |
 | 0019 | [Adresy http z GBIF (#84)](0019-adresy-http-gbif.md) | Zatwierdzona, czeka na wdrożenie |
 | 0020 | [Zdjęcia z kategorii Wikimedia Commons (`commons_category`)](0020-commons-category.md) | Zatwierdzona, czeka na wdrożenie |
+| 0021 | [Wiersze GBIF bez statusu weryfikacji](0021-gbif-bez-statusu-weryfikacji.md) | Zatwierdzona |
