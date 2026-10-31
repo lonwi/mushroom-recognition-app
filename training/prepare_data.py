@@ -28,7 +28,8 @@ class over the per-class component-share limit, or with an empty val or test,
 stops the run before any split file or dataset manifest is written.
 ``person_cap_report.json`` is written with the other prepare outputs and is
 removed with them when that hard stop fires. Its ``author_cap_report``
-lists every cut row: class, person key, N, limit, count, reason, and ids.
+is one entry per class: N, the computed cap, and each person's kept and
+cut counts. Cut rows still list a reason and photo ids.
 Unverified rows and both dedup passes run before the cap, so those rows
 are not in N and do not take a slot. Kept rows are ordered by the seeded
 photo-id hash, not by the order of the source files.

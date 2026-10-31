@@ -26,6 +26,7 @@ from person_cap import (
     CAP_MAX,
     CAP_MIN,
     MISSING_PERSON_KEY,
+    N_DEFINITION,
     PERSON_CAP_SEED,
     apply_person_class_cap,
     cap_author_key,
@@ -143,6 +144,24 @@ def _counts(rows: list[dict]) -> dict[str, Counter[str]]:
 
 def _class_rows(rows: list[dict], class_id: str) -> list[dict]:
     return [row for row in rows if row.get("class_id") == class_id]
+
+
+def _author_class(report: dict, class_id: str) -> dict:
+    matches = [item for item in report["author_cap_report"] if item["class_id"] == class_id]
+    if len(matches) != 1:
+        raise AssertionError(f"{class_id} appears {len(matches)} times in author_cap_report")
+    return matches[0]
+
+
+def _author_person(entry: dict, person_key: str, reason: str | None = None) -> dict:
+    matches = [
+        item
+        for item in entry["persons"]
+        if item["person_key"] == person_key and (reason is None or item["reason"] == reason)
+    ]
+    if len(matches) != 1:
+        raise AssertionError(f"{person_key} appears {len(matches)} times")
+    return matches[0]
 
 
 class PersonCapContractTest(unittest.TestCase):
@@ -313,6 +332,88 @@ class PersonCapContractTest(unittest.TestCase):
         self.assertLess(cap_step.index("dedup_by_identity("), cap_step.index("dedup_records("))
         self.assertLess(cap_step.index("dedup_records("), cap_step.index("apply_person_class_cap("))
 
+    def test_n_146_caps_at_15_and_n_95_caps_at_10(self):
+        """N is the class size after the unverified filter and both dedups.
+
+        round(0.10 * 146) is 15 and round(0.10 * 95) is 10. Both sit inside
+        [10, 60]. Prepare does not apply a per-observation cap of 3 before N.
+        """
+        from import_external import training_eligible
+
+        self.assertEqual(round(CAP_FRACTION * 146), 15)
+        self.assertEqual(round(CAP_FRACTION * 95), 10)
+        self.assertEqual(person_row_cap(146), 15)
+        self.assertEqual(person_row_cap(95), 10)
+        self.assertIn("does not apply a per-observation cap of 3", N_DEFINITION)
+        self.assertIn("before this author cap", N_DEFINITION)
+        self.assertEqual(MAX_PER_OCCURRENCE, 2)
+
+        def population(class_id: str, total: int, heavy: int, heavy_name: str) -> list[dict]:
+            rows = [
+                _row(class_id, heavy_name, index, observation=f"{class_id}-heavy-{index}")
+                for index in range(heavy)
+            ]
+            rows.extend(
+                _row(
+                    class_id,
+                    f"{class_id}-solo-{index}",
+                    10_000 + index,
+                    observation=f"{class_id}-solo-{index}",
+                )
+                for index in range(total - heavy)
+            )
+            return rows
+
+        wide = population("n_wide", 146, 30, "Ada Hunter")
+        narrow = population("n_narrow", 95, 20, "Boa")
+        duplicates = []
+        for index, row in enumerate(wide[:4] + narrow[:3]):
+            duplicates.append({**row, "sha256": f"dup-sha-{index}", "file": f"dup-{index}.jpg", "bytes": 1})
+        unverified = [
+            _row("n_wide", "Ada Hunter", 50_000 + index, observation=f"unv-w-{index}", unverified=True)
+            for index in range(9)
+        ]
+        unverified.extend(
+            _row("n_narrow", "Boa", 60_000 + index, observation=f"unv-n-{index}", unverified=True)
+            for index in range(6)
+        )
+        raw = wide + narrow + duplicates + unverified
+        filtered = [row for row in raw if training_eligible(row)]
+        self.assertEqual(len(filtered), 146 + 95 + len(duplicates))
+        self.assertEqual(len(raw) - len(filtered), len(unverified))
+        _capped, near, identity, _removed, report = records_for_split(filtered)
+        self.assertEqual(len(identity), len(duplicates))
+        self.assertEqual(near, [])
+        self.assertIn("after the unverified filter", report["n_definition"])
+        self.assertIn("before this author cap", report["n_definition"])
+
+        wide_report = _author_class(report, "n_wide")
+        self.assertEqual(wide_report["n"], 146)
+        self.assertEqual(wide_report["cap"], person_row_cap(146))
+        self.assertEqual(wide_report["cap"], 15)
+        ada = _author_person(wide_report, "person:ada hunter")
+        self.assertEqual(ada["kept"], 15)
+        self.assertEqual(ada["cut"], 15)
+        self.assertEqual(ada["reason"], "person_cap")
+        wide_solos = [item for item in wide_report["persons"] if item["person_key"] != "person:ada hunter"]
+        self.assertEqual(len(wide_solos), 116)
+        self.assertTrue(all(item["kept"] == 1 and item["cut"] == 0 and item["reason"] is None for item in wide_solos))
+        self.assertEqual(sum(item["kept"] + item["cut"] for item in wide_report["persons"]), 146)
+
+        narrow_report = _author_class(report, "n_narrow")
+        self.assertEqual(narrow_report["n"], 95)
+        self.assertEqual(narrow_report["cap"], person_row_cap(95))
+        self.assertEqual(narrow_report["cap"], 10)
+        boa = _author_person(narrow_report, "person:boa")
+        self.assertEqual(boa["kept"], 10)
+        self.assertEqual(boa["cut"], 10)
+        self.assertEqual(boa["reason"], "person_cap")
+        narrow_solos = [item for item in narrow_report["persons"] if item["person_key"] != "person:boa"]
+        self.assertEqual(len(narrow_solos), 75)
+        self.assertTrue(all(item["kept"] == 1 and item["cut"] == 0 for item in narrow_solos))
+        self.assertEqual(sum(item["kept"] + item["cut"] for item in narrow_report["persons"]), 95)
+        self.assertEqual(person_row_cap(146 + 9), 16)
+
     def test_prepare_caps_one_person_at_61_of_72_rows(self):
         rows = _merged_fixture()
         before = json.dumps(rows, sort_keys=True)
@@ -361,46 +462,43 @@ class PersonCapContractTest(unittest.TestCase):
         self.assertEqual(post["amanita_muscaria"][MISSING_PERSON_KEY], 10)
         self.assertEqual(sum(post["cortinarius_orellanus"].values()) - post["cortinarius_orellanus"]["person:ada hunter"], 11)
 
-        self.assertEqual(report["author_cap_report"], report["removed"])
-        ada_removed = [
-            item
-            for item in report["author_cap_report"]
-            if item["class_id"] == "cortinarius_orellanus" and item["person_key"] == "person:ada hunter"
-        ]
+        orellanus = _author_class(report, "cortinarius_orellanus")
+        self.assertEqual(orellanus["n"], 72)
+        self.assertEqual(orellanus["cap"], 10)
+        self.assertEqual(sum(item["kept"] + item["cut"] for item in orellanus["persons"]), 72)
         ada_ids = sorted(
             row["inat_photo_id"]
             for row in removed
             if row.get("class_id") == "cortinarius_orellanus" and row.get("inat_observer") == "Ada Hunter"
         )
-        self.assertEqual(ada_removed, [
-            {
-                "class_id": "cortinarius_orellanus",
-                "person_key": "person:ada hunter",
-                "n": 72,
-                "limit": 10,
-                "count": 51,
-                "reason": "person_cap",
-                "ids": ada_ids,
-            }
-        ])
+        self.assertEqual(_author_person(orellanus, "person:ada hunter"), {
+            "person_key": "person:ada hunter",
+            "kept": 10,
+            "cut": 51,
+            "reason": "person_cap",
+            "ids": ada_ids,
+        })
         self.assertEqual(len(ada_ids), 51)
+        for item in orellanus["persons"]:
+            if item["person_key"] == "person:ada hunter":
+                continue
+            self.assertEqual(item["kept"], 1)
+            self.assertEqual(item["cut"], 0)
+            self.assertIsNone(item["reason"])
+            self.assertEqual(item["ids"], [])
         unknown_ids = sorted(
             row["inat_photo_id"] for row in removed if row.get("class_id") == "amanita_muscaria"
         )
-        unknown_removed = [
-            item for item in report["author_cap_report"] if item["class_id"] == "amanita_muscaria"
-        ]
-        self.assertEqual(unknown_removed, [
-            {
-                "class_id": "amanita_muscaria",
-                "person_key": MISSING_PERSON_KEY,
-                "n": 15,
-                "limit": 10,
-                "count": 5,
-                "reason": "no_person_key",
-                "ids": unknown_ids,
-            }
-        ])
+        muscaria = _author_class(report, "amanita_muscaria")
+        self.assertEqual(muscaria["n"], 15)
+        self.assertEqual(muscaria["cap"], 10)
+        self.assertEqual(_author_person(muscaria, MISSING_PERSON_KEY), {
+            "person_key": MISSING_PERSON_KEY,
+            "kept": 10,
+            "cut": 5,
+            "reason": "no_person_key",
+            "ids": unknown_ids,
+        })
         for row in _class_rows(capped, "amanita_muscaria"):
             self.assertEqual(person_identity_keys(row), [])
         self.assertEqual(len(removed), 51 + 25 + 5)
@@ -458,10 +556,11 @@ class PersonCapContractTest(unittest.TestCase):
         self.assertEqual(sum(1 for row in capped if cap_author_key(row)[0] == "person:ada hunter"), 10)
         self.assertEqual(report["classes"][0]["n"], 12)
         self.assertEqual(report["classes"][0]["cap"], 10)
-        self.assertEqual(
-            [item["person_key"] for item in report["author_cap_report"]],
-            ["person:ada hunter"],
-        )
+        spell = _author_class(report, "suillus_grevillei")
+        self.assertEqual(spell["n"], 12)
+        self.assertEqual(spell["cap"], 10)
+        self.assertEqual(_author_person(spell, "person:ada hunter")["kept"], 10)
+        self.assertEqual(_author_person(spell, "person:ada hunter")["cut"], 2)
 
         collector_rows = []
         for index in range(11):
@@ -523,19 +622,25 @@ class PersonCapContractTest(unittest.TestCase):
         self.assertEqual(len(bea_kept), 10)
         self.assertTrue(all(row["recorded_by"] == "Bea Collector" for row in ada_kept))
         self.assertEqual(sum(1 for row in capped if "person:bea collector" in person_identity_keys(row)), 20)
-        charged = {item["person_key"] for item in report["author_cap_report"]}
-        self.assertEqual(charged, {"person:ada hunter", "person:bea collector"})
-        for item in report["author_cap_report"]:
-            self.assertEqual(item["count"], 1)
-            self.assertEqual(item["n"], 22)
-            self.assertEqual(item["limit"], 10)
+        procera = _author_class(report, "macrolepiota_procera")
+        self.assertEqual(procera["n"], 22)
+        self.assertEqual(procera["cap"], 10)
+        self.assertEqual({item["person_key"] for item in procera["persons"]}, {"person:ada hunter", "person:bea collector"})
+        for item in procera["persons"]:
+            self.assertEqual(item["kept"], 10)
+            self.assertEqual(item["cut"], 1)
+            self.assertEqual(item["reason"], "person_cap")
             self.assertEqual(len(item["ids"]), 1)
         ada_cut = [row for row in removed if row.get("creator") == "Ada Hunter"]
         self.assertEqual(len(ada_cut), 1)
         self.assertEqual(ada_cut[0]["recorded_by"], "Bea Collector")
         self.assertEqual(ada_cut[0]["drop_reason"], "person_cap")
         ada_photo = ada_cut[0]["inat_photo_id"]
-        listed_for = [item["person_key"] for item in report["author_cap_report"] if ada_photo in item["ids"]]
+        listed_for = [
+            item["person_key"]
+            for item in procera["persons"]
+            if ada_photo in item["ids"]
+        ]
         self.assertEqual(listed_for, ["person:ada hunter"])
 
     def test_three_photos_of_one_observation_stay_when_the_person_is_under_the_cap(self):
@@ -644,9 +749,11 @@ class PersonCapContractTest(unittest.TestCase):
             self.assertEqual([row["inat_photo_id"] for row in again], photo_ids)
             self.assertEqual(again_report["author_cap_report"], report["author_cap_report"])
             for entry in again_report["author_cap_report"]:
-                self.assertEqual(entry["ids"], sorted(entry["ids"]))
-                self.assertEqual(entry["count"], len(entry["ids"]))
-                self.assertEqual(entry["limit"], person_row_cap(entry["n"]))
+                self.assertEqual(entry["cap"], person_row_cap(entry["n"]))
+                self.assertEqual(sum(item["kept"] + item["cut"] for item in entry["persons"]), entry["n"])
+                for person in entry["persons"]:
+                    self.assertEqual(person["ids"], sorted(person["ids"]))
+                    self.assertEqual(person["cut"], len(person["ids"]))
 
     def test_unverified_and_duplicates_do_not_take_cap_slots(self):
         from PIL import Image
@@ -724,20 +831,20 @@ class PersonCapContractTest(unittest.TestCase):
             self.assertEqual(len(kept_ids), 10)
             self.assertTrue(kept_ids <= {f"ada-photo-{index}" for index in range(12)})
             self.assertTrue(all("/dup-" not in row["file"] for row in capped))
-            cut = report["author_cap_report"]
-            self.assertEqual(len(cut), 1)
-            self.assertEqual(cut[0]["person_key"], "person:ada hunter")
-            self.assertNotIn("person:bea collector", [item["person_key"] for item in cut])
-            self.assertEqual(cut[0]["n"], 12)
-            self.assertEqual(cut[0]["limit"], 10)
-            self.assertEqual(cut[0]["count"], 2)
-            self.assertEqual(cut[0]["reason"], "person_cap")
-            self.assertEqual(cut[0]["ids"], sorted(cut[0]["ids"]))
-            self.assertEqual(len(cut[0]["ids"]), 2)
-            self.assertTrue(set(cut[0]["ids"]) <= {f"ada-photo-{index}" for index in range(12)})
-            self.assertTrue(set(cut[0]["ids"]).isdisjoint(kept_ids))
+            bolete = _author_class(report, "boletus_edulis")
+            self.assertEqual(bolete["n"], 12)
+            self.assertEqual(bolete["cap"], 10)
+            ada = _author_person(bolete, "person:ada hunter")
+            self.assertNotIn("person:bea collector", [item["person_key"] for item in bolete["persons"]])
+            self.assertEqual(ada["kept"], 10)
+            self.assertEqual(ada["cut"], 2)
+            self.assertEqual(ada["reason"], "person_cap")
+            self.assertEqual(ada["ids"], sorted(ada["ids"]))
+            self.assertEqual(len(ada["ids"]), 2)
+            self.assertTrue(set(ada["ids"]) <= {f"ada-photo-{index}" for index in range(12)})
+            self.assertTrue(set(ada["ids"]).isdisjoint(kept_ids))
             self.assertTrue(all(not str(row["inat_photo_id"]).startswith("unverified-") for row in capped))
-            self.assertTrue(all(row["inat_photo_id"] in set(cut[0]["ids"]) for row in removed))
+            self.assertTrue(all(row["inat_photo_id"] in set(ada["ids"]) for row in removed))
 
     def test_prepare_main_merges_sources_writes_the_report_and_leaves_files(self):
         from PIL import Image
@@ -808,7 +915,12 @@ class PersonCapContractTest(unittest.TestCase):
                 for item in report["removed"]
                 if item["person_key"] == "person:ada hunter" and item["reason"] == "person_cap"
             ]
-            self.assertEqual(report["author_cap_report"], report["removed"])
+            bolete = _author_class(report, "boletus_edulis")
+            self.assertEqual(bolete["n"], 56)
+            self.assertEqual(bolete["cap"], 10)
+            ada_person = _author_person(bolete, "person:ada hunter")
+            self.assertEqual(ada_person["kept"], 10)
+            self.assertEqual(ada_person["cut"], 6)
             self.assertEqual(len(ada), 1)
             self.assertEqual(ada[0]["class_id"], "boletus_edulis")
             self.assertEqual(ada[0]["person_key"], "person:ada hunter")

@@ -52,16 +52,22 @@ MISSING_PERSON_KEY = "none"
 FORMULA = "min(CAP_MAX, max(CAP_MIN, round(CAP_FRACTION * N)))"
 N_DEFINITION = (
     "N is the number of rows of one class still eligible for training after "
-    "every source has been merged and after both dedup passes (identity, then "
-    "perceptual hash), and before this cap. Rows skipped before dedup (not "
-    "downloaded, unverified, DF20 left out, training_only under "
-    "--publishable-only, missing file, corrupt) are not in N. Identity "
-    "duplicates and perceptual near-duplicates are not in N and do not take "
-    "a person's slot. The 224px PNG "
-    "cache runs after the cap and can still drop a kept row; that drop does "
-    "not change N or the cap. A person's rows in other classes are not added "
-    "to N. The cap is retroactive: rows collected before 2026-10-23 are "
-    "capped with the same N. There is no grandfathering."
+    "every source has been merged, after the unverified filter, and after "
+    "both dedup passes (identity, then perceptual hash), and before this "
+    "author cap. Order: merge, unverified filter (and the other pre-dedup "
+    "skips), identity dedup, perceptual dedup, count N, author cap. Prepare "
+    "does not apply a per-observation cap of 3. The only per-occurrence cap "
+    "is sampling.MAX_PER_OCCURRENCE (2), and it runs in the GBIF fetch, "
+    "before prepare, so it is not a step between dedup and this cap. Three "
+    "distinct photos of one observation that remain after dedup all count "
+    "in N. Rows skipped before dedup (not downloaded, unverified, DF20 left "
+    "out, training_only under --publishable-only, missing file, corrupt) "
+    "are not in N. Identity duplicates and perceptual near-duplicates are "
+    "not in N and do not take a person's slot. The 224px PNG cache runs "
+    "after the cap and can still drop a kept row; that drop does not change "
+    "N or the cap. A person's rows in other classes are not added to N. The "
+    "cap is retroactive: rows collected before 2026-10-23 are capped with "
+    "the same N. There is no grandfathering."
 )
 MISSING_PERSON_RULE = (
     "The cap counts one key: creator, otherwise rights_holder. "
@@ -283,8 +289,10 @@ def apply_person_class_cap(
     Returns the same row objects, ordered by the seeded photo-id hash,
     plus removed copies and the report. Input order is not kept. The input
     list and the kept dicts are not modified. Removed copies are not written
-    back to the source files. ``author_cap_report`` lists each cut bucket
-    with the class, person key, N, limit, count, reason, and photo ids.
+    back to the source files. ``author_cap_report`` is one entry per class:
+    ``n`` (N), ``cap`` (the computed ceiling), and ``persons`` with each
+    person's ``kept`` and ``cut`` counts. Cut rows still carry ``reason``
+    and photo ``ids``.
 
     ``limit`` None uses ``person_row_cap``. A positive int is the same
     selector with that ceiling on every class. The importer passes one
@@ -305,6 +313,7 @@ def apply_person_class_cap(
     removed_ids: dict[tuple[str, str, str], list[str]] = defaultdict(list)
     class_n_cap: dict[str, tuple[int, int]] = {}
     class_info: list[dict] = []
+    author_classes: list[dict] = []
     key_errors = 0
 
     for class_id in sorted(by_class):
@@ -359,6 +368,52 @@ def apply_person_class_cap(
                 removed_counts[bucket] += 1
                 removed_ids[bucket].append(report_row_id(record))
             removed_by_index[index] = _removed_copy(record, _primary_reason(reasons))
+        persons_report: list[dict] = []
+        for key in sorted(persons):
+            group = persons[key]
+            kept_n = sum(1 for index, _record in group if index in kept_indexes)
+            cut_records = [record for index, record in group if index not in kept_indexes]
+            reason = None
+            if cut_records:
+                reasons = sorted(
+                    {
+                        bucket_reason
+                        for bucket_class, bucket_key, bucket_reason in removed_counts
+                        if bucket_class == class_id and bucket_key == key
+                    }
+                )
+                reason = reasons[0] if len(reasons) == 1 else _primary_reason(reasons)
+            persons_report.append(
+                {
+                    "person_key": key,
+                    "kept": kept_n,
+                    "cut": len(cut_records),
+                    "reason": reason,
+                    "ids": sorted(report_row_id(record) for record in cut_records),
+                }
+            )
+        error_records = [record for index, record in items if index in failed]
+        if error_records:
+            persons_report.append(
+                {
+                    "person_key": MISSING_PERSON_KEY,
+                    "kept": 0,
+                    "cut": len(error_records),
+                    "reason": "person_key_error",
+                    "ids": sorted(report_row_id(record) for record in error_records),
+                }
+            )
+        persons_report.sort(key=lambda item: (item["person_key"], item["reason"] or ""))
+        if sum(item["kept"] + item["cut"] for item in persons_report) != n:
+            raise RuntimeError(f"author cap report for {class_id} does not add up to N")
+        author_classes.append(
+            {
+                "class_id": class_id,
+                "n": n,
+                "cap": cap,
+                "persons": persons_report,
+            }
+        )
         class_info.append(
             {
                 "class_id": class_id,
@@ -376,7 +431,7 @@ def apply_person_class_cap(
         (removed_by_index[index] for index in removed_by_index),
         key=lambda row: _emission_key(seed, row),
     )
-    author_cap_report = [
+    removed_report = [
         {
             "class_id": class_id,
             "person_key": person_key,
@@ -388,6 +443,7 @@ def apply_person_class_cap(
         }
         for (class_id, person_key, reason), count in sorted(removed_counts.items())
     ]
+    author_cap_report = author_classes
     report = {
         "applied": True,
         "n_definition": N_DEFINITION,
@@ -413,7 +469,7 @@ def apply_person_class_cap(
             "person_key_error: the person key could not be computed."
         ),
         "classes": class_info,
-        "removed": author_cap_report,
+        "removed": removed_report,
         "author_cap_report": author_cap_report,
     }
     return kept, removed, report
