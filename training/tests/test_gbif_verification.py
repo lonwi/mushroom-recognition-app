@@ -270,6 +270,64 @@ class FetchVerificationTest(unittest.TestCase):
         self.assertEqual(lines[0]["basisOfRecord"], "HUMAN_OBSERVATION")
         self.assertTrue(all("verified" not in item for item in lines))
         self.assertFalse((root / "images" / "boletus_edulis" / "1_0.jpg").exists())
+        report = json.loads((root / "fetch_report.json").read_text(encoding="utf-8"))
+        self.assertEqual(report["classes"]["boletus_edulis"]["rejected_unverified"], 1)
+
+    def test_fetch_report_counts_unverified_licensed_rows_per_class(self):
+        calls = {"n": 0}
+
+        def page(_taxon_key, _country, _offset):
+            calls["n"] += 1
+            if calls["n"] != 1:
+                return {"results": [], "count": 0, "endOfRecords": True}
+            return {
+                "results": [
+                    _occurrence("unverified", key=31),
+                    _occurrence("validated", key=32),
+                ],
+                "count": 2,
+                "endOfRecords": True,
+            }
+
+        root = Path(tempfile.mkdtemp())
+        self.addCleanup(lambda: __import__("shutil").rmtree(root, ignore_errors=True))
+        payload = _large_jpeg()
+
+        def download(url, destination, **_kwargs):
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes(payload)
+            return len(payload)
+
+        manifest = {
+            "classes": [
+                {
+                    "id": "boletus_edulis",
+                    "gbif_names": ["Boletus edulis"],
+                    "safety_tag": "edible",
+                }
+            ]
+        }
+        with patch.object(fetch_gbif, "_fetch_occurrence_page", side_effect=page), patch.object(
+            fetch_gbif, "resolve_accepted_keys", return_value={1: "Boletus edulis"}
+        ), patch.object(fetch_gbif, "download_image", side_effect=download), patch.object(
+            fetch_gbif.time, "sleep"
+        ):
+            fetch_gbif.run_fetch(
+                manifest,
+                max_per_class=5,
+                max_pages=1,
+                only="boletus_edulis",
+                download_workers=1,
+                data_dir=root,
+            )
+        report = json.loads((root / "fetch_report.json").read_text(encoding="utf-8"))
+        self.assertEqual(report["classes"]["boletus_edulis"]["rejected_unverified"], 1)
+        self.assertEqual(report["classes"]["boletus_edulis"]["accepted"], 1)
+        lines = [
+            json.loads(line)
+            for line in (root / "attributions.jsonl").read_text(encoding="utf-8").splitlines()
+        ]
+        self.assertEqual([row["identificationVerificationStatus"] for row in lines], ["validated"])
 
 
 class ImportVerificationTest(unittest.TestCase):
@@ -390,6 +448,101 @@ class ImportVerificationTest(unittest.TestCase):
             {"gbif_not_validated": 2, "identification_unverified": 1},
         )
         self.assertEqual(report["rejected_by_reason"]["identification_unverified"], 2)
+
+    def test_fixture_statuses_and_allowlist(self):
+        fixture = Path(__file__).resolve().parent / "fixtures" / "gbif_verification_statuses.json"
+        statuses = json.loads(fixture.read_text(encoding="utf-8"))
+        self.assertEqual(
+            statuses,
+            ["", "unverified", "Approved | Expert | Evidence", "Confident"],
+        )
+        for value in statuses:
+            self.assertIsInstance(value, str)
+            self.assertNotIn("http", value.casefold())
+            self.assertIsNone(__import__("re").search(r"\d", value))
+        allowlisted = [value for value in statuses if value not in ("", "unverified")]
+        root = Path(tempfile.mkdtemp())
+        self.addCleanup(lambda: __import__("shutil").rmtree(root, ignore_errors=True))
+        rows = []
+        index = 0
+        for confidence in ("gbif_no_status", "gbif_not_validated"):
+            for status in statuses:
+                index += 1
+                rows.append(
+                    _photo_row(
+                        image_url=f"https://images.example.test/fixture/{confidence}/{index}.jpg",
+                        source_url=f"https://www.gbif.org/occurrence/{5000 + index}",
+                        id_confidence=confidence,
+                        identificationVerificationStatus=status,
+                    )
+                )
+        rows.extend(
+            [
+                _photo_row(
+                    image_url="https://images.example.test/fixture/questionable.jpg",
+                    source_url="https://www.gbif.org/occurrence/6101",
+                    id_confidence="gbif_not_validated",
+                    identificationVerificationStatus="Questionable",
+                ),
+                _photo_row(
+                    image_url="https://images.example.test/fixture/needs-id.jpg",
+                    source_url="https://www.gbif.org/occurrence/6102",
+                    id_confidence="gbif_not_validated",
+                    identificationVerificationStatus="Needs ID",
+                ),
+                _photo_row(
+                    image_url="https://images.example.test/fixture/approved-case.jpg",
+                    source_url="https://www.gbif.org/occurrence/6103",
+                    id_confidence="gbif_not_validated",
+                    identificationVerificationStatus="  APPROVED | EXPERT | EVIDENCE  ",
+                ),
+                _photo_row(
+                    image_url="https://images.example.test/fixture/confident-space.jpg",
+                    source_url="https://www.gbif.org/occurrence/6104",
+                    id_confidence="gbif_not_validated",
+                    identificationVerificationStatus="confident",
+                ),
+                _photo_row(
+                    image_url="https://images.example.test/fixture/no-status-questionable.jpg",
+                    source_url="https://www.gbif.org/occurrence/6105",
+                    id_confidence="gbif_no_status",
+                    identificationVerificationStatus="Questionable",
+                ),
+            ]
+        )
+        _write_csv(root / "fixture.csv", rows)
+        written, report = import_directory(root, max_per_collector=30)
+        by_url = {row["image_url"]: row for row in written}
+        for status in statuses:
+            if status == "":
+                match = [
+                    row
+                    for row in written
+                    if row["id_confidence"] == "gbif_no_status" and row["identificationVerificationStatus"] == ""
+                ]
+                self.assertEqual(len(match), 1)
+                self.assertIs(match[0]["unverified"], False)
+            elif status == "unverified":
+                self.assertFalse(any(row["identificationVerificationStatus"].casefold() == "unverified" for row in written))
+            else:
+                match = [
+                    row
+                    for row in written
+                    if row["id_confidence"] == "gbif_not_validated" and row["identificationVerificationStatus"] == status
+                ]
+                self.assertEqual(len(match), 1, status)
+                self.assertIs(match[0]["unverified"], False)
+        self.assertEqual(allowlisted, ["Approved | Expert | Evidence", "Confident"])
+        self.assertNotIn("https://images.example.test/fixture/questionable.jpg", by_url)
+        self.assertNotIn("https://images.example.test/fixture/needs-id.jpg", by_url)
+        self.assertIs(by_url["https://images.example.test/fixture/approved-case.jpg"]["unverified"], False)
+        self.assertIs(by_url["https://images.example.test/fixture/confident-space.jpg"]["unverified"], False)
+        self.assertIs(by_url["https://images.example.test/fixture/no-status-questionable.jpg"]["unverified"], False)
+        counted = report["verification_per_class"]["amanita_phalloides"]
+        self.assertEqual(counted["identification_unverified"], 2)
+        self.assertEqual(counted["identification_not_allowlisted"], 2)
+        self.assertEqual(counted["gbif_not_validated"], 1)
+        self.assertGreaterEqual(counted["kept"], 5)
 
 
 class PrepareVerificationTest(unittest.TestCase):
@@ -512,6 +665,10 @@ class PrepareVerificationTest(unittest.TestCase):
             report["skipped_per_class"]["boletus_edulis"],
             {"identification_unverified": 1, "unverified": 1},
         )
+        self.assertEqual(report["skipped_corrupt_or_unreadable"], 0)
+        self.assertEqual(report["skipped_identification_unverified"], 2)
+        self.assertEqual(report["skipped_unverified"], 1)
+        self.assertEqual(report["excluded_df20"], 0)
 
 
 class SplitStaysOpenTest(unittest.TestCase):

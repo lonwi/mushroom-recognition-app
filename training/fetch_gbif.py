@@ -487,6 +487,7 @@ def _take_from_occurrence(
     media_skip: int,
     partial_key,
     room: int,
+    rejected: list | None = None,
 ) -> tuple[list[dict], int, object, str]:
     """Take the next licensed photos from one occurrence.
 
@@ -501,6 +502,8 @@ def _take_from_occurrence(
     if key in seen and key != partial_key:
         return [], 0, None, "skip"
     if explicit_unverified_identification(record.get("identificationVerificationStatus")):
+        if rejected is not None:
+            rejected.append(len(listed_media_records(record)))
         if key not in seen:
             seen.add(key)
             seen_list.append(key)
@@ -547,6 +550,7 @@ def _fetch_licensed(
 ) -> tuple[list[dict], dict]:
     """Append up to ``want`` licensed photos. Stop before the next GBIF page once ``want`` is met."""
     cursor = copy.deepcopy(cursor)
+    rejected_unverified: list[int] = []
     if want < 1 or cursor.get("exhausted"):
         return [], cursor
     if max_per_occurrence < 1:
@@ -623,6 +627,7 @@ def _fetch_licensed(
                 media_skip=resume_skip,
                 partial_key=resume_key,
                 room=want - len(rows),
+                rejected=rejected_unverified,
             )
             for row in got:
                 row["region_scope"] = scope
@@ -657,6 +662,7 @@ def _fetch_licensed(
         if end:
             _advance_name(cursor, name_count, pass_count)
     cursor["seen"] = seen_list
+    cursor["rejected_unverified"] = int(cursor.get("rejected_unverified") or 0) + sum(rejected_unverified)
     return rows, cursor
 
 
@@ -678,6 +684,17 @@ class _Pool:
         self.finite = finite
         self.bundle: _Bundle | None = None
         self.budget_exhausted = False
+        self.cache_rejected_unverified = 0
+
+    def rejected_unverified(self) -> int:
+        """Licensed photos dropped because the identification was unverified."""
+        cursor_count = 0
+        if isinstance(self.cursor, dict):
+            try:
+                cursor_count = int(self.cursor.get("rejected_unverified") or 0)
+            except (TypeError, ValueError):
+                cursor_count = 0
+        return cursor_count + int(self.cache_rejected_unverified)
 
     def pages_ended(self) -> bool:
         if self.finite or not isinstance(self.cursor, dict):
@@ -1740,17 +1757,21 @@ def _pool_from_cache_entry(item: dict) -> _Pool | None:
     rows = item.get("rows")
     if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
         return None
-    kept = [
-        row
-        for row in rows
-        if _row_license_allowed(row)
-        and not explicit_unverified_identification(row.get("identificationVerificationStatus"))
-    ]
+    kept = []
+    dropped_unverified = 0
+    for row in rows:
+        if explicit_unverified_identification(row.get("identificationVerificationStatus")):
+            dropped_unverified += 1
+            continue
+        if _row_license_allowed(row):
+            kept.append(row)
     cursor = item.get("cursor") if isinstance(item.get("cursor"), dict) else None
     fetch = item.get("fetch") if isinstance(item.get("fetch"), dict) else None
     meta = item.get("meta") if isinstance(item.get("meta"), dict) else {}
     finite = bool(item.get("finite")) or cursor is None
-    return _Pool(str(item.get("name") or ""), kept, cursor, fetch, meta, finite)
+    pool = _Pool(str(item.get("name") or ""), kept, cursor, fetch, meta, finite)
+    pool.cache_rejected_unverified = dropped_unverified
+    return pool
 
 
 def _read_bundle(path: Path, key: str) -> _Bundle | None:
@@ -2212,7 +2233,13 @@ def _stats_for(pool: _Pool, kept: list[dict], attempted: list[dict], cap: int, *
     )
 
 
-def _class_report_entry(kept: list[dict], stats: dict, cap: int, min_before_global: int) -> dict:
+def _class_report_entry(
+    kept: list[dict],
+    stats: dict,
+    cap: int,
+    min_before_global: int,
+    rejected_unverified: int = 0,
+) -> dict:
     regional = sum(1 for row in kept if row.get("region_scope") == "central_europe")
     taxa = sorted({str(row.get("taxon_name") or row.get("queried_name") or "") for row in kept})
     accepted = int(stats["accepted"])
@@ -2229,6 +2256,7 @@ def _class_report_entry(kept: list[dict], stats: dict, cap: int, min_before_glob
         "pool": stats["pool"],
         "shortfall": stats["shortfall"],
         "any_taxon_pool_exhausted": bool(stats["any_taxon_pool_exhausted"]),
+        "rejected_unverified": int(rejected_unverified),
     }
     if stats.get("exhausted_reason"):
         entry["exhausted_reason"] = stats["exhausted_reason"]
@@ -2319,7 +2347,14 @@ def run_fetch(
                 exhausted_reason="end_of_records",
             )
             class_stats["any_taxon_pool_exhausted"] = bool(class_stats["pool_exhausted"])
-        per_class[species["id"]] = _class_report_entry(kept, class_stats, cap, min_before_global)
+        rejected_unverified = sum(pool.rejected_unverified() for pool in bundle.pools)
+        per_class[species["id"]] = _class_report_entry(
+            kept,
+            class_stats,
+            cap,
+            min_before_global,
+            rejected_unverified,
+        )
         entry = per_class[species["id"]]
         print(
             f"  accepted media: {entry['accepted']} "

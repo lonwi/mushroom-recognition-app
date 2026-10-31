@@ -32,9 +32,10 @@ and comparison photos. CC BY-NC, CC BY-SA, and DF20 fail it.
 ``_niezweryfikowane`` files set ``unverified``. ``prepare_data.py`` skips
 those rows, so they are not mixed into train, val, or test. An explicit
 ``identificationVerificationStatus`` of ``unverified`` drops the row. For
-``gbif_no_status`` and ``gbif_not_validated`` that column decides:
-``gbif_not_validated`` with no status stays unverified, and any other
-non-empty status is kept. ``gbif_no_status`` with no status is kept.
+``gbif_no_status`` and ``gbif_not_validated`` that column decides.
+``gbif_no_status`` with no status is kept. ``gbif_not_validated`` is kept
+only for ``Approved | Expert | Evidence`` and ``Confident``; no status stays
+the old unverified flag, and any other non-empty status is rejected.
 
 ``--max-per-collector`` limits how many photos one observer or author can
 contribute to one class. Observation and photo ids are kept so a later
@@ -105,9 +106,13 @@ _GBIF_OCCURRENCE = re.compile(r"gbif\.org/occurrence/(\d+)", re.IGNORECASE)
 _INAT_OBSERVATION = re.compile(r"inaturalist\.org/observations/(\d+)", re.IGNORECASE)
 _INAT_PHOTO = re.compile(r"/photos/(\d+)", re.IGNORECASE)
 # commons_category stays unverified regardless of a status column.
-# gbif_not_validated is unverified only when that column is missing or blank.
-# gbif_no_status is not unverified by itself.
+# gbif_not_validated is kept only for the allowlist below. No status stays
+# the old unverified flag. gbif_no_status is not unverified by itself.
 _GBIF_STATUS_CONFIDENCE = frozenset({"gbif_no_status", "gbif_not_validated"})
+_GBIF_NOT_VALIDATED_ALLOWLIST = frozenset({
+    "approved | expert | evidence",
+    "confident",
+})
 _UNVERIFIED_CONFIDENCE = {"gbif_not_validated", "commons_category"}
 _PHOTO_FIELDS = (
     "species",
@@ -583,16 +588,27 @@ def _located(value: str) -> str:
     return " ".join(value.split())
 
 
-def _gbif_confidence_decision(confidence: str, status: str) -> tuple[bool, str]:
-    """Unverified flag and per-class outcome for a GBIF-origin confidence value.
+def _normalized_status(status: str) -> str:
+    """Case-fold and collapse whitespace. The allowlist is compared to this."""
+    return " ".join(status.split()).casefold()
 
-    The status column decides. No status on ``gbif_not_validated`` stays the
-    old rejection. No status on ``gbif_no_status`` is kept. An explicit
-    unverified status is not handled here; the caller drops that row.
+
+def _gbif_confidence_decision(confidence: str, status: str) -> tuple[bool, str, str]:
+    """Unverified flag, per-class outcome, and a drop reason.
+
+    An explicit ``unverified`` status is handled by the caller. ``gbif_no_status``
+    keeps every other status, including a blank one. ``gbif_not_validated`` keeps
+    only the allowlist. A blank status there stays the old unverified flag.
+    Any other non-empty text is dropped.
     """
-    if confidence == "gbif_not_validated" and not status:
-        return True, "gbif_not_validated"
-    return False, "kept"
+    if confidence == "gbif_no_status":
+        return False, "kept", ""
+    normalized = _normalized_status(status)
+    if not normalized:
+        return True, "gbif_not_validated", ""
+    if normalized in _GBIF_NOT_VALIDATED_ALLOWLIST:
+        return False, "kept", ""
+    return False, "identification_not_allowlisted", "identification_not_allowlisted"
 
 
 def _row_from_photo(
@@ -629,7 +645,9 @@ def _row_from_photo(
         return None, "identification_unverified", class_id
     verification = ""
     if confidence in _GBIF_STATUS_CONFIDENCE:
-        confidence_unverified, verification = _gbif_confidence_decision(confidence, status)
+        confidence_unverified, verification, reject_reason = _gbif_confidence_decision(confidence, status)
+        if reject_reason:
+            return None, reject_reason, class_id
     else:
         confidence_unverified = confidence in _UNVERIFIED_CONFIDENCE
     unverified = unverified_file or confidence_unverified
@@ -1062,8 +1080,8 @@ def import_directory(
                 )
             if row is None:
                 rejected[reason] += 1
-                if reason == "identification_unverified" and class_id:
-                    verification.setdefault(class_id, Counter())["identification_unverified"] += 1
+                if reason in ("identification_unverified", "identification_not_allowlisted") and class_id:
+                    verification.setdefault(class_id, Counter())[reason] += 1
                 if reason in _LICENSE_POISON_REASONS:
                     poisoned.update(_photo_keys_from_raw(raw))
                 if reason == "unmapped":

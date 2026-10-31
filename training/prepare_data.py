@@ -342,6 +342,18 @@ def main(argv: list[str] | None = None) -> None:
     print(json.dumps({name: len(rows) for name, rows in splits.items()}))
 
 
+# File problems only. Policy skips have their own counters.
+_READ_SKIP_REASONS = frozenset({"missing_file", "corrupt", "prepare_failed"})
+
+
+def _skip_reason_count(skipped: list, reasons: frozenset[str]) -> int:
+    return sum(
+        1
+        for row in skipped
+        if isinstance(row, dict) and row.get("skip_reason") in reasons
+    )
+
+
 def _skipped_per_class(skipped: list) -> dict[str, dict[str, int]]:
     """Skip reasons per class. Explicit unverified identifications are one reason."""
     counts: dict[str, Counter[str]] = {}
@@ -426,11 +438,12 @@ def write_prepare_outputs(
                 ),
                 "class_conflicts": class_conflicts,
                 "held_out_withheld": len(withheld),
-                "skipped_corrupt_or_unreadable": len(skipped),
+                "skipped_corrupt_or_unreadable": _skip_reason_count(skipped, _READ_SKIP_REASONS),
+                "skipped_identification_unverified": _skip_reason_count(skipped, {"identification_unverified"}),
+                "skipped_unverified": _skip_reason_count(skipped, {"unverified"}),
+                "skipped_training_only": _skip_reason_count(skipped, {"training_only"}),
                 "skipped_per_class": _skipped_per_class(skipped),
-                "excluded_df20": sum(
-                    1 for row in skipped if isinstance(row, dict) and row.get("skip_reason") == "df20_opt_out"
-                ),
+                "excluded_df20": _skip_reason_count(skipped, {"df20_opt_out"}),
                 "model_png_size": model_png_size,
             },
             indent=2,
