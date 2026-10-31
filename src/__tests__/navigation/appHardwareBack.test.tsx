@@ -35,6 +35,33 @@ function installBackHandler() {
   return { handlers, press, restore: () => spy.mockRestore() };
 }
 
+type HostNode = {
+  type: string;
+  parent: unknown;
+};
+
+function asHostNode(value: unknown): HostNode | null {
+  if (typeof value !== 'object' || value === null || !('type' in value)) {
+    return null;
+  }
+  if (typeof value.type !== 'string') {
+    return null;
+  }
+  return value as HostNode;
+}
+
+/** RNTL 14 only exposes host nodes. The card's vertical ScrollView is `RCTScrollView`. */
+function speciesCardScrollHost(anchor: HostNode): HostNode {
+  let current: HostNode | null = anchor;
+  while (current !== null && current.type !== 'RCTScrollView') {
+    current = asHostNode(current.parent);
+  }
+  if (current === null) {
+    throw new Error('Species card ScrollView host was not found');
+  }
+  return current;
+}
+
 describe('Android hardware back', () => {
   const previousPlatform = Platform.OS;
 
@@ -161,6 +188,32 @@ describe('Android hardware back', () => {
       });
       expect(screen.getByTestId('scanner-atlas-scope')).toBeTruthy();
       expect(back.press()).toBe(false);
+    } finally {
+      back.restore();
+    }
+  });
+
+  it('mounts a new species card ScrollView when opening a look-alike and when going back', async () => {
+    const back = installBackHandler();
+    try {
+      const screen = await render(<App />);
+
+      await fireEvent.press(screen.getByTestId('demo-atlas-macrolepiota'));
+      expect(screen.getByText('Macrolepiota procera')).toBeTruthy();
+      const scrollBefore = speciesCardScrollHost(screen.getByTestId('species-family-label'));
+
+      await fireEvent.press(screen.getByTestId('lookalike-link-amanita_phalloides'));
+      expect(screen.getByText('Amanita phalloides')).toBeTruthy();
+      const scrollLookAlike = speciesCardScrollHost(screen.getByTestId('species-family-label'));
+      expect(scrollLookAlike).not.toBe(scrollBefore);
+
+      await act(async () => {
+        expect(back.press()).toBe(true);
+      });
+      expect(screen.getByText('Macrolepiota procera')).toBeTruthy();
+      expect(screen.queryByText('Amanita phalloides')).toBeNull();
+      const scrollAfterBack = speciesCardScrollHost(screen.getByTestId('species-family-label'));
+      expect(scrollAfterBack).not.toBe(scrollLookAlike);
     } finally {
       back.restore();
     }
