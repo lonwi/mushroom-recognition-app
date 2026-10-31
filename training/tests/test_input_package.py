@@ -242,6 +242,41 @@ class InputPackageHashTest(unittest.TestCase):
             self.assertEqual(report["self_entry_path"], "zdjecia/SHA256SUMS")
             self.assertTrue(manifest["sums_checked"])
 
+    def test_attributions_beside_zdjecia_are_not_required_in_sha256sums(self):
+        """fetch's attributions.jsonl sits next to zdjecia/ and is not in the package list."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _write(root, "attributions.jsonl", b'{"source":"fetch"}\n')
+            _write(root, "zdjecia/a.csv", b"alpha,1\n")
+            _write(root, "zdjecia/script.py", b"print('synthetic')\n")
+            text = (
+                _sums_line(root, "zdjecia/a.csv")
+                + _sums_line(root, "zdjecia/script.py", binary=True)
+                + f"{_EMPTY_SHA256}  zdjecia/SHA256SUMS\n"
+            )
+            (root / "zdjecia" / "SHA256SUMS").write_text(text, encoding="utf-8")
+            manifest = _prepare(root)
+            report = json.loads((root / "dedup_report.json").read_text(encoding="utf-8"))
+            self.assertTrue(manifest["sums_checked"])
+            self.assertTrue(report["sums_checked"])
+            self.assertEqual(manifest["self_entry_path"], "zdjecia/SHA256SUMS")
+            self.assertEqual(manifest["input_tree_sha256"], input_tree_sha256(root))
+            without_attributions = input_tree_sha256(root)
+            (root / "attributions.jsonl").write_bytes(b'{"source":"changed"}\n')
+            self.assertNotEqual(input_tree_sha256(root), without_attributions)
+
+    def test_unlisted_csv_inside_zdjecia_still_stops(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _write(root, "attributions.jsonl", b'{"source":"fetch"}\n')
+            _write(root, "zdjecia/a.csv", b"alpha,1\n")
+            _write(root, "zdjecia/b.csv", b"beta,2\n")
+            _write(root, "zdjecia/script.py", b"print('synthetic')\n")
+            text = _sums_line(root, "zdjecia/a.csv") + _sums_line(root, "zdjecia/script.py")
+            (root / "zdjecia" / "SHA256SUMS").write_text(text, encoding="utf-8")
+            _seed_old_outputs(root)
+            _assert_hard_stop(self, root, "SHA256SUMS does not list package file: zdjecia/b.csv")
+
     def test_empty_file_hash_on_any_other_file_is_a_hard_stop(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

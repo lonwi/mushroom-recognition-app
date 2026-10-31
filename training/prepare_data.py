@@ -312,11 +312,15 @@ def _is_hex_digest(token: str) -> bool:
     return len(token) == 64 and all(character in _HEX_DIGITS for character in token)
 
 
-def _must_be_listed(path: Path, root: Path) -> bool:
-    """CSV, attribution input, or script that may not sit outside SHA256SUMS."""
-    if not _is_input_package_file(path, root) and not _is_script_file(path, root):
+def _is_csv_file(path: Path, root: Path) -> bool:
+    relative = _package_relative(path, root)
+    parts = relative.split("/")
+    if any(part in _PACKAGE_SKIP_DIRS for part in parts[:-1]):
         return False
-    return True
+    name = parts[-1]
+    if name.endswith(".bak") or name.endswith(".log"):
+        return False
+    return name.lower().endswith(".csv")
 
 
 def _is_script_file(path: Path, root: Path) -> bool:
@@ -330,13 +334,19 @@ def _is_script_file(path: Path, root: Path) -> bool:
     return any(name.lower().endswith(suffix) for suffix in _SCRIPT_SUFFIXES)
 
 
-def _files_that_must_be_listed(root: Path) -> list[str]:
-    if not root.is_dir():
+def _files_that_must_be_listed(scan_root: Path, base: Path) -> list[str]:
+    """CSV and script paths, relative to ``base``, that the checksum list must name.
+
+    ``scan_root`` is the directory that holds ``SHA256SUMS`` when that file is
+    ``zdjecia/SHA256SUMS``. Files outside it, including ``attributions.jsonl``
+    beside ``zdjecia/``, are not part of this check.
+    """
+    if not scan_root.is_dir():
         return []
     found = []
-    for path in root.rglob("*"):
-        if path.is_file() and _must_be_listed(path, root):
-            found.append(_package_relative(path, root))
+    for path in scan_root.rglob("*"):
+        if path.is_file() and (_is_csv_file(path, base) or _is_script_file(path, base)):
+            found.append(_package_relative(path, base))
     return sorted(found)
 
 
@@ -405,8 +415,11 @@ def verify_input_package_sums(root: Path) -> dict[str, object]:
     with ``*`` instead of the second space for binary mode. Paths are relative
     to the package base (the directory above ``zdjecia/`` when the list lives
     at ``zdjecia/SHA256SUMS``). An absolute path, a ``..`` segment, a missing
-    file, a hash mismatch, or a CSV or script that is not listed is a hard stop.
-    The one skipped line is the checksum file itself: it cannot hold its own
+    file, a hash mismatch, or a CSV or script inside the checksum directory
+    that is not listed is a hard stop. When the list is ``zdjecia/SHA256SUMS``,
+    that directory is ``zdjecia/`` only. ``attributions.jsonl`` beside
+    ``zdjecia/`` is not required to be in the list; the tree hash still covers
+    it. The one skipped line is the checksum file itself: it cannot hold its own
     hash. That line is ``self_entry_ignored`` and is not checked.
     A missing list records ``sums_checked`` false and warns on stderr.
     """
@@ -458,7 +471,8 @@ def verify_input_package_sums(root: Path) -> dict[str, object]:
         actual = _file_sha256(candidate)
         if actual != expected:
             raise SystemExit(f"SHA256SUMS hash mismatch: {relative}")
-    unlisted = [relative for relative in _files_that_must_be_listed(base) if relative not in listed]
+    scan_root = path.parent if self_rel.startswith("zdjecia/") else base
+    unlisted = [relative for relative in _files_that_must_be_listed(scan_root, base) if relative not in listed]
     if unlisted:
         raise SystemExit("SHA256SUMS does not list package file: " + ", ".join(unlisted))
     return {
