@@ -70,6 +70,7 @@ describe('ScreenErrorBoundary', () => {
 
     expect(screen.getByTestId('screen-error-fallback')).toBeTruthy();
     expect(screen.getByText(pl.screenError.title)).toBeTruthy();
+    expect(screen.getByTestId('call-112').props.accessibilityLabel).toBe(pl.safetyGuide.call112Title);
     const polishTab = String(screen.getByTestId('nav-safety-label').props.children);
     expect(polishTab).toBe(pl.nav.safety);
     const polishBody = String(screen.getByTestId('screen-error-body').props.children);
@@ -114,6 +115,7 @@ describe('ScreenErrorBoundary', () => {
     );
     const fallback = StyleSheet.flatten(screen.getByTestId('screen-error-fallback').props.style);
     const button = StyleSheet.flatten(screen.getByTestId('screen-error-retry').props.style);
+    const emergency = StyleSheet.flatten(screen.getByTestId('call-112').props.style);
     expect(fallback.backgroundColor).toBe(colors.slate900);
     expect(fallback.borderLeftWidth).toBeUndefined();
     expect(fallback.borderLeftColor).toBeUndefined();
@@ -123,6 +125,12 @@ describe('ScreenErrorBoundary', () => {
     expect(button.borderRadius).toBeLessThanOrEqual(6);
     expect(button.borderLeftWidth).toBeUndefined();
     expect(button.borderLeftColor).toBeUndefined();
+    expect(emergency.backgroundColor).toBe(colors.red600);
+    expect(emergency.borderRadius).toBe(radius.xs);
+    expect(emergency.borderRadius).toBeGreaterThanOrEqual(3);
+    expect(emergency.borderRadius).toBeLessThanOrEqual(6);
+    expect(emergency.borderLeftWidth).toBeUndefined();
+    expect(emergency.minHeight).toBeGreaterThanOrEqual(44);
 
     await screen.rerender(
       <Harness resetKey="ATLAS:tab" colorScheme="light">
