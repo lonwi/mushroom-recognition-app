@@ -1541,134 +1541,62 @@ class ImportDirectoryTest(unittest.TestCase):
         with self.assertRaises(SystemExit):
             _attribution_sources(folder, with_external=True)
 
-    def test_ported_cc_licence_maps_to_the_same_family_and_keeps_the_url(self):
-        """A national CC port is the same family. The original license_url stays."""
+    def test_jurisdiction_port_and_public_domain_without_url_stay_rejected(self):
+        """The licence table is unchanged. These rows stay rejected and are counted."""
         ported_sa = "https://creativecommons.org/licenses/by-sa/3.0/de/"
-        ported_by = "https://creativecommons.org/licenses/by/3.0/pl/"
-        ported_nc = "https://creativecommons.org/licenses/by-nc/2.0/de/"
-        deed = "https://creativecommons.org/licenses/by-sa/3.0/de/deed.en"
-        nc_sa = "https://creativecommons.org/licenses/by-nc-sa/3.0/de/"
-        nd = "https://creativecommons.org/licenses/by-nd/3.0/de/"
-        cases = [
-            ("sa-de", "CC BY-SA 3.0 de", ported_sa, "https://images.example.test/sa-de.jpg"),
-            ("sa-code", "cc-by-sa-3.0-de", ported_sa, "https://images.example.test/sa-code.jpg"),
-            ("sa-germany", "CC BY-SA 3.0 Germany", ported_sa, "https://images.example.test/sa-germany.jpg"),
-            (
-                "sa-deed",
-                "Creative Commons Attribution-ShareAlike 3.0 Germany",
-                deed,
-                "https://images.example.test/sa-deed.jpg",
-            ),
-            ("by-pl", "CC BY 3.0 pl", ported_by, "https://images.example.test/by-pl.jpg"),
-            ("nc-de", "CC BY-NC 2.0 de", ported_nc, "https://images.example.test/nc-de.jpg"),
-            ("nc-sa-de", "CC BY-NC-SA 3.0 de", nc_sa, "https://images.example.test/nc-sa-de.jpg"),
-            ("nd-de", "CC BY-ND 3.0 de", nd, "https://images.example.test/nd-de.jpg"),
-            ("pd", "public domain", "", "https://images.example.test/pd.jpg"),
-            ("pd-mark", "Public Domain Mark", "", "https://images.example.test/pd-mark.jpg"),
-            ("sa-empty", "CC BY-SA 3.0 de", "", "https://images.example.test/sa-empty.jpg"),
-            (
-                "sa-http",
-                "CC BY-SA 3.0 de",
-                "http://creativecommons.org/licenses/by-sa/3.0/de/",
-                "https://images.example.test/sa-http.jpg",
-            ),
-            ("sa-junk", "CC BY-SA 3.0 xyzzy", ported_sa, "https://images.example.test/sa-junk.jpg"),
-            ("by-mismatch", "CC BY 3.0 pl", ported_sa, "https://images.example.test/by-mismatch.jpg"),
-        ]
         _photo(
-            self.root / "ported.csv",
+            self.root / "held.csv",
             [
                 self._base(
-                    license=text,
-                    license_url=url,
-                    inat_photo_id=photo_id,
-                    inat_observation_id=photo_id,
-                    image_url=image,
-                    source_url=f"https://www.inaturalist.org/observations/{photo_id}",
-                    inat_observer=photo_id,
-                    author=f"Author {photo_id}",
-                )
-                for photo_id, text, url, image in cases
+                    license="CC BY 4.0",
+                    license_url=_BY_40,
+                    inat_photo_id="kept",
+                    inat_observation_id="kept",
+                    image_url="https://images.example.test/kept.jpg",
+                    source_url="https://www.inaturalist.org/observations/kept",
+                ),
+                self._base(
+                    license="CC BY-SA 3.0 de",
+                    license_url=ported_sa,
+                    inat_photo_id="ported",
+                    inat_observation_id="ported",
+                    image_url="https://images.example.test/ported.jpg",
+                    source_url="https://www.inaturalist.org/observations/ported",
+                    author="Port Author",
+                    inat_observer="ported",
+                ),
+                self._base(
+                    license="public domain",
+                    license_url="",
+                    inat_photo_id="pd",
+                    inat_observation_id="pd",
+                    image_url="https://images.example.test/pd.jpg",
+                    source_url="https://www.inaturalist.org/observations/pd",
+                    author="Pd Author",
+                    inat_observer="pd",
+                ),
             ],
         )
         rows, report = import_directory(self.root, max_per_collector=30)
-        by_id = {row["inat_photo_id"]: row for row in rows}
-        for photo_id in ("sa-de", "sa-code", "sa-germany", "sa-deed", "by-pl", "nc-de"):
-            self.assertIn(photo_id, by_id, photo_id)
-
-        sa = by_id["sa-de"]
-        self.assertEqual(sa["license"], "CC BY-SA 3.0 de")
-        self.assertEqual(sa["license_normalized"], "cc-by-sa-3.0")
-        self.assertEqual(sa["usage"], "training_only")
-        self.assertEqual(sa["license_url"], ported_sa)
-        self.assertNotEqual(sa["license_url"], "https://creativecommons.org/licenses/by-sa/3.0/")
-        self.assertFalse(is_publishable(sa))
-        self.assertTrue(attributions_complete([sa]))
-        self.assertEqual(by_id["sa-code"]["license_normalized"], "cc-by-sa-3.0")
-        self.assertEqual(by_id["sa-code"]["license_url"], ported_sa)
-        self.assertEqual(by_id["sa-germany"]["license_normalized"], "cc-by-sa-3.0")
-        self.assertEqual(by_id["sa-germany"]["license_url"], ported_sa)
-        deed_row = by_id["sa-deed"]
-        self.assertEqual(deed_row["license_normalized"], "cc-by-sa-3.0")
-        self.assertEqual(deed_row["license_url"], deed)
-        self.assertNotIn("cc-by-sa-3.0-de", EXACT_LICENSE_USAGE)
-
-        polish = by_id["by-pl"]
-        self.assertEqual(polish["license_normalized"], "cc-by-3.0")
-        self.assertEqual(polish["usage"], "publishable")
-        self.assertEqual(polish["license_url"], ported_by)
-        self.assertNotEqual(polish["license_url"], "https://creativecommons.org/licenses/by/3.0/")
-        self.assertTrue(is_publishable(polish))
-        self.assertEqual(rows_for_atlas_gallery([polish]), [polish])
-
-        nc = by_id["nc-de"]
-        self.assertEqual(nc["license_normalized"], "cc-by-nc-2.0")
-        self.assertEqual(nc["usage"], "training_only")
-        self.assertEqual(nc["license_url"], ported_nc)
-        self.assertFalse(is_publishable(nc))
-        self.assertEqual(rows_for_atlas_gallery([nc]), [])
-        self.assertEqual(EXACT_LICENSE_USAGE["cc-by-nc-2.0"], "training_only")
-        self.assertEqual(EXACT_LICENSE_USAGE["cc-by-sa-3.0"], "training_only")
-        self.assertNotIn("cc-by-nc-sa-3.0", EXACT_LICENSE_USAGE)
-        self.assertNotIn("cc-by-nd-3.0", EXACT_LICENSE_USAGE)
-
-        self.assertNotIn("nc-sa-de", by_id)
-        self.assertNotIn("nd-de", by_id)
-        self.assertNotIn("pd", by_id)
-        self.assertNotIn("pd-mark", by_id)
-        self.assertNotIn("sa-empty", by_id)
-        self.assertNotIn("sa-http", by_id)
-        self.assertNotIn("sa-junk", by_id)
-        self.assertNotIn("by-mismatch", by_id)
+        self.assertEqual([row["inat_photo_id"] for row in rows], ["kept"])
+        self.assertIsNone(parse_textual_license("CC BY-SA 3.0 de", ported_sa))
+        self.assertIsNone(parse_textual_license("CC BY 3.0 pl"))
         self.assertIsNone(parse_textual_license("public domain", ""))
-        self.assertIsNone(parse_textual_license("public domain", _ZERO))
-        self.assertIsNone(parse_textual_license("CC BY-NC-SA 3.0 de", nc_sa))
-        self.assertIsNone(parse_textual_license("CC BY-ND 3.0 de", nd))
-        self.assertIsNone(parse_textual_license("CC BY-SA 3.0 xyzzy", ported_sa))
-        self.assertIsNone(normalize_cc_license(ported_sa))
-        self.assertEqual(normalize_cc_license(ported_by), "cc-by-3.0")
-
-        listed = {item["image_url"]: item for item in report["rejected_rows"]}
-        self.assertEqual(listed["https://images.example.test/pd.jpg"]["reason"], "license_url_empty")
-        self.assertEqual(listed["https://images.example.test/pd.jpg"]["license"], "public domain")
-        self.assertEqual(listed["https://images.example.test/pd.jpg"]["license_url"], "")
-        self.assertEqual(listed["https://images.example.test/pd-mark.jpg"]["reason"], "license_url_empty")
-        self.assertEqual(listed["https://images.example.test/nc-sa-de.jpg"]["reason"], "license")
-        self.assertEqual(listed["https://images.example.test/nd-de.jpg"]["reason"], "license")
-        self.assertEqual(listed["https://images.example.test/sa-empty.jpg"]["reason"], "license_url_empty")
-        self.assertEqual(listed["https://images.example.test/sa-http.jpg"]["reason"], "license_url_not_https")
-        self.assertEqual(listed["https://images.example.test/sa-junk.jpg"]["reason"], "license")
-        self.assertEqual(listed["https://images.example.test/by-mismatch.jpg"]["reason"], "license_url_mismatch")
-        self.assertTrue(all(item.get("reason") for item in report["rejected_rows"]))
-        accounted = sum(
-            count
-            for reason, count in report["rejected_by_reason"].items()
-            if reason not in {"publishable_only", "exclude_unverified"}
-        )
-        self.assertEqual(accounted, len(report["rejected_rows"]))
         decision, reason = photo_license_decision("public domain", "")
         self.assertIsNone(decision)
         self.assertEqual(reason, "license_url_empty")
+        ported_decision, ported_reason = photo_license_decision("CC BY-SA 3.0 de", ported_sa)
+        self.assertIsNone(ported_decision)
+        self.assertEqual(ported_reason, "license")
+        self.assertNotIn("cc-by-sa-3.0-de", EXACT_LICENSE_USAGE)
+        counted = report["rejected_per_class"]["amanita_phalloides"]
+        self.assertEqual(counted["license"], 1)
+        self.assertEqual(counted["license_url_empty"], 1)
+        total = sum(count for reasons in report["rejected_per_class"].values() for count in reasons.values())
+        self.assertEqual(total, 2)
+        self.assertTrue(
+            all(reason and count > 0 for reasons in report["rejected_per_class"].values() for reason, count in reasons.items())
+        )
 
     def test_highest_csv_version_wins_and_older_files_are_reported(self):
         def morchella(photo_id: str, author: str) -> dict:
@@ -1735,6 +1663,20 @@ class ImportDirectoryTest(unittest.TestCase):
         self.assertNotIn("morchella_esculenta_by_nc.csv", skipped)
         self.assertNotIn("other/morchella_esculenta_v2.csv", skipped)
         self.assertTrue(all(item.get("reason") for item in report["skipped_files"]))
+        self.assertEqual(report["rejected_per_class"]["morchella_esculenta"]["superseded_version"], 4)
+        superseded_rows = sum(item["rows"] for item in report["skipped_files"])
+        superseded_counted = sum(
+            reasons.get("superseded_version", 0) for reasons in report["rejected_per_class"].values()
+        )
+        self.assertEqual(superseded_counted, superseded_rows)
+        self.assertEqual(superseded_counted, 4)
+        self.assertTrue(
+            all(
+                reason and count > 0
+                for reasons in report["rejected_per_class"].values()
+                for reason, count in reasons.items()
+            )
+        )
 
 
 class CollectorCapTest(unittest.TestCase):

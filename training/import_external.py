@@ -17,13 +17,10 @@ training only: any DF20 row keeps ``shippable`` false, and
 https ``license_url`` that names the same license as the text, including
 CC BY-SA. An empty URL, an ``http://`` URL, or a URL for a different license
 drops the row, including when the text already says ``CC BY 4.0``. A
-versionless ``CC BY`` with no ``license_url`` is rejected. A national port
-such as ``https://creativecommons.org/licenses/by-sa/3.0/de/`` or
-``CC BY-SA 3.0 de`` is the same versioned id (``cc-by-sa-3.0``). The row
-keeps that photo's original ``license_url``. The allowed-id list does not
-grow, so a ported ND or NC-SA licence is still rejected. ``public domain``
-with an empty ``license_url`` is rejected: a missing URL is not CC0.
-NC-ND, NC-SA, ND, and unknown licenses are rejected. DF20 has no per-image
+versionless ``CC BY`` with no ``license_url`` is rejected. NC-ND, NC-SA, ND,
+and unknown licenses are rejected. A jurisdiction port and ``public domain``
+with an empty ``license_url`` stay rejected until the licence table changes.
+DF20 has no per-image
 Creative Commons URL. The normalized id is matched in full (``cc-by-4.0``),
 never by prefix.
 The same photo from two sources keeps the stricter license: CC BY-NC, DF20,
@@ -41,8 +38,10 @@ those rows, so they are not mixed into train, val, or test.
 In one directory, ``species_v10.csv`` replaces ``species_v3.csv``,
 ``species_v2.csv``, and ``species.csv``. ``species_by_nc.csv`` is a
 different file, and a file in another directory is its own family. Each
-older file is listed in the report as ``superseded_version``. Every
-rejected row is listed with its reason.
+older file is listed as ``superseded_version``. The report's
+``rejected_per_class`` counts every rejected row by class and reason
+(licence, unverified, duplicate, superseded version, and the other
+existing reasons). Nothing in that count is anonymous.
 
 ``--max-per-collector`` limits how many photos one observer or author can
 contribute to one class. Observation and photo ids are kept so a later
@@ -107,143 +106,6 @@ _SKIP_TOKENS = {
     "legalcode",
     "deed",
 }
-# CC 3.0 and earlier were also published as jurisdiction ports. The port is
-# the same licence family and version. An unknown extra word still rejects
-# the row, and this set does not add ND, NC-SA, or NC-ND to the policy.
-_JURISDICTION_TOKENS = frozenset(
-    {
-        "ar",
-        "at",
-        "au",
-        "az",
-        "be",
-        "bg",
-        "br",
-        "ca",
-        "ch",
-        "cl",
-        "cn",
-        "co",
-        "cr",
-        "cz",
-        "de",
-        "dk",
-        "ec",
-        "ee",
-        "eg",
-        "es",
-        "fi",
-        "fr",
-        "gr",
-        "gt",
-        "hk",
-        "hr",
-        "hu",
-        "ie",
-        "il",
-        "in",
-        "igo",
-        "it",
-        "jp",
-        "kr",
-        "lu",
-        "mk",
-        "mt",
-        "mx",
-        "my",
-        "nl",
-        "no",
-        "nz",
-        "pe",
-        "ph",
-        "pl",
-        "pr",
-        "pt",
-        "ro",
-        "rs",
-        "scotland",
-        "se",
-        "sg",
-        "si",
-        "th",
-        "tw",
-        "ug",
-        "uk",
-        "us",
-        "ve",
-        "vn",
-        "za",
-        "argentina",
-        "australia",
-        "austria",
-        "azerbaijan",
-        "belgium",
-        "brazil",
-        "bulgaria",
-        "canada",
-        "chile",
-        "china",
-        "colombia",
-        "croatia",
-        "denmark",
-        "deutschland",
-        "ecuador",
-        "egypt",
-        "england",
-        "estonia",
-        "finland",
-        "france",
-        "germany",
-        "greece",
-        "guatemala",
-        "hungary",
-        "india",
-        "ireland",
-        "israel",
-        "italy",
-        "japan",
-        "korea",
-        "luxembourg",
-        "macedonia",
-        "malaysia",
-        "malta",
-        "mexico",
-        "netherlands",
-        "norway",
-        "peru",
-        "philippines",
-        "poland",
-        "polska",
-        "portugal",
-        "ported",
-        "romania",
-        "serbia",
-        "singapore",
-        "slovenia",
-        "spain",
-        "sweden",
-        "switzerland",
-        "taiwan",
-        "thailand",
-        "uganda",
-        "venezuela",
-        "vietnam",
-        "wales",
-    }
-)
-_JURISDICTION_PAIRS = frozenset(
-    {
-        ("costa", "rica"),
-        ("czech", "republic"),
-        ("hong", "kong"),
-        ("new", "zealand"),
-        ("puerto", "rico"),
-        ("south", "africa"),
-        ("south", "korea"),
-        ("united", "kingdom"),
-        ("united", "states"),
-    }
-)
 _VERSION_SUFFIX = re.compile(r"_v([1-9]\d*)$")
 _KNOWN_TOKENS = {"by", "nc", "nd", "sa", "zero", "public", "domain", "publicdomain", "cc0"}
 _GBIF_OCCURRENCE = re.compile(r"gbif\.org/occurrence/(\d+)", re.IGNORECASE)
@@ -275,9 +137,8 @@ def parse_textual_license(raw: str | None, license_url: str | None = None) -> di
     CC BY, even when ``license_url`` points at CC BY. A versionless ``CC BY``
     or ``CC BY-NC`` takes the version from ``license_url`` when that URL is
     the same license. If neither side has a version, the row is rejected.
-    CC0 without a version is ``cc0-1.0``, the only CC0 version. A jurisdiction
-    port (``CC BY-SA 3.0 de``, ``cc-by-sa-3.0-de``) is that same versioned id.
-    ``public domain`` is not CC0. This does not change the GBIF URL filter.
+    CC0 without a version is ``cc0-1.0``, the only CC0 version. This does not
+    change the GBIF URL filter.
     """
     if raw is None or not str(raw).strip():
         return None
@@ -396,11 +257,8 @@ def _code_from_tokens(text: str) -> tuple[str | None, str | None]:
     index = 0
     while index < len(raw_tokens):
         token = raw_tokens[index]
-        if token in _SKIP_TOKENS or token in _JURISDICTION_TOKENS:
+        if token in _SKIP_TOKENS:
             index += 1
-            continue
-        if index + 1 < len(raw_tokens) and (token, raw_tokens[index + 1]) in _JURISDICTION_PAIRS:
-            index += 2
             continue
         if token == "non" and index + 1 < len(raw_tokens) and raw_tokens[index + 1].startswith("commercial"):
             mapped.append("nc")
@@ -432,13 +290,7 @@ def _code_from_tokens(text: str) -> tuple[str | None, str | None]:
         return None, None
     if "cc0" in mapped or ("zero" in mapped and "public" in mapped and "domain" in mapped):
         return "cc0", version
-    has_cc = (
-        re.search(r"\bcc\b", text) is not None
-        or "creativecommons" in text
-        or "creative commons" in text
-        or "cc0" in mapped
-    )
-    if not has_cc:
+    if not re.search(r"\bcc\b", text) and "creativecommons" not in text and "cc0" not in mapped:
         return None, None
     core = tuple(token for token in mapped if token in {"by", "nc", "nd", "sa"})
     for name, phrase in _CODE_PHRASES:
@@ -1014,7 +866,40 @@ def _license_strictness(row: dict) -> int:
     return training_license_rank(row.get("license_normalized"))
 
 
-def dedupe_rows(rows: list[dict]) -> tuple[list[dict], int, int, int, list[dict]]:
+def _class_of(row: dict) -> str:
+    class_id = row.get("class_id")
+    if isinstance(class_id, str) and class_id.strip():
+        return class_id.strip()
+    return "unmapped"
+
+
+def _bump(counts: dict[str, Counter[str]], class_id: str, reason: str, n: int = 1) -> None:
+    if n < 1:
+        return
+    label = class_id.strip() if isinstance(class_id, str) and class_id.strip() else "unmapped"
+    why = reason.strip() if isinstance(reason, str) and reason.strip() else "unknown"
+    counts.setdefault(label, Counter())[why] += n
+
+
+def _per_class_report(counts: dict[str, Counter[str]]) -> dict[str, dict[str, int]]:
+    """Class id to reason to row count. Empty reasons are not written."""
+    return {
+        class_id: {reason: int(count) for reason, count in sorted(bucket.items())}
+        for class_id, bucket in sorted(counts.items())
+        if bucket
+    }
+
+
+def _class_counts_in_csv(path: Path, index: dict[str, dict]) -> Counter[str]:
+    counts: Counter[str] = Counter()
+    for raw in _read_csv(path):
+        species = _cell(raw, "species") or _cell(raw, "df20_name_used")
+        target = resolve_species(species, index) if species else None
+        counts[target["class_id"] if target else "unmapped"] += 1
+    return counts
+
+
+def dedupe_rows(rows: list[dict]) -> tuple[list[dict], int, int, int, list[dict], dict[str, Counter[str]]]:
     """Drop label conflicts, then keep the stricter license of one photo.
 
     File order must not pick the species. When one photo id or one observation
@@ -1034,7 +919,13 @@ def dedupe_rows(rows: list[dict]) -> tuple[list[dict], int, int, int, list[dict]
         {"kind": kind, "id": ident, "labels": sorted(labels_by_key[(kind, ident)])}
         for kind, ident in sorted(conflict_keys)
     ]
-    surviving = [row for row in rows if not any(key in conflict_keys for key in _conflict_keys(row))]
+    per_class: dict[str, Counter[str]] = {}
+    surviving = []
+    for row in rows:
+        if any(key in conflict_keys for key in _conflict_keys(row)):
+            _bump(per_class, _class_of(row), "label_conflict")
+            continue
+        surviving.append(row)
     parent = list(range(len(surviving)))
 
     def find(index: int) -> int:
@@ -1068,6 +959,8 @@ def dedupe_rows(rows: list[dict]) -> tuple[list[dict], int, int, int, list[dict]
         labels = {_label_text(row) for row in group}
         if len(labels) > 1:
             extra_conflicts += len(group)
+            for row in group:
+                _bump(per_class, _class_of(row), "label_conflict")
             conflicts.append(
                 {
                     "kind": "photo",
@@ -1086,11 +979,13 @@ def dedupe_rows(rows: list[dict]) -> tuple[list[dict], int, int, int, list[dict]
         for row in ranked[1:]:
             if _license_strictness(row) < winner_rank:
                 looser_dropped += 1
+                _bump(per_class, _class_of(row), "looser_license")
             else:
                 duplicate_dropped += 1
+                _bump(per_class, _class_of(row), "duplicate")
     kept.sort(key=lambda row: int(row.get("_order") or 0))
     conflict_dropped = len(rows) - len(surviving) + extra_conflicts
-    return kept, duplicate_dropped, looser_dropped, conflict_dropped, conflicts
+    return kept, duplicate_dropped, looser_dropped, conflict_dropped, conflicts, per_class
 
 
 def apply_collector_cap(rows: list[dict], max_per_collector: int) -> tuple[list[dict], list[dict]]:
@@ -1199,7 +1094,10 @@ def import_directory(
     photos, metas, skipped_files = _photo_files(root)
     rows: list[dict] = []
     rejected = Counter()
-    rejected_rows: list[dict] = []
+    per_class: dict[str, Counter[str]] = {}
+    for item in skipped_files:
+        for class_id, count in _class_counts_in_csv(root / item["file"], index).items():
+            _bump(per_class, class_id, "superseded_version", count)
     unmapped: Counter[str] = Counter()
     poisoned: set[str] = set()
     order = 0
@@ -1228,16 +1126,9 @@ def import_directory(
                 )
             if row is None:
                 rejected[reason] += 1
-                rejected_rows.append(
-                    {
-                        "reason": reason,
-                        "file": path.relative_to(root).as_posix(),
-                        "species": _cell(raw, "species") or _cell(raw, "df20_name_used"),
-                        "license": _cell(raw, "license"),
-                        "license_url": _cell(raw, "license_url"),
-                        "image_url": _cell(raw, "image_url"),
-                    }
-                )
+                species = _cell(raw, "species") or _cell(raw, "df20_name_used")
+                target = resolve_species(species, index) if species else None
+                _bump(per_class, target["class_id"] if target else "unmapped", reason)
                 if reason in _LICENSE_POISON_REASONS:
                     poisoned.update(_photo_keys_from_raw(raw))
                 if reason == "unmapped":
@@ -1251,24 +1142,45 @@ def import_directory(
         for row in rows:
             if poisoned.intersection(_stable_photo_keys(row)):
                 tainted += 1
+                _bump(per_class, _class_of(row), "rejected_license_copy")
                 continue
             kept_rows.append(row)
         rows = kept_rows
+    from component_share import is_df20_row
     from license_policy import exclude_df20_unless_requested
 
+    if not include_df20:
+        for row in rows:
+            if is_df20_row(row):
+                _bump(per_class, _class_of(row), "df20_opt_out")
     rows, excluded_df20 = exclude_df20_unless_requested(rows, include_df20=include_df20)
-    rows, duplicate_dropped, looser_dropped, conflict_dropped, label_conflicts = dedupe_rows(rows)
+    rows, duplicate_dropped, looser_dropped, conflict_dropped, label_conflicts, dedupe_classes = dedupe_rows(rows)
+    for class_id, reasons in dedupe_classes.items():
+        for reason, count in reasons.items():
+            _bump(per_class, class_id, reason, count)
     # publishable_only runs before the cap so a CC BY-NC photo does not
     # consume a collector's slot that a CC BY photo of the same person needs.
     if publishable_only:
+        kept_ids = {id(row) for row in published_rows(rows)}
+        for row in rows:
+            if id(row) not in kept_ids:
+                _bump(per_class, _class_of(row), "publishable_only")
         before = len(rows)
-        rows = published_rows(rows)
+        rows = [row for row in rows if id(row) in kept_ids]
         rejected["publishable_only"] += before - len(rows)
     meta_joined = _join_meta(rows, metas)
     rows, cap_dropped = apply_collector_cap(rows, max_per_collector)
+    for row in cap_dropped:
+        _bump(per_class, _class_of(row), "collector_cap")
     if exclude_unverified:
-        rejected["exclude_unverified"] += sum(1 for row in rows if row.get("unverified") is True)
-        rows = [row for row in rows if row.get("unverified") is not True]
+        still_in = []
+        for row in rows:
+            if row.get("unverified") is True:
+                rejected["exclude_unverified"] += 1
+                _bump(per_class, _class_of(row), "unverified")
+                continue
+            still_in.append(row)
+        rows = still_in
     written = [_public_row(row) for row in rows]
     by_class = Counter(row["class_id"] for row in written)
     report = {
@@ -1290,7 +1202,7 @@ def import_directory(
         "rejected_license_url_not_https": int(rejected["license_url_not_https"]),
         "rejected_license_url_mismatch": int(rejected["license_url_mismatch"]),
         "rejected_by_reason": {key: int(rejected[key]) for key in sorted(rejected)},
-        "rejected_rows": rejected_rows,
+        "rejected_per_class": _per_class_report(per_class),
         "skipped_files": skipped_files,
         "dropped_by_reason": {
             "duplicate": duplicate_dropped,

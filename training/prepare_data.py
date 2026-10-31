@@ -163,9 +163,7 @@ def _usable_records(
     drops ``usage=training_only`` (CC BY-NC, CC BY-SA, and Danish Fungi 2020).
     Without that flag ``--with-external`` keeps CC BY-NC and CC BY-SA.
     DF20 is kept only with ``include_df20`` (``--include-df20``). Otherwise
-    each DF20 row is skipped and counted as ``df20_opt_out``. A public-domain
-    claim with an empty ``license_url`` is skipped as ``license_url_empty``.
-    That wording is not CC0.
+    each DF20 row is skipped and counted as ``df20_opt_out``.
     """
     records = []
     skipped = []
@@ -179,22 +177,6 @@ def _usable_records(
             )
         )
     return records, skipped
-
-
-def _unproven_public_domain(row: dict) -> bool:
-    """Public-domain wording with no licence URL is not proof of CC0."""
-    url = row.get("license_url")
-    if isinstance(url, str) and url.strip():
-        return False
-    text = row.get("license")
-    if not isinstance(text, str):
-        return False
-    folded = " ".join(text.casefold().split())
-    if not folded:
-        return False
-    if folded.startswith("public domain"):
-        return True
-    return folded in {"pdm", "pdm 1.0"}
 
 
 def _usable_records_one(
@@ -211,9 +193,6 @@ def _usable_records_one(
         if not line.strip():
             continue
         row = json.loads(line)
-        if _unproven_public_domain(row):
-            skipped.append({**row, "skip_reason": "license_url_empty"})
-            continue
         if not include_df20 and is_df20_row(row):
             skipped.append({**row, "skip_reason": "df20_opt_out"})
             continue
@@ -262,25 +241,27 @@ def _cache_model_pngs(records: list[dict], size: int) -> tuple[list[dict], list[
     return kept, skipped
 
 
-def _skip_report_entry(row: object) -> dict:
-    """One skipped prepare row, with the reason that dropped it."""
-    if not isinstance(row, dict):
-        return {
-            "reason": "unknown",
-            "license": "",
-            "license_url": "",
-            "file": "",
-            "image_url": "",
-            "class_id": "",
-        }
-    license_url = row.get("license_url")
+def _rejected_per_class(*groups: list) -> dict[str, dict[str, int]]:
+    """Count every skipped or dropped prepare row by class and reason.
+
+    A row with no class is ``unmapped``. A row with no reason is ``unknown``,
+    so a silent drop still shows up in the report.
+    """
+    counts: dict[str, Counter[str]] = {}
+    for group in groups:
+        for row in group:
+            if not isinstance(row, dict):
+                counts.setdefault("unmapped", Counter())["unknown"] += 1
+                continue
+            class_id = row.get("class_id")
+            label = class_id.strip() if isinstance(class_id, str) and class_id.strip() else "unmapped"
+            reason = row.get("skip_reason") or row.get("drop_reason") or ""
+            why = str(reason).strip() or "unknown"
+            counts.setdefault(label, Counter())[why] += 1
     return {
-        "reason": str(row.get("skip_reason") or ""),
-        "license": row.get("license") if isinstance(row.get("license"), str) else "",
-        "license_url": license_url.strip() if isinstance(license_url, str) else "",
-        "file": row.get("file") if isinstance(row.get("file"), str) else "",
-        "image_url": row.get("image_url") if isinstance(row.get("image_url"), str) else "",
-        "class_id": row.get("class_id") if isinstance(row.get("class_id"), str) else "",
+        class_id: {reason: int(count) for reason, count in sorted(bucket.items())}
+        for class_id, bucket in sorted(counts.items())
+        if bucket
     }
 
 
@@ -431,7 +412,7 @@ def write_prepare_outputs(
         for row in identity_dropped
         if row.get("drop_reason") == "class_conflict"
     ]
-    skipped_rows = [_skip_report_entry(row) for row in skipped]
+    rejected_per_class = _rejected_per_class(skipped, identity_dropped, dropped)
     (directory / "dedup_report.json").write_text(
         json.dumps(
             {
@@ -447,8 +428,7 @@ def write_prepare_outputs(
                 "class_conflicts": class_conflicts,
                 "held_out_withheld": len(withheld),
                 "skipped_corrupt_or_unreadable": len(skipped),
-                "skipped_by_reason": dict(Counter(entry["reason"] for entry in skipped_rows)),
-                "skipped_rows": skipped_rows,
+                "rejected_per_class": rejected_per_class,
                 "excluded_df20": sum(
                     1 for row in skipped if isinstance(row, dict) and row.get("skip_reason") == "df20_opt_out"
                 ),
