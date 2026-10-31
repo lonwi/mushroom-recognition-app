@@ -91,7 +91,7 @@ Stan na 2026-10-31.
 | 0015 | [Własne zdjęcia Wojciecha w treningu: później](0015-wlasne-zdjecia-pozniej.md) | Odłożona |
 | 0016 | [Proporcje train/val/test w training/split.py](0016-proporcje-splitu.md) | Podjęta |
 | 0017 | [React Doctor](0017-react-doctor.md) | Zatwierdzona, czeka na wdrożenie |
-| 0018 | [Limit autora i Wikimedia Commons](0018-limit-autora-commons.md) | Podjęta (wdrożenie w toku) |
+| 0018 | [Limit autora i Wikimedia Commons](0018-limit-autora-commons.md) | Podjęta (wdrożenie w toku; zaokrąglanie `round` otwarte) |
 | 0019 | [Adresy http z GBIF (#84)](0019-adresy-http-gbif.md) | Zatwierdzona, czeka na wdrożenie |
 | 0020 | [Zdjęcia z kategorii Wikimedia Commons (`commons_category`)](0020-commons-category.md) | Zatwierdzona, czeka na wdrożenie |
 | 0021 | [Wiersze GBIF bez statusu weryfikacji](0021-gbif-bez-statusu-weryfikacji.md) | Zatwierdzona |
