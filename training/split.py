@@ -21,8 +21,11 @@ component is still assigned as a whole. When that assignment is val or test,
 the train-only rows are dropped (``train_only_in_heldout_component``) instead
 of being moved to train, so a shared author or observation is never in two
 splits. A component enters val or test only when the added eligible rows stay
-inside the target of every class it contains. A component that fits neither
-split stays in train. ``TEST_SHARE_TOLERANCE`` (0.05) and ``MIN_TEST_COUNT``
+inside the target of every class it contains. Components with fewer
+train-only rows are placed first, so a component that is mostly Commons
+category photos does not take a val or test slot while other photos can
+fill that budget. A component that fits neither split stays in train.
+``TEST_SHARE_TOLERANCE`` (0.05) and ``MIN_TEST_COUNT``
 (8) are a provisional ship gate: a class whose test share sits outside the
 band, or whose test count is below the minimum, is a hard stop in prepare
 and a ship blocker. The numbers are not final. ``val_rows`` and ``val_share``
@@ -542,12 +545,20 @@ def train_only_reason_for(record: dict) -> str | None:
     return None
 
 
-def mark_train_only_rows(records: list[dict]) -> None:
-    """Stamp ``train_only_reason`` on rows that must not remain in val or test."""
+def mark_train_only_rows(records: list[dict]) -> list[dict]:
+    """Return rows with ``train_only_reason`` set, without modifying the input.
+
+    A row that already carries the reason is reused. A row that needs the
+    stamp is copied. Call this once, on the list the splitter walks.
+    """
+    marked: list[dict] = []
     for record in records:
         reason = train_only_reason_for(record)
-        if reason:
-            record["train_only_reason"] = reason
+        if not reason or record.get("train_only_reason") == reason:
+            marked.append(record)
+            continue
+        marked.append({**record, "train_only_reason": reason})
+    return marked
 
 
 def _counts_toward_budget(row: dict) -> bool:
@@ -599,10 +610,16 @@ def _place_components(
     test_ratio: float,
     seed: int,
 ) -> dict[str, list[dict]]:
-    """Place each component once, largest and most multi-class first.
+    """Place each component once. Fewer train-only rows go first.
 
-    ``seed`` only orders components that have the same class count and size.
-    It does not use the salted component id, so the salt cannot move a row.
+    Val and test budgets count eligible rows only (not held-out, not
+    train-only). Among components that fit, a component with fewer train-only
+    rows is placed first, so one normal photo tied to many Commons category
+    photos does not take a slot that cleaner components can fill. The cleaner
+    components then fill the budget and the commons-heavy component stays in
+    train. Within the same train-only count, components that span more classes
+    go first, then larger ones. ``seed`` only breaks those ties. It does not
+    use the salted component id, so the salt cannot move a row.
     """
     totals: dict[str, int] = defaultdict(int)
     component_count: dict[str, int] = defaultdict(int)
@@ -626,6 +643,7 @@ def _place_components(
     sequence = sorted(
         range(len(components)),
         key=lambda index: (
+            components[index].get("train_only_rows", 0),
             -len(components[index]["class_counts"]),
             -len(components[index]["rows"]),
             rank[index],
@@ -679,27 +697,32 @@ def split_by_observation(
     stays in the component's split when that split is train. When the component
     lands in val or test, the row is removed and appended to ``train_only_dropped``
     with reason ``train_only_in_heldout_component``. It is not moved to train.
-    Components that span more classes, and then larger ones, are placed first;
-    ``seed`` breaks the remaining ties. A class with fewer than three components
-    does not open a target and stays in train unless another class places that
-    component. The salt pseudonymizes component ids. It does not change the
-    assignment or the linking keys.
+    Components with fewer train-only rows are placed first; within that,
+    components that span more classes, and then larger ones. ``seed`` breaks
+    the remaining ties. A class with fewer than three components does not open
+    a target and stays in train unless another class places that component.
+    The salt pseudonymizes component ids. It does not change the assignment
+    or the linking keys. ``source=commons_expert_described`` is not train-only.
     """
     salt = _require_salt(salt)
     if val_ratio < 0 or test_ratio < 0 or val_ratio + test_ratio >= 1:
         raise ValueError("val and test ratios must leave a non-empty train share")
 
-    mark_train_only_rows(records)
+    records = mark_train_only_rows(records)
     blocked = test_blocked or (lambda _record: False)
     components = _components(records, salt)
     for component in components:
         component["blocked"] = any(blocked(row) for row in component["rows"])
         counts: dict[str, int] = defaultdict(int)
+        train_only_rows = 0
         for row in component["rows"]:
+            if row.get("train_only_reason"):
+                train_only_rows += 1
             if not _counts_toward_budget(row):
                 continue
             counts[row["class_id"]] += 1
         component["class_counts"] = dict(counts)
+        component["train_only_rows"] = train_only_rows
 
     splits = _place_components(components, val_ratio, test_ratio, seed)
     removed_train_only = _drop_train_only_outside_train(splits)
@@ -903,7 +926,6 @@ def train_only_report(splits: dict[str, list[dict]], dropped: list[dict] | None 
         for class_id in sorted(set(in_train) | set(dropped_counts))
     }
     return {
-        "train_only_reason": COMMONS_CATEGORY_SOURCE,
         "rows": sum(per_class.values()),
         "per_class": per_class,
         "reasons": dict(sorted(reasons.items())),

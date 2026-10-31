@@ -53,7 +53,7 @@ from gallery_exclusion import (
 from import_external import training_eligible
 from manifest import ROOT, load_manifest
 from preprocess import MODEL_INPUT_SIZE, ImageReadError, load_oriented_rgb, write_model_png
-from split import mark_train_only_rows, split_by_observation, split_key_summary
+from split import split_by_observation, split_key_summary
 from split_salt import SplitSaltError, load_split_salt
 
 DATA_DIR = ROOT / "training" / "data"
@@ -250,13 +250,12 @@ def assign_splits(
 ) -> tuple[dict[str, list[dict]], list[dict], list[dict]]:
     """Train/val/test split. Identity dedup has already run. A gallery photo in test raises.
 
-    Commons category rows are marked train-only before the split. A train-only
-    row whose component lands in val or test is returned in the third list and
-    is not part of either split.
+    The splitter stamps train-only copies itself, once. A train-only row whose
+    component lands in val or test is returned in the third list and is not
+    part of either split.
     """
     withheld: list[dict] = []
     train_only_dropped: list[dict] = []
-    mark_train_only_rows(records)
     splits = split_by_observation(
         records,
         salt=salt,

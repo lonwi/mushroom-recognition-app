@@ -70,30 +70,39 @@ class CommonsCategoryTrainOnlyTest(unittest.TestCase):
         self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
 
     def test_no_train_only_row_in_val_or_test_and_linking_keys_stay_together(self):
-        """A commons row that shares an author is not left in test and not moved to train.
+        """A component that lands in test drops its commons row instead of moving it.
 
-        Ninety singletons plus a ten-photo author: on the splitter before this
-        rule the author, including the commons photo, lands in test. After the
-        rule the other nine photos stay in test and the commons photo is dropped.
+        Every component carries one commons photo, so train-only count does not
+        put a cleaner component ahead of this author. The largest component is
+        placed first and fits test. Its commons photo is dropped. The author's
+        other photos, including the shared observation, stay in test.
         """
         bundle = _bundle("boletus_edulis", "shared_author", 10)
         bundle[0]["source"] = "Commons_Category"
-        records = [*_singletons("boletus_edulis", 90, "solo"), *bundle]
+        bundle[0]["inat_observation_id"] = bundle[1]["inat_observation_id"]
+        records = []
+        for index in range(20):
+            group = _bundle("boletus_edulis", f"peer_{index}", 5)
+            group[0]["source"] = "commons_category"
+            records.extend(group)
+        records.extend(bundle)
         splits, dropped = _split(records)
 
         self._assert_no_train_only_held_out(splits)
         self._assert_linking_keys_once(splits)
-        self.assertEqual(dropped[0]["drop_reason"], _DROP_REASON)
-        self.assertEqual(dropped[0]["train_only_reason"], _REASON)
-        self.assertEqual(dropped[0]["assigned_split"], "test")
-        self.assertEqual(dropped[0]["file"], bundle[0]["file"])
+        self.assertNotIn("train_only_reason", bundle[0])
+        authored = [row for row in dropped if row["file"] == bundle[0]["file"]]
+        self.assertEqual(len(authored), 1)
+        self.assertEqual(authored[0]["drop_reason"], _DROP_REASON)
+        self.assertEqual(authored[0]["train_only_reason"], _REASON)
+        self.assertEqual(authored[0]["assigned_split"], "test")
         self.assertNotIn(bundle[0]["file"], self._files(splits))
         sibling_files = {row["file"] for row in bundle[1:]}
         self.assertTrue(sibling_files <= {row["file"] for row in splits["test"]})
-        homes = self._homes(splits)
-        self.assertEqual(homes["shared_author"], {"test"})
-        for row in splits["train"]:
-            self.assertNotEqual(row.get("train_only_reason"), _REASON)
+        self.assertEqual(self._homes(splits)["shared_author"], {"test"})
+        observation = f"inat_observation:{bundle[1]['inat_observation_id']}"
+        self.assertEqual(self._key_homes(splits)[observation], {"test"})
+        self.assertTrue(all(row["drop_reason"] == _DROP_REASON for row in dropped))
 
         manifest = build_dataset_manifest(
             splits,
@@ -103,18 +112,19 @@ class CommonsCategoryTrainOnlyTest(unittest.TestCase):
         )
         block = manifest["train_only"]
         self.assertEqual(block["dropped"]["reason"], _DROP_REASON)
-        self.assertEqual(block["dropped"]["per_class"], {"boletus_edulis": 1})
-        self.assertEqual(block["dropped"]["rows"], 1)
-        self.assertEqual(block["per_class"], {"boletus_edulis": 1})
-        self.assertEqual(block["in_train"]["rows"], 0)
-        self.assertEqual(block["reasons"], {_REASON: 1})
+        self.assertEqual(block["dropped"]["per_class"]["boletus_edulis"], len(dropped))
+        self.assertEqual(block["rows"], block["in_train"]["rows"] + block["dropped"]["rows"])
+        self.assertEqual(block["reasons"], {_REASON: block["rows"]})
+        self.assertNotIn("train_only_reason", block)
         balance = manifest["test_balance"]["per_class"]["boletus_edulis"]
-        self.assertEqual(balance["rows"], 99)
-        self.assertEqual(balance["test_rows"], round(99 * TEST_SPLIT_RATIO))
-        self.assertEqual(balance["train_only_rows"], 0)
+        eligible = 20 * 4 + 9
+        self.assertEqual(balance["rows"], eligible)
+        self.assertEqual(balance["test_rows"], round(eligible * TEST_SPLIT_RATIO))
+        self.assertEqual(balance["train_only_rows"], block["in_train"]["rows"])
         self.assertNotIn("boletus_edulis", manifest["test_balance"]["hard_stop_classes"])
 
-    def test_shared_observation_is_not_split_by_moving_the_commons_row(self):
+    def test_shared_observation_stays_in_one_split_when_the_budget_is_met(self):
+        """Clean photos fill val and test, so the linked pair stays in train together."""
         regular = _photo("boletus_edulis", "ada", 1)
         commons = _photo("boletus_edulis", "bea", 2, source="commons_category")
         commons["inat_observation_id"] = regular["inat_observation_id"]
@@ -123,26 +133,33 @@ class CommonsCategoryTrainOnlyTest(unittest.TestCase):
 
         self._assert_no_train_only_held_out(splits)
         self._assert_linking_keys_once(splits)
-        self.assertEqual(len(dropped), 1)
-        self.assertEqual(dropped[0]["drop_reason"], _DROP_REASON)
-        self.assertEqual(dropped[0]["inat_observer"], "bea")
+        self.assertEqual(dropped, [])
+        self.assertNotIn("train_only_reason", commons)
         homes = self._homes(splits)
-        self.assertNotIn("bea", homes)
-        self.assertEqual(homes["ada"], {dropped[0]["assigned_split"]})
-        self.assertIn(dropped[0]["assigned_split"], {"val", "test"})
+        self.assertEqual(homes["ada"], {"train"})
+        self.assertEqual(homes["bea"], {"train"})
+        kept = [row for row in splits["train"] if row["inat_observer"] == "bea"]
+        self.assertEqual(kept[0]["train_only_reason"], _REASON)
         observation = f"inat_observation:{regular['inat_observation_id']}"
-        self.assertEqual(self._key_homes(splits)[observation], {dropped[0]["assigned_split"]})
+        self.assertEqual(self._key_homes(splits)[observation], {"train"})
 
     def test_explicit_train_only_reason_is_dropped_with_its_component(self):
-        bundle = _bundle("cantharellus_cibarius", "explicit_author", 8)
+        bundle = _bundle("cantharellus_cibarius", "explicit_author", 10)
         bundle[0]["train_only_reason"] = _REASON
         bundle[0]["source"] = "inat"
-        records = [*_singletons("cantharellus_cibarius", 80, "solo"), *bundle]
+        records = []
+        for index in range(20):
+            group = _bundle("cantharellus_cibarius", f"peer_{index}", 5)
+            group[0]["train_only_reason"] = _REASON
+            records.extend(group)
+        records.extend(bundle)
         splits, dropped = _split(records)
         self._assert_no_train_only_held_out(splits)
         self._assert_linking_keys_once(splits)
-        self.assertEqual([row["file"] for row in dropped], [bundle[0]["file"]])
-        self.assertEqual(self._homes(splits)["explicit_author"], {dropped[0]["assigned_split"]})
+        authored = [row for row in dropped if row["file"] == bundle[0]["file"]]
+        self.assertEqual(len(authored), 1)
+        self.assertEqual(authored[0]["drop_reason"], _DROP_REASON)
+        self.assertEqual(self._homes(splits)["explicit_author"], {"test"})
         self.assertNotIn(bundle[0]["file"], self._files(splits))
 
     def test_commons_category_in_a_train_component_stays_in_train(self):
@@ -236,13 +253,111 @@ class CommonsCategoryTrainOnlyTest(unittest.TestCase):
         self._assert_linking_keys_once(splits)
         for row in splits["test"]:
             self.assertFalse(row.get("gallery"))
-        self.assertEqual(len(dropped), 1)
-        self.assertEqual(dropped[0]["drop_reason"], _DROP_REASON)
-        sibling_files = {row["file"] for row in bundle[1:]}
-        self.assertTrue(sibling_files <= {row["file"] for row in splits[dropped[0]["assigned_split"]]})
-        self.assertNotEqual(dropped[0]["assigned_split"], "train")
-        self.assertEqual(self._homes(splits)["gallery_author"], {dropped[0]["assigned_split"]})
-        self.assertNotIn(bundle[0]["file"], self._files(splits))
+        self.assertEqual(dropped, [])
+        self.assertEqual(self._homes(splits)["gallery_author"], {"train"})
+        kept = [row for row in splits["train"] if row["file"] == bundle[0]["file"]]
+        self.assertEqual(kept[0]["train_only_reason"], _REASON)
+
+    def test_commons_heavy_component_stays_in_train_when_the_budget_is_met(self):
+        """One normal photo plus many commons rows must not be placed first.
+
+        Counting every row would put this component ahead of the singletons
+        and into test, then drop the commons photos. Fewer train-only rows
+        win, the singletons fill val and test, and nothing is dropped.
+        """
+        heavy = _bundle("boletus_edulis", "commons_heavy", 41)
+        for row in heavy[1:]:
+            row["source"] = "commons_category"
+        self.assertGreater(len(heavy), 1)
+        records = [*_singletons("boletus_edulis", 80, "solo"), *heavy]
+        splits, dropped = _split(records)
+        self._assert_no_train_only_held_out(splits)
+        self._assert_linking_keys_once(splits)
+        self.assertEqual(dropped, [])
+        self.assertEqual(self._homes(splits)["commons_heavy"], {"train"})
+        train_files = {row["file"] for row in splits["train"]}
+        self.assertTrue({row["file"] for row in heavy} <= train_files)
+        manifest = build_dataset_manifest(
+            splits,
+            salt=FIXTURE_SALT,
+            share_config={"limit": COMPONENT_SHARE_LIMIT, "acknowledgements": {}},
+            train_only_dropped=dropped,
+        )
+        self.assertEqual(manifest["train_only"]["dropped"]["rows"], 0)
+        self.assertEqual(manifest["train_only"]["dropped"]["per_class"], {})
+        self.assertEqual(manifest["train_only"]["in_train"]["per_class"]["boletus_edulis"], 40)
+        self.assertEqual(manifest["train_only"]["reasons"], {_REASON: 40})
+        info = manifest["test_balance"]["per_class"]["boletus_edulis"]
+        eligible = 81
+        self.assertEqual(info["rows"], eligible)
+        self.assertEqual(info["test_rows"], round(eligible * TEST_SPLIT_RATIO))
+        self.assertEqual(info["val_rows"], round(eligible * VAL_SPLIT_RATIO))
+        self.assertNotIn("boletus_edulis", manifest["test_balance"]["hard_stop_classes"])
+
+    def test_commons_category_only_class_stops_on_the_test_minimum(self):
+        """Eighty category photos would clear the minimum if they counted as eligible.
+
+        They are train-only, so the class has no val or test rows. Prepare
+        stops because the test count is below 8. The minimum is not lowered.
+        """
+        records = _singletons("cortinarius_orellanus", 80, "commons", source="commons_category")
+        splits, dropped = _split(records)
+        self.assertEqual(splits["val"], [])
+        self.assertEqual(splits["test"], [])
+        self.assertEqual(dropped, [])
+        self.assertEqual(len(splits["train"]), 80)
+        report = measure_test_balance(splits)
+        info = report["per_class"]["cortinarius_orellanus"]
+        self.assertEqual(info["rows"], 0)
+        self.assertEqual(info["test_rows"], 0)
+        self.assertEqual(info["train_only_rows"], 80)
+        self.assertTrue(info["below_minimum"])
+        self.assertIn("cortinarius_orellanus", report["hard_stop_classes"])
+        self.assertTrue(
+            any("minimum 8" in item and "cortinarius_orellanus" in item for item in report["ship_blockers"])
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            for name in ("splits.json", "dataset_manifest.json", "dedup_report.json", "attributions.dedup.jsonl"):
+                (directory / name).write_text("{}", encoding="utf-8")
+            with self.assertRaises(SystemExit) as raised:
+                write_prepare_outputs(
+                    directory,
+                    prepared=list(records),
+                    splits=splits,
+                    dropped=[],
+                    identity_dropped=[],
+                    skipped=[],
+                    withheld=[],
+                    train_only_dropped=dropped,
+                    salt=FIXTURE_SALT,
+                    share_config={"limit": COMPONENT_SHARE_LIMIT, "acknowledgements": {}},
+                    model_png_size=224,
+                )
+            self.assertIn("No split files were written", str(raised.exception))
+            self.assertIn("cortinarius_orellanus", str(raised.exception))
+            self.assertFalse((directory / "splits.json").exists())
+
+    def test_commons_expert_described_is_not_train_only(self):
+        records = _singletons(
+            "boletus_edulis",
+            80,
+            "expert",
+            source="commons_expert_described",
+            id_confidence="commons_expert_described",
+        )
+        splits, dropped = _split(records)
+        self.assertEqual(dropped, [])
+        self.assertGreater(len(splits["val"]), 0)
+        self.assertGreater(len(splits["test"]), 0)
+        for name in ("val", "test"):
+            for row in splits[name]:
+                self.assertEqual(row["source"], "commons_expert_described")
+                self.assertEqual(row["id_confidence"], "commons_expert_described")
+                self.assertFalse(row.get("train_only_reason"))
+        self.assertFalse(any(row.get("train_only_reason") for rows in splits.values() for row in rows))
+        self._assert_linking_keys_once(splits)
+        self._assert_no_train_only_held_out(splits)
 
     def test_an_ordinary_commons_file_is_not_train_only(self):
         records = _singletons("boletus_edulis", 80, "solo", source="commons")
