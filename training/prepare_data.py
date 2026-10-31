@@ -11,7 +11,10 @@ source_url stay out of test. A match that still lands in test stops the run.
     python training/prepare_data.py --gallery-csv /path/galeria/manifest_gallery.csv
 
 Reads ``attributions.jsonl``. ``external.jsonl`` is read only with
-``--with-external``. Unverified rows are skipped. ``--publishable-only``
+``--with-external``. Unverified rows are skipped. A row whose
+``identificationVerificationStatus`` is explicitly ``unverified`` is skipped
+again here, even when fetch or the CSV import already dropped it. A missing
+status is kept and is not marked verified. ``--publishable-only``
 also skips ``usage=training_only`` (CC BY-NC, CC BY-SA, and Danish Fungi 2020).
 Without that flag CC BY-NC and CC BY-SA stay in the training set. Danish
 Fungi 2020 stays out unless ``--include-df20`` is also set; those rows are
@@ -47,6 +50,7 @@ from gallery_exclusion import (
     record_matches_gallery,
 )
 from import_external import training_eligible
+from licenses import explicit_unverified_identification
 from manifest import ROOT, load_manifest
 from preprocess import MODEL_INPUT_SIZE, ImageReadError, load_oriented_rgb, write_model_png
 from split import split_by_observation, split_key_summary
@@ -193,6 +197,9 @@ def _usable_records_one(
         if not line.strip():
             continue
         row = json.loads(line)
+        if explicit_unverified_identification(row.get("identificationVerificationStatus")):
+            skipped.append({**row, "skip_reason": "identification_unverified"})
+            continue
         if not include_df20 and is_df20_row(row):
             skipped.append({**row, "skip_reason": "df20_opt_out"})
             continue
@@ -335,6 +342,23 @@ def main(argv: list[str] | None = None) -> None:
     print(json.dumps({name: len(rows) for name, rows in splits.items()}))
 
 
+def _skipped_per_class(skipped: list) -> dict[str, dict[str, int]]:
+    """Skip reasons per class. Explicit unverified identifications are one reason."""
+    counts: dict[str, Counter[str]] = {}
+    for row in skipped:
+        if not isinstance(row, dict):
+            continue
+        reason = row.get("skip_reason")
+        if not isinstance(reason, str) or not reason:
+            continue
+        class_id = str(row.get("class_id") or "")
+        counts.setdefault(class_id, Counter())[reason] += 1
+    return {
+        class_id: {reason: counts[class_id][reason] for reason in sorted(counts[class_id])}
+        for class_id in sorted(counts)
+    }
+
+
 def write_prepare_outputs(
     directory: Path,
     *,
@@ -403,6 +427,7 @@ def write_prepare_outputs(
                 "class_conflicts": class_conflicts,
                 "held_out_withheld": len(withheld),
                 "skipped_corrupt_or_unreadable": len(skipped),
+                "skipped_per_class": _skipped_per_class(skipped),
                 "excluded_df20": sum(
                     1 for row in skipped if isinstance(row, dict) and row.get("skip_reason") == "df20_opt_out"
                 ),

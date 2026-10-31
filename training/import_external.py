@@ -30,7 +30,11 @@ credit. ``is_publishable`` is the check for the atlas gallery, ``site/``,
 and comparison photos. CC BY-NC, CC BY-SA, and DF20 fail it.
 
 ``_niezweryfikowane`` files set ``unverified``. ``prepare_data.py`` skips
-those rows, so they are not mixed into train, val, or test.
+those rows, so they are not mixed into train, val, or test. An explicit
+``identificationVerificationStatus`` of ``unverified`` drops the row. For
+``gbif_no_status`` and ``gbif_not_validated`` that column decides:
+``gbif_not_validated`` with no status stays unverified, and any other
+non-empty status is kept. ``gbif_no_status`` with no status is kept.
 
 ``--max-per-collector`` limits how many photos one observer or author can
 contribute to one class. Observation and photo ids are kept so a later
@@ -50,6 +54,7 @@ from urllib.parse import urlsplit, urlunsplit
 
 from license_policy import EXACT_LICENSE_USAGE as _EXACT_LICENSE_USAGE
 from license_policy import exact_license_usage, training_license_rank
+from licenses import explicit_unverified_identification
 from manifest import ROOT, load_manifest
 from url_safety import force_https_url
 
@@ -99,6 +104,10 @@ _KNOWN_TOKENS = {"by", "nc", "nd", "sa", "zero", "public", "domain", "publicdoma
 _GBIF_OCCURRENCE = re.compile(r"gbif\.org/occurrence/(\d+)", re.IGNORECASE)
 _INAT_OBSERVATION = re.compile(r"inaturalist\.org/observations/(\d+)", re.IGNORECASE)
 _INAT_PHOTO = re.compile(r"/photos/(\d+)", re.IGNORECASE)
+# commons_category stays unverified regardless of a status column.
+# gbif_not_validated is unverified only when that column is missing or blank.
+# gbif_no_status is not unverified by itself.
+_GBIF_STATUS_CONFIDENCE = frozenset({"gbif_no_status", "gbif_not_validated"})
 _UNVERIFIED_CONFIDENCE = {"gbif_not_validated", "commons_category"}
 _PHOTO_FIELDS = (
     "species",
@@ -574,6 +583,18 @@ def _located(value: str) -> str:
     return " ".join(value.split())
 
 
+def _gbif_confidence_decision(confidence: str, status: str) -> tuple[bool, str]:
+    """Unverified flag and per-class outcome for a GBIF-origin confidence value.
+
+    The status column decides. No status on ``gbif_not_validated`` stays the
+    old rejection. No status on ``gbif_no_status`` is kept. An explicit
+    unverified status is not handled here; the caller drops that row.
+    """
+    if confidence == "gbif_not_validated" and not status:
+        return True, "gbif_not_validated"
+    return False, "kept"
+
+
 def _row_from_photo(
     raw: dict,
     *,
@@ -581,28 +602,39 @@ def _row_from_photo(
     order: int,
     index: dict[str, dict],
     unverified_file: bool,
-) -> tuple[dict | None, str]:
+) -> tuple[dict | None, str, str]:
     species = _cell(raw, "species")
     target = resolve_species(species, index) if species else None
     if target is None:
-        return None, "unmapped"
+        return None, "unmapped", ""
     license_text = _cell(raw, "license")
     license_url = _cell(raw, "license_url")
     decision, reason = photo_license_decision(license_text, license_url)
     if decision is None:
-        return None, reason
+        return None, reason, ""
     author = _located(_cell(raw, "author"))
     if not author:
-        return None, "author"
+        return None, "author", ""
     image_url = force_https_url(_cell(raw, "image_url"))
     if urlsplit(image_url).scheme != "https":
-        return None, "url"
+        return None, "url", ""
     source_url = force_https_url(_cell(raw, "source_url"))
     if source_url and urlsplit(source_url).scheme != "https":
-        return None, "url"
+        return None, "url", ""
     stored_license_url = license_url
     confidence = _cell(raw, "id_confidence")
-    unverified = unverified_file or confidence in _UNVERIFIED_CONFIDENCE
+    status = _cell(raw, "identificationVerificationStatus")
+    class_id = str(target["class_id"])
+    if explicit_unverified_identification(status):
+        return None, "identification_unverified", class_id
+    verification = ""
+    if confidence in _GBIF_STATUS_CONFIDENCE:
+        confidence_unverified, verification = _gbif_confidence_decision(confidence, status)
+    else:
+        confidence_unverified = confidence in _UNVERIFIED_CONFIDENCE
+    unverified = unverified_file or confidence_unverified
+    if verification == "kept" and unverified:
+        verification = ""
     ids = _blank_ids()
     ids["inat_observer"] = _cell(raw, "inat_observer")
     ids["inat_photo_id"] = _cell(raw, "inat_photo_id")
@@ -633,6 +665,7 @@ def _row_from_photo(
         "usage": decision["usage"],
         "unverified": unverified,
         "id_confidence": confidence,
+        "identificationVerificationStatus": status,
         "recorded_by": recorded_by,
         "collector_key": _collector_key(ids["inat_observer"], author),
         "occurrence_key": occurrence_key,
@@ -646,21 +679,26 @@ def _row_from_photo(
         "_order": order,
         "_image_key": image_key,
     }
+    if verification:
+        row["_verification"] = verification
     row.update(ids)
-    return row, ""
+    return row, "", ""
 
 
-def _row_from_df20(raw: dict, *, order: int, index: dict[str, dict]) -> tuple[dict | None, str]:
+def _row_from_df20(raw: dict, *, order: int, index: dict[str, dict]) -> tuple[dict | None, str, str]:
     species = _cell(raw, "species") or _cell(raw, "df20_name_used")
     target = resolve_species(species, index) if species else None
     if target is None:
         used = _cell(raw, "df20_name_used")
         target = resolve_species(used, index) if used and used != species else None
     if target is None:
-        return None, "unmapped"
+        return None, "unmapped", ""
     author = _located(_cell(raw, "photographer_rightsHolder") or _cell(raw, "author"))
     if not author:
-        return None, "author"
+        return None, "author", ""
+    status = _cell(raw, "identificationVerificationStatus")
+    if explicit_unverified_identification(status):
+        return None, "identification_unverified", str(target["class_id"])
     note = _cell(raw, "licence_note") or "DF20 training-only; no per-image licence"
     ids = _blank_ids()
     ids["df20_observation_id"] = _cell(raw, "observationID")
@@ -703,8 +741,10 @@ def _row_from_df20(raw: dict, *, order: int, index: dict[str, dict]) -> tuple[di
         "_order": order,
         "_image_key": "",
     }
+    if status:
+        row["identificationVerificationStatus"] = status
     row.update(ids)
-    return row, ""
+    return row, "", ""
 
 
 def _identity(row: dict) -> str:
@@ -993,6 +1033,7 @@ def import_directory(
     photos, metas = _photo_files(root)
     rows: list[dict] = []
     rejected = Counter()
+    verification: dict[str, Counter[str]] = {}
     unmapped: Counter[str] = Counter()
     poisoned: set[str] = set()
     order = 0
@@ -1010,9 +1051,9 @@ def import_directory(
         for raw in table:
             order += 1
             if df20:
-                row, reason = _row_from_df20(raw, order=order, index=index)
+                row, reason, class_id = _row_from_df20(raw, order=order, index=index)
             else:
-                row, reason = _row_from_photo(
+                row, reason, class_id = _row_from_photo(
                     raw,
                     path=path,
                     order=order,
@@ -1021,11 +1062,16 @@ def import_directory(
                 )
             if row is None:
                 rejected[reason] += 1
+                if reason == "identification_unverified" and class_id:
+                    verification.setdefault(class_id, Counter())["identification_unverified"] += 1
                 if reason in _LICENSE_POISON_REASONS:
                     poisoned.update(_photo_keys_from_raw(raw))
                 if reason == "unmapped":
                     unmapped[_cell(raw, "species") or _cell(raw, "df20_name_used") or "(blank)"] += 1
                 continue
+            outcome = row.pop("_verification", "")
+            if outcome:
+                verification.setdefault(str(row.get("class_id") or ""), Counter())[str(outcome)] += 1
             rows.append(row)
     rows_read = order
     tainted = 0
@@ -1073,6 +1119,11 @@ def import_directory(
         "rejected_license_url_not_https": int(rejected["license_url_not_https"]),
         "rejected_license_url_mismatch": int(rejected["license_url_mismatch"]),
         "rejected_by_reason": {key: int(rejected[key]) for key in sorted(rejected)},
+        "verification_per_class": {
+            class_id: {name: int(bucket[name]) for name in sorted(bucket)}
+            for class_id, bucket in sorted(verification.items())
+            if class_id
+        },
         "dropped_by_reason": {
             "duplicate": duplicate_dropped,
             "looser_license": looser_dropped,

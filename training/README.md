@@ -6,7 +6,7 @@ No weights were trained for release in the change that updated this pipeline. Do
 
 ## License rules
 
-Photos are fetched from the GBIF occurrence API (`training/fetch_gbif.py`). A photo is kept only when **its own media license** normalizes to CC0 or CC-BY (any version). The occurrence-level license is not allowed to override the photo.
+Photos are fetched from the GBIF occurrence API (`training/fetch_gbif.py`). A photo is kept only when **its own media license** normalizes to CC0 or CC-BY (any version). The occurrence-level license is not allowed to override the photo. Each kept row copies `identificationVerificationStatus` and `basisOfRecord`. An explicit status of `unverified` (any letter case) is dropped. A missing status is kept and is not marked verified.
 
 Rejected on purpose:
 
@@ -30,7 +30,7 @@ The same photo id or the same observation id under two species drops every one o
 
 A Wikimedia Commons copy and an iNaturalist copy are the same photo only when the rows share an id (`inat_photo_id` on either row, including a Commons row, the Commons file name, or the same image URL). The importer does not read a Commons file description to recover an iNaturalist photo id. Follow-up: #73
 
-Files whose name contains `_niezweryfikowane` are `unverified: true`, and so are rows whose `id_confidence` is `gbif_not_validated` or `commons_category`. They stay in the jsonl so a later split can see them, and `prepare_data.py` does not put them in train, val, or test. `prepare_data.py` reads `external.jsonl` only with `--with-external`. That flag keeps CC BY-NC and CC BY-SA and leaves DF20 out unless `--include-df20` is also set. `--publishable-only` on prepare drops training-only rows before dedup.
+Files whose name contains `_niezweryfikowane` are `unverified: true`, and so are rows whose `id_confidence` is `commons_category`. `gbif_not_validated` is unverified only when `identificationVerificationStatus` is missing or blank. `gbif_no_status` is not unverified by itself. For both of those GBIF confidence values the status column decides, and only an explicit `unverified` value is rejected. `Approved | Expert | Evidence` and `Confident` stay. The import report counts those outcomes per class (`verification_per_class`). Rows that stay flagged unverified remain in the jsonl so a later split can see them, and `prepare_data.py` does not put them in train, val, or test. Prepare counts skipped rows per class, including `identification_unverified`. `prepare_data.py` reads `external.jsonl` only with `--with-external`. That flag keeps CC BY-NC and CC BY-SA and leaves DF20 out unless `--include-df20` is also set. `--publishable-only` on prepare drops training-only rows before dedup.
 
 `--max-per-collector` (default 30) caps photos of one iNaturalist observer, or of the author when that login is missing, inside one class. Whole observations are kept when they fit. Observer, author, observation id, and photo id are stored for the split (`inat_observer`, `recorded_by`, `inat_observation_id`, `inaturalist_observation_id`, `mo_observation_id`, `occurrence_key`). Image and source URLs are rewritten to https.
 

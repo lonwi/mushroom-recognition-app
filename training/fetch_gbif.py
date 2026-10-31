@@ -86,7 +86,7 @@ from datetime import timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 
-from licenses import normalize_cc_license
+from licenses import explicit_unverified_identification, normalize_cc_license
 from url_safety import UnsafeMediaUrl, force_https_url, listed_media_records, validate_media_url
 from manifest import CENTRAL_EUROPE, LABELS_PATH, ROOT, load_manifest
 from sampling import (
@@ -492,10 +492,19 @@ def _take_from_occurrence(
 
     Returns rows, the next media offset, the occurrence key when a photo
     remains, and ``full``, ``partial``, or ``skip``.
+
+    An explicit ``identificationVerificationStatus`` of unverified drops the
+    occurrence. A missing status is kept and is not marked verified.
+    ``basisOfRecord`` is copied onto every kept row.
     """
     key = record.get("key")
     if key in seen and key != partial_key:
         return [], 0, None, "skip"
+    if explicit_unverified_identification(record.get("identificationVerificationStatus")):
+        if key not in seen:
+            seen.add(key)
+            seen_list.append(key)
+        return [], 0, None, "full"
     licensed = listed_media_records(record)
     if not licensed or max_per_occurrence < 1 or room < 1:
         return [], 0, None, "skip"
@@ -509,8 +518,25 @@ def _take_from_occurrence(
         if key not in seen:
             seen.add(key)
             seen_list.append(key)
+        _stamp_occurrence_record(record, got)
         return got, 0, None, "full"
+    _stamp_occurrence_record(record, got)
     return got, consumed, key, "partial"
+
+
+def _copied_occurrence_text(value: object) -> str:
+    if isinstance(value, str):
+        return value.strip()
+    return ""
+
+
+def _stamp_occurrence_record(record: dict, rows: list[dict]) -> None:
+    """Copy GBIF identification fields. A blank status stays blank."""
+    status = _copied_occurrence_text(record.get("identificationVerificationStatus"))
+    basis = _copied_occurrence_text(record.get("basisOfRecord"))
+    for row in rows:
+        row["identificationVerificationStatus"] = status
+        row["basisOfRecord"] = basis
 
 
 def _fetch_licensed(
@@ -1714,7 +1740,12 @@ def _pool_from_cache_entry(item: dict) -> _Pool | None:
     rows = item.get("rows")
     if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
         return None
-    kept = [row for row in rows if _row_license_allowed(row)]
+    kept = [
+        row
+        for row in rows
+        if _row_license_allowed(row)
+        and not explicit_unverified_identification(row.get("identificationVerificationStatus"))
+    ]
     cursor = item.get("cursor") if isinstance(item.get("cursor"), dict) else None
     fetch = item.get("fetch") if isinstance(item.get("fetch"), dict) else None
     meta = item.get("meta") if isinstance(item.get("meta"), dict) else {}
