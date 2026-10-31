@@ -43,13 +43,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # pnpm.auditConfig.ignoreCves lists exactly the CVEs that still have no compatible fix.
-      # node-forge is overridden to 1.4.2 (expo>@expo/cli). That covers CVE-2026-85393 and the
-      # later high advisories patched in >=1.4.1. It is the Expo CLI, not the app runtime.
-      # eslint-plugin-react-hooks>zod is overridden to 4.6.7, which that plugin accepts.
-      # GHSA-mrhx-c7xc-m3w5 / CVE-2023-54404: zod via expo>@expo/cli. The published fix is zod >=4.6.6,
-      #   but @expo/cli declares zod ^3.25.76, so the override would leave the CLI's range.
-      #   Dev tooling only, not the app runtime.
+      # No published npm fix. pnpm.auditConfig.ignoreCves lists exactly these CVEs.
+      # GHSA-86w9-cpqp-85rv / CVE-2026-85393: node-forge via expo>@expo/cli, not the app runtime.
       # GHSA-vfj7-8cjw-p6xm / CVE-2026-93687: braces via jest-expo>micromatch and @expo/metro-file-map.
       # GHSA-hp3w-g68c-fv3c / CVE-2026-97058: sprintf-js via jest>argparse
       #   (used by the Jest CLI, not the app runtime).

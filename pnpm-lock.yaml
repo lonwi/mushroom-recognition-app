@@ -10,8 +10,6 @@ overrides:
   xcode>uuid: 11.1.1
   '@storybook/addon-actions>uuid': 11.1.1
   handlebars: 4.7.10
-  node-forge: 1.4.2
-  eslint-plugin-react-hooks>zod: 4.6.7
 
 importers:
 
@@ -4162,8 +4160,8 @@ packages:
       encoding:
         optional: true
 
-  node-forge@1.4.2:
-    resolution: {integrity: sha512-rRtAR5XLJ8gCKd9du4qrKAsgCG1ObGP4gLeNJMa4vYSeq4bmBMOJk5IHkrviBV0q7uoAJlVd8HEQYQSVUb4FGQ==}
+  node-forge@1.4.0:
+    resolution: {integrity: sha512-LarFH0+6VfriEhqMMcLX2F7SwSXeWwnEAJEsYm5QKWchiVYVvJyV9v7UDvUv+w5HO23ZpQTXDv/GxdDdMyOuoQ==}
     engines: {node: '>= 6.13.0'}
 
   node-int64@0.4.0:
@@ -6204,7 +6202,7 @@ snapshots:
       glob: 13.0.6
       lan-network: 0.2.1
       multitars: 1.0.2
-      node-forge: 1.4.2
+      node-forge: 1.4.0
       npm-package-arg: 11.0.3
       ora: 3.4.0
       picomatch: 4.0.7
@@ -6240,7 +6238,7 @@ snapshots:
 
   '@expo/code-signing-certificates@0.0.6':
     dependencies:
-      node-forge: 1.4.2
+      node-forge: 1.4.0
 
   '@expo/config-plugins@57.0.9(typescript@5.8.3)':
     dependencies:
@@ -8452,8 +8450,8 @@ snapshots:
       '@babel/parser': 7.29.9
       eslint: 9.39.5(jiti@2.7.0)
       hermes-parser: 0.25.1
-      zod: 4.6.7
-      zod-validation-error: 4.0.2(zod@4.6.7)
+      zod: 3.25.76
+      zod-validation-error: 4.0.2(zod@3.25.76)
     transitivePeerDependencies:
       - supports-color
 
@@ -10168,7 +10166,7 @@ snapshots:
     dependencies:
       whatwg-url: 5.0.0
 
-  node-forge@1.4.2: {}
+  node-forge@1.4.0: {}
 
   node-int64@0.4.0: {}
 
@@ -11292,9 +11290,9 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  zod-validation-error@4.0.2(zod@4.6.7):
+  zod-validation-error@4.0.2(zod@3.25.76):
     dependencies:
-      zod: 4.6.7
+      zod: 3.25.76
 
   zod@3.25.76: {}
 
