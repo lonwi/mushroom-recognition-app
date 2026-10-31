@@ -482,6 +482,31 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.locator('body')).not.toContainText('bezpodstawny');
   });
 
+  test('Screen error fallback keeps the retry control and the safety-tab hint', async ({ page }) => {
+    await page.goto('/iframe.html?id=mushroom-screenerrorboundary--render-error');
+    await expect(page.getByTestId('screen-error-fallback')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Spróbuj ponownie' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Coś poszło nie tak' })).toBeVisible();
+    await expect(page.getByTestId('screen-error-body')).toContainText('Pomoc');
+    const light = await page.getByTestId('screen-error-fallback').evaluate((el) => {
+      const style = getComputedStyle(el);
+      return { background: style.backgroundColor, borderLeft: style.borderLeftWidth };
+    });
+    const radius = await page.getByTestId('screen-error-retry').evaluate((el) => getComputedStyle(el).borderRadius);
+    expect(light.background).toBe('rgb(248, 250, 252)');
+    expect(light.borderLeft).toBe('0px');
+    expect(radius).toBe('4px');
+
+    await page.goto('/iframe.html?id=mushroom-screenerrorboundary--render-error-dark');
+    const dark = await page.getByTestId('screen-error-fallback').evaluate((el) => {
+      const style = getComputedStyle(el);
+      return { background: style.backgroundColor, borderLeft: style.borderLeftWidth };
+    });
+    expect(dark.background).toBe('rgb(15, 23, 42)');
+    expect(dark.borderLeft).toBe('0px');
+    await expect(page.getByTestId('screen-error-body')).toContainText('Pomoc');
+  });
+
   test('PreparationGuide renders cleaning, cooking, and storing categories', async ({ page }) => {
     await page.goto('/iframe.html?id=mushroom-preparationguidescreen--default-view');
     await expect(page.locator('body')).toContainText('Poradnik Przygotowania');

@@ -688,6 +688,12 @@ export const pl = {
       },
     },
   },
+  // Projekt do zatwierdzenia przez Wojtka. {tab} = nav.safety, bez wpisanej nazwy karty.
+  screenError: {
+    title: 'Coś poszło nie tak',
+    body: 'Nie udało się wyświetlić tego ekranu. Spróbuj ponownie albo wybierz inną kartę. Telefony alarmowe są w karcie {tab}.',
+    retry: 'Spróbuj ponownie',
+  },
 };
 
 export type Translations = typeof pl;
