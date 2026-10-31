@@ -34,6 +34,8 @@ Wcześniejsze 30 na autora było ustawieniem Zbierania, a nie decyzją. Obowiąz
 
 Skutki: większość klas schodzi poniżej udziału komponentu 0.20, a `cortinarius_orellanus` mocno się zmniejsza. Pytanie o minimum w [#78](https://github.com/lonwi/mushroom-recognition-app/pull/78) zostaje otwarte. Wartość `COMPONENT_SHARE_LIMIT` nadal opisuje [0001](0001-udzial-zbieracza.md).
 
+Wiersze z `id_confidence` = `commons_category` opisuje [0020](0020-commons-category.md): tylko trening, nigdy test ani walidacja.
+
 ## Data
 
 2026-10-23, 16:55 czasu polskiego.
