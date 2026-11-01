@@ -49,19 +49,19 @@ mushroom-recognition-app/
 ├── src/
 │   ├── components/          # Reusable UI components
 │   ├── contexts/            # React contexts (LanguageContext, …)
-│   ├── data/                # Static offline datasets (mushrooms.ts, preparationRules.ts, safetyRules.ts, FILTRY.md)
+│   ├── data/                # Species catalog (speciesCatalog.ts, sync access over the offline loader), Static offline datasets (mushrooms.ts, preparationRules.ts, safetyRules.ts, FILTRY.md)
 │   ├── hooks/               # React hooks
 │   ├── i18n/                # pl.ts, en.ts
 │   ├── navigation/          # App navigation
 │   ├── presentation/        # Presentation helpers for screens
 │   ├── screens/             # App tabs and views (Scanner, Atlas, SpeciesDetail, Journal, SafetyGuide, …)
 │   ├── services/            # Recognition (classifierService, recognitionDecision, tfliteRuntime,
-│   │   │                    #   imagePreprocess, modelPackage, modelManifest), journal, attribution
+│   │   │                    #   imagePreprocess, modelPackage, modelManifest), species dataset loader (speciesData.ts, speciesManifest.ts), journal, attribution
 │   │   └── storage/         # Storage adapters: keyValueStore, settingsStore, journalRepository,
 │   │                        #   journalSchema, journalBackupStore, keys
 │   ├── stories/             # Storybook stories
 │   ├── theme/               # tokens.ts (design tokens), paperTheme.ts (MD3 theme built from tokens)
-│   ├── types/               # TypeScript models
+│   ├── types/               # TypeScript models (speciesData.ts)
 │   ├── utils/               # Small shared utilities
 │   └── __tests__/           # Jest & RNTL tests
 ├── training/                # Python pipeline: fetch_gbif, licenses, dedup, split, train, evaluate,
