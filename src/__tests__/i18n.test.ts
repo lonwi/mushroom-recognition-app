@@ -156,6 +156,12 @@ describe('Polish and English dictionaries', () => {
     expect(en.cards.underside).toBe('Underside ({type})');
     expect(en.nav.atlas).toBe('Atlas');
     expect(en.atlas.hymenophoreOther).toBe('Other underside');
+    expect(pl.atlas.unverifiedBody).toBe(
+      'Gatunki z tej sekcji nie pasują do wszystkich wybranych cech albo brakuje dla nich danych. Są tu też gatunki trujące i śmiertelnie trujące, których nie da się wykluczyć na podstawie tych cech, bo pochwa, pierścień, kolor czy rozmiar mogą być u okazu niewidoczne albo inne niż w opisie.',
+    );
+    expect(en.atlas.unverifiedBody).toBe(
+      'Species in this section do not match all selected features, or data for them is missing. This includes poisonous and deadly species that cannot be ruled out by these features, because a volva, ring, colour or size may be missing from a specimen or differ from the description.',
+    );
     expect(pl.atlas.filters.unverified).toBe('Do weryfikacji');
     expect(pl.atlas.filters.open).toBe('Filtry ({count})');
     expect(pl.atlas.filters.clear).toBe('Wyczyść');

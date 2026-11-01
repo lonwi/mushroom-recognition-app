@@ -832,6 +832,113 @@
       "inaturalist_observation_id": "191268109",
       "mo_observation_id": null,
       "source_url": "https://www.inaturalist.org/observations/191268109"
+    },
+    {
+      "species_id": "hypholoma_fasciculare",
+      "image_url": "https://www.inaturalist.org/photos/57083848",
+      "inaturalist_observation_id": "36134920",
+      "mo_observation_id": null,
+      "source_url": "https://www.inaturalist.org/photos/57083848"
+    },
+    {
+      "species_id": "hypholoma_fasciculare",
+      "image_url": "https://www.inaturalist.org/photos/585781642",
+      "inaturalist_observation_id": "323712901",
+      "mo_observation_id": null,
+      "source_url": "https://www.inaturalist.org/photos/585781642"
+    },
+    {
+      "species_id": "hypholoma_fasciculare",
+      "image_url": "https://www.inaturalist.org/photos/334051112",
+      "inaturalist_observation_id": "190539437",
+      "mo_observation_id": null,
+      "source_url": "https://www.inaturalist.org/photos/334051112"
+    },
+    {
+      "species_id": "hypholoma_fasciculare",
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/f/f5/Hypholoma_fasciculare_313452639.jpg",
+      "inaturalist_photo_url": "https://www.inaturalist.org/photos/313452639",
+      "inaturalist_observation_id": "179992253",
+      "mo_observation_id": null,
+      "source_url": "https://www.inaturalist.org/photos/313452639"
+    },
+    {
+      "species_id": "hypholoma_fasciculare",
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/d/d3/Hypholoma_fasciculare_101886055.jpg",
+      "inaturalist_photo_url": "https://www.inaturalist.org/photos/101886055",
+      "inaturalist_observation_id": "63498273",
+      "mo_observation_id": null,
+      "source_url": "https://www.inaturalist.org/photos/101886055"
+    },
+    {
+      "species_id": "armillaria_mellea",
+      "image_url": "https://www.inaturalist.org/photos/334304961",
+      "inaturalist_observation_id": "190671820",
+      "mo_observation_id": null,
+      "source_url": "https://www.inaturalist.org/photos/334304961"
+    },
+    {
+      "species_id": "armillaria_mellea",
+      "image_url": "https://www.inaturalist.org/photos/237957448",
+      "inaturalist_observation_id": "139156344",
+      "mo_observation_id": null,
+      "source_url": "https://www.inaturalist.org/photos/237957448"
+    },
+    {
+      "species_id": "armillaria_mellea",
+      "image_url": "https://www.inaturalist.org/photos/54007942",
+      "inaturalist_observation_id": "34326887",
+      "mo_observation_id": null,
+      "source_url": "https://www.inaturalist.org/photos/54007942"
+    },
+    {
+      "species_id": "armillaria_mellea",
+      "image_url": "https://www.inaturalist.org/photos/54007897",
+      "inaturalist_observation_id": "34326887",
+      "mo_observation_id": null,
+      "source_url": "https://www.inaturalist.org/photos/54007897"
+    },
+    {
+      "species_id": "galerina_marginata",
+      "image_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/481995011/original.jpg",
+      "inaturalist_observation_id": "268164012",
+      "mo_observation_id": null,
+      "source_url": "https://www.inaturalist.org/photos/481995011"
+    },
+    {
+      "species_id": "galerina_marginata",
+      "image_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/29910624/original.jpg",
+      "inaturalist_observation_id": "19442400",
+      "mo_observation_id": null,
+      "source_url": "https://www.inaturalist.org/photos/29910624"
+    },
+    {
+      "species_id": "galerina_marginata",
+      "image_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/342884222/original.jpg",
+      "inaturalist_observation_id": "194976255",
+      "mo_observation_id": null,
+      "source_url": "https://www.inaturalist.org/photos/342884222"
+    },
+    {
+      "species_id": "galerina_marginata",
+      "image_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/61730025/original.jpeg",
+      "inaturalist_observation_id": "38807007",
+      "mo_observation_id": null,
+      "source_url": "https://www.inaturalist.org/photos/61730025"
+    },
+    {
+      "species_id": "galerina_marginata",
+      "image_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/170500861/original.jpeg",
+      "inaturalist_observation_id": "102041261",
+      "mo_observation_id": null,
+      "source_url": "https://www.inaturalist.org/photos/170500861"
+    },
+    {
+      "species_id": "galerina_marginata",
+      "image_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/331784845/original.jpg",
+      "inaturalist_observation_id": "189400216",
+      "mo_observation_id": null,
+      "source_url": "https://www.inaturalist.org/photos/331784845"
     }
   ]
 }

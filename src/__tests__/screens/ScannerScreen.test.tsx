@@ -3,6 +3,7 @@ import { Alert, Platform } from 'react-native';
 import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { ScannerScreen } from '../../screens/ScannerScreen';
+import { resetInferenceTimingForTests } from '../../services/inferenceTiming';
 import { classifierService } from '../../services/classifierService';
 import { SKIP_PROCESSING_CAPTURE } from '../../services/photoPixels';
 import { pl } from '../../i18n/pl';
@@ -61,6 +62,7 @@ describe('ScannerScreen does not invent a recognition result', () => {
   let classifySpy: jest.SpyInstance;
 
   beforeEach(() => {
+    resetInferenceTimingForTests();
     cameraMock.__permission.current = { granted: true };
     takePictureAsync.mockReset();
     (ImagePicker.launchImageLibraryAsync as jest.Mock).mockReset();
@@ -292,6 +294,7 @@ describe('ScannerScreen shows the real model outcome', () => {
   let classifySpy: jest.SpyInstance;
 
   beforeEach(() => {
+    resetInferenceTimingForTests();
     cameraMock.__permission.current = { granted: true };
     takePictureAsync.mockReset();
     takePictureAsync.mockResolvedValue({ uri: 'file://camera/real-capture.jpg' });
