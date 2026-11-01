@@ -133,3 +133,35 @@ python -m unittest discover -s training/tests -v   # when touching training/
 ```
 
 Then open a PR. CI must be green and the PR gets a review. Who merges is described in `docs/QUALITY.md` → "PR process"; safety content always needs the owner's word. Never loosen a quality gate to make CI pass – see "What must not be loosened" in `docs/QUALITY.md`.
+
+## 🌿 Git Workflow & Pull Request Protocol
+
+For any new task, feature request, bug fix, or refactoring, follow this procedure:
+
+1. **Branch Initialization (Before modifying any files):**
+   - Verify repo state: `git status`.
+   - Update main branch: `git checkout main && git pull`.
+   - Create and switch to a descriptive branch:
+     - Features: `git checkout -b feat/<short-description>`
+     - Fixes: `git checkout -b fix/<short-description>`
+   - *Never commit directly to `main` or `master`.*
+
+2. **Implementation & Verification:**
+   - Implement changes cleanly with TypeScript and React Native best practices.
+   - Install with `pnpm install --frozen-lockfile`, then run everything CI runs:
+     - Type check: `pnpm typecheck`
+     - Tests: `pnpm test`
+     - Quality gates: `pnpm quality` (lint, jscpd duplication, knip, dependency-cruiser)
+     - E2E: `pnpm build-storybook && pnpm test:e2e`
+     - Python: `python -m unittest discover -s training/tests -v` when `training/` is changed.
+   - Read failures and fix the cause; do not silence them or loosen a gate.
+
+3. **Commit & Push:**
+   - Stage modified files: `git add <files>`.
+   - Use Conventional Commits in English: `git commit -m "feat(<scope>): <concise message>"`.
+   - Push branch upstream: `git push -u origin <branch-name>`.
+
+4. **Pull Request Automation:**
+   - Create PR using GitHub CLI:
+     `gh pr create --title "feat(<scope>): <summary>" --body "## Summary\n<1-2 sentence overview>\n\n## Changes\n- <bullet points>\n\n## Testing\n- Verified on iOS/Android emulator"`
+   - Output the generated PR URL directly to the user.
