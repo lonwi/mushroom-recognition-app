@@ -1,12 +1,10 @@
 import React from 'react';
 import {
-  Alert,
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Linking,
 } from 'react-native';
 import {
   EMERGENCY_CALLS,
@@ -19,6 +17,7 @@ import {
   toTelUrl,
 } from '../data/safetyRules';
 import { useLanguage } from '../contexts/LanguageContext';
+import { placeEmergencyCall } from '../components/placeEmergencyCall';
 import { colors } from '../theme/tokens';
 import { ScreenFrame } from '../components/ScreenFrame';
 
@@ -40,18 +39,11 @@ export const SafetyGuideScreen = ({ onShowDisclaimer, onOpenPreparation }: Props
     const key = HOURS_LABEL_KEYS[hours];
     return key ? t(key) : hours;
   };
-  const handleCall = async (phone: string) => {
-    const url = toTelUrl(phone);
-    if (!url) {
-      Alert.alert(t('safetyGuide.callNotSupportedTitle'), t('safetyGuide.callNotSupportedBody'));
-      return;
-    }
-    const supported = await Linking.canOpenURL(url);
-    if (supported) {
-      await Linking.openURL(url);
-    } else {
-      Alert.alert(t('safetyGuide.callNotSupportedTitle'), t('safetyGuide.callNotSupportedBody'));
-    }
+  const handleCall = (phone: string) => {
+    void placeEmergencyCall(phone, {
+      title: t('safetyGuide.callNotSupportedTitle'),
+      body: t('safetyGuide.callNotSupportedBody'),
+    });
   };
 
   return (
