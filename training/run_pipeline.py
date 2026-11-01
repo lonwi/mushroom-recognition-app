@@ -25,15 +25,17 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Open-license mushroom recognition pipeline")
     parser.add_argument(
         "stage",
-        choices=("fetch", "prepare", "train", "evaluate", "export", "all"),
+        choices=("fetch", "import-external", "prepare", "train", "evaluate", "export", "all"),
     )
     parser.add_argument("rest", nargs=argparse.REMAINDER)
     args = parser.parse_args()
     extra = [item for item in args.rest if item != "--"]
     if args.stage in ("fetch", "all"):
         run("fetch_gbif.py", extra if args.stage == "fetch" else [])
+    if args.stage == "import-external":
+        run("import_external.py", extra)
     if args.stage in ("prepare", "all"):
-        run("prepare_data.py", [])
+        run("prepare_data.py", extra if args.stage == "prepare" else [])
     if args.stage in ("train", "all"):
         run("train.py", extra if args.stage == "train" else [])
     if args.stage in ("evaluate", "all"):

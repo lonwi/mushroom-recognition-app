@@ -98,17 +98,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: ESLint
-        run: pnpm lint
-
-      - name: Copy-paste detection
-        run: pnpm duplication
-
-      - name: Unused files, exports, and dependencies
-        run: pnpm knip
-
-      - name: Dependency rules
-        run: pnpm depcruise
+      # lint, duplication, knip, depcruise, and check:site. Same command as release.
+      - name: Quality
+        run: pnpm quality
 
   python:
     runs-on: ubuntu-24.04

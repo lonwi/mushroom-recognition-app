@@ -25,7 +25,16 @@ const preview: Preview = {
     (Story) => (
       <LanguageProvider>
         <PaperProvider theme={paperTheme}>
-          <div style={{ padding: 20, maxWidth: 600, margin: '0 auto', fontFamily: 'sans-serif' }}>
+          <div
+            style={{
+              boxSizing: 'border-box',
+              width: '100%',
+              maxWidth: 600,
+              padding: 20,
+              margin: '0 auto',
+              fontFamily: 'sans-serif',
+            }}
+          >
             <Story />
           </div>
         </PaperProvider>

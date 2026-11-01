@@ -1,5 +1,11 @@
 import type { EdibilityStatus, MushroomSpecies } from '../types/mushroom';
+import {
+  FEATURE_KEYS,
+  structureProblem,
+  type AtlasFeatureFields,
+} from './atlasFeatureVocab';
 import table from './atlasFilterFacts.json';
+import { POISONOUS_MISS_ALLOWLIST } from './poisonousMissAllowlist';
 
 type SpeciesId = MushroomSpecies['id'];
 
@@ -20,7 +26,7 @@ type FilterFieldValue = FilterScalar | readonly FilterScalar[] | null;
  * Morphological facts only. `status` and `propozycja` are not fields:
  * a second copy of either key fails the assignment below.
  */
-export interface StructureFacts {
+export interface StructureFacts extends AtlasFeatureFields {
   psychoactive: boolean;
   hymenophore: FilterFieldValue;
   sporePrint: FilterFieldValue;
@@ -35,7 +41,7 @@ type _FactsExcludeStatusAndProposal = Assert<
   [ForbiddenFactKey] extends [Exclude<ForbiddenFactKey, keyof StructureFacts>] ? true : never
 >;
 
-interface ImportedFact {
+interface ImportedFact extends AtlasFeatureFields {
   psychoactive: boolean;
   hymenophore: string | null;
   sporePrint: string | readonly string[] | null;
@@ -43,8 +49,6 @@ interface ImportedFact {
   volva: string | readonly string[] | null;
   protection: string | null;
 }
-
-type FilterableField = 'hymenophore' | 'sporePrint' | 'ring' | 'volva' | 'protection';
 
 type FactsLookup = (speciesId: string) => StructureFacts | undefined;
 
@@ -54,6 +58,9 @@ interface FilterChip {
   predicate: (species: MushroomSpecies, facts: FactsLookup) => boolean;
   /** A non-match that stays visible under "Do weryfikacji". */
   hold?: (species: MushroomSpecies) => boolean;
+  /** Fact key this chip reads. Kind chips leave it unset. */
+  field?: string;
+  accepted?: readonly FilterScalar[];
 }
 
 interface FilterGroup {
@@ -87,9 +94,18 @@ interface ChipSpec {
   accepted: readonly FilterScalar[];
 }
 
+/** Copies known feature keys only. A spread would let `status` or `propozycja` through. */
+function copyFeatures(raw: AtlasFeatureFields, facts: StructureFacts): void {
+  for (const key of FEATURE_KEYS) {
+    if (raw[key] !== undefined) {
+      Object.assign(facts, { [key]: raw[key] });
+    }
+  }
+}
+
 /** Copies only structure fields. A spread would let `status` or `propozycja` through. */
 function structureFacts(raw: ImportedFact): StructureFacts {
-  return {
+  const facts: StructureFacts = {
     psychoactive: raw.psychoactive,
     hymenophore: raw.hymenophore,
     sporePrint: raw.sporePrint,
@@ -97,6 +113,8 @@ function structureFacts(raw: ImportedFact): StructureFacts {
     volva: raw.volva,
     protection: raw.protection,
   };
+  copyFeatures(raw, facts);
+  return facts;
 }
 
 /** `true` stops compiling if StructureFacts grows status, propozycja, or rodzaj. */
@@ -108,7 +126,12 @@ function loadFacts(
   const facts: Record<SpeciesId, StructureFacts> = {};
   if (!FACT_SHAPE_OK) return facts;
   for (const id of Object.keys(source)) {
-    facts[id] = structureFacts(source[id]);
+    const row = structureFacts(source[id]);
+    const problem = structureProblem(row);
+    if (problem) {
+      throw new Error(`Invalid atlas fact ${id}.${problem}`);
+    }
+    facts[id] = row;
   }
   return facts;
 }
@@ -127,9 +150,9 @@ function unfinishedEdible(species: MushroomSpecies): boolean {
   return species.status === 'EDIBLE' && species.incompleteCard === true;
 }
 
-function readField(facts: StructureFacts | undefined, field: FilterableField): FilterFieldValue | null {
+function readField(facts: StructureFacts | undefined, field: string): FilterFieldValue | null {
   if (!facts) return null;
-  return facts[field];
+  return readTraitValue(facts, field);
 }
 
 function isPresent(value: FilterFieldValue | null): boolean {
@@ -145,10 +168,12 @@ function valueMatches(value: FilterFieldValue | null, accepted: readonly FilterS
   return values.some((item) => accepted.some((candidate) => candidate === item));
 }
 
-function fieldChips(groupId: string, field: FilterableField, specs: readonly ChipSpec[]): FilterChip[] {
+function fieldChips(groupId: string, field: string, specs: readonly ChipSpec[]): FilterChip[] {
   return specs.map((spec) => ({
     id: `${groupId}-${spec.id}`,
     label: spec.label,
+    field,
+    accepted: spec.accepted,
     predicate: (species, facts) => valueMatches(readField(facts(species.id), field), spec.accepted),
   }));
 }
@@ -156,7 +181,7 @@ function fieldChips(groupId: string, field: FilterableField, specs: readonly Chi
 function fieldGroup(
   id: string,
   label: string,
-  field: FilterableField,
+  field: string,
   specs: readonly ChipSpec[],
 ): FilterGroup {
   return {
@@ -180,6 +205,22 @@ const SPORE_CHIPS: readonly ChipSpec[] = [
   ['fioletowoczarny', 'atlas.filters.sporePurpleBlack'],
   ['czarnobrazowy', 'atlas.filters.sporeBlackBrown'],
 ].map(([id, label]) => ({ id, label, accepted: [id] }));
+
+const HYMENOPHORE = 'hymenophore';
+const RING = 'ring';
+const VOLVA = 'volva';
+const BRAK = 'brak';
+const BULWA = 'bulwa';
+const POCHWA = 'pochwa';
+
+/**
+ * Defined contradictions that may remove a poisonous species from both sections.
+ * Every other field, including spore print and any field added later, holds.
+ * A null or missing value on one of these fields holds too.
+ */
+export const STABLE_TRAITS = [HYMENOPHORE] as const;
+
+const STABLE_TRAIT_FIELDS = new Set<string>(STABLE_TRAITS);
 
 /** Stage 1 chips. Months, habitats and host trees are intentionally absent. */
 export const ATLAS_FILTER_GROUPS: readonly FilterGroup[] = [
@@ -206,7 +247,7 @@ export const ATLAS_FILTER_GROUPS: readonly FilterGroup[] = [
       },
     ],
   },
-  fieldGroup('hymenophore', 'atlas.filters.hymenophore', 'hymenophore', [
+  fieldGroup(HYMENOPHORE, 'atlas.filters.hymenophore', HYMENOPHORE, [
     { id: 'blaszki', label: 'atlas.filters.gills', accepted: ['blaszki'] },
     { id: 'rurki', label: 'atlas.filters.tubes', accepted: ['rurki'] },
     { id: 'listwy', label: 'atlas.filters.folds', accepted: ['listwy'] },
@@ -216,16 +257,18 @@ export const ATLAS_FILTER_GROUPS: readonly FilterGroup[] = [
   fieldGroup('protection', 'atlas.filters.protection', 'protection', [
     { id: 'scisla', label: 'atlas.filters.protectionStrict', accepted: ['scisla'] },
     { id: 'czesciowa', label: 'atlas.filters.protectionPartial', accepted: ['czesciowa'] },
-    { id: 'brak', label: 'atlas.filters.protectionNone', accepted: ['brak'] },
+    { id: BRAK, label: 'atlas.filters.protectionNone', accepted: [BRAK] },
   ]),
-  fieldGroup('ring', 'atlas.filters.ring', 'ring', [
+  fieldGroup(RING, 'atlas.filters.ring', RING, [
     { id: 'present', label: 'atlas.filters.ringPresent', accepted: [true] },
     { id: 'absent', label: 'atlas.filters.ringAbsent', accepted: [false] },
   ]),
-  fieldGroup('volva', 'atlas.filters.volva', 'volva', [
-    { id: 'pochwa', label: 'atlas.filters.volvaVolva', accepted: ['pochwa'] },
-    { id: 'bulwa', label: 'atlas.filters.volvaBulb', accepted: ['bulwa'] },
-    { id: 'brak', label: 'atlas.filters.volvaNone', accepted: ['brak'] },
+  fieldGroup(VOLVA, 'atlas.filters.volva', VOLVA, [
+    // A bulb is not a volva, and a volva left in the soil looks like a bulb.
+    // Both chips accept both tokens, so the death cap stays with citrina and rubescens.
+    { id: POCHWA, label: 'atlas.filters.volvaVolva', accepted: [POCHWA, BULWA] },
+    { id: BULWA, label: 'atlas.filters.volvaBulb', accepted: [BULWA, POCHWA] },
+    { id: BRAK, label: 'atlas.filters.volvaNone', accepted: [BRAK] },
   ]),
 ];
 
@@ -257,6 +300,47 @@ function toRow(species: MushroomSpecies, facts: FactsLookup): AtlasRow {
   };
 }
 
+function scalarValue(value: unknown): FilterFieldValue | null {
+  if (typeof value === 'string' || typeof value === 'boolean') return value;
+  if (!Array.isArray(value)) return null;
+  const scalars: FilterScalar[] = [];
+  for (const item of value) {
+    if (typeof item !== 'string' && typeof item !== 'boolean') return null;
+    scalars.push(item);
+  }
+  return scalars.length > 0 ? scalars : null;
+}
+
+/** Reads any fact key, so a new filter field needs no field switch. */
+function readTraitValue(facts: StructureFacts, field: string): FilterFieldValue | null {
+  for (const [key, value] of Object.entries(facts)) {
+    if (key === field) return scalarValue(value);
+  }
+  return null;
+}
+
+function toxicSpecies(species: MushroomSpecies): boolean {
+  return species.status === 'POISONOUS' || species.status === 'DEADLY_POISONOUS';
+}
+
+function missAllowlisted(speciesId: string, chipId: string): boolean {
+  return POISONOUS_MISS_ALLOWLIST.some((pair) => pair.speciesId === speciesId && pair.chipId === chipId);
+}
+
+function onStableTrait(selected: readonly FilterChip[]): boolean {
+  return selected.some((chip) => chip.field != null && STABLE_TRAIT_FIELDS.has(chip.field));
+}
+
+/**
+ * A poisonous contradiction stays visible unless the chip reads a stable trait
+ * or the pair is allowlisted. Null stable facts never reach this: an undefined
+ * field is already unverified.
+ */
+function contradictoryPoisonousHolds(species: MushroomSpecies, selected: readonly FilterChip[]): boolean {
+  if (!toxicSpecies(species) || onStableTrait(selected)) return false;
+  return !selected.every((chip) => missAllowlisted(species.id, chip.id));
+}
+
 function groupOutcome(
   species: MushroomSpecies,
   group: FilterGroup,
@@ -268,6 +352,7 @@ function groupOutcome(
   if (selected.some((chip) => chip.predicate(species, facts))) return 'match';
   if (selected.some((chip) => chip.hold?.(species) === true)) return 'unverified';
   if (!group.defined(species, facts)) return 'unverified';
+  if (contradictoryPoisonousHolds(species, selected)) return 'unverified';
   return 'miss';
 }
 
@@ -297,11 +382,11 @@ function groupById(id: string): FilterGroup {
 export const ATLAS_KIND_GROUP = groupById('kind');
 
 export const ATLAS_PANEL_GROUPS: readonly FilterGroup[] = [
-  groupById('hymenophore'),
+  groupById(HYMENOPHORE),
   groupById('spore'),
   groupById('protection'),
-  groupById('ring'),
-  groupById('volva'),
+  groupById(RING),
+  groupById(VOLVA),
 ];
 
 const PANEL_CHIP_IDS = new Set(
