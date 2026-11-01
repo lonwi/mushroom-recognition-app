@@ -23,7 +23,8 @@
     "depcruise": "node scripts/depcruise-gate.mjs && node --test scripts/quality-gates.test.mjs",
     "depcruise:tighten": "node scripts/depcruise-gate.mjs --shrink",
     "depcruise:baseline": "node scripts/depcruise-gate.mjs --update",
-    "quality": "pnpm lint && pnpm duplication && pnpm knip && pnpm depcruise",
+    "quality": "pnpm lint && pnpm duplication && pnpm knip && pnpm depcruise && pnpm check:site",
+    "check:site": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-site.mjs",
     "test": "jest --config jest.config.js",
     "test:e2e": "playwright test",
     "storybook": "storybook dev -p 6006",
@@ -53,9 +54,9 @@
     "@babel/core": "^8.0.0",
     "@eslint/js": "9.39.5",
     "@playwright/test": "^1.63.0",
-    "@storybook/addon-essentials": "^8.6.14",
-    "@storybook/react": "8.6.14",
-    "@storybook/react-vite": "^8.6.14",
+    "@storybook/addon-essentials": "^8.6.19",
+    "@storybook/react": "8.6.19",
+    "@storybook/react-vite": "^8.6.19",
     "@testing-library/react-native": "^14.0.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.20.5",
@@ -71,10 +72,10 @@
     "jest-expo": "^57.0.5",
     "jscpd": "5.4.0",
     "knip": "6.40.0",
-    "storybook": "^8.6.14",
+    "storybook": "^8.6.19",
     "typescript": "~5.8.2",
     "typescript-eslint": "8.71.1",
-    "vite": "^8.3.1"
+    "vite": "^8.3.5"
   },
   "private": true,
   "pnpm": {
@@ -83,7 +84,9 @@
       "source-map-js": "1.2.2",
       "xcode>uuid": "11.1.1",
       "@storybook/addon-actions>uuid": "11.1.1",
-      "handlebars": "4.7.10"
+      "handlebars": "4.7.10",
+      "zod": "^4.6.6",
+      "node-forge": "1.4.1"
     },
     "auditConfig": {
       "ignoreCves": [

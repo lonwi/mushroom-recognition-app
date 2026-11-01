@@ -87,7 +87,7 @@ from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 from licenses import normalize_cc_license
-from url_safety import UnsafeMediaUrl, listed_media_records, validate_media_url
+from url_safety import UnsafeMediaUrl, force_https_url, listed_media_records, validate_media_url
 from manifest import CENTRAL_EUROPE, LABELS_PATH, ROOT, load_manifest
 from sampling import (
     MAX_PER_OCCURRENCE,
@@ -891,12 +891,25 @@ def _reason_is_transient(reason: object) -> bool:
     return _text_is_transient(str(reason))
 
 
+def _is_timeout_error(error: BaseException) -> bool:
+    """Socket and read timeouts, including those wrapped in URLError."""
+    if isinstance(error, TimeoutError):
+        return True
+    reason = getattr(error, "reason", None)
+    if isinstance(reason, TimeoutError):
+        return True
+    blob = f"{error} {reason}".lower()
+    return "timed out" in blob or "timeout" in blob
+
+
 def _is_transient_download_error(error: BaseException) -> bool:
     """DNS, timeout, reset, HTTP 429/5xx, and SSL handshake. Not 403, 404, or a bad certificate."""
     if _is_certificate_failure(error):
         return False
     if isinstance(error, urllib.error.HTTPError):
         return error.code == 429 or 500 <= int(error.code) <= 599
+    if _is_timeout_error(error):
+        return True
     if isinstance(error, urllib.error.URLError):
         return _reason_is_transient(error.reason)
     return _reason_is_transient(error)
@@ -1294,8 +1307,11 @@ class _PublicRedirectHandler(urllib.request.HTTPRedirectHandler):
     """
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
-        validate_media_url(newurl)
-        return super().redirect_request(req, fp, code, msg, headers, newurl)
+        rewritten = force_https_url(newurl) if isinstance(newurl, str) else newurl
+        if not isinstance(rewritten, str) or urllib.parse.urlsplit(rewritten).scheme != "https":
+            raise UnsafeMediaUrl("redirect target must be https")
+        validate_media_url(rewritten)
+        return super().redirect_request(req, fp, code, msg, headers, rewritten)
 
 
 class _RedirectMediaOpener:
@@ -1416,13 +1432,19 @@ def download_image(
 ) -> int:
     """Download one photo. A verified image already at `destination` is skipped.
 
-    The URL must be http or https on port 80 or 443, and every resolved
+    The image URL must be https on port 443 after ``force_https_url``. An
+    http URL is rewritten to https and is never requested as http, including
+    when https times out. A redirect to http is rewritten to https before it
+    is followed. Anything that is still not https is refused. Every resolved
     address must be public. Each redirect is checked the same way. urllib
     resolves the host again after that check, and an HTTP proxy is not
     forced onto the address that was accepted.
 
     Bytes land in a temporary file in the same directory and are renamed into
-    place. The bytes are decoded in memory first. HTTP 429 honors Retry-After
+    place. The bytes are decoded in memory first. Timeouts are retried at
+    most ``attempts`` times (default ``DOWNLOAD_ATTEMPTS``, which is 3) on
+    the same https URL, with exponential backoff. There is no further loop.
+    HTTP 429 honors Retry-After
     plus a short random offset. Other transient errors use exponential backoff
     with the same offset. HTTP 403, 404, certificate errors, and undecodable
     bodies are not retried. A truncated body is retried once. A file already
@@ -1430,6 +1452,9 @@ def download_image(
     checks as a new download. Those checks finish before it is remembered. A
     file that fails them is quarantined and is not accepted.
     """
+    url = force_https_url(url)
+    if urllib.parse.urlsplit(url).scheme != "https":
+        raise UnsafeMediaUrl("image URL must be https")
     destination.parent.mkdir(parents=True, exist_ok=True)
     root = _data_dir_for(destination, data_dir)
     index = _verified_index(root)
@@ -1797,6 +1822,9 @@ def _occurrence_key_for_filename(value: object) -> str:
 
 
 def _attach_file(row: dict, folder: str) -> Path:
+    image_url = row.get("image_url")
+    if isinstance(image_url, str):
+        row["image_url"] = force_https_url(image_url)
     filename = (
         f"{_occurrence_key_for_filename(row.get('occurrence_key'))}"
         f"_{row['media_index']}{suffix_for(row['image_url'])}"

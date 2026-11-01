@@ -13,6 +13,7 @@ from sampling import (
     taxon_fetch_plan,
     thin_class_report,
 )
+from salt_fixture import FIXTURE_SALT
 from split import collector_grid_key, collector_group_key, split_by_observation, split_key_summary
 
 
@@ -99,12 +100,21 @@ class SamplingTest(unittest.TestCase):
                     "file": f"{occurrence}.jpg",
                 }
             )
-        splits = split_by_observation(records, val_ratio=0.15, test_ratio=0.15, seed=42)
+        withheld: list[dict] = []
+        splits = split_by_observation(
+            records,
+            val_ratio=0.15,
+            test_ratio=0.15,
+            seed=42,
+            salt=FIXTURE_SALT,
+            withheld=withheld,
+        )
         for name in ("train", "val"):
             for row in splits[name]:
                 self.assertFalse(row["held_out_taxon"])
-        held = [row for row in splits["test"] if row["held_out_taxon"]]
-        self.assertEqual(sorted(row["occurrence_key"] for row in held), [4, 5])
+        held_keys = {row["occurrence_key"] for row in splits["test"] if row["held_out_taxon"]}
+        held_keys.update(row["occurrence_key"] for row in withheld)
+        self.assertEqual(held_keys, {4, 5})
 
     def test_poisonous_held_out_taxa_are_filled_first(self):
         plan = taxon_fetch_plan(
@@ -137,7 +147,7 @@ class SamplingTest(unittest.TestCase):
         self.assertTrue(collector_group_key(records[0]).startswith("collector:"))
         self.assertEqual(collector_group_key(records[0]), collector_group_key(records[1]))
         self.assertNotEqual(collector_group_key(records[0]), collector_group_key(records[2]))
-        splits = split_by_observation(records, val_ratio=0.34, test_ratio=0.34, seed=1)
+        splits = split_by_observation(records, val_ratio=0.34, test_ratio=0.34, seed=1, salt=FIXTURE_SALT)
         home = {}
         for name, rows in splits.items():
             for row in rows:
