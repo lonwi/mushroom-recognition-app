@@ -1,9 +1,12 @@
-"""Dedup, write the 224px training PNGs, then split without identity leakage.
+"""Dedup, cap each person inside each class, write the 224px training PNGs, then split.
 
-Repeated photo ids are dropped first. The split groups a photographer and
-an observation into one of train, val, or test. Atlas gallery photos that
-match by image URL, mo_observation_id, or the iNaturalist observation id in
-source_url stay out of test. A match that still lands in test stops the run.
+Repeated photo ids are dropped first. After both dedup passes, each person
+is capped inside each class (``person_cap.py``). N is the row count of that
+class at that moment. Removed rows stay in the source files. The split then
+groups a photographer and an observation into one of train, val, or test.
+Atlas gallery photos that match by image URL, mo_observation_id, or the
+iNaturalist observation id in source_url stay out of test. A match that
+still lands in test stops the run.
 
     python training/prepare_data.py
     python training/prepare_data.py --with-external
@@ -23,6 +26,16 @@ are skipped. The cached PNG is EXIF-oriented and area-resized to the
 model input, which is what the phone feeds the network. An unacknowledged
 class over the per-class component-share limit, or with an empty val or test,
 stops the run before any split file or dataset manifest is written.
+``person_cap_report.json`` is written under ``training/data/`` (gitignored).
+It holds plaintext author names in ``author_cap_report`` and must not be
+committed, packed into a data release, or copied to OneDrive. It is removed
+with the other prepare outputs when a component-share hard stop fires.
+``author_cap_report`` is one entry per class: N, the computed cap, and each
+person's kept and cut counts. Cut rows still list a reason and photo ids.
+Order: unverified filter, both dedup passes, model-PNG readability, then N
+and the author cap. A file that cannot be read or written as that PNG is
+not in N and does not take a slot. Kept rows are ordered by the seeded
+photo-id hash, not by the order of the source files.
 """
 
 from __future__ import annotations
@@ -48,6 +61,7 @@ from gallery_exclusion import (
 )
 from import_external import training_eligible
 from manifest import ROOT, load_manifest
+from person_cap import apply_person_class_cap
 from preprocess import MODEL_INPUT_SIZE, ImageReadError, load_oriented_rgb, write_model_png
 from split import split_by_observation, split_key_summary
 from split_salt import SplitSaltError, load_split_salt
@@ -56,6 +70,7 @@ DATA_DIR = ROOT / "training" / "data"
 _PREPARE_OUTPUTS = (
     "attributions.dedup.jsonl",
     "dedup_report.json",
+    "person_cap_report.json",
     "splits.json",
     "split_counts.json",
     "split_groups.json",
@@ -241,6 +256,28 @@ def _cache_model_pngs(records: list[dict], size: int) -> tuple[list[dict], list[
     return kept, skipped
 
 
+def prepare_rows_before_cap(
+    records: list[dict],
+) -> tuple[list[dict], list[dict], list[dict]]:
+    """Identity dedup, then perceptual dedup. Readability and the cap come next."""
+    deduped, identity_dropped = dedup_by_identity(records)
+    kept, dropped = dedup_records(deduped)
+    return kept, dropped, identity_dropped
+
+
+def records_for_split(
+    records: list[dict],
+) -> tuple[list[dict], list[dict], list[dict], list[dict], dict]:
+    """Dedup, then the per-person cap, without the model-PNG readability check.
+
+    ``main`` runs ``_cache_model_pngs`` between ``prepare_rows_before_cap``
+    and ``apply_person_class_cap``, so an unreadable file is not in N.
+    """
+    kept, dropped, identity_dropped = prepare_rows_before_cap(records)
+    capped, cap_removed, cap_report = apply_person_class_cap(kept)
+    return capped, dropped, identity_dropped, cap_removed, cap_report
+
+
 def assign_splits(records: list[dict], *, salt: str, exclusion) -> tuple[dict[str, list[dict]], list[dict]]:
     """Train/val/test split. Identity dedup has already run. A gallery photo in test raises."""
     withheld: list[dict] = []
@@ -312,10 +349,20 @@ def main(argv: list[str] | None = None) -> None:
         publishable_only=args.publishable_only,
         include_df20=args.include_df20,
     )
-    records, identity_dropped = dedup_by_identity(records)
-    kept, dropped = dedup_records(records)
-    prepared, prepare_skipped = _cache_model_pngs(kept, size)
-    skipped.extend(prepare_skipped)
+    deduped, dropped, identity_dropped = prepare_rows_before_cap(records)
+    readable, unreadable = _cache_model_pngs(deduped, size)
+    skipped.extend(unreadable)
+    capped, _cap_removed, cap_report = apply_person_class_cap(readable)
+    kept_ids = {id(row) for row in capped}
+    for row in readable:
+        if id(row) in kept_ids:
+            continue
+        relative = row.get("prepared_file")
+        if isinstance(relative, str) and relative:
+            path = DATA_DIR / relative
+            if path.is_file():
+                path.unlink()
+    prepared = capped
     try:
         splits, withheld = assign_splits(prepared, salt=salt, exclusion=exclusion)
     except GalleryLeakError as error:
@@ -331,6 +378,7 @@ def main(argv: list[str] | None = None) -> None:
         salt=salt,
         share_config=share_config,
         model_png_size=size or MODEL_INPUT_SIZE,
+        cap_report=cap_report,
     )
     print(json.dumps({name: len(rows) for name, rows in splits.items()}))
 
@@ -347,6 +395,7 @@ def write_prepare_outputs(
     salt: str,
     share_config: dict,
     model_png_size: int,
+    cap_report: dict | None = None,
 ) -> dict:
     """Write split artifacts after the per-class hard stop.
 
@@ -407,11 +456,18 @@ def write_prepare_outputs(
                     1 for row in skipped if isinstance(row, dict) and row.get("skip_reason") == "df20_opt_out"
                 ),
                 "model_png_size": model_png_size,
+                "person_cap_removed": 0 if not cap_report else int(cap_report.get("removed_rows") or 0),
+                "author_cap_report": None if cap_report is None else "person_cap_report.json",
             },
             indent=2,
         ),
         encoding="utf-8",
     )
+    if cap_report is not None:
+        (directory / "person_cap_report.json").write_text(
+            json.dumps(cap_report, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
     serializable = {name: rows for name, rows in splits.items()}
     (directory / "splits.json").write_text(json.dumps(serializable, ensure_ascii=False), encoding="utf-8")
     counts = {name: dict(Counter(row["class_id"] for row in rows)) for name, rows in splits.items()}

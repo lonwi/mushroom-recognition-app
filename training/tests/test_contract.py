@@ -442,6 +442,44 @@ class ManifestAndShipGateTest(unittest.TestCase):
         # Changing this constant is Wojtek's decision only.
         self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
 
+    def test_person_class_cap_constants_are_pinned(self):
+        from component_share import COMPONENT_SHARE_LIMIT
+        from person_cap import CAP_FRACTION, CAP_MAX, CAP_MIN, PERSON_CAP_SEED
+        from sampling import MAX_PER_OCCURRENCE
+
+        # Wojtek 2026-10-23 16:55, decision A. Do not raise the ceiling or the fraction.
+        self.assertEqual(CAP_MAX, 60)
+        self.assertEqual(CAP_MIN, 10)
+        self.assertEqual(CAP_FRACTION, 0.10)
+        self.assertEqual(PERSON_CAP_SEED, 42)
+        source = (ROOT / "training" / "person_cap.py").read_text(encoding="utf-8")
+        self.assertIn("CAP_MAX = 60", source)
+        self.assertIn("CAP_MIN = 10", source)
+        self.assertIn("CAP_FRACTION = 0.10", source)
+        self.assertIn("PERSON_CAP_SEED = 42", source)
+        self.assertIn("2026-10-23 16:55, decision A", source)
+        self.assertIn("no grandfathering", source)
+        self.assertNotIn("pending Wojtek", source)
+        self.assertIn('for field in ("creator", "rights_holder")', source)
+        self.assertIn("occupies a slot only for the author", source)
+        importer = (ROOT / "training" / "import_external.py").read_text(encoding="utf-8")
+        self.assertNotIn("DEFAULT_MAX_PER_COLLECTOR", importer)
+        self.assertIn("apply_person_class_cap", importer)
+        self.assertNotIn("= 30", importer)
+        collector_fn = importer.split("def apply_collector_cap(", 1)[1].split("\ndef ", 1)[0]
+        self.assertNotIn("apply_person_class_cap", collector_fn)
+        self.assertIn("does not apply the author cap", collector_fn)
+        self.assertNotIn("inat_observer", collector_fn)
+        self.assertNotIn("30", collector_fn)
+        self.assertIn("def cap_for_n(", source)
+        self.assertIn("round half to even (Python round)", source)
+        self.assertIn("unknown subject", (ROOT / "training" / "split.py").read_text(encoding="utf-8"))
+        importer_tests = (ROOT / "training" / "tests" / "test_import_external.py").read_text(encoding="utf-8")
+        self.assertNotIn("max_per_collector=30", importer_tests)
+        self.assertNotIn("max_per_collector = 30", importer_tests)
+        self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
+        self.assertEqual(MAX_PER_OCCURRENCE, 2)
+
     def test_variant_c_leaves_agreement_share_https_and_license_url(self):
         from component_share import COMPONENT_SHARE_LIMIT
         from import_external import photo_license_decision

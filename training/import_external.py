@@ -32,9 +32,14 @@ and comparison photos. CC BY-NC, CC BY-SA, and DF20 fail it.
 ``_niezweryfikowane`` files set ``unverified``. ``prepare_data.py`` skips
 those rows, so they are not mixed into train, val, or test.
 
-``--max-per-collector`` limits how many photos one observer or author can
-contribute to one class. Observation and photo ids are kept so a later
-split can group by observer and deduplicate by id.
+The author cap runs only in ``prepare_data.py``, after dedup. This importer
+does not drop rows for it. ``--max-per-collector`` is optional and only
+writes a diagnostic of how many rows that ceiling would remove. Zbierania
+CSVs store the photo credit in the ``author`` column, copied into
+``creator`` and ``rights_holder``. ``collector_key`` is still written
+(``inat:`` login, otherwise ``author:``) so the split can link the same
+person. Observation and photo ids are kept so a later split can group
+by observer and deduplicate by id.
 """
 
 from __future__ import annotations
@@ -51,12 +56,12 @@ from urllib.parse import urlsplit, urlunsplit
 from license_policy import EXACT_LICENSE_USAGE as _EXACT_LICENSE_USAGE
 from license_policy import exact_license_usage, training_license_rank
 from manifest import ROOT, load_manifest
+from person_cap import apply_person_class_cap
 from url_safety import force_https_url
 
 DATA_DIR = ROOT / "training" / "data"
 DEFAULT_OUTPUT = DATA_DIR / "external.jsonl"
 DEFAULT_REPORT = DATA_DIR / "external_report.json"
-DEFAULT_MAX_PER_COLLECTOR = 30
 
 # Names the photo tables use for a taxon the manifest stores under the accepted name.
 _SPECIES_ALIASES = {
@@ -591,6 +596,8 @@ def _row_from_photo(
     decision, reason = photo_license_decision(license_text, license_url)
     if decision is None:
         return None, reason
+    # Zbierania CSVs have one credit column. It is both the photo author
+    # and the rights holder for the cap.
     author = _located(_cell(raw, "author"))
     if not author:
         return None, "author"
@@ -626,6 +633,7 @@ def _row_from_photo(
         "image_url": image_url,
         "source_url": source_url,
         "creator": author,
+        "rights_holder": author,
         "author": author,
         "license": license_text,
         "license_url": stored_license_url,
@@ -682,6 +690,7 @@ def _row_from_df20(raw: dict, *, order: int, index: dict[str, dict]) -> tuple[di
         "image_url": "",
         "source_url": "",
         "creator": author,
+        "rights_holder": author,
         "author": author,
         "license": note,
         "license_normalized": "df20",
@@ -887,51 +896,29 @@ def dedupe_rows(rows: list[dict]) -> tuple[list[dict], int, int, int, list[dict]
     return kept, duplicate_dropped, looser_dropped, conflict_dropped, conflicts
 
 
-def apply_collector_cap(rows: list[dict], max_per_collector: int) -> tuple[list[dict], list[dict]]:
-    """Cap photos per collector per class.
+def apply_collector_cap(
+    rows: list[dict],
+    max_per_collector: int | None = None,
+) -> tuple[list[dict], list[dict]]:
+    """Return every row. Import does not apply the author cap.
 
-    Unverified rows have their own cap, so they do not push verified photos
-    out. Observations are kept whole when they fit. One observation larger
-    than the cap contributes its first ``max_per_collector`` photos and
-    nothing further from that collector. ``max_per_collector`` below 1
-    disables the cap.
+    ``max_per_collector`` is ignored here. Prepare cuts after dedup.
+    ``collector_cap_diagnostic`` is the only use of a passed ceiling, and
+    it does not drop rows.
     """
-    if max_per_collector < 1:
-        return list(rows), []
-    pools: dict[tuple, list[dict]] = {}
-    for row in rows:
-        collector = row.get("collector_key") or f"anon:{row.get('_order')}"
-        pool_key = (row.get("class_id"), bool(row.get("unverified")), collector)
-        pools.setdefault(pool_key, []).append(row)
-    kept_orders: set[int] = set()
-    for group in pools.values():
-        observations: list[list[dict]] = []
-        current_key = None
-        current: list[dict] | None = None
-        ordered = sorted(group, key=lambda item: int(item.get("_order") or 0))
-        for row in ordered:
-            obs = str(row.get("occurrence_key") or "")
-            if current is None or obs != current_key:
-                current_key = obs
-                current = []
-                observations.append(current)
-            current.append(row)
-        room = max_per_collector
-        for index, obs_rows in enumerate(observations):
-            if room < 1:
-                break
-            if len(obs_rows) <= room:
-                for row in obs_rows:
-                    kept_orders.add(int(row["_order"]))
-                room -= len(obs_rows)
-                continue
-            if index == 0 and not any(int(row["_order"]) in kept_orders for row in group):
-                for row in obs_rows[:max_per_collector]:
-                    kept_orders.add(int(row["_order"]))
-                room = 0
-    kept = [row for row in rows if int(row["_order"]) in kept_orders]
-    dropped = [row for row in rows if int(row["_order"]) not in kept_orders]
-    return kept, dropped
+    del max_per_collector
+    return list(rows), []
+
+
+def collector_cap_diagnostic(rows: list[dict], limit: int) -> dict:
+    """How many verified rows a fixed ceiling would remove. Nothing is dropped."""
+    verified = [row for row in rows if row.get("unverified") is not True]
+    _kept, removed, _report = apply_person_class_cap(verified, limit=limit)
+    return {
+        "limit": limit,
+        "would_drop": len(removed),
+        "note": "diagnostic only; import does not drop rows. The cap runs in prepare.",
+    }
 
 
 def _join_meta(rows: list[dict], meta_paths: list[Path]) -> int:
@@ -979,7 +966,7 @@ def _public_row(row: dict) -> dict:
 def import_directory(
     root: Path,
     *,
-    max_per_collector: int = DEFAULT_MAX_PER_COLLECTOR,
+    max_per_collector: int | None = None,
     publishable_only: bool = False,
     exclude_unverified: bool = False,
     include_df20: bool = False,
@@ -1048,6 +1035,9 @@ def import_directory(
         rows = published_rows(rows)
         rejected["publishable_only"] += before - len(rows)
     meta_joined = _join_meta(rows, metas)
+    diagnostic = None
+    if isinstance(max_per_collector, int) and not isinstance(max_per_collector, bool) and max_per_collector >= 1:
+        diagnostic = collector_cap_diagnostic(rows, max_per_collector)
     rows, cap_dropped = apply_collector_cap(rows, max_per_collector)
     if exclude_unverified:
         rejected["exclude_unverified"] += sum(1 for row in rows if row.get("unverified") is True)
@@ -1092,6 +1082,8 @@ def import_directory(
         "publishable": sum(1 for row in written if row.get("usage") == "publishable"),
         "by_class": dict(sorted(by_class.items())),
         "max_per_collector": max_per_collector,
+        "author_cap_formula": None,
+        "collector_cap_diagnostic": diagnostic,
         "publishable_only": publishable_only,
         "exclude_unverified": exclude_unverified,
     }
@@ -1114,8 +1106,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--max-per-collector",
         type=int,
-        default=DEFAULT_MAX_PER_COLLECTOR,
-        help="Max photos per observer or author per class. Below 1 disables the cap. Default 30.",
+        default=None,
+        help=(
+            "Do not drop rows. When set to a positive integer, write a diagnostic "
+            "of how many verified rows that ceiling would remove. The author cap "
+            "runs only in prepare."
+        ),
     )
     parser.add_argument(
         "--publishable-only",

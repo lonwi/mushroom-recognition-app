@@ -820,6 +820,7 @@ class SplitLeakTest(unittest.TestCase):
     def test_placeholder_authors_do_not_glue_observations(self):
         placeholders = (
             "Unknown",
+            "Unknown Subject",
             "Anonymous",
             "anonim",
             "anonimowy",
