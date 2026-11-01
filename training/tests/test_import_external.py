@@ -31,6 +31,7 @@ from import_external import (
     import_directory,
     is_publishable,
     parse_textual_license,
+    photo_license_decision,
     rows_for_atlas_gallery,
     rows_for_comparison,
     rows_for_site,
@@ -1539,6 +1540,143 @@ class ImportDirectoryTest(unittest.TestCase):
         (folder / "external.jsonl").unlink()
         with self.assertRaises(SystemExit):
             _attribution_sources(folder, with_external=True)
+
+    def test_jurisdiction_port_and_public_domain_without_url_stay_rejected(self):
+        """The licence table is unchanged. These rows stay rejected and are counted."""
+        ported_sa = "https://creativecommons.org/licenses/by-sa/3.0/de/"
+        _photo(
+            self.root / "held.csv",
+            [
+                self._base(
+                    license="CC BY 4.0",
+                    license_url=_BY_40,
+                    inat_photo_id="kept",
+                    inat_observation_id="kept",
+                    image_url="https://images.example.test/kept.jpg",
+                    source_url="https://www.inaturalist.org/observations/kept",
+                ),
+                self._base(
+                    license="CC BY-SA 3.0 de",
+                    license_url=ported_sa,
+                    inat_photo_id="ported",
+                    inat_observation_id="ported",
+                    image_url="https://images.example.test/ported.jpg",
+                    source_url="https://www.inaturalist.org/observations/ported",
+                    author="Port Author",
+                    inat_observer="ported",
+                ),
+                self._base(
+                    license="public domain",
+                    license_url="",
+                    inat_photo_id="pd",
+                    inat_observation_id="pd",
+                    image_url="https://images.example.test/pd.jpg",
+                    source_url="https://www.inaturalist.org/observations/pd",
+                    author="Pd Author",
+                    inat_observer="pd",
+                ),
+            ],
+        )
+        rows, report = import_directory(self.root, max_per_collector=30)
+        self.assertEqual([row["inat_photo_id"] for row in rows], ["kept"])
+        self.assertIsNone(parse_textual_license("CC BY-SA 3.0 de", ported_sa))
+        self.assertIsNone(parse_textual_license("CC BY 3.0 pl"))
+        self.assertIsNone(parse_textual_license("public domain", ""))
+        decision, reason = photo_license_decision("public domain", "")
+        self.assertIsNone(decision)
+        self.assertEqual(reason, "license_url_empty")
+        ported_decision, ported_reason = photo_license_decision("CC BY-SA 3.0 de", ported_sa)
+        self.assertIsNone(ported_decision)
+        self.assertEqual(ported_reason, "license")
+        self.assertNotIn("cc-by-sa-3.0-de", EXACT_LICENSE_USAGE)
+        counted = report["rejected_per_class"]["amanita_phalloides"]
+        self.assertEqual(counted["license"], 1)
+        self.assertEqual(counted["license_url_empty"], 1)
+        total = sum(count for reasons in report["rejected_per_class"].values() for count in reasons.values())
+        self.assertEqual(total, 2)
+        self.assertTrue(
+            all(reason and count > 0 for reasons in report["rejected_per_class"].values() for reason, count in reasons.items())
+        )
+
+    def test_highest_csv_version_wins_and_older_files_are_reported(self):
+        def morchella(photo_id: str, author: str) -> dict:
+            return self._base(
+                species="Morchella esculenta",
+                license="CC BY 4.0",
+                license_url=_BY_40,
+                image_url=f"https://images.example.test/{photo_id}.jpg",
+                source_url=f"https://www.inaturalist.org/observations/{photo_id}",
+                inat_photo_id=photo_id,
+                inat_observation_id=photo_id,
+                inat_observer=photo_id,
+                author=author,
+            )
+
+        _photo(self.root / "morchella_esculenta.csv", [morchella("base", "Base Author")])
+        _photo(self.root / "morchella_esculenta_v2.csv", [morchella("v2", "V2 Author")])
+        _photo(self.root / "morchella_esculenta_v3.csv", [morchella("v3", "V3 Author")])
+        _photo(self.root / "morchella_esculenta_v10.csv", [morchella("v10", "V10 Author")])
+        _photo(
+            self.root / "morchella_esculenta_by_nc.csv",
+            [
+                self._base(
+                    species="Morchella esculenta",
+                    license="CC BY-NC 4.0",
+                    license_url=_BY_NC_40,
+                    image_url="https://images.example.test/nc.jpg",
+                    source_url="https://www.inaturalist.org/observations/nc",
+                    inat_photo_id="nc",
+                    inat_observation_id="nc",
+                    inat_observer="nc",
+                    author="Nc Author",
+                )
+            ],
+        )
+        _photo(self.root / "other" / "morchella_esculenta.csv", [morchella("other-base", "Other Base")])
+        _photo(self.root / "other" / "morchella_esculenta_v2.csv", [morchella("other-v2", "Other V2")])
+
+        rows, report = import_directory(self.root, max_per_collector=30)
+        self.assertEqual(
+            {row["inat_photo_id"] for row in rows},
+            {"v10", "nc", "other-v2"},
+        )
+        winner = next(row for row in rows if row["inat_photo_id"] == "v10")
+        self.assertEqual(winner["license_normalized"], "cc-by-4.0")
+        nc = next(row for row in rows if row["inat_photo_id"] == "nc")
+        self.assertEqual(nc["license_normalized"], "cc-by-nc-4.0")
+        self.assertEqual(nc["usage"], "training_only")
+
+        skipped = {item["file"]: item for item in report["skipped_files"]}
+        for name in (
+            "morchella_esculenta.csv",
+            "morchella_esculenta_v2.csv",
+            "morchella_esculenta_v3.csv",
+            "other/morchella_esculenta.csv",
+        ):
+            self.assertEqual(skipped[name]["reason"], "superseded_version", name)
+            self.assertGreaterEqual(skipped[name]["rows"], 1, name)
+        self.assertEqual(skipped["morchella_esculenta.csv"]["kept"], ["morchella_esculenta_v10.csv"])
+        self.assertEqual(skipped["morchella_esculenta_v2.csv"]["kept"], ["morchella_esculenta_v10.csv"])
+        self.assertEqual(skipped["morchella_esculenta_v3.csv"]["kept"], ["morchella_esculenta_v10.csv"])
+        self.assertEqual(skipped["other/morchella_esculenta.csv"]["kept"], ["other/morchella_esculenta_v2.csv"])
+        self.assertNotIn("morchella_esculenta_v10.csv", skipped)
+        self.assertNotIn("morchella_esculenta_by_nc.csv", skipped)
+        self.assertNotIn("other/morchella_esculenta_v2.csv", skipped)
+        self.assertTrue(all(item.get("reason") for item in report["skipped_files"]))
+        self.assertEqual(report["rejected_per_class"]["morchella_esculenta"]["superseded_version"], 4)
+        superseded_rows = sum(item["rows"] for item in report["skipped_files"])
+        superseded_counted = sum(
+            reasons.get("superseded_version", 0) for reasons in report["rejected_per_class"].values()
+        )
+        self.assertEqual(superseded_counted, superseded_rows)
+        self.assertEqual(superseded_counted, 4)
+        self.assertTrue(
+            all(
+                reason and count > 0
+                for reasons in report["rejected_per_class"].values()
+                for reason, count in reasons.items()
+            )
+        )
 
 
 class CollectorCapTest(unittest.TestCase):

@@ -18,8 +18,11 @@ https ``license_url`` that names the same license as the text, including
 CC BY-SA. An empty URL, an ``http://`` URL, or a URL for a different license
 drops the row, including when the text already says ``CC BY 4.0``. A
 versionless ``CC BY`` with no ``license_url`` is rejected. NC-ND, NC-SA, ND,
-and unknown licenses are rejected. DF20 has no per-image Creative Commons
-URL. The normalized id is matched in full (``cc-by-4.0``), never by prefix.
+and unknown licenses are rejected. A jurisdiction port and ``public domain``
+with an empty ``license_url`` stay rejected until the licence table changes.
+DF20 has no per-image
+Creative Commons URL. The normalized id is matched in full (``cc-by-4.0``),
+never by prefix.
 The same photo from two sources keeps the stricter license: CC BY-NC, DF20,
 and CC BY-SA beat CC BY, and CC BY beats CC0, so the extra duty stays on
 the row. A row rejected for a licence reason records that photo's keys, and
@@ -31,6 +34,14 @@ and comparison photos. CC BY-NC, CC BY-SA, and DF20 fail it.
 
 ``_niezweryfikowane`` files set ``unverified``. ``prepare_data.py`` skips
 those rows, so they are not mixed into train, val, or test.
+
+In one directory, ``species_v10.csv`` replaces ``species_v3.csv``,
+``species_v2.csv``, and ``species.csv``. ``species_by_nc.csv`` is a
+different file, and a file in another directory is its own family. Each
+older file is listed as ``superseded_version``. The report's
+``rejected_per_class`` counts every rejected row by class and reason
+(licence, unverified, duplicate, superseded version, and the other
+existing reasons). Nothing in that count is anonymous.
 
 ``--max-per-collector`` limits how many photos one observer or author can
 contribute to one class. Observation and photo ids are kept so a later
@@ -95,6 +106,7 @@ _SKIP_TOKENS = {
     "legalcode",
     "deed",
 }
+_VERSION_SUFFIX = re.compile(r"_v([1-9]\d*)$")
 _KNOWN_TOKENS = {"by", "nc", "nd", "sa", "zero", "public", "domain", "publicdomain", "cc0"}
 _GBIF_OCCURRENCE = re.compile(r"gbif\.org/occurrence/(\d+)", re.IGNORECASE)
 _INAT_OBSERVATION = re.compile(r"inaturalist\.org/observations/(\d+)", re.IGNORECASE)
@@ -468,12 +480,37 @@ def _is_df20(path: Path, fieldnames: set[str]) -> bool:
     return "df20_image_path" in fieldnames or ("observationID" in fieldnames and "licence_note" in fieldnames)
 
 
-def _photo_files(root: Path) -> tuple[list[Path], list[Path]]:
-    """Photo CSVs and meta CSVs. Summaries and a superseded v1 file are omitted."""
+def _csv_family(stem: str) -> tuple[str, int]:
+    """Base name and version. A file without ``_vN`` is version 1 of itself."""
+    match = _VERSION_SUFFIX.search(stem)
+    if match is None:
+        return stem, 1
+    base = stem[: match.start()]
+    if not base:
+        return stem, 1
+    return base, int(match.group(1))
+
+
+def _csv_data_rows(path: Path) -> int:
+    with path.open(encoding="utf-8-sig", newline="") as handle:
+        reader = csv.reader(handle)
+        next(reader, None)
+        return sum(1 for row in reader if any(str(cell).strip() for cell in row))
+
+
+def _photo_files(root: Path) -> tuple[list[Path], list[Path], list[dict]]:
+    """Photo CSVs, meta CSVs, and older ``_vN`` files the highest version replaces.
+
+    ``species_v10.csv`` wins over ``species_v3.csv``, ``species_v2.csv``, and
+    ``species.csv`` in the same directory. ``species_by_nc.csv`` is not a
+    version of ``species.csv``. A same stem in another directory is its own
+    family. Summaries are omitted. Each older file is reported; its rows are
+    not read.
+    """
     candidates = [path for path in root.rglob("*.csv") if path.is_file()]
-    stems = {path.stem for path in candidates}
     photos: list[Path] = []
     metas: list[Path] = []
+    versioned: list[Path] = []
     for path in candidates:
         name = path.name
         if name.startswith("_") or "grupa_toksyczna" in name:
@@ -481,12 +518,33 @@ def _photo_files(root: Path) -> tuple[list[Path], list[Path]]:
         if name.endswith("_meta.csv"):
             metas.append(path)
             continue
-        if path.stem.endswith("_v2"):
-            pass
-        elif f"{path.stem}_v2" in stems:
-            continue
-        photos.append(path)
-    return photos, metas
+        versioned.append(path)
+    groups: dict[tuple[Path, str], list[tuple[int, Path]]] = {}
+    for path in versioned:
+        base, version = _csv_family(path.stem)
+        groups.setdefault((path.parent, base), []).append((version, path))
+    skipped: list[dict] = []
+    for members in groups.values():
+        highest = max(version for version, _path in members)
+        winners = sorted(
+            (path for version, path in members if version == highest),
+            key=lambda path: path.name,
+        )
+        kept = [path.relative_to(root).as_posix() for path in winners]
+        for version, path in members:
+            if version == highest:
+                photos.append(path)
+                continue
+            skipped.append(
+                {
+                    "file": path.relative_to(root).as_posix(),
+                    "reason": "superseded_version",
+                    "kept": kept,
+                    "rows": _csv_data_rows(path),
+                }
+            )
+    skipped.sort(key=lambda item: item["file"])
+    return photos, metas, skipped
 
 
 def _file_sort_key(path: Path) -> tuple:
@@ -808,7 +866,40 @@ def _license_strictness(row: dict) -> int:
     return training_license_rank(row.get("license_normalized"))
 
 
-def dedupe_rows(rows: list[dict]) -> tuple[list[dict], int, int, int, list[dict]]:
+def _class_of(row: dict) -> str:
+    class_id = row.get("class_id")
+    if isinstance(class_id, str) and class_id.strip():
+        return class_id.strip()
+    return "unmapped"
+
+
+def _bump(counts: dict[str, Counter[str]], class_id: str, reason: str, n: int = 1) -> None:
+    if n < 1:
+        return
+    label = class_id.strip() if isinstance(class_id, str) and class_id.strip() else "unmapped"
+    why = reason.strip() if isinstance(reason, str) and reason.strip() else "unknown"
+    counts.setdefault(label, Counter())[why] += n
+
+
+def _per_class_report(counts: dict[str, Counter[str]]) -> dict[str, dict[str, int]]:
+    """Class id to reason to row count. Empty reasons are not written."""
+    return {
+        class_id: {reason: int(count) for reason, count in sorted(bucket.items())}
+        for class_id, bucket in sorted(counts.items())
+        if bucket
+    }
+
+
+def _class_counts_in_csv(path: Path, index: dict[str, dict]) -> Counter[str]:
+    counts: Counter[str] = Counter()
+    for raw in _read_csv(path):
+        species = _cell(raw, "species") or _cell(raw, "df20_name_used")
+        target = resolve_species(species, index) if species else None
+        counts[target["class_id"] if target else "unmapped"] += 1
+    return counts
+
+
+def dedupe_rows(rows: list[dict]) -> tuple[list[dict], int, int, int, list[dict], dict[str, Counter[str]]]:
     """Drop label conflicts, then keep the stricter license of one photo.
 
     File order must not pick the species. When one photo id or one observation
@@ -828,7 +919,13 @@ def dedupe_rows(rows: list[dict]) -> tuple[list[dict], int, int, int, list[dict]
         {"kind": kind, "id": ident, "labels": sorted(labels_by_key[(kind, ident)])}
         for kind, ident in sorted(conflict_keys)
     ]
-    surviving = [row for row in rows if not any(key in conflict_keys for key in _conflict_keys(row))]
+    per_class: dict[str, Counter[str]] = {}
+    surviving = []
+    for row in rows:
+        if any(key in conflict_keys for key in _conflict_keys(row)):
+            _bump(per_class, _class_of(row), "label_conflict")
+            continue
+        surviving.append(row)
     parent = list(range(len(surviving)))
 
     def find(index: int) -> int:
@@ -862,6 +959,8 @@ def dedupe_rows(rows: list[dict]) -> tuple[list[dict], int, int, int, list[dict]
         labels = {_label_text(row) for row in group}
         if len(labels) > 1:
             extra_conflicts += len(group)
+            for row in group:
+                _bump(per_class, _class_of(row), "label_conflict")
             conflicts.append(
                 {
                     "kind": "photo",
@@ -880,11 +979,13 @@ def dedupe_rows(rows: list[dict]) -> tuple[list[dict], int, int, int, list[dict]
         for row in ranked[1:]:
             if _license_strictness(row) < winner_rank:
                 looser_dropped += 1
+                _bump(per_class, _class_of(row), "looser_license")
             else:
                 duplicate_dropped += 1
+                _bump(per_class, _class_of(row), "duplicate")
     kept.sort(key=lambda row: int(row.get("_order") or 0))
     conflict_dropped = len(rows) - len(surviving) + extra_conflicts
-    return kept, duplicate_dropped, looser_dropped, conflict_dropped, conflicts
+    return kept, duplicate_dropped, looser_dropped, conflict_dropped, conflicts, per_class
 
 
 def apply_collector_cap(rows: list[dict], max_per_collector: int) -> tuple[list[dict], list[dict]]:
@@ -990,9 +1091,13 @@ def import_directory(
     if not root.is_dir():
         raise FileNotFoundError(f"not a directory: {root}")
     index = species_index(manifest)
-    photos, metas = _photo_files(root)
+    photos, metas, skipped_files = _photo_files(root)
     rows: list[dict] = []
     rejected = Counter()
+    per_class: dict[str, Counter[str]] = {}
+    for item in skipped_files:
+        for class_id, count in _class_counts_in_csv(root / item["file"], index).items():
+            _bump(per_class, class_id, "superseded_version", count)
     unmapped: Counter[str] = Counter()
     poisoned: set[str] = set()
     order = 0
@@ -1021,6 +1126,9 @@ def import_directory(
                 )
             if row is None:
                 rejected[reason] += 1
+                species = _cell(raw, "species") or _cell(raw, "df20_name_used")
+                target = resolve_species(species, index) if species else None
+                _bump(per_class, target["class_id"] if target else "unmapped", reason)
                 if reason in _LICENSE_POISON_REASONS:
                     poisoned.update(_photo_keys_from_raw(raw))
                 if reason == "unmapped":
@@ -1034,24 +1142,45 @@ def import_directory(
         for row in rows:
             if poisoned.intersection(_stable_photo_keys(row)):
                 tainted += 1
+                _bump(per_class, _class_of(row), "rejected_license_copy")
                 continue
             kept_rows.append(row)
         rows = kept_rows
+    from component_share import is_df20_row
     from license_policy import exclude_df20_unless_requested
 
+    if not include_df20:
+        for row in rows:
+            if is_df20_row(row):
+                _bump(per_class, _class_of(row), "df20_opt_out")
     rows, excluded_df20 = exclude_df20_unless_requested(rows, include_df20=include_df20)
-    rows, duplicate_dropped, looser_dropped, conflict_dropped, label_conflicts = dedupe_rows(rows)
+    rows, duplicate_dropped, looser_dropped, conflict_dropped, label_conflicts, dedupe_classes = dedupe_rows(rows)
+    for class_id, reasons in dedupe_classes.items():
+        for reason, count in reasons.items():
+            _bump(per_class, class_id, reason, count)
     # publishable_only runs before the cap so a CC BY-NC photo does not
     # consume a collector's slot that a CC BY photo of the same person needs.
     if publishable_only:
+        kept_ids = {id(row) for row in published_rows(rows)}
+        for row in rows:
+            if id(row) not in kept_ids:
+                _bump(per_class, _class_of(row), "publishable_only")
         before = len(rows)
-        rows = published_rows(rows)
+        rows = [row for row in rows if id(row) in kept_ids]
         rejected["publishable_only"] += before - len(rows)
     meta_joined = _join_meta(rows, metas)
     rows, cap_dropped = apply_collector_cap(rows, max_per_collector)
+    for row in cap_dropped:
+        _bump(per_class, _class_of(row), "collector_cap")
     if exclude_unverified:
-        rejected["exclude_unverified"] += sum(1 for row in rows if row.get("unverified") is True)
-        rows = [row for row in rows if row.get("unverified") is not True]
+        still_in = []
+        for row in rows:
+            if row.get("unverified") is True:
+                rejected["exclude_unverified"] += 1
+                _bump(per_class, _class_of(row), "unverified")
+                continue
+            still_in.append(row)
+        rows = still_in
     written = [_public_row(row) for row in rows]
     by_class = Counter(row["class_id"] for row in written)
     report = {
@@ -1073,6 +1202,8 @@ def import_directory(
         "rejected_license_url_not_https": int(rejected["license_url_not_https"]),
         "rejected_license_url_mismatch": int(rejected["license_url_mismatch"]),
         "rejected_by_reason": {key: int(rejected[key]) for key in sorted(rejected)},
+        "rejected_per_class": _per_class_report(per_class),
+        "skipped_files": skipped_files,
         "dropped_by_reason": {
             "duplicate": duplicate_dropped,
             "looser_license": looser_dropped,

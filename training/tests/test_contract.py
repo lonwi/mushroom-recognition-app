@@ -486,6 +486,75 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertEqual(sa_reason, "")
         self.assertEqual((sa["license_normalized"], sa["usage"]), ("cc-by-sa-4.0", "training_only"))
 
+    def test_prepare_report_counts_rejections_per_class(self):
+        """Every row prepare skips or drops is counted by class and reason."""
+        from component_share import COMPONENT_SHARE_LIMIT
+        from prepare_data import _rejected_per_class, write_prepare_outputs
+        from salt_fixture import FIXTURE_SALT
+
+        skipped = [
+            {"class_id": "boletus_edulis", "skip_reason": "unverified", "file": "a.jpg"},
+            {"class_id": "boletus_edulis", "skip_reason": "unverified", "file": "b.jpg"},
+            {"class_id": "amanita_phalloides", "skip_reason": "df20_opt_out", "file": "c.jpg"},
+            {"class_id": "", "skip_reason": "corrupt", "file": "d.jpg"},
+        ]
+        identity_dropped = [
+            {"class_id": "boletus_edulis", "drop_reason": "duplicate_photo_id", "file": "e.jpg"},
+            {"class_id": "boletus_edulis", "drop_reason": "looser_license", "file": "f.jpg"},
+        ]
+        dropped = [
+            {"class_id": "cantharellus_cibarius", "drop_reason": "perceptual_near_duplicate", "file": "g.jpg"},
+        ]
+        silent = [{"class_id": "boletus_edulis", "file": "h.jpg"}]
+        counted = _rejected_per_class(skipped, identity_dropped, dropped, silent)
+        self.assertEqual(counted["boletus_edulis"]["unverified"], 2)
+        self.assertEqual(counted["boletus_edulis"]["duplicate_photo_id"], 1)
+        self.assertEqual(counted["boletus_edulis"]["looser_license"], 1)
+        self.assertEqual(counted["boletus_edulis"]["unknown"], 1)
+        self.assertEqual(counted["amanita_phalloides"]["df20_opt_out"], 1)
+        self.assertEqual(counted["cantharellus_cibarius"]["perceptual_near_duplicate"], 1)
+        self.assertEqual(counted["unmapped"]["corrupt"], 1)
+        total = sum(count for reasons in counted.values() for count in reasons.values())
+        self.assertEqual(total, len(skipped) + len(identity_dropped) + len(dropped) + len(silent))
+        self.assertTrue(all(reason and count > 0 for reasons in counted.values() for reason, count in reasons.items()))
+
+        balanced = []
+        for index in range(10):
+            balanced.append(
+                {
+                    "class_id": "boletus_edulis",
+                    "inat_observer": f"login_{index}",
+                    "author": f"Author {index}",
+                    "license": "CC BY 4.0",
+                    "license_normalized": "cc-by-4.0",
+                    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+                    "image_url": f"https://images.example.test/boletus_edulis/{index}.jpg",
+                    "file": f"boletus_edulis_{index}.jpg",
+                    "occurrence_key": f"boletus_edulis-{index}",
+                    "inat_photo_id": str(index),
+                    "inat_observation_id": f"obs-{index}",
+                }
+            )
+        splits = {"train": balanced[:6], "val": balanced[6:8], "test": balanced[8:]}
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            write_prepare_outputs(
+                out,
+                prepared=balanced,
+                splits=splits,
+                dropped=dropped,
+                identity_dropped=identity_dropped,
+                skipped=skipped + silent,
+                withheld=[],
+                salt=FIXTURE_SALT,
+                share_config={"limit": COMPONENT_SHARE_LIMIT, "acknowledgements": {}},
+                model_png_size=224,
+            )
+            report = json.loads((out / "dedup_report.json").read_text(encoding="utf-8"))
+        self.assertEqual(report["rejected_per_class"], counted)
+        reported = sum(count for reasons in report["rejected_per_class"].values() for count in reasons.values())
+        self.assertEqual(reported, len(skipped) + len(identity_dropped) + len(dropped) + len(silent))
+
     def test_nc_sa_nd_and_nc_nd_are_rejected_for_training(self):
         from evaluate import attributions_complete
         from license_policy import allowed_for_training
