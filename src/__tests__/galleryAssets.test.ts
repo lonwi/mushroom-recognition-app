@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { MUSHROOMS_DATABASE } from '../data/mushrooms';
+import { COMPARISON_PHOTOS } from '../data/sulphurHoneyComparison';
 import { photosForSpecies, SPECIES_GALLERY } from '../data/speciesGallery';
 
 /** 11,559,224 bytes of gallery WebP, plus about 20%, rounded up to the next KiB. */
@@ -59,7 +60,24 @@ function webpSize(buffer: Buffer): { width: number; height: number } {
 
 describe('atlas gallery assets', () => {
   const photos = Object.values(SPECIES_GALLERY).flat();
-  const assetPaths = photos.map((photo) => photo.assetPath);
+  const assetPaths = [
+    ...photos.map((photo) => photo.assetPath),
+    ...COMPARISON_PHOTOS.map((photo) => photo.assetPath),
+  ];
+  const credited: Array<{
+    imageUrl: string;
+    sourceUrl: string;
+    inaturalistObservationId?: string;
+    inaturalistPhotoUrl?: string;
+  }> = [
+    ...photos.map((photo) => ({ imageUrl: photo.imageUrl, sourceUrl: photo.sourceUrl })),
+    ...COMPARISON_PHOTOS.map((photo) => ({
+      imageUrl: photo.imageUrl,
+      sourceUrl: photo.sourceUrl,
+      inaturalistObservationId: photo.inaturalistObservationId,
+      inaturalistPhotoUrl: photo.inaturalistPhotoUrl,
+    })),
+  ];
 
   it('keeps every poisonous card illustrated and leaves other cards without a gallery', () => {
     for (const species of MUSHROOMS_DATABASE) {
@@ -104,17 +122,33 @@ describe('atlas gallery assets', () => {
       photos: Array<{
         image_url: string;
         inaturalist_observation_id: string | null;
+        inaturalist_photo_url?: string;
         source_url: string;
       }>;
     };
     const listedUrls = exclusion.photos.map((photo) => photo.image_url);
-    expect(new Set(listedUrls)).toEqual(new Set(photos.map((photo) => photo.imageUrl)));
-    expect(listedUrls.length).toBe(new Set(listedUrls).size);
+    const creditedUrls = new Set(credited.map((photo) => photo.imageUrl));
+    const listed = new Set(listedUrls);
+    const hiddenOnly = 'https://inaturalist-open-data.s3.amazonaws.com/photos/331784845/original.jpg';
+    expect(listedUrls.length).toBe(listed.size);
+    for (const url of creditedUrls) {
+      expect(listed.has(url)).toBe(true);
+    }
+    expect([...listed].filter((url) => !creditedUrls.has(url))).toEqual([hiddenOnly]);
 
     for (const row of exclusion.photos) {
-      const match = photos.find((photo) => photo.imageUrl === row.image_url);
-      expect(match?.sourceUrl).toBe(row.source_url);
-      if (row.inaturalist_observation_id) {
+      const match = credited.find((photo) => photo.imageUrl === row.image_url);
+      if (!match) {
+        expect(row.image_url).toBe(hiddenOnly);
+        expect(row.inaturalist_observation_id).toBe('189400216');
+        expect(row.source_url).toBe('https://www.inaturalist.org/photos/331784845');
+        continue;
+      }
+      expect(match.sourceUrl).toBe(row.source_url);
+      if (match?.inaturalistObservationId) {
+        expect(row.inaturalist_observation_id).toBe(match.inaturalistObservationId);
+        expect(row.inaturalist_photo_url ?? null).toBe(match.inaturalistPhotoUrl ?? null);
+      } else if (row.inaturalist_observation_id) {
         expect(match?.sourceUrl).toContain(`/observations/${row.inaturalist_observation_id}`);
       }
     }
