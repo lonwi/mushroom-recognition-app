@@ -1,0 +1,158 @@
+{
+  "captured_at": "2026-10-31T07:21:20Z",
+  "samples_per_host": 5,
+  "note": "One-time http versus https body comparison. Unit tests read this file and do not download it again. A host is allowlisted only when every sample has a 2xx status on both schemes and both bodies share a SHA-256. An attribution URL is rewritten only when that exact resource is one of these samples, or when migrate_attribution_https.py has checked that row's own https response.",
+  "hosts": {},
+  "rejected_hosts": {
+    "sweetgum.nybg.org": {
+      "label": "NYBG Steere Herbarium",
+      "dataset_key": "d415c253-4d61-4459-9d25-4015b9084fb0",
+      "selection": {
+        "dataset_key": "d415c253-4d61-4459-9d25-4015b9084fb0",
+        "pages_fetched": 3,
+        "page_limit": 300,
+        "max_pages": 3,
+        "candidates": 1800,
+        "end_of_records": false,
+        "order": "lexicographic"
+      },
+      "samples": [
+        {
+          "url": "http://sweetgum.nybg.org/images3/4127/530/04758269.jpg",
+          "https_url": "https://sweetgum.nybg.org/images3/4127/530/04758269.jpg",
+          "http_status": null,
+          "https_status": 200,
+          "http_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "https_sha256": "5343fa5cfdbe1e4f80bc9d88d28492c1034ce72168f3dede7e65847bac9dcefb",
+          "http_bytes": 0,
+          "https_bytes": 2258251,
+          "http_error": "timed out",
+          "https_error": null
+        },
+        {
+          "url": "http://sweetgum.nybg.org/images3/4127/531/04758270.jpg",
+          "https_url": "https://sweetgum.nybg.org/images3/4127/531/04758270.jpg",
+          "http_status": null,
+          "https_status": 200,
+          "http_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "https_sha256": "d857672654a4be49581d46fec608523234fdf8cfda8b56769933ebedf1c224a4",
+          "http_bytes": 0,
+          "https_bytes": 1957590,
+          "http_error": "timed out",
+          "https_error": null
+        },
+        {
+          "url": "http://sweetgum.nybg.org/images3/4127/532/04758271.jpg",
+          "https_url": "https://sweetgum.nybg.org/images3/4127/532/04758271.jpg",
+          "http_status": null,
+          "https_status": 200,
+          "http_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "https_sha256": "42ea79b1d7a9f8b3c0529f4e5c8a6e390a9dc56a56a1cf12d7c230515b85e2d9",
+          "http_bytes": 0,
+          "https_bytes": 2164772,
+          "http_error": "timed out",
+          "https_error": null
+        },
+        {
+          "url": "http://sweetgum.nybg.org/images3/4127/533/04758272.jpg",
+          "https_url": "https://sweetgum.nybg.org/images3/4127/533/04758272.jpg",
+          "http_status": null,
+          "https_status": 200,
+          "http_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "https_sha256": "d2c45451ee1960508ff85528d8790ad654cfa85fc0b2a93afaa063f50be43684",
+          "http_bytes": 0,
+          "https_bytes": 2127690,
+          "http_error": "timed out",
+          "https_error": null
+        },
+        {
+          "url": "http://sweetgum.nybg.org/images3/4127/534/04758273.jpg",
+          "https_url": "https://sweetgum.nybg.org/images3/4127/534/04758273.jpg",
+          "http_status": null,
+          "https_status": 200,
+          "http_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "https_sha256": "4a9fc1e10aaad14340bd7c7d33749717cd3d56c950ef555aa30ab875634d78ba",
+          "http_bytes": 0,
+          "https_bytes": 2097861,
+          "http_error": "timed out",
+          "https_error": null
+        }
+      ]
+    },
+    "specimens.kew.org": {
+      "label": "Kew Fungarium",
+      "dataset_key": "2e8ab72b-5931-4e04-b8ff-e1fb61305d17",
+      "selection": {
+        "dataset_key": "2e8ab72b-5931-4e04-b8ff-e1fb61305d17",
+        "pages_fetched": 3,
+        "page_limit": 300,
+        "max_pages": 3,
+        "candidates": 900,
+        "end_of_records": false,
+        "order": "lexicographic"
+      },
+      "samples": [
+        {
+          "url": "http://specimens.kew.org/Fungarium/K-M000023703",
+          "https_url": "https://specimens.kew.org/Fungarium/K-M000023703",
+          "http_status": 403,
+          "https_status": 403,
+          "http_sha256": "8914ee5f1601bbae5f55d279878323efc664af5f5f14957af3d0b1878b830929",
+          "https_sha256": "f20197faa7a5c1c2f6eb8e6812708623676722db7d9a12cc7d11d784d32d5b2a",
+          "http_bytes": 5735,
+          "https_bytes": 5735,
+          "http_error": null,
+          "https_error": null
+        },
+        {
+          "url": "http://specimens.kew.org/Fungarium/K-M000025389",
+          "https_url": "https://specimens.kew.org/Fungarium/K-M000025389",
+          "http_status": 403,
+          "https_status": 403,
+          "http_sha256": "d7bc96e9648eaf4826130c504a7fe283347acaecae784584ecccf444c2ff4c7e",
+          "https_sha256": "1bfa9bb02af0a1a6f96c10c03e81da113e6e6d69303e04f986bfd73e4c80e66b",
+          "http_bytes": 5735,
+          "https_bytes": 5735,
+          "http_error": null,
+          "https_error": null
+        },
+        {
+          "url": "http://specimens.kew.org/Fungarium/K-M000025443",
+          "https_url": "https://specimens.kew.org/Fungarium/K-M000025443",
+          "http_status": 403,
+          "https_status": 403,
+          "http_sha256": "92baa3f40d2fa6da252763ab9d927663a56f5edbe6d9f792a27be498c54bc917",
+          "https_sha256": "e737932201536d2df8077c3e0388a741dea7a33f579e96ea9ed724a62a7bd49c",
+          "http_bytes": 5735,
+          "https_bytes": 5735,
+          "http_error": null,
+          "https_error": null
+        },
+        {
+          "url": "http://specimens.kew.org/Fungarium/K-M000025474",
+          "https_url": "https://specimens.kew.org/Fungarium/K-M000025474",
+          "http_status": 403,
+          "https_status": 403,
+          "http_sha256": "91756396f22ddee6c3ed9bafb5e8aa4592accbc9d6780f3776ab0419697435f2",
+          "https_sha256": "32a5843a92370b30a0691423c0c833c3e9997d20298fb2aef3f33d09d535b251",
+          "http_bytes": 5735,
+          "https_bytes": 5735,
+          "http_error": null,
+          "https_error": null
+        },
+        {
+          "url": "http://specimens.kew.org/Fungarium/K-M000025488",
+          "https_url": "https://specimens.kew.org/Fungarium/K-M000025488",
+          "http_status": 403,
+          "https_status": 403,
+          "http_sha256": "7825463aac977d0422150c2828f22ed4e5b6b0d44293bc74b5454cd4d40f4bb0",
+          "https_sha256": "5b634f6e8ba86953746b13ff504b44cb5c1251b2a41137bf3e660c9b551a300d",
+          "http_bytes": 5735,
+          "https_bytes": 5735,
+          "http_error": null,
+          "https_error": null
+        }
+      ]
+    }
+  }
+}
