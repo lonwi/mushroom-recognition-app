@@ -1,5 +1,5 @@
 import React from 'react';
-import { BackHandler, Platform } from 'react-native';
+import { BackHandler, Dimensions, Platform, StyleSheet } from 'react-native';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import App from '../../../App';
@@ -33,6 +33,41 @@ function installBackHandler() {
   };
 
   return { handlers, press, restore: () => spy.mockRestore() };
+}
+
+type HostNode = {
+  type: string;
+  parent: unknown;
+};
+
+function asHostNode(value: unknown): HostNode | null {
+  if (typeof value !== 'object' || value === null || !('type' in value)) {
+    return null;
+  }
+  if (typeof value.type !== 'string') {
+    return null;
+  }
+  return value as HostNode;
+}
+
+/** RNTL 14 only exposes host nodes. The card's vertical ScrollView is `RCTScrollView`. */
+function speciesCardScrollHost(anchor: HostNode): HostNode {
+  let current: HostNode | null = anchor;
+  while (current !== null && current.type !== 'RCTScrollView') {
+    current = asHostNode(current.parent);
+  }
+  if (current === null) {
+    throw new Error('Species card ScrollView host was not found');
+  }
+  return current;
+}
+
+function galleryPageWidth(style: Parameters<typeof StyleSheet.flatten>[0]): number {
+  const flat: unknown = StyleSheet.flatten(style);
+  if (typeof flat !== 'object' || flat === null || !('width' in flat) || typeof flat.width !== 'number') {
+    throw new Error('Gallery page width is not a number');
+  }
+  return flat.width;
 }
 
 describe('Android hardware back', () => {
@@ -161,6 +196,47 @@ describe('Android hardware back', () => {
       });
       expect(screen.getByTestId('scanner-atlas-scope')).toBeTruthy();
       expect(back.press()).toBe(false);
+    } finally {
+      back.restore();
+    }
+  });
+
+  it('mounts a new species card ScrollView when opening a look-alike and when going back', async () => {
+    const back = installBackHandler();
+    try {
+      const screen = await render(<App />);
+
+      await fireEvent.press(screen.getByTestId('demo-atlas-macrolepiota'));
+      expect(screen.getByText('Macrolepiota procera')).toBeTruthy();
+      const scrollBefore = speciesCardScrollHost(screen.getByTestId('species-family-label'));
+
+      await fireEvent.press(screen.getByTestId('lookalike-link-amanita_phalloides'));
+      expect(screen.getByText('Amanita phalloides')).toBeTruthy();
+      const scrollLookAlike = speciesCardScrollHost(screen.getByTestId('species-family-label'));
+      expect(scrollLookAlike).not.toBe(scrollBefore);
+
+      await act(async () => {
+        expect(back.press()).toBe(true);
+      });
+      expect(screen.getByText('Macrolepiota procera')).toBeTruthy();
+      expect(screen.queryByText('Amanita phalloides')).toBeNull();
+      const scrollAfterBack = speciesCardScrollHost(screen.getByTestId('species-family-label'));
+      expect(scrollAfterBack).not.toBe(scrollLookAlike);
+
+      await fireEvent.press(screen.getByTestId('lookalike-link-amanita_phalloides'));
+      expect(screen.getByText('Amanita phalloides')).toBeTruthy();
+      const parkedWidth = 417;
+      expect(parkedWidth).not.toBe(Dimensions.get('window').width);
+      await fireEvent(screen.getByTestId('species-gallery'), 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: parkedWidth, height: 120 } },
+      });
+      expect(galleryPageWidth(screen.getByTestId('species-gallery-slide-0').props.style)).toBe(parkedWidth);
+
+      await fireEvent.press(screen.getByTestId('lookalike-link-amanita_citrina'));
+      expect(screen.getByText('Amanita citrina')).toBeTruthy();
+      expect(galleryPageWidth(screen.getByTestId('species-gallery-slide-0').props.style)).toBe(
+        Dimensions.get('window').width,
+      );
     } finally {
       back.restore();
     }
