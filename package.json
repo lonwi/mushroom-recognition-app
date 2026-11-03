@@ -57,7 +57,7 @@
     "@storybook/addon-essentials": "^8.6.19",
     "@storybook/react": "8.6.19",
     "@storybook/react-vite": "^8.6.19",
-    "@testing-library/react-native": "^14.0.1",
+    "@testing-library/react-native": "^14.1.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.20.5",
     "@types/react": "^19.3.0",
