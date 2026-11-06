@@ -93,6 +93,14 @@ describe('validateSpeciesPayload', () => {
     expect(validateSpeciesPayload(payload)).toBeNull();
   });
 
+  it('rejects a payload whose species is not an array', () => {
+    const payload = {
+      species: {} as unknown as MushroomSpecies[],
+      manifest: validPayload().manifest,
+    };
+    expect(validateSpeciesPayload(payload)).toBeNull();
+  });
+
   it('rejects a species whose confusionRisks is missing', () => {
     const species = minimalSpecies();
     delete (species as Partial<MushroomSpecies>).confusionRisks;
