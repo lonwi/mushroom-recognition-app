@@ -62,6 +62,9 @@ from url_safety import force_https_url
 DATA_DIR = ROOT / "training" / "data"
 DEFAULT_OUTPUT = DATA_DIR / "external.jsonl"
 DEFAULT_REPORT = DATA_DIR / "external_report.json"
+# Compatibility default for callers that request a collector-cap diagnostic.
+# The actual cap remains enforced only by prepare_data.py after deduplication.
+DEFAULT_MAX_PER_COLLECTOR = 30
 
 # Names the photo tables use for a taxon the manifest stores under the accepted name.
 _SPECIES_ALIASES = {
