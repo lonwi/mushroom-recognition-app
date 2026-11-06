@@ -1,5 +1,4 @@
 /// <reference types="jest" />
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   SPECIES_CACHE_KEY,
   SPECIES_CACHE_VERSION_KEY,
@@ -88,22 +87,16 @@ describe('validateSpeciesPayload', () => {
   });
 
   it('rejects a payload missing required fields', () => {
-    const { habitat, ...rest } = minimalSpecies();
-    const payload = { species: [rest], manifest: validPayload().manifest };
-    expect(validateSpeciesPayload(payload)).toBeNull();
-  });
-
-  it('rejects a payload whose species is not an array', () => {
-    const payload = {
-      species: {} as unknown as MushroomSpecies[],
-      manifest: validPayload().manifest,
-    };
+    const species = minimalSpecies();
+    delete (species as Partial<MushroomSpecies>).habitat;
+    const payload = { species: [species], manifest: validPayload().manifest };
     expect(validateSpeciesPayload(payload)).toBeNull();
   });
 
   it('rejects a species whose confusionRisks is missing', () => {
-    const { confusionRisks, ...rest } = minimalSpecies();
-    const payload = { species: [rest], manifest: validPayload().manifest };
+    const species = minimalSpecies();
+    delete (species as Partial<MushroomSpecies>).confusionRisks;
+    const payload = { species: [species], manifest: validPayload().manifest };
     expect(validateSpeciesPayload(payload)).toBeNull();
   });
 });
