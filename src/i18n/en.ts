@@ -689,4 +689,10 @@ export const en: Translations = {
       },
     },
   },
+  // Draft pending Wojtek's approval. {tab} is nav.safety, not a hardcoded tab name.
+  screenError: {
+    title: 'Something went wrong',
+    body: 'This screen could not be shown. Try again or choose another tab. Emergency numbers are in the {tab} tab.',
+    retry: 'Try again',
+  },
 };
