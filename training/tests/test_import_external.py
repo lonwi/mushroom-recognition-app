@@ -705,20 +705,23 @@ class ImportDirectoryTest(unittest.TestCase):
             ],
         )
 
-        rows, report = import_directory(self.root, max_per_collector=2, include_df20=True)
+        rows, report = import_directory(self.root, include_df20=True)
         self.assertEqual(report["excluded_df20"], 0)
         self.assertTrue(report["include_df20"])
+        self.assertIsNone(report["max_per_collector"])
         by_photo = {row.get("inat_photo_id") or row.get("commons_file") or row.get("df20_image_id"): row for row in rows}
 
-        ada_verified = [
+        ada_rows = [
             row
             for row in rows
             if row["class_id"] == "amanita_phalloides" and row["collector_key"] == "inat:ada" and not row["unverified"]
         ]
-        self.assertEqual(len(ada_verified), 2)
-        self.assertTrue(all(row["usage"] == "publishable" for row in ada_verified))
-        self.assertNotIn("1", by_photo)
+        ada_verified = [row for row in ada_rows if row["usage"] == "publishable"]
+        self.assertEqual({row["inat_photo_id"] for row in ada_verified}, {"2", "3"})
+        self.assertEqual(by_photo["1"]["license_normalized"], "cc-by-nc-4.0")
+        self.assertEqual(by_photo["1"]["usage"], "training_only")
         self.assertGreaterEqual(report["dropped_looser_license"], 1)
+        self.assertEqual(report["dropped_collector_cap"], 0)
         self.assertNotIn("9", {row["inat_photo_id"] for row in ada_verified})
 
         joined = by_photo["2"]
@@ -773,17 +776,15 @@ class ImportDirectoryTest(unittest.TestCase):
         self.assertFalse(is_publishable(share_alike))
         self.assertGreaterEqual(report["rejected_missing_author"], 1)
         self.assertGreaterEqual(report["dropped_looser_license"], 1)
-        self.assertGreaterEqual(report["dropped_collector_cap"], 1)
         self.assertEqual(report["dropped_by_reason"]["looser_license"], report["dropped_looser_license"])
 
         df20_rows = [row for row in rows if row["source"] == "df20"]
-        self.assertEqual(len(df20_rows), 1)
-        self.assertEqual(df20_rows[0]["usage"], "training_only")
-        self.assertEqual(df20_rows[0]["license_normalized"], "df20")
-        self.assertEqual(df20_rows[0]["creator"], "Benny Example")
-        self.assertEqual(df20_rows[0]["df20_observation_id"], "223")
-        self.assertEqual(df20_rows[0]["occurrence_key"], "df20:223")
-        self.assertFalse(df20_rows[0]["unverified"])
+        self.assertEqual({row["df20_observation_id"] for row in df20_rows}, {"223", "224"})
+        self.assertTrue(all(row["usage"] == "training_only" for row in df20_rows))
+        self.assertTrue(all(row["license_normalized"] == "df20" for row in df20_rows))
+        self.assertTrue(all(row["creator"] == "Benny Example" and row["rights_holder"] == "Benny Example" for row in df20_rows))
+        self.assertEqual(by_photo["223-1"]["occurrence_key"], "df20:223")
+        self.assertFalse(any(row["unverified"] for row in df20_rows))
         boletus_publishable = [
             row for row in rows if row["class_id"] == "boletus_edulis" and row["usage"] == "publishable"
         ]
@@ -791,7 +792,7 @@ class ImportDirectoryTest(unittest.TestCase):
         self.assertEqual(boletus_publishable[0]["creator"], "Benny Example")
         self.assertTrue(all(row["creator"] for row in rows))
 
-        publishable_only, only_report = import_directory(self.root, max_per_collector=2, publishable_only=True)
+        publishable_only, only_report = import_directory(self.root, publishable_only=True)
         self.assertTrue(all(is_publishable(row) for row in publishable_only))
         self.assertEqual(only_report["training_only"], 0)
         self.assertTrue(all(row["unverified"] is False for row in publishable_only))
@@ -959,7 +960,7 @@ class ImportDirectoryTest(unittest.TestCase):
                 ),
             ],
         )
-        rows, report = import_directory(self.root, max_per_collector=30)
+        rows, report = import_directory(self.root)
         self.assertEqual([row["inat_photo_id"] for row in rows], ["10"])
         by_id = {item["id"]: item for item in report["label_conflicts"]}
         self.assertEqual(by_id["inat-photo:7"]["kind"], "photo")
@@ -1018,7 +1019,7 @@ class ImportDirectoryTest(unittest.TestCase):
                 ),
             ],
         )
-        rows, report = import_directory(self.root, max_per_collector=30)
+        rows, report = import_directory(self.root)
         self.assertEqual(rows, [])
         self.assertGreaterEqual(report["rejected_license_url_empty"], 1)
         self.assertGreaterEqual(report["rejected_license"], 1)
@@ -1066,7 +1067,7 @@ class ImportDirectoryTest(unittest.TestCase):
                 ),
             ],
         )
-        rows, report = import_directory(self.root, max_per_collector=30)
+        rows, report = import_directory(self.root)
         self.assertEqual(rows, [])
         self.assertGreaterEqual(report["rejected_license_url_empty"], 2)
         self.assertEqual(report["rejected_license_url_not_https"], 1)
@@ -1113,7 +1114,7 @@ class ImportDirectoryTest(unittest.TestCase):
                 )
             ],
         )
-        rows, report = import_directory(self.root, max_per_collector=30)
+        rows, report = import_directory(self.root)
         self.assertEqual(len(rows), 1)
         kept = rows[0]
         self.assertEqual(kept["license_normalized"], "cc-by-nc-4.0")
@@ -1541,18 +1542,110 @@ class ImportDirectoryTest(unittest.TestCase):
             _attribution_sources(folder, with_external=True)
 
 
+    def test_author_column_fills_creator_and_rights_holder(self):
+        rows = []
+        for index in range(12):
+            rows.append(
+                self._base(
+                    author="Ada Hunter",
+                    inat_observer="bea",
+                    inat_photo_id=str(3000 + index),
+                    inat_observation_id=str(4000 + index),
+                    image_url=f"https://images.example.test/ada-{index}.jpg",
+                    source_url=f"https://www.inaturalist.org/observations/{4000 + index}",
+                )
+            )
+        _photo(self.root / "amanita_phalloides.csv", rows)
+        written, report = import_directory(self.root)
+        self.assertIsNone(report["max_per_collector"])
+        self.assertIsNone(report["author_cap_formula"])
+        self.assertIsNone(report["collector_cap_diagnostic"])
+        self.assertEqual(len(written), 12)
+        self.assertTrue(all(row["creator"] == "Ada Hunter" for row in written))
+        self.assertTrue(all(row["rights_holder"] == "Ada Hunter" for row in written))
+        self.assertTrue(all(row["collector_key"] == "inat:bea" for row in written))
+        self.assertEqual(report["dropped_collector_cap"], 0)
+        source = Path(__file__).resolve().parents[1].joinpath("import_external.py").read_text(encoding="utf-8")
+        self.assertNotIn("DEFAULT_MAX_PER_COLLECTOR", source)
+        self.assertIn("apply_person_class_cap", source)
+
+    def test_csv_author_column_has_the_same_cap_key_as_creator_and_rights_holder(self):
+        from person_cap import cap_author_key
+        from split import person_identity_keys
+
+        _photo(
+            self.root / "amanita_phalloides.csv",
+            [
+                self._base(
+                    author="Ada Hunter",
+                    inat_observer="bea",
+                    inat_photo_id="501",
+                    inat_observation_id="601",
+                    image_url="https://images.example.test/csv-ada.jpg",
+                    source_url="https://www.inaturalist.org/observations/601",
+                )
+            ],
+        )
+        written, report = import_directory(self.root)
+        self.assertEqual(len(written), 1)
+        self.assertIsNone(report["max_per_collector"])
+        row = written[0]
+        self.assertEqual(row["author"], "Ada Hunter")
+        self.assertEqual(row["creator"], row["author"])
+        self.assertEqual(row["rights_holder"], row["author"])
+        self.assertEqual(row["collector_key"], "inat:bea")
+        author_only = {"creator": row["author"], "rights_holder": row["author"]}
+        self.assertEqual(cap_author_key(row), cap_author_key(author_only))
+        self.assertEqual(cap_author_key(row), cap_author_key({"creator": row["author"]}))
+        self.assertEqual(cap_author_key(row), cap_author_key({"rights_holder": row["author"]}))
+        self.assertEqual(cap_author_key(row), ("person:ada hunter", False))
+        self.assertIn("person:bea", person_identity_keys(row))
+        self.assertNotEqual(cap_author_key(row)[0], "person:bea")
+
+
+    def test_default_import_does_not_cut_and_the_flag_is_diagnostic_only(self):
+        from import_external import collector_cap_diagnostic
+
+        rows = [
+            self._base(
+                author="Ada Hunter",
+                inat_observer="bea",
+                inat_photo_id=str(8000 + index),
+                inat_observation_id=str(9000 + index),
+                image_url=f"https://images.example.test/diag-{index}.jpg",
+                source_url=f"https://www.inaturalist.org/observations/{9000 + index}",
+            )
+            for index in range(12)
+        ]
+        _photo(self.root / "amanita_phalloides.csv", rows)
+        written, report = import_directory(self.root)
+        self.assertEqual(len(written), 12)
+        self.assertEqual(report["dropped_collector_cap"], 0)
+        self.assertIsNone(report["collector_cap_diagnostic"])
+        flagged, flagged_report = import_directory(self.root, max_per_collector=3)
+        self.assertEqual(len(flagged), 12)
+        self.assertEqual(flagged_report["dropped_collector_cap"], 0)
+        self.assertEqual(flagged_report["collector_cap_diagnostic"]["limit"], 3)
+        self.assertGreater(flagged_report["collector_cap_diagnostic"]["would_drop"], 0)
+        self.assertEqual(collector_cap_diagnostic(written, 3)["would_drop"], flagged_report["collector_cap_diagnostic"]["would_drop"])
+
+
 class CollectorCapTest(unittest.TestCase):
     def test_whole_observations_and_per_class(self):
         rows = []
         order = 1
         for obs, count in (("obs-a", 2), ("obs-b", 2), ("obs-c", 1)):
-            for _ in range(count):
+            for frame in range(count):
                 rows.append(
                     {
                         "_order": order,
                         "class_id": "amanita_phalloides",
-                        "collector_key": "inat:ada",
+                        "creator": "Ada Hunter",
+                        "rights_holder": "Ada Hunter",
+                        "collector_key": "inat:bea",
+                        "inat_observer": "bea",
                         "occurrence_key": obs,
+                        "inat_photo_id": f"{obs}-{frame}",
                         "unverified": False,
                     }
                 )
@@ -1561,17 +1654,68 @@ class CollectorCapTest(unittest.TestCase):
             {
                 "_order": order,
                 "class_id": "boletus_edulis",
-                "collector_key": "inat:ada",
+                "creator": "Ada Hunter",
+                "rights_holder": "Ada Hunter",
+                "collector_key": "inat:bea",
                 "occurrence_key": "other",
+                "inat_photo_id": "boletus-0",
                 "unverified": False,
             }
         )
         kept, dropped = apply_collector_cap(rows, 3)
+        self.assertEqual(dropped, [])
+        self.assertEqual(len(kept), len(rows))
         phalloides = [row for row in kept if row["class_id"] == "amanita_phalloides"]
-        self.assertEqual(len(phalloides), 3)
-        self.assertEqual({row["occurrence_key"] for row in phalloides}, {"obs-a", "obs-c"})
-        self.assertEqual(len(dropped), 2)
+        self.assertEqual(len(phalloides), 5)
+        self.assertEqual({row["occurrence_key"] for row in phalloides}, {"obs-a", "obs-b", "obs-c"})
+        self.assertEqual(len(dropped), 0)
         self.assertEqual([row for row in kept if row["class_id"] == "boletus_edulis"], [rows[-1]])
+        self.assertEqual([row["_order"] for row in kept], sorted(row["_order"] for row in kept))
+
+    def test_formula_counts_creator_not_the_observer(self):
+        rows = []
+        order = 1
+        for name, count in (("Ada Hunter", 12), ("Cara Hunter", 12)):
+            for index in range(count):
+                rows.append(
+                    {
+                        "_order": order,
+                        "class_id": "amanita_phalloides",
+                        "creator": name,
+                        "rights_holder": name,
+                        "collector_key": "inat:bea",
+                        "inat_observer": "bea",
+                        "occurrence_key": f"{name}-{index}",
+                        "inat_photo_id": f"{name}-{index}",
+                        "unverified": False,
+                    }
+                )
+                order += 1
+        kept, dropped = apply_collector_cap(rows)
+        self.assertEqual(dropped, [])
+        self.assertEqual(len(kept), 24)
+        flagged, flagged_dropped = apply_collector_cap(rows, 10)
+        self.assertEqual(flagged_dropped, [])
+        self.assertEqual(len(flagged), 24)
+        self.assertTrue(all(row["collector_key"] == "inat:bea" for row in kept))
+
+    def test_missing_creator_uses_rights_holder(self):
+        rows = [
+            {
+                "_order": index,
+                "class_id": "amanita_phalloides",
+                "creator": "",
+                "rights_holder": "Ada Hunter",
+                "collector_key": "inat:bea",
+                "occurrence_key": f"obs-{index}",
+                "inat_photo_id": f"hold-{index}",
+                "unverified": False,
+            }
+            for index in range(12)
+        ]
+        kept, dropped = apply_collector_cap(rows)
+        self.assertEqual(len(kept), 12)
+        self.assertEqual(dropped, [])
 
     def test_https_rewrites_port_80(self):
         self.assertEqual(
