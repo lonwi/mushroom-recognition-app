@@ -6,7 +6,6 @@
  * Fallback chain: fresh remote -> cached remote -> bundled baseline.
  * The app never requires a network connection.
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { KeyValueStore } from './storage/keyValueStore';
 import { asyncStorageStore } from './storage/keyValueStore';
 import { speciesManifest } from './speciesManifest';
