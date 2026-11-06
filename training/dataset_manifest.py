@@ -64,6 +64,8 @@ def build_dataset_manifest(
     self_entry_ignored: bool | None = None,
     self_entry_path: str | None = None,
     input_archive_sha256: str | None = None,
+    gbif_fetch_report_sha256: str | None = None,
+    gbif_rows_sha256: str | None = None,
 ) -> dict:
     """Per-split totals, per-class counts, component shares, and a content sha256.
 
@@ -112,6 +114,8 @@ def build_dataset_manifest(
         "salt_fingerprint": salt_fingerprint(salt),
         "component_share": share,
         "held_out_withheld": held_out_withheld_report(withheld or []),
+        "gbif_fetch_report_sha256": gbif_fetch_report_sha256,
+        "gbif_rows_sha256": gbif_rows_sha256,
     }
     if input_tree_sha256 is not None:
         manifest["input_tree_sha256"] = input_tree_sha256
