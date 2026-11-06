@@ -48,6 +48,17 @@ def normalize_cc_license(raw: str | None) -> str | None:
     return f"cc-by-{version}"
 
 
+def explicit_unverified_identification(value: object) -> bool:
+    """True when the whole status is unverified, ignoring case and surrounding space.
+
+    A missing or blank status is false. Any other text, including
+    ``Approved | Expert | Evidence`` and ``Confident``, is false.
+    """
+    if not isinstance(value, str):
+        return False
+    return value.strip().casefold() == "unverified"
+
+
 def accepted_media_records(occurrence: dict) -> list[dict]:
     """Yield GBIF media entries whose own license is CC0 or CC-BY."""
     accepted: list[dict] = []
