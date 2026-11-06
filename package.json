@@ -28,7 +28,8 @@
     "test": "jest --config jest.config.js",
     "test:e2e": "playwright test",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "build:species": "node scripts/build-species-bundle.mjs"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
