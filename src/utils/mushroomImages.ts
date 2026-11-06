@@ -1,16 +1,18 @@
 import type { ImageSourcePropType } from 'react-native';
-import boletusEdulis from '../../assets/mushrooms/boletus_edulis.jpg';
-import amanitaPhalloides from '../../assets/mushrooms/amanita_phalloides.jpg';
-import macrolepiotaProcera from '../../assets/mushrooms/macrolepiota_procera.jpg';
-import cantharellusCibarius from '../../assets/mushrooms/cantharellus_cibarius.jpg';
-import imleriaBadia from '../../assets/mushrooms/imleria_badia.jpg';
-import suillusLuteus from '../../assets/mushrooms/suillus_luteus.jpg';
-import leccinumScabrum from '../../assets/mushrooms/leccinum_scabrum.jpg';
-import tylopilusFelleus from '../../assets/mushrooms/tylopilus_felleus.jpg';
-import amanitaMuscaria from '../../assets/mushrooms/amanita_muscaria.jpg';
-import lactariusDeliciosus from '../../assets/mushrooms/lactarius_deliciosus.jpg';
-import gyromitraEsculenta from '../../assets/mushrooms/gyromitra_esculenta.jpg';
-import paxillusInvolutus from '../../assets/mushrooms/paxillus_involutus.jpg';
+
+// Importing WebP files (converted from JPEG)
+import boletusEdulis from '../../assets/mushrooms/boletus_edulis.webp';
+import amanitaPhalloides from '../../assets/mushrooms/amanita_phalloides.webp';
+import macrolepiotaProcera from '../../assets/mushrooms/macrolepiota_procera.webp';
+import cantharellusCibarius from '../../assets/mushrooms/cantharellus_cibarius.webp';
+import imleriaBadia from '../../assets/mushrooms/imleria_badia.webp';
+import suillusLuteus from '../../assets/mushrooms/suillus_luteus.webp';
+import leccinumScabrum from '../../assets/mushrooms/leccinum_scabrum.webp';
+import tylopilusFelleus from '../../assets/mushrooms/tylopilus_felleus.webp';
+import amanitaMuscaria from '../../assets/mushrooms/amanita_muscaria.webp';
+import lactariusDeliciosus from '../../assets/mushrooms/lactarius_deliciosus.webp';
+import gyromitraEsculenta from '../../assets/mushrooms/gyromitra_esculenta.webp';
+import paxillusInvolutus from '../../assets/mushrooms/paxillus_involutus.webp';
 
 const MUSHROOM_IMAGES: Record<string, ImageSourcePropType> = {
   boletus_edulis: boletusEdulis,
