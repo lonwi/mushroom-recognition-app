@@ -24,8 +24,10 @@ https is skipped too, with reason ``url_not_https`` in the per-class section
 of ``dedup_report.json``. That skip does not rewrite the URL and does not
 stop the rest of the run. The cached PNG is EXIF-oriented and area-resized to the
 model input, which is what the phone feeds the network. An unacknowledged
-class over the per-class component-share limit, or with an empty val or test,
-stops the run before any split file or dataset manifest is written.
+class over the per-class component-share limit, with an empty val or test,
+or with a test share outside the provisional band or a test count below
+``MIN_TEST_COUNT``, stops the run before any split file or dataset manifest
+is written.
 """
 
 from __future__ import annotations
@@ -413,8 +415,9 @@ def write_prepare_outputs(
     """Write split artifacts after the per-class hard stop.
 
     The manifest is built in memory first. An unacknowledged class over the
-    component-share limit, or with an empty val or test, raises ``SystemExit``
-    and leaves the directory without ``splits.json`` or ``dataset_manifest.json``.
+    component-share limit, with an empty val or test, or outside the provisional
+    test-split band, raises ``SystemExit`` and leaves the directory without
+    ``splits.json`` or ``dataset_manifest.json``.
     """
     source_hashes = gbif_input_hashes(directory)
     dataset_manifest = build_dataset_manifest(
@@ -425,18 +428,26 @@ def write_prepare_outputs(
         gbif_fetch_report_sha256=source_hashes["gbif_fetch_report_sha256"],
         gbif_rows_sha256=source_hashes["gbif_rows_sha256"],
     )
-    hard = list(dataset_manifest["component_share"]["hard_stop_classes"])
+    hard = list(
+        dict.fromkeys(
+            [
+                *dataset_manifest["component_share"]["hard_stop_classes"],
+                *dataset_manifest["test_balance"]["hard_stop_classes"],
+            ]
+        )
+    )
     if hard:
         for name in _PREPARE_OUTPUTS:
             path = directory / name
             if path.is_file():
                 path.unlink()
         raise SystemExit(
-            "per-class component share or empty val/test stops the run for: "
+            "per-class component share, empty val/test, or a test split outside the provisional "
+            "band or below the minimum test count stops the run for: "
             + ", ".join(hard)
             + ". No split files were written. "
-            "Add an explicit acknowledgement with a reason, or widen the class. "
-            "Acknowledged classes are recorded in the manifest as ship blockers, so the model is not shippable."
+            "A component-share stop can be acknowledged with a reason; that class stays a ship blocker. "
+            "A test split outside the band or below the minimum test count is not acknowledged."
         )
     directory.mkdir(parents=True, exist_ok=True)
     write_jsonl(directory / "attributions.dedup.jsonl", prepared)

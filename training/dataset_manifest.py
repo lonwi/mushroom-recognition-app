@@ -89,7 +89,7 @@ def build_dataset_manifest(
         }
     digest = hashlib.sha256("\n".join(sorted(lines)).encode("utf-8")).hexdigest()
     from component_share import COMPONENT_SHARE_LIMIT, load_share_config, measure_component_share
-    from split import held_out_withheld_report
+    from split import held_out_withheld_report, measure_test_balance
     from split_salt import salt_fingerprint
 
     config = load_share_config() if share_config is None else share_config
@@ -104,6 +104,7 @@ def build_dataset_manifest(
         "content_sha256": digest,
         "salt_fingerprint": salt_fingerprint(salt),
         "component_share": share,
+        "test_balance": measure_test_balance(splits),
         "held_out_withheld": held_out_withheld_report(withheld or []),
         "gbif_fetch_report_sha256": gbif_fetch_report_sha256,
         "gbif_rows_sha256": gbif_rows_sha256,

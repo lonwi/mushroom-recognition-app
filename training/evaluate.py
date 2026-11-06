@@ -885,13 +885,17 @@ def main() -> None:
     test_pred = _predict_rows(model, splits["test"], image_size)
     report = assemble_report(manifest, splits, val_pred, test_pred)
     from component_share import blockers_from_manifest_file
+    from split import balance_blockers_from_manifest_file
 
-    report["component_share_blockers"] = blockers_from_manifest_file(DATA_DIR / "dataset_manifest.json")
+    manifest_path = DATA_DIR / "dataset_manifest.json"
+    report["component_share_blockers"] = blockers_from_manifest_file(manifest_path)
+    report["test_balance_blockers"] = balance_blockers_from_manifest_file(manifest_path)
     report["tflite"] = {"loaded": False, "top1_agreement_with_fp32": None, "agreement_source": None}
     report["shippable"] = False
     report["ship_blockers"] = [
         "TFLite export has not scored real val/test photos yet",
         *report["component_share_blockers"],
+        *report["test_balance_blockers"],
     ]
     ARTIFACTS.mkdir(parents=True, exist_ok=True)
     (ARTIFACTS / "metrics.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
