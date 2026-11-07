@@ -7,7 +7,6 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
-  ScrollView,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
@@ -16,16 +15,11 @@ import { SKIP_PROCESSING_CAPTURE, uprightCaptureWidth, widthForCapture } from '.
 import { DevInferenceOverlay } from '../components/DevInferenceOverlay';
 import { ResultModal } from '../components/ResultModal';
 import { useLanguage } from '../contexts/LanguageContext';
-import { getSpecies } from '../data/speciesCatalog';
-import { colors, radius, spacing } from '../theme/tokens';
-import { visibleAtlasExamples } from '../utils/atlasExampleLabel';
-
-const ATLAS_EXAMPLES = [
-  { id: 'boletus_edulis', slug: 'boletus', emoji: '🌲', danger: false },
-  { id: 'amanita_phalloides', slug: 'amanita', emoji: '☠', danger: true },
-  { id: 'macrolepiota_procera', slug: 'macrolepiota', emoji: '☂', danger: false },
-  { id: 'cantharellus_cibarius', slug: 'cantharellus', emoji: '🍳', danger: false },
-] as const;
+import { colors, spacing } from '../theme/tokens';
+import { ScannerExamples } from '../components/scanner/ScannerExamples';
+import { ScannerReticle } from '../components/scanner/ScannerReticle';
+import { ScannerControls } from '../components/scanner/ScannerControls';
+import { ScannerPermissionPrompt } from '../components/scanner/ScannerPermissionPrompt';
 
 interface Props {
   onOpenAtlasSpecies?: (speciesId: string) => void;
@@ -33,8 +27,7 @@ interface Props {
 }
 
 export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJournal }) => {
-  const { t, language } = useLanguage();
-  const atlasExamples = visibleAtlasExamples(ATLAS_EXAMPLES, language, getSpecies);
+  const { t } = useLanguage();
   const [permission, requestPermission] = useCameraPermissions();
   const [torchEnabled, setTorchEnabled] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -151,21 +144,11 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
 
   if (!permission.granted) {
     return (
-      <View style={styles.permissionContainer}>
-        <Text style={styles.permissionIcon}>📷</Text>
-        <Text style={styles.permissionTitle}>{t('scanner.cameraRequiredTitle')}</Text>
-        <Text style={styles.permissionDesc}>{t('scanner.cameraRequiredBody')}</Text>
-        <TouchableOpacity style={styles.permissionBtn} onPress={requestPermission} activeOpacity={0.8}>
-          <Text style={styles.permissionBtnText}>{t('scanner.allowCamera')}</Text>
-        </TouchableOpacity>
-
-        {/* Galeria bez uprawnień do kamery. Błąd wyboru nie podstawia innego zdjęcia. */}
-        <View style={styles.demoFallbackBox}>
-          <Text style={styles.demoFallbackTitle}>{t('scanner.galleryFallback')}</Text>
-          <TouchableOpacity style={styles.galleryBtnAlt} onPress={pickImageFromGallery}>
-            <Text style={styles.galleryBtnAltText}>{t('scanner.galleryAlt')}</Text>
-          </TouchableOpacity>
-        </View>
+      <View style={styles.permissionWrapper}>
+        <ScannerPermissionPrompt
+          onRequestPermission={requestPermission}
+          onPickGallery={pickImageFromGallery}
+        />
         <DevInferenceOverlay />
         {resultModal}
       </View>
@@ -201,91 +184,18 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
           </TouchableOpacity>
         </View>
 
-        {/* Celownik i wskazówki kadrowania makro */}
-        <View style={styles.viewfinderCenter}>
-          <View style={styles.frameCornerTopLeft} />
-          <View style={styles.frameCornerTopRight} />
-          <View style={styles.frameCornerBottomLeft} />
-          <View style={styles.frameCornerBottomRight} />
+        <ScannerReticle />
 
-          <View style={styles.guideBadge}>
-            <Text style={styles.guideBadgeText}>{t('scanner.aimGuide')}</Text>
-          </View>
-        </View>
+        <ScannerExamples
+          onOpenAtlasSample={openAtlasSample}
+          disabled={isAnalyzing}
+        />
 
-        {/* Skróty do kart w atlasie. Nie uruchamiają rozpoznawania. */}
-        <View style={styles.demoTestContainer}>
-          <Text style={styles.demoTestLabel}>{t('scanner.quickDemo')}</Text>
-          <Text style={styles.demoScopeHint} testID="scanner-atlas-scope">
-            {t('scanner.atlasScopeHint')}
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.demoScroll}>
-            {atlasExamples.map((example) => (
-              <TouchableOpacity
-                key={example.id}
-                style={[styles.demoChip, example.danger && styles.demoChipDanger]}
-                onPress={() => openAtlasSample(example.id)}
-                disabled={isAnalyzing}
-                accessibilityLabel={example.label}
-                testID={`demo-atlas-${example.slug}`}
-              >
-                <Text
-                  style={styles.demoChipEmoji}
-                  importantForAccessibility="no"
-                  accessibilityElementsHidden
-                >
-                  {example.emoji}
-                </Text>
-                <Text
-                  style={[styles.demoChipText, example.danger && styles.demoChipDangerText]}
-                  testID={`demo-atlas-label-${example.slug}`}
-                >
-                  {example.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Dolne przyciski migawki */}
-        <View style={styles.cameraControls}>
-          <TouchableOpacity
-            style={styles.galleryButton}
-            onPress={pickImageFromGallery}
-            disabled={isAnalyzing}
-            activeOpacity={0.7}
-            testID="scanner-gallery"
-            accessibilityRole="button"
-            accessibilityLabel={t('scanner.gallery')}
-            accessibilityState={{ disabled: isAnalyzing }}
-          >
-            <Text style={styles.galleryIcon} importantForAccessibility="no" accessibilityElementsHidden>
-              🖼
-            </Text>
-            <Text style={styles.galleryText}>{t('scanner.gallery')}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.shutterButton}
-            onPress={takePictureAndAnalyze}
-            disabled={isAnalyzing}
-            activeOpacity={0.8}
-            testID="scanner-shutter"
-            accessibilityRole="button"
-            accessibilityLabel={t('scanner.takePhoto')}
-            accessibilityState={{ disabled: isAnalyzing, busy: isAnalyzing }}
-          >
-            <View style={styles.shutterInner}>
-              {isAnalyzing ? (
-                <ActivityIndicator color={colors.primary} size="large" />
-              ) : (
-                <View style={styles.shutterCenter} />
-              )}
-            </View>
-          </TouchableOpacity>
-
-          <View style={{ width: 60 }} />
-        </View>
+        <ScannerControls
+          isAnalyzing={isAnalyzing}
+          onTakePhoto={takePictureAndAnalyze}
+          onPickGallery={pickImageFromGallery}
+        />
       </View>
 
       <DevInferenceOverlay />
@@ -299,6 +209,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.black,
   },
+  permissionWrapper: {
+    flex: 1,
+  },
   cameraOverlay: {
     ...StyleSheet.absoluteFill,
     justifyContent: 'space-between',
@@ -311,12 +224,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   toolBtn: {
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    backgroundColor: colors.overlayDark55,
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: colors.overlayLight30,
   },
   toolBtnActive: {
     backgroundColor: colors.amber500,
@@ -326,164 +239,6 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 12,
     fontWeight: '700',
-  },
-  viewfinderCenter: {
-    alignSelf: 'center',
-    width: 260,
-    height: 260,
-    position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  frameCornerTopLeft: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: 32,
-    height: 32,
-    borderTopWidth: 4,
-    borderLeftWidth: 4,
-    borderColor: colors.green400,
-    borderTopLeftRadius: 10,
-  },
-  frameCornerTopRight: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 32,
-    height: 32,
-    borderTopWidth: 4,
-    borderRightWidth: 4,
-    borderColor: colors.green400,
-    borderTopRightRadius: 10,
-  },
-  frameCornerBottomLeft: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    width: 32,
-    height: 32,
-    borderBottomWidth: 4,
-    borderLeftWidth: 4,
-    borderColor: colors.green400,
-    borderBottomLeftRadius: 10,
-  },
-  frameCornerBottomRight: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 32,
-    height: 32,
-    borderBottomWidth: 4,
-    borderRightWidth: 4,
-    borderColor: colors.green400,
-    borderBottomRightRadius: 10,
-  },
-  guideBadge: {
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-  },
-  guideBadgeText: {
-    color: colors.background,
-    fontSize: 12,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  demoTestContainer: {
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-  },
-  demoTestLabel: {
-    color: colors.outline,
-    fontSize: 11,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  demoScopeHint: {
-    color: colors.slate400,
-    fontSize: 11,
-    lineHeight: 15,
-    marginBottom: 6,
-  },
-  demoScroll: {
-    gap: 8,
-  },
-  demoChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexShrink: 0,
-    gap: spacing.xs,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.25)',
-  },
-  demoChipEmoji: {
-    fontSize: 12,
-    flexShrink: 0,
-  },
-  demoChipText: {
-    color: colors.white,
-    fontSize: 12,
-    fontWeight: '600',
-    flexShrink: 0,
-  },
-  demoChipDanger: {
-    backgroundColor: 'rgba(220, 38, 38, 0.4)',
-    borderColor: colors.red500,
-  },
-  demoChipDangerText: {
-    color: colors.red300,
-  },
-  cameraControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingBottom: spacing.lg,
-    paddingTop: spacing.lg,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  galleryButton: {
-    alignItems: 'center',
-    width: 60,
-  },
-  galleryIcon: {
-    fontSize: 26,
-  },
-  galleryText: {
-    color: colors.white,
-    fontSize: 11,
-    marginTop: 4,
-    fontWeight: '600',
-  },
-  shutterButton: {
-    width: 78,
-    height: 78,
-    borderRadius: 39,
-    borderWidth: 4,
-    borderColor: colors.white,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  shutterInner: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
-    backgroundColor: colors.white,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  shutterCenter: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: colors.primary,
   },
   centerContainer: {
     flex: 1,
@@ -495,60 +250,5 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 14,
     color: colors.slate700,
-  },
-  permissionContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-    backgroundColor: colors.background,
-  },
-  permissionIcon: {
-    fontSize: 50,
-    marginBottom: 16,
-  },
-  permissionTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.slate800,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  permissionDesc: {
-    fontSize: 14,
-    color: colors.slate500,
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 20,
-  },
-  permissionBtn: {
-    backgroundColor: colors.primary,
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: radius.md,
-  },
-  permissionBtnText: {
-    color: colors.white,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  demoFallbackBox: {
-    marginTop: 40,
-    alignItems: 'center',
-  },
-  demoFallbackTitle: {
-    fontSize: 13,
-    color: colors.slate600,
-    marginBottom: 10,
-  },
-  galleryBtnAlt: {
-    backgroundColor: colors.slate200,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: radius.sm,
-  },
-  galleryBtnAltText: {
-    color: colors.slate800,
-    fontWeight: '700',
   },
 });

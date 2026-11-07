@@ -128,6 +128,15 @@ export const colors = {
 
   /** Dim layer behind the atlas filter sheet. slate900 at 45%. */
   scrim: 'rgba(15, 23, 42, 0.45)',
+  /** Camera overlays and transparent controls. */
+  overlayDark50: 'rgba(0, 0, 0, 0.5)',
+  overlayDark55: 'rgba(0, 0, 0, 0.55)',
+  overlayDark65: 'rgba(0, 0, 0, 0.65)',
+  overlayDark70: 'rgba(0, 0, 0, 0.7)',
+  overlayLight20: 'rgba(255, 255, 255, 0.2)',
+  overlayLight25: 'rgba(255, 255, 255, 0.25)',
+  overlayLight30: 'rgba(255, 255, 255, 0.3)',
+  overlayDanger40: 'rgba(220, 38, 38, 0.4)',
   canvas: '#F3F6F3',
   sheet: '#F9FBF9',
   gray100: '#EDF2F7',
