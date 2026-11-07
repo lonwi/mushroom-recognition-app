@@ -20,6 +20,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { placeEmergencyCall } from '../components/placeEmergencyCall';
 import { colors } from '../theme/tokens';
 import { ScreenFrame } from '../components/ScreenFrame';
+import { useAppNavigation } from '../navigation/NavigationContext';
 
 // Every hours constant in safetyRules.ts has a translated label.
 const HOURS_LABEL_KEYS: Record<string, string> = {
@@ -35,6 +36,8 @@ interface Props {
 
 export const SafetyGuideScreen = ({ onShowDisclaimer, onOpenPreparation }: Props) => {
   const { t } = useLanguage();
+  const nav = useAppNavigation();
+  const handleOpenPreparation = onOpenPreparation ?? nav?.openPreparation;
   const hoursLabel = (hours: string) => {
     const key = HOURS_LABEL_KEYS[hours];
     return key ? t(key) : hours;
@@ -160,10 +163,10 @@ export const SafetyGuideScreen = ({ onShowDisclaimer, onOpenPreparation }: Props
           </View>
 
           {/* Przycisk do Poradnika Przygotowania Grzybów */}
-          {onOpenPreparation && (
+          {handleOpenPreparation && (
             <TouchableOpacity
               style={styles.preparationBtn}
-              onPress={onOpenPreparation}
+              onPress={handleOpenPreparation}
               activeOpacity={0.8}
               testID="open-preparation"
             >

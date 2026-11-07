@@ -16,6 +16,7 @@ import { SettingsScreen } from './src/screens/SettingsScreen';
 import { PreparationGuideScreen } from './src/screens/PreparationGuideScreen';
 import { SafetyDisclaimerModal } from './src/components/SafetyDisclaimerModal';
 import { ScreenErrorBoundary } from './src/components/ScreenErrorBoundary';
+import { BottomNavigationBar } from './src/components/BottomNavigationBar';
 import { settingsStore } from './src/services/storage/settingsStore';
 import { getSpecies } from './src/data/speciesCatalog';
 import { LanguageProvider, useLanguage } from './src/contexts/LanguageContext';
@@ -30,19 +31,16 @@ import {
   type ShellTab,
   type ViewStack,
 } from './src/navigation/viewStack';
+import {
+  NavigationProvider,
+  type NavigationContextValue,
+} from './src/navigation/NavigationContext';
 
 import { PaperProvider } from 'react-native-paper';
 import { paperTheme } from './src/theme/paperTheme';
 import { colors, radius, spacing, typography } from './src/theme/tokens';
 
 type Tab = ShellTab;
-
-const TAB_BAR: ReadonlyArray<{ id: Tab; icon: string; labelKey: string }> = [
-  { id: 'SCANNER', icon: '📷', labelKey: 'nav.scanner' },
-  { id: 'ATLAS', icon: '📖', labelKey: 'nav.atlas' },
-  { id: 'JOURNAL', icon: '🧺', labelKey: 'nav.journal' },
-  { id: 'SAFETY', icon: '🛡', labelKey: 'nav.safety' },
-];
 
 interface ShellHandlers {
   journalRefreshSignal: number;
@@ -151,74 +149,73 @@ function AppContent() {
     onShowDisclaimer: () => setDisclaimerVisible(true),
   });
 
+  const navValue: NavigationContextValue = {
+    stack,
+    activeScreen: activeTab,
+    currentTab: stack.tab,
+    visibleRoute: route,
+    goToTab: setActiveTab,
+    openSpecies: handleOpenAtlasSpecies,
+    openPreparation: () => setActiveTab('PREPARATION'),
+    openSettings: () => setActiveTab('SETTINGS'),
+    goBack: () => setSelectedSpecies(null),
+  };
+
   return (
-    // Top, bottom, and side insets are applied once, here. Tab screens sit in
-    // `content`, between the header and the tab bar, and must not add them again.
-    <SafeAreaView style={styles.container} edges={['top', 'right', 'bottom', 'left']}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+    <NavigationProvider value={navValue}>
+      {/* Top, bottom, and side insets are applied once, here. Tab screens sit in
+          `content`, between the header and the tab bar, and must not add them again. */}
+      <SafeAreaView style={styles.container} edges={['top', 'right', 'bottom', 'left']}>
+        <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
 
-      <View style={styles.topHeader}>
-        <TouchableOpacity
-          style={styles.brandRow}
-          onPress={() => {
-            setSelectedSpecies(null);
-            setActiveTab('SCANNER');
-          }}
-          accessibilityRole="button"
-          accessibilityLabel={t('app.title')}
-        >
-          <Text style={styles.brandIcon} importantForAccessibility="no">
-            🍄
-          </Text>
-          <View>
-            <Text style={styles.brandTitle}>{t('app.title')}</Text>
-            <Text style={styles.brandSubtitle}>{t('app.subtitle')}</Text>
-          </View>
-        </TouchableOpacity>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View style={styles.offlinePill}>
-            <Text style={styles.offlinePillText}>{t('app.offline')}</Text>
-          </View>
+        <View style={styles.topHeader}>
           <TouchableOpacity
-            onPress={() => setActiveTab('SETTINGS')}
-            style={{ marginLeft: spacing.md }}
+            style={styles.brandRow}
+            onPress={() => {
+              setSelectedSpecies(null);
+              setActiveTab('SCANNER');
+            }}
             accessibilityRole="button"
-            accessibilityLabel={t('nav.settings')}
+            accessibilityLabel={t('app.title')}
           >
-            <Text style={{ fontSize: 20 }} importantForAccessibility="no">
-              ⚙️
+            <Text style={styles.brandIcon} importantForAccessibility="no">
+              🍄
             </Text>
+            <View>
+              <Text style={styles.brandTitle}>{t('app.title')}</Text>
+              <Text style={styles.brandSubtitle}>{t('app.subtitle')}</Text>
+            </View>
           </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.content}>
-        <ScreenErrorBoundary resetKey={contentKey}>{screens[activeTab]}</ScreenErrorBoundary>
-      </View>
-
-      <View style={styles.bottomNav}>
-        {TAB_BAR.map((tab) => {
-          const active = activeTab === tab.id;
-          return (
+          <View style={styles.headerRight}>
+            <View style={styles.offlinePill}>
+              <Text style={styles.offlinePillText}>{t('app.offline')}</Text>
+            </View>
             <TouchableOpacity
-              key={tab.id}
-              style={[styles.navItem, active && styles.navItemActive]}
-              onPress={() => setActiveTab(tab.id)}
-              activeOpacity={0.7}
-              testID={`nav-${tab.id}`}
+              onPress={() => setActiveTab('SETTINGS')}
+              style={styles.settingsHeaderBtn}
+              accessibilityRole="button"
+              accessibilityLabel={t('nav.settings')}
+              testID="nav-settings-header"
             >
-              <Text style={styles.navIcon}>{tab.icon}</Text>
-              <Text style={[styles.navText, active && styles.navTextActive]}>{t(tab.labelKey)}</Text>
+              <Text style={styles.settingsIcon} importantForAccessibility="no">
+                ⚙️
+              </Text>
             </TouchableOpacity>
-          );
-        })}
-      </View>
+          </View>
+        </View>
 
-      <SafetyDisclaimerModal
-        visible={disclaimerVisible}
-        onAccept={handleAcceptDisclaimer}
-      />
-    </SafeAreaView>
+        <View style={styles.content}>
+          <ScreenErrorBoundary resetKey={contentKey}>{screens[activeTab]}</ScreenErrorBoundary>
+        </View>
+
+        <BottomNavigationBar activeTab={activeTab} onSelectTab={setActiveTab} />
+
+        <SafetyDisclaimerModal
+          visible={disclaimerVisible}
+          onAccept={handleAcceptDisclaimer}
+        />
+      </SafeAreaView>
+    </NavigationProvider>
   );
 }
 
@@ -267,9 +264,18 @@ const styles = StyleSheet.create({
   },
   brandSubtitle: {
     fontSize: typography.caption,
-    // emerald50 on primary is 11.76:1. 10px text needs WCAG AA 4.5:1.
     color: colors.emerald50,
     fontWeight: '600',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  settingsHeaderBtn: {
+    marginLeft: spacing.md,
+  },
+  settingsIcon: {
+    fontSize: 20,
   },
   offlinePill: {
     backgroundColor: colors.emerald900,
@@ -280,7 +286,6 @@ const styles = StyleSheet.create({
     borderColor: colors.emerald600,
   },
   offlinePillText: {
-    // onPrimary on emerald900 is 9.72:1.
     color: colors.onPrimary,
     fontSize: typography.caption,
     fontWeight: '800',
@@ -288,41 +293,5 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    backgroundColor: colors.white,
-    borderTopWidth: 1,
-    borderTopColor: colors.slate200,
-    paddingVertical: spacing.sm,
-    paddingBottom: spacing.md,
-    justifyContent: 'space-around',
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  navItem: {
-    alignItems: 'center',
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.sm,
-  },
-  navItemActive: {
-    backgroundColor: colors.edibleBg,
-  },
-  navIcon: {
-    fontSize: 20,
-    marginBottom: 2,
-  },
-  navText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.slate500,
-  },
-  navTextActive: {
-    color: colors.primary,
-    fontWeight: '800',
   },
 });

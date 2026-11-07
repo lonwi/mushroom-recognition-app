@@ -9,6 +9,7 @@
 export const colors = {
   white: '#FFFFFF',
   black: '#000000',
+  transparent: 'transparent',
 
   primary: '#1B3B22',
   onPrimary: '#FFFFFF',
