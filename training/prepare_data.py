@@ -11,10 +11,12 @@ source_url stay out of test. A match that still lands in test stops the run.
     python training/prepare_data.py --gallery-csv /path/galeria/manifest_gallery.csv
 
 Reads ``attributions.jsonl``. ``external.jsonl`` is read only with
-``--with-external``. Unverified rows are skipped. A row whose
-``identificationVerificationStatus`` is explicitly ``unverified`` is skipped
-again here, even when fetch or the CSV import already dropped it. A missing
-status is kept and is not marked verified. ``--publishable-only``
+``--with-external``. Unverified rows are skipped. A row is skipped again
+here when ``identificationVerificationStatus`` is non-empty and is not
+``Approved | Expert | Evidence`` or ``Confident``, even when fetch or the
+CSV import already dropped it. An empty status is kept and is not marked
+verified. ``unverified`` and any other rejected label are counted separately.
+``--publishable-only``
 also skips ``usage=training_only`` (CC BY-NC, CC BY-SA, and Danish Fungi 2020).
 Without that flag CC BY-NC and CC BY-SA stay in the training set. Danish
 Fungi 2020 stays out unless ``--include-df20`` is also set; those rows are
@@ -53,7 +55,7 @@ from gallery_exclusion import (
     record_matches_gallery,
 )
 from import_external import training_eligible
-from licenses import explicit_unverified_identification
+from licenses import identification_status_rejection
 from manifest import ROOT, load_manifest
 from preprocess import MODEL_INPUT_SIZE, ImageReadError, load_oriented_rgb, write_model_png
 from split import split_by_observation, split_key_summary
@@ -200,8 +202,9 @@ def _usable_records_one(
         if not line.strip():
             continue
         row = json.loads(line)
-        if explicit_unverified_identification(row.get("identificationVerificationStatus")):
-            skipped.append({**row, "skip_reason": "identification_unverified"})
+        status_reason = identification_status_rejection(row.get("identificationVerificationStatus"))
+        if status_reason:
+            skipped.append({**row, "skip_reason": status_reason})
             continue
         if not include_df20 and is_df20_row(row):
             skipped.append({**row, "skip_reason": "df20_opt_out"})
@@ -417,7 +420,7 @@ def _skip_reason_count(skipped: list, reasons: frozenset[str]) -> int:
 
 
 def _skipped_per_class(skipped: list) -> dict[str, dict[str, int]]:
-    """Skip reasons per class. Explicit unverified identifications are one reason."""
+    """Skip reasons per class. Unverified and other rejected statuses stay separate."""
     counts: dict[str, Counter[str]] = {}
     for row in skipped:
         if not isinstance(row, dict):
@@ -505,6 +508,9 @@ def write_prepare_outputs(
                 "held_out_withheld": len(withheld),
                 "skipped_corrupt_or_unreadable": _skip_reason_count(skipped, _READ_SKIP_REASONS),
                 "skipped_identification_unverified": _skip_reason_count(skipped, {"identification_unverified"}),
+                "skipped_identification_not_allowlisted": _skip_reason_count(
+                    skipped, {"identification_not_allowlisted"}
+                ),
                 "skipped_unverified": _skip_reason_count(skipped, {"unverified"}),
                 "skipped_training_only": _skip_reason_count(skipped, {"training_only"}),
                 "skipped_per_class": _skipped_per_class(skipped),

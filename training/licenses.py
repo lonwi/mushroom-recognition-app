@@ -48,15 +48,47 @@ def normalize_cc_license(raw: str | None) -> str | None:
     return f"cc-by-{version}"
 
 
-def explicit_unverified_identification(value: object) -> bool:
-    """True when the whole status is unverified, ignoring case and surrounding space.
+# Whole-value compare after whitespace collapse and case-folding.
+# Empty stays. These two stay. Every other non-empty status is dropped.
+_IDENTIFICATION_STATUS_ALLOWLIST = frozenset({
+    "approved | expert | evidence",
+    "confident",
+})
 
-    A missing or blank status is false. Any other text, including
-    ``Approved | Expert | Evidence`` and ``Confident``, is false.
-    """
+
+def normalize_identification_status(value: object) -> str:
+    """Collapse whitespace and case-fold. Non-strings and blanks are empty."""
     if not isinstance(value, str):
-        return False
-    return value.strip().casefold() == "unverified"
+        return ""
+    return " ".join(value.split()).casefold()
+
+
+def identification_status_rejection(value: object) -> str:
+    """Return a drop reason, or ``""`` when this status stays.
+
+    An empty status stays. ``Approved | Expert | Evidence`` and ``Confident``
+    stay, compared with :func:`normalize_identification_status`. Any other
+    non-empty status is dropped. The whole value ``unverified`` is
+    ``identification_unverified``. Every other rejected label, including
+    ``validated``, ``Questionable``, and ``Needs ID``, is
+    ``identification_not_allowlisted``.
+    """
+    normalized = normalize_identification_status(value)
+    if not normalized or normalized in _IDENTIFICATION_STATUS_ALLOWLIST:
+        return ""
+    if normalized == "unverified":
+        return "identification_unverified"
+    return "identification_not_allowlisted"
+
+
+def explicit_unverified_identification(value: object) -> bool:
+    """True when the status is exactly ``unverified`` under the shared normalization.
+
+    A missing or blank status is false. Allowlisted text and every other
+    non-empty label are false here. Callers that enforce the full rule use
+    :func:`identification_status_rejection`.
+    """
+    return identification_status_rejection(value) == "identification_unverified"
 
 
 def accepted_media_records(occurrence: dict) -> list[dict]:
