@@ -13,6 +13,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { classifierService, ClassificationResult } from '../services/classifierService';
 import { SKIP_PROCESSING_CAPTURE, uprightCaptureWidth, widthForCapture } from '../services/photoPixels';
+import { DevInferenceOverlay } from '../components/DevInferenceOverlay';
 import { ResultModal } from '../components/ResultModal';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getSpecies } from '../data/speciesCatalog';
@@ -165,6 +166,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
             <Text style={styles.galleryBtnAltText}>{t('scanner.galleryAlt')}</Text>
           </TouchableOpacity>
         </View>
+        <DevInferenceOverlay />
         {resultModal}
       </View>
     );
@@ -188,6 +190,10 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
             style={[styles.toolBtn, torchEnabled && styles.toolBtnActive]}
             onPress={() => setTorchEnabled(!torchEnabled)}
             activeOpacity={0.7}
+            testID="scanner-torch"
+            accessibilityRole="switch"
+            accessibilityLabel={torchEnabled ? t('scanner.torchOn') : t('scanner.torchOff')}
+            accessibilityState={{ checked: torchEnabled }}
           >
             <Text style={styles.toolIcon}>
               {torchEnabled ? t('scanner.torchOnShort') : t('scanner.torchOffShort')}
@@ -249,8 +255,13 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
             disabled={isAnalyzing}
             activeOpacity={0.7}
             testID="scanner-gallery"
+            accessibilityRole="button"
+            accessibilityLabel={t('scanner.gallery')}
+            accessibilityState={{ disabled: isAnalyzing }}
           >
-            <Text style={styles.galleryIcon}>🖼</Text>
+            <Text style={styles.galleryIcon} importantForAccessibility="no" accessibilityElementsHidden>
+              🖼
+            </Text>
             <Text style={styles.galleryText}>{t('scanner.gallery')}</Text>
           </TouchableOpacity>
 
@@ -260,6 +271,9 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
             disabled={isAnalyzing}
             activeOpacity={0.8}
             testID="scanner-shutter"
+            accessibilityRole="button"
+            accessibilityLabel={t('scanner.takePhoto')}
+            accessibilityState={{ disabled: isAnalyzing, busy: isAnalyzing }}
           >
             <View style={styles.shutterInner}>
               {isAnalyzing ? (
@@ -274,6 +288,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
         </View>
       </View>
 
+      <DevInferenceOverlay />
       {resultModal}
     </View>
   );

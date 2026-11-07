@@ -27,6 +27,18 @@
     "io_dtype": "float32"
   },
   "quantization": null,
+  "model_sha256": null,
+  "delegate_sample_sha256": null,
+  "delegate_release": {
+    "android-gpu": {
+      "passed": false,
+      "reason": "not_measured"
+    },
+    "core-ml": {
+      "passed": false,
+      "reason": "not_measured"
+    }
+  },
   "dangerous_genera": [
     "Amanita",
     "Cortinarius",

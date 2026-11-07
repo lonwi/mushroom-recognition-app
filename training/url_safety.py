@@ -98,6 +98,47 @@ def validate_media_url_syntax(url: str) -> None:
         raise UnsafeMediaUrl("media URL port must be 80 or 443")
 
 
+def force_https_url(url: str) -> str:
+    """Rewrite an http URL to https. Other schemes are left unchanged.
+
+    Port 80 and an explicit port 443 are dropped so the result is https on
+    the default port. A non-http URL is not rewritten into something fetchable.
+    """
+    if not isinstance(url, str):
+        return url
+    text = url.strip()
+    if text.startswith("//"):
+        text = "https:" + text
+    parts = urllib.parse.urlsplit(text)
+    scheme = parts.scheme.lower()
+    if scheme == "https":
+        if parts.scheme == "https":
+            return text
+        return urllib.parse.urlunsplit(("https", parts.netloc, parts.path, parts.query, parts.fragment))
+    if scheme != "http":
+        return text
+    host = parts.hostname
+    if not host:
+        return text
+    try:
+        port = parts.port
+    except ValueError:
+        return text
+    if ":" in host:
+        host = f"[{host}]"
+    auth = ""
+    if parts.username:
+        auth = parts.username
+        if parts.password:
+            auth += f":{parts.password}"
+        auth += "@"
+    if port in (None, 80, 443):
+        netloc = f"{auth}{host}"
+    else:
+        netloc = f"{auth}{host}:{port}"
+    return urllib.parse.urlunsplit(("https", netloc, parts.path, parts.query, parts.fragment))
+
+
 def validate_media_url(url: str) -> None:
     """Syntax check, then reject a host that resolves to a non-public address.
 

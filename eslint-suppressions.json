@@ -132,11 +132,6 @@
       "count": 4
     }
   },
-  "src/__tests__/services/tfliteRuntime.test.ts": {
-    "@typescript-eslint/no-require-imports": {
-      "count": 2
-    }
-  },
   "src/components/EdibilityBadge.tsx": {
     "react-native/no-color-literals": {
       "count": 4

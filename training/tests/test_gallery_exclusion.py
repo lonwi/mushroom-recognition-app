@@ -13,6 +13,7 @@ from gallery_exclusion import (
 )
 from gallery_exclusion import GalleryExclusion
 from prepare_data import assign_splits
+from salt_fixture import FIXTURE_SALT
 from split import split_by_observation
 
 DEATH_CAP = "https://inaturalist-open-data.s3.amazonaws.com/photos/318776310/original.jpg"
@@ -130,6 +131,7 @@ class GalleryExclusionTest(unittest.TestCase):
         splits = split_by_observation(
             records,
             test_blocked=lambda row: record_matches_gallery(row, exclusion),
+            salt=FIXTURE_SALT,
         )
         test_keys = {row["occurrence_key"] for row in splits["test"]}
         self.assertNotIn(4, test_keys)
@@ -153,13 +155,17 @@ class GalleryExclusionTest(unittest.TestCase):
             "occurrence_key": 2,
             "image_url": "https://images.example.test/other.jpg",
         }
+        withheld: list[dict] = []
         splits = split_by_observation(
             [gallery, other],
             test_blocked=lambda row: record_matches_gallery(row, exclusion),
+            salt=FIXTURE_SALT,
+            withheld=withheld,
         )
-        self.assertIn(other, splits["test"])
+        self.assertNotIn(other, splits["test"])
         self.assertNotIn(gallery, splits["test"])
-        self.assertIn(gallery, splits["train"])
+        self.assertNotIn(gallery, splits["train"])
+        self.assertEqual({row["occurrence_key"] for row in withheld}, {1, 2})
 
     def test_prepare_keeps_the_checked_in_photos_out_of_test(self):
         exclusion = load_gallery_exclusion()
@@ -174,11 +180,50 @@ class GalleryExclusionTest(unittest.TestCase):
             "recorded_by": "person 101",
         }
         records.extend([listed, mirrored])
-        splits = assign_splits(records)
+        splits, _dropped = assign_splits(records, salt=FIXTURE_SALT, exclusion=exclusion)
         test_urls = {row["image_url"] for row in splits["test"]}
         self.assertNotIn(sample_url, test_urls)
         self.assertNotIn(mirrored["image_url"], test_urls)
         self.assertGreater(len(splits["test"]), 0)
+
+    def test_comparison_photos_are_excluded_by_photo_and_by_observation(self):
+        exclusion = load_gallery_exclusion()
+        pairs = (
+            ("57083848", "36134920"),
+            ("585781642", "323712901"),
+            ("334051112", "190539437"),
+            ("313452639", "179992253"),
+            ("101886055", "63498273"),
+            ("334304961", "190671820"),
+            ("237957448", "139156344"),
+            ("54007942", "34326887"),
+            ("54007897", "34326887"),
+            ("481995011", "268164012"),
+            ("29910624", "19442400"),
+            ("342884222", "194976255"),
+            ("61730025", "38807007"),
+            ("170500861", "102041261"),
+            ("331784845", "189400216"),
+        )
+        self.assertEqual(len(pairs), 15)
+        for photo_id, observation_id in pairs:
+            self.assertIn(photo_id, exclusion.photo_ids)
+            self.assertIn(observation_id, exclusion.inat_ids)
+            self.assertTrue(
+                record_matches_gallery(
+                    {"image_url": f"https://static.inaturalist.org/photos/{photo_id}/original.jpg"},
+                    exclusion,
+                )
+            )
+            self.assertTrue(
+                record_matches_gallery(
+                    {
+                        "image_url": "https://gbif.example/other-photo.jpg",
+                        "source_url": f"https://www.inaturalist.org/observations/{observation_id}",
+                    },
+                    exclusion,
+                )
+            )
 
 
 if __name__ == "__main__":

@@ -59,6 +59,17 @@
       ],
       "./plugins/withAndroidGeoQueries.js",
       [
+        "react-native-fast-tflite",
+        {
+          "enableCoreMLDelegate": true,
+          "enableAndroidGpuLibraries": [
+            "libOpenCL-pixel.so",
+            "libGLES_mali.so",
+            "libPVROCL.so"
+          ]
+        }
+      ],
+      [
         "expo-camera",
         {
           "cameraPermission": "Zezwól aplikacji Grzybobranie AI na używanie aparatu do rozpoznawania grzybów.",

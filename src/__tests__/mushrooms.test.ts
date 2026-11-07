@@ -693,7 +693,7 @@ describe('Mushroom Database & Safety Verification', () => {
 
     const warsaw = TOXICOLOGY_CENTERS.find((c) => c.city === 'Warszawa');
     expect(warsaw).toBeDefined();
-    expect(warsaw?.phone).toContain('22');
+    expect(warsaw?.phones).toEqual(['22 619 66 54']);
 
     const ids = GOLDEN_RULES.map((rule) => rule.id);
     const wholeIndex = ids.indexOf('rule_whole_mushroom');

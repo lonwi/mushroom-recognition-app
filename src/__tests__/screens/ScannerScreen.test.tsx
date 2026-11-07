@@ -3,6 +3,7 @@ import { Alert, Platform } from 'react-native';
 import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { ScannerScreen } from '../../screens/ScannerScreen';
+import { resetInferenceTimingForTests } from '../../services/inferenceTiming';
 import { classifierService } from '../../services/classifierService';
 import { SKIP_PROCESSING_CAPTURE } from '../../services/photoPixels';
 import { pl } from '../../i18n/pl';
@@ -61,6 +62,7 @@ describe('ScannerScreen does not invent a recognition result', () => {
   let classifySpy: jest.SpyInstance;
 
   beforeEach(() => {
+    resetInferenceTimingForTests();
     cameraMock.__permission.current = { granted: true };
     takePictureAsync.mockReset();
     (ImagePicker.launchImageLibraryAsync as jest.Mock).mockReset();
@@ -114,6 +116,22 @@ describe('ScannerScreen does not invent a recognition result', () => {
 
     expect(queryByText(/100% OFFLINE/)).toBeNull();
     expect(queryByText(pl.app.offline)).toBeNull();
+  });
+
+  it('names the shutter, exposes torch state, and hides the gallery glyph', async () => {
+    const screen = await renderScanner();
+
+    const shutter = screen.getByRole('button', { name: pl.scanner.takePhoto });
+    expect(shutter.props.testID).toBe('scanner-shutter');
+
+    const torch = screen.getByTestId('scanner-torch');
+    expect(torch.props.accessibilityState).toEqual({ checked: false });
+    await fireEvent.press(torch);
+    expect(screen.getByTestId('scanner-torch').props.accessibilityState).toEqual({ checked: true });
+
+    expect(screen.getByText('🖼', { includeHiddenElements: true }).props.importantForAccessibility).toBe(
+      'no',
+    );
   });
 
   it('does not fall back to a stock photo when the camera fails', async () => {
@@ -292,6 +310,7 @@ describe('ScannerScreen shows the real model outcome', () => {
   let classifySpy: jest.SpyInstance;
 
   beforeEach(() => {
+    resetInferenceTimingForTests();
     cameraMock.__permission.current = { granted: true };
     takePictureAsync.mockReset();
     takePictureAsync.mockResolvedValue({ uri: 'file://camera/real-capture.jpg' });

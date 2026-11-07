@@ -1,4 +1,5 @@
 import hashlib
+import inspect
 import json
 import math
 import os
@@ -6,6 +7,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -15,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from evaluate import (
     choose_threshold,
+    id_validation_energies,
     confident_toxic_as_edible,
     deadly_probe_taxa,
     image_counts,
@@ -23,7 +26,14 @@ from evaluate import (
     outcome_is_strict_top1_edible,
     poisonous_sample_reasons,
 )
-from export_tflite import DEFAULT_QUANTIZATIONS, representative_dataset
+from export_tflite import (
+    DEFAULT_QUANTIZATIONS,
+    assess_export,
+    calibration_rows,
+    choose_install_target,
+    metric_delta,
+    representative_dataset,
+)
 from manifest import ROOT, load_manifest, poisonous_heldout_taxa
 from preprocess import ImageReadError, load_oriented_rgb, model_rgb_uint8, preprocess_rgb_uint8, resize_to_width
 from recognition_math import (
@@ -36,7 +46,7 @@ from recognition_math import (
     energy_score,
     softmax,
 )
-from ship_gates import assess_shippable
+from ship_gates import _df20_release_reasons, _int8_energy_reasons, assess_shippable, sha256_file
 
 FIXTURE = ROOT / "training" / "fixtures" / "decision_cases.json"
 PREPROCESS_FIXTURE = ROOT / "training" / "fixtures" / "preprocess_2x2_to_4.json"
@@ -311,6 +321,17 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertEqual(manifest["input"]["formula"], "(pixel / 127.5) - 1")
         self.assertFalse(manifest["ood"]["calibrated"])
         self.assertIsNone(manifest["quantization"])
+        model_file = ROOT / "assets" / "models" / "mushrooms_model.tflite"
+        packaged_hash = sha256_file(model_file)
+        if model_file.is_file():
+            self.assertEqual(manifest["model_sha256"], packaged_hash)
+        else:
+            self.assertIsNone(packaged_hash)
+            self.assertIsNone(manifest["model_sha256"])
+        self.assertIsNone(manifest["delegate_sample_sha256"])
+        self.assertFalse(manifest["delegate_release"]["android-gpu"]["passed"])
+        self.assertFalse(manifest["delegate_release"]["core-ml"]["passed"])
+        self.assertEqual(manifest["delegate_release"]["android-gpu"]["reason"], "not_measured")
         self.assertFalse((ROOT / "assets" / "models" / "mushrooms_model.tflite").exists())
         self.assertEqual(set(DANGEROUS_GENERA), set(manifest["dangerous_genera"]))
         self.assertEqual(manifest["dangerous_genus_min_probability"], DANGEROUS_GENUS_MIN_PROBABILITY)
@@ -413,6 +434,409 @@ class ManifestAndShipGateTest(unittest.TestCase):
         ok, reasons = assess_shippable({})
         self.assertFalse(ok)
         self.assertTrue(reasons)
+        self.assertTrue(any("component_share" in reason for reason in reasons))
+
+    def test_component_share_limit_is_pinned(self):
+        from component_share import COMPONENT_SHARE_LIMIT
+
+        # Changing this constant is Wojtek's decision only.
+        self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
+
+    def test_variant_c_leaves_agreement_share_https_and_license_url(self):
+        from component_share import COMPONENT_SHARE_LIMIT
+        from import_external import photo_license_decision
+        from ship_gates import TFLITE_AGREEMENT_MIN
+        from url_safety import force_https_url
+
+        self.assertEqual(TFLITE_AGREEMENT_MIN, 0.99)
+        self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
+        gates = (ROOT / "training" / "ship_gates.py").read_text(encoding="utf-8")
+        share = (ROOT / "training" / "component_share.py").read_text(encoding="utf-8")
+        self.assertIn("TFLITE_AGREEMENT_MIN = 0.99", gates)
+        self.assertIn("COMPONENT_SHARE_LIMIT = 0.20", share)
+        self.assertNotIn("COMPONENT_SHARE_LIMIT = 0.50", share)
+        self.assertEqual(
+            force_https_url("http://images.example.test/a.jpg"),
+            "https://images.example.test/a.jpg",
+        )
+        pinned = (
+            ("CC BY 4.0", "", "license_url_empty"),
+            ("CC BY-NC 4.0", "", "license_url_empty"),
+            ("CC BY-SA 4.0", "", "license_url_empty"),
+            ("CC BY-NC 4.0", "http://creativecommons.org/licenses/by-nc/4.0/", "license_url_not_https"),
+            ("CC BY-SA 4.0", "http://creativecommons.org/licenses/by-sa/4.0/", "license_url_not_https"),
+            ("CC BY-NC 4.0", "https://creativecommons.org/licenses/by/4.0/", "license_url_mismatch"),
+            ("CC BY-SA 4.0", "https://creativecommons.org/licenses/by-nc/4.0/", "license_url_mismatch"),
+            ("CC BY 4.0", "https://creativecommons.org/licenses/by/2.0/", "license_url_mismatch"),
+        )
+        for text, url, reason in pinned:
+            decision, got = photo_license_decision(text, url)
+            self.assertIsNone(decision, text)
+            self.assertEqual(got, reason, text)
+        nc, nc_reason = photo_license_decision(
+            "CC BY-NC",
+            "https://creativecommons.org/licenses/by-nc/2.0/",
+        )
+        self.assertEqual(nc_reason, "")
+        self.assertEqual((nc["license_normalized"], nc["usage"]), ("cc-by-nc-2.0", "training_only"))
+        sa, sa_reason = photo_license_decision(
+            "CC BY-SA 4.0",
+            "https://creativecommons.org/licenses/by-sa/4.0/",
+        )
+        self.assertEqual(sa_reason, "")
+        self.assertEqual((sa["license_normalized"], sa["usage"]), ("cc-by-sa-4.0", "training_only"))
+
+    def test_nc_sa_nd_and_nc_nd_are_rejected_for_training(self):
+        from evaluate import attributions_complete
+        from license_policy import allowed_for_training
+
+        rejected = (
+            ("cc-by-nc-sa-4.0", "CC BY-NC-SA 4.0", "https://creativecommons.org/licenses/by-nc-sa/4.0/"),
+            ("cc-by-nd-4.0", "CC BY-ND 4.0", "https://creativecommons.org/licenses/by-nd/4.0/"),
+            ("cc-by-nc-nd-4.0", "CC BY-NC-ND 4.0", "https://creativecommons.org/licenses/by-nc-nd/4.0/"),
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertTrue(ok, reasons)
+            path = artifact_dir / "attributions.jsonl"
+            lines = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+            for license_id, text, url in rejected:
+                self.assertFalse(allowed_for_training(license_id), license_id)
+                self.assertFalse(
+                    attributions_complete(
+                        [
+                            {
+                                "creator": "Ada",
+                                "license": text,
+                                "license_normalized": license_id,
+                                "license_url": url,
+                                "image_url": "https://images.example.test/a.jpg",
+                                "source_url": "https://example.test/a",
+                            }
+                        ]
+                    ),
+                    license_id,
+                )
+                blocked = [dict(line) for line in lines]
+                blocked[0]["license"] = text
+                blocked[0]["license_normalized"] = license_id
+                blocked[0]["license_url"] = url
+                path.write_text("".join(json.dumps(line) + "\n" for line in blocked), encoding="utf-8")
+                ok, reasons = assess_shippable(report, artifact_dir)
+                self.assertFalse(ok, license_id)
+                self.assertTrue(any("license" in reason for reason in reasons), license_id)
+
+    def test_versioned_cc_by_sa_rows_leave_the_release_shippable(self):
+        """Share-alike does not cover weights (2026-10-23 12:17, variant B, register 0004)."""
+        from license_policy import EXACT_LICENSE_USAGE, TRAINING_ONLY, allowed_for_display
+
+        versions = ("1.0", "2.0", "2.5", "3.0", "4.0")
+        for version in versions:
+            license_id = f"cc-by-sa-{version}"
+            self.assertEqual(EXACT_LICENSE_USAGE[license_id], TRAINING_ONLY, license_id)
+            self.assertFalse(allowed_for_display(license_id), license_id)
+        policy = (ROOT / "training" / "license_policy.py").read_text(encoding="utf-8")
+        gates = (ROOT / "training" / "ship_gates.py").read_text(encoding="utf-8")
+        self.assertIn("2026-10-23 12:17", policy)
+        self.assertIn("not cover model weights", policy)
+        self.assertNotIn("cc-by-sa", gates)
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            path = artifact_dir / "attributions.jsonl"
+            lines = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+            for index, version in enumerate(versions):
+                url = f"https://creativecommons.org/licenses/by-sa/{version}/"
+                lines[index]["license"] = f"CC BY-SA {version}"
+                lines[index]["license_normalized"] = f"cc-by-sa-{version}"
+                lines[index]["license_url"] = url
+                lines[index]["usage"] = "training_only"
+            path.write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertTrue(ok, reasons)
+
+    def test_any_df20_row_blocks_release_even_if_consent_is_patched(self):
+        from import_external import import_directory
+        from license_policy import DF20_CONSENT_CONFIRMED, EXACT_LICENSE_USAGE, TRAINING_ONLY
+        from prepare_data import _usable_records
+
+        policy = (ROOT / "training" / "license_policy.py").read_text(encoding="utf-8")
+        gates = (ROOT / "training" / "ship_gates.py").read_text(encoding="utf-8")
+        self.assertFalse(DF20_CONSENT_CONFIRMED)
+        self.assertEqual(EXACT_LICENSE_USAGE["df20"], TRAINING_ONLY)
+        self.assertEqual(EXACT_LICENSE_USAGE["cc-by-nc-4.0"], TRAINING_ONLY)
+        self.assertEqual(EXACT_LICENSE_USAGE["cc-by-sa-4.0"], TRAINING_ONLY)
+        self.assertIs(inspect.signature(import_directory).parameters["include_df20"].default, False)
+        self.assertIs(inspect.signature(_usable_records).parameters["include_df20"].default, False)
+        self.assertIn("DF20_CONSENT_CONFIRMED = False", policy)
+        self.assertIn("pending", policy.casefold())
+        self.assertIn("Svampeatlas", policy)
+        self.assertNotIn("if DF20_CONSENT_CONFIRMED", gates)
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertTrue(ok, reasons)
+            path = artifact_dir / "attributions.jsonl"
+            lines = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+            lines[0]["license"] = "CC BY-NC 4.0"
+            lines[0]["license_normalized"] = "cc-by-nc-4.0"
+            lines[0]["license_url"] = "https://creativecommons.org/licenses/by-nc/4.0/"
+            lines[0]["usage"] = "training_only"
+            lines[1]["license"] = "CC BY-SA 4.0"
+            lines[1]["license_normalized"] = "cc-by-sa-4.0"
+            lines[1]["license_url"] = "https://creativecommons.org/licenses/by-sa/4.0/"
+            lines[1]["usage"] = "training_only"
+            path.write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertTrue(ok, reasons)
+            lines[2]["license_normalized"] = "df20"
+            lines[2]["license"] = "DF20 training-only; no per-image licence"
+            lines[2]["source"] = "df20"
+            lines[2]["usage"] = "training_only"
+            lines[2]["license_url"] = ""
+            path.write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("experimental" in reason for reason in reasons))
+            with patch("license_policy.DF20_CONSENT_CONFIRMED", True):
+                ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("experimental" in reason for reason in reasons))
+
+    def test_df20_gate_blocks_when_the_attribution_file_cannot_be_read(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertTrue(ok, reasons)
+            path = artifact_dir / "attributions.jsonl"
+            path.unlink()
+            missing = _df20_release_reasons(artifact_dir)
+            self.assertTrue(any("missing" in reason for reason in missing))
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("missing" in reason for reason in reasons))
+            path.write_text("{not json\n", encoding="utf-8")
+            broken = _df20_release_reasons(artifact_dir)
+            self.assertTrue(any("not valid jsonl" in reason for reason in broken))
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("not valid jsonl" in reason for reason in reasons))
+
+    def test_df20_marker_alone_blocks_release(self):
+        from component_share import is_df20_row
+
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            path = artifact_dir / "attributions.jsonl"
+            lines = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+            lines[0]["ImageUniqueID"] = "2237858559-1"
+            self.assertNotEqual(lines[0].get("source"), "df20")
+            self.assertNotEqual(lines[0].get("license_normalized"), "df20")
+            self.assertTrue(is_df20_row(lines[0]))
+            path.write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("experimental" in reason for reason in reasons))
+
+    def test_marker_only_df20_row_blocks_release_after_write_attribution_file(self):
+        """A DF20 marker must still block after the real export writer, not only a hand-edited jsonl."""
+        from component_share import is_df20_row
+        from export_tflite import write_attribution_file
+
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            coverage = report["coverage"]
+            count = (
+                sum(coverage["train_images"].values())
+                + sum(coverage["val_images"].values())
+                + sum(coverage["test_images"].values())
+            )
+            rows = []
+            for index in range(count):
+                rows.append(
+                    {
+                        "creator": "Ada",
+                        "license": "CC BY 4.0",
+                        "license_normalized": "cc-by-4.0",
+                        "license_url": "https://creativecommons.org/licenses/by/4.0/",
+                        "image_url": f"https://example.test/{index}.jpg",
+                        "source_url": f"https://example.test/source/{index}",
+                        "gbif_occurrence": f"https://www.gbif.org/occurrence/{index}",
+                        "class_id": "boletus_edulis",
+                        "file": f"images/{index}.jpg",
+                    }
+                )
+            path = artifact_dir / "attributions.jsonl"
+            write_attribution_file(rows, path)
+            self.assertEqual(_df20_release_reasons(artifact_dir), [])
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertTrue(ok, reasons)
+
+            marker = dict(rows[0])
+            marker["ImageUniqueID"] = "2237858559-1"
+            self.assertNotEqual(marker.get("source"), "df20")
+            self.assertNotEqual(marker.get("license_normalized"), "df20")
+            self.assertIsNone(marker.get("df20_image_id"))
+            self.assertIsNone(marker.get("df20_image_path"))
+            self.assertIsNone(marker.get("licence_note"))
+            self.assertIsNone(marker.get("license_note"))
+            self.assertIsNone(marker.get("dataset"))
+            self.assertIsNone(marker.get("collection"))
+            self.assertTrue(is_df20_row(marker))
+            exported_rows = [marker, *rows[1:]]
+            write_attribution_file(exported_rows, path)
+            df20_reasons = _df20_release_reasons(artifact_dir)
+            self.assertTrue(any("experimental" in reason for reason in df20_reasons), df20_reasons)
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("experimental" in reason for reason in reasons), reasons)
+
+    def test_attribution_row_preserves_every_field_is_df20_row_reads(self):
+        """Export and the DF20 check share one field tuple, so a new marker cannot be dropped."""
+        import ast
+        import textwrap
+
+        from component_share import is_df20_row
+        from export_tflite import attribution_row
+        from publication import (
+            DF20_DATASET_FIELDS,
+            DF20_DETECTION_FIELDS,
+            DF20_NORMALIZED_LICENSE_FIELD,
+            DF20_NOTE_FIELDS,
+            DF20_PRESENT_FIELDS,
+            DF20_SOURCE_FIELD,
+            _df20_marker,
+        )
+
+        def body_nodes(func):
+            source = textwrap.dedent(inspect.getsource(func))
+            func_def = ast.parse(source).body[0]
+            body = func_def.body
+            if (
+                body
+                and isinstance(body[0], ast.Expr)
+                and isinstance(body[0].value, ast.Constant)
+                and isinstance(body[0].value.value, str)
+            ):
+                body = body[1:]
+            return body
+
+        def code_strings(func) -> set[str]:
+            found = set()
+            for node in body_nodes(func):
+                for child in ast.walk(node):
+                    if isinstance(child, ast.Constant) and isinstance(child.value, str):
+                        found.add(child.value)
+            return found
+
+        def code_names(func) -> set[str]:
+            found = set()
+            for node in body_nodes(func):
+                for child in ast.walk(node):
+                    if isinstance(child, ast.Name):
+                        found.add(child.id)
+            return found
+
+        self.assertEqual(
+            DF20_DETECTION_FIELDS,
+            (
+                *DF20_PRESENT_FIELDS,
+                *DF20_NOTE_FIELDS,
+                *DF20_DATASET_FIELDS,
+                DF20_NORMALIZED_LICENSE_FIELD,
+            ),
+        )
+        self.assertEqual(len(DF20_DETECTION_FIELDS), len(set(DF20_DETECTION_FIELDS)))
+        self.assertIn(DF20_SOURCE_FIELD, DF20_DATASET_FIELDS)
+        self.assertEqual(code_strings(is_df20_row), {"", "df20"})
+        self.assertEqual(code_strings(_df20_marker), {"df20"})
+        self.assertEqual(
+            code_names(is_df20_row),
+            {
+                "isinstance",
+                "row",
+                "dict",
+                "source",
+                "DF20_SOURCE_FIELD",
+                "str",
+                "normalized",
+                "DF20_NORMALIZED_LICENSE_FIELD",
+                "_df20_marker",
+            },
+        )
+        self.assertEqual(
+            code_names(_df20_marker),
+            {
+                "any",
+                "row",
+                "field",
+                "DF20_PRESENT_FIELDS",
+                "value",
+                "DF20_NOTE_FIELDS",
+                "isinstance",
+                "str",
+                "DF20_DATASET_FIELDS",
+                "_DF20_DATASETS",
+            },
+        )
+        export_source = inspect.getsource(attribution_row)
+        self.assertIn("DF20_DETECTION_FIELDS", export_source)
+        for field in DF20_DETECTION_FIELDS:
+            self.assertNotIn(f'"{field}"', export_source)
+            self.assertNotIn(f"'{field}'", export_source)
+
+        def marker_value(field: str) -> str:
+            if field in DF20_PRESENT_FIELDS:
+                return "2237858559-1"
+            if field in DF20_NOTE_FIELDS:
+                return "DF20 training-only; no per-image licence"
+            if field == DF20_SOURCE_FIELD:
+                return "df20"
+            if field in DF20_DATASET_FIELDS:
+                return "Danish Fungi 2020"
+            if field == DF20_NORMALIZED_LICENSE_FIELD:
+                return "df20"
+            raise AssertionError(field)
+
+        base = {
+            "creator": "Ada",
+            "license": "CC BY 4.0",
+            "license_normalized": "cc-by-4.0",
+            "license_url": "https://creativecommons.org/licenses/by/4.0/",
+            "image_url": "https://example.test/a.jpg",
+            "source_url": "https://example.test/a",
+            "file": "images/a.jpg",
+            "class_id": "boletus_edulis",
+        }
+        self.assertFalse(is_df20_row(base))
+        self.assertFalse(is_df20_row(attribution_row(base)))
+        for field in DF20_DETECTION_FIELDS:
+            row = dict(base)
+            value = marker_value(field)
+            row[field] = value
+            self.assertTrue(is_df20_row(row), field)
+            exported = attribution_row(row)
+            self.assertEqual(exported.get(field), value, field)
+            self.assertTrue(is_df20_row(exported), field)
+
+    def test_missing_component_share_blockers_key_blocks_shipping(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            report = self._passing_report(artifact_dir)
+            del report["component_share_blockers"]
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("component_share_blockers" in reason for reason in reasons))
+            report["component_share_blockers"] = ["boletus_edulis: acknowledged. The model is not shippable."]
+            ok, reasons = assess_shippable(report, artifact_dir)
+            self.assertFalse(ok)
+            self.assertTrue(any("boletus_edulis" in reason for reason in reasons))
 
     def _passing_report(self, artifact_dir: Path) -> dict:
         manifest = load_manifest()
@@ -486,6 +910,7 @@ class ManifestAndShipGateTest(unittest.TestCase):
                 "tflite_sha256": hashlib.sha256(tflite_bytes).hexdigest(),
             },
             "attributions_complete": True,
+            "component_share_blockers": [],
         }
         self._write_attributions(artifact_dir, report)
         return report
@@ -1353,6 +1778,149 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertIn('default="fp16"', source)
         self.assertNotIn('for quantization in ("int8", "fp16")', source)
 
+    def test_quantized_export_keeps_train_calibration_and_existing_floors(self):
+        source = (ROOT / "training" / "export_tflite.py").read_text(encoding="utf-8")
+        gates = (ROOT / "training" / "ship_gates.py").read_text(encoding="utf-8")
+        self.assertIn("train_rows = calibration_rows(splits)", source)
+        self.assertIn("converter.representative_dataset = representative_dataset(train_rows, image_size, data_dir)", source)
+        self.assertEqual(source.count("representative_dataset("), 2)
+        self.assertNotIn("representative_dataset(val_rows", source)
+        self.assertNotIn("representative_dataset(test_rows", source)
+        self.assertIn("TFLITE_BUILTINS_INT8", source)
+        self.assertIn("inference_input_type = tf.float32", source)
+        self.assertIn("inference_output_type = tf.float32", source)
+        self.assertIn('quantization == "dynamic"', source)
+        self.assertIn('"--also-export"', source)
+        self.assertIn('"--select-quantized"', source)
+        self.assertIn("TFLITE_AGREEMENT_MIN", source)
+        self.assertIn("agreement >= TFLITE_AGREEMENT_MIN", source)
+        self.assertNotIn("agreement >= 0.99", source)
+        self.assertNotIn("agreement >= 0.98", source)
+        self.assertIn("copied_from_float", source)
+        self.assertIn("energy_recalibration", source)
+        self.assertIn("macro_top1 < 0.80", gates)
+        self.assertIn("macro_top3 < 0.90", gates)
+        self.assertIn("TFLITE_AGREEMENT_MIN = 0.99", gates)
+        self.assertIn("agreement < TFLITE_AGREEMENT_MIN", gates)
+        self.assertIn("high_risk_agreement < TFLITE_AGREEMENT_MIN", gates)
+        self.assertIn("id_keep < 0.95", gates)
+        self.assertIn("OPEN_SET_SAFE_MIN = 0.90", gates)
+        self.assertIn("OPEN_SET_CONFIDENT_EDIBLE_MAX = 0.02", gates)
+        splits = {
+            "train": [{"file": "train.png", "split": "train"}],
+            "val": [{"file": "val.png", "split": "val"}],
+            "test": [{"file": "test.png", "split": "test"}],
+        }
+        self.assertEqual([row["file"] for row in calibration_rows(splits)], ["train.png"])
+        with self.assertRaises(RuntimeError):
+            representative_dataset([{"file": "test.png", "split": "test"}], 8, Path("."))
+        with self.assertRaises(RuntimeError):
+            representative_dataset([{"file": "val.png", "split": "val"}], 8, Path("."))
+        with self.assertRaises(RuntimeError):
+            calibration_rows({"train": [{"file": "hidden.png", "split": "test"}]})
+
+    def test_quantized_model_is_selectable_only_when_existing_gates_pass(self):
+        float_report = {"macro_top1": 0.91, "macro_top3": 0.97, "confident_toxic_as_edible": 0}
+        quantized_report = {"macro_top1": 0.90, "macro_top3": 0.96, "confident_toxic_as_edible": 0}
+        delta = metric_delta(float_report, quantized_report)
+        self.assertAlmostEqual(delta["macro_top1"], -0.01)
+        self.assertAlmostEqual(delta["macro_top3"], -0.01)
+        self.assertEqual(delta["confident_toxic_as_edible"], 0)
+        self.assertEqual(
+            choose_install_target(select_quantized=False, primary_shippable=True, quantized_shippable=True),
+            "primary",
+        )
+        self.assertEqual(
+            choose_install_target(select_quantized=True, primary_shippable=True, quantized_shippable=True),
+            "quantized",
+        )
+        self.assertEqual(
+            choose_install_target(select_quantized=True, primary_shippable=True, quantized_shippable=False),
+            "refuse",
+        )
+        self.assertEqual(
+            choose_install_target(select_quantized=False, primary_shippable=False, quantized_shippable=True),
+            "refuse",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            passing = self._passing_report(artifact_dir)
+            ok, reasons = assess_shippable(passing, artifact_dir)
+            self.assertTrue(ok, reasons)
+            payload = (artifact_dir / "mushrooms_model.tflite").read_bytes()
+            gated, gate_reasons = assess_export(passing, payload, artifact_dir)
+            self.assertTrue(gated, gate_reasons)
+            lowered = json.loads(json.dumps(passing))
+            lowered["macro_top1"] = 0.79
+            refused, refuse_reasons = assess_export(lowered, payload, artifact_dir)
+            self.assertFalse(refused)
+            self.assertTrue(any("0.80" in reason for reason in refuse_reasons))
+            still_ok, still_reasons = assess_shippable(passing, artifact_dir)
+            self.assertTrue(still_ok, still_reasons)
+            int8 = json.loads(json.dumps(passing))
+            int8["tflite"]["quantization"] = "int8"
+            int8["ood"]["energy_threshold"] = -4.0
+            refused_int8, int8_reasons = assess_shippable(int8, artifact_dir)
+            self.assertFalse(refused_int8)
+            self.assertTrue(any("recalibrat" in reason for reason in int8_reasons))
+            energies = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
+            from evaluate import choose_threshold
+
+            threshold = choose_threshold([{"class_id": "species", "energy": energy} for energy in energies])
+            int8["ood"]["energy_threshold"] = threshold
+            int8["energy_recalibration"] = {
+                "quantization": "int8",
+                "source": "validation_split",
+                "copied_from_float": False,
+                "threshold": threshold,
+                "id_validation_energies": energies,
+            }
+            recalibrated, recalibrated_reasons = assess_shippable(int8, artifact_dir)
+            self.assertTrue(recalibrated, recalibrated_reasons)
+            copied = json.loads(json.dumps(int8))
+            copied["energy_recalibration"]["copied_from_float"] = True
+            copied["energy_recalibration"]["threshold"] = -4.0
+            copied["ood"]["energy_threshold"] = -4.0
+            copied_ok, copied_reasons = assess_shippable(copied, artifact_dir)
+            self.assertFalse(copied_ok)
+            self.assertTrue(any("do not carry over" in reason or "order statistic" in reason for reason in copied_reasons))
+
+    def test_int8_threshold_matches_when_validation_includes_background(self):
+        """Export and the int8 gate share the ID-only order statistic.
+
+        A background energy above every ID energy would move the threshold if
+        it were counted. Both paths skip it, so they stay equal.
+        """
+        from recognition_math import BACKGROUND_CLASS_ID
+
+        id_rows = [{"class_id": "boletus_edulis", "energy": float(energy)} for energy in range(1, 9)]
+        val_pred = id_rows + [{"class_id": BACKGROUND_CLASS_ID, "energy": 100.0}]
+        export_threshold = choose_threshold(val_pred)
+        stored = id_validation_energies(val_pred)
+        gate_threshold = choose_threshold([{"class_id": "species", "energy": energy} for energy in stored])
+        counted_background = choose_threshold(
+            [{"class_id": "species", "energy": energy} for energy in [*stored, 100.0]]
+        )
+        self.assertEqual(stored, [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0])
+        self.assertEqual(export_threshold, gate_threshold)
+        self.assertEqual(export_threshold, 8.0)
+        self.assertEqual(counted_background, 100.0)
+        self.assertNotEqual(export_threshold, counted_background)
+        reasons = _int8_energy_reasons(
+            {
+                "tflite": {"quantization": "int8"},
+                "ood": {"energy_threshold": export_threshold},
+                "energy_recalibration": {
+                    "quantization": "int8",
+                    "source": "validation_split",
+                    "copied_from_float": False,
+                    "threshold": export_threshold,
+                    "id_validation_energies": stored,
+                },
+            }
+        )
+        self.assertEqual(reasons, [])
+
     @contextmanager
     def _installed_repo_copy(self):
         import export_tflite
@@ -1443,8 +2011,13 @@ class ManifestAndShipGateTest(unittest.TestCase):
             shutil.rmtree(parent, ignore_errors=True)
 
     def test_install_writes_jsonl_on_a_repo_copy(self):
-        with self._installed_repo_copy():
-            pass
+        with self._installed_repo_copy() as copy_root:
+            labels = json.loads((copy_root / "assets" / "models" / "labels.json").read_text(encoding="utf-8"))
+            self.assertEqual(labels["model_sha256"], hashlib.sha256(b"tflite-bytes").hexdigest())
+            self.assertIsNone(labels["delegate_sample_sha256"])
+            self.assertFalse(labels["delegate_release"]["android-gpu"]["passed"])
+            self.assertFalse(labels["delegate_release"]["core-ml"]["passed"])
+            self.assertEqual(labels["delegate_release"]["android-gpu"]["reason"], "not_measured")
 
     def test_repo_copy_ignores_training_data_and_secret_files(self):
         with tempfile.TemporaryDirectory() as tmp:

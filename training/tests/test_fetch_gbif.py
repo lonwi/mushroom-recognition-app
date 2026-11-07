@@ -245,6 +245,69 @@ class DownloadRetryTest(FetchCase):
         self.assertEqual(calls["n"], 2)
         self.assertEqual(sleeps, [fetch_gbif.DOWNLOAD_BACKOFF_SECONDS + 0.25])
 
+    def test_unverified_http_image_url_is_not_fetched(self):
+        def urlopen(request, timeout=40):
+            raise AssertionError("urlopen")
+
+        with patch("fetch_gbif.urllib.request.urlopen", side_effect=urlopen):
+            with self.assertRaises(url_safety.UnsafeMediaUrl) as raised:
+                fetch_gbif.download_image("http://images.example.test:80/a.jpg", self._dest)
+        self.assertIn("http_host_not_allowlisted", str(raised.exception))
+
+    def test_timeout_is_retried_with_backoff(self):
+        calls = {"n": 0}
+
+        def urlopen(request, timeout=40):
+            calls["n"] += 1
+            if calls["n"] < 3:
+                raise urllib.error.URLError(socket.timeout("The read operation timed out"))
+            return _Response(self.jpeg)
+
+        sleeps: list[float] = []
+        with patch("fetch_gbif.urllib.request.urlopen", side_effect=urlopen), patch(
+            "fetch_gbif.random.uniform", return_value=0.25
+        ), patch("fetch_gbif.time.sleep", side_effect=sleeps.append):
+            size = fetch_gbif.download_image(self._url, self._dest)
+        self.assertEqual(calls["n"], 3)
+        self.assertEqual(sleeps, [0.75, 1.25])
+        self.assertEqual(size, len(self.jpeg))
+        self.assertTrue(fetch_gbif._is_timeout_error(socket.timeout("timed out")))
+        self.assertTrue(fetch_gbif._is_transient_download_error(socket.timeout("timed out")))
+
+    def test_retry_stops_at_max_attempts_and_does_not_fall_back_to_http(self):
+        seen: list[str] = []
+
+        def urlopen(request, timeout=40):
+            seen.append(request.full_url)
+            raise urllib.error.URLError(socket.timeout("timed out"))
+
+        sleeps: list[float] = []
+        with patch("fetch_gbif.urllib.request.urlopen", side_effect=urlopen), patch(
+            "fetch_gbif.random.uniform", return_value=0.25
+        ), patch("fetch_gbif.time.sleep", side_effect=sleeps.append):
+            with self.assertRaises(urllib.error.URLError):
+                fetch_gbif.download_image("https://images.example.test/a.jpg", self._dest, attempts=2)
+        self.assertEqual(seen, ["https://images.example.test/a.jpg", "https://images.example.test/a.jpg"])
+        self.assertTrue(all(url.startswith("https://") for url in seen))
+        self.assertEqual(sleeps, [fetch_gbif.DOWNLOAD_BACKOFF_SECONDS + 0.25])
+        self.assertEqual(fetch_gbif.DOWNLOAD_ATTEMPTS, 3)
+        self.assertLessEqual(fetch_gbif.DOWNLOAD_ATTEMPTS, 5)
+
+    def test_attach_file_does_not_rewrite_an_unverified_http_url(self):
+        row = {
+            "occurrence_key": 7,
+            "media_index": 0,
+            "image_url": "http://images.example.test/photo.jpg",
+            "source_url": "http://images.example.test/page",
+            "creator": "Ada http://images.example.test/credit",
+        }
+        reason = fetch_gbif.prepare_attribution_urls(row)
+        self.assertEqual(reason, "http_host_not_allowlisted")
+        self.assertEqual(row["image_url"], "http://images.example.test/photo.jpg")
+        self.assertEqual(row["source_url"], "http://images.example.test/page")
+        self.assertEqual(row["creator"], "Ada http://images.example.test/credit")
+        self.assertNotIn("file", row)
+
     def test_dns_timeout_reset_and_ssl_are_retried(self):
         reasons = [
             socket.gaierror(socket.EAI_AGAIN, "Temporary failure in name resolution"),
@@ -2883,6 +2946,11 @@ class MediaUrlSafetyTest(FetchCase):
             request, None, 302, "Found", EmailMessage(), "https://cdn.example.test/b.jpg"
         )
         self.assertEqual(allowed.full_url, "https://cdn.example.test/b.jpg")
+        rewritten = handler.redirect_request(
+            request, None, 302, "Found", EmailMessage(), "http://cdn.example.test/b.jpg"
+        )
+        self.assertEqual(rewritten.full_url, "https://cdn.example.test/b.jpg")
+        self.assertTrue(rewritten.full_url.startswith("https://"))
         for target in (
             "http://127.0.0.1/secret",
             "http://169.254.169.254/latest",

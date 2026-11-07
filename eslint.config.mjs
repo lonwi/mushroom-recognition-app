@@ -384,4 +384,11 @@ export default tseslint.config(
       '@typescript-eslint/no-require-imports': 'off',
     },
   },
+  {
+    // jest.resetModules() only sees require() calls made after the reset.
+    files: ['src/__tests__/services/tfliteRuntime.test.ts'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
 );
