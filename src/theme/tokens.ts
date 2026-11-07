@@ -49,6 +49,19 @@ export const colors = {
   surfaceVariant: '#F1F5F9',
   outline: '#CBD5E1',
 
+  // Nordic Field Guide v3.1 canonical tokens (Stitch / docs/DESIGN.md)
+  primaryGreen: '#1b382b',
+  primaryGreenHover: '#152e23',
+  paper: '#f6f5f1',
+  paperActive: '#eae6dc',
+  surfaceCard: '#ffffff',
+  borderSubtle: '#dcdad3',
+  softGreenBg: '#f4f7f4',
+  accentRed: '#ad1414',
+  accentRedSoft: '#fdf2f2',
+  warningAmber: '#d97706',
+  warningSoft: '#fef3c7',
+
   slate200: '#E2E8F0',
   slate400: '#94A3B8',
   slate500: '#64748B',
@@ -166,6 +179,8 @@ export const radius = {
   sm: 8,
   md: 12,
   lg: 14,
+  xl: 24,
+  full: 9999,
   pill: 12,
 } as const;
 
