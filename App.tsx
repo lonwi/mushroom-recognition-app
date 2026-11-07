@@ -15,6 +15,7 @@ import { SafetyGuideScreen } from './src/screens/SafetyGuideScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { PreparationGuideScreen } from './src/screens/PreparationGuideScreen';
 import { SafetyDisclaimerModal } from './src/components/SafetyDisclaimerModal';
+import { ScreenErrorBoundary } from './src/components/ScreenErrorBoundary';
 import { settingsStore } from './src/services/storage/settingsStore';
 import { getSpecies } from './src/data/speciesCatalog';
 import { LanguageProvider, useLanguage } from './src/contexts/LanguageContext';
@@ -136,6 +137,11 @@ function AppContent() {
   };
 
   const activeTab = shellScreen(stack);
+  const route = visibleRoute(stack);
+  const contentKey =
+    route.kind === 'species'
+      ? `${activeTab}:species:${route.speciesId}`
+      : `${activeTab}:${route.kind}`;
   const screens = shellScreens(stack, {
     journalRefreshSignal,
     onOpenAtlasSpecies: handleOpenAtlasSpecies,
@@ -186,7 +192,9 @@ function AppContent() {
         </View>
       </View>
 
-      <View style={styles.content}>{screens[activeTab]}</View>
+      <View style={styles.content}>
+        <ScreenErrorBoundary resetKey={contentKey}>{screens[activeTab]}</ScreenErrorBoundary>
+      </View>
 
       <View style={styles.bottomNav}>
         {TAB_BAR.map((tab) => {
