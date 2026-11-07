@@ -59,7 +59,7 @@ Polityka A zostaje przy pustym statusie: wiersze bez statusu nie są odrzucane i
 
 #92 jest na `main` (`129eea7210cbac7ebbf5a34c5da827ca866e838d`). Jawne `unverified` odpada w fetchu i ponownie w `prepare_data`. `gbif_not_validated` trzyma listę `Approved | Expert | Evidence` i `Confident`. Pusty `gbif_not_validated` zostaje z flagą `unverified`.
 
-Zacieśnienie z 2026-11-07 jest osobnym pull requestem po tym commicie. Ta sama funkcja w `training/licenses.py` decyduje w fetchu, w `prepare_data` i przy obu etykietach CSV. Skrót polityki zapytania GBIF jest liczony z bajtów `licenses.py`, więc stary cache zapytań przestaje pasować.
+Zacieśnienie z 2026-11-07 jest w [#105](https://github.com/lonwi/mushroom-recognition-app/pull/105), osobnym pull requeście po tamtym commicie. Ta sama funkcja w `training/licenses.py` decyduje w fetchu, w `prepare_data` i przy obu etykietach CSV. Skrót polityki zapytania GBIF jest liczony z bajtów `licenses.py`, więc stary cache zapytań przestaje pasować.
 
 ## Weryfikacja
 
