@@ -12,9 +12,17 @@ source_url stay out of test. A match that still lands in test stops the run.
 
 Reads ``attributions.jsonl``. ``external.jsonl`` is read only with
 ``--with-external``. Unverified rows are skipped. ``--publishable-only``
-also skips ``usage=training_only`` (CC BY-NC and Danish Fungi 2020). The split
+also skips ``usage=training_only`` (CC BY-NC, CC BY-SA, and Danish Fungi 2020).
+Without that flag CC BY-NC and CC BY-SA stay in the training set. Danish
+Fungi 2020 stays out unless ``--include-df20`` is also set; those rows are
+counted as ``excluded_df20``. Those rows are experimental training only:
+any DF20 row keeps ``shippable`` false, and ``DF20_CONSENT_CONFIRMED``
+cannot clear that. The split
 salt is ``GRZYBOBRANIE_SPLIT_SALT`` or a file outside the repo. Corrupt files
-are skipped. The cached PNG is EXIF-oriented and area-resized to the
+are skipped. A downloaded row whose ``image_url`` or ``source_url`` is not
+https is skipped too, with reason ``url_not_https`` in the per-class section
+of ``dedup_report.json``. That skip does not rewrite the URL and does not
+stop the rest of the run. The cached PNG is EXIF-oriented and area-resized to the
 model input, which is what the phone feeds the network. An unacknowledged
 class over the per-class component-share limit, or with an empty val or test,
 stops the run before any split file or dataset manifest is written.
@@ -146,31 +154,61 @@ def _attribution_sources(data_dir: Path | None = None, *, with_external: bool = 
     return sources
 
 
-def _usable_records(sources: list[Path], *, publishable_only: bool = False) -> tuple[list[dict], list[dict]]:
+def _usable_records(
+    sources: list[Path],
+    *,
+    publishable_only: bool = False,
+    include_df20: bool = False,
+) -> tuple[list[dict], list[dict]]:
     """Decode every downloaded photo. Skip corrupt files instead of aborting.
 
     Unverified external rows never enter the set. ``publishable_only`` also
-    drops ``usage=training_only`` (CC BY-NC and Danish Fungi 2020).
+    drops ``usage=training_only`` (CC BY-NC, CC BY-SA, and Danish Fungi 2020).
+    Without that flag ``--with-external`` keeps CC BY-NC and CC BY-SA.
+    DF20 is kept only with ``include_df20`` (``--include-df20``). Otherwise
+    each DF20 row is skipped and counted as ``df20_opt_out``.
     """
     records = []
     skipped = []
     for source in sources:
-        skipped.extend(_usable_records_one(source, records, publishable_only=publishable_only))
+        skipped.extend(
+            _usable_records_one(
+                source,
+                records,
+                publishable_only=publishable_only,
+                include_df20=include_df20,
+            )
+        )
     return records, skipped
 
 
-def _usable_records_one(source: Path, records: list[dict], *, publishable_only: bool) -> list[dict]:
+def _usable_records_one(
+    source: Path,
+    records: list[dict],
+    *,
+    publishable_only: bool,
+    include_df20: bool = False,
+) -> list[dict]:
+    from component_share import is_df20_row
+
     skipped = []
     for line in source.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
         row = json.loads(line)
+        if not include_df20 and is_df20_row(row):
+            skipped.append({**row, "skip_reason": "df20_opt_out"})
+            continue
         if not training_eligible(row, publishable_only=publishable_only):
             if row.get("downloaded"):
                 reason = "unverified" if row.get("unverified") is True else "training_only"
                 skipped.append({**row, "skip_reason": reason})
             continue
         if not row.get("downloaded"):
+            continue
+        http_fields = non_https_url_fields(row)
+        if http_fields:
+            skipped.append({**row, "skip_reason": "url_not_https", "non_https_fields": http_fields})
             continue
         path = DATA_DIR / row["file"]
         if not path.is_file():
@@ -189,6 +227,61 @@ def _usable_records_one(source: Path, records: list[dict], *, publishable_only: 
         row["bytes"] = len(payload)
         records.append(row)
     return skipped
+
+
+def non_https_url_fields(row: dict) -> list[str]:
+    """``image_url`` and ``source_url`` values that export would refuse.
+
+    Empty fields are allowed. The check is the same prefix rule as
+    ``export_tflite.write_attribution_file`` and does not rewrite the row.
+    """
+    fields = []
+    for field in ("image_url", "source_url"):
+        value = row.get(field)
+        if isinstance(value, str) and value.strip() and not value.strip().lower().startswith("https://"):
+            fields.append(field)
+    return fields
+
+
+def _file_sha256(path: Path) -> str | None:
+    if not path.is_file():
+        return None
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def gbif_input_hashes(directory: Path) -> dict[str, str | None]:
+    """SHA-256 of the GBIF fetch report and of ``attributions.jsonl`` when present.
+
+    The rows file is the JSONL ``fetch_gbif.py`` writes. A missing file is
+    null so a prepare that did not start from a fetch still records the gap.
+    """
+    return {
+        "gbif_fetch_report_sha256": _file_sha256(directory / "fetch_report.json"),
+        "gbif_rows_sha256": _file_sha256(directory / "attributions.jsonl"),
+    }
+
+
+def http_rejection_report(skipped: list) -> dict:
+    """Per-class counts for rows prepare refused because a URL was not https."""
+    per_class: dict[str, dict] = {}
+    total = 0
+    for row in skipped:
+        if not isinstance(row, dict) or row.get("skip_reason") != "url_not_https":
+            continue
+        total += 1
+        class_id = str(row.get("class_id") or "")
+        bucket = per_class.setdefault(class_id, {"url_not_https": 0, "rows": []})
+        bucket["url_not_https"] += 1
+        bucket["rows"].append(
+            {
+                "file": row.get("file") or "",
+                "reason": "url_not_https",
+                "fields": list(row.get("non_https_fields") or []),
+                "image_url": row.get("image_url") if isinstance(row.get("image_url"), str) else "",
+                "source_url": row.get("source_url") if isinstance(row.get("source_url"), str) else "",
+            }
+        )
+    return {"rejected_http_rows": total, "rejected_http_per_class": per_class}
 
 
 def _cache_model_pngs(records: list[dict], size: int) -> tuple[list[dict], list[dict]]:
@@ -233,7 +326,16 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument(
         "--publishable-only",
         action="store_true",
-        help="Drop usage=training_only rows (CC BY-NC and DF20) before dedup and split.",
+        help="Drop usage=training_only rows (CC BY-NC, CC BY-SA, and DF20) before dedup and split.",
+    )
+    parser.add_argument(
+        "--include-df20",
+        action="store_true",
+        help=(
+            "With --with-external, keep Danish Fungi 2020 rows. The default excludes "
+            "them and counts excluded_df20. CC BY-NC and CC BY-SA are unaffected. "
+            "DF20 is experimental only: any such row keeps shippable false."
+        ),
     )
     parser.add_argument(
         "--gallery-csv",
@@ -267,7 +369,11 @@ def main(argv: list[str] | None = None) -> None:
         )
     manifest = load_manifest()
     size = int(manifest["input"]["size"])
-    records, skipped = _usable_records(sources, publishable_only=args.publishable_only)
+    records, skipped = _usable_records(
+        sources,
+        publishable_only=args.publishable_only,
+        include_df20=args.include_df20,
+    )
     records, identity_dropped = dedup_by_identity(records)
     kept, dropped = dedup_records(records)
     prepared, prepare_skipped = _cache_model_pngs(kept, size)
@@ -310,11 +416,14 @@ def write_prepare_outputs(
     component-share limit, or with an empty val or test, raises ``SystemExit``
     and leaves the directory without ``splits.json`` or ``dataset_manifest.json``.
     """
+    source_hashes = gbif_input_hashes(directory)
     dataset_manifest = build_dataset_manifest(
         splits,
         salt=salt,
         share_config=share_config,
         withheld=withheld,
+        gbif_fetch_report_sha256=source_hashes["gbif_fetch_report_sha256"],
+        gbif_rows_sha256=source_hashes["gbif_rows_sha256"],
     )
     hard = list(dataset_manifest["component_share"]["hard_stop_classes"])
     if hard:
@@ -353,10 +462,18 @@ def write_prepare_outputs(
                 "hash": "dhash_or_phash_threshold_2",
                 "identity_dropped": len(identity_dropped),
                 "identity_dropped_reasons": identity_reasons,
+                "dropped_looser_license": sum(
+                    1 for row in identity_dropped if row.get("drop_reason") == "looser_license"
+                ),
                 "class_conflicts": class_conflicts,
                 "held_out_withheld": len(withheld),
                 "skipped_corrupt_or_unreadable": len(skipped),
+                "excluded_df20": sum(
+                    1 for row in skipped if isinstance(row, dict) and row.get("skip_reason") == "df20_opt_out"
+                ),
                 "model_png_size": model_png_size,
+                **http_rejection_report(skipped),
+                **source_hashes,
             },
             indent=2,
         ),

@@ -87,6 +87,7 @@ from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 from licenses import normalize_cc_license
+from https_equivalence import upgrade_verified_url
 from url_safety import UnsafeMediaUrl, force_https_url, listed_media_records, validate_media_url
 from manifest import CENTRAL_EUROPE, LABELS_PATH, ROOT, load_manifest
 from sampling import (
@@ -1421,6 +1422,18 @@ def _restore_not_selected(data_dir: Path, destination: Path, index: _VerifiedInd
     return destination.stat().st_size
 
 
+def _fetchable_image_url(url: str) -> str:
+    """https URL to download. Unverified http is refused, not rewritten by host."""
+    if not isinstance(url, str):
+        raise UnsafeMediaUrl("image URL must be https")
+    upgraded, reason = upgrade_verified_url(url)
+    if reason:
+        raise UnsafeMediaUrl(reason)
+    if not isinstance(upgraded, str) or urllib.parse.urlsplit(upgraded).scheme != "https":
+        raise UnsafeMediaUrl("image URL must be https")
+    return upgraded
+
+
 def download_image(
     url: str,
     destination: Path,
@@ -1432,10 +1445,13 @@ def download_image(
 ) -> int:
     """Download one photo. A verified image already at `destination` is skipped.
 
-    The image URL must be https on port 443 after ``force_https_url``. An
-    http URL is rewritten to https and is never requested as http, including
-    when https times out. A redirect to http is rewritten to https before it
-    is followed. Anything that is still not https is refused. Every resolved
+    The image URL must be https on port 443. ``force_https_url`` rewrites an
+    http URL only when ``upgrade_verified_url`` finds that exact resource in
+    the http/https capture (same host, path, and query, matching body hashes).
+    Any other http URL is refused and is never requested, including as a
+    fallback after a timeout. A redirect to http is still rewritten to https
+    before it is followed, so a redirect cannot downgrade the transfer.
+    Anything that is still not https is refused. Every resolved
     address must be public. Each redirect is checked the same way. urllib
     resolves the host again after that check, and an HTTP proxy is not
     forced onto the address that was accepted.
@@ -1452,7 +1468,7 @@ def download_image(
     checks as a new download. Those checks finish before it is remembered. A
     file that fails them is quarantined and is not accepted.
     """
-    url = force_https_url(url)
+    url = _fetchable_image_url(url)
     if urllib.parse.urlsplit(url).scheme != "https":
         raise UnsafeMediaUrl("image URL must be https")
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -1821,10 +1837,72 @@ def _occurrence_key_for_filename(value: object) -> str:
     return text
 
 
+def prepare_attribution_urls(row: dict) -> str | None:
+    """Upgrade image_url and source_url only when that exact URL was captured.
+
+    Returns a reject reason and leaves the row's URLs unchanged when any URL
+    field is not a verified resource. Creator, licence, and other text fields
+    are not read. An empty field and an https URL stay as they are.
+    """
+    updates: dict[str, str] = {}
+    bad_fields: list[str] = []
+    reason: str | None = None
+    upgraded = False
+    for field in ("image_url", "source_url"):
+        value = row.get(field)
+        if not isinstance(value, str) or not value.strip():
+            continue
+        new_url, field_reason = upgrade_verified_url(value)
+        if field_reason:
+            bad_fields.append(field)
+            reason = reason or field_reason
+            continue
+        if new_url != value:
+            updates[field] = new_url
+            upgraded = True
+    if reason:
+        row["_policy_reject"] = True
+        row["_non_https_fields"] = bad_fields
+        return reason
+    row.update(updates)
+    if upgraded:
+        row["_upgraded_https"] = True
+    return None
+
+
+def _bind_row(row: dict, folder: str) -> None:
+    """Apply the https rule, then name the file. A rejected row is not renamed."""
+    reason = prepare_attribution_urls(row)
+    if reason:
+        row["_failure_reason"] = reason
+        row["downloaded"] = False
+        return
+    _attach_file(row, folder)
+
+
+def _policy_rejected_records(rows: list[dict]) -> list[dict]:
+    """Rows dropped by the https rule, one record per row, in pool order."""
+    records = []
+    for row in rows:
+        if not row.get("_policy_reject"):
+            continue
+        records.append(
+            {
+                "class_id": row.get("class_id") or "",
+                "reason": row.get("_failure_reason") or "",
+                "detail": row.get("_https_failure_detail") or "",
+                "fields": list(row.get("_non_https_fields") or []),
+                "image_url": row.get("image_url") if isinstance(row.get("image_url"), str) else "",
+                "source_url": row.get("source_url") if isinstance(row.get("source_url"), str) else "",
+            }
+        )
+    return records
+
+
 def _attach_file(row: dict, folder: str) -> Path:
     image_url = row.get("image_url")
-    if isinstance(image_url, str):
-        row["image_url"] = force_https_url(image_url)
+    if not isinstance(image_url, str) or not image_url:
+        raise ValueError("image_url is required")
     filename = (
         f"{_occurrence_key_for_filename(row.get('occurrence_key'))}"
         f"_{row['media_index']}{suffix_for(row['image_url'])}"
@@ -1879,13 +1957,21 @@ def _download_rows(media: list[dict], *, directory: Path, resume: bool, workers:
     """Download in place. Completion order does not change `media` order."""
 
     def fetch(row: dict) -> None:
+        if row.get("_policy_reject"):
+            row["downloaded"] = False
+            return
         destination = _destination_for(directory, row["file"])
         try:
             size = download_image(row["image_url"], destination, resume=resume, data_dir=directory)
         except Exception as error:  # noqa: BLE001 — keep the crawl going
             if isinstance(error, (_RejectedImage, _TruncatedTransfer)):
                 row["_image_rejected"] = True
-            row["_failure_reason"] = _failure_reason(error)
+            if row.get("_upgraded_https"):
+                row["_https_failure_detail"] = _failure_reason(error)
+                row["_failure_reason"] = "https_url_failed"
+                row["_policy_reject"] = True
+            else:
+                row["_failure_reason"] = _failure_reason(error)
             row["download_error"] = str(error)
             row["downloaded"] = False
             with _PRINT_LOCK:
@@ -1939,8 +2025,14 @@ def _outcome_stats(
     ``replacement_budget`` stops the unit without writing ``gbif_licensed_count``.
     """
     if dry_run:
-        accepted = len(kept)
-        failed: dict[str, int] = {}
+        failed_counts: Counter[str] = Counter()
+        accepted = 0
+        for row in attempted:
+            if row.get("_policy_reject"):
+                failed_counts[str(row.get("_failure_reason") or "https_not_verified_for_url")] += 1
+            else:
+                accepted += 1
+        failed = {key: failed_counts[key] for key in sorted(failed_counts)}
         selected = len(attempted)
     else:
         failed_counts: Counter[str] = Counter()
@@ -2078,12 +2170,13 @@ def _fill_to_cap(
     """
     media = pool.rows
     for row in media:
-        _attach_file(row, folder)
+        _bind_row(row, folder)
     if cap < 1:
         return [], []
     if dry_run:
-        kept = list(media[:cap])
-        return kept, list(kept)
+        considered = list(media[:cap])
+        kept = [row for row in considered if not row.get("_policy_reject")]
+        return kept, considered
 
     kept: list[dict] = []
     attempted: list[dict] = []
@@ -2105,13 +2198,17 @@ def _fill_to_cap(
             added = pool.fetch_more(min(slots, remaining, failure_room))
             if added:
                 for row in media[len(media) - added :]:
-                    _attach_file(row, folder)
+                    _bind_row(row, folder)
             if cursor >= len(media):
                 break
         batch: list[dict] = []
         scheduled = 0
         while len(batch) < slots and len(batch) < failure_room and cursor < len(media):
             row = media[cursor]
+            if row.get("_policy_reject"):
+                batch.append(row)
+                cursor += 1
+                continue
             if not _row_skips_network(directory, row, resume):
                 if scheduled >= remaining:
                     break
@@ -2126,7 +2223,7 @@ def _fill_to_cap(
         for row in batch:
             if id(row) in local_ids:
                 _settle_without_network(directory, row)
-        network = [row for row in batch if id(row) not in local_ids]
+        network = [row for row in batch if id(row) not in local_ids and not row.get("_policy_reject")]
         if network:
             _download_rows(network, directory=directory, resume=resume, workers=workers)
             for row in network:
@@ -2255,6 +2352,7 @@ def run_fetch(
         part_caps = _part_caps(species, cap)
         kept_parts: list[dict] = []
         part_stats: list[dict] = []
+        rejected_records: list[dict] = []
         for pool in bundle.pools:
             part_cap = part_caps.get(pool.name, 0)
             kept, attempted = _fill_to_cap(
@@ -2269,11 +2367,15 @@ def run_fetch(
             stats = _stats_for(pool, kept, attempted, part_cap, dry_run=dry_run)
             kept_parts.extend(kept)
             part_stats.append(stats)
+            rejected_here = _policy_rejected_records(attempted)
+            rejected_records.extend(rejected_here)
             if pool.name:
                 sampling = species.get("sampling") or {}
                 planned = list(sampling.get("taxa") or [])
                 keys = {str(taxon["name"]): taxon.get("gbif_key") for taxon in planned}
-                taxon_report.append(_taxon_report_row(pool.name, part_cap, stats, species["id"], keys.get(pool.name)))
+                taxon_row = _taxon_report_row(pool.name, part_cap, stats, species["id"], keys.get(pool.name))
+                taxon_row["rejected_rows"] = rejected_here
+                taxon_report.append(taxon_row)
         kept = kept_parts
         if part_stats:
             class_stats = _combine_stats(part_stats)
@@ -2289,6 +2391,7 @@ def run_fetch(
             )
             class_stats["any_taxon_pool_exhausted"] = bool(class_stats["pool_exhausted"])
         per_class[species["id"]] = _class_report_entry(kept, class_stats, cap, min_before_global)
+        per_class[species["id"]]["rejected_rows"] = rejected_records
         entry = per_class[species["id"]]
         print(
             f"  accepted media: {entry['accepted']} "
@@ -2359,6 +2462,7 @@ def run_fetch(
             stats = _stats_for(pool, kept, attempted, cap, dry_run=dry_run)
             rows.extend(kept)
             probe_row = _taxon_report_row(name, cap, stats, probe_folder, taxon.get("gbif_key"))
+            probe_row["rejected_rows"] = _policy_rejected_records(attempted)
             probe_report.append(probe_row)
             taxon_report.append(probe_row)
             print(f"  accepted probe media: {stats['accepted']} (shortfall {stats['shortfall']})")

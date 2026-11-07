@@ -8,7 +8,6 @@ import math
 from collections import Counter, defaultdict
 from pathlib import Path
 
-from publication import classify_license_column
 from split import observation_identity_keys, photo_identity_keys
 
 
@@ -137,25 +136,14 @@ def dedup_records(records: list[dict], hash_distance: int = 2) -> tuple[list[dic
 
 
 def _license_rank(record: dict) -> int:
-    """Prefer a versioned CC0 row over CC BY, and either over a training-only row."""
-    from import_external import exact_license_usage
+    """Stricter licence wins, the same rank as the importer.
 
-    normalized = record.get("license_normalized")
-    usage = exact_license_usage(normalized)
-    if usage == "publishable" and str(normalized).startswith("cc0-"):
-        return 2
-    if usage == "publishable":
-        return 1
-    url = record.get("license_url")
-    kind = classify_license_column(
-        record.get("license") if isinstance(record.get("license"), str) else None,
-        url if isinstance(url, str) else None,
-    )
-    if kind == "cc0":
-        return 2
-    if kind == "cc-by":
-        return 1
-    return 0
+    NC, DF20, and SA outrank CC BY, which outranks CC0. The rank is the
+    normalised id only. A public-domain copy does not replace an NC copy.
+    """
+    from license_policy import training_license_rank
+
+    return training_license_rank(record.get("license_normalized"))
 
 
 def _class_conflict_indexes(records: list[dict]) -> dict[int, list[str]]:
@@ -214,7 +202,9 @@ def dedup_by_identity(records: list[dict]) -> tuple[list[dict], list[dict]]:
     The same photo, or the same observation id, under two species drops every
     row of that id. Those rows are listed with ``drop_reason`` ``class_conflict``.
     Two different photos that share an observation and one species are kept.
-    A second copy of one photo keeps the versioned CC0 or CC BY row.
+    A second copy of one photo keeps the stricter licence: NC, DF20, and SA
+    beat CC BY, and CC BY beats CC0. The looser copy is ``looser_license``.
+    An equal licence keeps the earliest row as ``duplicate_photo_id``.
     A second copy of an observation that does not add a photo id is dropped.
     """
     conflicts = _class_conflict_indexes(records)
@@ -270,10 +260,14 @@ def dedup_by_identity(records: list[dict]) -> tuple[list[dict], list[dict]]:
         if winner in emitted or index != winner:
             continue
         emitted.add(winner)
-        for other in members[find(winner)]:
-            if other != winner:
-                dropped.append({**remaining[other], "drop_reason": "duplicate_photo_id"})
         chosen = remaining[winner]
+        winner_rank = _license_rank(chosen)
+        for other in members[find(winner)]:
+            if other == winner:
+                continue
+            loser = remaining[other]
+            reason = "looser_license" if _license_rank(loser) < winner_rank else "duplicate_photo_id"
+            dropped.append({**loser, "drop_reason": reason})
         observed = observation_identity_keys(chosen)
         if not photos[winner] and any(key in seen_observation for key in observed):
             dropped.append({**chosen, "drop_reason": "duplicate_observation_id"})

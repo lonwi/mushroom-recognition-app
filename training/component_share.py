@@ -19,7 +19,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 from manifest import ROOT
-from publication import _df20_marker
+from publication import DF20_NORMALIZED_LICENSE_FIELD, DF20_SOURCE_FIELD, _df20_marker
 from split import _components, normalized_person_text, person_identity_keys
 
 # Pending owner decision (20% vs 50%); do not raise.
@@ -61,8 +61,17 @@ def is_placeholder_row(row: dict) -> bool:
 
 
 def is_df20_row(row: dict) -> bool:
-    source = str(row.get("source") or "").casefold()
-    if source == "df20":
+    """DF20 when the source, the normalised licence id, or a marker says so.
+
+    The fields are ``publication.DF20_DETECTION_FIELDS``. A marker alone is enough.
+    """
+    if not isinstance(row, dict):
+        return False
+    source = row.get(DF20_SOURCE_FIELD)
+    if str(source or "").casefold() == "df20":
+        return True
+    normalized = row.get(DF20_NORMALIZED_LICENSE_FIELD)
+    if isinstance(normalized, str) and normalized.strip().casefold() == "df20":
         return True
     return _df20_marker(row)
 

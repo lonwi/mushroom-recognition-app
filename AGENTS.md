@@ -101,11 +101,15 @@ mushroom-recognition-app/
    - A packaged model still must not show an edibility verdict. Amanita, Cortinarius, Galerina, or Gyromitra in the top 3, or low confidence, requires the expert / Sanepid warning. `not_a_mushroom` and the energy gate may reject a photo; `unknown_mushroom` shows the honest "the app does not know this mushroom" message, never a species or verdict.
    - Do not install weights that failed `training/ship_gates.py`.
 
-6. **Training data licensing**:
-   - **Today the code accepts only CC0 and CC-BY** (`training/licenses.py` rejects `by-nc`). Do not fetch NC, ND, SA, or unlicensed photos.
-   - **Approved, not yet implemented** (owner decision 2026-10-16, to be delivered by training PR 3): CC BY-NC (plain BY-NC only, not NC-ND / NC-SA) and DF20 for **training only** – never published, displayed in the app, or bundled; attribution kept; licence in its own manifest column with a filter that can exclude BY-NC / DF20; DF20 needs photographer consent confirmed by the owner before any release. Until PR 3 is merged, the CC0/CC-BY rule above is what the code enforces.
-   - A **commercial release** needs a model retrained without BY-NC and DF20 data.
-   - Planned with PR 3: split keys combine all available keys (observation id, GBIF key, collector + grid + day), an empty key is never a key, and collector ids are hashed with a salt kept outside the repo.
+6. **Training data licensing** (Decyzja Wojtka 2026-10-23 12:02, wariant C):
+   - A released model may be trained on versioned CC0, CC BY, CC BY-NC, and CC BY-SA (`training/license_policy.py`). ND, NC-ND, and NC-SA stay rejected.
+   - Danish Fungi 2020 is experimental training only, never a released model (DF20 variant B). `--include-df20` opts in and defaults to off; excluded rows are counted as `excluded_df20`. Any DF20 row sets `shippable` false. `DF20_CONSENT_CONFIRMED` stays false as documentation of the pending Svampeatlas consent and must not unlock a release.
+   - Allowed training ids are an explicit list. Do not prefix-match. Unversioned `cc-by`, `cc-by-nc`, `cc-by-sa`, and `cc-by-nc-sa` are rejected. An empty or unknown licence blocks release. CC BY-SA is accepted only as `cc-by-sa-1.0`, `cc-by-sa-2.0`, `cc-by-sa-2.5`, `cc-by-sa-3.0`, or `cc-by-sa-4.0`, with `usage=training_only`. ND and NC-SA stay rejected.
+   - Photos shown in the app stay CC0 or CC BY. `is_publishable`, the atlas gallery, `site/`, and comparison photos reject CC BY-NC, CC BY-SA, and DF20.
+   - The GBIF fetch (`training/licenses.py`) still keeps only CC0 and CC-BY URLs. CC BY-NC, CC BY-SA, and DF20 enter through external CSVs (`--with-external`), not through that fetch. Do not fetch ND, NC-SA, NC-ND, or unlicensed photos.
+   - Every CC row, including CC BY-NC and CC BY-SA, needs an https `license_url` that carries the version from that photo. `attributions.jsonl` copies that row's own `license_url` and does not rebuild a deed from the licence id. DF20 keeps the dataset note already used on main and has no per-photo `license_url`, so the copied field is empty. Do not add `licence_url_source=dataset` until the DF20 terms are checked.
+   - The ship gate does not block CC BY-NC or CC BY-SA. Owner decision 2026-10-23 12:17, CC BY-SA variant B (register entry 0004 in #74): share-alike does not cover model weights, so versioned CC BY-SA may train a released model. Photos shown stay CC0 or CC BY. Any DF20 row sets `shippable` false even though `df20` is `training_only`, and changing `DF20_CONSENT_CONFIRMED` does not clear that. `attributions.jsonl` still lists every train, val, and test photo with its licence and author. `attribution_row` copies every field in `DF20_DETECTION_FIELDS` into that file, so a DF20 row recognised only by a marker still sets `shippable` false after export. A missing or unreadable attributions file still blocks.
+   - `dedup_by_identity` keeps the stricter licence of one photo (NC, DF20, and SA over CC BY over CC0) and counts the looser copy as `dropped_looser_license`. A Commons CC0 copy does not override an iNaturalist NC copy.
 
 7. **Content rules**:
    - Stamets (and other copyrighted books): paraphrase only, always with page numbers; no quotes.
@@ -129,3 +133,35 @@ python -m unittest discover -s training/tests -v   # when touching training/
 ```
 
 Then open a PR. CI must be green and the PR gets a review. Who merges is described in `docs/QUALITY.md` → "PR process"; safety content always needs the owner's word. Never loosen a quality gate to make CI pass – see "What must not be loosened" in `docs/QUALITY.md`.
+
+## 🌿 Git Workflow & Pull Request Protocol
+
+For any new task, feature request, bug fix, or refactoring, follow this procedure:
+
+1. **Branch Initialization (Before modifying any files):**
+   - Verify repo state: `git status`.
+   - Update main branch: `git checkout main && git pull`.
+   - Create and switch to a descriptive branch:
+     - Features: `git checkout -b feat/<short-description>`
+     - Fixes: `git checkout -b fix/<short-description>`
+   - *Never commit directly to `main` or `master`.*
+
+2. **Implementation & Verification:**
+   - Implement changes cleanly with TypeScript and React Native best practices.
+   - Install with `pnpm install --frozen-lockfile`, then run everything CI runs:
+     - Type check: `pnpm typecheck`
+     - Tests: `pnpm test`
+     - Quality gates: `pnpm quality` (lint, jscpd duplication, knip, dependency-cruiser)
+     - E2E: `pnpm build-storybook && pnpm test:e2e`
+     - Python: `python -m unittest discover -s training/tests -v` when `training/` is changed.
+   - Read failures and fix the cause; do not silence them or loosen a gate.
+
+3. **Commit & Push:**
+   - Stage modified files: `git add <files>`.
+   - Use Conventional Commits in English: `git commit -m "feat(<scope>): <concise message>"`.
+   - Push branch upstream: `git push -u origin <branch-name>`.
+
+4. **Pull Request Automation:**
+   - Create PR using GitHub CLI:
+     `gh pr create --title "feat(<scope>): <summary>" --body "## Summary\n<1-2 sentence overview>\n\n## Changes\n- <bullet points>\n\n## Testing\n- Verified on iOS/Android emulator"`
+   - Output the generated PR URL directly to the user.

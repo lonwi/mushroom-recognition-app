@@ -13,6 +13,8 @@ import { MushroomSpecies } from '../types/mushroom';
 import { SpeciesStatusBadge } from '../components/EdibilityBadge';
 import { LookAlikeAlert } from '../components/LookAlikeAlert';
 import { SpeciesGallery } from '../components/SpeciesGallery';
+import { SulphurHoneyComparison } from '../components/SulphurHoneyComparison';
+import { showsSulphurHoneyComparison } from '../data/sulphurHoneyComparison';
 import { getMushroomImage } from '../utils/mushroomImages';
 import { hasFatalLookAlikeRisk, MUSHROOM_IDS, showsKitchenSection } from '../data/mushrooms';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -247,6 +249,8 @@ export const SpeciesDetailScreen: React.FC<Props> = ({ species, onBack, onOpenLo
             <Text style={styles.infoValue} testID="species-season-omitted">{t('cards.seasonOmitted')}</Text>
           )}
         </View>
+
+        {showsSulphurHoneyComparison(species.id) ? <SulphurHoneyComparison /> : null}
 
         {/* Lookalikes Warning */}
         <View style={styles.lookAlikeContainer}>
