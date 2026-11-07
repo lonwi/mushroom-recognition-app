@@ -91,11 +91,10 @@ describe('release config', () => {
 
     expect(eas.cli.appVersionSource).toBe('remote');
     expect(eas.cli.version).toBe('>= 16.0.0');
-    const pnpmVersion = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).packageManager.replace(
-      /^pnpm@/,
-      '',
-    );
-    expect(pnpmVersion).toBe('10.33.4');
+    const pnpmVersion = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).packageManager
+      .replace(/^pnpm@/, '')
+      .split('+')[0];
+    expect(pnpmVersion).toBe('12.16.1');
     expect(eas.build.development).toEqual({
       pnpm: pnpmVersion,
       distribution: 'internal',
