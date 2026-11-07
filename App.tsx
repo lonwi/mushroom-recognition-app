@@ -248,6 +248,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: colors.secondary,
+    position: 'relative',
+    zIndex: 100,
   },
   brandRow: {
     flexDirection: 'row',

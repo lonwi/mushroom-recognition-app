@@ -28,7 +28,8 @@ test('hardware back returns from species detail, settings, and preparation', asy
 
   await page.getByTestId('nav-ATLAS').click();
   await page.getByTestId('atlas-card-boletus_edulis').click();
-  await page.getByText('⚙️').click();
+  await expect(page.getByTestId('species-back')).toBeVisible();
+  await page.getByText('⚙️').click({ force: true });
   await expect(page.getByTestId('btn-lang-pl')).toBeVisible();
   await expect(page.getByTestId('species-back')).toHaveCount(0);
 

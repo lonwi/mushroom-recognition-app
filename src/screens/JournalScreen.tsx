@@ -65,6 +65,12 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies, refreshSign
     void loadSightingsRef.current();
   }, [refreshSignal]);
 
+  useEffect(() => {
+    return storageService.subscribe(() => {
+      void loadSightingsRef.current();
+    });
+  }, []);
+
   const handleDelete = (item: SightingRecord) => {
     Alert.alert(t('journal.deleteTitle'), t('journal.deleteBody'), [
       { text: t('journal.cancel'), style: 'cancel' },

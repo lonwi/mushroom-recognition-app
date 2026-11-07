@@ -469,4 +469,24 @@ describe('storageService journal records', () => {
       if (original) getItem.mockImplementation(original);
     }
   });
+
+  it('notifies subscribers on write operations and allows unsubscribing', async () => {
+    let callCount = 0;
+    const unsubscribe = storageService.subscribe(() => {
+      callCount++;
+    });
+
+    await storageService.saveSighting(unclearEntry('sub_1'));
+    expect(callCount).toBe(1);
+
+    await storageService.updateSightingNotes('sub_1', 'notatka');
+    expect(callCount).toBe(2);
+
+    await storageService.deleteSighting('sub_1');
+    expect(callCount).toBe(3);
+
+    unsubscribe();
+    await storageService.saveSighting(unclearEntry('sub_2'));
+    expect(callCount).toBe(3);
+  });
 });

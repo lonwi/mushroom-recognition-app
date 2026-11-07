@@ -24,13 +24,33 @@ function isReadableJournal(raw: string | null): boolean {
   }
 }
 
+type JournalListener = () => void;
+
 /** Journal CRUD. Writes are serialized. Backups and settings live elsewhere. */
 class JournalRepository {
   private tail: Promise<unknown> = Promise.resolve();
   private readonly backups: JournalBackupStore;
+  private readonly listeners = new Set<JournalListener>();
 
   constructor(private readonly store: KeyValueStore) {
     this.backups = new JournalBackupStore(store);
+  }
+
+  public subscribe(listener: JournalListener): () => void {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  private notify(): void {
+    for (const listener of this.listeners) {
+      try {
+        listener();
+      } catch (error) {
+        console.error('Błąd listenera dziennika:', error);
+      }
+    }
   }
 
   private enqueue<T>(task: () => Promise<T>): Promise<T> {
@@ -105,6 +125,7 @@ class JournalRepository {
       if (cleared !== '[]') {
         throw new Error('Nie udało się potwierdzić wyczyszczenia dziennika');
       }
+      this.notify();
     });
   }
 
@@ -117,6 +138,7 @@ class JournalRepository {
       const existing = await this.readSightings();
       const updated = [sighting, ...existing.filter((item) => item.id !== sighting.id)];
       await this.store.setItem(SIGHTINGS_STORAGE_KEY, JSON.stringify(updated));
+      this.notify();
       return sighting;
     });
   }
@@ -135,6 +157,7 @@ class JournalRepository {
       const updated = [...existing];
       updated[index] = next;
       await this.store.setItem(SIGHTINGS_STORAGE_KEY, JSON.stringify(updated));
+      this.notify();
       return next;
     });
   }
@@ -152,6 +175,7 @@ class JournalRepository {
           console.error('Błąd podczas usuwania zdjęcia znaleziska:', error);
         }
       }
+      this.notify();
     });
   }
 }

@@ -17,7 +17,7 @@ import { DevInferenceOverlay } from '../components/DevInferenceOverlay';
 import { ResultModal } from '../components/ResultModal';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getSpecies } from '../data/speciesCatalog';
-import { spacing } from '../theme/tokens';
+import { colors, radius, spacing } from '../theme/tokens';
 import { visibleAtlasExamples } from '../utils/atlasExampleLabel';
 
 const ATLAS_EXAMPLES = [
@@ -143,7 +143,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
   if (!permission) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#1B3B22" />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>{t('scanner.cameraInit')}</Text>
       </View>
     );
@@ -277,7 +277,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
           >
             <View style={styles.shutterInner}>
               {isAnalyzing ? (
-                <ActivityIndicator color="#1B3B22" size="large" />
+                <ActivityIndicator color={colors.primary} size="large" />
               ) : (
                 <View style={styles.shutterCenter} />
               )}
@@ -297,7 +297,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.black,
   },
   cameraOverlay: {
     ...StyleSheet.absoluteFill,
@@ -319,11 +319,11 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.3)',
   },
   toolBtnActive: {
-    backgroundColor: '#F59E0B',
-    borderColor: '#F59E0B',
+    backgroundColor: colors.amber500,
+    borderColor: colors.amber500,
   },
   toolIcon: {
-    color: '#FFF',
+    color: colors.white,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
     height: 32,
     borderTopWidth: 4,
     borderLeftWidth: 4,
-    borderColor: '#4ADE80',
+    borderColor: colors.green400,
     borderTopLeftRadius: 10,
   },
   frameCornerTopRight: {
@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
     height: 32,
     borderTopWidth: 4,
     borderRightWidth: 4,
-    borderColor: '#4ADE80',
+    borderColor: colors.green400,
     borderTopRightRadius: 10,
   },
   frameCornerBottomLeft: {
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
     height: 32,
     borderBottomWidth: 4,
     borderLeftWidth: 4,
-    borderColor: '#4ADE80',
+    borderColor: colors.green400,
     borderBottomLeftRadius: 10,
   },
   frameCornerBottomRight: {
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
     height: 32,
     borderBottomWidth: 4,
     borderRightWidth: 4,
-    borderColor: '#4ADE80',
+    borderColor: colors.green400,
     borderBottomRightRadius: 10,
   },
   guideBadge: {
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   guideBadgeText: {
-    color: '#F8FAFC',
+    color: colors.background,
     fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
@@ -397,13 +397,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   demoTestLabel: {
-    color: '#CBD5E1',
+    color: colors.outline,
     fontSize: 11,
     fontWeight: '700',
     marginBottom: 2,
   },
   demoScopeHint: {
-    color: '#94A3B8',
+    color: colors.slate400,
     fontSize: 11,
     lineHeight: 15,
     marginBottom: 6,
@@ -428,17 +428,17 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   demoChipText: {
-    color: '#FFF',
+    color: colors.white,
     fontSize: 12,
     fontWeight: '600',
     flexShrink: 0,
   },
   demoChipDanger: {
     backgroundColor: 'rgba(220, 38, 38, 0.4)',
-    borderColor: '#EF4444',
+    borderColor: colors.red500,
   },
   demoChipDangerText: {
-    color: '#FCA5A5',
+    color: colors.red300,
   },
   cameraControls: {
     flexDirection: 'row',
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
     fontSize: 26,
   },
   galleryText: {
-    color: '#FFF',
+    color: colors.white,
     fontSize: 11,
     marginTop: 4,
     fontWeight: '600',
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
     height: 78,
     borderRadius: 39,
     borderWidth: 4,
-    borderColor: '#FFFFFF',
+    borderColor: colors.white,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.2)',
@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
     width: 62,
     height: 62,
     borderRadius: 31,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -483,25 +483,25 @@ const styles = StyleSheet.create({
     width: 54,
     height: 54,
     borderRadius: 27,
-    backgroundColor: '#1B3B22',
+    backgroundColor: colors.primary,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
   },
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: '#334155',
+    color: colors.slate700,
   },
   permissionContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
   },
   permissionIcon: {
     fontSize: 50,
@@ -510,25 +510,25 @@ const styles = StyleSheet.create({
   permissionTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#1E293B',
+    color: colors.slate800,
     marginBottom: 8,
     textAlign: 'center',
   },
   permissionDesc: {
     fontSize: 14,
-    color: '#64748B',
+    color: colors.slate500,
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 20,
   },
   permissionBtn: {
-    backgroundColor: '#1B3B22',
+    backgroundColor: colors.primary,
     paddingVertical: 14,
     paddingHorizontal: 28,
-    borderRadius: 12,
+    borderRadius: radius.md,
   },
   permissionBtnText: {
-    color: '#FFF',
+    color: colors.white,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -538,17 +538,17 @@ const styles = StyleSheet.create({
   },
   demoFallbackTitle: {
     fontSize: 13,
-    color: '#475569',
+    color: colors.slate600,
     marginBottom: 10,
   },
   galleryBtnAlt: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.slate200,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: radius.sm,
   },
   galleryBtnAltText: {
-    color: '#1E293B',
+    color: colors.slate800,
     fontWeight: '700',
   },
 });
