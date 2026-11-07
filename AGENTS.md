@@ -2,7 +2,7 @@
 
 Welcome to the **Grzybobranie AI** repository. This document is the primary guidance and rulebook for AI coding agents (Cursor, Claude, Copilot, Antigravity, etc.) and for anyone taking over a task.
 
-Read also: [`docs/QUALITY.md`](docs/QUALITY.md) (CI gates, baselines, what must not be loosened, PR process), [`docs/RELEASE.md`](docs/RELEASE.md) (release builds), [`training/README.md`](training/README.md) (model training) and [`README.md`](README.md).
+Read also: [`docs/QUALITY.md`](docs/QUALITY.md) (CI gates, baselines, what must not be loosened, PR process), [`docs/RELEASE.md`](docs/RELEASE.md) (release builds), [`docs/DESIGN.md`](docs/DESIGN.md) (UI design system — Nordic Field Guide v3.1), [`training/README.md`](training/README.md) (model training) and [`README.md`](README.md).
 
 ---
 
@@ -121,7 +121,7 @@ mushroom-recognition-app/
 
 ## 🎨 UI Design System — Nordic Field Guide v3.1
 
-The authoritative design specification lives in the **Stitch** project "Grzybobranie Mobile Design System". All new UI code must follow these rules. When in doubt, `tokens.ts` is the code source of truth; Stitch is the visual source of truth.
+The authoritative design specification lives in the **Stitch** project "Grzybobranie Mobile Design System" and is mirrored in [`docs/DESIGN.md`](docs/DESIGN.md). All new UI code must follow these rules. When in doubt, `tokens.ts` is the code source of truth; Stitch / `docs/DESIGN.md` is the visual source of truth.
 
 ### Visual Archetype & Prohibitions
 
