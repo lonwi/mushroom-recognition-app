@@ -6,9 +6,8 @@ Wikimedia Commons, Danish Fungi 2020). It does not download images.
 
     python training/import_external.py /path/to/zdjecia --output training/data/external.jsonl
 
-The allowed training licences live in ``license_policy.py`` (Decyzja Wojtka
-2026-10-23 12:02, wariant C): versioned CC0, CC BY, CC BY-NC, CC BY-SA, and
-DF20. ``usage`` is ``publishable`` for CC0 and CC BY, and ``training_only``
+The allowed training licences live in ``license_policy.py``: versioned
+CC0, CC BY, CC BY-NC, CC BY-SA, and DF20. ``usage`` is ``publishable`` for CC0 and CC BY, and ``training_only``
 for CC BY-NC, CC BY-SA, and DF20. ``training_only`` means the photo is not
 shown. CC BY-NC and CC BY-SA do not block a release on licence grounds.
 DF20 is excluded unless ``--include-df20`` is set. It is experimental

@@ -1,10 +1,10 @@
 """Which photo licences may train a released model, and which may be shown.
 
-Decyzja Wojtka 2026-10-23 12:02, wariant C: a released model's training set
-may include CC0, CC BY, CC BY-NC, CC BY-SA, and Danish Fungi 2020. Photos
-shown in the app (atlas gallery, ``site/``, comparison photos) stay CC0 or
-CC BY. CC BY-SA is accepted only as an exact versioned id such as
-``cc-by-sa-4.0``, and that id is ``usage=training_only``.
+License Policy: A released model's training set may include CC0, CC BY,
+CC BY-NC, CC BY-SA, and Danish Fungi 2020. Photos shown in the app (atlas
+gallery, ``site/``, comparison photos) stay CC0 or CC BY. CC BY-SA is accepted
+only as an exact versioned id such as ``cc-by-sa-4.0``, and that id is
+``usage=training_only``.
 
 The ids below are a closed list of whole keys. Nothing is accepted by
 prefix. ``cc-by`` is not ``cc-by-4.0``, ``cc-by-nc`` is not ``cc-by-nc-4.0``,
@@ -25,8 +25,7 @@ PUBLISHABLE = "publishable"
 TRAINING_ONLY = "training_only"
 
 # ``training_only`` means the photo may train and must not be shown. For CC
-# BY-NC and CC BY-SA that usage does not refuse ``shippable``. Owner decision
-# 2026-10-23 12:17, CC BY-SA variant B (register 0004 in #74): share-alike does
+# BY-NC and CC BY-SA that usage does not refuse ``shippable``: share-alike does
 # not cover model weights, so versioned CC BY-SA may train a released model.
 # ``df20`` is listed so an opted-in experimental run can train on it. Any DF20
 # attribution row still sets ``shippable`` false, and ``DF20_CONSENT_CONFIRMED``
