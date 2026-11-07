@@ -13,6 +13,7 @@ export const en: Translations = {
     safety: 'Safety',
     preparation: 'Preparation',
     settings: 'Settings',
+    profile: 'Profile',
   },
   settings: {
     title: 'Settings',

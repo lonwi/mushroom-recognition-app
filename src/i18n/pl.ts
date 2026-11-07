@@ -11,6 +11,7 @@ export const pl = {
     safety: 'Pomoc',
     preparation: 'Przygotowanie',
     settings: 'Ustawienia',
+    profile: 'Profil',
   },
   settings: {
     title: 'Ustawienia',
