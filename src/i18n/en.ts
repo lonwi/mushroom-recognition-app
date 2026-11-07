@@ -40,6 +40,17 @@ export const en: Translations = {
     onDeviceTitle: '⚡ 100% On-Device AI',
     atlasScope:
       'The atlas has {count} cards. It is not a complete key to the mushrooms of Poland and it does not replace a mycologist or a Sanepid mushroom inspection point.',
+    profileTitle: 'Forager Profile',
+    profileSubtitle: 'Explore forests and identify wild mushrooms safely',
+    badgeForager: 'Forest Forager',
+    statSpecies: 'Atlas species',
+    statOffline: 'Offline database',
+    statOfflineReady: '100% ready',
+    statAI: 'AI Engine',
+    statAIReady: 'On-Device',
+    securityNoticeTitle: '🛡️ Safety & Sanepid',
+    securityNoticeBody:
+      'First aid guidelines and mycologist stations are available in the Safety tab.',
   },
   atlas: {
     title: 'Mushroom Atlas',

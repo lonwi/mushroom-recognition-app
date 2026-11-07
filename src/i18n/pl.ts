@@ -38,6 +38,17 @@ export const pl = {
     onDeviceTitle: '⚡ 100% On-Device AI',
     atlasScope:
       'Atlas ma {count} kart. To nie jest kompletny klucz do grzybów Polski i nie zastępuje grzyboznawcy ani punktu kontroli grzybów w Sanepidzie.',
+    profileTitle: 'Profil zbieracza',
+    profileSubtitle: 'Eksploruj las i bezpiecznie rozpoznawaj grzyby',
+    badgeForager: 'Leśny zbieracz',
+    statSpecies: 'Gatunki w atlasie',
+    statOffline: 'Baza offline',
+    statOfflineReady: '100% gotowa',
+    statAI: 'Silnik AI',
+    statAIReady: 'On-Device',
+    securityNoticeTitle: '🛡️ Bezpieczeństwo i Sanepid',
+    securityNoticeBody:
+      'Wskazówki pierwszej pomocy oraz dyżury grzyboznawców są dostępne w zakładce Pomoc.',
   },
   atlas: {
     title: 'Atlas Grzybów',
