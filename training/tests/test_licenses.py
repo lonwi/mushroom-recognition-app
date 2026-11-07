@@ -11,11 +11,11 @@ from licenses import accepted_media_records, normalize_cc_license
 from url_safety import UnsafeMediaUrl, listed_media_records, validate_media_url, validate_media_url_syntax
 
 
-# licences.py and sampling.py. The hash moved when an explicit
-# identificationVerificationStatus of unverified started to be rejected,
-# so a GBIF query cache from before that rule is not reused. URL checks
+# licenses.py and sampling.py. The hash moved when a non-empty status outside
+# Approved | Expert | Evidence and Confident started to be rejected, so a
+# GBIF query cache from the unverified-only rule is not reused. URL checks
 # still live in url_safety.py and do not change this hash.
-_MAIN_POLICY_HASH = "3a584fb8d946a3497ee3a25015efff3d2a1be425ebe48f109bd386426b6cdad9"
+_MAIN_POLICY_HASH = "e19dcc13956787c3691d1022274bf927f413ebbfc6a9c48042c9950b7191be35"
 
 
 def _offline_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):

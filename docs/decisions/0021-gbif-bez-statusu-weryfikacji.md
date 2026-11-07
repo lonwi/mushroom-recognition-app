@@ -1,6 +1,6 @@
 # 0021. Wiersze GBIF bez statusu weryfikacji
 
-- **Status:** Zatwierdzona
+- **Status:** Podjęta (wdrożenie w toku)
 - **Data wpisu:** 2026-10-31
 
 ## Kontekst
@@ -27,24 +27,42 @@ Brak.
 
 **A** (2026-10-31, 08:13). Wiersze z GBIF bez statusu weryfikacji zostają w treningu i w teście, jak dziś. iNat research-grade liczymy jako zweryfikowane.
 
-Odrzucone: **B** i **C**.
+Odrzucone tego dnia: **B** i **C** z listy powyżej (wyrzucenie całej puli bez statusu).
+
+**C** (2026-11-07, Wojciech Bubółka), osobny wybór po [#92](https://github.com/lonwi/mushroom-recognition-app/pull/92). Najpierw scalony zostaje #92 tak, jak jest (commit `129eea7210cbac7ebbf5a34c5da827ca866e838d`, Refs [#83](https://github.com/lonwi/mushroom-recognition-app/issues/83)). Potem osobny pull request zacieśnia regułę. #92 nie jest otwierany ponownie.
+
+Jedna reguła w `fetch_gbif` i w `prepare_data`, dla `gbif_no_status` i dla `gbif_not_validated`:
+
+- pusty status zostaje;
+- status, który po zrzuceniu wielkości liter i zbiciu białych znaków jest na liście `Approved | Expert | Evidence` albo `Confident`, zostaje;
+- każdy inny niepusty status odpada.
+
+`unverified` jest liczone osobno (`identification_unverified` w imporcie i w `prepare`, `rejected_unverified` w `fetch_report`). Inna etykieta spoza listy, na przykład `Questionable`, `Needs ID` albo `validated`, jest `identification_not_allowlisted` albo `rejected_not_allowlisted`. Pusty status nadal zostaje w treningu i w teście, więc decyzja A z 2026-10-31 zostaje. `commons_category` i pliki `_niezweryfikowane` zostają przy dotychczasowej fladze `unverified`.
 
 ## Ustalenie zespołu
 
-To nie jest decyzja Wojtka. Zespół ustalił, że odrzucane jest tylko 55 wierszy jawnie `unverified`, jako błąd importera w [#83](https://github.com/lonwi/mushroom-recognition-app/issues/83).
+To ustalenie jest sprzed 2026-11-07 i nie jest decyzją Wojtka. Zespół wtedy ustalił, że odrzucane jest tylko 55 wierszy jawnie `unverified`, jako błąd importera w [#83](https://github.com/lonwi/mushroom-recognition-app/issues/83). Wybór właściciela z 2026-11-07 jest w sekcji Decyzja.
 
 ## Data
 
-2026-10-31, 08:13 czasu polskiego.
+2026-10-31, 08:13 czasu polskiego. Dopisek: 2026-11-07, wybór właściciela, wariant C (po scaleniu #92, zacieśnienie listy statusów).
 
 ## Uzasadnienie
 
 Właściciel zostawia wiersze bez statusu w obecnym splicie i każe liczyć iNat research-grade jako zweryfikowane. Nie ogranicza wierszy spoza iNat do samego treningu i nie wyrzuca całej puli bez statusu.
 
+Dopisek 2026-11-07: po scaleniu #92 wiersz `gbif_no_status` z niepustą etykietą spoza listy, oraz fetch, który odrzucał tylko jawne `unverified`, nadal wpuszczały taki status do treningu. Właściciel wybrał jedną listę we wszystkich tych miejscach.
+
 ## Wdrożenie
 
-Polityka A jest dzisiejszym zachowaniem fetchu: wiersze bez statusu nie są odrzucane i idą zwykłym splitem. `accepted_media_records` nadal nie zapisuje statusu weryfikacji ani research-grade. Odrzucenia 55 jawnych `unverified` w kodzie jeszcze nie ma. Jest na liście zadań #83.
+Polityka A zostaje przy pustym statusie: wiersze bez statusu nie są odrzucane i idą zwykłym splitem.
+
+#92 jest na `main` (`129eea7210cbac7ebbf5a34c5da827ca866e838d`). Jawne `unverified` odpada w fetchu i ponownie w `prepare_data`. `gbif_not_validated` trzyma listę `Approved | Expert | Evidence` i `Confident`. Pusty `gbif_not_validated` zostaje z flagą `unverified`.
+
+Zacieśnienie z 2026-11-07 jest w [#105](https://github.com/lonwi/mushroom-recognition-app/pull/105), osobnym pull requeście po tamtym commicie. Ta sama funkcja w `training/licenses.py` decyduje w fetchu, w `prepare_data` i przy obu etykietach CSV. Skrót polityki zapytania GBIF jest liczony z bajtów `licenses.py`, więc stary cache zapytań przestaje pasować.
 
 ## Weryfikacja
 
-Issue #83 oraz brak pola weryfikacji w `accepted_media_records` sprawdzone w tym wpisie. Liczb z API GBIF tu nie pobierano ponownie. Są takie, jak w #83.
+Issue #83 oraz brak pola weryfikacji w `accepted_media_records` sprawdzone przy pierwszym wpisie. Liczb z API GBIF tu nie pobierano ponownie. Są takie, jak w #83.
+
+2026-11-07: w kodzie po #92 sprawdzone, że fetch i `prepare_data` odrzucały tylko jawne `unverified`, a `gbif_no_status` z etykietą `Questionable` albo `Needs ID` przechodził. Testy treningu pokrywają jedną regułę i osobne liczniki.

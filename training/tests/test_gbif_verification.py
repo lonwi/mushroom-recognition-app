@@ -1,18 +1,20 @@
 """GBIF identification status on fetch rows and collector CSVs.
 
-Owner decision 2026-10-31 08:13, recorded in #74: a row with no verification
-status stays eligible for train and for test, iNaturalist research-grade
-counts as verified, and this change adds no split flag. Only an explicit
-``unverified`` status is rejected. Comparison is the whole value after
-stripping and case-folding.
+Owner decision 2026-10-31 08:13 keeps a row with no verification status
+eligible for train and for test. iNaturalist research-grade still counts as
+verified, and this change adds no split flag. On 2026-11-07 the owner chose
+the follow-up after #92: one status rule in fetch and in prepare, for
+``gbif_no_status`` and for ``gbif_not_validated``.
 
-Collector CSVs may set ``id_confidence`` to ``gbif_no_status`` or
-``gbif_not_validated`` and may carry ``identificationVerificationStatus``.
-For those two confidence values the status column decides. ``gbif_no_status``
-with an empty status is kept. ``gbif_not_validated`` with no status keeps
-today's rejection. A non-empty status other than ``unverified`` (for example
-``Approved | Expert | Evidence`` or ``Confident``) is kept. Other
-``id_confidence`` values are unchanged.
+An empty status stays. A status that normalizes to ``Approved | Expert |
+Evidence`` or ``Confident`` stays. Any other non-empty status is dropped.
+``unverified`` keeps its own reason. ``Questionable``, ``Needs ID``, and
+``validated`` are ``identification_not_allowlisted``. Comparison is the whole
+value after whitespace collapse and case-folding.
+
+``commons_category`` and ``_niezweryfikowane`` files stay flagged unverified.
+Other ``id_confidence`` values still drop only an explicit ``unverified``
+status at import. ``prepare_data.py`` applies the full rule to every row.
 """
 
 from __future__ import annotations
@@ -142,23 +144,44 @@ def _split_photo(index: int, status: str | None) -> dict:
 
 
 class FetchVerificationTest(unittest.TestCase):
-    def test_fetch_copies_status_and_basis_and_drops_only_explicit_unverified(self):
-        validated = _take(_occurrence("validated", key=1))
-        self.assertEqual(len(validated), 1)
-        self.assertEqual(validated[0]["identificationVerificationStatus"], "validated")
-        self.assertEqual(validated[0]["basisOfRecord"], "HUMAN_OBSERVATION")
-        self.assertNotIn("verified", validated[0])
-        self.assertIsNot(validated[0].get("unverified"), True)
-        self.assertNotIn("split_flag", validated[0])
+    def test_status_rule_names_unverified_apart_from_other_labels(self):
+        from licenses import identification_status_rejection
 
+        self.assertEqual(identification_status_rejection(None), "")
+        self.assertEqual(identification_status_rejection("  "), "")
+        self.assertEqual(identification_status_rejection("  APPROVED | EXPERT | EVIDENCE  "), "")
+        self.assertEqual(identification_status_rejection("confident"), "")
+        self.assertEqual(identification_status_rejection(" Unverified "), "identification_unverified")
+        self.assertEqual(identification_status_rejection("Questionable"), "identification_not_allowlisted")
+        self.assertEqual(identification_status_rejection("Needs ID"), "identification_not_allowlisted")
+        self.assertEqual(identification_status_rejection("validated"), "identification_not_allowlisted")
+
+    def test_fetch_keeps_empty_and_allowlist_and_drops_every_other_status(self):
         approved = _take(_occurrence(_APPROVED, key=2, basis="PRESERVED_SPECIMEN"))
+        self.assertEqual(len(approved), 1)
         self.assertEqual(approved[0]["identificationVerificationStatus"], _APPROVED)
         self.assertEqual(approved[0]["basisOfRecord"], "PRESERVED_SPECIMEN")
+        self.assertNotIn("verified", approved[0])
+        self.assertIsNot(approved[0].get("unverified"), True)
+        self.assertNotIn("split_flag", approved[0])
+
+        spaced = _take(_occurrence("  APPROVED | EXPERT | EVIDENCE  ", key=4))
+        self.assertEqual(len(spaced), 1)
+        self.assertEqual(spaced[0]["identificationVerificationStatus"], "APPROVED | EXPERT | EVIDENCE")
 
         confident = _take(_occurrence("Confident", key=3))
         self.assertEqual(confident[0]["identificationVerificationStatus"], "Confident")
 
-        for text in ("unverified", "Unverified", "UNVERIFIED", " unverified "):
+        for text in (
+            "unverified",
+            "Unverified",
+            "UNVERIFIED",
+            " unverified ",
+            "validated",
+            "Questionable",
+            "Needs ID",
+            "verified using recorded media",
+        ):
             self.assertEqual(_take(_occurrence(text, key=9)), [], text)
 
     def test_missing_status_and_inat_research_grade_stay_without_a_split_flag(self):
@@ -229,6 +252,9 @@ class FetchVerificationTest(unittest.TestCase):
                         row(1, "https://images.example.test/unverified.jpg", "unverified"),
                         row(2, "https://images.example.test/blank.jpg", ""),
                         row(3, "https://images.example.test/approved.jpg", _APPROVED),
+                        row(4, "https://images.example.test/questionable.jpg", "Questionable"),
+                        row(5, "https://images.example.test/needs-id.jpg", "Needs ID"),
+                        row(6, "https://images.example.test/validated.jpg", "validated"),
                     ],
                 }
             ),
@@ -272,6 +298,7 @@ class FetchVerificationTest(unittest.TestCase):
         self.assertFalse((root / "images" / "boletus_edulis" / "1_0.jpg").exists())
         report = json.loads((root / "fetch_report.json").read_text(encoding="utf-8"))
         self.assertEqual(report["classes"]["boletus_edulis"]["rejected_unverified"], 1)
+        self.assertEqual(report["classes"]["boletus_edulis"]["rejected_not_allowlisted"], 3)
 
     def test_fetch_report_counts_unverified_licensed_rows_per_class(self):
         calls = {"n": 0}
@@ -284,8 +311,13 @@ class FetchVerificationTest(unittest.TestCase):
                 "results": [
                     _occurrence("unverified", key=31),
                     _occurrence("validated", key=32),
+                    _occurrence("Questionable", key=33),
+                    _occurrence("Needs ID", key=34),
+                    _occurrence("Confident", key=35),
+                    _occurrence(_APPROVED, key=36),
+                    _occurrence(None, key=37),
                 ],
-                "count": 2,
+                "count": 7,
                 "endOfRecords": True,
             }
 
@@ -322,12 +354,16 @@ class FetchVerificationTest(unittest.TestCase):
             )
         report = json.loads((root / "fetch_report.json").read_text(encoding="utf-8"))
         self.assertEqual(report["classes"]["boletus_edulis"]["rejected_unverified"], 1)
-        self.assertEqual(report["classes"]["boletus_edulis"]["accepted"], 1)
+        self.assertEqual(report["classes"]["boletus_edulis"]["rejected_not_allowlisted"], 3)
+        self.assertEqual(report["classes"]["boletus_edulis"]["accepted"], 3)
         lines = [
             json.loads(line)
             for line in (root / "attributions.jsonl").read_text(encoding="utf-8").splitlines()
         ]
-        self.assertEqual([row["identificationVerificationStatus"] for row in lines], ["validated"])
+        self.assertEqual(
+            [row["identificationVerificationStatus"] for row in lines],
+            ["Confident", _APPROVED, ""],
+        )
 
 
 class ImportVerificationTest(unittest.TestCase):
@@ -366,6 +402,18 @@ class ImportVerificationTest(unittest.TestCase):
                     source_url="https://www.gbif.org/occurrence/2005",
                     id_confidence="gbif_no_status",
                     identificationVerificationStatus=_APPROVED,
+                ),
+                _photo_row(
+                    image_url="https://images.example.test/a-questionable.jpg",
+                    source_url="https://www.gbif.org/occurrence/2006",
+                    id_confidence="gbif_no_status",
+                    identificationVerificationStatus="Questionable",
+                ),
+                _photo_row(
+                    image_url="https://images.example.test/a-needs-id.jpg",
+                    source_url="https://www.gbif.org/occurrence/2007",
+                    id_confidence="gbif_no_status",
+                    identificationVerificationStatus="Needs ID",
                 ),
                 _photo_row(
                     species="Boletus edulis",
@@ -409,6 +457,22 @@ class ImportVerificationTest(unittest.TestCase):
                     inat_observer="ada",
                     identificationVerificationStatus="",
                 ),
+                _photo_row(
+                    image_url="https://images.example.test/commons-questionable.jpg",
+                    source_url="https://commons.wikimedia.org/wiki/File:Questionable.jpg",
+                    id_confidence="commons_category",
+                    commons_file="Questionable.jpg",
+                    identificationVerificationStatus="Questionable",
+                ),
+                _photo_row(
+                    image_url="https://images.example.test/research-validated.jpg",
+                    source_url="https://www.inaturalist.org/observations/89",
+                    id_confidence="research_grade",
+                    inat_photo_id="89",
+                    inat_observation_id="89",
+                    inat_observer="ada",
+                    identificationVerificationStatus="validated",
+                ),
             ],
         )
         rows, report = import_directory(root, max_per_collector=30)
@@ -425,6 +489,8 @@ class ImportVerificationTest(unittest.TestCase):
             _APPROVED,
         )
         self.assertNotIn("https://images.example.test/a-unverified.jpg", by_url)
+        self.assertNotIn("https://images.example.test/a-questionable.jpg", by_url)
+        self.assertNotIn("https://images.example.test/a-needs-id.jpg", by_url)
         self.assertNotIn("https://images.example.test/b-unverified.jpg", by_url)
         self.assertIs(by_url["https://images.example.test/b-missing.jpg"]["unverified"], True)
         self.assertEqual(by_url["https://images.example.test/b-missing.jpg"]["identificationVerificationStatus"], "")
@@ -439,28 +505,46 @@ class ImportVerificationTest(unittest.TestCase):
         self.assertIs(research["unverified"], False)
         self.assertNotIn("verified", research)
         self.assertNotIn("split_flag", research)
+        self.assertIs(by_url["https://images.example.test/commons-questionable.jpg"]["unverified"], True)
+        self.assertEqual(
+            by_url["https://images.example.test/commons-questionable.jpg"]["identificationVerificationStatus"],
+            "Questionable",
+        )
+        research_validated = by_url["https://images.example.test/research-validated.jpg"]
+        self.assertIs(research_validated["unverified"], False)
+        self.assertEqual(research_validated["identificationVerificationStatus"], "validated")
         self.assertEqual(
             report["verification_per_class"]["amanita_phalloides"],
-            {"kept": 4, "identification_unverified": 1},
+            {"identification_not_allowlisted": 2, "identification_unverified": 1, "kept": 4},
         )
         self.assertEqual(
             report["verification_per_class"]["boletus_edulis"],
             {"gbif_not_validated": 2, "identification_unverified": 1},
         )
         self.assertEqual(report["rejected_by_reason"]["identification_unverified"], 2)
+        self.assertEqual(report["rejected_by_reason"]["identification_not_allowlisted"], 2)
 
     def test_fixture_statuses_and_allowlist(self):
         fixture = Path(__file__).resolve().parent / "fixtures" / "gbif_verification_statuses.json"
         statuses = json.loads(fixture.read_text(encoding="utf-8"))
         self.assertEqual(
             statuses,
-            ["", "unverified", "Approved | Expert | Evidence", "Confident"],
+            [
+                "",
+                "unverified",
+                "Approved | Expert | Evidence",
+                "Confident",
+                "Questionable",
+                "Needs ID",
+                "validated",
+            ],
         )
         for value in statuses:
             self.assertIsInstance(value, str)
             self.assertNotIn("http", value.casefold())
             self.assertIsNone(__import__("re").search(r"\d", value))
-        allowlisted = [value for value in statuses if value not in ("", "unverified")]
+        allowlist = {"Approved | Expert | Evidence", "Confident"}
+        dropped = {"unverified", "Questionable", "Needs ID", "validated"}
         root = Path(tempfile.mkdtemp())
         self.addCleanup(lambda: __import__("shutil").rmtree(root, ignore_errors=True))
         rows = []
@@ -513,36 +597,42 @@ class ImportVerificationTest(unittest.TestCase):
         _write_csv(root / "fixture.csv", rows)
         written, report = import_directory(root, max_per_collector=30)
         by_url = {row["image_url"]: row for row in written}
-        for status in statuses:
-            if status == "":
+        for confidence in ("gbif_no_status", "gbif_not_validated"):
+            for status in statuses:
                 match = [
                     row
                     for row in written
-                    if row["id_confidence"] == "gbif_no_status" and row["identificationVerificationStatus"] == ""
+                    if row["id_confidence"] == confidence and row["identificationVerificationStatus"] == status
                 ]
-                self.assertEqual(len(match), 1)
-                self.assertIs(match[0]["unverified"], False)
-            elif status == "unverified":
-                self.assertFalse(any(row["identificationVerificationStatus"].casefold() == "unverified" for row in written))
-            else:
-                match = [
-                    row
-                    for row in written
-                    if row["id_confidence"] == "gbif_not_validated" and row["identificationVerificationStatus"] == status
-                ]
-                self.assertEqual(len(match), 1, status)
-                self.assertIs(match[0]["unverified"], False)
-        self.assertEqual(allowlisted, ["Approved | Expert | Evidence", "Confident"])
+                if status == "" or status in allowlist:
+                    self.assertEqual(len(match), 1, (confidence, status))
+                elif status in dropped:
+                    self.assertEqual(match, [], (confidence, status))
+                else:
+                    self.fail(status)
+        empty_no_status = [
+            row
+            for row in written
+            if row["id_confidence"] == "gbif_no_status" and row["identificationVerificationStatus"] == ""
+        ]
+        self.assertIs(empty_no_status[0]["unverified"], False)
+        empty_not_validated = [
+            row
+            for row in written
+            if row["id_confidence"] == "gbif_not_validated" and row["identificationVerificationStatus"] == ""
+        ]
+        self.assertIs(empty_not_validated[0]["unverified"], True)
+        self.assertFalse(any(row["identificationVerificationStatus"].casefold() == "unverified" for row in written))
         self.assertNotIn("https://images.example.test/fixture/questionable.jpg", by_url)
         self.assertNotIn("https://images.example.test/fixture/needs-id.jpg", by_url)
+        self.assertNotIn("https://images.example.test/fixture/no-status-questionable.jpg", by_url)
         self.assertIs(by_url["https://images.example.test/fixture/approved-case.jpg"]["unverified"], False)
         self.assertIs(by_url["https://images.example.test/fixture/confident-space.jpg"]["unverified"], False)
-        self.assertIs(by_url["https://images.example.test/fixture/no-status-questionable.jpg"]["unverified"], False)
         counted = report["verification_per_class"]["amanita_phalloides"]
         self.assertEqual(counted["identification_unverified"], 2)
-        self.assertEqual(counted["identification_not_allowlisted"], 2)
+        self.assertEqual(counted["identification_not_allowlisted"], 9)
         self.assertEqual(counted["gbif_not_validated"], 1)
-        self.assertGreaterEqual(counted["kept"], 5)
+        self.assertEqual(counted["kept"], 7)
 
 
 class PrepareVerificationTest(unittest.TestCase):
@@ -590,6 +680,24 @@ class PrepareVerificationTest(unittest.TestCase):
                 "unverified": False,
                 "usage": "publishable",
                 "id_confidence": "gbif_no_status",
+                "identificationVerificationStatus": "Questionable",
+                "class_id": "amanita_phalloides",
+                "file": "images/amanita_phalloides/questionable.jpg",
+            },
+            {
+                "downloaded": True,
+                "unverified": False,
+                "usage": "publishable",
+                "id_confidence": "research_grade",
+                "identificationVerificationStatus": "validated",
+                "class_id": "amanita_phalloides",
+                "file": "images/amanita_phalloides/validated.jpg",
+            },
+            {
+                "downloaded": True,
+                "unverified": False,
+                "usage": "publishable",
+                "id_confidence": "gbif_no_status",
                 "identificationVerificationStatus": " Unverified ",
                 "class_id": "boletus_edulis",
                 "file": "images/boletus_edulis/bad.jpg",
@@ -616,6 +724,15 @@ class PrepareVerificationTest(unittest.TestCase):
                 "downloaded": True,
                 "unverified": False,
                 "usage": "publishable",
+                "id_confidence": "gbif_no_status",
+                "identificationVerificationStatus": "Needs ID",
+                "class_id": "boletus_edulis",
+                "file": "images/boletus_edulis/needs-id.jpg",
+            },
+            {
+                "downloaded": True,
+                "unverified": False,
+                "usage": "publishable",
                 "id_confidence": "research_grade",
                 "class_id": "boletus_edulis",
                 "file": "images/boletus_edulis/research.jpg",
@@ -630,15 +747,21 @@ class PrepareVerificationTest(unittest.TestCase):
         self.assertIn(("amanita_phalloides", _APPROVED), kept_status)
         self.assertIn(("boletus_edulis", "Confident"), kept_status)
         self.assertIn(("boletus_edulis", None), kept_status)
+        self.assertNotIn(("amanita_phalloides", "Questionable"), kept_status)
+        self.assertNotIn(("amanita_phalloides", "validated"), kept_status)
+        self.assertNotIn(("boletus_edulis", "Needs ID"), kept_status)
         self.assertTrue(all(row.get("unverified") is not True for row in usable))
         self.assertTrue(all("verified" not in row and "split_flag" not in row for row in usable))
         reasons = {}
         for item in skipped:
             reasons.setdefault(item["class_id"], []).append(item["skip_reason"])
-        self.assertEqual(reasons["amanita_phalloides"], ["identification_unverified"])
+        self.assertEqual(
+            reasons["amanita_phalloides"],
+            ["identification_unverified", "identification_not_allowlisted", "identification_not_allowlisted"],
+        )
         self.assertEqual(
             sorted(reasons["boletus_edulis"]),
-            ["identification_unverified", "unverified"],
+            ["identification_not_allowlisted", "identification_unverified", "unverified"],
         )
         prepared = [_split_photo(index, "" if index % 2 == 0 else _APPROVED) for index in range(10)]
         splits = {"train": prepared[:6], "val": prepared[6:8], "test": prepared[8:]}
@@ -659,14 +782,15 @@ class PrepareVerificationTest(unittest.TestCase):
             report = json.loads((directory / "dedup_report.json").read_text(encoding="utf-8"))
         self.assertEqual(
             report["skipped_per_class"]["amanita_phalloides"],
-            {"identification_unverified": 1},
+            {"identification_not_allowlisted": 2, "identification_unverified": 1},
         )
         self.assertEqual(
             report["skipped_per_class"]["boletus_edulis"],
-            {"identification_unverified": 1, "unverified": 1},
+            {"identification_not_allowlisted": 1, "identification_unverified": 1, "unverified": 1},
         )
         self.assertEqual(report["skipped_corrupt_or_unreadable"], 0)
         self.assertEqual(report["skipped_identification_unverified"], 2)
+        self.assertEqual(report["skipped_identification_not_allowlisted"], 3)
         self.assertEqual(report["skipped_unverified"], 1)
         self.assertEqual(report["excluded_df20"], 0)
 
