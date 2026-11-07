@@ -58,6 +58,7 @@ function shellScreens(stack: ViewStack, handlers: ShellHandlers): Record<Tab, Re
   const species = route.kind === 'species' ? getSpecies(route.speciesId) : undefined;
   const speciesCard = species ? (
     <SpeciesDetailScreen
+      key={species.id}
       species={species}
       onBack={handlers.onBack}
       onOpenLookAlike={handlers.onOpenAtlasSpecies}
