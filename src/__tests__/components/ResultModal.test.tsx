@@ -28,13 +28,31 @@ const unavailable: ClassificationResult = {
 function renderModal(
   result: ClassificationResult | null = unavailable,
   onOpenAtlasSpecies?: (speciesId: string) => void,
+  onClose: () => void = () => {},
 ) {
   return render(
     <LanguageProvider>
-      <ResultModal visible result={result} onClose={() => {}} onOpenAtlasSpecies={onOpenAtlasSpecies} />
+      <ResultModal visible result={result} onClose={onClose} onOpenAtlasSpecies={onOpenAtlasSpecies} />
     </LanguageProvider>
   );
 }
+
+describe('ResultModal hardware back', () => {
+  it('calls onClose when the modal requests close', async () => {
+    const onClose = jest.fn();
+    const screen = await renderModal(unavailable, undefined, onClose);
+    const modal = screen.root?.queryAll((node) => node.type === 'Modal', { includeSelf: true })[0];
+    if (!modal) {
+      throw new Error('Modal host was not rendered');
+    }
+
+    await act(() => {
+      modal.props.onRequestClose();
+    });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe('ResultModal when recognition is unavailable', () => {
   beforeEach(async () => {
