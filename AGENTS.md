@@ -21,7 +21,7 @@ Read also: [`docs/QUALITY.md`](docs/QUALITY.md) (CI gates, baselines, what must 
 |---|---|---|
 | **Package Manager** | `pnpm@10.33.4` (pinned in `package.json` → `packageManager`). Node 22 (`.nvmrc`, used by CI); `engines` also allows `^24` | Always use `pnpm` (`pnpm.cmd` on Windows). Never commit `package-lock.json` or `yarn.lock`. Install with `pnpm install --frozen-lockfile`. |
 | **Framework** | **React Native 0.86** + **Expo SDK 57** + TypeScript | Keep compatibility with Expo Go, React Native Web, and native builds. |
-| **UI** | `react-native-paper` 5 (MD3) is installed and `PaperProvider` wraps the app in `App.tsx`. Most screens still use the project's own components styled with `src/theme/tokens.ts`. | New UI: take colors, spacing and typography from `src/theme/tokens.ts` (the Paper theme in `src/theme/paperTheme.ts` is built from the same tokens). Never hardcode colors. Prefer Paper components for new widgets; a gradual migration to Paper is planned. Do **not** add MUI (`@mui/*`) – it is a web library and is not used here. |
+| **UI** | `react-native-paper` 5 (MD3) is installed and `PaperProvider` wraps the app in `App.tsx`. Most screens still use the project's own components styled with `src/theme/tokens.ts`. | New UI: take colors, spacing and typography from `src/theme/tokens.ts` (the Paper theme in `src/theme/paperTheme.ts` is built from the same tokens). Never hardcode colors. The canonical design language is **Nordic Field Guide v3.1** (see the _🎨 UI Design System_ section below). Prefer Paper components for new widgets; a gradual migration to Paper is planned. Do **not** add MUI (`@mui/*`) – it is a web library and is not used here. |
 | **Safe Areas** | `react-native-safe-area-context` | **NEVER** import `SafeAreaView` from `'react-native'`. Always import from `'react-native-safe-area-context'`. |
 | **Component Testing** | Jest + `@testing-library/react-native` 14 | `pnpm test`. Use `await render(...)` (RNTL v14 / React 19) and `waitFor(...)` for state transitions. |
 | **E2E Testing** | Playwright (`@playwright/test`) against static Storybook | `pnpm build-storybook && pnpm test:e2e`. Specs in `e2e/`. |
@@ -116,6 +116,96 @@ mushroom-recognition-app/
    - Psychoactive species: never give doses.
    - Every URL in code, data, and docs uses `https://`. Exception: test fixtures that check `http://` handling on purpose (e.g. `training/tests/test_fetch_gbif.py`, `training/tests/test_licenses.py`).
    - Emergency phone numbers exist only in `src/data/safetyRules.ts`. The test `src/__tests__/phoneNumbersSingleSource.test.ts` (added with the emergency-numbers PR) enforces it; cards and screens link to the emergency screen instead.
+
+---
+
+## 🎨 UI Design System — Nordic Field Guide v3.1
+
+The authoritative design specification lives in the **Stitch** project "Grzybobranie Mobile Design System". All new UI code must follow these rules. When in doubt, `tokens.ts` is the code source of truth; Stitch is the visual source of truth.
+
+### Visual Archetype & Prohibitions
+
+- **Aesthetic**: Nordic Field Guide / Warm Editorial Paper — Scandinavian botanical manual.
+- **NO** neon greens, laser scan lines, dark-mode cyberpunk HUDs, or monospace fonts (`JetBrains Mono`).
+- **NO** fake iOS/Android status bars (no `08:05` clock, WiFi, cellular, or battery icons).
+- **NO** horizontal before/after drag sliders (`compare-slider`) on mobile screens — use a static 50/50 grid or a segmented toggle instead.
+- **NO** heavily rounded pill-shaped buttons or fluid circular chips on non-action elements.
+- **NO** diffusion/blur box shadows (blur > 4px is forbidden); use 1 px crisp borders instead.
+
+### Font Family
+
+Exclusively **Plus Jakarta Sans** (`font-sans`). Never use serif or monospace fonts in app UI.
+
+### Color Tokens
+
+The primary palette — always read from `src/theme/tokens.ts`; never hardcode hex values in components.
+
+| Token | Hex | Usage |
+|---|---|---|
+| `primaryGreen` / `primary` | `#1b382b` | Primary CTA, edible status, Skaner pill, header |
+| `primaryGreenHover` | `#152e23` | Active / pressed state for primary buttons |
+| `paper` / `appBg` | `#f6f5f1` | App background — warm matte paper |
+| `paperActive` | `#eae6dc` | Active pills, selected tabs, active step cards |
+| `surfaceCard` | `#ffffff` | Cards and content blocks |
+| `borderSubtle` | `#dcdad3` | 1 px hairlines and borders |
+| `softGreenBg` | `#f4f7f4` | Soft tint for edible comparison columns |
+| `accentRed` | `#ad1414` | Life-safety crimson (deadly toxic, SOS 112) |
+| `accentRedSoft` | `#fdf2f2` | Soft tint for toxic warnings / look-alike cards |
+| `warningAmber` | `#d97706` | Inedible / requires thermal processing |
+| `warningSoft` | `#fef3c7` | Amber tint background |
+
+Edibility/toxicity signal colors are **reserved** for taxonomic status only — never co-opt them for generic UI states.
+
+### Typography Scale
+
+| Token | Size | Weight | Usage |
+|---|---|---|---|
+| `headline-lg` | 30 px / lh 36 px | 800 | Screen titles (desktop) |
+| `headline-lg-mobile` | 24 px / lh 32 px | 800 | Screen titles (mobile) |
+| `headline-md` | 18 px / lh 24 px | 800 | Section headers |
+| `headline-sm` | 15 px / lh 20 px | 800 | Sub-section headers |
+| `species-latin` | 13 px / lh 18 px | 400 italic | Latin binomial names |
+| `body-default` | 13 px / lh 18 px | 400 | Body copy, descriptions |
+| `body-medium` | 13 px / lh 18 px | 600 | Emphasised body copy |
+| `label-micro` | 11 px / lh 14 px | 700 | Micro-labels, tracking 0.025 em |
+| `label-badge` | 10 px / lh 12 px | 800 | Badges, uppercase, tracking 0.05 em |
+
+### Corner Radius
+
+| Token | Value | Usage |
+|---|---|---|
+| `sm` | 4 px | Buttons, inputs, inner image crops |
+| `md` / `DEFAULT` | 8 px | Standard cards, chips |
+| `lg` | 16 px | Modal sheets, detail panels |
+| `xl` | 24 px | Large containers |
+| `full` | 9999 px | Pill shapes (Skaner CTA only) |
+
+### Spacing Scale
+
+| Token | Value |
+|---|---|
+| `space-xs` | 4 px |
+| `space-sm` | 8 px |
+| `space-md` | 12 px |
+| `space-lg` | 16 px |
+| `space-xl` | 24 px |
+| `gutter` / `margin` | 16 px |
+
+### Layout Rules
+
+- **Mobile container**: `max-w-[420px]`, full viewport height, `bg-appBg`, `rounded-[40px]` on sm+.
+- **Edge-to-edge cards**: span 100 % width, separated by 1 px `borderSubtle` borders — not floating cards with heavy shadows.
+- **Internal sticky header** (detail & comparison screens): `h-13`, `bg-appBg/95 backdrop-blur-md`, `border-b borderSubtle`, back button left, **SOS 112** button right (`bg-accentRed`, 11 px extrabold).
+- **Touch targets**: minimum 48 × 48 px for all interactive elements.
+- **NativeWind-ready**: use Flexbox and simple grid layouts that map cleanly to React Native primitives.
+
+### Locked Component: BottomNavigationBar
+
+The bottom tab bar HTML/JSX is locked in the Stitch design system. Do **not** redesign it. Tabs in order: **Atlas · Dziennik · Skaner · Pomoc · Profil**. The Skaner tab uses the `primaryGreen` pill CTA. Active tab indicator is a `2.5 px` underline in `neutral-900`; inactive tabs use `neutral-700` text.
+
+### Deadly Poisonous Badge (special rule)
+
+`background: #2A080C` · `text: #FF4560` · `border: 1.5 px solid #FF1744`. Must include the skull symbol (☠️). Contrast ratio for text on bg must remain ≥ 5.18:1 — verify with WCAG whenever changing these values.
 
 ---
 
