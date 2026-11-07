@@ -25,8 +25,9 @@ PUBLISHABLE = "publishable"
 TRAINING_ONLY = "training_only"
 
 # ``training_only`` means the photo may train and must not be shown. For CC
-# BY-NC and CC BY-SA that usage does not refuse ``shippable``: share-alike does
-# not cover model weights, so versioned CC BY-SA may train a released model.
+# BY-NC and CC BY-SA that usage does not refuse ``shippable`` (2026-10-23 12:17):
+# share-alike does not cover model weights, so versioned CC BY-SA may train a
+# released model.
 # ``df20`` is listed so an opted-in experimental run can train on it. Any DF20
 # attribution row still sets ``shippable`` false, and ``DF20_CONSENT_CONFIRMED``
 # cannot clear that. Each row is one exact id, its usage, and its family.
