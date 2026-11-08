@@ -53,9 +53,9 @@ playwright-report
 # Store-submit secrets belong on EAS credentials, not in git. See docs/RELEASE.md.
 google-service-account.json
 
-# Training pipeline local data
-training/data/
-training/artifacts/
+# ML pipeline local data
+ml/data/
+ml/artifacts/
 __pycache__/
 *.pyc
 .pytest_cache/

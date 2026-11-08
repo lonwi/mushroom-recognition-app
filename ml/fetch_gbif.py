@@ -2,8 +2,8 @@
 
 Usage (from the repo root):
 
-    python training/fetch_gbif.py --dry-run --only amanita_phalloides --max-per-class 5
-    python training/fetch_gbif.py --only amanita_phalloides --max-per-class 20
+    python ml/fetch_gbif.py --dry-run --only amanita_phalloides --max-per-class 5
+    python ml/fetch_gbif.py --only amanita_phalloides --max-per-class 20
 
 A file already listed in checkpoints/verified.jsonl with the same size and
 mtime is skipped. Any other existing file must pass a structural end-of-file
@@ -98,7 +98,7 @@ from sampling import (
 )
 
 USER_AGENT = "GrzybobranieAI-training/1.0 (open-license photos only; CC0 and CC-BY)"
-DATA_DIR = ROOT / "training" / "data"
+DATA_DIR = ROOT / "ml" / "data"
 GBIF_SEARCH = "https://api.gbif.org/v1/occurrence/search"
 GBIF_MATCH = "https://api.gbif.org/v1/species/match"
 # Occurrence search and species match stay on one thread. Image hosts are separate.

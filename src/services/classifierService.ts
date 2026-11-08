@@ -2,7 +2,7 @@
  * On-device recognition.
  *
  * assets/models/labels.json is a class contract, not a network. Until
- * training/export_tflite.py installs a calibrated mushrooms_model.tflite and
+ * ml/export_tflite.py installs a calibrated mushrooms_model.tflite and
  * rewrites modelPackage.ts, this service returns recognition unavailable and
  * does not invent a species, a confidence, or an inference time.
  *

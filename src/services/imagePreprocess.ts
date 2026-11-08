@@ -1,5 +1,5 @@
 /**
- * Keras MobileNetV3 preprocessing. Must match training/preprocess.py.
+ * Keras MobileNetV3 preprocessing. Must match ml/preprocess.py.
  *
  * Downsampling (both sides at least the model size) is an antialiased box
  * filter. Each output pixel averages the source rectangle it covers, then

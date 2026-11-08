@@ -34,7 +34,7 @@ from recognition_math import (
 )
 from stats import wilson_interval
 
-ARTIFACTS = ROOT / "training" / "artifacts"
+ARTIFACTS = ROOT / "ml" / "artifacts"
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 # Unknown-class recall stays a diagnostic (target 0.50, bootstrap lower bound
 # 0.40). The ship gate only requires enough held-out photos to compute it.

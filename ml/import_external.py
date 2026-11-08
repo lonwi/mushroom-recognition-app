@@ -4,7 +4,7 @@ The GBIF fetch in ``fetch_gbif.py`` still accepts only CC0 and CC-BY media
 URLs. This script is the separate path for tabular lists (iNaturalist, GBIF,
 Wikimedia Commons, Danish Fungi 2020). It does not download images.
 
-    python training/import_external.py /path/to/zdjecia --output training/data/external.jsonl
+    python ml/import_external.py /path/to/zdjecia --output training/data/external.jsonl
 
 The allowed training licences live in ``license_policy.py``: versioned
 CC0, CC BY, CC BY-NC, CC BY-SA, and DF20. ``usage`` is ``publishable`` for CC0 and CC BY, and ``training_only``
@@ -60,7 +60,7 @@ from licenses import explicit_unverified_identification, identification_status_r
 from manifest import ROOT, load_manifest
 from url_safety import force_https_url
 
-DATA_DIR = ROOT / "training" / "data"
+DATA_DIR = ROOT / "ml" / "data"
 DEFAULT_OUTPUT = DATA_DIR / "external.jsonl"
 DEFAULT_REPORT = DATA_DIR / "external_report.json"
 DEFAULT_MAX_PER_COLLECTOR = 30

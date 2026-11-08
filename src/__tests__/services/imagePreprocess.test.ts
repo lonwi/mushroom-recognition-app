@@ -5,11 +5,11 @@ import { preprocessRgbToMobileNetV3 } from '../../services/imagePreprocess';
 import { decodePngToRgb } from '../../services/decodePng';
 
 const preprocessFixture = JSON.parse(
-  fs.readFileSync(path.join(__dirname, '../../../training/fixtures/preprocess_2x2_to_4.json'), 'utf8'),
+  fs.readFileSync(path.join(__dirname, '../../../ml/fixtures/preprocess_2x2_to_4.json'), 'utf8'),
 ) as { width: number; height: number; size: number; rgb: number[]; expected: number[] };
 
 const areaFixture = JSON.parse(
-  fs.readFileSync(path.join(__dirname, '../../../training/fixtures/area_resize_6x4_to_2.json'), 'utf8'),
+  fs.readFileSync(path.join(__dirname, '../../../ml/fixtures/area_resize_6x4_to_2.json'), 'utf8'),
 ) as { width: number; height: number; size: number; rgb: number[]; expected: number[] };
 
 describe('MobileNetV3 preprocessing', () => {
@@ -56,7 +56,7 @@ describe('MobileNetV3 preprocessing', () => {
 
   test('rounds a half-pixel average the way Math.round does', () => {
     const half = JSON.parse(
-      fs.readFileSync(path.join(__dirname, '../../../training/fixtures/round_half_up_2x2_to_1.json'), 'utf8'),
+      fs.readFileSync(path.join(__dirname, '../../../ml/fixtures/round_half_up_2x2_to_1.json'), 'utf8'),
     ) as { width: number; height: number; size: number; rgb: number[]; expected_uint8: number[] };
     const output = preprocessRgbToMobileNetV3(
       Uint8Array.from(half.rgb),

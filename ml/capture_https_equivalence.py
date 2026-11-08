@@ -1,7 +1,7 @@
 """One-time capture: does https serve the same bytes as http?
 
 CI does not run this script. It talks to GBIF and to the image hosts, writes
-``training/fixtures/https_host_equivalence.json``, and exits. The unit tests
+``ml/fixtures/https_host_equivalence.json``, and exits. The unit tests
 only read that file. The script exits 0 when every host matched and 1 when
 any host did not, after writing the fixture either way. A failed host is
 not allowlisted.
@@ -16,7 +16,7 @@ A later test allowlists a host only when every one of those samples has a
 ``rejected_hosts`` and is not allowlisted. Nothing here rewrites an
 attribution row.
 
-    python training/capture_https_equivalence.py
+    python ml/capture_https_equivalence.py
 """
 
 from __future__ import annotations

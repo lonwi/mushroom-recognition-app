@@ -47,7 +47,7 @@ function manifest(patch: Partial<NonNullable<ModelManifest['delegate_release']>[
 
 describe('delegate release gate', () => {
   test('matches TFLITE_AGREEMENT_MIN parsed from the training ship gate', () => {
-    const gates = fs.readFileSync(path.join(__dirname, '../../../training/ship_gates.py'), 'utf8');
+    const gates = fs.readFileSync(path.join(__dirname, '../../../ml/ship_gates.py'), 'utf8');
     const match = gates.match(/^TFLITE_AGREEMENT_MIN = ([0-9.]+)$/m);
     if (!match) {
       throw new Error('TFLITE_AGREEMENT_MIN is missing from ship_gates.py');

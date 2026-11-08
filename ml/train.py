@@ -23,8 +23,8 @@ from pathlib import Path
 from manifest import ROOT, load_manifest
 from preprocess import load_oriented_rgb, model_rgb_uint8
 
-DATA_DIR = ROOT / "training" / "data"
-ARTIFACTS = ROOT / "training" / "artifacts"
+DATA_DIR = ROOT / "ml" / "data"
+ARTIFACTS = ROOT / "ml" / "artifacts"
 CLASS_WEIGHT_CAP = 10.0
 
 

@@ -48,8 +48,8 @@ from recognition_math import (
 )
 from ship_gates import _df20_release_reasons, _int8_energy_reasons, assess_shippable, sha256_file
 
-FIXTURE = ROOT / "training" / "fixtures" / "decision_cases.json"
-PREPROCESS_FIXTURE = ROOT / "training" / "fixtures" / "preprocess_2x2_to_4.json"
+FIXTURE = ROOT / "ml" / "fixtures" / "decision_cases.json"
+PREPROCESS_FIXTURE = ROOT / "ml" / "fixtures" / "preprocess_2x2_to_4.json"
 
 
 def _classes(ids, genera):
@@ -115,7 +115,7 @@ class PreprocessTest(unittest.TestCase):
             "rgb": half.reshape(-1).tolist(),
             "expected_uint8": [11, 11, 11],
         }
-        fixture = ROOT / "training" / "fixtures" / "round_half_up_2x2_to_1.json"
+        fixture = ROOT / "ml" / "fixtures" / "round_half_up_2x2_to_1.json"
         self.assertEqual(json.loads(fixture.read_text(encoding="utf-8")), payload)
 
     def test_matches_committed_bilinear_fixture(self):
@@ -219,7 +219,7 @@ class DecisionTest(unittest.TestCase):
 
 
 # Names copied from .gitignore that can hold tokens or signing material.
-# `training/data` is matched by directory, not by this basename list, so `src/data` stays.
+# `ml/data` is matched by directory, not by this basename list, so `src/data` stays.
 _REPO_COPY_SECRET_PATTERNS = (
     ".env",
     ".env.*",
@@ -239,7 +239,7 @@ _REPO_COPY_SECRET_PATTERNS = (
 
 
 def _ignore_repo_copy(repo_root: Path):
-    """Skip install bulk, `training/data`, and secret-shaped filenames."""
+    """Skip install bulk, `ml/data`, and secret-shaped filenames."""
     skip_names = shutil.ignore_patterns(
         "node_modules",
         ".git",
@@ -247,13 +247,14 @@ def _ignore_repo_copy(repo_root: Path):
         "dist",
         "coverage",
         ".cache",
+        ".venv",
         *_REPO_COPY_SECRET_PATTERNS,
     )
-    training = (repo_root / "training").resolve()
+    ml_dir = (repo_root / "ml").resolve()
 
     def ignore(directory: str, names: list[str]) -> set[str]:
         ignored = set(skip_names(directory, names))
-        if Path(directory).resolve() == training and "data" in names:
+        if Path(directory).resolve() == ml_dir and "data" in names:
             ignored.add("data")
         return ignored
 
@@ -317,7 +318,7 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertNotIn("status", unknown)
         self.assertFalse(manifest["model_packaged"])
         self.assertFalse(manifest["recognition_available"])
-        self.assertEqual(manifest["backbone"]["pretrained_weights_license"], "see training/README.md")
+        self.assertEqual(manifest["backbone"]["pretrained_weights_license"], "see ml/README.md")
         self.assertEqual(manifest["input"]["formula"], "(pixel / 127.5) - 1")
         self.assertFalse(manifest["ood"]["calibrated"])
         self.assertIsNone(manifest["quantization"])
@@ -450,8 +451,8 @@ class ManifestAndShipGateTest(unittest.TestCase):
 
         self.assertEqual(TFLITE_AGREEMENT_MIN, 0.99)
         self.assertEqual(COMPONENT_SHARE_LIMIT, 0.20)
-        gates = (ROOT / "training" / "ship_gates.py").read_text(encoding="utf-8")
-        share = (ROOT / "training" / "component_share.py").read_text(encoding="utf-8")
+        gates = (ROOT / "ml" / "ship_gates.py").read_text(encoding="utf-8")
+        share = (ROOT / "ml" / "component_share.py").read_text(encoding="utf-8")
         self.assertIn("TFLITE_AGREEMENT_MIN = 0.99", gates)
         self.assertIn("COMPONENT_SHARE_LIMIT = 0.20", share)
         self.assertNotIn("COMPONENT_SHARE_LIMIT = 0.50", share)
@@ -537,8 +538,8 @@ class ManifestAndShipGateTest(unittest.TestCase):
             license_id = f"cc-by-sa-{version}"
             self.assertEqual(EXACT_LICENSE_USAGE[license_id], TRAINING_ONLY, license_id)
             self.assertFalse(allowed_for_display(license_id), license_id)
-        policy = (ROOT / "training" / "license_policy.py").read_text(encoding="utf-8")
-        gates = (ROOT / "training" / "ship_gates.py").read_text(encoding="utf-8")
+        policy = (ROOT / "ml" / "license_policy.py").read_text(encoding="utf-8")
+        gates = (ROOT / "ml" / "ship_gates.py").read_text(encoding="utf-8")
         self.assertIn("2026-10-23 12:17", policy)
         self.assertIn("not cover model weights", policy)
         self.assertNotIn("cc-by-sa", gates)
@@ -562,8 +563,8 @@ class ManifestAndShipGateTest(unittest.TestCase):
         from license_policy import DF20_CONSENT_CONFIRMED, EXACT_LICENSE_USAGE, TRAINING_ONLY
         from prepare_data import _usable_records
 
-        policy = (ROOT / "training" / "license_policy.py").read_text(encoding="utf-8")
-        gates = (ROOT / "training" / "ship_gates.py").read_text(encoding="utf-8")
+        policy = (ROOT / "ml" / "license_policy.py").read_text(encoding="utf-8")
+        gates = (ROOT / "ml" / "ship_gates.py").read_text(encoding="utf-8")
         self.assertFalse(DF20_CONSENT_CONFIRMED)
         self.assertEqual(EXACT_LICENSE_USAGE["df20"], TRAINING_ONLY)
         self.assertEqual(EXACT_LICENSE_USAGE["cc-by-nc-4.0"], TRAINING_ONLY)
@@ -1022,7 +1023,7 @@ class ManifestAndShipGateTest(unittest.TestCase):
     def test_int8_representative_dataset_uses_training_photos(self):
         from PIL import Image
 
-        source = (ROOT / "training" / "export_tflite.py").read_text(encoding="utf-8")
+        source = (ROOT / "ml" / "export_tflite.py").read_text(encoding="utf-8")
         self.assertNotIn("np.random", source)
         self.assertNotIn("default_rng", source)
         with tempfile.TemporaryDirectory() as tmp:
@@ -1774,13 +1775,13 @@ class ManifestAndShipGateTest(unittest.TestCase):
 
     def test_fp16_is_the_default_export(self):
         self.assertEqual(DEFAULT_QUANTIZATIONS, ("fp16",))
-        source = (ROOT / "training" / "export_tflite.py").read_text(encoding="utf-8")
+        source = (ROOT / "ml" / "export_tflite.py").read_text(encoding="utf-8")
         self.assertIn('default="fp16"', source)
         self.assertNotIn('for quantization in ("int8", "fp16")', source)
 
     def test_quantized_export_keeps_train_calibration_and_existing_floors(self):
-        source = (ROOT / "training" / "export_tflite.py").read_text(encoding="utf-8")
-        gates = (ROOT / "training" / "ship_gates.py").read_text(encoding="utf-8")
+        source = (ROOT / "ml" / "export_tflite.py").read_text(encoding="utf-8")
+        gates = (ROOT / "ml" / "ship_gates.py").read_text(encoding="utf-8")
         self.assertIn("train_rows = calibration_rows(splits)", source)
         self.assertIn("converter.representative_dataset = representative_dataset(train_rows, image_size, data_dir)", source)
         self.assertEqual(source.count("representative_dataset("), 2)
@@ -1949,8 +1950,12 @@ class ManifestAndShipGateTest(unittest.TestCase):
                 symlinks=True,
                 ignore=_ignore_repo_copy(ROOT),
             )
-            self.assertFalse((copy_root / "training" / "data").exists())
-            (copy_root / "node_modules").symlink_to(ROOT / "node_modules", target_is_directory=True)
+            self.assertFalse((copy_root / "ml" / "data").exists())
+            try:
+                (copy_root / "node_modules").symlink_to(ROOT / "node_modules", target_is_directory=True)
+            except OSError:
+                import _winapi
+                _winapi.CreateJunction(str(ROOT / "node_modules"), str(copy_root / "node_modules"))
             module = copy_root / "src" / "services" / "attributionPackage.ts"
             model_module = copy_root / "src" / "services" / "modelPackage.ts"
             jsonl_dest = copy_root / "assets" / "models" / "attributions.jsonl"
@@ -2022,10 +2027,10 @@ class ManifestAndShipGateTest(unittest.TestCase):
     def test_repo_copy_ignores_training_data_and_secret_files(self):
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "repo"
-            (source / "training" / "data" / "images").mkdir(parents=True)
-            (source / "training" / "data" / "images" / "a.jpg").write_bytes(b"jpg")
-            (source / "training" / "data" / ".env").write_text("TOKEN=1\n", encoding="utf-8")
-            (source / "training" / "prepare_data.py").write_text("print('ok')\n", encoding="utf-8")
+            (source / "ml" / "data" / "images").mkdir(parents=True)
+            (source / "ml" / "data" / "images" / "a.jpg").write_bytes(b"jpg")
+            (source / "ml" / "data" / ".env").write_text("TOKEN=1\n", encoding="utf-8")
+            (source / "ml" / "prepare_data.py").write_text("print('ok')\n", encoding="utf-8")
             (source / "src" / "data").mkdir(parents=True)
             (source / "src" / "data" / "mushrooms.ts").write_text("export {}\n", encoding="utf-8")
             (source / ".env").write_text("EXPO_TOKEN=1\n", encoding="utf-8")
@@ -2036,8 +2041,8 @@ class ManifestAndShipGateTest(unittest.TestCase):
             (source / "certs" / "readme.txt").write_text("keep\n", encoding="utf-8")
             dest = Path(tmp) / "copy"
             shutil.copytree(source, dest, ignore=_ignore_repo_copy(source))
-            self.assertFalse((dest / "training" / "data").exists())
-            self.assertTrue((dest / "training" / "prepare_data.py").is_file())
+            self.assertFalse((dest / "ml" / "data").exists())
+            self.assertTrue((dest / "ml" / "prepare_data.py").is_file())
             self.assertEqual(
                 (dest / "src" / "data" / "mushrooms.ts").read_text(encoding="utf-8"),
                 "export {}\n",

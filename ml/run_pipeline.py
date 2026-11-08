@@ -1,7 +1,7 @@
 """Run the open-license training pipeline. See training/README.md.
 
-    python training/run_pipeline.py fetch
-    python training/run_pipeline.py all
+    python ml/run_pipeline.py fetch
+    python ml/run_pipeline.py all
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ PYTHON = sys.executable
 
 
 def run(script: str, extra: list[str]) -> None:
-    command = [PYTHON, str(ROOT / "training" / script), *extra]
+    command = [PYTHON, str(ROOT / "ml" / script), *extra]
     print("+", " ".join(command))
     subprocess.run(command, check=True, cwd=ROOT)
 

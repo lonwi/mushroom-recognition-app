@@ -1940,7 +1940,7 @@ export const LOOKALIKES_WITHOUT_CARD: Readonly<
     status: 'POISONOUS',
     note: POISONOUS_NOTE,
     reason:
-      'Wieruszka zatokowata (Entoloma sinuatum) has no atlas card. training/README.md lists it among poisonous held-out taxa. assets/models/labels.json marks the taxon toxic and does not set deadly. The researcher upload marks this look-alike dangerous. The note stays at poisonous and names no syndrome.',
+      'Wieruszka zatokowata (Entoloma sinuatum) has no atlas card. ml/README.md lists it among poisonous held-out taxa. assets/models/labels.json marks the taxon toxic and does not set deadly. The researcher upload marks this look-alike dangerous. The note stays at poisonous and names no syndrome.',
   },
   craterellus_tubaeformis: {
     status: 'NO_ATLAS_VERDICT',

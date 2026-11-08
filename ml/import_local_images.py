@@ -3,15 +3,15 @@
 The GBIF fetch in ``fetch_gbif.py`` and the CSV importer in
 ``import_external.py`` both describe photos that live on a remote URL. This
 script is the third path: photos the user already has on their hard drive. It
-merges them into ``training/data/external.jsonl`` using the same row schema,
+merges them into ``ml/data/external.jsonl`` using the same row schema,
 license decision, and identity dedup as ``import_external.py``.
 
-    python training/import_local_images.py manifest.csv \
+    python ml/import_local_images.py manifest.csv \
         --staging training/data/local --external training/data/external.jsonl
 
 Unlike ``import_external.py`` this script does not keep ``image_url`` as the
 only source of pixels. Each listed image is copied into
-``training/data/local/<class_id>/`` and the row is marked ``downloaded=True``
+``ml/data/local/<class_id>/`` and the row is marked ``downloaded=True``
 with ``file`` pointing at the staged copy, so ``prepare_data.py`` consumes it
 directly without a network download. That is the whole point of step 1: no
 Hugging Face, no new download step, just a merge into the existing JSONL.
@@ -125,7 +125,7 @@ def _row_from_local(raw: dict, *, staged_rel: str, order: int, index: dict[str, 
 
     The differences are deliberate: ``image_url`` may be empty (a local photo
     can have no online URL), the row is already ``downloaded``, and ``file`` is
-    the staged copy relative to ``training/data/``. Every license, author,
+    the staged copy relative to ``ml/data/``. Every license, author,
     species, and identity decision is identical to the remote path.
     """
     species = _cell(raw, "species")
@@ -236,7 +236,7 @@ def _staging_root(staging_dir: Path) -> Path:
     """Return the parent of ``staging_dir``.
 
     ``file`` is stored relative to the parent of the staging directory, so
-    ``training/data/local`` images get a ``file`` like ``data/local/...``.
+    ``ml/data/local`` images get a ``file`` like ``data/local/...``.
     """
     return staging_dir.parent
 

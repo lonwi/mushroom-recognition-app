@@ -14,7 +14,7 @@
     "**/coverage/**",
     "**/.expo/**",
     "**/.cache/**",
-    "**/training/**",
+    "**/ml/**",
     "**/android/**",
     "**/ios/**",
     "**/test-results/**",

@@ -4,7 +4,7 @@ The threshold is chosen on the validation split so that 97% of in-distribution
 validation images are kept (their energy is at or below the threshold).
 The ship gate still requires 95% on the test split.
 Held-out test images, including non-mushrooms, are only scored after that.
-`training/export_tflite.py` runs this again on the TFLite interpreter's logits.
+`ml/export_tflite.py` runs this again on the TFLite interpreter's logits.
 """
 
 from __future__ import annotations
@@ -44,8 +44,8 @@ from recognition_math import (
     softmax,
 )
 
-DATA_DIR = ROOT / "training" / "data"
-ARTIFACTS = ROOT / "training" / "artifacts"
+DATA_DIR = ROOT / "ml" / "data"
+ARTIFACTS = ROOT / "ml" / "artifacts"
 # Fit the threshold a bit above the 0.95 ship floor. A threshold that keeps
 # exactly 95% of validation images fails the test gate on ordinary split noise.
 ID_KEEP_FIT = 0.97

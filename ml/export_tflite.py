@@ -36,7 +36,7 @@ from publication import DF20_DETECTION_FIELDS, DF20_NORMALIZED_LICENSE_FIELD
 from recognition_math import HIGH_STAKES_IDS
 from ship_gates import TFLITE_AGREEMENT_MIN, assess_shippable, blank_delegate_release, fetch_report_file, sha256_file
 
-ARTIFACTS = ROOT / "training" / "artifacts"
+ARTIFACTS = ROOT / "ml" / "artifacts"
 MODEL_DEST = ROOT / "assets" / "models" / "mushrooms_model.tflite"
 ATTRIBUTION_DEST = ROOT / "assets" / "models" / "attributions.jsonl"
 PACKAGE_MODULE = ROOT / "src" / "services" / "modelPackage.ts"
