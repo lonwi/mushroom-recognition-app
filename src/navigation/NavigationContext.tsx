@@ -1,10 +1,5 @@
 import React, { createContext, useContext } from 'react';
-import {
-  RootTab,
-  ShellTab,
-  ViewStack,
-  VisibleRoute,
-} from './viewStack';
+import { RootTab, ShellTab, ViewStack, VisibleRoute } from './viewStack';
 
 export interface NavigationContextValue {
   stack: ViewStack;
@@ -30,9 +25,5 @@ interface NavigationProviderProps {
 }
 
 export const NavigationProvider: React.FC<NavigationProviderProps> = ({ value, children }) => {
-  return (
-    <NavigationContext.Provider value={value}>
-      {children}
-    </NavigationContext.Provider>
-  );
+  return <NavigationContext.Provider value={value}>{children}</NavigationContext.Provider>;
 };

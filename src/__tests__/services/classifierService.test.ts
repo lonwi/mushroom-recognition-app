@@ -12,7 +12,7 @@ import { modelManifest } from '../../services/modelManifest';
 
 const serviceSource = fs.readFileSync(
   path.join(__dirname, '../../services/classifierService.ts'),
-  'utf8'
+  'utf8',
 );
 
 describe('classifierService when no pixel model is installed', () => {
@@ -55,10 +55,9 @@ describe('classifierService when no pixel model is installed', () => {
   });
 
   test('a forced species id cannot produce that species or a confidence', async () => {
-    const result = await (classifierService.classifyImage as (uri: string, forced?: string) => Promise<unknown>)(
-      'file://camera/capture.jpg',
-      'amanita_phalloides'
-    );
+    const result = await (
+      classifierService.classifyImage as (uri: string, forced?: string) => Promise<unknown>
+    )('file://camera/capture.jpg', 'amanita_phalloides');
 
     expect(result).toEqual({
       status: 'unavailable',
@@ -72,7 +71,7 @@ describe('classifierService when no pixel model is installed', () => {
 
   test('labels.json is not treated as a model that can name a mushroom', async () => {
     const labels = JSON.parse(
-      fs.readFileSync(path.join(__dirname, '../../../assets/models/labels.json'), 'utf8')
+      fs.readFileSync(path.join(__dirname, '../../../assets/models/labels.json'), 'utf8'),
     ) as { classes: { id: string; name: string }[] };
 
     expect(labels.classes.length).toBeGreaterThan(0);
@@ -96,11 +95,15 @@ describe('classifierService when no pixel model is installed', () => {
 
   test('the packaged model file is absent and the manifest is not calibrated', () => {
     expect(PACKAGED_MODEL_MODULE).toBeNull();
-    expect(fs.existsSync(path.join(__dirname, '../../../assets/models/mushrooms_model.tflite'))).toBe(false);
+    expect(
+      fs.existsSync(path.join(__dirname, '../../../assets/models/mushrooms_model.tflite')),
+    ).toBe(false);
     expect(modelManifest.model_packaged).toBe(false);
     expect(modelManifest.recognition_available).toBe(false);
     expect(modelManifest.ood.calibrated).toBe(false);
-    expect(modelManifest.classes.some((item) => 'status' in item || 'edibility' in item)).toBe(false);
+    expect(modelManifest.classes.some((item) => 'status' in item || 'edibility' in item)).toBe(
+      false,
+    );
   });
 });
 
@@ -288,9 +291,27 @@ describe('classifierService when a calibrated model is injected', () => {
     const packaged = {
       ...manifest,
       classes: [
-        { index: 0, id: 'boletus_edulis', name: 'Borowik szlachetny', name_latin: 'Boletus edulis', genus: 'Boletus' },
-        { index: 1, id: 'unknown_mushroom', name: 'Nieznany grzyb', name_latin: 'Unknown mushroom', genus: '' },
-        { index: 2, id: 'not_a_mushroom', name: 'To nie jest grzyb', name_latin: 'Not a mushroom', genus: '' },
+        {
+          index: 0,
+          id: 'boletus_edulis',
+          name: 'Borowik szlachetny',
+          name_latin: 'Boletus edulis',
+          genus: 'Boletus',
+        },
+        {
+          index: 1,
+          id: 'unknown_mushroom',
+          name: 'Nieznany grzyb',
+          name_latin: 'Unknown mushroom',
+          genus: '',
+        },
+        {
+          index: 2,
+          id: 'not_a_mushroom',
+          name: 'To nie jest grzyb',
+          name_latin: 'Not a mushroom',
+          genus: '',
+        },
       ],
       ood: {
         ...manifest.ood,

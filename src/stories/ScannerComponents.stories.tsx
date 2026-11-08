@@ -44,11 +44,7 @@ export const Reticle: StoryObj = {
 export const ControlsIdle: StoryObj = {
   render: () => (
     <View style={styles.darkFrame}>
-      <ScannerControls
-        isAnalyzing={false}
-        onTakePhoto={() => {}}
-        onPickGallery={() => {}}
-      />
+      <ScannerControls isAnalyzing={false} onTakePhoto={() => {}} onPickGallery={() => {}} />
     </View>
   ),
 };
@@ -56,11 +52,7 @@ export const ControlsIdle: StoryObj = {
 export const ControlsAnalyzing: StoryObj = {
   render: () => (
     <View style={styles.darkFrame}>
-      <ScannerControls
-        isAnalyzing={true}
-        onTakePhoto={() => {}}
-        onPickGallery={() => {}}
-      />
+      <ScannerControls isAnalyzing={true} onTakePhoto={() => {}} onPickGallery={() => {}} />
     </View>
   ),
 };
@@ -76,10 +68,7 @@ export const ExamplesList: StoryObj = {
 export const PermissionPrompt: StoryObj = {
   render: () => (
     <View style={styles.lightFrame}>
-      <ScannerPermissionPrompt
-        onRequestPermission={() => {}}
-        onPickGallery={() => {}}
-      />
+      <ScannerPermissionPrompt onRequestPermission={() => {}} onPickGallery={() => {}} />
     </View>
   ),
 };

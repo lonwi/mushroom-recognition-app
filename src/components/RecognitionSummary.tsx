@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getSpecies } from '../data/speciesCatalog';
 import { formatConfidencePercent } from '../services/recognitionDecision';
-import { journalActionStyles } from './journalActionStyles';
+import { journalActionStyles, journalSummaryStyles as journalStyles } from './journalActionStyles';
 import { colors, radius, spacing } from '../theme/tokens';
 
 type RejectedReason = 'not_a_mushroom' | 'unknown_mushroom' | 'unclear';
@@ -38,7 +38,10 @@ export type RecognitionSummaryData =
     };
 
 const MODAL_REJECTED_CHROME = {
-  unknown_mushroom: { titleKey: 'scanner.unknownMushroomTitle', testID: 'recognition-unknown-title' },
+  unknown_mushroom: {
+    titleKey: 'scanner.unknownMushroomTitle',
+    testID: 'recognition-unknown-title',
+  },
   unclear: { titleKey: 'scanner.rejectedTitle', testID: 'recognition-rejected-title' },
   not_a_mushroom: { titleKey: 'scanner.rejectedTitle', testID: 'recognition-rejected-title' },
 } as const satisfies Record<RejectedReason, { titleKey: string; testID: string }>;
@@ -57,7 +60,10 @@ export function modalRecognitionChrome(
   recognition: Exclude<RecognitionSummaryData, { status: 'legacy' }>,
 ): { titleKey: string; testID: string } {
   if (recognition.status === 'unavailable') {
-    return { titleKey: 'scanner.recognitionUnavailableTitle', testID: 'recognition-unavailable-title' };
+    return {
+      titleKey: 'scanner.recognitionUnavailableTitle',
+      testID: 'recognition-unavailable-title',
+    };
   }
   if (recognition.status === 'rejected') {
     return MODAL_REJECTED_CHROME[recognition.reason];
@@ -80,7 +86,9 @@ function LegacyJournal({
   const { t } = useLanguage();
   const storedName = recognition.speciesNamePl ?? recognition.speciesNameLatin;
   const latinSuffix =
-    recognition.speciesNamePl && recognition.speciesNameLatin ? ` (${recognition.speciesNameLatin})` : '';
+    recognition.speciesNamePl && recognition.speciesNameLatin
+      ? ` (${recognition.speciesNameLatin})`
+      : '';
   return (
     <View>
       <Text style={journalStyles.legacyBanner} testID={`journal-legacy-${entryId}`}>
@@ -291,7 +299,10 @@ function ModalCandidate({
         </Text>
       ) : null}
       <Text style={modalStyles.candidateLatin}>{candidate.nameLatin}</Text>
-      <Text style={modalStyles.candidateConfidence} testID={`candidate-confidence-${candidate.rank}`}>
+      <Text
+        style={modalStyles.candidateConfidence}
+        testID={`candidate-confidence-${candidate.rank}`}
+      >
         {t('scanner.confidence')}: {formatConfidencePercent(candidate.confidence)}
       </Text>
       {card && onOpenAtlasSpecies ? (
@@ -350,7 +361,11 @@ export const RecognitionSummary: React.FC<Props> = (props) => {
     return <LegacyJournal recognition={recognition} entryId={props.entryId} />;
   }
   if (recognition.status === 'unavailable') {
-    return props.variant === 'modal' ? <UnavailableModal /> : <UnavailableJournal entryId={props.entryId} />;
+    return props.variant === 'modal' ? (
+      <UnavailableModal />
+    ) : (
+      <UnavailableJournal entryId={props.entryId} />
+    );
   }
   if (recognition.status === 'rejected') {
     return props.variant === 'modal' ? (
@@ -471,42 +486,5 @@ const modalStyles = StyleSheet.create({
     color: colors.green950,
     fontWeight: '700',
     fontSize: 13,
-  },
-});
-
-const journalStyles = StyleSheet.create({
-  speciesNamePl: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: colors.slate900,
-  },
-  legacyBanner: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.orange900,
-    backgroundColor: colors.orange100,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
-    borderRadius: radius.sm,
-    marginBottom: 6,
-    lineHeight: 17,
-  },
-  honestBody: {
-    fontSize: 12,
-    color: colors.slate700,
-    marginTop: spacing.xs,
-    lineHeight: 17,
-  },
-  warningText: {
-    fontSize: 12,
-    color: colors.red800,
-    fontWeight: '700',
-    marginTop: spacing.xs,
-    lineHeight: 17,
-  },
-  candidateText: {
-    fontSize: 12,
-    color: colors.slate900,
-    marginTop: spacing.xs,
   },
 });

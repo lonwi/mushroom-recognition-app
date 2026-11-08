@@ -5,7 +5,9 @@ import path from 'path';
 import { DELEGATE_AGREEMENT_MIN, delegateReleasePassed } from '../../services/delegateRelease';
 import type { ModelManifest } from '../../services/modelManifest';
 
-function manifest(patch: Partial<NonNullable<ModelManifest['delegate_release']>['android-gpu']> = {}): ModelManifest {
+function manifest(
+  patch: Partial<NonNullable<ModelManifest['delegate_release']>['android-gpu']> = {},
+): ModelManifest {
   const hash = 'a'.repeat(64);
   const sample = 'b'.repeat(64);
   return {
@@ -59,11 +61,19 @@ describe('delegate release gate', () => {
     expect(delegateReleasePassed(manifest(), 'android-gpu')).toBe(true);
     expect(delegateReleasePassed(manifest(), 'core-ml')).toBe(false);
     expect(delegateReleasePassed(manifest({ passed: false }), 'android-gpu')).toBe(false);
-    expect(delegateReleasePassed(manifest({ model_sha256: 'c'.repeat(64) }), 'android-gpu')).toBe(false);
-    expect(delegateReleasePassed(manifest({ sample_sha256: 'd'.repeat(64) }), 'android-gpu')).toBe(false);
+    expect(delegateReleasePassed(manifest({ model_sha256: 'c'.repeat(64) }), 'android-gpu')).toBe(
+      false,
+    );
+    expect(delegateReleasePassed(manifest({ sample_sha256: 'd'.repeat(64) }), 'android-gpu')).toBe(
+      false,
+    );
     expect(delegateReleasePassed(manifest({ top1_agreement: 0.989 }), 'android-gpu')).toBe(false);
-    expect(delegateReleasePassed(manifest({ decision_agreement: 0.989 }), 'android-gpu')).toBe(false);
-    expect(delegateReleasePassed(manifest({ max_energy_difference: undefined }), 'android-gpu')).toBe(false);
+    expect(delegateReleasePassed(manifest({ decision_agreement: 0.989 }), 'android-gpu')).toBe(
+      false,
+    );
+    expect(
+      delegateReleasePassed(manifest({ max_energy_difference: undefined }), 'android-gpu'),
+    ).toBe(false);
     const missing = manifest();
     delete missing.delegate_release;
     expect(delegateReleasePassed(missing, 'android-gpu')).toBe(false);

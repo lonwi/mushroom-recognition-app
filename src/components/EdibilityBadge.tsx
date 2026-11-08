@@ -20,9 +20,24 @@ const BADGE_SIZE: Record<
   BadgeSize,
   { paddingVertical: number; paddingHorizontal: number; iconSize: number; labelSize: number }
 > = {
-  small: { paddingVertical: spacing.xxs, paddingHorizontal: 6, iconSize: typography.caption, labelSize: typography.caption },
-  medium: { paddingVertical: spacing.xs, paddingHorizontal: 10, iconSize: typography.small, labelSize: typography.small },
-  large: { paddingVertical: spacing.sm, paddingHorizontal: 14, iconSize: typography.title, labelSize: typography.body },
+  small: {
+    paddingVertical: spacing.xxs,
+    paddingHorizontal: 6,
+    iconSize: typography.caption,
+    labelSize: typography.caption,
+  },
+  medium: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: 10,
+    iconSize: typography.small,
+    labelSize: typography.small,
+  },
+  large: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: 14,
+    iconSize: typography.title,
+    labelSize: typography.body,
+  },
 };
 
 interface ChipProps {
@@ -51,7 +66,9 @@ function StatusChip({ label, icon, backgroundColor, borderColor, color, size, te
       ]}
     >
       {icon ? (
-        <Text style={[styles.icon, { color, fontSize: metrics.iconSize, marginRight: spacing.xs }]}>{icon}</Text>
+        <Text style={[styles.icon, { color, fontSize: metrics.iconSize, marginRight: spacing.xs }]}>
+          {icon}
+        </Text>
       ) : null}
       <Text style={[styles.text, { color, fontSize: metrics.labelSize }]}>{label}</Text>
     </View>

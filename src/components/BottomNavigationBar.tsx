@@ -55,12 +55,7 @@ export const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({
                 <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
                   {t(tab.labelKey)}
                 </Text>
-                <View
-                  style={[
-                    styles.activeIndicator,
-                    isActive && styles.activeIndicatorVisible,
-                  ]}
-                />
+                <View style={[styles.activeIndicator, isActive && styles.activeIndicatorVisible]} />
               </TouchableOpacity>
             );
           }
@@ -84,12 +79,7 @@ export const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({
               <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
                 {t(tab.labelKey)}
               </Text>
-              <View
-                style={[
-                  styles.activeIndicator,
-                  isActive && styles.activeIndicatorVisible,
-                ]}
-              />
+              <View style={[styles.activeIndicator, isActive && styles.activeIndicatorVisible]} />
             </TouchableOpacity>
           );
         })}

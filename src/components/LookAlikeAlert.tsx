@@ -60,9 +60,7 @@ export const LookAlikeAlert: React.FC<Props> = ({
       return (
         <View style={styles.sourcedContainer} testID="lookalike-sourced-clearance">
           <Text style={styles.sourcedTitle}>{t('lookalike.sourcedTitle')}</Text>
-          <Text style={styles.sourcedDesc}>
-            {t('lookalike.sourcedBody', { source })}
-          </Text>
+          <Text style={styles.sourcedDesc}>{t('lookalike.sourcedBody', { source })}</Text>
         </View>
       );
     }
@@ -119,7 +117,10 @@ export const LookAlikeAlert: React.FC<Props> = ({
                     testID={`incomplete-card-badge-${risk.confusedWithId}`}
                   />
                 ) : (
-                  <MissingCardBadge size="small" testID={`missing-card-badge-${risk.confusedWithId}`} />
+                  <MissingCardBadge
+                    size="small"
+                    testID={`missing-card-badge-${risk.confusedWithId}`}
+                  />
                 )}
               </View>
             </View>
@@ -134,7 +135,10 @@ export const LookAlikeAlert: React.FC<Props> = ({
               </TouchableOpacity>
             ) : null}
             {!inCatalog ? (
-              <Text style={styles.unlinkedNote} testID={`lookalike-unlinked-${risk.confusedWithId}`}>
+              <Text
+                style={styles.unlinkedNote}
+                testID={`lookalike-unlinked-${risk.confusedWithId}`}
+              >
                 {t('lookalike.unlinked')}
                 {withoutCard ? ` ${noteFor(withoutCard.note)}.` : ''}
               </Text>

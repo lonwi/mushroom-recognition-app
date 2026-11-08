@@ -55,9 +55,7 @@ interface CandidatesClassification {
 }
 
 export type ClassificationResult =
-  | UnavailableClassification
-  | RejectedClassification
-  | CandidatesClassification;
+  UnavailableClassification | RejectedClassification | CandidatesClassification;
 
 export interface ClassifierDependencies {
   packagedModel: number | null;
@@ -66,8 +64,14 @@ export interface ClassifierDependencies {
   runLogits: (input: Float32Array) => Promise<Float32Array>;
 }
 
-function isModelPackaged(deps: Pick<ClassifierDependencies, 'packagedModel' | 'manifest'>): boolean {
-  return deps.packagedModel != null && deps.manifest.model_packaged === true && deps.manifest.recognition_available === true;
+function isModelPackaged(
+  deps: Pick<ClassifierDependencies, 'packagedModel' | 'manifest'>,
+): boolean {
+  return (
+    deps.packagedModel != null &&
+    deps.manifest.model_packaged === true &&
+    deps.manifest.recognition_available === true
+  );
 }
 
 const defaultDependencies: ClassifierDependencies = {
@@ -104,7 +108,12 @@ export async function classifyImageWithDeps(
   let input: Float32Array;
   try {
     const decoded = decodePngToRgb(png);
-    input = preprocessRgbToMobileNetV3(decoded.rgb, decoded.width, decoded.height, deps.manifest.input.size);
+    input = preprocessRgbToMobileNetV3(
+      decoded.rgb,
+      decoded.width,
+      decoded.height,
+      deps.manifest.input.size,
+    );
   } catch {
     return unavailable(imageUri, 'decode_failed');
   }

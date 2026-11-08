@@ -23,8 +23,15 @@ function decisionFieldsMatch(fields: string[] | undefined): boolean {
   );
 }
 
-function countsMatch(entry: { images?: number; high_risk_images?: number; max_energy_difference?: number }): boolean {
-  if (typeof entry.max_energy_difference !== 'number' || !Number.isFinite(entry.max_energy_difference)) {
+function countsMatch(entry: {
+  images?: number;
+  high_risk_images?: number;
+  max_energy_difference?: number;
+}): boolean {
+  if (
+    typeof entry.max_energy_difference !== 'number' ||
+    !Number.isFinite(entry.max_energy_difference)
+  ) {
     return false;
   }
   if (entry.max_energy_difference < 0) {
@@ -50,12 +57,20 @@ function hashesMatch(
  * device report for this exact model and the fixed val+test sample.
  * Missing, stale, and hash-mismatched reports fail closed.
  */
-export function delegateReleasePassed(manifest: ModelManifest, platform: HardwareDelegateName): boolean {
+export function delegateReleasePassed(
+  manifest: ModelManifest,
+  platform: HardwareDelegateName,
+): boolean {
   if (platform !== ANDROID_GPU && platform !== CORE_ML) {
     return false;
   }
   const entry = manifest.delegate_release?.[platform];
-  if (!entry || entry.passed !== true || !hashesMatch(manifest, entry) || !decisionFieldsMatch(entry.decision_fields)) {
+  if (
+    !entry ||
+    entry.passed !== true ||
+    !hashesMatch(manifest, entry) ||
+    !decisionFieldsMatch(entry.decision_fields)
+  ) {
     return false;
   }
   return (

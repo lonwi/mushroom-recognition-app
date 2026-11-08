@@ -28,11 +28,7 @@ export const ScannerControls: React.FC<ScannerControlsProps> = ({
         accessibilityLabel={t('scanner.gallery')}
         accessibilityState={{ disabled: isAnalyzing }}
       >
-        <Text
-          style={styles.galleryIcon}
-          importantForAccessibility="no"
-          accessibilityElementsHidden
-        >
+        <Text style={styles.galleryIcon} importantForAccessibility="no" accessibilityElementsHidden>
           🖼
         </Text>
         <Text style={styles.galleryText}>{t('scanner.gallery')}</Text>

@@ -36,7 +36,7 @@ describe('AtlasScreen RTL Tests', () => {
     const { getByPlaceholderText, getByText } = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={onSelect} />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     expect(getByPlaceholderText('Szukaj grzyba (np. borowik, kania, kurka)...')).toBeTruthy();
@@ -48,7 +48,7 @@ describe('AtlasScreen RTL Tests', () => {
     const { getByPlaceholderText, getByText, queryByText } = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={onSelect} />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     const input = getByPlaceholderText('Szukaj grzyba (np. borowik, kania, kurka)...');
@@ -64,7 +64,7 @@ describe('AtlasScreen RTL Tests', () => {
     const screen = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={() => {}} />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     await fireEvent.press(screen.getByTestId('filter-chip-kind-poisonous'));
@@ -119,7 +119,7 @@ describe('AtlasScreen RTL Tests', () => {
     const { getByText, getAllByText, getByTestId, queryByText } = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={onSelect} />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     await fireEvent.press(getByTestId('filter-chip-kind-poisonous'));
@@ -136,12 +136,12 @@ describe('AtlasScreen RTL Tests', () => {
     const { getByPlaceholderText, getByText, queryByTestId, queryByText } = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={onSelect} />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     await fireEvent.changeText(
       getByPlaceholderText('Szukaj grzyba (np. borowik, kania, kurka)...'),
-      'szatan'
+      'szatan',
     );
 
     await waitFor(() => {
@@ -155,15 +155,16 @@ describe('AtlasScreen RTL Tests', () => {
 
   it('shows a no-photo state for look-alikes that have no picture', async () => {
     const onSelect = jest.fn();
-    const { getByPlaceholderText, getByTestId, getByText, queryByTestId, queryByText } = await render(
-      <LanguageProvider>
-        <AtlasScreen onSelectSpecies={onSelect} />
-      </LanguageProvider>
-    );
+    const { getByPlaceholderText, getByTestId, getByText, queryByTestId, queryByText } =
+      await render(
+        <LanguageProvider>
+          <AtlasScreen onSelectSpecies={onSelect} />
+        </LanguageProvider>,
+      );
 
     await fireEvent.changeText(
       getByPlaceholderText('Szukaj grzyba (np. borowik, kania, kurka)...'),
-      'Gołąbek zielonawy'
+      'Gołąbek zielonawy',
     );
 
     await waitFor(() => {
@@ -179,7 +180,7 @@ describe('AtlasScreen RTL Tests', () => {
     const { getByTestId } = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={() => {}} />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     const { MUSHROOMS_DATABASE } = require('../../data/mushrooms');
@@ -188,7 +189,7 @@ describe('AtlasScreen RTL Tests', () => {
     expect(notice).toContain('nie jest kompletny klucz');
     expect(notice).toContain('Sanepidzie');
     expect(getByTestId('atlas-result-count').props.children).toBe(
-      `Pasujące karty: ${MUSHROOMS_DATABASE.length}`
+      `Pasujące karty: ${MUSHROOMS_DATABASE.length}`,
     );
   });
 
@@ -196,7 +197,7 @@ describe('AtlasScreen RTL Tests', () => {
     const screen = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={() => {}} />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     await fireEvent.press(screen.getByTestId('filter-chip-kind-inedible'));
@@ -219,8 +220,16 @@ describe('AtlasScreen RTL Tests', () => {
       expect(screen.queryByTestId('filter-chip-psychoactive')).toBeNull();
       expect(matches.getByText('Muchomor sromotnikowy (zielonawy)')).toBeTruthy();
       expect(matches.getByText('Krowiak podwinięty (Olszówka)')).toBeTruthy();
-      expect(within(matches.getByTestId('atlas-card-badge-amanita_phalloides')).getByText('ŚMIERTELNIE TRUJĄCY')).toBeTruthy();
-      expect(within(matches.getByTestId('atlas-card-badge-paxillus_involutus')).getByText('ŚMIERTELNIE TRUJĄCY')).toBeTruthy();
+      expect(
+        within(matches.getByTestId('atlas-card-badge-amanita_phalloides')).getByText(
+          'ŚMIERTELNIE TRUJĄCY',
+        ),
+      ).toBeTruthy();
+      expect(
+        within(matches.getByTestId('atlas-card-badge-paxillus_involutus')).getByText(
+          'ŚMIERTELNIE TRUJĄCY',
+        ),
+      ).toBeTruthy();
       expect(matches.queryByText('Goryczak żółciowy')).toBeNull();
       expect(matches.queryByText('Prawdziwki')).toBeNull();
     });
@@ -230,7 +239,7 @@ describe('AtlasScreen RTL Tests', () => {
     const screen = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={() => {}} />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     await fireEvent.press(screen.getByTestId('filter-chip-kind-edible'));
@@ -273,7 +282,7 @@ describe('AtlasScreen RTL Tests', () => {
     const screen = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={() => {}} />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     await fireEvent.press(screen.getByTestId('atlas-filter-open'));
@@ -287,8 +296,12 @@ describe('AtlasScreen RTL Tests', () => {
       expect(screen.queryByText('Gęśnica wiosenna')).toBeNull();
       expect(screen.queryByText('Prawdziwki')).toBeNull();
       const listed = screen.getAllByTestId(/^atlas-card-[a-z0-9_]+$/);
-      const matchCount = within(screen.getByTestId('atlas-matches')).getAllByTestId(/^atlas-card-[a-z0-9_]+$/).length;
-      expect(screen.getByTestId('atlas-result-count').props.children).toBe(`Pasujące karty: ${matchCount}`);
+      const matchCount = within(screen.getByTestId('atlas-matches')).getAllByTestId(
+        /^atlas-card-[a-z0-9_]+$/,
+      ).length;
+      expect(screen.getByTestId('atlas-result-count').props.children).toBe(
+        `Pasujące karty: ${matchCount}`,
+      );
       expect(listed.length).toBeGreaterThan(matchCount);
     });
   });
@@ -297,7 +310,7 @@ describe('AtlasScreen RTL Tests', () => {
     const screen = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={() => {}} />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     await fireEvent.press(screen.getByTestId('atlas-filter-open'));
@@ -326,12 +339,12 @@ describe('AtlasScreen RTL Tests', () => {
     const { getByPlaceholderText, getByText, queryByText } = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={() => {}} />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     await fireEvent.changeText(
       getByPlaceholderText('Szukaj grzyba (np. borowik, kania, kurka)...'),
-      'Amanita virosa'
+      'Amanita virosa',
     );
 
     await waitFor(() => {
@@ -344,11 +357,13 @@ describe('AtlasScreen RTL Tests', () => {
     const screen = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={() => {}} />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     expect(screen.getByText('Prawdziwki')).toBeTruthy();
-    expect(screen.getByTestId('atlas-months-boletus_edulis').props.children).toBe('📅 6 - 11 mies.');
+    expect(screen.getByTestId('atlas-months-boletus_edulis').props.children).toBe(
+      '📅 6 - 11 mies.',
+    );
     expect(screen.queryByTestId('atlas-source-language-note')).toBeNull();
     expect(screen.queryByText(en.cards.sourceLanguageNote)).toBeNull();
     expect(pl.atlas.monthRange).toBe('{start} - {end} mies.');
@@ -366,7 +381,7 @@ describe('AtlasScreen RTL Tests', () => {
     const screen = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={() => {}} />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     expect(await screen.findByTestId('atlas-source-language-note')).toBeTruthy();
@@ -380,11 +395,13 @@ describe('AtlasScreen RTL Tests', () => {
     expect(screen.getByText('Prawdziwki')).toBeTruthy();
     expect(screen.getByText('To be verified')).toBeTruthy();
     expect(screen.getByText('Filters (0)')).toBeTruthy();
-    expect(screen.getByTestId('atlas-filter-open').props.accessibilityLabel).toBe('Filters, active: 0');
+    expect(screen.getByTestId('atlas-filter-open').props.accessibilityLabel).toBe(
+      'Filters, active: 0',
+    );
 
     await fireEvent.changeText(
       screen.getByPlaceholderText(en.atlas.searchPlaceholder),
-      'Gołąbek zielonawy'
+      'Gołąbek zielonawy',
     );
     await waitFor(() => {
       expect(screen.getByText('No photo')).toBeTruthy();
@@ -406,7 +423,9 @@ describe('AtlasScreen RTL Tests', () => {
     await waitFor(() => {
       expect(screen.getAllByText('☠ Look-alike!').length).toBeGreaterThan(0);
       expect(screen.queryByText('☠ Sobowtór!')).toBeNull();
-      expect(screen.getByTestId('atlas-psychoactive-amanita_muscaria').props.children).toBe('Psychoactive');
+      expect(screen.getByTestId('atlas-psychoactive-amanita_muscaria').props.children).toBe(
+        'Psychoactive',
+      );
       expect(screen.getByTestId('atlas-source-language-note')).toBeTruthy();
       expect(screen.queryByText('Nietrujące')).toBeNull();
       expect(screen.queryByText('Non-poisonous')).toBeNull();
@@ -417,23 +436,31 @@ describe('AtlasScreen RTL Tests', () => {
     expect(screen.getByTestId('filter-active-protection-brak').props.accessibilityLabel).toBe(
       'Remove filter: Protection: Not protected',
     );
-    expect(within(screen.getByTestId('filter-active-protection-brak')).getByText('Not protected ×')).toBeTruthy();
+    expect(
+      within(screen.getByTestId('filter-active-protection-brak')).getByText('Not protected ×'),
+    ).toBeTruthy();
   });
 
   it('keeps type chips and Do weryfikacji in one row and the other groups in the sheet', async () => {
     const screen = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={() => {}} />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     const bar = within(screen.getByTestId('atlas-filter-bar'));
     expect(bar.getByTestId('filter-chip-kind-edible').props.accessibilityRole).toBe('button');
-    expect(bar.getByTestId('filter-chip-kind-edible').props.accessibilityState).toEqual({ selected: false });
+    expect(bar.getByTestId('filter-chip-kind-edible').props.accessibilityState).toEqual({
+      selected: false,
+    });
     expect(bar.getByText('Do weryfikacji')).toBeTruthy();
-    expect(bar.getByTestId('filter-chip-unverified').props.accessibilityState).toEqual({ selected: false });
+    expect(bar.getByTestId('filter-chip-unverified').props.accessibilityState).toEqual({
+      selected: false,
+    });
     expect(bar.getByText('Filtry (0)')).toBeTruthy();
-    expect(screen.getByTestId('atlas-filter-open').props.accessibilityLabel).toBe('Filtry, aktywne: 0');
+    expect(screen.getByTestId('atlas-filter-open').props.accessibilityLabel).toBe(
+      'Filtry, aktywne: 0',
+    );
     expect(screen.queryByTestId('filter-chip-hymenophore-blaszki')).toBeNull();
     expect(screen.queryByTestId('filter-chip-psychoactive')).toBeNull();
     expect(screen.queryByText('Nietrujące')).toBeNull();
@@ -448,14 +475,16 @@ describe('AtlasScreen RTL Tests', () => {
     expect(sheet.getByTestId('filter-chip-ring-present')).toBeTruthy();
     expect(sheet.getByTestId('filter-chip-volva-pochwa')).toBeTruthy();
     expect(sheet.getByText('Wyczyść')).toBeTruthy();
-    expect(screen.getByTestId('atlas-filter-open').props.accessibilityState).toEqual({ expanded: true });
+    expect(screen.getByTestId('atlas-filter-open').props.accessibilityState).toEqual({
+      expanded: true,
+    });
   });
 
   it('counts panel filters, removes one chip, and clears the sheet without hiding poisonous cards', async () => {
     const screen = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={() => {}} />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     expect(screen.getByText('Muchomor sromotnikowy (zielonawy)')).toBeTruthy();
@@ -468,16 +497,22 @@ describe('AtlasScreen RTL Tests', () => {
     const visibleBoth = screen.getAllByTestId(/^atlas-card-[a-z0-9_]+$/).length;
     expect(visibleBoth).toBeGreaterThan(0);
     expect(screen.getByText('Filtry (2)')).toBeTruthy();
-    expect(screen.getByTestId('atlas-filter-open').props.accessibilityLabel).toBe('Filtry, aktywne: 2');
+    expect(screen.getByTestId('atlas-filter-open').props.accessibilityLabel).toBe(
+      'Filtry, aktywne: 2',
+    );
     const show = screen.getByTestId('atlas-filter-show');
     expect(show.props.accessibilityRole).toBe('button');
     expect(show.props.accessibilityLabel).toBe(`Pokaż ${visibleBoth} wyników`);
     expect(within(show).getByText(`Pokaż ${visibleBoth}`)).toBeTruthy();
-    expect(screen.getByTestId('filter-chip-hymenophore-kolce').props.accessibilityState).toEqual({ selected: true });
+    expect(screen.getByTestId('filter-chip-hymenophore-kolce').props.accessibilityState).toEqual({
+      selected: true,
+    });
     expect(screen.getByTestId('filter-active-hymenophore-kolce').props.accessibilityLabel).toBe(
       'Usuń filtr: Spód kapelusza: Kolce',
     );
-    expect(within(screen.getByTestId('filter-active-hymenophore-kolce')).getByText('Kolce ×')).toBeTruthy();
+    expect(
+      within(screen.getByTestId('filter-active-hymenophore-kolce')).getByText('Kolce ×'),
+    ).toBeTruthy();
 
     await fireEvent.press(screen.getByTestId('filter-active-hymenophore-kolce'));
     await waitFor(() => {
@@ -488,7 +523,9 @@ describe('AtlasScreen RTL Tests', () => {
       );
       expect(screen.getByTestId('atlas-result-count').props.children).not.toBe(withBoth);
       const visible = screen.getAllByTestId(/^atlas-card-[a-z0-9_]+$/).length;
-      expect(screen.getByTestId('atlas-filter-show').props.accessibilityLabel).toBe(`Pokaż ${visible} wyników`);
+      expect(screen.getByTestId('atlas-filter-show').props.accessibilityLabel).toBe(
+        `Pokaż ${visible} wyników`,
+      );
     });
 
     await fireEvent.press(screen.getByTestId('atlas-filter-clear'));
@@ -507,12 +544,18 @@ describe('AtlasScreen RTL Tests', () => {
 
     await fireEvent.press(screen.getByTestId('filter-chip-kind-edible'));
     await waitFor(() => {
-      expect(within(screen.getByTestId('atlas-matches')).queryByText('Muchomor sromotnikowy (zielonawy)')).toBeNull();
+      expect(
+        within(screen.getByTestId('atlas-matches')).queryByText(
+          'Muchomor sromotnikowy (zielonawy)',
+        ),
+      ).toBeNull();
     });
     await fireEvent.press(screen.getByTestId('filter-chip-kind-edible'));
     await waitFor(() => {
       expect(screen.getByText('Muchomor sromotnikowy (zielonawy)')).toBeTruthy();
-      expect(screen.getByTestId('filter-chip-kind-edible').props.accessibilityState).toEqual({ selected: false });
+      expect(screen.getByTestId('filter-chip-kind-edible').props.accessibilityState).toEqual({
+        selected: false,
+      });
     });
   });
 
@@ -520,7 +563,7 @@ describe('AtlasScreen RTL Tests', () => {
     const screen = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={() => {}} />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     await fireEvent.press(screen.getByTestId('atlas-filter-open'));
@@ -550,7 +593,7 @@ describe('AtlasScreen RTL Tests', () => {
     const screen = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={() => {}} />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     await fireEvent.press(screen.getByTestId('atlas-filter-open'));
@@ -576,12 +619,14 @@ describe('AtlasScreen RTL Tests', () => {
     const screen = await render(
       <LanguageProvider>
         <AtlasScreen onSelectSpecies={() => {}} />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     await fireEvent.press(screen.getByTestId('filter-chip-unverified'));
     await waitFor(() => {
-      expect(screen.getByTestId('filter-chip-unverified').props.accessibilityState).toEqual({ selected: true });
+      expect(screen.getByTestId('filter-chip-unverified').props.accessibilityState).toEqual({
+        selected: true,
+      });
       const results = screen.getByTestId('atlas-results');
       const unverified = screen.getByTestId('atlas-unverified');
       const matches = screen.getByTestId('atlas-matches');
@@ -612,7 +657,7 @@ describe('AtlasScreen RTL Tests', () => {
       const screen = await render(
         <LanguageProvider>
           <AtlasScreen onSelectSpecies={() => {}} />
-        </LanguageProvider>
+        </LanguageProvider>,
       );
 
       await fireEvent.press(screen.getByTestId('atlas-filter-open'));

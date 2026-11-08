@@ -57,7 +57,14 @@ const PLATFORM_FROM_PATH_NOT = `(?:^|/)node_modules/|^src/stories/|(?:${adapters
 /** Production UI. Used only for the platform reachability walk in the gate. */
 const UI_FROM = '^(?:App\\.tsx|index\\.ts|src/(?:screens|components|contexts|utils|stories)/)';
 
-const VALUE_DEPENDENCY_TYPES = ['npm', 'npm-dev', 'npm-optional', 'npm-peer', 'npm-no-pkg', 'npm-unknown'];
+const VALUE_DEPENDENCY_TYPES = [
+  'npm',
+  'npm-dev',
+  'npm-optional',
+  'npm-peer',
+  'npm-no-pkg',
+  'npm-unknown',
+];
 
 function importerRule(adapter) {
   return {
@@ -132,7 +139,12 @@ module.exports = {
       path: 'node_modules',
     },
     exclude: {
-      path: ['(^|/)__tests__/', '\\.(test|spec)\\.(ts|tsx|js|jsx)$', '(^|/)e2e/', 'storybook-static'],
+      path: [
+        '(^|/)__tests__/',
+        '\\.(test|spec)\\.(ts|tsx|js|jsx)$',
+        '(^|/)e2e/',
+        'storybook-static',
+      ],
     },
     tsPreCompilationDeps: true,
     tsConfig: {

@@ -16,7 +16,13 @@ interface Props {
   tone?: 'default' | 'warning';
 }
 
-export const AtlasFilterChip: React.FC<Props> = ({ chipId, label, active, onPress, tone = 'default' }) => {
+export const AtlasFilterChip: React.FC<Props> = ({
+  chipId,
+  label,
+  active,
+  onPress,
+  tone = 'default',
+}) => {
   const { t } = useLanguage();
   const warning = tone === 'warning';
   return (

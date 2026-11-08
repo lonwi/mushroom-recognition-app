@@ -39,7 +39,9 @@ export function galleryFeatureKey(speciesId: string, feature: GalleryFeature): s
     return wholeFeatureKey(speciesId);
   }
   if (feature === 'Y') {
-    return speciesId.startsWith(AMANITA_GENUS) ? 'gallery.feature.amanitaYoung' : 'gallery.feature.young';
+    return speciesId.startsWith(AMANITA_GENUS)
+      ? 'gallery.feature.amanitaYoung'
+      : 'gallery.feature.young';
   }
   if (speciesId === GYROMITRA) {
     return 'gallery.feature.undersideStem';

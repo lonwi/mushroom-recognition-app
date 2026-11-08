@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import {
   EMERGENCY_CALLS,
   GOLDEN_RULES,
@@ -51,142 +45,145 @@ export const SafetyGuideScreen = ({ onShowDisclaimer, onOpenPreparation }: Props
 
   return (
     <ScreenFrame title={t('safetyGuide.title')} subtitle={t('safetyGuide.subtitle')}>
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-          {/* Przyciski alarmowe 112 i 999 */}
-          <View style={styles.emergencyBtns}>
-            {EMERGENCY_CALLS.map((call) => (
-              <TouchableOpacity
-                key={call.number}
-                style={styles.emergencyBtn}
-                onPress={() => handleCall(call.number)}
-                activeOpacity={0.8}
-                accessibilityRole="button"
-                accessibilityLabel={t(call.titleKey)}
-                testID={`call-${call.number}`}
-              >
-                <Text style={styles.emergencyIcon}>🚨</Text>
-                <View style={{ flex: 1, marginLeft: 10 }}>
-                  <Text style={styles.emergencyTitle}>{t(call.titleKey)}</Text>
-                  <Text style={styles.emergencySub}>{t(call.subKey)}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Złote zasady grzybiarza */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('safetyGuide.goldenRulesTitle')}</Text>
-            {GOLDEN_RULES.map((rule) => (
-              <View
-                key={rule.id}
-                style={[styles.ruleCard, rule.critical && styles.ruleCardCritical]}
-              >
-                <View style={styles.ruleTop}>
-                  <Text style={styles.ruleBadge}>
-                    {rule.critical ? t('safetyGuide.badgeCritical') : t('safetyGuide.badgeTip')}
-                  </Text>
-                  <Text style={styles.ruleTitle}>{t(`safetyGuide.rules.${rule.id}.title`)}</Text>
-                </View>
-                <Text style={styles.ruleDesc}>{t(`safetyGuide.rules.${rule.id}.description`)}</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Główne zespoły zatruć */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('safetyGuide.syndromesTitle')}</Text>
-            {POISON_SYNDROMES.map((syn) => (
-              <View key={syn.id} style={styles.syndromeCard}>
-                <Text style={styles.synName}>{t(`safetyGuide.syndromes.${syn.id}.name`)}</Text>
-                <Text style={styles.synSpecies}>
-                  {t('safetyGuide.speciesLabel')} {t(`safetyGuide.syndromes.${syn.id}.species`)}
-                </Text>
-
-                <View style={styles.latencyBox}>
-                  <Text style={styles.latencyLabel}>{t('safetyGuide.latencyLabel')}</Text>
-                  <Text style={styles.latencyVal}>{t(`safetyGuide.syndromes.${syn.id}.latency`)}</Text>
-                </View>
-
-                <Text style={styles.synSymptomsLabel}>{t('safetyGuide.symptomsLabel')}</Text>
-                <Text style={styles.synSymptomsText}>{t(`safetyGuide.syndromes.${syn.id}.symptoms`)}</Text>
-
-                <View style={styles.synActionBox}>
-                  <Text style={styles.synActionText}>
-                    {t('safetyGuide.actionLabel')} {t(`safetyGuide.syndromes.${syn.id}.action`)}
-                  </Text>
-                </View>
-              </View>
-            ))}
-          </View>
-
-          {/* Ośrodki Informacji Toksykologicznej w Polsce */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('safetyGuide.centersTitle')}</Text>
-            <Text style={styles.sectionSub}>{t('safetyGuide.centersSub')}</Text>
-
-            {TOXICOLOGY_CENTERS.map((center) => (
-              <View key={center.city} style={styles.centerRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.centerCity}>{center.city}</Text>
-                  <Text style={styles.centerAddress}>{center.address}</Text>
-                  {center.hours ? (
-                    <Text style={styles.centerHours}>
-                      {t('safetyGuide.availabilityLabel')}{' '}
-                      {hoursLabel(center.hours)}
-                    </Text>
-                  ) : null}
-                </View>
-
-                <View style={styles.callCenterBtns}>
-                  {center.phones.map((phone) =>
-                    toTelUrl(phone) ? (
-                      <TouchableOpacity
-                        key={phone}
-                        style={styles.callCenterBtn}
-                        onPress={() => handleCall(phone)}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('safetyGuide.callCenterA11y', { city: center.city, phone })}
-                        testID={`call-center-${phone.replace(/\D/g, '')}`}
-                      >
-                        <Text style={styles.callCenterBtnText}>📞 {phone}</Text>
-                      </TouchableOpacity>
-                    ) : (
-                      // No tel: link for numbers that cannot be dialled directly (e.g. extensions).
-                      <Text key={phone} style={styles.centerPhoneText} selectable>
-                        {phone}
-                      </Text>
-                    ),
-                  )}
-                </View>
-              </View>
-            ))}
-          </View>
-
-          {/* Przycisk do Poradnika Przygotowania Grzybów */}
-          {handleOpenPreparation && (
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+        {/* Przyciski alarmowe 112 i 999 */}
+        <View style={styles.emergencyBtns}>
+          {EMERGENCY_CALLS.map((call) => (
             <TouchableOpacity
-              style={styles.preparationBtn}
-              onPress={handleOpenPreparation}
+              key={call.number}
+              style={styles.emergencyBtn}
+              onPress={() => handleCall(call.number)}
               activeOpacity={0.8}
-              testID="open-preparation"
+              accessibilityRole="button"
+              accessibilityLabel={t(call.titleKey)}
+              testID={`call-${call.number}`}
             >
-              <Text style={styles.preparationIcon}>🍳</Text>
+              <Text style={styles.emergencyIcon}>🚨</Text>
               <View style={{ flex: 1, marginLeft: 10 }}>
-                <Text style={styles.preparationTitle}>{t('safetyGuide.preparationTitle')}</Text>
-                <Text style={styles.preparationSub}>{t('safetyGuide.preparationSub')}</Text>
+                <Text style={styles.emergencyTitle}>{t(call.titleKey)}</Text>
+                <Text style={styles.emergencySub}>{t(call.subKey)}</Text>
               </View>
             </TouchableOpacity>
-          )}
+          ))}
+        </View>
 
-          {/* Przycisk ponownego wyświetlenia Disclaimer */}
+        {/* Złote zasady grzybiarza */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('safetyGuide.goldenRulesTitle')}</Text>
+          {GOLDEN_RULES.map((rule) => (
+            <View key={rule.id} style={[styles.ruleCard, rule.critical && styles.ruleCardCritical]}>
+              <View style={styles.ruleTop}>
+                <Text style={styles.ruleBadge}>
+                  {rule.critical ? t('safetyGuide.badgeCritical') : t('safetyGuide.badgeTip')}
+                </Text>
+                <Text style={styles.ruleTitle}>{t(`safetyGuide.rules.${rule.id}.title`)}</Text>
+              </View>
+              <Text style={styles.ruleDesc}>{t(`safetyGuide.rules.${rule.id}.description`)}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Główne zespoły zatruć */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('safetyGuide.syndromesTitle')}</Text>
+          {POISON_SYNDROMES.map((syn) => (
+            <View key={syn.id} style={styles.syndromeCard}>
+              <Text style={styles.synName}>{t(`safetyGuide.syndromes.${syn.id}.name`)}</Text>
+              <Text style={styles.synSpecies}>
+                {t('safetyGuide.speciesLabel')} {t(`safetyGuide.syndromes.${syn.id}.species`)}
+              </Text>
+
+              <View style={styles.latencyBox}>
+                <Text style={styles.latencyLabel}>{t('safetyGuide.latencyLabel')}</Text>
+                <Text style={styles.latencyVal}>
+                  {t(`safetyGuide.syndromes.${syn.id}.latency`)}
+                </Text>
+              </View>
+
+              <Text style={styles.synSymptomsLabel}>{t('safetyGuide.symptomsLabel')}</Text>
+              <Text style={styles.synSymptomsText}>
+                {t(`safetyGuide.syndromes.${syn.id}.symptoms`)}
+              </Text>
+
+              <View style={styles.synActionBox}>
+                <Text style={styles.synActionText}>
+                  {t('safetyGuide.actionLabel')} {t(`safetyGuide.syndromes.${syn.id}.action`)}
+                </Text>
+              </View>
+            </View>
+          ))}
+        </View>
+
+        {/* Ośrodki Informacji Toksykologicznej w Polsce */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('safetyGuide.centersTitle')}</Text>
+          <Text style={styles.sectionSub}>{t('safetyGuide.centersSub')}</Text>
+
+          {TOXICOLOGY_CENTERS.map((center) => (
+            <View key={center.city} style={styles.centerRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.centerCity}>{center.city}</Text>
+                <Text style={styles.centerAddress}>{center.address}</Text>
+                {center.hours ? (
+                  <Text style={styles.centerHours}>
+                    {t('safetyGuide.availabilityLabel')} {hoursLabel(center.hours)}
+                  </Text>
+                ) : null}
+              </View>
+
+              <View style={styles.callCenterBtns}>
+                {center.phones.map((phone) =>
+                  toTelUrl(phone) ? (
+                    <TouchableOpacity
+                      key={phone}
+                      style={styles.callCenterBtn}
+                      onPress={() => handleCall(phone)}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('safetyGuide.callCenterA11y', {
+                        city: center.city,
+                        phone,
+                      })}
+                      testID={`call-center-${phone.replace(/\D/g, '')}`}
+                    >
+                      <Text style={styles.callCenterBtnText}>📞 {phone}</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    // No tel: link for numbers that cannot be dialled directly (e.g. extensions).
+                    <Text key={phone} style={styles.centerPhoneText} selectable>
+                      {phone}
+                    </Text>
+                  ),
+                )}
+              </View>
+            </View>
+          ))}
+        </View>
+
+        {/* Przycisk do Poradnika Przygotowania Grzybów */}
+        {handleOpenPreparation && (
           <TouchableOpacity
-            style={styles.disclaimerReopenBtn}
-            onPress={onShowDisclaimer}
-            activeOpacity={0.7}
+            style={styles.preparationBtn}
+            onPress={handleOpenPreparation}
+            activeOpacity={0.8}
+            testID="open-preparation"
           >
-            <Text style={styles.disclaimerReopenText}>{t('safetyGuide.reopenDisclaimer')}</Text>
+            <Text style={styles.preparationIcon}>🍳</Text>
+            <View style={{ flex: 1, marginLeft: 10 }}>
+              <Text style={styles.preparationTitle}>{t('safetyGuide.preparationTitle')}</Text>
+              <Text style={styles.preparationSub}>{t('safetyGuide.preparationSub')}</Text>
+            </View>
           </TouchableOpacity>
-        </ScrollView>
+        )}
+
+        {/* Przycisk ponownego wyświetlenia Disclaimer */}
+        <TouchableOpacity
+          style={styles.disclaimerReopenBtn}
+          onPress={onShowDisclaimer}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.disclaimerReopenText}>{t('safetyGuide.reopenDisclaimer')}</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </ScreenFrame>
   );
 };

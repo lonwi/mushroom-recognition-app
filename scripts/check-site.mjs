@@ -85,7 +85,9 @@ function inside(file) {
 }
 
 function htmlFiles() {
-  return walk(root).filter((file) => file.endsWith('.html')).sort();
+  return walk(root)
+    .filter((file) => file.endsWith('.html'))
+    .sort();
 }
 
 function langFor(file) {
@@ -189,11 +191,14 @@ function checkEmergencyNumbers(files) {
     for (const number of phoneNumbersInHtml(html)) found.add(number);
   }
   if (!sameNumbers(found, allowed)) {
-    report(`site phones [${[...found].sort().join(' ')}] != EMERGENCY_CALLS [${[...allowed].sort().join(' ')}]`);
+    report(
+      `site phones [${[...found].sort().join(' ')}] != EMERGENCY_CALLS [${[...allowed].sort().join(' ')}]`,
+    );
   }
   const corpus = pages.join('\n');
   for (const number of numbersOutside(allowed, [safetyRules])) {
-    if (corpus.includes(number)) report(`site contains a non-emergency number from safetyRules (${number})`);
+    if (corpus.includes(number))
+      report(`site contains a non-emergency number from safetyRules (${number})`);
   }
   for (const center of safetyRules.TOXICOLOGY_CENTERS) {
     for (const phone of center.phones) {
@@ -248,7 +253,10 @@ for (const file of files) {
   for (const needle of trackerNeedles) {
     if (lowered.includes(needle)) report(`${where}: blocked ${needle}`);
   }
-  if (!text.includes('http-equiv="Content-Security-Policy"') || !text.includes("default-src 'none'")) {
+  if (
+    !text.includes('http-equiv="Content-Security-Policy"') ||
+    !text.includes("default-src 'none'")
+  ) {
     report(`${where}: missing strict Content-Security-Policy`);
   }
   for (const fragment of toxicologyFragments()) {

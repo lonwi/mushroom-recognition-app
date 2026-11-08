@@ -24,7 +24,12 @@ describe('safety_tag', () => {
       expect(tags.get(mushroom.id)).toBe(expectedTag[mushroom.status]);
     }
     expect(checked).toBe(37);
-    for (const id of ['amanita_rubescens', 'amanita_citrina', 'cortinarius_orellanus', 'cortinarius_rubellus']) {
+    for (const id of [
+      'amanita_rubescens',
+      'amanita_citrina',
+      'cortinarius_orellanus',
+      'cortinarius_rubellus',
+    ]) {
       expect(MUSHROOMS_DATABASE.some((mushroom) => mushroom.id === id)).toBe(true);
       expect(tags.has(id)).toBe(true);
     }

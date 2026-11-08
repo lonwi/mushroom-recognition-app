@@ -24,7 +24,10 @@ export class JournalBackupStore {
     } catch {
       throw new Error('Lista kopii dziennika jest uszkodzona');
     }
-    if (!Array.isArray(parsed) || parsed.some((id) => typeof id !== 'string' || !SAFE_BACKUP_ID.test(id))) {
+    if (
+      !Array.isArray(parsed) ||
+      parsed.some((id) => typeof id !== 'string' || !SAFE_BACKUP_ID.test(id))
+    ) {
       throw new Error('Lista kopii dziennika jest uszkodzona');
     }
     return parsed;
@@ -117,7 +120,9 @@ export class JournalBackupStore {
    */
   private async rotateBackups(ids: string[], protectId?: string): Promise<void> {
     const ordered =
-      protectId && ids.includes(protectId) ? [...ids.filter((id) => id !== protectId), protectId] : ids;
+      protectId && ids.includes(protectId)
+        ? [...ids.filter((id) => id !== protectId), protectId]
+        : ids;
     if (ordered.length <= MAX_JOURNAL_BACKUPS) return;
     const dropped = ordered.slice(0, ordered.length - MAX_JOURNAL_BACKUPS);
     const kept = ordered.slice(ordered.length - MAX_JOURNAL_BACKUPS);

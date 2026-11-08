@@ -3,7 +3,10 @@ import fs from 'fs';
 import path from 'path';
 
 import * as classifiedPhotoTally from '../../services/classifiedPhotoTally';
-import { classifiedPhotoCount, resetClassifiedPhotoCountForTests } from '../../services/classifiedPhotoTally';
+import {
+  classifiedPhotoCount,
+  resetClassifiedPhotoCountForTests,
+} from '../../services/classifiedPhotoTally';
 import { classifyImageWithDeps } from '../../services/classifierService';
 import { decideFromLogits } from '../../services/recognitionDecision';
 import { createJournalEntryFromScan } from '../../services/journalEntry';
@@ -266,7 +269,10 @@ describe('tflite hardware delegate', () => {
       calls.push(delegates.slice());
       return { run: async () => [logitsBuffer()] };
     });
-    const { runtime } = loadRuntime(load, passingRelease('android-gpu', 'a'.repeat(64), 'b'.repeat(64), 'c'.repeat(64)));
+    const { runtime } = loadRuntime(
+      load,
+      passingRelease('android-gpu', 'a'.repeat(64), 'b'.repeat(64), 'c'.repeat(64)),
+    );
     const { Platform } = require('react-native') as typeof import('react-native');
     Platform.OS = 'android';
     devFlag().__DEV__ = false;
@@ -309,7 +315,12 @@ describe('tflite hardware delegate', () => {
     devFlag().__DEV__ = true;
 
     const pathWritten = await runtime.writeDelegateCalibrationDump([
-      { file: 'val/cap.png', split: 'val', classId: 'amanita_phalloides', input: new Float32Array(3) },
+      {
+        file: 'val/cap.png',
+        split: 'val',
+        classId: 'amanita_phalloides',
+        input: new Float32Array(3),
+      },
     ]);
 
     expect(pathWritten).toBe('file:///mock/cache/delegate-calibration.json');
@@ -353,7 +364,8 @@ describe('tflite hardware delegate', () => {
     const result = await classifyImageWithDeps('file://camera/cap.jpg', {
       packagedModel: 1,
       manifest,
-      readPngBytes: async () => new Uint8Array(fs.readFileSync(path.join(__dirname, '../fixtures/solid-red-2x2.png'))),
+      readPngBytes: async () =>
+        new Uint8Array(fs.readFileSync(path.join(__dirname, '../fixtures/solid-red-2x2.png'))),
       runLogits: (input) => runtime.runPackagedTflite(input),
     });
     const decision = decideFromLogits(logits, manifest);

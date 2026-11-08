@@ -28,7 +28,7 @@ describe('SpeciesDetailScreen safety notices', () => {
         species={species('paxillus_involutus')}
         onBack={() => {}}
         onOpenLookAlike={() => {}}
-      />
+      />,
     );
 
     expect(queryByTestId('lookalike-incomplete')).toBeNull();
@@ -44,7 +44,7 @@ describe('SpeciesDetailScreen safety notices', () => {
 
   it('names caesarea and young blusher on muchomor czerwony, without Russula', async () => {
     const { getByTestId, getByText, queryByTestId, queryByText } = await render(
-      <SpeciesDetailScreen species={species('amanita_muscaria')} onBack={() => {}} />
+      <SpeciesDetailScreen species={species('amanita_muscaria')} onBack={() => {}} />,
     );
 
     expect(queryByTestId('lookalike-incomplete')).toBeNull();
@@ -115,7 +115,7 @@ describe('SpeciesDetailScreen safety notices', () => {
 
   it('omits the season calendar when a card has no checked months', async () => {
     const { getByTestId, queryByTestId, getByText } = await render(
-      <SpeciesDetailScreen species={species('rubroboletus_satanas')} onBack={() => {}} />
+      <SpeciesDetailScreen species={species('rubroboletus_satanas')} onBack={() => {}} />,
     );
 
     expect(getByTestId('species-season-omitted').props.children).toBe(
@@ -129,7 +129,7 @@ describe('SpeciesDetailScreen safety notices', () => {
 
   it('shows fatal look-alike risk and warning notes for kania', async () => {
     const { getByTestId, getByText } = await render(
-      <SpeciesDetailScreen species={species('macrolepiota_procera')} onBack={() => {}} />
+      <SpeciesDetailScreen species={species('macrolepiota_procera')} onBack={() => {}} />,
     );
 
     expect(getByTestId('fatal-lookalike-banner')).toBeTruthy();
@@ -146,7 +146,7 @@ describe('SpeciesDetailScreen safety notices', () => {
         species={species('macrolepiota_procera')}
         onBack={() => {}}
         onOpenLookAlike={onOpenLookAlike}
-      />
+      />,
     );
 
     fireEvent.press(screen.getByTestId('lookalike-link-amanita_phalloides'));
@@ -160,7 +160,7 @@ describe('SpeciesDetailScreen safety notices', () => {
         species={species('russula_virescens')}
         onBack={() => {}}
         onOpenLookAlike={() => {}}
-      />
+      />,
     );
 
     expect(getByTestId('species-photo-missing')).toBeTruthy();
@@ -180,7 +180,7 @@ describe('SpeciesDetailScreen safety notices', () => {
 
   it('shows the blusher cooking warning and the panther twin on the unfinished card', async () => {
     const { getAllByText, getByTestId, getByText, queryByText } = await render(
-      <SpeciesDetailScreen species={species('amanita_rubescens')} onBack={() => {}} />
+      <SpeciesDetailScreen species={species('amanita_rubescens')} onBack={() => {}} />,
     );
 
     expect(getByTestId('incomplete-card-banner')).toBeTruthy();
@@ -206,7 +206,7 @@ describe('SpeciesDetailScreen safety notices', () => {
 
   it('keeps a finished edible card on the green badge', async () => {
     const { getByText, getByTestId, queryByTestId } = await render(
-      <SpeciesDetailScreen species={species('boletus_edulis')} onBack={() => {}} />
+      <SpeciesDetailScreen species={species('boletus_edulis')} onBack={() => {}} />,
     );
 
     expect(getByText('JADALNY')).toBeTruthy();
@@ -246,7 +246,7 @@ describe('SpeciesDetailScreen safety notices', () => {
 
   it('keeps the green kitchen section on a finished edible species', async () => {
     const { getByTestId, getByText, queryByText } = await render(
-      <SpeciesDetailScreen species={species('macrolepiota_procera')} onBack={() => {}} />
+      <SpeciesDetailScreen species={species('macrolepiota_procera')} onBack={() => {}} />,
     );
 
     expect(getByTestId('species-use-edible')).toBeTruthy();
@@ -256,7 +256,7 @@ describe('SpeciesDetailScreen safety notices', () => {
 
   it('shows the incomplete badge on look-alike rows that point at unfinished edible cards', async () => {
     const { getByTestId, getByText } = await render(
-      <SpeciesDetailScreen species={species('amanita_phalloides')} onBack={() => {}} />
+      <SpeciesDetailScreen species={species('amanita_phalloides')} onBack={() => {}} />,
     );
 
     expect(getByTestId('incomplete-card-badge-russula_virescens')).toBeTruthy();
@@ -281,19 +281,16 @@ describe('SpeciesDetailScreen safety notices', () => {
     }
   });
 
-  it.each(redWarningIds)(
-    'shows a red look-alike warning for %s',
-    async (id) => {
-      const card = species(id);
-      const { getByTestId, getByText } = await render(
-        <SpeciesDetailScreen species={card} onBack={() => {}} />
-      );
+  it.each(redWarningIds)('shows a red look-alike warning for %s', async (id) => {
+    const card = species(id);
+    const { getByTestId, getByText } = await render(
+      <SpeciesDetailScreen species={card} onBack={() => {}} />,
+    );
 
-      expect(getByTestId('fatal-lookalike-banner')).toBeTruthy();
-      expect(getByText('Śmiertelnie groźny sobowtór w tej karcie')).toBeTruthy();
-      expect(getByText('ŚMIERTELNIE GROŹNE SOBOWTÓRY!')).toBeTruthy();
-    },
-  );
+    expect(getByTestId('fatal-lookalike-banner')).toBeTruthy();
+    expect(getByText('Śmiertelnie groźny sobowtór w tej karcie')).toBeTruthy();
+    expect(getByText('ŚMIERTELNIE GROŹNE SOBOWTÓRY!')).toBeTruthy();
+  });
 });
 
 describe('SpeciesDetailScreen language', () => {
@@ -305,7 +302,7 @@ describe('SpeciesDetailScreen language', () => {
     return render(
       <LanguageProvider>
         <SpeciesDetailScreen species={species(id)} onBack={() => {}} />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
   }
 
@@ -313,17 +310,25 @@ describe('SpeciesDetailScreen language', () => {
     const edible = await renderSpecies('boletus_edulis');
     expect(edible.getByText('W kuchni')).toBeTruthy();
     expect(edible.getByTestId('species-back-label').props.children).toBe(pl.nav.atlas);
-    expect(edible.getByTestId('species-hymenophore').props.children).toBe(pl.atlas.hymenophoreTubes);
+    expect(edible.getByTestId('species-hymenophore').props.children).toBe(
+      pl.atlas.hymenophoreTubes,
+    );
     expect(edible.getByTestId('species-family-label').props.children).toBe(pl.cards.family);
-    expect(edible.getByTestId('species-other-names-label').props.children).toBe(pl.cards.otherNames);
+    expect(edible.getByTestId('species-other-names-label').props.children).toBe(
+      pl.cards.otherNames,
+    );
     expect(edible.getByTestId('species-season-label').props.children).toBe(pl.cards.seasonPoland);
-    expect(edible.getByTestId('species-morphology-heading').props.children).toBe(pl.cards.morphologyHabitat);
+    expect(edible.getByTestId('species-morphology-heading').props.children).toBe(
+      pl.cards.morphologyHabitat,
+    );
     expect(edible.getByTestId('species-occurrence-label').props.children).toBe(pl.cards.occurrence);
     expect(edible.getByTestId('species-cap-label').props.children).toBe(pl.cards.cap);
     expect(edible.getByTestId('species-underside-label').props.children).toBe('Spód (Rurki)');
     expect(edible.getByTestId('species-stem-label').props.children).toBe(pl.cards.stemVeil);
     expect(edible.getByTestId('species-flesh-label').props.children).toBe(pl.cards.fleshTasteSmell);
-    expect(edible.getByTestId('species-significance-heading').props.children).toBe(pl.cards.significanceUse);
+    expect(edible.getByTestId('species-significance-heading').props.children).toBe(
+      pl.cards.significanceUse,
+    );
     expect(edible.queryByText('FAMILY')).toBeNull();
     expect(edible.queryByText('Significance and use')).toBeNull();
     expect(edible.queryByText('Tubes')).toBeNull();
@@ -362,26 +367,38 @@ describe('SpeciesDetailScreen language', () => {
     expect(await edible.findByText('In the kitchen')).toBeTruthy();
     expect(edible.queryByText('W kuchni')).toBeNull();
     expect(edible.getByTestId('species-back-label').props.children).toBe(en.nav.atlas);
-    expect(edible.getByTestId('species-hymenophore').props.children).toBe(en.atlas.hymenophoreTubes);
+    expect(edible.getByTestId('species-hymenophore').props.children).toBe(
+      en.atlas.hymenophoreTubes,
+    );
     expect(edible.getByTestId('species-family-label').props.children).toBe(en.cards.family);
-    expect(edible.getByTestId('species-other-names-label').props.children).toBe(en.cards.otherNames);
+    expect(edible.getByTestId('species-other-names-label').props.children).toBe(
+      en.cards.otherNames,
+    );
     expect(edible.getByTestId('species-season-label').props.children).toBe(en.cards.seasonPoland);
-    expect(edible.getByTestId('species-morphology-heading').props.children).toBe(en.cards.morphologyHabitat);
+    expect(edible.getByTestId('species-morphology-heading').props.children).toBe(
+      en.cards.morphologyHabitat,
+    );
     expect(edible.getByTestId('species-occurrence-label').props.children).toBe(en.cards.occurrence);
     expect(edible.getByTestId('species-cap-label').props.children).toBe(en.cards.cap);
     expect(edible.getByTestId('species-underside-label').props.children).toBe('Underside (Tubes)');
     expect(edible.getByTestId('species-stem-label').props.children).toBe(en.cards.stemVeil);
     expect(edible.getByTestId('species-flesh-label').props.children).toBe(en.cards.fleshTasteSmell);
-    expect(edible.getByTestId('species-significance-heading').props.children).toBe(en.cards.significanceUse);
+    expect(edible.getByTestId('species-significance-heading').props.children).toBe(
+      en.cards.significanceUse,
+    );
     expect(edible.queryByText('RODZINA')).toBeNull();
     expect(edible.queryByText('Znaczenie i zastosowanie')).toBeNull();
     expect(edible.queryByText('Morfologia i siedlisko')).toBeNull();
     expect(edible.queryByText('Rurki')).toBeNull();
     expect(edible.queryByText('Kapelusz')).toBeNull();
     expect(edible.getByTestId('species-source-language-note').props.children).toBe(
-      en.cards.sourceLanguageNote
+      en.cards.sourceLanguageNote,
     );
-    expect(edible.getByText(/Descriptions, look-alike differences, and morphology are source text in Polish/)).toBeTruthy();
+    expect(
+      edible.getByText(
+        /Descriptions, look-alike differences, and morphology are source text in Polish/,
+      ),
+    ).toBeTruthy();
     expect(edible.getByTestId('species-month-1').props.children).toBe('Jan');
     expect(edible.getByTestId('species-month-6').props.children).toBe('Jun');
     expect(edible.getByTestId('species-month-12').props.children).toBe('Dec');
@@ -429,7 +446,9 @@ describe('SpeciesDetailScreen language', () => {
       const polish = await renderSpecies(id);
       const polishName = pl.atlas[key];
       expect(polish.getByTestId('species-hymenophore').props.children).toBe(polishName);
-      expect(polish.getByTestId('species-underside-label').props.children).toBe(`Spód (${polishName})`);
+      expect(polish.getByTestId('species-underside-label').props.children).toBe(
+        `Spód (${polishName})`,
+      );
       expect(polish.getByTestId('species-significance-heading').props.children).toBe(
         'Znaczenie i zastosowanie',
       );
@@ -485,7 +504,12 @@ describe('Species detail hero', () => {
 
     expect(photo.props.resizeMode).toBe('cover');
     expect(StyleSheet.flatten(frame.props.style).aspectRatio).toBeCloseTo(1200 / 896, 5);
-    expect(StyleSheet.flatten(photo.props.style)).toMatchObject({ top: 0, right: 0, bottom: 0, left: 0 });
+    expect(StyleSheet.flatten(photo.props.style)).toMatchObject({
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+    });
     expect(within(frame).queryByText('Muchomor sromotnikowy (zielonawy)')).toBeNull();
     expect(within(frame).queryByText('Amanita phalloides')).toBeNull();
 

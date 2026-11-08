@@ -71,7 +71,9 @@ function stableFactMissing(speciesId: string, field: string): boolean {
 function poisonousMissPermitted(speciesId: string, chip: { id: string; field?: string }): boolean {
   const field = stableField(chip);
   if (field != null && !stableFactMissing(speciesId, field)) return true;
-  return POISONOUS_MISS_ALLOWLIST.some((pair) => pair.speciesId === speciesId && pair.chipId === chip.id);
+  return POISONOUS_MISS_ALLOWLIST.some(
+    (pair) => pair.speciesId === speciesId && pair.chipId === chip.id,
+  );
 }
 
 function expectPoisonousMissRule(toxic: readonly { id: string }[]): void {
@@ -106,7 +108,9 @@ describe('atlas filter model', () => {
     expect(idsOf(apply([], 'zolciowy').matches)).toEqual(['tylopilus_felleus']);
     expect(idsOf(apply([], 'wlokniak ceglasty').matches)).toEqual(['inocybe_erubescens']);
     expect(idsOf(apply([], 'Inocybe erubescens').matches)).toEqual(['inocybe_erubescens']);
-    expect(idsOf(apply([], 'czubajnik czerwieniejacy').matches)).toEqual(['chlorophyllum_rhacodes']);
+    expect(idsOf(apply([], 'czubajnik czerwieniejacy').matches)).toEqual([
+      'chlorophyllum_rhacodes',
+    ]);
     expect(idsOf(apply([], 'czubajka czerwieniejaca').matches)).toEqual(['chlorophyllum_rhacodes']);
   });
 
@@ -132,7 +136,9 @@ describe('atlas filter model', () => {
     expect(matched).not.toContain('amanita_phalloides');
     expect(matched).not.toContain('tylopilus_felleus');
     expect(result.matches.every((row) => row.kind === 'edible')).toBe(true);
-    expect(idsOf(result.matches).concat(idsOf(result.unverified))).not.toContain('amanita_phalloides');
+    expect(idsOf(result.matches).concat(idsOf(result.unverified))).not.toContain(
+      'amanita_phalloides',
+    );
   });
 
   test('every fact key has a card and the loaded row has no status or proposal', () => {
@@ -155,12 +161,16 @@ describe('atlas filter model', () => {
   test('edible filter skips unfinished cards', () => {
     const edible = apply(['kind-edible']);
     const unfinished = MUSHROOMS_DATABASE.filter((species) => species.incompleteCard === true);
-    expect(unfinished.map((species) => species.id)).toEqual(expect.arrayContaining(UNFINISHED_EDIBLE));
+    expect(unfinished.map((species) => species.id)).toEqual(
+      expect.arrayContaining(UNFINISHED_EDIBLE),
+    );
     for (const species of unfinished) {
       expect(idsOf(edible.matches)).not.toContain(species.id);
       expect(idsOf(edible.unverified)).toContain(species.id);
     }
-    expect(edible.matches.every((row) => row.kind === 'edible' && row.species.status === 'EDIBLE')).toBe(true);
+    expect(
+      edible.matches.every((row) => row.kind === 'edible' && row.species.status === 'EDIBLE'),
+    ).toBe(true);
     expect(edible.matches.some((row) => row.species.incompleteCard === true)).toBe(false);
     expect(idsOf(edible.matches)).toContain('boletus_edulis');
     expect(idsOf(edible.matches)).not.toContain('amanita_phalloides');
@@ -168,7 +178,8 @@ describe('atlas filter model', () => {
   });
 
   test('kind follows the card status when the fact row is missing', () => {
-    const factsById = (id: string) => (id === 'suillus_luteus' ? undefined : ATLAS_FILTER_FACTS[id]);
+    const factsById = (id: string) =>
+      id === 'suillus_luteus' ? undefined : ATLAS_FILTER_FACTS[id];
     const edible = applyAtlasFilters(MUSHROOMS_DATABASE, {
       query: '',
       chipIds: new Set(['kind-edible']),
@@ -208,7 +219,9 @@ describe('atlas filter model', () => {
     const yellow = apply(['spore-zolty']);
     expect(idsOf(white.matches)).toContain('russula_virescens');
     expect(idsOf(cream.matches)).toContain('russula_virescens');
-    expect(idsOf(yellow.matches).concat(idsOf(yellow.unverified))).not.toContain('russula_virescens');
+    expect(idsOf(yellow.matches).concat(idsOf(yellow.unverified))).not.toContain(
+      'russula_virescens',
+    );
     expect(idsOf(cream.matches)).not.toContain('hygrophoropsis_aurantiaca');
     expect(idsOf(cream.unverified)).toContain('hygrophoropsis_aurantiaca');
   });
@@ -228,7 +241,9 @@ describe('atlas filter model', () => {
       ]),
     );
     expect(idsOf(sheath.matches)).toContain('amanita_rubescens');
-    expect(idsOf(neither.matches).concat(idsOf(neither.unverified))).not.toContain('amanita_rubescens');
+    expect(idsOf(neither.matches).concat(idsOf(neither.unverified))).not.toContain(
+      'amanita_rubescens',
+    );
     expect(idsOf(neither.matches)).not.toContain('amanita_citrina');
     expect(idsOf(neither.unverified)).toContain('amanita_citrina');
     expect(ATLAS_FILTER_FACTS.amanita_rubescens?.volva).toBe('bulwa');
@@ -243,11 +258,18 @@ describe('atlas filter model', () => {
     }
     const sheath = idsOf(apply(['volva-pochwa']).matches);
     expect(sheath).toEqual(
-      expect.arrayContaining(['amanita_phalloides', 'amanita_virosa', 'amanita_citrina', 'amanita_rubescens']),
+      expect.arrayContaining([
+        'amanita_phalloides',
+        'amanita_virosa',
+        'amanita_citrina',
+        'amanita_rubescens',
+      ]),
     );
     expect(ATLAS_FILTER_FACTS.hypholoma_capnoides?.ring).toBe(false);
     expect(ATLAS_FILTER_FACTS.hypholoma_fasciculare?.ring).toBe(false);
-    expect(ATLAS_FILTER_FACTS.hypholoma_capnoides?.stemFeatures).toEqual(expect.arrayContaining(['wlokna_zasnowki']));
+    expect(ATLAS_FILTER_FACTS.hypholoma_capnoides?.stemFeatures).toEqual(
+      expect.arrayContaining(['wlokna_zasnowki']),
+    );
     expect(ATLAS_FILTER_FACTS.hypholoma_fasciculare?.stemFeatures).toEqual(
       expect.arrayContaining(['wlokna_zasnowki']),
     );
@@ -263,7 +285,9 @@ describe('atlas filter model', () => {
       'ring',
       'volva',
     ]);
-    expect(chipIds.some((id) => /nietruj|non-poison|nonpoison|kind-safe|kind-deadly/i.test(id))).toBe(false);
+    expect(
+      chipIds.some((id) => /nietruj|non-poison|nonpoison|kind-safe|kind-deadly/i.test(id)),
+    ).toBe(false);
     expect(JSON.stringify(pl.atlas.filters)).not.toMatch(/nietruj/i);
     expect(JSON.stringify(en.atlas.filters)).not.toMatch(/non-poison|nonpoisonous/i);
 
@@ -284,7 +308,11 @@ describe('atlas filter model', () => {
   test('edible matches stay free of poisonous cards, including a deadly card with no filter row', () => {
     const edible = apply(['kind-edible']);
     expect(edible.matches.every((row) => row.kind === 'edible')).toBe(true);
-    expect(edible.matches.some((row) => row.species.status === 'POISONOUS' || row.species.status === 'DEADLY_POISONOUS')).toBe(false);
+    expect(
+      edible.matches.some(
+        (row) => row.species.status === 'POISONOUS' || row.species.status === 'DEADLY_POISONOUS',
+      ),
+    ).toBe(false);
     expect(idsOf(edible.matches)).not.toContain('amanita_phalloides');
     expect(idsOf(edible.unverified)).toContain('amanita_phalloides');
     expect(idsOf(edible.matches)).not.toContain('gyromitra_esculenta');
@@ -362,12 +390,24 @@ describe('atlas filter model', () => {
       'ring',
       'volva',
     ]);
-    const selected = new Set(['kind-edible', 'kind-poisonous', 'hymenophore-kolce', 'ring-present']);
+    const selected = new Set([
+      'kind-edible',
+      'kind-poisonous',
+      'hymenophore-kolce',
+      'ring-present',
+    ]);
     expect(panelFilterCount(selected)).toBe(2);
     expect(panelFilterCount(new Set(['kind-poisonous']))).toBe(0);
-    expect(activePanelChips(selected).map((chip) => chip.id)).toEqual(['hymenophore-kolce', 'ring-present']);
+    expect(activePanelChips(selected).map((chip) => chip.id)).toEqual([
+      'hymenophore-kolce',
+      'ring-present',
+    ]);
     expect(activePanelChips(new Set(['protection-brak', 'volva-brak']))).toEqual([
-      { id: 'protection-brak', group: 'atlas.filters.protection', label: 'atlas.filters.protectionNone' },
+      {
+        id: 'protection-brak',
+        group: 'atlas.filters.protection',
+        label: 'atlas.filters.protectionNone',
+      },
       { id: 'volva-brak', group: 'atlas.filters.volva', label: 'atlas.filters.volvaNone' },
     ]);
 
@@ -385,7 +425,9 @@ describe('atlas filter model', () => {
     const kinds = applyAtlasFilters(MUSHROOMS_DATABASE, { query: '', chipIds: cleared });
     expect(idsOf(kinds.matches)).toContain('amanita_phalloides');
     expect(idsOf(kinds.matches)).toContain('boletus_edulis');
-    expect(kinds.matches.every((row) => row.kind === 'edible' || row.kind === 'poisonous')).toBe(true);
+    expect(kinds.matches.every((row) => row.kind === 'edible' || row.kind === 'poisonous')).toBe(
+      true,
+    );
   });
 
   test('deselecting kind chips never hides poisonous mushrooms', () => {
@@ -399,7 +441,11 @@ describe('atlas filter model', () => {
     expect(all.matches).toHaveLength(MUSHROOMS_DATABASE.length);
     expect(idsOf(all.matches)).toContain('amanita_phalloides');
     expect(idsOf(all.matches)).toContain('gyromitra_esculenta');
-    expect(all.matches.some((row) => row.species.status === 'POISONOUS' || row.species.status === 'DEADLY_POISONOUS')).toBe(true);
+    expect(
+      all.matches.some(
+        (row) => row.species.status === 'POISONOUS' || row.species.status === 'DEADLY_POISONOUS',
+      ),
+    ).toBe(true);
 
     const panelOnly = apply(['hymenophore-blaszki']);
     const panelCleared = withoutPanelChips(new Set(['hymenophore-blaszki']));
@@ -445,10 +491,14 @@ describe('atlas filter model', () => {
   test('no hymenophore chip separates Gyromitra from Morchella', () => {
     expect(ATLAS_FILTER_FACTS.gyromitra_esculenta?.hymenophore).toBe('inne');
     expect(ATLAS_FILTER_FACTS.morchella_esculenta?.hymenophore).toBe('inne');
-    const chips = ATLAS_FILTER_GROUPS.flatMap((group) => group.chips).filter((chip) => stableField(chip) != null);
+    const chips = ATLAS_FILTER_GROUPS.flatMap((group) => group.chips).filter(
+      (chip) => stableField(chip) != null,
+    );
     expect(chips.length).toBeGreaterThan(0);
     for (const chip of chips) {
-      expect(outcomeClass('gyromitra_esculenta', chip.id)).toBe(outcomeClass('morchella_esculenta', chip.id));
+      expect(outcomeClass('gyromitra_esculenta', chip.id)).toBe(
+        outcomeClass('morchella_esculenta', chip.id),
+      );
     }
   });
 

@@ -22,7 +22,7 @@ describe('SettingsScreen RTL Tests', () => {
     const { getByTestId, getByText } = await render(
       <LanguageProvider>
         <SettingsScreen />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     expect(getByText('Język aplikacji')).toBeTruthy();
@@ -45,7 +45,7 @@ describe('SettingsScreen RTL Tests', () => {
     const { getByTestId, queryByTestId, queryByText, findAllByText } = await render(
       <LanguageProvider>
         <SettingsScreen />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     await fireEvent.press(getByTestId('btn-photo-credits'));
@@ -67,7 +67,7 @@ describe('SettingsScreen RTL Tests', () => {
     const { getByTestId, findByTestId, queryByText } = await render(
       <LanguageProvider>
         <SettingsScreen />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     await fireEvent.press(getByTestId('btn-photo-credits'));

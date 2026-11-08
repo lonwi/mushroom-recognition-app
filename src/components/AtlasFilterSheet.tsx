@@ -69,7 +69,9 @@ export const AtlasFilterSheet: React.FC<Props> = ({
               style={styles.showButton}
               onPress={onClose}
             >
-              <Text style={styles.showText}>{t('atlas.filters.show', { count: visibleCount })}</Text>
+              <Text style={styles.showText}>
+                {t('atlas.filters.show', { count: visibleCount })}
+              </Text>
             </TouchableOpacity>
           </View>
           <ScrollView

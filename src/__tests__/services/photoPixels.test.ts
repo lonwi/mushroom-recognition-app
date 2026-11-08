@@ -103,7 +103,12 @@ describe('uprightCaptureWidth', () => {
 });
 
 describe('uprightWidthFromExif', () => {
-  const stored = { PixelXDimension: 4032, PixelYDimension: 3024, ImageWidth: 4032, ImageLength: 3024 };
+  const stored = {
+    PixelXDimension: 4032,
+    PixelYDimension: 3024,
+    ImageWidth: 4032,
+    ImageLength: 3024,
+  };
 
   it('keeps the stored width for orientations 1–4', () => {
     for (const orientation of [1, 2, 3, 4]) {
@@ -118,8 +123,12 @@ describe('uprightWidthFromExif', () => {
   });
 
   it('reads Android ImageWidth and iOS PixelXDimension, including nested exif', () => {
-    expect(uprightWidthFromExif({ Orientation: 6, ImageWidth: 4032, ImageLength: 3024 })).toBe(3024);
-    expect(uprightWidthFromExif({ Orientation: 1, PixelXDimension: 800, PixelYDimension: 600 })).toBe(800);
+    expect(uprightWidthFromExif({ Orientation: 6, ImageWidth: 4032, ImageLength: 3024 })).toBe(
+      3024,
+    );
+    expect(
+      uprightWidthFromExif({ Orientation: 1, PixelXDimension: 800, PixelYDimension: 600 }),
+    ).toBe(800);
     expect(
       uprightWidthFromExif({
         '{Exif}': { Orientation: '8', PixelXDimension: '4032', PixelYDimension: '3024' },
@@ -170,6 +179,8 @@ describe('uprightWidthFromExif', () => {
       exif: { Orientation: 6, PixelXDimension: 4032, PixelYDimension: 3024 },
     };
     expect(widthForCapture(portrait, SKIP_PROCESSING_CAPTURE)).toBe(3024);
-    expect(widthForCapture({ width: 3024, exif: portrait.exif }, { skipProcessing: false })).toBe(3024);
+    expect(widthForCapture({ width: 3024, exif: portrait.exif }, { skipProcessing: false })).toBe(
+      3024,
+    );
   });
 });

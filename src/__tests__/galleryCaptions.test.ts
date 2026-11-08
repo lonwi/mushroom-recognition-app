@@ -26,7 +26,11 @@ const PLAIN = new Set([
   'tricholoma_equestre',
 ]);
 const TUBES = new Set(['suillellus_luridus', 'rubroboletus_satanas']);
-const NOT_VOLVA = new Set(['inocybe_erubescens', 'agaricus_xanthodermus', 'chlorophyllum_rhacodes']);
+const NOT_VOLVA = new Set([
+  'inocybe_erubescens',
+  'agaricus_xanthodermus',
+  'chlorophyllum_rhacodes',
+]);
 const GYROMITRA = 'gyromitra_esculenta';
 
 const BULB = /bulw|pochw|bulb|volva/i;
@@ -54,7 +58,12 @@ function bulwaOnlyAsNegation(text: string): boolean {
   return any;
 }
 
-function bulbWordsAllowed(speciesId: string, feature: GalleryFeature, language: 'pl' | 'en', text: string): boolean {
+function bulbWordsAllowed(
+  speciesId: string,
+  feature: GalleryFeature,
+  language: 'pl' | 'en',
+  text: string,
+): boolean {
   if (AMANITA.has(speciesId) && feature === 'W') {
     return true;
   }
@@ -67,7 +76,12 @@ function bulbWordsAllowed(speciesId: string, feature: GalleryFeature, language: 
   return /is not an Amanita volva or bulb/.test(text) && !/with the bulb or volva/.test(text);
 }
 
-function expectRestrictedWords(speciesId: string, feature: GalleryFeature, language: 'pl' | 'en', text: string): void {
+function expectRestrictedWords(
+  speciesId: string,
+  feature: GalleryFeature,
+  language: 'pl' | 'en',
+  text: string,
+): void {
   const where = `${speciesId} ${feature}: ${text}`;
   expect({ where, bulb: BULB.test(text) }).toEqual({
     where,
@@ -87,7 +101,12 @@ function phrase(language: 'pl' | 'en', polish: string, english: string): string 
   return language === 'pl' ? polish : english;
 }
 
-function expectSwollenBaseCopy(speciesId: string, feature: GalleryFeature, language: 'pl' | 'en', text: string): void {
+function expectSwollenBaseCopy(
+  speciesId: string,
+  feature: GalleryFeature,
+  language: 'pl' | 'en',
+  text: string,
+): void {
   if (!NOT_VOLVA.has(speciesId) || feature !== 'W') {
     return;
   }
@@ -101,15 +120,24 @@ function expectSwollenBaseCopy(speciesId: string, feature: GalleryFeature, langu
   expect(text).toMatch(language === 'pl' ? /nie ma pochwy/ : /no volva/);
 }
 
-function expectGroupCopy(speciesId: string, feature: GalleryFeature, language: 'pl' | 'en', text: string): void {
+function expectGroupCopy(
+  speciesId: string,
+  feature: GalleryFeature,
+  language: 'pl' | 'en',
+  text: string,
+): void {
   if (CORTINA.has(speciesId) && feature === 'G') {
     expect(text).toMatch(language === 'pl' ? /zasnówk/ : /cortina/);
   }
   if (speciesId === GYROMITRA && feature === 'G') {
-    expect(text).toBe(phrase(language, pl.gallery.feature.undersideStem, en.gallery.feature.undersideStem));
+    expect(text).toBe(
+      phrase(language, pl.gallery.feature.undersideStem, en.gallery.feature.undersideStem),
+    );
   }
   if (!AMANITA.has(speciesId) && !NOT_VOLVA.has(speciesId) && feature === 'W') {
-    expect(text).toBe(phrase(language, pl.gallery.feature.wholeStemBase, en.gallery.feature.wholeStemBase));
+    expect(text).toBe(
+      phrase(language, pl.gallery.feature.wholeStemBase, en.gallery.feature.wholeStemBase),
+    );
   }
   if (!AMANITA.has(speciesId) && feature === 'Y') {
     expect(text).toBe(phrase(language, pl.gallery.feature.young, en.gallery.feature.young));

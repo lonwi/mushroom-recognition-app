@@ -34,7 +34,10 @@ function positiveInteger(value: unknown): number | undefined {
   return undefined;
 }
 
-function readKeyedInteger(record: Record<string, unknown>, keys: readonly string[]): number | undefined {
+function readKeyedInteger(
+  record: Record<string, unknown>,
+  keys: readonly string[],
+): number | undefined {
   for (const key of keys) {
     const parsed = positiveInteger(record[key]);
     if (parsed !== undefined) {
@@ -62,7 +65,9 @@ function dimensionPair(
  * `ImageWidth` + `ImageLength` wins over `PixelXDimension` + `PixelYDimension`,
  * even when the TIFF pair is on a later nested object.
  */
-function storedDimensionPair(records: Record<string, unknown>[]): { width: number; height: number } | undefined {
+function storedDimensionPair(
+  records: Record<string, unknown>[],
+): { width: number; height: number } | undefined {
   for (const record of records) {
     const tiff = dimensionPair(record, 'ImageWidth', TIFF_HEIGHT_KEYS);
     if (tiff) {
@@ -201,7 +206,11 @@ type ManipulatorContext = {
   renderAsync: () => Promise<{
     width: number;
     height: number;
-    saveAsync: (options: { compress: number; format: string; base64: boolean }) => Promise<{ base64?: string }>;
+    saveAsync: (options: {
+      compress: number;
+      format: string;
+      base64: boolean;
+    }) => Promise<{ base64?: string }>;
   }>;
 };
 

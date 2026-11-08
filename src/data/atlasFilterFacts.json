@@ -6,44 +6,21 @@
     "ring": true,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "kulisty",
-      "wypukly",
-      "plaski"
-    ],
-    "capColor": [
-      "bialy",
-      "kremowy"
-    ],
+    "capShape": ["kulisty", "wypukly", "plaski"],
+    "capColor": ["bialy", "kremowy"],
     "capSizeCm": {
       "min": 3,
       "max": 10
     },
-    "stemShape": [
-      "walcowaty"
-    ],
-    "stemColor": [
-      "bialy"
-    ],
-    "stemFeatures": [
-      "luskowaty"
-    ],
-    "smell": [
-      "niewyrazny"
-    ],
-    "taste": [
-      "niewyrazny"
-    ],
-    "fleshDiscoloration": [
-      "czerwienieje"
-    ],
-    "latex": [
-      "brak"
-    ],
+    "stemShape": ["walcowaty"],
+    "stemColor": ["bialy"],
+    "stemFeatures": ["luskowaty"],
+    "smell": ["niewyrazny"],
+    "taste": ["niewyrazny"],
+    "fleshDiscoloration": ["czerwienieje"],
+    "latex": ["brak"],
     "hostTrees": [],
-    "substrate": [
-      "gleba"
-    ]
+    "substrate": ["gleba"]
   },
   "agaricus_xanthodermus": {
     "psychoactive": false,
@@ -52,43 +29,21 @@
     "ring": true,
     "volva": "bulwa",
     "protection": "brak",
-    "capShape": [
-      "polkulisty",
-      "wypukly"
-    ],
-    "capColor": [
-      "bialy",
-      "kremowy",
-      "szary",
-      "brazowy"
-    ],
+    "capShape": ["polkulisty", "wypukly"],
+    "capColor": ["bialy", "kremowy", "szary", "brazowy"],
     "capSizeCm": {
       "min": 5,
       "max": 15
     },
-    "stemShape": [
-      "bulwiasty"
-    ],
-    "stemColor": [
-      "bialy"
-    ],
+    "stemShape": ["bulwiasty"],
+    "stemColor": ["bialy"],
     "stemFeatures": [],
-    "smell": [
-      "fenolowy"
-    ],
-    "taste": [
-      "nie_podaje_sie"
-    ],
-    "fleshDiscoloration": [
-      "zolknie"
-    ],
-    "latex": [
-      "brak"
-    ],
+    "smell": ["fenolowy"],
+    "taste": ["nie_podaje_sie"],
+    "fleshDiscoloration": ["zolknie"],
+    "latex": ["brak"],
     "hostTrees": [],
-    "substrate": [
-      "gleba"
-    ]
+    "substrate": ["gleba"]
   },
   "amanita_citrina": {
     "psychoactive": false,
@@ -97,46 +52,21 @@
     "ring": true,
     "volva": "bulwa",
     "protection": "brak",
-    "capShape": [
-      "polkulisty",
-      "plaski"
-    ],
-    "capColor": [
-      "zolty",
-      "zielony"
-    ],
+    "capShape": ["polkulisty", "plaski"],
+    "capColor": ["zolty", "zielony"],
     "capSizeCm": {
       "min": null,
       "max": 10
     },
-    "stemShape": [
-      "walcowaty",
-      "zweza_w_gore",
-      "bulwiasty"
-    ],
-    "stemColor": [
-      "bialy"
-    ],
+    "stemShape": ["walcowaty", "zweza_w_gore", "bulwiasty"],
+    "stemColor": ["bialy"],
     "stemFeatures": [],
-    "smell": [
-      "surowe_ziemniaki"
-    ],
-    "taste": [
-      "nie_podaje_sie"
-    ],
-    "fleshDiscoloration": [
-      "brak"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "sosna",
-      "swierk"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "smell": ["surowe_ziemniaki"],
+    "taste": ["nie_podaje_sie"],
+    "fleshDiscoloration": ["brak"],
+    "latex": ["brak"],
+    "hostTrees": ["sosna", "swierk"],
+    "substrate": ["gleba"]
   },
   "amanita_excelsa": {
     "psychoactive": false,
@@ -145,92 +75,41 @@
     "ring": true,
     "volva": "bulwa",
     "protection": "brak",
-    "capShape": [
-      "polkulisty",
-      "wypukly",
-      "plaski"
-    ],
-    "capColor": [
-      "szary",
-      "brazowy"
-    ],
+    "capShape": ["polkulisty", "wypukly", "plaski"],
+    "capColor": ["szary", "brazowy"],
     "capSizeCm": {
       "min": 8,
       "max": 15
     },
-    "stemShape": [
-      "walcowaty",
-      "bulwiasty"
-    ],
-    "stemColor": [
-      "bialy",
-      "brazowy"
-    ],
-    "stemFeatures": [
-      "luskowaty"
-    ],
-    "smell": [
-      "ziemisty"
-    ],
-    "taste": [
-      "niewyrazny"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "stemShape": ["walcowaty", "bulwiasty"],
+    "stemColor": ["bialy", "brazowy"],
+    "stemFeatures": ["luskowaty"],
+    "smell": ["ziemisty"],
+    "taste": ["niewyrazny"],
+    "latex": ["brak"],
+    "substrate": ["gleba"]
   },
   "amanita_muscaria": {
     "psychoactive": true,
     "hymenophore": "blaszki",
     "sporePrint": "bialy",
     "ring": true,
-    "volva": [
-      "bulwa",
-      "pochwa"
-    ],
+    "volva": ["bulwa", "pochwa"],
     "protection": "brak",
-    "capShape": [
-      "kulisty",
-      "wypukly",
-      "plaski"
-    ],
-    "capColor": [
-      "czerwony",
-      "pomaranczowy"
-    ],
+    "capShape": ["kulisty", "wypukly", "plaski"],
+    "capColor": ["czerwony", "pomaranczowy"],
     "capSizeCm": {
       "min": 10,
       "max": 20
     },
-    "stemShape": [
-      "walcowaty",
-      "bulwiasty"
-    ],
-    "stemColor": [
-      "bialy",
-      "zolty"
-    ],
+    "stemShape": ["walcowaty", "bulwiasty"],
+    "stemColor": ["bialy", "zolty"],
     "stemFeatures": [],
-    "smell": [
-      "niewyrazny"
-    ],
-    "taste": [
-      "nie_podaje_sie"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "sosna",
-      "swierk",
-      "brzoza"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "smell": ["niewyrazny"],
+    "taste": ["nie_podaje_sie"],
+    "latex": ["brak"],
+    "hostTrees": ["sosna", "swierk", "brzoza"],
+    "substrate": ["gleba"]
   },
   "amanita_pantherina": {
     "psychoactive": true,
@@ -239,48 +118,21 @@
     "ring": true,
     "volva": "pochwa",
     "protection": "brak",
-    "capShape": [
-      "kulisty",
-      "polkulisty",
-      "plaski"
-    ],
-    "capColor": [
-      "brazowy",
-      "szary"
-    ],
+    "capShape": ["kulisty", "polkulisty", "plaski"],
+    "capColor": ["brazowy", "szary"],
     "capSizeCm": {
       "min": 5,
       "max": 12
     },
-    "stemShape": [
-      "walcowaty",
-      "bulwiasty"
-    ],
-    "stemColor": [
-      "bialy"
-    ],
+    "stemShape": ["walcowaty", "bulwiasty"],
+    "stemColor": ["bialy"],
     "stemFeatures": [],
-    "smell": [
-      "rzodkiewkowy"
-    ],
-    "taste": [
-      "nie_podaje_sie"
-    ],
-    "fleshDiscoloration": [
-      "brak"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "sosna",
-      "swierk",
-      "dab",
-      "buk"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "smell": ["rzodkiewkowy"],
+    "taste": ["nie_podaje_sie"],
+    "fleshDiscoloration": ["brak"],
+    "latex": ["brak"],
+    "hostTrees": ["sosna", "swierk", "dab", "buk"],
+    "substrate": ["gleba"]
   },
   "amanita_phalloides": {
     "psychoactive": false,
@@ -289,51 +141,20 @@
     "ring": true,
     "volva": "pochwa",
     "protection": "brak",
-    "capShape": [
-      "polkulisty",
-      "jajowaty",
-      "plaski"
-    ],
-    "capColor": [
-      "zielony",
-      "oliwkowy",
-      "zolty",
-      "bialy",
-      "brazowy"
-    ],
+    "capShape": ["polkulisty", "jajowaty", "plaski"],
+    "capColor": ["zielony", "oliwkowy", "zolty", "bialy", "brazowy"],
     "capSizeCm": {
       "min": 5,
       "max": 12
     },
-    "stemShape": [
-      "walcowaty",
-      "bulwiasty"
-    ],
-    "stemColor": [
-      "bialy",
-      "oliwkowy",
-      "zielony"
-    ],
-    "stemFeatures": [
-      "zygzaki"
-    ],
-    "smell": [
-      "niewyrazny",
-      "mdlo_slodki"
-    ],
-    "taste": [
-      "nie_podaje_sie"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "dab",
-      "buk"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "stemShape": ["walcowaty", "bulwiasty"],
+    "stemColor": ["bialy", "oliwkowy", "zielony"],
+    "stemFeatures": ["zygzaki"],
+    "smell": ["niewyrazny", "mdlo_slodki"],
+    "taste": ["nie_podaje_sie"],
+    "latex": ["brak"],
+    "hostTrees": ["dab", "buk"],
+    "substrate": ["gleba"]
   },
   "amanita_rubescens": {
     "psychoactive": false,
@@ -342,48 +163,21 @@
     "ring": true,
     "volva": "bulwa",
     "protection": "brak",
-    "capShape": [
-      "wypukly",
-      "plaski"
-    ],
-    "capColor": [
-      "rozowy",
-      "czerwony",
-      "brazowy"
-    ],
+    "capShape": ["wypukly", "plaski"],
+    "capColor": ["rozowy", "czerwony", "brazowy"],
     "capSizeCm": {
       "min": 5,
       "max": 15
     },
-    "stemShape": [
-      "bulwiasty"
-    ],
-    "stemColor": [
-      "bialy",
-      "rozowy"
-    ],
+    "stemShape": ["bulwiasty"],
+    "stemColor": ["bialy", "rozowy"],
     "stemFeatures": [],
-    "smell": [
-      "niewyrazny"
-    ],
-    "taste": [
-      "niewyrazny"
-    ],
-    "fleshDiscoloration": [
-      "czerwienieje"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "sosna",
-      "brzoza",
-      "dab",
-      "buk"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "smell": ["niewyrazny"],
+    "taste": ["niewyrazny"],
+    "fleshDiscoloration": ["czerwienieje"],
+    "latex": ["brak"],
+    "hostTrees": ["sosna", "brzoza", "dab", "buk"],
+    "substrate": ["gleba"]
   },
   "amanita_virosa": {
     "psychoactive": false,
@@ -392,45 +186,19 @@
     "ring": true,
     "volva": "pochwa",
     "protection": "brak",
-    "capShape": [
-      "jajowaty",
-      "dzwonkowaty",
-      "plaski"
-    ],
-    "capColor": [
-      "bialy"
-    ],
+    "capShape": ["jajowaty", "dzwonkowaty", "plaski"],
+    "capColor": ["bialy"],
     "capSizeCm": {
       "min": 5,
       "max": 10
     },
-    "stemShape": [
-      "walcowaty",
-      "zweza_w_gore",
-      "bulwiasty"
-    ],
-    "stemColor": [
-      "bialy"
-    ],
-    "stemFeatures": [
-      "luskowaty"
-    ],
-    "taste": [
-      "nie_podaje_sie"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "sosna",
-      "swierk",
-      "brzoza",
-      "dab",
-      "buk"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "stemShape": ["walcowaty", "zweza_w_gore", "bulwiasty"],
+    "stemColor": ["bialy"],
+    "stemFeatures": ["luskowaty"],
+    "taste": ["nie_podaje_sie"],
+    "latex": ["brak"],
+    "hostTrees": ["sosna", "swierk", "brzoza", "dab", "buk"],
+    "substrate": ["gleba"]
   },
   "armillaria_mellea": {
     "psychoactive": false,
@@ -439,40 +207,18 @@
     "ring": true,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "polkulisty",
-      "wypukly",
-      "plaski"
-    ],
-    "capColor": [
-      "zolty",
-      "pomaranczowy",
-      "brazowy"
-    ],
+    "capShape": ["polkulisty", "wypukly", "plaski"],
+    "capColor": ["zolty", "pomaranczowy", "brazowy"],
     "capSizeCm": {
       "min": 5,
       "max": 13
     },
-    "stemShape": [
-      "walcowaty"
-    ],
-    "stemColor": [
-      "zolty",
-      "brazowy"
-    ],
-    "stemFeatures": [
-      "zrosniete"
-    ],
-    "fleshDiscoloration": [
-      "brak"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "substrate": [
-      "zywe_drzewo",
-      "martwe_drewno"
-    ]
+    "stemShape": ["walcowaty"],
+    "stemColor": ["zolty", "brazowy"],
+    "stemFeatures": ["zrosniete"],
+    "fleshDiscoloration": ["brak"],
+    "latex": ["brak"],
+    "substrate": ["zywe_drzewo", "martwe_drewno"]
   },
   "boletus_edulis": {
     "psychoactive": false,
@@ -481,51 +227,21 @@
     "ring": false,
     "volva": null,
     "protection": "brak",
-    "capShape": [
-      "polkulisty",
-      "wypukly"
-    ],
-    "capColor": [
-      "bialy",
-      "kremowy",
-      "brazowy"
-    ],
+    "capShape": ["polkulisty", "wypukly"],
+    "capColor": ["bialy", "kremowy", "brazowy"],
     "capSizeCm": {
       "min": null,
       "max": 15
     },
-    "stemShape": [
-      "beczkowaty",
-      "maczugowaty"
-    ],
-    "stemColor": [
-      "bialy",
-      "kremowy"
-    ],
-    "stemFeatures": [
-      "siateczka"
-    ],
-    "smell": [
-      "przyjemny",
-      "grzybowy"
-    ],
-    "taste": [
-      "lagodny"
-    ],
-    "fleshDiscoloration": [
-      "brak"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "sosna",
-      "swierk",
-      "brzoza"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "stemShape": ["beczkowaty", "maczugowaty"],
+    "stemColor": ["bialy", "kremowy"],
+    "stemFeatures": ["siateczka"],
+    "smell": ["przyjemny", "grzybowy"],
+    "taste": ["lagodny"],
+    "fleshDiscoloration": ["brak"],
+    "latex": ["brak"],
+    "hostTrees": ["sosna", "swierk", "brzoza"],
+    "substrate": ["gleba"]
   },
   "calocybe_gambosa": {
     "psychoactive": false,
@@ -534,42 +250,20 @@
     "ring": false,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "polkulisty",
-      "dzwonkowaty",
-      "plaski",
-      "z_garbkiem"
-    ],
-    "capColor": [
-      "bialy",
-      "kremowy"
-    ],
+    "capShape": ["polkulisty", "dzwonkowaty", "plaski", "z_garbkiem"],
+    "capColor": ["bialy", "kremowy"],
     "capSizeCm": {
       "min": 5,
       "max": 12
     },
-    "stemShape": [
-      "beczkowaty",
-      "walcowaty"
-    ],
-    "stemColor": [
-      "bialy",
-      "kremowy"
-    ],
+    "stemShape": ["beczkowaty", "walcowaty"],
+    "stemColor": ["bialy", "kremowy"],
     "stemFeatures": [],
-    "smell": [
-      "maczny"
-    ],
-    "taste": [
-      "maczny"
-    ],
-    "latex": [
-      "brak"
-    ],
+    "smell": ["maczny"],
+    "taste": ["maczny"],
+    "latex": ["brak"],
     "hostTrees": [],
-    "substrate": [
-      "gleba"
-    ]
+    "substrate": ["gleba"]
   },
   "cantharellus_cibarius": {
     "psychoactive": false,
@@ -578,38 +272,19 @@
     "ring": false,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "lejkowaty",
-      "nieregularny"
-    ],
-    "capColor": [
-      "zolty",
-      "pomaranczowy"
-    ],
+    "capShape": ["lejkowaty", "nieregularny"],
+    "capColor": ["zolty", "pomaranczowy"],
     "capSizeCm": {
       "min": null,
       "max": 10
     },
-    "stemShape": [
-      "zweza_w_dol"
-    ],
-    "stemColor": [
-      "zolty"
-    ],
+    "stemShape": ["zweza_w_dol"],
+    "stemColor": ["zolty"],
     "stemFeatures": [],
-    "smell": [
-      "przyjemny",
-      "owocowy"
-    ],
-    "taste": [
-      "lagodny"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "smell": ["przyjemny", "owocowy"],
+    "taste": ["lagodny"],
+    "latex": ["brak"],
+    "substrate": ["gleba"]
   },
   "chlorophyllum_rhacodes": {
     "psychoactive": false,
@@ -618,46 +293,21 @@
     "ring": true,
     "volva": "bulwa",
     "protection": "brak",
-    "capShape": [
-      "jajowaty",
-      "wypukly",
-      "z_garbkiem"
-    ],
-    "capColor": [
-      "brazowy",
-      "szary",
-      "bialy"
-    ],
+    "capShape": ["jajowaty", "wypukly", "z_garbkiem"],
+    "capColor": ["brazowy", "szary", "bialy"],
     "capSizeCm": {
       "min": 5,
       "max": 15
     },
-    "stemShape": [
-      "walcowaty",
-      "bulwiasty"
-    ],
-    "stemColor": [
-      "bialy",
-      "brazowy"
-    ],
+    "stemShape": ["walcowaty", "bulwiasty"],
+    "stemColor": ["bialy", "brazowy"],
     "stemFeatures": [],
-    "smell": [
-      "przyjemny"
-    ],
-    "taste": [
-      "nie_podaje_sie"
-    ],
-    "fleshDiscoloration": [
-      "czerwienieje",
-      "zolknie"
-    ],
-    "latex": [
-      "brak"
-    ],
+    "smell": ["przyjemny"],
+    "taste": ["nie_podaje_sie"],
+    "fleshDiscoloration": ["czerwienieje", "zolknie"],
+    "latex": ["brak"],
     "hostTrees": [],
-    "substrate": [
-      "gleba"
-    ]
+    "substrate": ["gleba"]
   },
   "cortinarius_orellanus": {
     "psychoactive": false,
@@ -666,49 +316,20 @@
     "ring": null,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "polkulisty",
-      "dzwonkowaty",
-      "wypukly",
-      "z_garbkiem"
-    ],
-    "capColor": [
-      "pomaranczowy",
-      "brazowy",
-      "czerwony"
-    ],
+    "capShape": ["polkulisty", "dzwonkowaty", "wypukly", "z_garbkiem"],
+    "capColor": ["pomaranczowy", "brazowy", "czerwony"],
     "capSizeCm": {
       "min": 4,
       "max": 7
     },
-    "stemShape": [
-      "walcowaty",
-      "zweza_w_dol"
-    ],
-    "stemColor": [
-      "zolty"
-    ],
-    "stemFeatures": [
-      "wlokniste_smugi",
-      "wlokna_zasnowki"
-    ],
-    "smell": [
-      "rzodkiewkowy"
-    ],
-    "taste": [
-      "nie_podaje_sie"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "brzoza",
-      "dab",
-      "buk"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "stemShape": ["walcowaty", "zweza_w_dol"],
+    "stemColor": ["zolty"],
+    "stemFeatures": ["wlokniste_smugi", "wlokna_zasnowki"],
+    "smell": ["rzodkiewkowy"],
+    "taste": ["nie_podaje_sie"],
+    "latex": ["brak"],
+    "hostTrees": ["brzoza", "dab", "buk"],
+    "substrate": ["gleba"]
   },
   "cortinarius_rubellus": {
     "psychoactive": false,
@@ -717,39 +338,18 @@
     "ring": null,
     "volva": null,
     "protection": "brak",
-    "capShape": [
-      "wypukly",
-      "plaski",
-      "z_garbkiem"
-    ],
-    "capColor": [
-      "brazowy",
-      "pomaranczowy"
-    ],
+    "capShape": ["wypukly", "plaski", "z_garbkiem"],
+    "capColor": ["brazowy", "pomaranczowy"],
     "capSizeCm": {
       "min": 4,
       "max": 8
     },
-    "stemFeatures": [
-      "wlokna_zasnowki",
-      "wzor_weza"
-    ],
-    "smell": [
-      "rzodkiewkowy"
-    ],
-    "taste": [
-      "nie_podaje_sie"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "sosna",
-      "swierk"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "stemFeatures": ["wlokna_zasnowki", "wzor_weza"],
+    "smell": ["rzodkiewkowy"],
+    "taste": ["nie_podaje_sie"],
+    "latex": ["brak"],
+    "hostTrees": ["sosna", "swierk"],
+    "substrate": ["gleba"]
   },
   "galerina_marginata": {
     "psychoactive": false,
@@ -758,47 +358,21 @@
     "ring": true,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "polkulisty",
-      "plaski",
-      "z_garbkiem"
-    ],
-    "capColor": [
-      "zolty",
-      "brazowy"
-    ],
+    "capShape": ["polkulisty", "plaski", "z_garbkiem"],
+    "capColor": ["zolty", "brazowy"],
     "capSizeCm": {
       "min": 1,
       "max": 5
     },
-    "stemShape": [
-      "walcowaty"
-    ],
-    "stemColor": [
-      "brazowy"
-    ],
-    "stemFeatures": [
-      "wlokniste_smugi"
-    ],
-    "smell": [
-      "maczny"
-    ],
-    "taste": [
-      "nie_podaje_sie"
-    ],
-    "fleshDiscoloration": [
-      "brak"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "swierk",
-      "buk"
-    ],
-    "substrate": [
-      "martwe_drewno"
-    ]
+    "stemShape": ["walcowaty"],
+    "stemColor": ["brazowy"],
+    "stemFeatures": ["wlokniste_smugi"],
+    "smell": ["maczny"],
+    "taste": ["nie_podaje_sie"],
+    "fleshDiscoloration": ["brak"],
+    "latex": ["brak"],
+    "hostTrees": ["swierk", "buk"],
+    "substrate": ["martwe_drewno"]
   },
   "gyromitra_esculenta": {
     "psychoactive": false,
@@ -807,42 +381,20 @@
     "ring": false,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "mozgowaty",
-      "nieregularny"
-    ],
-    "capColor": [
-      "brazowy",
-      "czerwony"
-    ],
+    "capShape": ["mozgowaty", "nieregularny"],
+    "capColor": ["brazowy", "czerwony"],
     "capSizeCm": {
       "min": 3,
       "max": 10
     },
-    "stemShape": [
-      "walcowaty"
-    ],
-    "stemColor": [
-      "bialy",
-      "szary"
-    ],
-    "stemFeatures": [
-      "bruzdowany",
-      "pusty"
-    ],
-    "smell": [
-      "niewyrazny"
-    ],
-    "taste": [
-      "nie_podaje_sie"
-    ],
-    "latex": [
-      "brak"
-    ],
+    "stemShape": ["walcowaty"],
+    "stemColor": ["bialy", "szary"],
+    "stemFeatures": ["bruzdowany", "pusty"],
+    "smell": ["niewyrazny"],
+    "taste": ["nie_podaje_sie"],
+    "latex": ["brak"],
     "hostTrees": [],
-    "substrate": [
-      "gleba"
-    ]
+    "substrate": ["gleba"]
   },
   "hydnum_repandum": {
     "psychoactive": false,
@@ -851,44 +403,20 @@
     "ring": false,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "wklesly",
-      "nieregularny"
-    ],
-    "capColor": [
-      "bialy",
-      "kremowy",
-      "pomaranczowy"
-    ],
+    "capShape": ["wklesly", "nieregularny"],
+    "capColor": ["bialy", "kremowy", "pomaranczowy"],
     "capSizeCm": {
       "min": 4,
       "max": 10
     },
-    "stemShape": [
-      "walcowaty"
-    ],
-    "stemColor": [
-      "kremowy",
-      "brazowy",
-      "bialy"
-    ],
+    "stemShape": ["walcowaty"],
+    "stemColor": ["kremowy", "brazowy", "bialy"],
     "stemFeatures": [],
-    "smell": [
-      "niewyrazny"
-    ],
-    "fleshDiscoloration": [
-      "brak"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "swierk",
-      "buk"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "smell": ["niewyrazny"],
+    "fleshDiscoloration": ["brak"],
+    "latex": ["brak"],
+    "hostTrees": ["swierk", "buk"],
+    "substrate": ["gleba"]
   },
   "hygrophoropsis_aurantiaca": {
     "psychoactive": false,
@@ -897,45 +425,20 @@
     "ring": false,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "wypukly",
-      "plaski",
-      "lejkowaty"
-    ],
-    "capColor": [
-      "zolty",
-      "pomaranczowy"
-    ],
+    "capShape": ["wypukly", "plaski", "lejkowaty"],
+    "capColor": ["zolty", "pomaranczowy"],
     "capSizeCm": {
       "min": 2,
       "max": 7
     },
-    "stemShape": [
-      "walcowaty"
-    ],
-    "stemColor": [
-      "pomaranczowy",
-      "zolty"
-    ],
+    "stemShape": ["walcowaty"],
+    "stemColor": ["pomaranczowy", "zolty"],
     "stemFeatures": [],
-    "smell": [
-      "przyjemny"
-    ],
-    "taste": [
-      "nie_podaje_sie"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "sosna",
-      "jodla",
-      "buk"
-    ],
-    "substrate": [
-      "sciolka",
-      "martwe_drewno"
-    ]
+    "smell": ["przyjemny"],
+    "taste": ["nie_podaje_sie"],
+    "latex": ["brak"],
+    "hostTrees": ["sosna", "jodla", "buk"],
+    "substrate": ["sciolka", "martwe_drewno"]
   },
   "hypholoma_capnoides": {
     "psychoactive": false,
@@ -944,51 +447,21 @@
     "ring": false,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "polkulisty",
-      "wypukly",
-      "plaski",
-      "z_garbkiem"
-    ],
-    "capColor": [
-      "zolty",
-      "pomaranczowy",
-      "brazowy"
-    ],
+    "capShape": ["polkulisty", "wypukly", "plaski", "z_garbkiem"],
+    "capColor": ["zolty", "pomaranczowy", "brazowy"],
     "capSizeCm": {
       "min": 3,
       "max": 7
     },
-    "stemShape": [
-      "walcowaty"
-    ],
-    "stemColor": [
-      "bialy",
-      "zolty",
-      "brazowy"
-    ],
-    "stemFeatures": [
-      "zrosniete",
-      "wlokna_zasnowki"
-    ],
-    "smell": [
-      "przyjemny"
-    ],
-    "taste": [
-      "lagodny"
-    ],
-    "fleshDiscoloration": [
-      "zolknie"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "swierk"
-    ],
-    "substrate": [
-      "martwe_drewno"
-    ]
+    "stemShape": ["walcowaty"],
+    "stemColor": ["bialy", "zolty", "brazowy"],
+    "stemFeatures": ["zrosniete", "wlokna_zasnowki"],
+    "smell": ["przyjemny"],
+    "taste": ["lagodny"],
+    "fleshDiscoloration": ["zolknie"],
+    "latex": ["brak"],
+    "hostTrees": ["swierk"],
+    "substrate": ["martwe_drewno"]
   },
   "hypholoma_fasciculare": {
     "psychoactive": false,
@@ -997,49 +470,20 @@
     "ring": false,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "wypukly",
-      "z_garbkiem"
-    ],
-    "capColor": [
-      "zolty",
-      "zielony",
-      "pomaranczowy"
-    ],
+    "capShape": ["wypukly", "z_garbkiem"],
+    "capColor": ["zolty", "zielony", "pomaranczowy"],
     "capSizeCm": {
       "min": 2,
       "max": 7
     },
-    "stemShape": [
-      "walcowaty"
-    ],
-    "stemColor": [
-      "zolty",
-      "zielony"
-    ],
-    "stemFeatures": [
-      "zrosniete",
-      "wlokna_zasnowki"
-    ],
-    "smell": [
-      "niewyrazny"
-    ],
-    "taste": [
-      "nie_podaje_sie"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "sosna",
-      "swierk",
-      "brzoza",
-      "dab",
-      "buk"
-    ],
-    "substrate": [
-      "martwe_drewno"
-    ]
+    "stemShape": ["walcowaty"],
+    "stemColor": ["zolty", "zielony"],
+    "stemFeatures": ["zrosniete", "wlokna_zasnowki"],
+    "smell": ["niewyrazny"],
+    "taste": ["nie_podaje_sie"],
+    "latex": ["brak"],
+    "hostTrees": ["sosna", "swierk", "brzoza", "dab", "buk"],
+    "substrate": ["martwe_drewno"]
   },
   "imleria_badia": {
     "psychoactive": false,
@@ -1048,45 +492,21 @@
     "ring": false,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "polkulisty",
-      "wypukly"
-    ],
-    "capColor": [
-      "brazowy"
-    ],
+    "capShape": ["polkulisty", "wypukly"],
+    "capColor": ["brazowy"],
     "capSizeCm": {
       "min": 5,
       "max": 15
     },
-    "stemShape": [
-      "walcowaty"
-    ],
-    "stemColor": [
-      "brazowy"
-    ],
-    "stemFeatures": [
-      "wlokniste_smugi"
-    ],
-    "smell": [
-      "przyjemny"
-    ],
-    "taste": [
-      "lagodny"
-    ],
-    "fleshDiscoloration": [
-      "slabo_sinieje"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "sosna",
-      "swierk"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "stemShape": ["walcowaty"],
+    "stemColor": ["brazowy"],
+    "stemFeatures": ["wlokniste_smugi"],
+    "smell": ["przyjemny"],
+    "taste": ["lagodny"],
+    "fleshDiscoloration": ["slabo_sinieje"],
+    "latex": ["brak"],
+    "hostTrees": ["sosna", "swierk"],
+    "substrate": ["gleba"]
   },
   "inocybe_erubescens": {
     "psychoactive": false,
@@ -1095,47 +515,19 @@
     "ring": null,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "dzwonkowaty",
-      "stozkowaty",
-      "plaski",
-      "z_garbkiem"
-    ],
-    "capColor": [
-      "bialy",
-      "pomaranczowy",
-      "czerwony"
-    ],
+    "capShape": ["dzwonkowaty", "stozkowaty", "plaski", "z_garbkiem"],
+    "capColor": ["bialy", "pomaranczowy", "czerwony"],
     "capSizeCm": {
       "min": 3,
       "max": 9
     },
-    "stemShape": [
-      "walcowaty"
-    ],
-    "stemColor": [
-      "bialy",
-      "rozowy"
-    ],
-    "stemFeatures": [
-      "wlokniste_smugi"
-    ],
-    "taste": [
-      "nie_podaje_sie"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "sosna",
-      "dab",
-      "buk",
-      "grab",
-      "lipa"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "stemShape": ["walcowaty"],
+    "stemColor": ["bialy", "rozowy"],
+    "stemFeatures": ["wlokniste_smugi"],
+    "taste": ["nie_podaje_sie"],
+    "latex": ["brak"],
+    "hostTrees": ["sosna", "dab", "buk", "grab", "lipa"],
+    "substrate": ["gleba"]
   },
   "kuehneromyces_mutabilis": {
     "psychoactive": false,
@@ -1144,41 +536,19 @@
     "ring": true,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "polkulisty",
-      "plaski",
-      "z_garbkiem"
-    ],
-    "capColor": [
-      "brazowy",
-      "pomaranczowy"
-    ],
+    "capShape": ["polkulisty", "plaski", "z_garbkiem"],
+    "capColor": ["brazowy", "pomaranczowy"],
     "capSizeCm": {
       "min": 3,
       "max": 7
     },
-    "stemShape": [
-      "walcowaty"
-    ],
-    "stemColor": [
-      "brazowy"
-    ],
-    "stemFeatures": [
-      "luskowaty",
-      "zrosniete"
-    ],
-    "smell": [
-      "przyjemny"
-    ],
-    "taste": [
-      "niewyrazny"
-    ],
-    "fleshDiscoloration": [
-      "brak"
-    ],
-    "latex": [
-      "brak"
-    ],
+    "stemShape": ["walcowaty"],
+    "stemColor": ["brazowy"],
+    "stemFeatures": ["luskowaty", "zrosniete"],
+    "smell": ["przyjemny"],
+    "taste": ["niewyrazny"],
+    "fleshDiscoloration": ["brak"],
+    "latex": ["brak"],
     "hostTrees": [
       "sosna",
       "swierk",
@@ -1192,9 +562,7 @@
       "olcha",
       "wierzba"
     ],
-    "substrate": [
-      "martwe_drewno"
-    ]
+    "substrate": ["martwe_drewno"]
   },
   "lactarius_deliciosus": {
     "psychoactive": false,
@@ -1203,50 +571,21 @@
     "ring": false,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "wypukly",
-      "wklesly",
-      "lejkowaty"
-    ],
-    "capColor": [
-      "pomaranczowy",
-      "czerwony",
-      "zielony"
-    ],
+    "capShape": ["wypukly", "wklesly", "lejkowaty"],
+    "capColor": ["pomaranczowy", "czerwony", "zielony"],
     "capSizeCm": {
       "min": 6,
       "max": 12
     },
-    "stemShape": [
-      "walcowaty",
-      "zweza_w_dol"
-    ],
-    "stemColor": [
-      "pomaranczowy"
-    ],
-    "stemFeatures": [
-      "dolkowany",
-      "pusty"
-    ],
-    "smell": [
-      "owocowy"
-    ],
-    "taste": [
-      "lagodny",
-      "lekko_gorzki"
-    ],
-    "fleshDiscoloration": [
-      "zielenieje"
-    ],
-    "latex": [
-      "pomaranczowy"
-    ],
-    "hostTrees": [
-      "sosna"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "stemShape": ["walcowaty", "zweza_w_dol"],
+    "stemColor": ["pomaranczowy"],
+    "stemFeatures": ["dolkowany", "pusty"],
+    "smell": ["owocowy"],
+    "taste": ["lagodny", "lekko_gorzki"],
+    "fleshDiscoloration": ["zielenieje"],
+    "latex": ["pomaranczowy"],
+    "hostTrees": ["sosna"],
+    "substrate": ["gleba"]
   },
   "lactarius_torminosus": {
     "psychoactive": false,
@@ -1255,45 +594,20 @@
     "ring": false,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "wypukly",
-      "wklesly"
-    ],
-    "capColor": [
-      "rozowy",
-      "czerwony",
-      "brazowy"
-    ],
+    "capShape": ["wypukly", "wklesly"],
+    "capColor": ["rozowy", "czerwony", "brazowy"],
     "capSizeCm": {
       "min": 5,
       "max": 15
     },
-    "stemShape": [
-      "walcowaty"
-    ],
-    "stemColor": [
-      "bialy",
-      "rozowy",
-      "zolty"
-    ],
-    "stemFeatures": [
-      "pusty"
-    ],
-    "smell": [
-      "terpentynowy"
-    ],
-    "taste": [
-      "nie_podaje_sie"
-    ],
-    "latex": [
-      "bialy"
-    ],
-    "hostTrees": [
-      "brzoza"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "stemShape": ["walcowaty"],
+    "stemColor": ["bialy", "rozowy", "zolty"],
+    "stemFeatures": ["pusty"],
+    "smell": ["terpentynowy"],
+    "taste": ["nie_podaje_sie"],
+    "latex": ["bialy"],
+    "hostTrees": ["brzoza"],
+    "substrate": ["gleba"]
   },
   "leccinum_aurantiacum": {
     "psychoactive": false,
@@ -1302,48 +616,21 @@
     "ring": false,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "kulisty",
-      "wypukly",
-      "plaski"
-    ],
-    "capColor": [
-      "czerwony",
-      "pomaranczowy"
-    ],
+    "capShape": ["kulisty", "wypukly", "plaski"],
+    "capColor": ["czerwony", "pomaranczowy"],
     "capSizeCm": {
       "min": 5,
       "max": 15
     },
-    "stemShape": [
-      "walcowaty",
-      "maczugowaty"
-    ],
-    "stemColor": [
-      "bialy"
-    ],
-    "stemFeatures": [
-      "luseczki"
-    ],
-    "smell": [
-      "przyjemny"
-    ],
-    "taste": [
-      "lagodny"
-    ],
-    "fleshDiscoloration": [
-      "ciemnieje"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "dab",
-      "topola"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "stemShape": ["walcowaty", "maczugowaty"],
+    "stemColor": ["bialy"],
+    "stemFeatures": ["luseczki"],
+    "smell": ["przyjemny"],
+    "taste": ["lagodny"],
+    "fleshDiscoloration": ["ciemnieje"],
+    "latex": ["brak"],
+    "hostTrees": ["dab", "topola"],
+    "substrate": ["gleba"]
   },
   "leccinum_scabrum": {
     "psychoactive": false,
@@ -1352,45 +639,21 @@
     "ring": false,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "wypukly"
-    ],
-    "capColor": [
-      "brazowy"
-    ],
+    "capShape": ["wypukly"],
+    "capColor": ["brazowy"],
     "capSizeCm": {
       "min": 5,
       "max": 20
     },
-    "stemShape": [
-      "walcowaty",
-      "zweza_w_gore"
-    ],
-    "stemColor": [
-      "bialy"
-    ],
-    "stemFeatures": [
-      "luseczki"
-    ],
-    "smell": [
-      "przyjemny",
-      "grzybowy"
-    ],
-    "taste": [
-      "lagodny"
-    ],
-    "fleshDiscoloration": [
-      "brak"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "brzoza"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "stemShape": ["walcowaty", "zweza_w_gore"],
+    "stemColor": ["bialy"],
+    "stemFeatures": ["luseczki"],
+    "smell": ["przyjemny", "grzybowy"],
+    "taste": ["lagodny"],
+    "fleshDiscoloration": ["brak"],
+    "latex": ["brak"],
+    "hostTrees": ["brzoza"],
+    "substrate": ["gleba"]
   },
   "macrolepiota_procera": {
     "psychoactive": false,
@@ -1399,45 +662,20 @@
     "ring": true,
     "volva": "bulwa",
     "protection": "brak",
-    "capShape": [
-      "jajowaty",
-      "plaski",
-      "z_garbkiem"
-    ],
-    "capColor": [
-      "brazowy",
-      "kremowy"
-    ],
+    "capShape": ["jajowaty", "plaski", "z_garbkiem"],
+    "capColor": ["brazowy", "kremowy"],
     "capSizeCm": {
       "min": null,
       "max": 30
     },
-    "stemShape": [
-      "walcowaty",
-      "bulwiasty"
-    ],
-    "stemColor": [
-      "bialy",
-      "kremowy",
-      "brazowy"
-    ],
-    "stemFeatures": [
-      "wzor_weza"
-    ],
-    "smell": [
-      "przyjemny",
-      "grzybowy"
-    ],
-    "fleshDiscoloration": [
-      "brak"
-    ],
-    "latex": [
-      "brak"
-    ],
+    "stemShape": ["walcowaty", "bulwiasty"],
+    "stemColor": ["bialy", "kremowy", "brazowy"],
+    "stemFeatures": ["wzor_weza"],
+    "smell": ["przyjemny", "grzybowy"],
+    "fleshDiscoloration": ["brak"],
+    "latex": ["brak"],
     "hostTrees": [],
-    "substrate": [
-      "gleba"
-    ]
+    "substrate": ["gleba"]
   },
   "morchella_esculenta": {
     "psychoactive": false,
@@ -1446,54 +684,20 @@
     "ring": false,
     "volva": "brak",
     "protection": "czesciowa",
-    "capShape": [
-      "kulisty",
-      "jajowaty",
-      "stozkowaty",
-      "komorkowaty"
-    ],
-    "capColor": [
-      "brazowy",
-      "zolty",
-      "szary",
-      "kremowy"
-    ],
+    "capShape": ["kulisty", "jajowaty", "stozkowaty", "komorkowaty"],
+    "capColor": ["brazowy", "zolty", "szary", "kremowy"],
     "capSizeCm": {
       "min": 3,
       "max": 10
     },
-    "stemShape": [
-      "walcowaty"
-    ],
-    "stemColor": [
-      "bialy",
-      "zolty",
-      "kremowy"
-    ],
-    "stemFeatures": [
-      "pusty"
-    ],
-    "smell": [
-      "przyjemny",
-      "korzenny"
-    ],
-    "taste": [
-      "niewyrazny"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "buk",
-      "grab",
-      "leszczyna",
-      "olcha",
-      "jesion",
-      "wiaz"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "stemShape": ["walcowaty"],
+    "stemColor": ["bialy", "zolty", "kremowy"],
+    "stemFeatures": ["pusty"],
+    "smell": ["przyjemny", "korzenny"],
+    "taste": ["niewyrazny"],
+    "latex": ["brak"],
+    "hostTrees": ["buk", "grab", "leszczyna", "olcha", "jesion", "wiaz"],
+    "substrate": ["gleba"]
   },
   "neoboletus_luridiformis": {
     "psychoactive": false,
@@ -1502,51 +706,21 @@
     "ring": false,
     "volva": null,
     "protection": "brak",
-    "capShape": [
-      "wypukly",
-      "plaski"
-    ],
-    "capColor": [
-      "brazowy"
-    ],
+    "capShape": ["wypukly", "plaski"],
+    "capColor": ["brazowy"],
     "capSizeCm": {
       "min": null,
       "max": 20
     },
-    "stemShape": [
-      "beczkowaty",
-      "maczugowaty"
-    ],
-    "stemColor": [
-      "zolty",
-      "czerwony"
-    ],
-    "stemFeatures": [
-      "czerwone_punkty"
-    ],
-    "smell": [
-      "przyjemny"
-    ],
-    "taste": [
-      "niewyrazny"
-    ],
-    "fleshDiscoloration": [
-      "sinieje"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "swierk",
-      "jodla",
-      "dab",
-      "buk",
-      "grab",
-      "lipa"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "stemShape": ["beczkowaty", "maczugowaty"],
+    "stemColor": ["zolty", "czerwony"],
+    "stemFeatures": ["czerwone_punkty"],
+    "smell": ["przyjemny"],
+    "taste": ["niewyrazny"],
+    "fleshDiscoloration": ["sinieje"],
+    "latex": ["brak"],
+    "hostTrees": ["swierk", "jodla", "dab", "buk", "grab", "lipa"],
+    "substrate": ["gleba"]
   },
   "paxillus_involutus": {
     "psychoactive": false,
@@ -1555,49 +729,21 @@
     "ring": false,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "plaski",
-      "wklesly",
-      "lejkowaty"
-    ],
-    "capColor": [
-      "brazowy",
-      "oliwkowy"
-    ],
+    "capShape": ["plaski", "wklesly", "lejkowaty"],
+    "capColor": ["brazowy", "oliwkowy"],
     "capSizeCm": {
       "min": 4,
       "max": 15
     },
-    "stemShape": [
-      "walcowaty",
-      "zweza_w_dol"
-    ],
-    "stemColor": [
-      "brazowy"
-    ],
+    "stemShape": ["walcowaty", "zweza_w_dol"],
+    "stemColor": ["brazowy"],
     "stemFeatures": [],
-    "smell": [
-      "niewyrazny"
-    ],
-    "taste": [
-      "nie_podaje_sie"
-    ],
-    "fleshDiscoloration": [
-      "brazowieje"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "sosna",
-      "swierk",
-      "brzoza",
-      "dab",
-      "olcha"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "smell": ["niewyrazny"],
+    "taste": ["nie_podaje_sie"],
+    "fleshDiscoloration": ["brazowieje"],
+    "latex": ["brak"],
+    "hostTrees": ["sosna", "swierk", "brzoza", "dab", "olcha"],
+    "substrate": ["gleba"]
   },
   "rubroboletus_satanas": {
     "psychoactive": false,
@@ -1606,102 +752,43 @@
     "ring": false,
     "volva": null,
     "protection": "scisla",
-    "capShape": [
-      "polkulisty",
-      "wypukly",
-      "nieregularny"
-    ],
-    "capColor": [
-      "bialy",
-      "szary",
-      "oliwkowy"
-    ],
+    "capShape": ["polkulisty", "wypukly", "nieregularny"],
+    "capColor": ["bialy", "szary", "oliwkowy"],
     "capSizeCm": {
       "min": 6,
       "max": 28
     },
-    "stemShape": [
-      "beczkowaty"
-    ],
-    "stemColor": [
-      "zolty",
-      "czerwony"
-    ],
-    "stemFeatures": [
-      "siateczka"
-    ],
-    "smell": [
-      "niewyrazny",
-      "nieprzyjemny"
-    ],
-    "taste": [
-      "nie_podaje_sie"
-    ],
-    "fleshDiscoloration": [
-      "slabo_sinieje"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "dab",
-      "buk",
-      "grab",
-      "leszczyna",
-      "lipa"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "stemShape": ["beczkowaty"],
+    "stemColor": ["zolty", "czerwony"],
+    "stemFeatures": ["siateczka"],
+    "smell": ["niewyrazny", "nieprzyjemny"],
+    "taste": ["nie_podaje_sie"],
+    "fleshDiscoloration": ["slabo_sinieje"],
+    "latex": ["brak"],
+    "hostTrees": ["dab", "buk", "grab", "leszczyna", "lipa"],
+    "substrate": ["gleba"]
   },
   "russula_virescens": {
     "psychoactive": false,
     "hymenophore": "blaszki",
-    "sporePrint": [
-      "bialy",
-      "kremowy"
-    ],
+    "sporePrint": ["bialy", "kremowy"],
     "ring": false,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "polkulisty",
-      "plaski",
-      "wklesly"
-    ],
-    "capColor": [
-      "zielony",
-      "szary"
-    ],
+    "capShape": ["polkulisty", "plaski", "wklesly"],
+    "capColor": ["zielony", "szary"],
     "capSizeCm": {
       "min": 5,
       "max": 15
     },
-    "stemShape": [
-      "walcowaty"
-    ],
-    "stemColor": [
-      "bialy"
-    ],
+    "stemShape": ["walcowaty"],
+    "stemColor": ["bialy"],
     "stemFeatures": [],
-    "smell": [
-      "owocowy"
-    ],
-    "taste": [
-      "lagodny"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "swierk",
-      "brzoza",
-      "dab",
-      "buk"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "smell": ["owocowy"],
+    "taste": ["lagodny"],
+    "latex": ["brak"],
+    "hostTrees": ["swierk", "brzoza", "dab", "buk"],
+    "substrate": ["gleba"]
   },
   "suillellus_luridus": {
     "psychoactive": false,
@@ -1710,52 +797,21 @@
     "ring": false,
     "volva": null,
     "protection": "brak",
-    "capShape": [
-      "polkulisty",
-      "wypukly",
-      "plaski"
-    ],
-    "capColor": [
-      "brazowy",
-      "oliwkowy",
-      "zolty"
-    ],
+    "capShape": ["polkulisty", "wypukly", "plaski"],
+    "capColor": ["brazowy", "oliwkowy", "zolty"],
     "capSizeCm": {
       "min": 8,
       "max": 23
     },
-    "stemShape": [
-      "beczkowaty",
-      "walcowaty"
-    ],
-    "stemColor": [
-      "zolty",
-      "czerwony"
-    ],
-    "stemFeatures": [
-      "siateczka"
-    ],
-    "smell": [
-      "niewyrazny"
-    ],
-    "taste": [
-      "nie_podaje_sie"
-    ],
-    "fleshDiscoloration": [
-      "sinieje"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "jodla",
-      "dab",
-      "buk",
-      "lipa"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "stemShape": ["beczkowaty", "walcowaty"],
+    "stemColor": ["zolty", "czerwony"],
+    "stemFeatures": ["siateczka"],
+    "smell": ["niewyrazny"],
+    "taste": ["nie_podaje_sie"],
+    "fleshDiscoloration": ["sinieje"],
+    "latex": ["brak"],
+    "hostTrees": ["jodla", "dab", "buk", "lipa"],
+    "substrate": ["gleba"]
   },
   "suillus_bovinus": {
     "psychoactive": false,
@@ -1764,38 +820,19 @@
     "ring": false,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "wypukly",
-      "nieregularny"
-    ],
-    "capColor": [
-      "pomaranczowy",
-      "brazowy",
-      "zolty"
-    ],
+    "capShape": ["wypukly", "nieregularny"],
+    "capColor": ["pomaranczowy", "brazowy", "zolty"],
     "capSizeCm": {
       "min": 3,
       "max": 12
     },
-    "stemShape": [
-      "zweza_w_dol"
-    ],
-    "stemColor": [
-      "brazowy"
-    ],
+    "stemShape": ["zweza_w_dol"],
+    "stemColor": ["brazowy"],
     "stemFeatures": [],
-    "smell": [
-      "owocowy"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "sosna"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "smell": ["owocowy"],
+    "latex": ["brak"],
+    "hostTrees": ["sosna"],
+    "substrate": ["gleba"]
   },
   "suillus_grevillei": {
     "psychoactive": false,
@@ -1804,43 +841,20 @@
     "ring": true,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "stozkowaty",
-      "plaski"
-    ],
-    "capColor": [
-      "zolty",
-      "pomaranczowy"
-    ],
+    "capShape": ["stozkowaty", "plaski"],
+    "capColor": ["zolty", "pomaranczowy"],
     "capSizeCm": {
       "min": 4,
       "max": 10
     },
-    "stemShape": [
-      "walcowaty"
-    ],
-    "stemColor": [
-      "zolty",
-      "brazowy"
-    ],
-    "stemFeatures": [
-      "siateczka"
-    ],
-    "smell": [
-      "owocowy"
-    ],
-    "taste": [
-      "niewyrazny"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "modrzew"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "stemShape": ["walcowaty"],
+    "stemColor": ["zolty", "brazowy"],
+    "stemFeatures": ["siateczka"],
+    "smell": ["owocowy"],
+    "taste": ["niewyrazny"],
+    "latex": ["brak"],
+    "hostTrees": ["modrzew"],
+    "substrate": ["gleba"]
   },
   "suillus_luteus": {
     "psychoactive": false,
@@ -1849,45 +863,21 @@
     "ring": true,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "polkulisty",
-      "plaski"
-    ],
-    "capColor": [
-      "brazowy",
-      "pomaranczowy"
-    ],
+    "capShape": ["polkulisty", "plaski"],
+    "capColor": ["brazowy", "pomaranczowy"],
     "capSizeCm": {
       "min": 5,
       "max": 15
     },
-    "stemShape": [
-      "walcowaty"
-    ],
-    "stemColor": [
-      "zolty"
-    ],
-    "stemFeatures": [
-      "gruczolki"
-    ],
-    "smell": [
-      "niewyrazny"
-    ],
-    "taste": [
-      "niewyrazny"
-    ],
-    "fleshDiscoloration": [
-      "brak"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "sosna"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "stemShape": ["walcowaty"],
+    "stemColor": ["zolty"],
+    "stemFeatures": ["gruczolki"],
+    "smell": ["niewyrazny"],
+    "taste": ["niewyrazny"],
+    "fleshDiscoloration": ["brak"],
+    "latex": ["brak"],
+    "hostTrees": ["sosna"],
+    "substrate": ["gleba"]
   },
   "suillus_variegatus": {
     "psychoactive": false,
@@ -1896,40 +886,20 @@
     "ring": false,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "wypukly"
-    ],
-    "capColor": [
-      "zolty",
-      "brazowy"
-    ],
+    "capShape": ["wypukly"],
+    "capColor": ["zolty", "brazowy"],
     "capSizeCm": {
       "min": 4,
       "max": 15
     },
-    "stemShape": [
-      "maczugowaty",
-      "walcowaty"
-    ],
-    "stemColor": [
-      "zolty"
-    ],
+    "stemShape": ["maczugowaty", "walcowaty"],
+    "stemColor": ["zolty"],
     "stemFeatures": [],
-    "smell": [
-      "igliwie"
-    ],
-    "fleshDiscoloration": [
-      "slabo_sinieje"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "sosna"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "smell": ["igliwie"],
+    "fleshDiscoloration": ["slabo_sinieje"],
+    "latex": ["brak"],
+    "hostTrees": ["sosna"],
+    "substrate": ["gleba"]
   },
   "tricholoma_equestre": {
     "psychoactive": false,
@@ -1938,47 +908,20 @@
     "ring": false,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "polkulisty",
-      "stozkowaty",
-      "plaski",
-      "z_garbkiem"
-    ],
-    "capColor": [
-      "zolty",
-      "zielony",
-      "brazowy"
-    ],
+    "capShape": ["polkulisty", "stozkowaty", "plaski", "z_garbkiem"],
+    "capColor": ["zolty", "zielony", "brazowy"],
     "capSizeCm": {
       "min": 5,
       "max": 9
     },
-    "stemShape": [
-      "maczugowaty",
-      "beczkowaty",
-      "walcowaty"
-    ],
-    "stemColor": [
-      "zolty"
-    ],
-    "stemFeatures": [
-      "wlokniste_smugi"
-    ],
-    "taste": [
-      "nie_podaje_sie"
-    ],
-    "fleshDiscoloration": [
-      "brak"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "sosna"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "stemShape": ["maczugowaty", "beczkowaty", "walcowaty"],
+    "stemColor": ["zolty"],
+    "stemFeatures": ["wlokniste_smugi"],
+    "taste": ["nie_podaje_sie"],
+    "fleshDiscoloration": ["brak"],
+    "latex": ["brak"],
+    "hostTrees": ["sosna"],
+    "substrate": ["gleba"]
   },
   "tylopilus_felleus": {
     "psychoactive": false,
@@ -1987,46 +930,20 @@
     "ring": false,
     "volva": null,
     "protection": "brak",
-    "capShape": [
-      "wypukly",
-      "plaski"
-    ],
-    "capColor": [
-      "zolty",
-      "brazowy"
-    ],
+    "capShape": ["wypukly", "plaski"],
+    "capColor": ["zolty", "brazowy"],
     "capSizeCm": {
       "min": 5,
       "max": 12
     },
-    "stemShape": [
-      "maczugowaty"
-    ],
-    "stemColor": [
-      "kremowy",
-      "brazowy"
-    ],
-    "stemFeatures": [
-      "siateczka"
-    ],
-    "smell": [
-      "przyjemny",
-      "grzybowy"
-    ],
-    "taste": [
-      "gorzki"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "sosna",
-      "swierk"
-    ],
-    "substrate": [
-      "gleba",
-      "martwe_drewno"
-    ]
+    "stemShape": ["maczugowaty"],
+    "stemColor": ["kremowy", "brazowy"],
+    "stemFeatures": ["siateczka"],
+    "smell": ["przyjemny", "grzybowy"],
+    "taste": ["gorzki"],
+    "latex": ["brak"],
+    "hostTrees": ["sosna", "swierk"],
+    "substrate": ["gleba", "martwe_drewno"]
   },
   "xerocomellus_chrysenteron": {
     "psychoactive": false,
@@ -2035,48 +952,21 @@
     "ring": false,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "wypukly",
-      "plaski"
-    ],
-    "capColor": [
-      "brazowy",
-      "oliwkowy",
-      "szary"
-    ],
+    "capShape": ["wypukly", "plaski"],
+    "capColor": ["brazowy", "oliwkowy", "szary"],
     "capSizeCm": {
       "min": 4,
       "max": 10
     },
-    "stemShape": [
-      "walcowaty"
-    ],
-    "stemColor": [
-      "zolty",
-      "czerwony"
-    ],
+    "stemShape": ["walcowaty"],
+    "stemColor": ["zolty", "czerwony"],
     "stemFeatures": [],
-    "smell": [
-      "niewyrazny"
-    ],
-    "taste": [
-      "niewyrazny"
-    ],
-    "fleshDiscoloration": [
-      "sinieje",
-      "czerwienieje"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "sosna",
-      "dab",
-      "buk"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "smell": ["niewyrazny"],
+    "taste": ["niewyrazny"],
+    "fleshDiscoloration": ["sinieje", "czerwienieje"],
+    "latex": ["brak"],
+    "hostTrees": ["sosna", "dab", "buk"],
+    "substrate": ["gleba"]
   },
   "xerocomus_subtomentosus": {
     "psychoactive": false,
@@ -2085,43 +975,18 @@
     "ring": false,
     "volva": "brak",
     "protection": "brak",
-    "capShape": [
-      "polkulisty",
-      "wypukly"
-    ],
-    "capColor": [
-      "zolty",
-      "brazowy",
-      "oliwkowy"
-    ],
+    "capShape": ["polkulisty", "wypukly"],
+    "capColor": ["zolty", "brazowy", "oliwkowy"],
     "capSizeCm": {
       "min": 4,
       "max": 10
     },
-    "stemShape": [
-      "walcowaty",
-      "zweza_w_dol"
-    ],
-    "stemColor": [
-      "zolty",
-      "brazowy"
-    ],
-    "smell": [
-      "niewyrazny"
-    ],
-    "taste": [
-      "niewyrazny"
-    ],
-    "latex": [
-      "brak"
-    ],
-    "hostTrees": [
-      "sosna",
-      "swierk",
-      "dab"
-    ],
-    "substrate": [
-      "gleba"
-    ]
+    "stemShape": ["walcowaty", "zweza_w_dol"],
+    "stemColor": ["zolty", "brazowy"],
+    "smell": ["niewyrazny"],
+    "taste": ["niewyrazny"],
+    "latex": ["brak"],
+    "hostTrees": ["sosna", "swierk", "dab"],
+    "substrate": ["gleba"]
   }
 }

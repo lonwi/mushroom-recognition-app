@@ -113,10 +113,16 @@ async function columnBox(page: Page, testId: string): Promise<{ x: number; width
 test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
   test('sulphur tuft comparison pairs the cortina with a membranous ring', async ({ page }) => {
     await page.goto('/iframe.html?id=mushroom-sulphurhoneycomparison--light');
-    await expect(page.getByTestId('comparison-lead')).toContainText('nie ma błoniastego pierścienia');
+    await expect(page.getByTestId('comparison-lead')).toContainText(
+      'nie ma błoniastego pierścienia',
+    );
     await expect(page.getByTestId('comparison-limit')).toContainText('grzyboznawcy');
-    await expect(page.getByTestId('comparison-author-ring-hypholoma-strefa-trzon')).toContainText('Jeffrey Lee');
-    await expect(page.getByTestId('comparison-photo-ring-armillaria-pierscien-trzony')).toBeVisible();
+    await expect(page.getByTestId('comparison-author-ring-hypholoma-strefa-trzon')).toContainText(
+      'Jeffrey Lee',
+    );
+    await expect(
+      page.getByTestId('comparison-photo-ring-armillaria-pierscien-trzony'),
+    ).toBeVisible();
     await expect(page.getByTestId('comparison-trait-gills')).toBeVisible();
     await expect(page.getByTestId('comparison-trait-cap')).toBeVisible();
     await page.getByTestId('comparison-side-galerina-ring').scrollIntoViewIfNeeded();
@@ -145,8 +151,12 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     expect(arm.x).toBeLessThan(gal.x);
     await page.getByTestId('comparison-side-galerina-ring').scrollIntoViewIfNeeded();
     await expect(page.getByTestId('comparison-caption-ring-galerina-pierscien')).toBeVisible();
-    await expect(page.getByTestId('comparison-galerina-heading-ring')).toContainText('śmiertelnie trująca');
-    expect(await captionContrast(page, 'comparison-caption-ring-galerina-pierscien')).toBeGreaterThanOrEqual(4.5);
+    await expect(page.getByTestId('comparison-galerina-heading-ring')).toContainText(
+      'śmiertelnie trująca',
+    );
+    expect(
+      await captionContrast(page, 'comparison-caption-ring-galerina-pierscien'),
+    ).toBeGreaterThanOrEqual(4.5);
   });
 
   test('comparison columns stay within a narrow viewport', async ({ page }) => {
@@ -188,7 +198,9 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await page.setViewportSize({ width: 320, height: 800 });
     await page.goto('/iframe.html?id=mushroom-sulphurhoneycomparison--dark');
     await expect(page.getByTestId('comparison-warning')).toContainText('Zawiera amatoksyny');
-    expect(await captionContrast(page, 'comparison-caption-cap-galerina-kapelusz')).toBeGreaterThanOrEqual(4.5);
+    expect(
+      await captionContrast(page, 'comparison-caption-cap-galerina-kapelusz'),
+    ).toBeGreaterThanOrEqual(4.5);
     const gal = await columnBox(page, 'comparison-side-galerina-cap');
     expect(gal.width).toBeGreaterThanOrEqual(148);
   });
@@ -207,14 +219,20 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.locator('body')).toContainText('luźną pochwę');
   });
 
-  test('LookAlikeAlert says look-alike information is incomplete when the list is empty', async ({ page }) => {
+  test('LookAlikeAlert says look-alike information is incomplete when the list is empty', async ({
+    page,
+  }) => {
     await page.goto('/iframe.html?id=mushroom-lookalikealert--incomplete-look-alike-record');
     await expect(page.locator('body')).toContainText('Informacja o sobowtórach jest niepełna');
-    await expect(page.locator('body')).toContainText('Pusta lista nie oznacza braku groźnych sobowtórów');
+    await expect(page.locator('body')).toContainText(
+      'Pusta lista nie oznacza braku groźnych sobowtórów',
+    );
     await expect(page.locator('body')).not.toContainText('Brak niebezpiecznych sobowtórów');
   });
 
-  test('SafetyDisclaimerModal renders Sanepid legal warning and 112 emergency', async ({ page }) => {
+  test('SafetyDisclaimerModal renders Sanepid legal warning and 112 emergency', async ({
+    page,
+  }) => {
     await page.goto('/iframe.html?id=mushroom-safetydisclaimermodal--interactive-disclaimer');
     await expect(page.locator('body')).toContainText('NIGDY NIE SPOŻYWAJ GRZYBÓW');
     await expect(page.locator('body')).toContainText('Weryfikacja w Sanepidzie');
@@ -239,20 +257,28 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
 
   test('ResultModal rejects a non-mushroom without naming a species', async ({ page }) => {
     await page.goto('/iframe.html?id=mushroom-resultmodal--not-a-mushroom');
-    await expect(page.getByTestId('recognition-rejected-title')).toContainText('Nie rozpoznano grzyba');
-    await expect(page.getByTestId('recognition-rejected-body')).toContainText('Gatunek nie został podany');
+    await expect(page.getByTestId('recognition-rejected-title')).toContainText(
+      'Nie rozpoznano grzyba',
+    );
+    await expect(page.getByTestId('recognition-rejected-body')).toContainText(
+      'Gatunek nie został podany',
+    );
     await expect(page.locator('body')).toContainText('Sanepidzie');
     await expect(page.locator('body')).not.toContainText('%');
     await expect(page.locator('body')).not.toContainText('Borowik');
     await expect(page.locator('body')).not.toContainText('JADALNY');
   });
 
-  test('ResultModal warns on a dangerous genus and does not give an edibility verdict', async ({ page }) => {
+  test('ResultModal warns on a dangerous genus and does not give an edibility verdict', async ({
+    page,
+  }) => {
     await page.goto('/iframe.html?id=mushroom-resultmodal--dangerous-genus-warning');
     await expect(page.getByTestId('expert-verification-banner')).toContainText('Sanepidzie');
     await expect(page.getByTestId('dangerous-genus-warning')).toContainText('Amanita');
     await expect(page.getByTestId('low-confidence-warning')).toBeVisible();
-    await expect(page.getByTestId('not-edibility-verdict')).toContainText('nie jest oceną jadalności');
+    await expect(page.getByTestId('not-edibility-verdict')).toContainText(
+      'nie jest oceną jadalności',
+    );
     await expect(page.getByTestId('candidate-confidence-1')).toContainText('41.0%');
     await expect(page.locator('body')).toContainText('Amanita phalloides');
     await expect(page.locator('body')).not.toContainText('JADALNY');
@@ -261,30 +287,46 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
 
   test('Journal keeps an unclear find without a map and opens a saved spot', async ({ page }) => {
     await page.goto('/iframe.html?id=mushroom-journalscreen--saved-finds');
-    await expect(page.getByTestId('journal-title-sighting_unclear')).toContainText('Niepewny wynik');
+    await expect(page.getByTestId('journal-title-sighting_unclear')).toContainText(
+      'Niepewny wynik',
+    );
     await expect(page.getByTestId('journal-no-location-sighting_unclear')).toContainText(
       'Brak zapisanej lokalizacji',
     );
     await expect(page.getByTestId('journal-open-map-sighting_unclear')).toHaveCount(0);
     await expect(page.getByTestId('journal-candidate-sighting_spot-1')).toContainText('57.4%');
-    await expect(page.getByTestId('journal-not-edible-sighting_spot')).toContainText('nie jest oceną jadalności');
-    await expect(page.getByTestId('journal-open-map-sighting_spot')).toContainText('Otwórz miejsce w mapach');
+    await expect(page.getByTestId('journal-not-edible-sighting_spot')).toContainText(
+      'nie jest oceną jadalności',
+    );
+    await expect(page.getByTestId('journal-open-map-sighting_spot')).toContainText(
+      'Otwórz miejsce w mapach',
+    );
     await expect(page.locator('body')).not.toContainText('JADALNY');
 
     await page.getByTestId('journal-edit-notes-sighting_spot').click();
     await page.getByTestId('journal-notes-input').fill('pod dębami, 4 sztuki');
     await page.getByTestId('journal-notes-save').click();
-    await expect(page.getByTestId('journal-notes-sighting_spot')).toContainText('pod dębami, 4 sztuki');
+    await expect(page.getByTestId('journal-notes-sighting_spot')).toContainText(
+      'pod dębami, 4 sztuki',
+    );
     await page.reload();
-    await expect(page.getByTestId('journal-notes-sighting_spot')).toContainText('pod dębami, 4 sztuki');
-    await expect(page.getByTestId('journal-title-sighting_unclear')).toContainText('Niepewny wynik');
+    await expect(page.getByTestId('journal-notes-sighting_spot')).toContainText(
+      'pod dębami, 4 sztuki',
+    );
+    await expect(page.getByTestId('journal-title-sighting_unclear')).toContainText(
+      'Niepewny wynik',
+    );
   });
 
-  test('ResultModal says recognition is unavailable and shows no species or confidence', async ({ page }) => {
+  test('ResultModal says recognition is unavailable and shows no species or confidence', async ({
+    page,
+  }) => {
     await page.goto('/iframe.html?id=mushroom-resultmodal--recognition-unavailable');
-    await expect(page.getByTestId('recognition-unavailable-title')).toContainText('Rozpoznawanie niedostępne');
+    await expect(page.getByTestId('recognition-unavailable-title')).toContainText(
+      'Rozpoznawanie niedostępne',
+    );
     await expect(page.getByTestId('recognition-unavailable-body')).toContainText(
-      'Nie ma modelu, który odczytuje piksele zdjęcia.'
+      'Nie ma modelu, który odczytuje piksele zdjęcia.',
     );
     await expect(page.locator('body')).not.toContainText('TFLite');
     await expect(page.locator('body')).not.toContainText('Pewność AI');
@@ -293,36 +335,62 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
   });
 
   test('Species detail keeps the olszówka warning without a kitchen section', async ({ page }) => {
-    await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--paxillus-incomplete-look-alikes');
-    await expect(page.getByTestId('species-warning-notes')).toContainText('NIGDY NIE ZBIERAJ OLSZÓWEK');
+    await page.goto(
+      '/iframe.html?id=mushroom-speciesdetailscreen--paxillus-incomplete-look-alikes',
+    );
+    await expect(page.getByTestId('species-warning-notes')).toContainText(
+      'NIGDY NIE ZBIERAJ OLSZÓWEK',
+    );
     await expect(page.getByTestId('lookalike-link-lactarius_deliciosus')).toBeVisible();
     await expect(page.locator('body')).not.toContainText('Brak niebezpiecznych sobowtórów');
-    await expect(page.getByTestId('fatal-lookalike-banner')).toContainText('Śmiertelnie groźny sobowtór');
+    await expect(page.getByTestId('fatal-lookalike-banner')).toContainText(
+      'Śmiertelnie groźny sobowtór',
+    );
     await expect(page.locator('body')).toContainText('ŚMIERTELNIE GROŹNE SOBOWTÓRY!');
     await expect(page.getByTestId('species-use-toxic')).toContainText('Toksyczność i objawy');
     await expect(page.locator('body')).not.toContainText('W kuchni');
   });
 
-  test('Muchomor sromotnikowy keeps a red look-alike warning when the named twins are edible', async ({ page }) => {
+  test('Muchomor sromotnikowy keeps a red look-alike warning when the named twins are edible', async ({
+    page,
+  }) => {
     await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--death-cap-red-warning');
-    await expect(page.getByTestId('fatal-lookalike-banner')).toContainText('Śmiertelnie groźny sobowtór');
+    await expect(page.getByTestId('fatal-lookalike-banner')).toContainText(
+      'Śmiertelnie groźny sobowtór',
+    );
     await expect(page.locator('body')).toContainText('ŚMIERTELNIE GROŹNE SOBOWTÓRY!');
-    await expect(page.getByTestId('lookalike-status-macrolepiota_procera')).toContainText('JADALNY');
-    await expect(page.getByTestId('incomplete-card-badge-russula_virescens')).toContainText('KARTA NIEPEŁNA');
+    await expect(page.getByTestId('lookalike-status-macrolepiota_procera')).toContainText(
+      'JADALNY',
+    );
+    await expect(page.getByTestId('incomplete-card-badge-russula_virescens')).toContainText(
+      'KARTA NIEPEŁNA',
+    );
   });
 
-  test('Panther card separates twardawy by ring and bulb and does not badge it as edible', async ({ page }) => {
+  test('Panther card separates twardawy by ring and bulb and does not badge it as edible', async ({
+    page,
+  }) => {
     await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--panther-missing-card-twins');
     await expect(page.locator('body')).toContainText('f. abietum');
     await expect(page.locator('body')).toContainText('w górach, pod jodłami i świerkami');
     await expect(page.locator('body')).toContainText('pierścień gładki');
     await expect(page.locator('body')).toContainText('pierścień prążkowany');
     await expect(page.getByTestId('lookalike-status-amanita_excelsa')).toContainText('NIEJADALNY');
-    await expect(page.getByTestId('lookalike-status-amanita_excelsa')).not.toContainText(/\bJADALNY\b/);
-    await expect(page.getByTestId('lookalike-status-amanita_excelsa')).not.toContainText('Brak karty');
-    await expect(page.getByTestId('incomplete-card-badge-amanita_rubescens')).toContainText('KARTA NIEPEŁNA');
-    await expect(page.getByTestId('lookalike-status-amanita_rubescens')).not.toContainText('JADALNY');
-    await expect(page.getByTestId('lookalike-status-macrolepiota_procera')).toContainText('JADALNY');
+    await expect(page.getByTestId('lookalike-status-amanita_excelsa')).not.toContainText(
+      /\bJADALNY\b/,
+    );
+    await expect(page.getByTestId('lookalike-status-amanita_excelsa')).not.toContainText(
+      'Brak karty',
+    );
+    await expect(page.getByTestId('incomplete-card-badge-amanita_rubescens')).toContainText(
+      'KARTA NIEPEŁNA',
+    );
+    await expect(page.getByTestId('lookalike-status-amanita_rubescens')).not.toContainText(
+      'JADALNY',
+    );
+    await expect(page.getByTestId('lookalike-status-macrolepiota_procera')).toContainText(
+      'JADALNY',
+    );
     await expect(page.getByTestId('species-warning-notes')).toContainText('112 lub 999');
     await expect(page.getByTestId('species-warning-notes')).toContainText(
       'nie podaje się mleka ani alkoholu',
@@ -343,7 +411,9 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.locator('body')).not.toContainText('607 218 174');
   });
 
-  test('Funeral bell warns that it is deadly and easy to confuse with Psilocybe', async ({ page }) => {
+  test('Funeral bell warns that it is deadly and easy to confuse with Psilocybe', async ({
+    page,
+  }) => {
     await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--funeral-bell-lookalikes');
     await expect(page.getByTestId('species-warning-notes')).toContainText(
       'Hełmówka jadowita jest śmiertelnie trująca i łatwo pomylić ją z łysiczką',
@@ -360,33 +430,53 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.locator('body')).not.toContainText('pastwisk');
   });
 
-  test('Fibrecap names majówka on an unfinished card without a green edible badge', async ({ page }) => {
+  test('Fibrecap names majówka on an unfinished card without a green edible badge', async ({
+    page,
+  }) => {
     await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--fibrecap-no-atlas-verdict');
-    await expect(page.getByTestId('fatal-lookalike-banner')).toContainText('Śmiertelnie groźny sobowtór');
-    await expect(page.getByTestId('incomplete-card-badge-calocybe_gambosa')).toContainText('KARTA NIEPEŁNA');
-    await expect(page.getByTestId('lookalike-status-calocybe_gambosa')).not.toContainText('JADALNY');
-    await expect(page.getByTestId('lookalike-status-calocybe_gambosa')).not.toContainText('Brak karty');
-    await expect(page.getByTestId('lookalike-status-cantharellus_cibarius')).toContainText('JADALNY');
+    await expect(page.getByTestId('fatal-lookalike-banner')).toContainText(
+      'Śmiertelnie groźny sobowtór',
+    );
+    await expect(page.getByTestId('incomplete-card-badge-calocybe_gambosa')).toContainText(
+      'KARTA NIEPEŁNA',
+    );
+    await expect(page.getByTestId('lookalike-status-calocybe_gambosa')).not.toContainText(
+      'JADALNY',
+    );
+    await expect(page.getByTestId('lookalike-status-calocybe_gambosa')).not.toContainText(
+      'Brak karty',
+    );
+    await expect(page.getByTestId('lookalike-status-cantharellus_cibarius')).toContainText(
+      'JADALNY',
+    );
   });
 
-  test('Species detail shows a fatal look-alike banner and warning notes for kania', async ({ page }) => {
+  test('Species detail shows a fatal look-alike banner and warning notes for kania', async ({
+    page,
+  }) => {
     await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--kania-fatal-look-alike');
-    await expect(page.getByTestId('fatal-lookalike-banner')).toContainText('Śmiertelnie groźny sobowtór');
+    await expect(page.getByTestId('fatal-lookalike-banner')).toContainText(
+      'Śmiertelnie groźny sobowtór',
+    );
     await expect(page.getByTestId('species-warning-notes')).toContainText('muchomorami');
     await expect(page.locator('body')).toContainText('ŚMIERTELNIE GROŹNE SOBOWTÓRY!');
   });
 
-  test('Smardz card states the 2014 partial-protection places without a green edible badge', async ({ page }) => {
+  test('Smardz card states the 2014 partial-protection places without a green edible badge', async ({
+    page,
+  }) => {
     await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--morel-protection-note');
     await expect(page.getByTestId('incomplete-card-badge')).toContainText('KARTA NIEPEŁNA');
     await expect(page.locator('body')).not.toContainText('JADALNY');
     await expect(page.getByTestId('species-use-neutral')).toContainText('Znaczenie w literaturze');
     await expect(page.locator('body')).not.toContainText('W kuchni');
     await expect(page.getByTestId('species-warning-notes')).toContainText(
-      'poza terenem ogrodów, upraw ogrodniczych, szkółek leśnych oraz poza terenami zieleni'
+      'poza terenem ogrodów, upraw ogrodniczych, szkółek leśnych oraz poza terenami zieleni',
     );
     await expect(page.getByTestId('species-warning-notes')).toContainText('§ 6 ust. 2 pkt 4');
-    await expect(page.getByTestId('morel-protection-notice')).toContainText('Nie zbieraj dziko rosnących');
+    await expect(page.getByTestId('morel-protection-notice')).toContainText(
+      'Nie zbieraj dziko rosnących',
+    );
     await expect(page.getByTestId('morel-protection-notice')).toContainText('Dz.U. 2014 poz. 1408');
     await expect(page.getByTestId('morel-protection-notice')).toContainText('zezwoleniem');
   });
@@ -395,7 +485,9 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await page.goto('/iframe.html?id=mushroom-speciesdetailscreen--russula-without-photo');
     await expect(page.getByTestId('species-photo-missing')).toContainText('Brak zdjęcia');
     await expect(page.getByTestId('species-photo')).toHaveCount(0);
-    await expect(page.getByTestId('species-warning-notes')).toContainText('NIE JEDZ NA PODSTAWIE TEJ KARTY');
+    await expect(page.getByTestId('species-warning-notes')).toContainText(
+      'NIE JEDZ NA PODSTAWIE TEJ KARTY',
+    );
     await expect(page.getByTestId('fatal-lookalike-banner')).toBeVisible();
     await expect(page.getByTestId('incomplete-card-banner')).toContainText('Karta niepełna');
     await expect(page.getByTestId('incomplete-card-badge')).toContainText('KARTA NIEPEŁNA');
@@ -413,7 +505,9 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.getByTestId('species-use-edible')).toHaveCount(0);
   });
 
-  test('Atlas scope matches the card list and filters combine to an empty state', async ({ page }) => {
+  test('Atlas scope matches the card list and filters combine to an empty state', async ({
+    page,
+  }) => {
     await page.goto('/iframe.html?id=mushroom-atlasscreen--filters');
     await expect(page.getByTestId('atlas-scope-notice')).toContainText('nie jest kompletny klucz');
     await expect(page.getByTestId('atlas-scope-notice')).toContainText('Sanepidzie');
@@ -434,9 +528,15 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
 
     await page.getByTestId('filter-chip-kind-poisonous').click();
     await expect(page.getByTestId('atlas-matches').getByText('Prawdziwki')).toBeVisible();
-    await expect(page.getByTestId('atlas-matches').getByText('Muchomor sromotnikowy (zielonawy)')).toBeVisible();
-    await expect(page.getByTestId('atlas-matches').getByText('Krowiak podwinięty (Olszówka)')).toBeVisible();
-    await expect(page.getByTestId('atlas-card-badge-paxillus_involutus')).toContainText('ŚMIERTELNIE TRUJĄCY');
+    await expect(
+      page.getByTestId('atlas-matches').getByText('Muchomor sromotnikowy (zielonawy)'),
+    ).toBeVisible();
+    await expect(
+      page.getByTestId('atlas-matches').getByText('Krowiak podwinięty (Olszówka)'),
+    ).toBeVisible();
+    await expect(page.getByTestId('atlas-card-badge-paxillus_involutus')).toContainText(
+      'ŚMIERTELNIE TRUJĄCY',
+    );
     await expect(page.getByTestId('atlas-psychoactive-amanita_muscaria')).toBeVisible();
 
     await page.getByTestId('filter-chip-kind-edible').click();
@@ -451,8 +551,12 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
       'Są tu też gatunki trujące i śmiertelnie trujące, których nie da się wykluczyć na podstawie tych cech',
     );
 
-    await page.getByPlaceholder('Szukaj grzyba (np. borowik, kania, kurka)...').fill('brak-takiego-grzyba');
-    await expect(page.getByTestId('atlas-empty')).toContainText('Brak karty nie oznacza, że grzyb jest jadalny');
+    await page
+      .getByPlaceholder('Szukaj grzyba (np. borowik, kania, kurka)...')
+      .fill('brak-takiego-grzyba');
+    await expect(page.getByTestId('atlas-empty')).toContainText(
+      'Brak karty nie oznacza, że grzyb jest jadalny',
+    );
     await expect(page.getByTestId('atlas-result-count')).toContainText('Pasujące karty: 0');
   });
 
@@ -482,7 +586,9 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
     await expect(page.locator('body')).not.toContainText('bezpodstawny');
   });
 
-  test('Screen error fallback keeps the retry control and the safety-tab hint', async ({ page }) => {
+  test('Screen error fallback keeps the retry control and the safety-tab hint', async ({
+    page,
+  }) => {
     await page.goto('/iframe.html?id=mushroom-screenerrorboundary--render-error');
     await expect(page.getByTestId('screen-error-fallback')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Spróbuj ponownie' })).toBeVisible();
@@ -492,8 +598,10 @@ test.describe('Grzybobranie AI - Storybook UI Component Tests', () => {
       const style = getComputedStyle(el);
       return { background: style.backgroundColor, borderLeft: style.borderLeftWidth };
     });
-    const radius = await page.getByTestId('screen-error-retry').evaluate((el) => getComputedStyle(el).borderRadius);
-    expect(light.background).toBe('rgb(248, 250, 252)');
+    const radius = await page
+      .getByTestId('screen-error-retry')
+      .evaluate((el) => getComputedStyle(el).borderRadius);
+    expect(light.background).toBe('rgb(246, 245, 241)');
     expect(light.borderLeft).toBe('0px');
     expect(radius).toBe('4px');
 

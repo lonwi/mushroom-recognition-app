@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Platform,
-  Image,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { MushroomSpecies } from '../../types/mushroom';
 import { SpeciesStatusBadge } from '../EdibilityBadge';
@@ -47,12 +40,7 @@ export const SpeciesHeroHeader: React.FC<SpeciesHeroHeaderProps> = ({ species, o
       </View>
       {photo ? (
         <View style={styles.photoFrame} testID="species-photo-frame">
-          <Image
-            source={photo}
-            style={styles.photo}
-            resizeMode="cover"
-            testID="species-photo"
-          />
+          <Image source={photo} style={styles.photo} resizeMode="cover" testID="species-photo" />
         </View>
       ) : null}
       <View style={styles.heroContent} testID="species-hero-copy">

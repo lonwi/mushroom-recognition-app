@@ -3,8 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const PLACEHOLDER_PREFIX = 'REPLACE_WITH_';
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const APPLE_TEAM_ID_PATTERN = /^[A-Z0-9]{10}$/;
 const ASC_APP_ID_PATTERN = /^\d{8,}$/;
 const PLAY_TRACKS = new Set(['internal', 'alpha', 'beta', 'production']);
@@ -90,7 +89,9 @@ export function collectReleaseBlockers(appJson, easJson, options = {}) {
   }
 
   if (!eas.cli || eas.cli.appVersionSource !== 'remote') {
-    errors.push('eas.json cli.appVersionSource must be "remote" so Android versionCode and iOS buildNumber live on EAS.');
+    errors.push(
+      'eas.json cli.appVersionSource must be "remote" so Android versionCode and iOS buildNumber live on EAS.',
+    );
   }
 
   const production = eas.build && eas.build.production;
@@ -98,7 +99,9 @@ export function collectReleaseBlockers(appJson, easJson, options = {}) {
     errors.push('eas.json build.production.autoIncrement must be true.');
   }
   if (!production || !production.android || production.android.buildType !== 'app-bundle') {
-    errors.push('eas.json build.production.android.buildType must stay "app-bundle" so Play Console can accept the artifact.');
+    errors.push(
+      'eas.json build.production.android.buildType must stay "app-bundle" so Play Console can accept the artifact.',
+    );
   }
 
   const development = eas.build && eas.build.development;
@@ -120,7 +123,9 @@ export function collectReleaseBlockers(appJson, easJson, options = {}) {
     errors.push('eas.json submit.production must include android and ios blocks.');
   } else {
     if (!PLAY_TRACKS.has(submit.android.track)) {
-      errors.push('eas.json submit.production.android.track must be internal, alpha, beta, or production.');
+      errors.push(
+        'eas.json submit.production.android.track must be internal, alpha, beta, or production.',
+      );
     }
     if (
       submit.android.releaseStatus !== undefined &&
@@ -137,7 +142,11 @@ export function collectReleaseBlockers(appJson, easJson, options = {}) {
     }
 
     const ascAppId = submit.ios.ascAppId;
-    if (typeof ascAppId !== 'string' || isPlaceholder(ascAppId) || !ASC_APP_ID_PATTERN.test(ascAppId)) {
+    if (
+      typeof ascAppId !== 'string' ||
+      isPlaceholder(ascAppId) ||
+      !ASC_APP_ID_PATTERN.test(ascAppId)
+    ) {
       errors.push(
         'eas.json submit.production.ios.ascAppId must be the numeric Apple ID from App Store Connect → your app → App Information → General Information. Replace REPLACE_WITH_APP_STORE_CONNECT_APPLE_ID. See docs/RELEASE.md.',
       );
@@ -165,7 +174,11 @@ export function collectReleaseBlockers(appJson, easJson, options = {}) {
 }
 
 function parseArgs(argv) {
-  const args = { app: path.join(root, 'app.json'), eas: path.join(root, 'eas.json'), tag: undefined };
+  const args = {
+    app: path.join(root, 'app.json'),
+    eas: path.join(root, 'eas.json'),
+    tag: undefined,
+  };
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
     if (token === '--app') {

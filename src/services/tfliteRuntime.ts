@@ -154,12 +154,19 @@ function logitsFromOutput(outputs: ArrayBuffer[]): Float32Array {
   return new Float32Array(output);
 }
 
-async function runInterpreterOnce(input: Float32Array, delegates: HardwareDelegateName[]): Promise<Float32Array> {
+async function runInterpreterOnce(
+  input: Float32Array,
+  delegates: HardwareDelegateName[],
+): Promise<Float32Array> {
   const model = await loadTensorflowModel(delegates);
   return logitsFromOutput(await model.run([cloneInput(input)]));
 }
 
-async function invoke(loaded: LoadedModel, input: Float32Array, fellBackToCpu: boolean): Promise<Float32Array> {
+async function invoke(
+  loaded: LoadedModel,
+  input: Float32Array,
+  fellBackToCpu: boolean,
+): Promise<Float32Array> {
   const started = clockMs();
   const logits = logitsFromOutput(await loaded.model.run([cloneInput(input)]));
   recordInferenceTiming({

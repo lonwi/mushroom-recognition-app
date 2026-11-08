@@ -31,7 +31,7 @@ describe('LookAlikeAlert RTL Component Tests', () => {
 
   it('shows a sourced clearance only when the data states one explicitly', async () => {
     const { getByTestId, getByText, queryByTestId } = await render(
-      <LookAlikeAlert risks={[]} noDangerousLookAlikesSource="Atlas X, wyd. 2, s. 10" />
+      <LookAlikeAlert risks={[]} noDangerousLookAlikesSource="Atlas X, wyd. 2, s. 10" />,
     );
 
     expect(getByTestId('lookalike-sourced-clearance')).toBeTruthy();
@@ -53,7 +53,7 @@ describe('LookAlikeAlert RTL Component Tests', () => {
     ];
 
     const { getByText, queryByTestId } = await render(
-      <LookAlikeAlert risks={risks} noDangerousLookAlikesSource="nie powinno się pokazać" />
+      <LookAlikeAlert risks={risks} noDangerousLookAlikesSource="nie powinno się pokazać" />,
     );
 
     expect(getByText('Uwaga na możliwe pomyłki')).toBeTruthy();
@@ -122,7 +122,7 @@ describe('LookAlikeAlert RTL Component Tests', () => {
         risks={risks}
         catalogIds={new Set(['amanita_phalloides'])}
         onOpenSpecies={onOpenSpecies}
-      />
+      />,
     );
 
     fireEvent.press(getByTestId('lookalike-link-amanita_phalloides'));
@@ -147,7 +147,7 @@ describe('LookAlikeAlert RTL Component Tests', () => {
         risks={risks}
         catalogIds={new Set(['inocybe_erubescens'])}
         onOpenSpecies={() => {}}
-      />
+      />,
     );
 
     expect(getByTestId('lookalike-unlinked-craterellus_tubaeformis')).toBeTruthy();
@@ -205,8 +205,9 @@ describe('LookAlikeAlert RTL Component Tests', () => {
   });
 
   it('marks wieruszka as poisonous and muchomor porfirowy as weakly poisonous', async () => {
-    const risks = MUSHROOMS_DATABASE.flatMap((item) => item.confusionRisks).filter((risk) =>
-      risk.confusedWithId === 'entoloma_sinuatum' || risk.confusedWithId === 'amanita_porphyria',
+    const risks = MUSHROOMS_DATABASE.flatMap((item) => item.confusionRisks).filter(
+      (risk) =>
+        risk.confusedWithId === 'entoloma_sinuatum' || risk.confusedWithId === 'amanita_porphyria',
     );
 
     const { getAllByTestId, getAllByText } = await render(<LookAlikeAlert risks={risks} />);
@@ -244,7 +245,7 @@ describe('LookAlikeAlert RTL Component Tests', () => {
         risks={risks}
         ownStatus="DEADLY_POISONOUS"
         catalogIds={new Set(['macrolepiota_procera'])}
-      />
+      />,
     );
 
     expect(getByText('ŚMIERTELNIE GROŹNE SOBOWTÓRY!')).toBeTruthy();
@@ -269,7 +270,9 @@ describe('LookAlikeAlert RTL Component Tests', () => {
       },
     ];
 
-    const { getByTestId, getAllByText, queryByTestId } = await render(<LookAlikeAlert risks={risks} />);
+    const { getByTestId, getAllByText, queryByTestId } = await render(
+      <LookAlikeAlert risks={risks} />,
+    );
 
     expect(getByTestId('incomplete-card-badge-russula_virescens')).toBeTruthy();
     expect(getAllByText(INCOMPLETE_CARD_LABEL)).toHaveLength(1);

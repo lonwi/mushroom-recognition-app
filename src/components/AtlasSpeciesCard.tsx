@@ -45,7 +45,10 @@ export const AtlasSpeciesCard: React.FC<Props> = ({ row, onPress }) => {
             testID={`atlas-photo-${item.id}`}
           />
         ) : (
-          <View style={[styles.cardThumbnail, styles.cardThumbnailMissing]} testID={`atlas-photo-missing-${item.id}`}>
+          <View
+            style={[styles.cardThumbnail, styles.cardThumbnailMissing]}
+            testID={`atlas-photo-missing-${item.id}`}
+          >
             <Text style={styles.cardThumbnailMissingText}>{t('cards.photoMissing')}</Text>
           </View>
         )}
@@ -87,7 +90,10 @@ export const AtlasSpeciesCard: React.FC<Props> = ({ row, onPress }) => {
             </View>
             {item.months.length > 0 ? (
               <View style={styles.tag}>
-                <Text style={styles.tagText} testID={`atlas-months-${item.id}`}>{`📅 ${monthsStr}`}</Text>
+                <Text
+                  style={styles.tagText}
+                  testID={`atlas-months-${item.id}`}
+                >{`📅 ${monthsStr}`}</Text>
               </View>
             ) : null}
             {hasFatalLookAlikeRisk(item) ? (

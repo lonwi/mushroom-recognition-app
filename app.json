@@ -62,11 +62,7 @@
         "react-native-fast-tflite",
         {
           "enableCoreMLDelegate": true,
-          "enableAndroidGpuLibraries": [
-            "libOpenCL-pixel.so",
-            "libGLES_mali.so",
-            "libPVROCL.so"
-          ]
+          "enableAndroidGpuLibraries": ["libOpenCL-pixel.so", "libGLES_mali.so", "libPVROCL.so"]
         }
       ],
       [

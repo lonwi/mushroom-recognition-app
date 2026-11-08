@@ -1,15 +1,15 @@
-export type EdibilityStatus = 
-  | 'EDIBLE'             // Jadalny (smaczny / dopuszczony do obrotu)
-  | 'INEDIBLE'           // Niejadalny (gorzki, twardy, niesmaczny, ale nietoksyczny). Dolegliwości żołądkowo-jelitowe należą do POISONOUS.
-  | 'POISONOUS'          // Trujący (wywołuje zaburzenia żołądkowo-jelitowe itp.)
-  | 'DEADLY_POISONOUS';  // Śmiertelnie trujący (amatoksyny, orellanina, gyromitryna)
+export type EdibilityStatus =
+  | 'EDIBLE' // Jadalny (smaczny / dopuszczony do obrotu)
+  | 'INEDIBLE' // Niejadalny (gorzki, twardy, niesmaczny, ale nietoksyczny). Dolegliwości żołądkowo-jelitowe należą do POISONOUS.
+  | 'POISONOUS' // Trujący (wywołuje zaburzenia żołądkowo-jelitowe itp.)
+  | 'DEADLY_POISONOUS'; // Śmiertelnie trujący (amatoksyny, orellanina, gyromitryna)
 
-export type HymenophoreType = 
-  | 'TUBES'   // Rurki ("gąbka") - np. borowiki, maślaki, podgrzybki
-  | 'GILLS'   // Blaszki - np. muchomory, kanie, gołąbki, pieczarki
-  | 'FOLDS'   // Listewki / fałdy - np. pieprznik jadalny (kurka)
-  | 'SPINES'  // Kolce - np. sarniak, kolczak
-  | 'OTHER';  // Inny (np. purchawki, smardze - fałdy główki)
+export type HymenophoreType =
+  | 'TUBES' // Rurki ("gąbka") - np. borowiki, maślaki, podgrzybki
+  | 'GILLS' // Blaszki - np. muchomory, kanie, gołąbki, pieczarki
+  | 'FOLDS' // Listewki / fałdy - np. pieprznik jadalny (kurka)
+  | 'SPINES' // Kolce - np. sarniak, kolczak
+  | 'OTHER'; // Inny (np. purchawki, smardze - fałdy główki)
 
 /**
  * Edibility of a named twin, or `NO_ATLAS_VERDICT` when that twin has no atlas card.
