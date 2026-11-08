@@ -1,4 +1,4 @@
-"""Tests for the local-image importer (training/import_local_images.py).
+"""Tests for the local-image importer (ml/import_local_images.py).
 
 This is the third dataset path: photos the user already has on disk. Each listed
 image is copied into a staging folder and becomes a ``downloaded`` row in the
@@ -10,6 +10,7 @@ string stands in for every photo.
 from __future__ import annotations
 
 import csv
+import inspect
 import json
 import sys
 import tempfile
@@ -18,8 +19,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import import_local_images as local_images
 from import_external import is_publishable
-from import_local_images import import_local_images
+from import_local_images import (
+    DEFAULT_EXTERNAL,
+    DEFAULT_REPORT,
+    STAGING_DIR,
+    build_parser,
+    import_local_images,
+)
+from manifest import ROOT
 
 _LABELS = Path(__file__).resolve().parents[2] / "assets" / "models" / "labels.json"
 
@@ -238,6 +247,44 @@ class LocalImportTest(unittest.TestCase):
         _, report = self._run([self._row()])
         self.assertFalse(report["include_df20"])
         self.assertEqual(report["excluded_df20"], 0)
+
+
+class DefaultPathTest(unittest.TestCase):
+    """Argparse defaults must write under ml/data, not the pre-rename training/data tree.
+
+    Integration tests pass their own temporary paths, so a leftover default would
+    stay green in CI and still send a no-flag CLI run to the old directory.
+    """
+
+    def test_argparse_defaults_point_at_ml_data(self):
+        data_dir = ROOT / "ml" / "data"
+        parser = build_parser()
+        args = parser.parse_args(["manifest.csv"])
+
+        self.assertEqual(args.staging, data_dir / "local")
+        self.assertEqual(args.external, data_dir / "external.jsonl")
+        self.assertEqual(args.report, data_dir / "local_report.json")
+        self.assertEqual(args.staging, STAGING_DIR)
+        self.assertEqual(args.external, DEFAULT_EXTERNAL)
+        self.assertEqual(args.report, DEFAULT_REPORT)
+
+        for path in (args.staging, args.external, args.report):
+            self.assertNotIn("training", path.parts)
+            self.assertTrue(path.is_relative_to(data_dir))
+
+        signature = inspect.signature(import_local_images)
+        self.assertEqual(signature.parameters["staging_dir"].default, data_dir / "local")
+        self.assertEqual(signature.parameters["external"].default, data_dir / "external.jsonl")
+
+        help_text = " ".join(parser.format_help().split())
+        self.assertIn("Where staged copies live (default: ml/data/local)", help_text)
+        self.assertIn("External JSONL to merge into (default: ml/data/external.jsonl)", help_text)
+        self.assertIn("JSON count report (default: ml/data/local_report.json)", help_text)
+        self.assertNotIn("training/data", help_text)
+        self.assertNotIn("training/data", local_images.__doc__)
+        self.assertIn("--staging ml/data/local", local_images.__doc__)
+        self.assertIn("--external ml/data/external.jsonl", local_images.__doc__)
+        self.assertIn("--report ml/data/local_report.json", local_images.__doc__)
 
 
 if __name__ == "__main__":
