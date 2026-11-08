@@ -219,10 +219,10 @@ importers:
         version: 0.37.1(react-native@0.86.3(@babel/core@8.0.6)(@react-native/jest-preset@0.86.3(@babel/core@8.0.6)(react@19.3.0)(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
       react-native-paper:
         specifier: ^5.15.3
-        version: 5.15.3(react-native-safe-area-context@5.10.0(react-native@0.86.3(@babel/core@8.0.6)(@react-native/jest-preset@0.86.3(@babel/core@8.0.6)(react@19.3.0)(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(react-native@0.86.3(@babel/core@8.0.6)(@react-native/jest-preset@0.86.3(@babel/core@8.0.6)(react@19.3.0)(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
+        version: 5.15.3(react-native-safe-area-context@5.11.1(react-native@0.86.3(@babel/core@8.0.6)(@react-native/jest-preset@0.86.3(@babel/core@8.0.6)(react@19.3.0)(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(react-native@0.86.3(@babel/core@8.0.6)(@react-native/jest-preset@0.86.3(@babel/core@8.0.6)(react@19.3.0)(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
       react-native-safe-area-context:
-        specifier: ^5.10.0
-        version: 5.10.0(react-native@0.86.3(@babel/core@8.0.6)(@react-native/jest-preset@0.86.3(@babel/core@8.0.6)(react@19.3.0)(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
+        specifier: ^5.11.1
+        version: 5.11.1(react-native@0.86.3(@babel/core@8.0.6)(@react-native/jest-preset@0.86.3(@babel/core@8.0.6)(react@19.3.0)(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
       react-native-web:
         specifier: ^0.21.3
         version: 0.21.3(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -4689,8 +4689,8 @@ packages:
       react-native: '*'
       react-native-safe-area-context: '*'
 
-  react-native-safe-area-context@5.10.0:
-    resolution: {integrity: sha512-U655+G0KItefqpTKZenr0aBNulY/49TUKSZkWGVtESlFK5qmML7BejQjPDCRU+GzC24g2KeWFJguWP5LR52dqA==}
+  react-native-safe-area-context@5.11.1:
+    resolution: {integrity: sha512-yCltXXwhwp42vMqfhAsH5BWgAysbLNgwfn3PDwNpOn/CgwfM+eMWgScZIbHbMzJYNLi5bKJEOIUEG4RwKNiECA==}
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -10830,16 +10830,16 @@ snapshots:
       react: 19.3.0
       react-native: 0.86.3(@babel/core@8.0.6)(@react-native/jest-preset@0.86.3(@babel/core@8.0.6)(react@19.3.0)(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1)
 
-  react-native-paper@5.15.3(react-native-safe-area-context@5.10.0(react-native@0.86.3(@babel/core@8.0.6)(@react-native/jest-preset@0.86.3(@babel/core@8.0.6)(react@19.3.0)(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(react-native@0.86.3(@babel/core@8.0.6)(@react-native/jest-preset@0.86.3(@babel/core@8.0.6)(react@19.3.0)(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0):
+  react-native-paper@5.15.3(react-native-safe-area-context@5.11.1(react-native@0.86.3(@babel/core@8.0.6)(@react-native/jest-preset@0.86.3(@babel/core@8.0.6)(react@19.3.0)(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(react-native@0.86.3(@babel/core@8.0.6)(@react-native/jest-preset@0.86.3(@babel/core@8.0.6)(react@19.3.0)(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0):
     dependencies:
       '@callstack/react-theme-provider': 3.0.9(react@19.3.0)
       color: 3.2.1
       react: 19.3.0
       react-native: 0.86.3(@babel/core@8.0.6)(@react-native/jest-preset@0.86.3(@babel/core@8.0.6)(react@19.3.0)(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1)
-      react-native-safe-area-context: 5.10.0(react-native@0.86.3(@babel/core@8.0.6)(@react-native/jest-preset@0.86.3(@babel/core@8.0.6)(react@19.3.0)(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
+      react-native-safe-area-context: 5.11.1(react-native@0.86.3(@babel/core@8.0.6)(@react-native/jest-preset@0.86.3(@babel/core@8.0.6)(react@19.3.0)(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
       use-latest-callback: 0.2.6(react@19.3.0)
 
-  react-native-safe-area-context@5.10.0(react-native@0.86.3(@babel/core@8.0.6)(@react-native/jest-preset@0.86.3(@babel/core@8.0.6)(react@19.3.0)(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0):
+  react-native-safe-area-context@5.11.1(react-native@0.86.3(@babel/core@8.0.6)(@react-native/jest-preset@0.86.3(@babel/core@8.0.6)(react@19.3.0)(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0):
     dependencies:
       react: 19.3.0
       react-native: 0.86.3(@babel/core@8.0.6)(@react-native/jest-preset@0.86.3(@babel/core@8.0.6)(react@19.3.0)(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1)
