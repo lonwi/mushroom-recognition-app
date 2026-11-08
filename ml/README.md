@@ -43,7 +43,7 @@ TensorFlow’s pip wheel is the CPU build unless you install a CUDA extra yourse
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -r training/requirements.txt
+pip install -r ml/requirements.txt
 
 python ml/run_pipeline.py fetch
 python ml/run_pipeline.py prepare
@@ -100,7 +100,7 @@ GBIF occurrence search and species match stay one request at a time, with at lea
 Unit tests that do not need TensorFlow:
 
 ```bash
-python -m unittest discover -s training/tests -v
+python -m unittest discover -s ml/tests -v
 ```
 
 ## Geography and volume
@@ -335,7 +335,7 @@ Export builds **fp16** weights with float32 input and output unless `--quantizat
 A development build can still try the delegate before that gate has passed, so the agreement dump can be collected. `writeDelegateCalibrationDump` runs each fixed val+test tensor on CPU and on the platform delegate and writes `delegate-calibration.json` in the cache directory. It does not classify, save a journal entry, or upload anything. Score that file with the same val+test list:
 
 ```bash
-python ml/score_delegate_dump.py --dump delegate-calibration.json --splits training/data/splits.json --write
+python ml/score_delegate_dump.py --dump delegate-calibration.json --splits ml/data/splits.json --write
 ```
 
 The sample is every val and test row. Train rows are rejected. `--write` records that platform in `assets/models/labels.json` and hashes `assets/models/mushrooms_model.tflite`. It exits without writing if that file is not on disk, and it does not fall back to `model_sha256` in `labels.json`. The dump and the manifest hash both have to match the file bytes. A failed gate is stored as `passed: false`. Pass `--model` to point at another copy of the same file.
