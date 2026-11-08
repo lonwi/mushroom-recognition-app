@@ -5,10 +5,10 @@ an observation into one of train, val, or test. Atlas gallery photos that
 match by image URL, mo_observation_id, or the iNaturalist observation id in
 source_url stay out of test. A match that still lands in test stops the run.
 
-    python training/prepare_data.py
-    python training/prepare_data.py --with-external
-    python training/prepare_data.py --publishable-only
-    python training/prepare_data.py --gallery-csv /path/galeria/manifest_gallery.csv
+    python ml/prepare_data.py
+    python ml/prepare_data.py --with-external
+    python ml/prepare_data.py --publishable-only
+    python ml/prepare_data.py --gallery-csv /path/galeria/manifest_gallery.csv
 
 Reads ``attributions.jsonl``. ``external.jsonl`` is read only with
 ``--with-external``. Unverified rows are skipped. A row is skipped again
@@ -61,7 +61,7 @@ from preprocess import MODEL_INPUT_SIZE, ImageReadError, load_oriented_rgb, writ
 from split import split_by_observation, split_key_summary
 from split_salt import SplitSaltError, load_split_salt
 
-DATA_DIR = ROOT / "training" / "data"
+DATA_DIR = ROOT / "ml" / "data"
 _PREPARE_OUTPUTS = (
     "attributions.dedup.jsonl",
     "dedup_report.json",

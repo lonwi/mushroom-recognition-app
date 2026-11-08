@@ -436,7 +436,7 @@ function passingRelease(
 
 function boleteManifest(): { logits: number[]; manifest: ModelManifest } {
   const decisionCases = JSON.parse(
-    fs.readFileSync(path.join(__dirname, '../../../training/fixtures/decision_cases.json'), 'utf8'),
+    fs.readFileSync(path.join(__dirname, '../../../ml/fixtures/decision_cases.json'), 'utf8'),
   ) as {
     cases: {
       name: string;

@@ -1,12 +1,12 @@
 /**
- * Same decision as training/recognition_math.py.
+ * Same decision as ml/recognition_math.py.
  * Energy is Liu et al. 2020: E(x) = -T * logsumexp(logits / T).
  * Lower energy means in-distribution. A softmax cutoff is not the gate.
  */
 
 import type { ModelManifest } from './modelManifest';
 
-/** Matches training/recognition_math.py. Rank 1 always counts; later ranks need this probability. */
+/** Matches ml/recognition_math.py. Rank 1 always counts; later ranks need this probability. */
 const DANGEROUS_GENUS_MIN_PROBABILITY = 0.1;
 
 export interface SpeciesCandidate {

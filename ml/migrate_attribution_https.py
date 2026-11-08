@@ -10,7 +10,7 @@ stays as it was written.
 The default check downloads both schemes. Unit tests pass their own check and
 do not use the network. CI does not run this script.
 
-    python training/migrate_attribution_https.py attributions.jsonl \\
+    python ml/migrate_attribution_https.py attributions.jsonl \\
         --output attributions.https.jsonl --report https_migration_report.json
 """
 

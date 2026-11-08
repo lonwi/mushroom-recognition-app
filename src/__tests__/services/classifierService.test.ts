@@ -106,7 +106,7 @@ describe('classifierService when no pixel model is installed', () => {
 
 describe('classifierService when a calibrated model is injected', () => {
   const decisionCases = JSON.parse(
-    fs.readFileSync(path.join(__dirname, '../../../training/fixtures/decision_cases.json'), 'utf8'),
+    fs.readFileSync(path.join(__dirname, '../../../ml/fixtures/decision_cases.json'), 'utf8'),
   ) as {
     cases: {
       name: string;

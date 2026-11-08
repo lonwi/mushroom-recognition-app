@@ -117,7 +117,7 @@ describe('atlas gallery assets', () => {
 
   it('matches the training exclusion list of image URLs and observation ids', () => {
     const exclusion = JSON.parse(
-      fs.readFileSync(path.join(ROOT, 'training/gallery_exclusion.json'), 'utf8'),
+      fs.readFileSync(path.join(ROOT, 'ml/gallery_exclusion.json'), 'utf8'),
     ) as {
       photos: Array<{
         image_url: string;

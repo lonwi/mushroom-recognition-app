@@ -1,6 +1,6 @@
 {
   "role": "class_contract",
-  "note": "This file is the class contract for a model we train ourselves. It is not a neural network. Recognition stays unavailable until training/export_tflite.py copies a calibrated mushrooms_model.tflite into this folder and sets model_packaged to true. No species, confidence, or edibility is implied by this list. safety_tag and taxon toxic flags are evaluation labels for the ship gates. The app must not show them as an edibility verdict. unknown_mushroom means a fungus that is not one of the known species. It is not a species name and not an edibility verdict. not_a_mushroom stays last.",
+  "note": "This file is the class contract for a model we train ourselves. It is not a neural network. Recognition stays unavailable until ml/export_tflite.py copies a calibrated mushrooms_model.tflite into this folder and sets model_packaged to true. No species, confidence, or edibility is implied by this list. safety_tag and taxon toxic flags are evaluation labels for the ship gates. The app must not show them as an edibility verdict. unknown_mushroom means a fungus that is not one of the known species. It is not a species name and not an edibility verdict. not_a_mushroom stays last.",
   "model_file": "mushrooms_model.tflite",
   "model_packaged": false,
   "recognition_available": false,
@@ -8,8 +8,8 @@
     "name": "MobileNetV3Small",
     "framework": "keras.applications.MobileNetV3Small",
     "pretrained_weights": "imagenet",
-    "pretrained_weights_license": "see training/README.md",
-    "pretrained_weights_source": "keras.applications.MobileNetV3Small weights='imagenet', file weights_mobilenet_v3_small_224_1.0_float_no_top_v2.h5 from https://storage.googleapis.com/tensorflow/keras-applications/mobilenet_v3/. License statements are quoted in training/README.md and are not a legal conclusion."
+    "pretrained_weights_license": "see ml/README.md",
+    "pretrained_weights_source": "keras.applications.MobileNetV3Small weights='imagenet', file weights_mobilenet_v3_small_224_1.0_float_no_top_v2.h5 from https://storage.googleapis.com/tensorflow/keras-applications/mobilenet_v3/. License statements are quoted in ml/README.md and are not a legal conclusion."
   },
   "input": {
     "size": 224,

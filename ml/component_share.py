@@ -24,7 +24,7 @@ from split import _components, normalized_person_text, person_identity_keys
 
 # Pending owner decision (20% vs 50%); do not raise.
 COMPONENT_SHARE_LIMIT = 0.20
-ACK_PATH = ROOT / "training" / "component_share_acknowledgements.json"
+ACK_PATH = ROOT / "ml" / "component_share_acknowledgements.json"
 _PERSON_FIELDS = (
     "inat_observer",
     "author",

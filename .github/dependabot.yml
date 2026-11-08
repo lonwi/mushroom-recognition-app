@@ -9,6 +9,6 @@ updates:
     schedule:
       interval: weekly
   - package-ecosystem: pip
-    directory: /training
+    directory: /ml
     schedule:
       interval: weekly

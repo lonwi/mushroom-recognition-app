@@ -20,7 +20,7 @@ Normalization is Keras `mode='tf'`:
 Output is float32 NHWC RGB in [-1, 1], without a batch dimension.
 
 JPEG orientation is applied with Pillow's EXIF transpose before the resize.
-`training/prepare_data.py` writes the oriented 224 PNG the trainer reads, so
+`ml/prepare_data.py` writes the oriented 224 PNG the trainer reads, so
 TensorFlow never decodes the original JPEG.
 """
 

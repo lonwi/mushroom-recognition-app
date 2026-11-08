@@ -1,7 +1,7 @@
 import type { ModelManifest } from './modelManifest';
 import { ANDROID_GPU, CORE_ML, type HardwareDelegateName } from './inferenceTiming';
 
-/** Same floor as training/ship_gates.py TFLITE_AGREEMENT_MIN. Not a lower bar. */
+/** Same floor as ml/ship_gates.py TFLITE_AGREEMENT_MIN. Not a lower bar. */
 export const DELEGATE_AGREEMENT_MIN = 0.99;
 
 const SHA256 = /^[0-9a-f]{64}$/;
