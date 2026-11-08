@@ -53,9 +53,12 @@ playwright-report
 # Store-submit secrets belong on EAS credentials, not in git. See docs/RELEASE.md.
 google-service-account.json
 
-# ML pipeline local data
+# ML pipeline local data. The training/ lines stay during the rename so
+# leftover files under the old directories are not committed by accident.
 ml/data/
 ml/artifacts/
+training/data/
+training/artifacts/
 __pycache__/
 *.pyc
 .pytest_cache/

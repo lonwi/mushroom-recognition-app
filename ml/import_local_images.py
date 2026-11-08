@@ -7,7 +7,8 @@ merges them into ``ml/data/external.jsonl`` using the same row schema,
 license decision, and identity dedup as ``import_external.py``.
 
     python ml/import_local_images.py manifest.csv \
-        --staging training/data/local --external training/data/external.jsonl
+        --staging ml/data/local --external ml/data/external.jsonl \
+        --report ml/data/local_report.json
 
 Unlike ``import_external.py`` this script does not keep ``image_url`` as the
 only source of pixels. Each listed image is copied into
@@ -74,11 +75,13 @@ from import_external import (
     species_index,
 )
 from license_policy import exclude_df20_unless_requested
-from manifest import load_manifest
+from manifest import ROOT, load_manifest
 
-STAGING_DIR = Path("training") / "data" / "local"
-DEFAULT_EXTERNAL = Path("training") / "data" / "external.jsonl"
-DEFAULT_REPORT = Path("training") / "data" / "local_report.json"
+# Same directory prepare_data.py and import_external.py read and write.
+DATA_DIR = ROOT / "ml" / "data"
+STAGING_DIR = DATA_DIR / "local"
+DEFAULT_EXTERNAL = DATA_DIR / "external.jsonl"
+DEFAULT_REPORT = DATA_DIR / "local_report.json"
 DEFAULT_LABELS = Path("assets") / "models" / "labels.json"
 
 # CSV columns this manifest understands. The first six are required.
@@ -236,7 +239,8 @@ def _staging_root(staging_dir: Path) -> Path:
     """Return the parent of ``staging_dir``.
 
     ``file`` is stored relative to the parent of the staging directory, so
-    ``ml/data/local`` images get a ``file`` like ``data/local/...``.
+    ``ml/data/local`` images are recorded as ``local/...``. ``prepare_data.py``
+    joins that path onto ``ml/data``.
     """
     return staging_dir.parent
 
@@ -365,13 +369,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--staging",
         type=Path,
         default=STAGING_DIR,
-        help=f"Where staged copies live (default: {STAGING_DIR})",
+        help=f"Where staged copies live (default: {STAGING_DIR.relative_to(ROOT).as_posix()})",
     )
     parser.add_argument(
         "--external",
         type=Path,
         default=DEFAULT_EXTERNAL,
-        help=f"External JSONL to merge into (default: {DEFAULT_EXTERNAL})",
+        help=f"External JSONL to merge into (default: {DEFAULT_EXTERNAL.relative_to(ROOT).as_posix()})",
     )
     parser.add_argument(
         "--labels",
@@ -383,7 +387,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--report",
         type=Path,
         default=DEFAULT_REPORT,
-        help="JSON count report (default: training/data/local_report.json)",
+        help=f"JSON count report (default: {DEFAULT_REPORT.relative_to(ROOT).as_posix()})",
     )
     parser.add_argument(
         "--max-per-collector",
