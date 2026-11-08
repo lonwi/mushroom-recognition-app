@@ -51,20 +51,42 @@ describe('adapter importer allowlist', { concurrency: 1 }, () => {
     assert.equal(allows('journalLocation', 'src/services/storage/journalSchema.ts'), true);
     assert.equal(allows('journalPhotos', 'src/services/storage/journalRepository.ts'), true);
     assert.equal(allows('journalPhotos', 'src/services/storage/journalSchema.ts'), true);
-    assert.equal(allows('storageService', 'App.tsx'), true);
     assert.equal(allows('tfliteRuntime', 'src/services/classifierService.ts'), true);
-    assert.equal(cruiseConfig.forbidden.some((rule) => rule.name === 'ui-not-to-platform-adapter-reachable'), false);
-    assert.equal(cruiseConfig.forbidden.some((rule) => rule.name === 'ui-not-to-platform-adapter'), false);
+    assert.equal(
+      cruiseConfig.forbidden.some((rule) => rule.name === 'ui-not-to-platform-adapter-reachable'),
+      false,
+    );
+    assert.equal(
+      cruiseConfig.forbidden.some((rule) => rule.name === 'ui-not-to-platform-adapter'),
+      false,
+    );
   });
 
   test('the dependency baseline does not grandfather importer rules', () => {
-    const baseline = JSON.parse(fs.readFileSync('.dependency-cruiser-known-violations.json', 'utf8'));
-    assert.equal(baseline.some((violation) => String(violation.rule?.name ?? '').startsWith(IMPORTER_PREFIX)), false);
-    assert.equal(baseline.some((violation) => violation.rule?.name === 'i18n-not-to-data'), false);
-    assert.equal(baseline.some((violation) => String(violation.rule?.name ?? '').includes('platform-adapter')), false);
+    const baseline = JSON.parse(
+      fs.readFileSync('.dependency-cruiser-known-violations.json', 'utf8'),
+    );
+    assert.equal(
+      baseline.some((violation) => String(violation.rule?.name ?? '').startsWith(IMPORTER_PREFIX)),
+      false,
+    );
+    assert.equal(
+      baseline.some((violation) => violation.rule?.name === 'i18n-not-to-data'),
+      false,
+    );
+    assert.equal(
+      baseline.some((violation) => String(violation.rule?.name ?? '').includes('platform-adapter')),
+      false,
+    );
     assert.equal(baseline.length, 2);
-    assert.equal(baseline.some((violation) => String(violation.from).includes('LanguageContext')), false);
-    assert.equal(baseline.every((violation) => violation.rule?.name === 'ui-not-to-storage-or-platform'), true);
+    assert.equal(
+      baseline.some((violation) => String(violation.from).includes('LanguageContext')),
+      false,
+    );
+    assert.equal(
+      baseline.every((violation) => violation.rule?.name === 'ui-not-to-storage-or-platform'),
+      true,
+    );
   });
 });
 
@@ -73,7 +95,9 @@ describe('platform binding re-exports', { concurrency: 1 }, () => {
 
   async function platformFindings(code) {
     const [result] = await eslint.lintText(code, { filePath: 'src/services/journalPhotos.ts' });
-    return result.messages.filter((message) => message.ruleId === 'grzybobranie/no-platform-reexport');
+    return result.messages.filter(
+      (message) => message.ruleId === 'grzybobranie/no-platform-reexport',
+    );
   }
 
   test('narrow wrappers and import type stay allowed', async () => {
@@ -197,7 +221,9 @@ export function QaRawScreen(): null {
     );
     created.push(WRAPPER, SCREEN);
     try {
-      const result = spawnSync(process.execPath, ['scripts/depcruise-gate.mjs'], { encoding: 'utf8' });
+      const result = spawnSync(process.execPath, ['scripts/depcruise-gate.mjs'], {
+        encoding: 'utf8',
+      });
       assert.equal(result.status, 1);
       assert.match(result.stderr, /adapter-importer-keyValueStore/);
       assert.match(result.stderr, /qaRawStore\.ts/);
@@ -216,7 +242,9 @@ export const qaCount = MUSHROOMS_DATABASE.length;
 `,
     );
     try {
-      const result = spawnSync(process.execPath, ['scripts/depcruise-gate.mjs'], { encoding: 'utf8' });
+      const result = spawnSync(process.execPath, ['scripts/depcruise-gate.mjs'], {
+        encoding: 'utf8',
+      });
       assert.equal(result.status, 1);
       assert.match(result.stderr, /i18n-not-to-data/);
       assert.match(result.stderr, /qaDataImport\.ts/);

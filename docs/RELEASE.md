@@ -1,5 +1,7 @@
 # Wydanie Grzybobranie AI
 
+> 🇬🇧 [English version](RELEASE.en.md)
+
 Tag `vX.Y.Z` uruchamia [`.github/workflows/release.yml`](../.github/workflows/release.yml). Najpierw job `verify` sprawdza, że commit tagu jest na `origin/main`, odpala typecheck, `pnpm test` i testy E2E, i wymaga, żeby napis tagu po `v` był równy `expo.version`. Potem job `build` (środowisko `release-build`) woła `eas build --profile production --platform all --non-interactive --json` i zapisuje id buildów Androida i iOS z tego biegu. Job `submit` czeka na środowisko `production` i wysyła te dwa id (`eas submit --id`), a nie najnowszy build w projekcie EAS.
 
 Workflow przypina akcje do commitów i instaluje `eas-cli` **24.12.0**. Lokalnie używaj tej samej wersji: `npx eas-cli@24.12.0`.

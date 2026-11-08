@@ -27,7 +27,8 @@ export function contrastRatio(foreground: string, background: string): number {
 export function nearestBackground(node: StyledNode): string {
   let current: StyledNode | null = node;
   while (current) {
-    const style = StyleSheet.flatten(current.props?.style) as { backgroundColor?: unknown } | undefined;
+    const style = StyleSheet.flatten(current.props?.style) as
+      { backgroundColor?: unknown } | undefined;
     if (typeof style?.backgroundColor === 'string' && !style.backgroundColor.startsWith('rgba')) {
       return style.backgroundColor;
     }

@@ -1,10 +1,6 @@
 import { isUsableCoordinate } from '../journalLocation';
 import { journalPhotoFileName } from '../journalPhotos';
-import {
-  JournalCandidate,
-  JournalRecognition,
-  SightingRecord,
-} from '../../types/mushroom';
+import { JournalCandidate, JournalRecognition, SightingRecord } from '../../types/mushroom';
 
 function textField(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
@@ -61,7 +57,9 @@ function sanitizeRecognition(value: unknown): JournalRecognition {
   const record = value as Record<string, unknown>;
   if (
     record.status === 'rejected' &&
-    (record.reason === 'not_a_mushroom' || record.reason === 'unknown_mushroom' || record.reason === 'unclear')
+    (record.reason === 'not_a_mushroom' ||
+      record.reason === 'unknown_mushroom' ||
+      record.reason === 'unclear')
   ) {
     return { status: 'rejected', reason: record.reason };
   }
@@ -78,7 +76,8 @@ function sanitizeRecognition(value: unknown): JournalRecognition {
         const candidate = sanitizeCandidate(item);
         return candidate ? [candidate] : [];
       }),
-      expertVerificationRequired: record.expertVerificationRequired === true || warningReasons.length > 0,
+      expertVerificationRequired:
+        record.expertVerificationRequired === true || warningReasons.length > 0,
       warningReasons,
     };
   }
@@ -94,7 +93,11 @@ function trimmedNotes(value: unknown): string {
 
 function photoNameFromRaw(raw: Record<string, unknown>): string | null {
   const storedPhoto =
-    typeof raw.photoFile === 'string' ? raw.photoFile : typeof raw.photoUri === 'string' ? raw.photoUri : undefined;
+    typeof raw.photoFile === 'string'
+      ? raw.photoFile
+      : typeof raw.photoUri === 'string'
+        ? raw.photoUri
+        : undefined;
   return journalPhotoFileName(storedPhoto);
 }
 
@@ -108,9 +111,14 @@ function sightingCoordinates(
   return undefined;
 }
 
-function legacyHasIdentity(recognition: Extract<JournalRecognition, { status: 'legacy' }>): boolean {
+function legacyHasIdentity(
+  recognition: Extract<JournalRecognition, { status: 'legacy' }>,
+): boolean {
   return Boolean(
-    recognition.speciesId || recognition.speciesNamePl || recognition.speciesNameLatin || recognition.confidence !== undefined,
+    recognition.speciesId ||
+    recognition.speciesNamePl ||
+    recognition.speciesNameLatin ||
+    recognition.confidence !== undefined,
   );
 }
 
@@ -119,7 +127,7 @@ function withLegacyParent(raw: Record<string, unknown>): JournalRecognition {
   if (recognition.status !== 'unavailable' && recognition.status !== 'legacy') return recognition;
   const fromParent = legacyFromFields(raw);
   if (recognition.status === 'legacy') {
-    return legacyHasIdentity(recognition) ? recognition : fromParent ?? recognition;
+    return legacyHasIdentity(recognition) ? recognition : (fromParent ?? recognition);
   }
   return fromParent ?? recognition;
 }

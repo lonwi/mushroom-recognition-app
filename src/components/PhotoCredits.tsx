@@ -15,6 +15,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { comparisonPhotoCredits } from '../data/sulphurHoneyComparison';
 import { galleryPhotoCredits } from '../data/speciesGallery';
 import { creditLicenseUrl, type PhotoCredit } from '../services/attributionPackage';
+import { colors } from '../theme/tokens';
 
 /**
  * FlatList is the only scroll container. Settings must not mount this inside
@@ -28,10 +29,7 @@ export const PhotoCredits: React.FC<{
 }> = ({ credits, loading = false, loadFailed = false, onClose }) => {
   const { t } = useLanguage();
   const [query, setQuery] = useState('');
-  const atlasCredits = useMemo(
-    () => [...galleryPhotoCredits(), ...comparisonPhotoCredits()],
-    [],
-  );
+  const atlasCredits = useMemo(() => [...galleryPhotoCredits(), ...comparisonPhotoCredits()], []);
   const rows = useMemo(() => {
     if (loading) {
       return [];
@@ -55,7 +53,8 @@ export const PhotoCredits: React.FC<{
       return rows;
     }
     return rows.filter((item) => {
-      const haystack = `${item.creator} ${item.taxonName} ${item.license} ${item.licenseNormalized}`.toLocaleLowerCase();
+      const haystack =
+        `${item.creator} ${item.taxonName} ${item.license} ${item.licenseNormalized}`.toLocaleLowerCase();
       return haystack.includes(needle);
     });
   }, [query, rows]);
@@ -72,7 +71,7 @@ export const PhotoCredits: React.FC<{
       </View>
       {loading ? (
         <View style={styles.loading} testID="photo-credits-loading">
-          <ActivityIndicator size="large" color="#1B3B22" />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.empty}>{t('settings.photoCreditsLoading')}</Text>
         </View>
       ) : rows.length === 0 ? (
@@ -118,7 +117,9 @@ export const PhotoCredits: React.FC<{
             const url = creditLicenseUrl(item);
             return (
               <View style={styles.row} testID={`photo-credit-${index}`}>
-                <Text style={styles.creator}>{item.creator || t('settings.photoCreditsUnknownAuthor')}</Text>
+                <Text style={styles.creator}>
+                  {item.creator || t('settings.photoCreditsUnknownAuthor')}
+                </Text>
                 {url ? (
                   <Pressable
                     onPress={() => {
@@ -163,7 +164,7 @@ export const PhotoCredits: React.FC<{
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: 16,
@@ -182,7 +183,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#1B3B22',
+    color: colors.primary,
   },
   list: {
     flex: 1,

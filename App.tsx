@@ -1,11 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  TouchableOpacity,
-  StatusBar,
-} from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, StatusBar } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { ScannerScreen } from './src/screens/ScannerScreen';
 import { AtlasScreen } from './src/screens/AtlasScreen';
@@ -210,10 +204,7 @@ function AppContent() {
 
         <BottomNavigationBar activeTab={activeTab} onSelectTab={setActiveTab} />
 
-        <SafetyDisclaimerModal
-          visible={disclaimerVisible}
-          onAccept={handleAcceptDisclaimer}
-        />
+        <SafetyDisclaimerModal visible={disclaimerVisible} onAccept={handleAcceptDisclaimer} />
       </SafeAreaView>
     </NavigationProvider>
   );

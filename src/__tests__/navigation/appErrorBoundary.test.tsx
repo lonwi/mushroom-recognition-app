@@ -77,7 +77,9 @@ describe('screen error boundary keeps the tab bar', () => {
     expect(fallbackBody).toBe(translate('pl', 'screenError.body', { tab: pl.nav.safety }));
     expect(fallbackBody).toContain(pl.nav.safety);
     expect(screen.getByRole('button', { name: pl.screenError.retry })).toBeTruthy();
-    expect(screen.getByTestId('call-112').props.accessibilityLabel).toBe(pl.safetyGuide.call112Title);
+    expect(screen.getByTestId('call-112').props.accessibilityLabel).toBe(
+      pl.safetyGuide.call112Title,
+    );
     expect(screen.getByTestId('nav-SAFETY')).toBeTruthy();
     expect(boundaryLogs(consoleError)).toHaveLength(1);
     expect(JSON.stringify(boundaryLogs(consoleError))).not.toContain(PRIVATE_NOTE[0]);

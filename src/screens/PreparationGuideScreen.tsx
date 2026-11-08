@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { PREPARATION_GUIDE, PREPARATION_TABS } from '../data/preparationRules';
 import { useLanguage } from '../contexts/LanguageContext';
 import { colors } from '../theme/tokens';
@@ -23,37 +17,37 @@ export const PreparationGuideScreen: React.FC = () => {
 
   return (
     <ScreenFrame title={t('preparation.title')} subtitle={t('preparation.subtitle')}>
-        <View style={styles.tabsRow}>
-          {PREPARATION_TABS.map((tab) => {
-            const active = activeCategory === tab.id;
-            return (
-              <TouchableOpacity
-                key={tab.id}
-                style={[styles.tabChip, active && styles.tabChipActive]}
-                onPress={() => setActiveCategory(tab.id)}
-                testID={tab.testID}
-              >
-                <Text style={[styles.tabChipText, active && styles.tabChipTextActive]}>
-                  {tab.icon}
-                  {t(tab.labelKey)}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+      <View style={styles.tabsRow}>
+        {PREPARATION_TABS.map((tab) => {
+          const active = activeCategory === tab.id;
+          return (
+            <TouchableOpacity
+              key={tab.id}
+              style={[styles.tabChip, active && styles.tabChipActive]}
+              onPress={() => setActiveCategory(tab.id)}
+              testID={tab.testID}
+            >
+              <Text style={[styles.tabChipText, active && styles.tabChipTextActive]}>
+                {tab.icon}
+                {t(tab.labelKey)}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
 
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-          <View style={styles.section}>
-            {filteredRules.map((rule) => (
-              <View key={rule.id} style={styles.ruleCard}>
-                <View style={styles.ruleTop}>
-                  <Text style={styles.ruleTitle}>🍄 {t(`preparation.rules.${rule.id}.title`)}</Text>
-                </View>
-                <Text style={styles.ruleDesc}>{t(`preparation.rules.${rule.id}.description`)}</Text>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.section}>
+          {filteredRules.map((rule) => (
+            <View key={rule.id} style={styles.ruleCard}>
+              <View style={styles.ruleTop}>
+                <Text style={styles.ruleTitle}>🍄 {t(`preparation.rules.${rule.id}.title`)}</Text>
               </View>
-            ))}
-          </View>
-        </ScrollView>
+              <Text style={styles.ruleDesc}>{t(`preparation.rules.${rule.id}.description`)}</Text>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
     </ScreenFrame>
   );
 };

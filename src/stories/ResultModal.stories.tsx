@@ -93,7 +93,12 @@ const dangerousResult: ClassificationResult = {
 export const DangerousGenusWarning: Story = {
   render: () => (
     <View style={{ flex: 1, minHeight: 700 }}>
-      <ResultModal visible={true} result={dangerousResult} onClose={() => {}} onOpenAtlasSpecies={() => {}} />
+      <ResultModal
+        visible={true}
+        result={dangerousResult}
+        onClose={() => {}}
+        onOpenAtlasSpecies={() => {}}
+      />
     </View>
   ),
 };

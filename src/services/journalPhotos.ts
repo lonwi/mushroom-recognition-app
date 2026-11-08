@@ -31,7 +31,12 @@ function journalPhotoDirectory(documentDirectory: string): string {
 }
 
 function hasTraversal(value: string): boolean {
-  return value.includes('..') || value.includes('\\') || value.includes('\0') || /%2e|%2f|%5c/i.test(value);
+  return (
+    value.includes('..') ||
+    value.includes('\\') ||
+    value.includes('\0') ||
+    /%2e|%2f|%5c/i.test(value)
+  );
 }
 
 /**

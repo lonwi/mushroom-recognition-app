@@ -78,7 +78,10 @@ export function DevInferenceOverlay({ scheme }: Props) {
           style={[styles.choice, surface, mode === AUTO_DELEGATE ? selectedSurface : null]}
           testID="dev-delegate-auto"
         >
-          <Text style={[styles.choiceText, mode === AUTO_DELEGATE ? selectedLabel : label]} testID="dev-delegate-auto-label">
+          <Text
+            style={[styles.choiceText, mode === AUTO_DELEGATE ? selectedLabel : label]}
+            testID="dev-delegate-auto-label"
+          >
             {t('scanner.devDelegateAuto')}
           </Text>
         </Pressable>
@@ -89,7 +92,10 @@ export function DevInferenceOverlay({ scheme }: Props) {
           style={[styles.choice, surface, mode === CPU_RUNTIME ? selectedSurface : null]}
           testID="dev-delegate-cpu"
         >
-          <Text style={[styles.choiceText, mode === CPU_RUNTIME ? selectedLabel : label]} testID="dev-delegate-cpu-label">
+          <Text
+            style={[styles.choiceText, mode === CPU_RUNTIME ? selectedLabel : label]}
+            testID="dev-delegate-cpu-label"
+          >
             {t('scanner.devDelegateCpu')}
           </Text>
         </Pressable>

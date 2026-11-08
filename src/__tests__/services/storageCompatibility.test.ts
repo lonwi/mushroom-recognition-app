@@ -4,8 +4,8 @@ import {
   SIGHTINGS_BACKUP_KEY,
   SIGHTINGS_STORAGE_KEY,
   journalBackupStorageKey,
-  storageService,
-} from '../../services/storageService';
+} from '../../services/storage/keys';
+import { journalRepository } from '../../services/storage/journalRepository';
 import {
   DISCLAIMER_STORAGE_KEY,
   LANGUAGE_STORAGE_KEY,
@@ -91,7 +91,7 @@ describe('stored journal format stays readable', () => {
     await AsyncStorage.setItem(SIGHTINGS_BACKUP_INDEX_KEY, JSON.stringify([INDEXED_BACKUP_ID]));
     await AsyncStorage.setItem(journalBackupStorageKey(INDEXED_BACKUP_ID), INDEXED_BACKUP);
 
-    const loaded = await storageService.getSightings();
+    const loaded = await journalRepository.getSightings();
 
     expect(loaded).toEqual([
       {
@@ -158,8 +158,12 @@ describe('stored journal format stays readable', () => {
 
     expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe(STORED_JOURNAL);
     expect(await AsyncStorage.getItem(SIGHTINGS_BACKUP_KEY)).toBe(LEGACY_BACKUP);
-    expect(await AsyncStorage.getItem(SIGHTINGS_BACKUP_INDEX_KEY)).toBe(JSON.stringify([INDEXED_BACKUP_ID]));
-    expect(await AsyncStorage.getItem(journalBackupStorageKey(INDEXED_BACKUP_ID))).toBe(INDEXED_BACKUP);
+    expect(await AsyncStorage.getItem(SIGHTINGS_BACKUP_INDEX_KEY)).toBe(
+      JSON.stringify([INDEXED_BACKUP_ID]),
+    );
+    expect(await AsyncStorage.getItem(journalBackupStorageKey(INDEXED_BACKUP_ID))).toBe(
+      INDEXED_BACKUP,
+    );
     expect(SIGHTINGS_STORAGE_KEY).toBe('@grzybobranie_ai:sightings_v1');
     expect(SIGHTINGS_BACKUP_KEY).toBe('@grzybobranie_ai:sightings_v1_backup');
     expect(SIGHTINGS_BACKUP_INDEX_KEY).toBe('@grzybobranie_ai:sightings_v1_backups');
@@ -169,7 +173,7 @@ describe('stored journal format stays readable', () => {
   });
 
   it('writes a journal entry with the same field names as before the split', async () => {
-    const saved = await storageService.saveSighting({
+    const saved = await journalRepository.saveSighting({
       id: 'written',
       timestamp: 42,
       photoFile: 'sighting_photo.jpg',
@@ -191,7 +195,7 @@ describe('stored journal format stays readable', () => {
     const raw = await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY);
     expect(raw).toBe(JSON.stringify([saved]));
     expect(raw).not.toContain('photoUri');
-    expect(await storageService.getSightings()).toEqual([saved]);
+    expect(await journalRepository.getSightings()).toEqual([saved]);
   });
 
   it('keeps the disclaimer and language keys that existing installs already use', async () => {

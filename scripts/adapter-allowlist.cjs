@@ -22,7 +22,6 @@ function ownTests(baseName) {
 }
 
 const journalEntry = '^src/services/journalEntry\\.ts$';
-const storageService = '^src/services/storageService\\.ts$';
 const journalSchema = '^src/services/storage/journalSchema\\.ts$';
 const journalRepository = '^src/services/storage/journalRepository\\.ts$';
 const classifierService = '^src/services/classifierService\\.ts$';
@@ -47,7 +46,6 @@ const adapters = [
     importers: [
       journalEntry,
       '^src/services/mapsLink\\.ts$',
-      storageService,
       journalSchema,
       ownTests('journalLocation'),
     ],
@@ -59,10 +57,9 @@ const adapters = [
       journalEntry,
       journalScreen,
       resultModal,
-      storageService,
       journalRepository,
       journalSchema,
-      '^src/__tests__/services/storageService\\.test\\.ts$',
+      '^src/__tests__/services/journalRepository\\.test\\.ts$',
       ownTests('journalPhotos'),
     ],
   },
@@ -88,26 +85,13 @@ const adapters = [
     ],
   },
   {
-    name: 'storageService',
-    to: storageService,
-    importers: [
-      journalEntry,
-      journalScreen,
-      '^App\\.tsx$',
-      resultModal,
-      '^src/stories/JournalScreen\\.stories\\.tsx$',
-      '^src/__tests__/screens/JournalScreen\\.test\\.tsx$',
-      '^src/__tests__/services/journalEntry\\.test\\.ts$',
-      '^src/__tests__/components/ResultModal\\.test\\.tsx$',
-      '^src/__tests__/services/storageService\\.test\\.ts$',
-      '^src/__tests__/services/storageCompatibility\\.test\\.ts$',
-      ownTests('storageService'),
-    ],
-  },
-  {
     name: 'tfliteRuntime',
     to: '^src/services/tfliteRuntime\\.ts$',
-    importers: [classifierService, '^src/__tests__/services/tfliteRuntime\\.test\\.ts$', ownTests('tfliteRuntime')],
+    importers: [
+      classifierService,
+      '^src/__tests__/services/tfliteRuntime\\.test\\.ts$',
+      ownTests('tfliteRuntime'),
+    ],
   },
 ];
 

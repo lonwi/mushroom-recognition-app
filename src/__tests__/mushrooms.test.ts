@@ -65,13 +65,13 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(deathCap?.hymenophore).toBe('GILLS');
 
     const hasKaniaConfusion = deathCap?.confusionRisks.some(
-      (r) => r.confusedWithId === 'macrolepiota_procera' && r.fatal === false
+      (r) => r.confusedWithId === 'macrolepiota_procera' && r.fatal === false,
     );
     expect(hasKaniaConfusion).toBe(true);
 
     const kania = MUSHROOMS_DATABASE.find((m) => m.id === 'macrolepiota_procera');
     const kaniaFlagsDeathCap = kania?.confusionRisks.some(
-      (r) => r.confusedWithId === 'amanita_phalloides' && r.fatal === true
+      (r) => r.confusedWithId === 'amanita_phalloides' && r.fatal === true,
     );
     expect(kaniaFlagsDeathCap).toBe(true);
   });
@@ -110,8 +110,8 @@ describe('Mushroom Database & Safety Verification', () => {
       expect(MUSHROOMS_DATABASE.some((species) => species.id === id)).toBe(false);
       expect(
         MUSHROOMS_DATABASE.some((species) =>
-          species.confusionRisks.some((risk) => risk.confusedWithId === id)
-        )
+          species.confusionRisks.some((risk) => risk.confusedWithId === id),
+        ),
       ).toBe(true);
     }
   });
@@ -167,9 +167,9 @@ describe('Mushroom Database & Safety Verification', () => {
     ).not.toMatch(/słabo|weak|silnie|ciężk/i);
     expect(LOOKALIKES_WITHOUT_CARD.amanita_porphyria.status).toBe('POISONOUS');
     expect(LOOKALIKES_WITHOUT_CARD.amanita_porphyria.note).toBe(WEAKLY_POISONOUS_NOTE);
-    expect(`${LOOKALIKES_WITHOUT_CARD.amanita_porphyria.note} ${LOOKALIKES_WITHOUT_CARD.amanita_porphyria.reason}`).not.toMatch(
-      /śmiertel|lethal|deadly/i,
-    );
+    expect(
+      `${LOOKALIKES_WITHOUT_CARD.amanita_porphyria.note} ${LOOKALIKES_WITHOUT_CARD.amanita_porphyria.reason}`,
+    ).not.toMatch(/śmiertel|lethal|deadly/i);
   });
 
   test('poisonous notes are never the no-verdict sentence', () => {
@@ -322,7 +322,7 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(fieldMushroom.nameEn).toBe('Field mushroom');
     expect(fieldMushroom.commonNicknames).toEqual([]);
     expect(fieldMushroom.culinaryValue).toContain(
-      'rozporządzenie MZ z 17.05.2011 (Dz.U. 2011 nr 115 poz. 672; t.j. Dz.U. 2026 poz. 258, zał. nr 1)'
+      'rozporządzenie MZ z 17.05.2011 (Dz.U. 2011 nr 115 poz. 672; t.j. Dz.U. 2026 poz. 258, zał. nr 1)',
     );
     expect(fieldMushroom.culinaryValue).toMatch(/zbyt młodych egzemplarzy ze stanu naturalnego/);
     expect(fieldMushroom.culinaryValue).toMatch(/blaszki jeszcze nie poróżowiały/);
@@ -358,7 +358,7 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(blusher.tasteAndSmell).toMatch(/Czerwienienie nie jest dowodem/);
 
     expect(orangeBolete.culinaryValue).toContain(
-      'Koźlarz czerwony (L. aurantiacum, w wykazie MZ jako L. rufum) jest dopuszczony do obrotu, koźlarz pomarańczowożółty (L. versipelle) nie.'
+      'Koźlarz czerwony (L. aurantiacum, w wykazie MZ jako L. rufum) jest dopuszczony do obrotu, koźlarz pomarańczowożółty (L. versipelle) nie.',
     );
     const rawStatement = /surowy i niedogotowany jest trujący/gi;
     const scarletinaText = [
@@ -367,9 +367,12 @@ describe('Mushroom Database & Safety Verification', () => {
       scarletina.culinaryValue,
       scarletina.warningNotes,
     ].join('\n');
-    const honeyText = [honey.fleshDescription, honey.tasteAndSmell, honey.culinaryValue, honey.warningNotes].join(
-      '\n'
-    );
+    const honeyText = [
+      honey.fleshDescription,
+      honey.tasteAndSmell,
+      honey.culinaryValue,
+      honey.warningNotes,
+    ].join('\n');
     expect(scarletinaText.match(rawStatement)).toHaveLength(1);
     expect(honeyText.match(rawStatement)).toHaveLength(1);
     expect(scarletinaText).not.toMatch(/lekko truj/);
@@ -386,7 +389,7 @@ describe('Mushroom Database & Safety Verification', () => {
     const polishLetter = String.raw`\p{L}\p{N}_`;
     const cookingOrder = new RegExp(
       `(?<![${polishLetter}])(?:obgotować|obgotuj|odlać|odlej|zdjąć|zdejmij|odciąć|odetnij|zeskrob)(?![${polishLetter}])|Tylko dla doświadczonych|(?<=^|[.!?]\\s+)Jadaln`,
-      'iu'
+      'iu',
     );
     expect('Jadalny po obróbce').toMatch(cookingOrder);
     expect('Zdanie. Jadalne tylko po obróbce').toMatch(cookingOrder);
@@ -394,12 +397,24 @@ describe('Mushroom Database & Safety Verification', () => {
     expect('Pytanie? Jadalny grzyb').toMatch(cookingOrder);
     expect('W literaturze jadalny wyłącznie po obróbce').not.toMatch(cookingOrder);
     expect('W literaturze jadalne tylko po obróbce').not.toMatch(cookingOrder);
-    for (const order of ['obgotować', 'obgotuj', 'odlać', 'odlej', 'zdjąć', 'zdejmij', 'odciąć', 'odetnij', 'zeskrob']) {
+    for (const order of [
+      'obgotować',
+      'obgotuj',
+      'odlać',
+      'odlej',
+      'zdjąć',
+      'zdejmij',
+      'odciąć',
+      'odetnij',
+      'zeskrob',
+    ]) {
       expect(order).toMatch(cookingOrder);
       expect(`W literaturze ${order}e się`).not.toMatch(cookingOrder);
     }
     expect('Odlej wodę').toMatch(cookingOrder);
-    expect('W literaturze kosmki z trzonu zeskrobuje się przed jedzeniem').not.toMatch(cookingOrder);
+    expect('W literaturze kosmki z trzonu zeskrobuje się przed jedzeniem').not.toMatch(
+      cookingOrder,
+    );
     expect(unfinished.length).toBeGreaterThan(0);
     for (const species of unfinished) {
       expect(species.culinaryValue).toMatch(/W literaturze|Według |Wg /);
@@ -415,7 +430,7 @@ describe('Mushroom Database & Safety Verification', () => {
 
     expect(note).toContain('Dz.U. poz. 1408');
     expect(note).toContain(
-      'poza terenem ogrodów, upraw ogrodniczych, szkółek leśnych oraz poza terenami zieleni'
+      'poza terenem ogrodów, upraw ogrodniczych, szkółek leśnych oraz poza terenami zieleni',
     );
     expect(note).toContain('§ 6 ust. 2 pkt 4');
     expect(note).toContain('ręczny zbiór owocników');
@@ -433,7 +448,9 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(names).not.toMatch(/szatan/);
 
     const bolete = MUSHROOMS_DATABASE.find((species) => species.id === 'boletus_edulis');
-    const boleteLookalike = bolete?.confusionRisks.find((risk) => risk.confusedWithId === 'tylopilus_felleus');
+    const boleteLookalike = bolete?.confusionRisks.find(
+      (risk) => risk.confusedWithId === 'tylopilus_felleus',
+    );
     expect(boleteLookalike?.confusedWithName).toBe('Goryczak żółciowy');
     expect(boleteLookalike?.confusedWithName.toLowerCase()).not.toMatch(/szatan/);
   });
@@ -478,7 +495,9 @@ describe('Mushroom Database & Safety Verification', () => {
     const fibrecap = MUSHROOMS_DATABASE.find((species) => species.id === 'inocybe_erubescens');
     const panther = MUSHROOMS_DATABASE.find((species) => species.id === 'amanita_pantherina');
     const hedgehog = MUSHROOMS_DATABASE.find((species) => species.id === 'hydnum_repandum');
-    const yellowStainer = MUSHROOMS_DATABASE.find((species) => species.id === 'agaricus_xanthodermus');
+    const yellowStainer = MUSHROOMS_DATABASE.find(
+      (species) => species.id === 'agaricus_xanthodermus',
+    );
     const bitter = MUSHROOMS_DATABASE.find((species) => species.id === 'tylopilus_felleus');
     const shaggy = MUSHROOMS_DATABASE.find((species) => species.id === 'chlorophyllum_rhacodes');
 
@@ -499,7 +518,7 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(fibrecap?.confusionRisks[0]?.confusedWithId).toBe('calocybe_gambosa');
 
     expect(panther?.confusionRisks.map((risk) => risk.confusedWithId)).toEqual(
-      expect.arrayContaining(['amanita_rubescens', 'amanita_excelsa'])
+      expect.arrayContaining(['amanita_rubescens', 'amanita_excelsa']),
     );
     const pantherText = `${panther?.capDescription} ${JSON.stringify(panther?.confusionRisks)}`;
     expect(pantherText).toMatch(/pierścień gładki/);
@@ -517,17 +536,32 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(hedgehog?.culinaryValue).toMatch(/na surowo lekko trujący/);
     expect(hedgehog?.culinaryValue).toMatch(/jeść tylko po obróbce termicznej/);
     expect(hedgehog?.fleshDescription).toMatch(/obróbce termicznej/);
-    expect(hedgehog?.warningNotes).toMatch(/^NIE JEDZ NA PODSTAWIE TEJ KARTY\. W literaturze jadalny tylko po obróbce termicznej\./);
+    expect(hedgehog?.warningNotes).toMatch(
+      /^NIE JEDZ NA PODSTAWIE TEJ KARTY\. W literaturze jadalny tylko po obróbce termicznej\./,
+    );
 
     const yellowKnight = MUSHROOMS_DATABASE.find((species) => species.id === 'tricholoma_equestre');
     expect(yellowKnight?.status).toBe('POISONOUS');
     expect(yellowKnight?.nameEn).toBe('Yellow knight');
-    expect(`${yellowKnight?.culinaryValue} ${yellowKnight?.warningNotes}`).toMatch(/Dz\.U\. 2026 poz\. 258/);
+    expect(`${yellowKnight?.culinaryValue} ${yellowKnight?.warningNotes}`).toMatch(
+      /Dz\.U\. 2026 poz\. 258/,
+    );
     expect(`${yellowKnight?.culinaryValue} ${yellowKnight?.warningNotes}`).toMatch(/rabdomioliz/i);
-    expect(yellowKnight?.confusionRisks.some((risk) => risk.confusedWithId === 'amanita_phalloides' && risk.fatal)).toBe(true);
+    expect(
+      yellowKnight?.confusionRisks.some(
+        (risk) => risk.confusedWithId === 'amanita_phalloides' && risk.fatal,
+      ),
+    ).toBe(true);
 
-    const groups = ['boletus_edulis', 'lactarius_deliciosus', 'armillaria_mellea', 'suillus_luteus'] as const;
-    const groupNames = groups.map((id) => MUSHROOMS_DATABASE.find((species) => species.id === id)?.namePl);
+    const groups = [
+      'boletus_edulis',
+      'lactarius_deliciosus',
+      'armillaria_mellea',
+      'suillus_luteus',
+    ] as const;
+    const groupNames = groups.map(
+      (id) => MUSHROOMS_DATABASE.find((species) => species.id === id)?.namePl,
+    );
     expect(groupNames).toEqual(['Prawdziwki', 'Rydze', 'Opieńki', 'Maślak zwyczajny i ziarnisty']);
 
     expect(yellowStainer?.stemDescription).toMatch(/szerokim, wyraźnym/);
@@ -541,7 +575,7 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(shaggy?.warningNotes).not.toMatch(/Zarzyński/);
     expect(shaggy?.warningNotes).not.toMatch(/s\. 110/);
     expect(shaggy?.culinaryValue).toMatch(
-      /^W części źródeł nadal opisywany jako jadalny; u części osób powoduje poważne dolegliwości żołądkowo-jelitowe; łatwo pomylić z trującymi czubajnikami/
+      /^W części źródeł nadal opisywany jako jadalny; u części osób powoduje poważne dolegliwości żołądkowo-jelitowe; łatwo pomylić z trującymi czubajnikami/,
     );
 
     const webcap = MUSHROOMS_DATABASE.find((species) => species.id === 'cortinarius_rubellus');
@@ -550,7 +584,9 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(JSON.stringify(MUSHROOMS_DATABASE)).toMatch(/Rudawy \(spiczasty\)/);
 
     const blusher = MUSHROOMS_DATABASE.find((species) => species.id === 'amanita_rubescens');
-    const excelsa = blusher?.confusionRisks.find((risk) => risk.confusedWithId === 'amanita_excelsa');
+    const excelsa = blusher?.confusionRisks.find(
+      (risk) => risk.confusedWithId === 'amanita_excelsa',
+    );
     const excelsaText = excelsa?.keyDifferences.join('\n') ?? '';
     expect(excelsaText).toMatch(/nie czerwienieje/);
     expect(excelsaText).toMatch(/różowieje/);
@@ -581,11 +617,17 @@ describe('Mushroom Database & Safety Verification', () => {
 
     expect(gambosa.incompleteCard).toBe(true);
     expect(gambosa.culinaryValue).toMatch(/gęśnica indyjska/);
-    expect(gambosa.confusionRisks.some((risk) => risk.confusedWithId === 'inocybe_erubescens' && risk.fatal)).toBe(
-      true,
-    );
+    expect(
+      gambosa.confusionRisks.some(
+        (risk) => risk.confusedWithId === 'inocybe_erubescens' && risk.fatal,
+      ),
+    ).toBe(true);
 
-    const luridusText = [luridus.culinaryValue, luridus.warningNotes, luridus.fleshDescription].join('\n');
+    const luridusText = [
+      luridus.culinaryValue,
+      luridus.warningNotes,
+      luridus.fleshDescription,
+    ].join('\n');
     expect(luridus.status).toBe('POISONOUS');
     expect(luridusText).toMatch(/żołądkowo-jelitow/);
     expect(luridusText).toMatch(/Dz\.U\. 2026 poz\. 258/);
@@ -595,15 +637,19 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(luridusText).not.toMatch(/alkohol/);
     expect(luridusText).not.toMatch(/surow/);
 
-    const galerina = capnoides.confusionRisks.find((risk) => risk.confusedWithId === 'galerina_marginata');
+    const galerina = capnoides.confusionRisks.find(
+      (risk) => risk.confusedWithId === 'galerina_marginata',
+    );
     if (!galerina) {
       throw new Error('galerina look-alike missing');
     }
     expect(galerina.confusedWithId).toBe('galerina_marginata');
     expect(galerina.fatal).toBe(true);
-    const galerinaText = [galerina.keyDifferences.join('\n'), capnoides.culinaryValue, capnoides.warningNotes].join(
-      '\n',
-    );
+    const galerinaText = [
+      galerina.keyDifferences.join('\n'),
+      capnoides.culinaryValue,
+      capnoides.warningNotes,
+    ].join('\n');
     expect(galerinaText).toMatch(/karcie hełmówki jadowitej/);
     expect(galerinaText).toMatch(/cynamonowobrązow/);
     expect(galerinaText).toMatch(/włóknisty/);
@@ -625,7 +671,11 @@ describe('Mushroom Database & Safety Verification', () => {
   test('a zigzag on the stem is not treated as proof that the mushroom is a parasol', () => {
     const parasol = MUSHROOMS_DATABASE.find((species) => species.id === 'macrolepiota_procera');
     const deathCap = MUSHROOMS_DATABASE.find((species) => species.id === 'amanita_phalloides');
-    const text = JSON.stringify([parasol?.confusionRisks, deathCap?.confusionRisks, deathCap?.stemDescription]);
+    const text = JSON.stringify([
+      parasol?.confusionRisks,
+      deathCap?.confusionRisks,
+      deathCap?.stemDescription,
+    ]);
 
     expect(text.toLowerCase()).not.toMatch(/muchomor ma gładki/);
     expect(text.toLowerCase()).toMatch(/zygzak/);
@@ -657,9 +707,11 @@ describe('Mushroom Database & Safety Verification', () => {
   });
 
   test('Psilocybe is a look-alike warning, not a card or a finding guide', () => {
-    expect(MUSHROOMS_DATABASE.some((species) => species.id === 'psilocybe' || species.id === 'panaeolus')).toBe(
-      false,
-    );
+    expect(
+      MUSHROOMS_DATABASE.some(
+        (species) => species.id === 'psilocybe' || species.id === 'panaeolus',
+      ),
+    ).toBe(false);
     expect(Object.prototype.hasOwnProperty.call(LOOKALIKES_WITHOUT_CARD, 'panaeolus')).toBe(false);
     const galerina = mustSpecies('galerina_marginata');
     const ids = galerina.confusionRisks.map((risk) => risk.confusedWithId);
@@ -679,7 +731,9 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(polish).toMatch(/Stamets 1996, s\. 31–33, 144–145, 192–193/);
     expect(polish).toMatch(/śmiertelnie/);
     expect(polish).not.toMatch(guide);
-    expect(LOOKALIKES_WITHOUT_CARD.psilocybe.reason).toMatch(/Stamets 1996, pp\. 31–33, 144–145, 192–193/);
+    expect(LOOKALIKES_WITHOUT_CARD.psilocybe.reason).toMatch(
+      /Stamets 1996, pp\. 31–33, 144–145, 192–193/,
+    );
     expect(LOOKALIKES_WITHOUT_CARD.psilocybe.reason).not.toMatch(/Stamets 1996, s\./);
     expect(LOOKALIKES_WITHOUT_CARD.psilocybe.reason).toMatch(/deadly/);
     expect(LOOKALIKES_WITHOUT_CARD.psilocybe.reason).not.toMatch(guide);
@@ -736,4 +790,3 @@ describe('Mushroom Database & Safety Verification', () => {
     expect(byId.rule_protect_forest_floor?.description).toMatch(/całkowitą pewność/);
   });
 });
-

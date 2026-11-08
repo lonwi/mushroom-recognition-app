@@ -4,7 +4,8 @@ import * as Location from 'expo-location';
 import type { ClassificationResult } from '../../services/classifierService';
 import { createJournalEntryFromScan } from '../../services/journalEntry';
 import { mapsUrlForCoordinates, openSpotInMaps } from '../../services/mapsLink';
-import { SIGHTINGS_STORAGE_KEY, storageService } from '../../services/storageService';
+import { SIGHTINGS_STORAGE_KEY } from '../../services/storage/keys';
+import { journalRepository } from '../../services/storage/journalRepository';
 
 const unclear: ClassificationResult = {
   status: 'rejected',
@@ -62,7 +63,9 @@ const bolete: ClassificationResult = {
 };
 
 function resetLocation() {
-  (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
+  (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({
+    status: 'granted',
+  });
   (Location.getCurrentPositionAsync as jest.Mock).mockResolvedValue({
     coords: { latitude: 52.2297, longitude: 21.0122 },
   });
@@ -96,7 +99,7 @@ describe('journal entries from a scan', () => {
     });
     expect(JSON.stringify(saved.record)).not.toMatch(/speciesId|confidence|Borowik|JADALNY/);
 
-    const reloaded = await storageService.getSightings();
+    const reloaded = await journalRepository.getSightings();
     expect(reloaded).toEqual([saved.record]);
   });
 
@@ -104,13 +107,17 @@ describe('journal entries from a scan', () => {
     const saved = await createJournalEntryFromScan(unknownMushroom, false);
 
     expect(saved.record.recognition).toEqual({ status: 'rejected', reason: 'unknown_mushroom' });
-    expect(JSON.stringify(saved.record)).not.toMatch(/speciesId|confidence|Borowik|JADALNY|edibility/);
-    const reloaded = await storageService.getSightings();
+    expect(JSON.stringify(saved.record)).not.toMatch(
+      /speciesId|confidence|Borowik|JADALNY|edibility/,
+    );
+    const reloaded = await journalRepository.getSightings();
     expect(reloaded[0].recognition).toEqual({ status: 'rejected', reason: 'unknown_mushroom' });
   });
 
   it('does not name a species for a non-mushroom and does not invent coordinates when GPS is refused', async () => {
-    (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'denied' });
+    (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({
+      status: 'denied',
+    });
 
     const saved = await createJournalEntryFromScan(notAMushroom, true);
 
@@ -223,7 +230,7 @@ describe('journal entries from a scan', () => {
       expect.stringMatching(/\/journal-photos\/sighting_.+\.jpg$/),
       { idempotent: true },
     );
-    expect(await storageService.getSightings()).toEqual([]);
+    expect(await journalRepository.getSightings()).toEqual([]);
   });
 
   it('removes a copied photo the journal did not keep', async () => {
@@ -248,7 +255,9 @@ describe('opening a spot in maps', () => {
     expect(mapsUrlForCoordinates(49.123456, 20.5, 'ios')).toBe(
       'https://maps.apple.com/?ll=49.123456,20.500000&q=49.123456,20.500000',
     );
-    expect(mapsUrlForCoordinates(49.1, 20.2, 'android')).toBe('geo:49.100000,20.200000?q=49.100000,20.200000');
+    expect(mapsUrlForCoordinates(49.1, 20.2, 'android')).toBe(
+      'geo:49.100000,20.200000?q=49.100000,20.200000',
+    );
     expect(mapsUrlForCoordinates(49.1, 20.2, 'web')).toContain('query=49.100000,20.200000');
     expect(() => mapsUrlForCoordinates(Number.NaN, 20, 'web')).toThrow(/usable/);
   });
@@ -259,7 +268,9 @@ describe('opening a spot in maps', () => {
     await openSpotInMaps(49.1, 20.2, 'ios', { openURL });
 
     expect(openURL).toHaveBeenCalledTimes(1);
-    expect(openURL).toHaveBeenCalledWith('https://maps.apple.com/?ll=49.100000,20.200000&q=49.100000,20.200000');
+    expect(openURL).toHaveBeenCalledWith(
+      'https://maps.apple.com/?ll=49.100000,20.200000&q=49.100000,20.200000',
+    );
   });
 
   it('opens the geo link on Android and uses a web link when that open fails', async () => {

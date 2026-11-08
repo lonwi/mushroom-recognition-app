@@ -1,10 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": [
-    "scripts/*.{js,mjs,cjs}",
-    "plugins/**/*.js",
-    ".storybook/mock*.js"
-  ],
+  "entry": ["scripts/*.{js,mjs,cjs}", "plugins/**/*.js", ".storybook/mock*.js"],
   "ignoreDependencies": [
     "@babel/core",
     "expo-updates",

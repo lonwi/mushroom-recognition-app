@@ -18,7 +18,8 @@ jest.mock('../../contexts/LanguageContext', () => {
     useLanguage: () => ({
       language: 'pl',
       setLanguage: () => undefined,
-      t: (key: string, params?: Record<string, string | number>) => actual.translate('pl', key, params),
+      t: (key: string, params?: Record<string, string | number>) =>
+        actual.translate('pl', key, params),
     }),
   };
 });

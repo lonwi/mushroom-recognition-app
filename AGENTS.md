@@ -4,7 +4,7 @@ This repository contains the **Grzybobranie AI** React Native mobile application
 
 Welcome to the **Grzybobranie AI** codebase. This document is the primary guidance and rulebook for AI coding agents (Cursor, Claude, Copilot, Antigravity, etc.) and human contributors taking over a task.
 
-Read also: [`docs/QUALITY.md`](docs/QUALITY.md) (CI gates, baselines, non-loosening rules, PR process), [`docs/RELEASE.md`](docs/RELEASE.md) (release builds), [`docs/DESIGN.md`](docs/DESIGN.md) (UI design system — Nordic Field Guide v3.1), [`ml/README.md`](ml/README.md) (model training pipeline), and [`README.md`](README.md).
+Read also: [`docs/QUALITY.md`](docs/QUALITY.md) (CI gates, baselines, non-loosening rules, PR process), [`docs/REVIEW.md`](docs/REVIEW.md) (PR review guidelines), [`docs/RELEASE.md`](docs/RELEASE.md) (release builds), [`docs/DESIGN.md`](docs/DESIGN.md) (UI design system — Nordic Field Guide v3.1), [`ml/README.md`](ml/README.md) (model training pipeline), [`ml/DATA_CONTRACT.md`](ml/DATA_CONTRACT.md) (data contract), and [`README.md`](README.md).
 
 ---
 
@@ -167,72 +167,14 @@ The authoritative design specification lives in the **Stitch** project "Grzybobr
 - **NO** heavily rounded pill-shaped buttons or fluid circular chips on non-action elements.
 - **NO** diffusion/blur box shadows (blur > 4px is forbidden); use 1 px crisp borders instead.
 
-### Font Family
+### Token Reference & Design Specification
 
-Exclusively **Plus Jakarta Sans** (`font-sans`). Never use serif or monospace fonts in app UI.
+Full token values, typography scales, spacing scales, and layout rules are specified in [`docs/DESIGN.md`](docs/DESIGN.md) and implemented in [`src/theme/tokens.ts`](src/theme/tokens.ts).
+- **Colors**: Always read from `src/theme/tokens.ts` (e.g., `primaryGreen`, `paper`, `accentRed`). Never hardcode hex values in components. Edibility/toxicity signal colors are strictly reserved for taxonomic status.
+- **Typography**: Exclusively **Plus Jakarta Sans** (`font-sans`). Never use serif or monospace fonts in app UI.
+- **Touch Targets**: Minimum 48 × 48 px for interactive elements.
+- **Borders & Shadows**: Use 1 px crisp `borderSubtle` hairlines instead of heavy blur shadows (blur > 4 px is forbidden).
 
-### Color Tokens
-
-The primary palette — always read from `src/theme/tokens.ts`; never hardcode hex values in components:
-
-| Token | Hex | Usage |
-|---|---|---|
-| `primaryGreen` / `primary` | `#1b382b` | Primary CTA, edible status, Skaner pill, header |
-| `primaryGreenHover` | `#152e23` | Active / pressed state for primary buttons |
-| `paper` / `appBg` | `#f6f5f1` | App background — warm matte paper |
-| `paperActive` | `#eae6dc` | Active pills, selected tabs, active step cards |
-| `surfaceCard` | `#ffffff` | Cards and content blocks |
-| `borderSubtle` | `#dcdad3` | 1 px hairlines and borders |
-| `softGreenBg` | `#f4f7f4` | Soft tint for edible comparison columns |
-| `accentRed` | `#ad1414` | Life-safety crimson (deadly toxic, SOS 112) |
-| `accentRedSoft` | `#fdf2f2` | Soft tint for toxic warnings / look-alike cards |
-| `warningAmber` | `#d97706` | Inedible / requires thermal processing |
-| `warningSoft` | `#fef3c7` | Amber tint background |
-
-Edibility/toxicity signal colors are **reserved** for taxonomic status only — never co-opt them for generic UI states.
-
-### Typography Scale
-
-| Token | Size | Weight | Usage |
-|---|---|---|---|
-| `headline-lg` | 30 px / lh 36 px | 800 | Screen titles (desktop) |
-| `headline-lg-mobile` | 24 px / lh 32 px | 800 | Screen titles (mobile) |
-| `headline-md` | 18 px / lh 24 px | 800 | Section headers |
-| `headline-sm` | 15 px / lh 20 px | 800 | Sub-section headers |
-| `species-latin` | 13 px / lh 18 px | 400 italic | Latin binomial names |
-| `body-default` | 13 px / lh 18 px | 400 | Body copy, descriptions |
-| `body-medium` | 13 px / lh 18 px | 600 | Emphasised body copy |
-| `label-micro` | 11 px / lh 14 px | 700 | Micro-labels, tracking 0.025 em |
-| `label-badge` | 10 px / lh 12 px | 800 | Badges, uppercase, tracking 0.05 em |
-
-### Corner Radius
-
-| Token | Value | Usage |
-|---|---|---|
-| `sm` | 4 px | Buttons, inputs, inner image crops |
-| `md` / `DEFAULT` | 8 px | Standard cards, chips |
-| `lg` | 16 px | Modal sheets, detail panels |
-| `xl` | 24 px | Large containers |
-| `full` | 9999 px | Pill shapes (Skaner CTA only) |
-
-### Spacing Scale
-
-| Token | Value |
-|---|---|
-| `space-xs` | 4 px |
-| `space-sm` | 8 px |
-| `space-md` | 12 px |
-| `space-lg` | 16 px |
-| `space-xl` | 24 px |
-| `gutter` / `margin` | 16 px |
-
-### Layout Rules
-
-- **Mobile container**: `max-w-[420px]`, full viewport height, `bg-appBg`, `rounded-[40px]` on sm+.
-- **Edge-to-edge cards**: span 100% width, separated by 1 px `borderSubtle` borders — not floating cards with heavy shadows.
-- **Internal sticky header** (detail & comparison screens): `h-13`, `bg-appBg/95 backdrop-blur-md`, `border-b borderSubtle`, back button left, **SOS 112** button right (`bg-accentRed`, 11 px extrabold).
-- **Touch targets**: minimum 48 × 48 px for all interactive elements.
-- **NativeWind-ready**: use Flexbox and simple grid layouts that map cleanly to React Native primitives.
 
 ### Locked Component: BottomNavigationBar
 

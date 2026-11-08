@@ -78,7 +78,9 @@ if (update) {
     issues: current,
   };
   fs.writeFileSync(baselinePath, `${JSON.stringify(document, null, 2)}\n`);
-  console.log(`Wrote ${current.length} Knip issues to ${path.relative(process.cwd(), baselinePath)}`);
+  console.log(
+    `Wrote ${current.length} Knip issues to ${path.relative(process.cwd(), baselinePath)}`,
+  );
   process.exit(0);
 }
 

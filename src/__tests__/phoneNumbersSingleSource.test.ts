@@ -95,7 +95,7 @@ describe('emergency phone numbers have a single source', () => {
     ["inatOriginal('189971985', EXT_JPG)"],
     ["observationUrl('61129056')"],
     ["const OBS_189971985 = '189971985';"],
-    ["assets/gallery/paxillus_involutus/i97788827.webp"],
+    ['assets/gallery/paxillus_involutus/i97788827.webp'],
     ['https://www.inaturalist.org/observations/189971985'],
     ['2026-10-17'],
     ['Bezpieczne grzybobranie (2016), s. 35'],
@@ -127,7 +127,9 @@ describe('emergency phone numbers have a single source', () => {
     PUBLIC_DIRS.forEach((dir) => walk(path.join(ROOT, dir), publicFiles, PUBLIC_EXT));
     const relative = publicFiles.map((file) => path.relative(ROOT, file).split(path.sep).join('/'));
     expect(relative.some((file) => file.startsWith('site/') && file.endsWith('.html'))).toBe(true);
-    expect(relative.some((file) => file.startsWith('scripts/') && file.endsWith('.mjs'))).toBe(true);
+    expect(relative.some((file) => file.startsWith('scripts/') && file.endsWith('.mjs'))).toBe(
+      true,
+    );
 
     const siteNumbers = new Set<string>();
     const offenders: string[] = [];

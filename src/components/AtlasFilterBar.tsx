@@ -49,7 +49,11 @@ export const AtlasFilterBar: React.FC<Props> = ({
             nestedScrollEnabled
             contentContainerStyle={styles.row}
           >
-            <AtlasFilterChipList chips={ATLAS_KIND_GROUP.chips} chipIds={chipIds} onToggle={onToggle} />
+            <AtlasFilterChipList
+              chips={ATLAS_KIND_GROUP.chips}
+              chipIds={chipIds}
+              onToggle={onToggle}
+            />
             <AtlasFilterChip
               chipId={UNVERIFIED_CHIP_ID}
               label="atlas.filters.unverified"
@@ -67,7 +71,12 @@ export const AtlasFilterBar: React.FC<Props> = ({
           style={[styles.filtersButton, panelCount > 0 ? styles.filtersButtonActive : null]}
           onPress={onOpenFilters}
         >
-          <Text style={[styles.filtersButtonText, panelCount > 0 ? styles.filtersButtonTextActive : null]}>
+          <Text
+            style={[
+              styles.filtersButtonText,
+              panelCount > 0 ? styles.filtersButtonTextActive : null,
+            ]}
+          >
             {t('atlas.filters.open', { count: panelCount })}
           </Text>
         </TouchableOpacity>
@@ -85,13 +94,14 @@ export const AtlasFilterBar: React.FC<Props> = ({
               key={chip.id}
               testID={`filter-active-${chip.id}`}
               accessibilityRole="button"
-              accessibilityLabel={t('atlas.filters.remove', { group: t(chip.group), label: t(chip.label) })}
+              accessibilityLabel={t('atlas.filters.remove', {
+                group: t(chip.group),
+                label: t(chip.label),
+              })}
               style={styles.activeChip}
               onPress={() => onRemove(chip.id)}
             >
-              <Text style={styles.activeChipText}>
-                {t(chip.label)} ×
-              </Text>
+              <Text style={styles.activeChipText}>{t(chip.label)} ×</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>

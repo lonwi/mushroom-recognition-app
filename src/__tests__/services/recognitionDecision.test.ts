@@ -58,7 +58,9 @@ describe('recognition decision', () => {
       expect(decision.maxSoftmax).toBeGreaterThan(entry.expect.max_softmax_gt);
     }
     if (decision.status === 'candidates') {
-      expect(decision.warningReasons.includes('dangerous_genus')).toBe(entry.expect.dangerous_genus);
+      expect(decision.warningReasons.includes('dangerous_genus')).toBe(
+        entry.expect.dangerous_genus,
+      );
       expect(decision.warningReasons.includes('low_confidence')).toBe(entry.expect.low_confidence);
       expect(decision.expertVerificationRequired).toBe(
         Boolean(entry.expect.dangerous_genus || entry.expect.low_confidence),
@@ -152,9 +154,27 @@ describe('recognition decision', () => {
   test('a confident unknown_mushroom top class is not a species and not edible', () => {
     const manifest = manifestFor(fixture.cases[0]);
     manifest.classes = [
-      { index: 0, id: 'boletus_edulis', name: 'Borowik szlachetny', name_latin: 'Boletus edulis', genus: 'Boletus' },
-      { index: 1, id: 'unknown_mushroom', name: 'Nieznany grzyb', name_latin: 'Unknown mushroom', genus: '' },
-      { index: 2, id: 'not_a_mushroom', name: 'To nie jest grzyb', name_latin: 'Not a mushroom', genus: '' },
+      {
+        index: 0,
+        id: 'boletus_edulis',
+        name: 'Borowik szlachetny',
+        name_latin: 'Boletus edulis',
+        genus: 'Boletus',
+      },
+      {
+        index: 1,
+        id: 'unknown_mushroom',
+        name: 'Nieznany grzyb',
+        name_latin: 'Unknown mushroom',
+        genus: '',
+      },
+      {
+        index: 2,
+        id: 'not_a_mushroom',
+        name: 'To nie jest grzyb',
+        name_latin: 'Not a mushroom',
+        genus: '',
+      },
     ];
     manifest.ood = {
       ...manifest.ood,
@@ -169,7 +189,11 @@ describe('recognition decision', () => {
     const logits = [0, 8, -2];
     expect(energyScore(logits)).toBeLessThan(0);
     const decision = decideFromLogits(logits, manifest);
-    expect(decision).toMatchObject({ status: 'rejected', reason: 'unknown_mushroom', topClassId: 'unknown_mushroom' });
+    expect(decision).toMatchObject({
+      status: 'rejected',
+      reason: 'unknown_mushroom',
+      topClassId: 'unknown_mushroom',
+    });
     expect(decision).not.toHaveProperty('top3');
     expect(JSON.stringify(decision)).not.toMatch(/edibility|JADALNY|Borowik/);
 

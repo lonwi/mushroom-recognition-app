@@ -115,7 +115,10 @@ export function decideFromLogits(logits: number[], manifest: ModelManifest): Rec
   }
 
   let lowConfidence = false;
-  if (ood.min_top1_softmax_for_high_confidence != null && top.probability < ood.min_top1_softmax_for_high_confidence) {
+  if (
+    ood.min_top1_softmax_for_high_confidence != null &&
+    top.probability < ood.min_top1_softmax_for_high_confidence
+  ) {
     lowConfidence = true;
   }
   if (ood.min_margin != null && margin < ood.min_margin) {

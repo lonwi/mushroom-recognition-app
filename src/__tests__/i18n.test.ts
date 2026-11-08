@@ -33,8 +33,12 @@ describe('Polish and English dictionaries', () => {
       'To wygląda na grzyba, którego aplikacja nie zna. Nie zbieraj go ani nie jedz na podstawie skanu.',
     );
     expect(translate('en', 'scanner.unknownMushroomBody')).toMatch(/Do not pick it or eat it/);
-    expect(translate('pl', 'scanner.unknownMushroomDeadly')).toBe('Ten grzyb może być śmiertelnie trujący.');
-    expect(translate('en', 'scanner.unknownMushroomDeadly')).toBe('This mushroom may be deadly poisonous.');
+    expect(translate('pl', 'scanner.unknownMushroomDeadly')).toBe(
+      'Ten grzyb może być śmiertelnie trujący.',
+    );
+    expect(translate('en', 'scanner.unknownMushroomDeadly')).toBe(
+      'This mushroom may be deadly poisonous.',
+    );
     expect(translate('pl', 'scanner.rejectedVerify')).toMatch(/grzyboznawcy/);
     expect(translate('en', 'scanner.rejectedVerify')).toMatch(/Sanepid/);
   });
@@ -81,8 +85,12 @@ describe('Polish and English dictionaries', () => {
     expect(en.safetyGuide.rules.rule_tube_mushrooms_cut.title).toMatch(/boletes/i);
     expect(en.safetyGuide.rules.rule_tube_mushrooms_cut.description).toMatch(/tubes/);
     expect(en.safetyGuide.rules.rule_tube_mushrooms_cut.description).toMatch(/Never cut a gilled/);
-    expect(en.safetyGuide.rules.rule_tube_mushrooms_cut.description).toMatch(/Foresters accept both methods/);
-    expect(en.safetyGuide.rules.rule_tube_mushrooms_cut.description).toMatch(/whole fruiting bodies/);
+    expect(en.safetyGuide.rules.rule_tube_mushrooms_cut.description).toMatch(
+      /Foresters accept both methods/,
+    );
+    expect(en.safetyGuide.rules.rule_tube_mushrooms_cut.description).toMatch(
+      /whole fruiting bodies/,
+    );
     expect(en.safetyGuide.rules.rule_tube_mushrooms_cut.description).not.toMatch(/baseless/);
     expect(en.safetyGuide.rules.rule_tube_mushrooms_cut.description).not.toMatch(/mycelium/);
     expect(en.safetyGuide.rules.rule_protect_forest_floor.description).toMatch(/completely sure/);
@@ -167,17 +175,17 @@ describe('Polish and English dictionaries', () => {
     expect(pl.atlas.filters.clear).toBe('Wyczyść');
     expect(pl.atlas.filters.show).toBe('Pokaż {count}');
     expect(pl.atlas.filters.remove).toBe('Usuń filtr: {group}: {label}');
-    expect(translate('pl', 'atlas.filters.remove', { group: 'Ochrona', label: 'Niechroniony' })).toBe(
-      'Usuń filtr: Ochrona: Niechroniony',
-    );
+    expect(
+      translate('pl', 'atlas.filters.remove', { group: 'Ochrona', label: 'Niechroniony' }),
+    ).toBe('Usuń filtr: Ochrona: Niechroniony');
     expect(en.atlas.filters.unverified).toBe('To be verified');
     expect(en.atlas.filters.open).toBe('Filters ({count})');
     expect(en.atlas.filters.clear).toBe('Clear');
     expect(en.atlas.filters.show).toBe('Show {count}');
     expect(en.atlas.filters.remove).toBe('Remove filter: {group}: {label}');
-    expect(translate('en', 'atlas.filters.remove', { group: 'Protection', label: 'Not protected' })).toBe(
-      'Remove filter: Protection: Not protected',
-    );
+    expect(
+      translate('en', 'atlas.filters.remove', { group: 'Protection', label: 'Not protected' }),
+    ).toBe('Remove filter: Protection: Not protected');
     expect(pl.atlas.lookAlikeTag).toBe('☠ Sobowtór!');
     expect(pl.atlas.monthRange).toBe('{start} - {end} mies.');
     expect(pl.months.jan).toBe('Sty');
@@ -195,7 +203,9 @@ describe('Polish and English dictionaries', () => {
   it('interpolates every placeholder, including a repeated one', () => {
     expect(interpolate('a {x} b {x}', { x: 1 })).toBe('a 1 b 1');
     expect(translate('pl', 'atlas.monthRange', { start: 6, end: 10 })).toBe('6 - 10 mies.');
-    expect(translate('pl', 'atlas.colloquial', { names: 'prawdziwek' })).toBe('Potocznie: prawdziwek');
+    expect(translate('pl', 'atlas.colloquial', { names: 'prawdziwek' })).toBe(
+      'Potocznie: prawdziwek',
+    );
     expect(translate('en', 'atlas.colloquial', { names: 'penny bun' })).toBe('Commonly: penny bun');
     expect(translate('pl', 'preparation.allTab')).toBe('Wszystkie');
     expect(translate('en', 'preparation.allTab')).toBe('All');

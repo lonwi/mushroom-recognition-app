@@ -11,15 +11,29 @@ export const colors = {
   black: '#000000',
   transparent: 'transparent',
 
-  primary: '#1B3B22',
+  // Nordic Field Guide v3.1 canonical tokens (Stitch / docs/DESIGN.md)
+  primaryGreen: '#1b382b',
+  primaryGreenHover: '#152e23',
+  paper: '#f6f5f1',
+  paperActive: '#eae6dc',
+  surfaceCard: '#ffffff',
+  borderSubtle: '#dcdad3',
+  softGreenBg: '#f4f7f4',
+  accentRed: '#ad1414',
+  accentRedSoft: '#fdf2f2',
+  warningAmber: '#d97706',
+  warningSoft: '#fef3c7',
+
+  // Semantic mappings (aligned with Nordic Field Guide v3.1)
+  primary: '#1b382b',
   onPrimary: '#FFFFFF',
-  primaryContainer: '#D1E7D5',
-  onPrimaryContainer: '#0B2613',
+  primaryContainer: '#eae6dc',
+  onPrimaryContainer: '#1b382b',
 
   secondary: '#2C5E37',
   onSecondary: '#FFFFFF',
-  secondaryContainer: '#E8F5E9',
-  onSecondaryContainer: '#133519',
+  secondaryContainer: '#f4f7f4',
+  onSecondaryContainer: '#152e23',
 
   tertiary: '#8D5B28',
   onTertiary: '#FFFFFF',
@@ -45,23 +59,11 @@ export const colors = {
   /** Same red as `deadly`. Darker `#D50000` fails on the `#064E3B` species header. */
   deadlyBorder: '#FF1744',
 
-  background: '#F8FAFC',
-  surface: '#FFFFFF',
-  surfaceVariant: '#F1F5F9',
-  outline: '#CBD5E1',
-
-  // Nordic Field Guide v3.1 canonical tokens (Stitch / docs/DESIGN.md)
-  primaryGreen: '#1b382b',
-  primaryGreenHover: '#152e23',
-  paper: '#f6f5f1',
-  paperActive: '#eae6dc',
-  surfaceCard: '#ffffff',
-  borderSubtle: '#dcdad3',
-  softGreenBg: '#f4f7f4',
-  accentRed: '#ad1414',
-  accentRedSoft: '#fdf2f2',
-  warningAmber: '#d97706',
-  warningSoft: '#fef3c7',
+  background: '#f6f5f1',
+  appBg: '#f6f5f1',
+  surface: '#ffffff',
+  surfaceVariant: '#eae6dc',
+  outline: '#dcdad3',
 
   slate200: '#E2E8F0',
   slate400: '#94A3B8',

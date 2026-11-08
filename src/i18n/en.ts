@@ -300,10 +300,10 @@ export const en: Translations = {
       title: 'Sulphur tuft, honey fungus and Deadly Galerina',
       lead: 'Sulphur tuft has no membranous ring. At most a faint, spore-darkened fibrous zone remains, or remnants at the cap margin. Honey fungus usually has a clear membranous ring. Deadly Galerina can also have a thin, short-lived ring, so a ring alone does not tell it apart from honey fungus.',
       limit: 'Photos cannot rule out a poisonous species. An expert checks the specimen.',
-      scope: 'The honey-fungus photos are Armillaria mellea. The atlas card also covers other honey fungi.',
+      scope:
+        'The honey-fungus photos are Armillaria mellea. The atlas card also covers other honey fungi.',
       galerinaHeading: 'Deadly Galerina (Galerina marginata) – deadly poisonous',
-      warning:
-        'Contains amatoxins. No single feature, including the ring, confirms honey fungus.',
+      warning: 'Contains amatoxins. No single feature, including the ring, confirms honey fungus.',
       chipHint:
         'The fibrous cortina zone is easy to take for a ring, so with “Has a ring” sulphur tuft stays among the cards to be checked.',
       hypholoma: 'Sulphur tuft',
@@ -317,13 +317,15 @@ export const en: Translations = {
           title: 'Cortina and ring',
           hypholoma:
             'Young fruiting bodies have a yellow, cobweb-like cortina. Later an irregular, spore-darkened fibrous zone remains on the stem, or only remnants at the cap margin.',
-          armillaria: 'The ring is thin, membranous and usually persistent: white, often with a yellowish edge.',
+          armillaria:
+            'The ring is thin, membranous and usually persistent: white, often with a yellowish edge.',
           galerina:
             'The ring may be a thin membrane or only a fibrous zone. It is often whitish and dusted rusty by spores, and it can disappear with age.',
         },
         gills: {
           title: 'Gills',
-          hypholoma: 'The gills start sulphur yellow, then become olive green, and darken as the spores mature.',
+          hypholoma:
+            'The gills start sulphur yellow, then become olive green, and darken as the spores mature.',
           armillaria: 'The gills are whitish to cream, attached or slightly running down the stem.',
           galerina:
             'The gills are attached or slightly run down the stem. They start yellowish to cream-ochre and later turn rusty brown.',
@@ -358,7 +360,8 @@ export const en: Translations = {
         },
         wood: {
           title: 'Wood and growth',
-          hypholoma: 'A saprobe in clumps on stumps and logs. It can grow from buried roots and look terrestrial.',
+          hypholoma:
+            'A saprobe in clumps on stumps and logs. It can grow from buried roots and look terrestrial.',
           armillaria:
             'A parasite and saprobe on wood, mainly hardwood, often in large clumps. Black rhizomorphs can occur under the bark.',
           galerina:
@@ -368,7 +371,8 @@ export const en: Translations = {
       captions: {
         hypholomaStem: 'Upper stem with an irregular, rusty fibrous cortina zone.',
         hypholomaGills: 'Greenish-yellow gills and dark fibres on the stem.',
-        hypholomaYoung: 'Young fruiting bodies with cobweb-like cortina remnants at the cap margin.',
+        hypholomaYoung:
+          'Young fruiting bodies with cobweb-like cortina remnants at the cap margin.',
         hypholomaMargin: 'Dark veil remnants on the cap margin.',
         hypholomaFlesh: 'Yellow flesh in section.',
         armillariaRing: 'Membranous white ring with a yellowish edge.',
@@ -388,7 +392,8 @@ export const en: Translations = {
     takePhoto: 'Take Photo & Classify',
     fromGallery: 'Choose from Gallery',
     quickDemo: 'Atlas samples — this is not recognition:',
-    atlasScopeHint: 'These are a few cards from a short atlas, not a full list of Polish mushrooms.',
+    atlasScopeHint:
+      'These are a few cards from a short atlas, not a full list of Polish mushrooms.',
     macroTips: 'Macro framing tips:',
     tipCap: '1. Photograph the cap top (color & texture)',
     tipUnder: '2. Show underside of the cap (tubes or gills)',
@@ -414,7 +419,8 @@ export const en: Translations = {
       'This looks like a mushroom the app does not know. Do not pick it or eat it based on the scan.',
     unknownMushroomDeadly: 'This mushroom may be deadly poisonous.',
     candidatesTitle: 'Scan candidates',
-    candidatesLead: 'The model’s three highest scores. This is not an identification you can forage on.',
+    candidatesLead:
+      'The model’s three highest scores. This is not an identification you can forage on.',
     notEdibilityVerdict: 'This scan is not an edibility verdict.',
     expertWarningTitle: 'Ask an expert',
     expertWarningBody:
@@ -460,8 +466,10 @@ export const en: Translations = {
     withoutLocation: 'Without location',
     cancel: 'Cancel',
     savedTitle: 'Saved to the journal',
-    savedWithLocation: 'The photo and coordinates are in the journal. You can add a note on the entry.',
-    savedWithoutLocationChoice: 'The entry was saved without a location. You can add a note on the entry.',
+    savedWithLocation:
+      'The photo and coordinates are in the journal. You can add a note on the entry.',
+    savedWithoutLocationChoice:
+      'The entry was saved without a location. You can add a note on the entry.',
     savedWithoutGps:
       'Location permission was denied or GPS is unavailable. The entry was saved without coordinates.',
     photoNotKept: 'The photo could not be copied into app storage, so it was not attached.',
@@ -589,7 +597,8 @@ export const en: Translations = {
     symptomsLabel: 'Symptoms:',
     actionLabel: '🚨 What to do:',
     centersTitle: '📞 Toxicology centres in Poland',
-    centersSub: 'These consultation lines mainly serve doctors and medical facilities. If poisoning symptoms appear, the first step is the emergency number 112 or 999.',
+    centersSub:
+      'These consultation lines mainly serve doctors and medical facilities. If poisoning symptoms appear, the first step is the emergency number 112 or 999.',
     callCenterA11y: 'Call: {city} {phone}',
     availabilityLabel: 'Availability:',
     hours247: 'Around the clock, 24/7',
@@ -599,7 +608,8 @@ export const en: Translations = {
     preparationSub: 'A guide to cleaning, cooking, and storing',
     reopenDisclaimer: '📄 Read the rules and the AI warning again',
     callNotSupportedTitle: 'Calling not available',
-    callNotSupportedBody: 'This device does not support phone calls. Please dial the number manually.',
+    callNotSupportedBody:
+      'This device does not support phone calls. Please dial the number manually.',
     rules: {
       rule_tubes_first: {
         title: 'For beginners: only mushrooms with tubes (a “sponge”)',
@@ -619,7 +629,7 @@ export const en: Translations = {
       rule_whole_mushroom: {
         title: 'Take the whole mushroom out, with the bulb and volva at the base',
         description:
-          'Lift every gilled mushroom (including parasols, field mushrooms and brittlegills), as well as chanterelles, hedgehog mushrooms and any other mushroom without tubes, out of the ground intact. Lever it out with a knife deep beside the stem, because a death cap\'s loose volva often stays in the soil. The bulb and volva at the base are what separate the death cap, destroying angel and panther cap from parasols, shaggy parasols and field mushrooms. Never cut these above the ground. The only exception is the tip below: boletes you have identified with certainty.',
+          "Lift every gilled mushroom (including parasols, field mushrooms and brittlegills), as well as chanterelles, hedgehog mushrooms and any other mushroom without tubes, out of the ground intact. Lever it out with a knife deep beside the stem, because a death cap's loose volva often stays in the soil. The bulb and volva at the base are what separate the death cap, destroying angel and panther cap from parasols, shaggy parasols and field mushrooms. Never cut these above the ground. The only exception is the tip below: boletes you have identified with certainty.",
       },
       rule_tube_mushrooms_cut: {
         title: 'Only boletes (with a “sponge”) may be cut low with a knife',

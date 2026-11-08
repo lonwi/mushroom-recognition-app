@@ -22,7 +22,5 @@ export default meta;
 type Story = StoryObj<typeof AtlasScreen>;
 
 export const Filters: Story = {
-  render: () => (
-    <AtlasFrame />
-  ),
+  render: () => <AtlasFrame />,
 };

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { JournalScreen } from '../screens/JournalScreen';
-import { SIGHTINGS_STORAGE_KEY } from '../services/storageService';
+import { SIGHTINGS_STORAGE_KEY } from '../services/storage/keys';
 import type { SightingRecord } from '../types/mushroom';
 
 const entries: SightingRecord[] = [

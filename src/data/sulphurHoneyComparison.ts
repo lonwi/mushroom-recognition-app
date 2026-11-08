@@ -477,7 +477,9 @@ export function comparisonPhotoById(id: string): ComparisonPhoto | undefined {
 }
 
 export function showsSulphurHoneyComparison(speciesId: string): boolean {
-  return speciesId === SULPHUR_TUFT_ID || speciesId === HONEY_FUNGUS_ID || speciesId === FUNERAL_BELL_ID;
+  return (
+    speciesId === SULPHUR_TUFT_ID || speciesId === HONEY_FUNGUS_ID || speciesId === FUNERAL_BELL_ID
+  );
 }
 
 /** One credit per comparison file, for the atlas photo-credit list. */

@@ -8,7 +8,11 @@ function formatMapCoordinate(value: number): string {
   return value.toFixed(6);
 }
 
-export function mapsUrlForCoordinates(latitude: number, longitude: number, platform: string): string {
+export function mapsUrlForCoordinates(
+  latitude: number,
+  longitude: number,
+  platform: string,
+): string {
   if (!isUsableCoordinate(latitude, longitude)) {
     throw new Error('coordinates are not usable');
   }

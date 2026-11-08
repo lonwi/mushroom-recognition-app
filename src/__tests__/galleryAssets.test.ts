@@ -92,7 +92,9 @@ describe('atlas gallery assets', () => {
   });
 
   it('stores the shared Cortinarius file once', () => {
-    const shared = photosForSpecies('cortinarius_orellanus').filter((photo) => photo.feature !== 'W');
+    const shared = photosForSpecies('cortinarius_orellanus').filter(
+      (photo) => photo.feature !== 'W',
+    );
     expect(shared.map((photo) => photo.feature).sort()).toEqual(['C', 'G', 'Y']);
     expect(new Set(shared.map((photo) => photo.assetPath)).size).toBe(1);
     expect(new Set(shared.map((photo) => photo.imageUrl)).size).toBe(1);
@@ -129,7 +131,8 @@ describe('atlas gallery assets', () => {
     const listedUrls = exclusion.photos.map((photo) => photo.image_url);
     const creditedUrls = new Set(credited.map((photo) => photo.imageUrl));
     const listed = new Set(listedUrls);
-    const hiddenOnly = 'https://inaturalist-open-data.s3.amazonaws.com/photos/331784845/original.jpg';
+    const hiddenOnly =
+      'https://inaturalist-open-data.s3.amazonaws.com/photos/331784845/original.jpg';
     expect(listedUrls.length).toBe(listed.size);
     for (const url of creditedUrls) {
       expect(listed.has(url)).toBe(true);

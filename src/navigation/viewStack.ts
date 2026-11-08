@@ -19,8 +19,7 @@ export type VisibleRoute =
   | { readonly kind: 'preparation' };
 
 export type HardwareBackResult =
-  | { readonly handled: false }
-  | { readonly handled: true; readonly stack: ViewStack };
+  { readonly handled: false } | { readonly handled: true; readonly stack: ViewStack };
 
 export function initialViewStack(): ViewStack {
   return { tab: 'SCANNER', pushed: [] };

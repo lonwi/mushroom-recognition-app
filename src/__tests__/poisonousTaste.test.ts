@@ -8,10 +8,8 @@ import { LOOKALIKES_WITHOUT_CARD, MUSHROOMS_DATABASE } from '../data/mushrooms';
 import { GOLDEN_RULES, POISON_SYNDROMES } from '../data/safetyRules';
 import { type MushroomSpecies } from '../types/mushroom';
 
-const PL_RULE =
-  'Smak ani zapach nie pozwalają odróżnić grzyba trującego od jadalnego.';
-const EN_RULE =
-  'Neither taste nor smell can tell a poisonous mushroom from an edible one.';
+const PL_RULE = 'Smak ani zapach nie pozwalają odróżnić grzyba trującego od jadalnego.';
+const EN_RULE = 'Neither taste nor smell can tell a poisonous mushroom from an edible one.';
 
 /**
  * A taste quality stated about a poisonous or deadly species.
@@ -83,7 +81,13 @@ describe('taste of poisonous species', () => {
     const safety = [
       ...GOLDEN_RULES.map((rule) => `${rule.title}\n${rule.description}`),
       ...POISON_SYNDROMES.map((syndrome) =>
-        [syndrome.name, syndrome.species, syndrome.latency, syndrome.symptoms, syndrome.action].join('\n'),
+        [
+          syndrome.name,
+          syndrome.species,
+          syndrome.latency,
+          syndrome.symptoms,
+          syndrome.action,
+        ].join('\n'),
       ),
       JSON.stringify(pl.safetyGuide),
       JSON.stringify(en.safetyGuide),

@@ -25,7 +25,9 @@ describe('SpeciesGallery', () => {
         en.gallery.feature.undersideStem,
       );
     });
-    expect(screen.getByTestId('species-gallery-feature-1')).toHaveTextContent(en.gallery.feature.wholeStemBase);
+    expect(screen.getByTestId('species-gallery-feature-1')).toHaveTextContent(
+      en.gallery.feature.wholeStemBase,
+    );
     expect(screen.queryByText(en.gallery.feature.gillsRing)).toBeNull();
     expect(screen.getByTestId('species-gallery-note')).toHaveTextContent(en.gallery.note);
     expect(screen.getByTestId('species-gallery-modified-0')).toHaveTextContent(en.gallery.modified);
@@ -52,8 +54,12 @@ describe('SpeciesGallery', () => {
     );
 
     expect(screen.getByTestId('species-gallery-note')).toHaveTextContent(pl.gallery.note);
-    expect(screen.getByTestId('species-gallery-feature-0')).toHaveTextContent(pl.gallery.feature.amanitaWhole);
-    expect(screen.getByTestId('species-gallery-author-0')).toHaveTextContent('Autor: Павлик Лисицын');
+    expect(screen.getByTestId('species-gallery-feature-0')).toHaveTextContent(
+      pl.gallery.feature.amanitaWhole,
+    );
+    expect(screen.getByTestId('species-gallery-author-0')).toHaveTextContent(
+      'Autor: Павлик Лисицын',
+    );
     expect(screen.getByTestId('species-gallery-license-0')).toHaveTextContent('CC BY 4.0');
     expect(screen.getByTestId('species-gallery-source-0')).toHaveTextContent(
       'Źródło: https://www.inaturalist.org/observations/182790926',
@@ -62,7 +68,9 @@ describe('SpeciesGallery', () => {
     expect(screen.getByTestId('species-gallery-modified-0')).toHaveTextContent(pl.gallery.modified);
     expect(screen.getByTestId('species-gallery-license-0').props.accessibilityRole).toBe('link');
     expect(screen.getByTestId('species-gallery-source-0').props.accessibilityRole).toBe('link');
-    expect(screen.getByTestId('species-gallery-source-0').props.accessibilityLabel).toBe(pl.gallery.source);
+    expect(screen.getByTestId('species-gallery-source-0').props.accessibilityLabel).toBe(
+      pl.gallery.source,
+    );
     expect(screen.getByTestId('species-gallery-photo-0').props.accessibilityLabel).toContain(
       'Muchomor sromotnikowy (zielonawy)',
     );

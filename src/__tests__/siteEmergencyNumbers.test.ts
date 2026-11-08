@@ -51,7 +51,9 @@ describe('site emergency numbers', () => {
     }
 
     const centrePhone = TOXICOLOGY_CENTERS[0].phones[0];
-    const leaked = phoneNumbersInHtml(`<p>${centrePhone}</p><a href="tel:${digitsOnly(centrePhone)}">x</a>`);
+    const leaked = phoneNumbersInHtml(
+      `<p>${centrePhone}</p><a href="tel:${digitsOnly(centrePhone)}">x</a>`,
+    );
     expect(leaked.has(digitsOnly(centrePhone))).toBe(true);
     expect([...leaked].sort()).not.toEqual(allowed);
 
@@ -59,6 +61,8 @@ describe('site emergency numbers', () => {
     expect([...dated]).toEqual([]);
 
     const linked = EMERGENCY_CALLS[0].number;
-    expect(phoneNumbersInHtml(`<a href="tel:${linked}">call</a>`).has(digitsOnly(linked))).toBe(true);
+    expect(phoneNumbersInHtml(`<a href="tel:${linked}">call</a>`).has(digitsOnly(linked))).toBe(
+      true,
+    );
   });
 });
