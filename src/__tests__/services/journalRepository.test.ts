@@ -1,15 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
-import { isManagedJournalPhoto, journalPhotoFileName, resolveJournalPhotoUri } from '../../services/journalPhotos';
 import {
-  JournalReadError,
+  isManagedJournalPhoto,
+  journalPhotoFileName,
+  resolveJournalPhotoUri,
+} from '../../services/journalPhotos';
+import {
   MAX_JOURNAL_BACKUPS,
   SIGHTINGS_BACKUP_INDEX_KEY,
   SIGHTINGS_BACKUP_KEY,
   SIGHTINGS_STORAGE_KEY,
   journalBackupStorageKey,
-  storageService,
-} from '../../services/storageService';
+} from '../../services/storage/keys';
+import { JournalReadError, journalRepository } from '../../services/storage/journalRepository';
 import type { SightingRecord } from '../../types/mushroom';
 
 const photoFile = 'sighting_photo.jpg';
@@ -41,7 +44,7 @@ function unclearEntry(id: string): SightingRecord {
   };
 }
 
-describe('storageService journal records', () => {
+describe('journalRepository journal records', () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
     (FileSystem.deleteAsync as jest.Mock).mockReset();
@@ -49,45 +52,48 @@ describe('storageService journal records', () => {
   });
 
   it('persists edited notes and leaves the scan result alone', async () => {
-    await storageService.saveSighting(unclearEntry('sighting_notes'));
+    await journalRepository.saveSighting(unclearEntry('sighting_notes'));
 
-    const first = await storageService.updateSightingNotes('sighting_notes', '  pod dębami, 4 sztuki  ');
+    const first = await journalRepository.updateSightingNotes(
+      'sighting_notes',
+      '  pod dębami, 4 sztuki  ',
+    );
     expect(first?.notes).toBe('pod dębami, 4 sztuki');
     expect(first?.recognition).toEqual({ status: 'rejected', reason: 'unclear' });
     expect(first?.latitude).toBe(49.3);
     expect(first?.photoFile).toBe(photoFile);
 
-    const reloaded = await storageService.getSightings();
+    const reloaded = await journalRepository.getSightings();
     expect(reloaded[0].notes).toBe('pod dębami, 4 sztuki');
 
-    await storageService.updateSightingNotes('sighting_notes', 'przy świerkach');
-    const edited = await storageService.getSightings();
+    await journalRepository.updateSightingNotes('sighting_notes', 'przy świerkach');
+    const edited = await journalRepository.getSightings();
     expect(edited[0].notes).toBe('przy świerkach');
     expect(edited[0].recognition).toEqual({ status: 'rejected', reason: 'unclear' });
 
-    await storageService.updateSightingNotes('sighting_notes', '   ');
-    const cleared = await storageService.getSightings();
+    await journalRepository.updateSightingNotes('sighting_notes', '   ');
+    const cleared = await journalRepository.getSightings();
     expect(cleared[0].notes).toBeUndefined();
   });
 
   it('deletes the persistent photo with the entry and ignores a cache uri', async () => {
-    await storageService.saveSighting(unclearEntry('sighting_photo'));
-    await storageService.saveSighting({
+    await journalRepository.saveSighting(unclearEntry('sighting_photo'));
+    await journalRepository.saveSighting({
       id: 'sighting_cache',
       timestamp: 1_700_000_000_001,
       photoFile: 'file://cache/camera.jpg',
       recognition: { status: 'unavailable' },
     });
 
-    const loaded = await storageService.getSightings();
+    const loaded = await journalRepository.getSightings();
     expect(loaded.find((item) => item.id === 'sighting_cache')?.photoFile).toBeUndefined();
 
-    await storageService.deleteSighting('sighting_cache');
+    await journalRepository.deleteSighting('sighting_cache');
     expect(FileSystem.deleteAsync).not.toHaveBeenCalled();
 
-    await storageService.deleteSighting('sighting_photo');
+    await journalRepository.deleteSighting('sighting_photo');
     expect(FileSystem.deleteAsync).toHaveBeenCalledWith(resolvedPhoto, { idempotent: true });
-    expect(await storageService.getSightings()).toEqual([]);
+    expect(await journalRepository.getSightings()).toEqual([]);
   });
 
   it('keeps an older species label as a legacy entry and writes it back without inventing a scan', async () => {
@@ -108,7 +114,7 @@ describe('storageService journal records', () => {
       ]),
     );
 
-    const [legacy] = await storageService.getSightings();
+    const [legacy] = await journalRepository.getSightings();
     expect(legacy.recognition).toEqual({
       status: 'legacy',
       speciesId: 'boletus_edulis',
@@ -120,13 +126,15 @@ describe('storageService journal records', () => {
     expect(legacy.latitude).toBeUndefined();
     expect(legacy.longitude).toBeUndefined();
 
-    await storageService.updateSightingNotes('legacy', 'stary las');
+    await journalRepository.updateSightingNotes('legacy', 'stary las');
     const raw = JSON.parse((await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)) ?? '[]');
     expect(raw[0].recognition.status).toBe('legacy');
     expect(raw[0].recognition.speciesNamePl).toBe('Borowik szlachetny');
     expect(raw[0].recognition.confidence).toBe(95);
     expect(raw[0].notes).toBe('stary las');
-    expect(JSON.stringify(raw[0])).not.toMatch(/"photoUri"|"status":"candidates"|"status":"unavailable"/);
+    expect(JSON.stringify(raw[0])).not.toMatch(
+      /"photoUri"|"status":"candidates"|"status":"unavailable"/,
+    );
   });
 
   it('stores only the file name and rebuilds an older absolute path from the current document directory', async () => {
@@ -142,7 +150,7 @@ describe('storageService journal records', () => {
       ]),
     );
 
-    const [entry] = await storageService.getSightings();
+    const [entry] = await journalRepository.getSightings();
     expect(entry.photoFile).toBe('sighting_p.jpg');
     expect(entry.photoFile).not.toContain('/');
     expect(resolveJournalPhotoUri(entry.photoFile)).toBe(
@@ -154,7 +162,9 @@ describe('storageService journal records', () => {
   });
 
   it('rejects photo names that leave the journal folder', () => {
-    expect(journalPhotoFileName('file:///mock/document/journal-photos/../../secret.jpg')).toBeNull();
+    expect(
+      journalPhotoFileName('file:///mock/document/journal-photos/../../secret.jpg'),
+    ).toBeNull();
     expect(journalPhotoFileName('..')).toBeNull();
     expect(journalPhotoFileName('sighting_p.jpg/../../secret.jpg')).toBeNull();
     expect(isManagedJournalPhoto('file:///mock/document/journal-photos/../secret.jpg')).toBe(false);
@@ -167,8 +177,8 @@ describe('storageService journal records', () => {
       JSON.stringify([{ id: 'no-time', recognition: { status: 'unavailable' } }]),
     );
 
-    const first = await storageService.getSightings();
-    const second = await storageService.getSightings();
+    const first = await journalRepository.getSightings();
+    const second = await journalRepository.getSightings();
     expect(first[0].timestamp).toBe(0);
     expect(second[0].timestamp).toBe(0);
   });
@@ -179,36 +189,40 @@ describe('storageService journal records', () => {
       JSON.stringify([{ id: 'gone', timestamp: 1, recognition: { status: 'unavailable' } }]),
     );
 
-    const [entry] = await storageService.getSightings();
+    const [entry] = await journalRepository.getSightings();
     expect(entry.recognition).toEqual({ status: 'unavailable' });
     expect(JSON.stringify(entry)).not.toMatch(/Borowik|speciesId|speciesNamePl/);
   });
 
   it('returns an empty journal when nothing has been saved', async () => {
-    expect(await storageService.getSightings()).toEqual([]);
+    expect(await journalRepository.getSightings()).toEqual([]);
   });
 
   it('backs up a broken journal and refuses to overwrite it', async () => {
     await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, 'not-json');
 
-    await expect(storageService.getSightings()).rejects.toBeInstanceOf(JournalReadError);
+    await expect(journalRepository.getSightings()).rejects.toBeInstanceOf(JournalReadError);
     expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('not-json');
     expect(await journalBackupValues()).toEqual(['not-json']);
 
-    await expect(storageService.saveSighting(unclearEntry('new'))).rejects.toBeInstanceOf(JournalReadError);
-    await expect(storageService.updateSightingNotes('new', 'notatka')).rejects.toBeInstanceOf(JournalReadError);
-    await expect(storageService.deleteSighting('new')).rejects.toBeInstanceOf(JournalReadError);
+    await expect(journalRepository.saveSighting(unclearEntry('new'))).rejects.toBeInstanceOf(
+      JournalReadError,
+    );
+    await expect(journalRepository.updateSightingNotes('new', 'notatka')).rejects.toBeInstanceOf(
+      JournalReadError,
+    );
+    await expect(journalRepository.deleteSighting('new')).rejects.toBeInstanceOf(JournalReadError);
     expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('not-json');
   });
 
   it('keeps a separate backup for each distinct corruption and skips a duplicate raw value', async () => {
     await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, 'not-json');
-    await expect(storageService.getSightings()).rejects.toBeInstanceOf(JournalReadError);
-    await expect(storageService.getSightings()).rejects.toBeInstanceOf(JournalReadError);
+    await expect(journalRepository.getSightings()).rejects.toBeInstanceOf(JournalReadError);
+    await expect(journalRepository.getSightings()).rejects.toBeInstanceOf(JournalReadError);
     expect(await journalBackupValues()).toEqual(['not-json']);
 
     await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, '{"no":"list"}');
-    await expect(storageService.getSightings()).rejects.toBeInstanceOf(JournalReadError);
+    await expect(journalRepository.getSightings()).rejects.toBeInstanceOf(JournalReadError);
 
     expect(await journalBackupValues()).toEqual(['not-json', '{"no":"list"}']);
     expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('{"no":"list"}');
@@ -217,13 +231,13 @@ describe('storageService journal records', () => {
 
   it('starts an empty journal and leaves the raw backup in place', async () => {
     await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, 'not-json');
-    await expect(storageService.getSightings()).rejects.toBeInstanceOf(JournalReadError);
+    await expect(journalRepository.getSightings()).rejects.toBeInstanceOf(JournalReadError);
 
-    await storageService.startFreshJournal();
+    await journalRepository.startFreshJournal();
 
     expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('[]');
     expect(await journalBackupValues()).toEqual(['not-json']);
-    expect(await storageService.getSightings()).toEqual([]);
+    expect(await journalRepository.getSightings()).toEqual([]);
   });
 
   it('leaves the journal untouched when the backup cannot be written', async () => {
@@ -238,7 +252,7 @@ describe('storageService journal records', () => {
     });
 
     try {
-      await expect(storageService.startFreshJournal()).rejects.toThrow(/backup failed/);
+      await expect(journalRepository.startFreshJournal()).rejects.toThrow(/backup failed/);
       expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('not-json');
       expect(await journalBackupValues()).toEqual([]);
     } finally {
@@ -251,7 +265,7 @@ describe('storageService journal records', () => {
     await AsyncStorage.setItem(SIGHTINGS_BACKUP_INDEX_KEY, '{not-json');
     await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, 'not-json');
 
-    await storageService.startFreshJournal();
+    await journalRepository.startFreshJournal();
 
     expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('[]');
     expect(await AsyncStorage.getItem(journalBackupStorageKey('kept'))).toBe('older-raw');
@@ -266,13 +280,17 @@ describe('storageService journal records', () => {
     await AsyncStorage.setItem(SIGHTINGS_BACKUP_INDEX_KEY, JSON.stringify(['safeid', '../nope']));
     await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, '{"no":"list"}');
 
-    await storageService.startFreshJournal();
+    await journalRepository.startFreshJournal();
 
     expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('[]');
-    const index = JSON.parse((await AsyncStorage.getItem(SIGHTINGS_BACKUP_INDEX_KEY)) ?? '[]') as string[];
+    const index = JSON.parse(
+      (await AsyncStorage.getItem(SIGHTINGS_BACKUP_INDEX_KEY)) ?? '[]',
+    ) as string[];
     expect(index).toContain('safeid');
     expect(index).not.toContain('../nope');
-    expect(await journalBackupValues()).toEqual(expect.arrayContaining(['older-raw', '{"no":"list"}']));
+    expect(await journalBackupValues()).toEqual(
+      expect.arrayContaining(['older-raw', '{"no":"list"}']),
+    );
   });
 
   it('starts a fresh journal when the damaged index cannot be rebuilt from keys', async () => {
@@ -283,7 +301,7 @@ describe('storageService journal records', () => {
     getAllKeys.mockRejectedValue(new Error('keys unavailable'));
 
     try {
-      await storageService.startFreshJournal();
+      await journalRepository.startFreshJournal();
       expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('[]');
       expect(await journalBackupValues()).toEqual(['not-json']);
     } finally {
@@ -296,7 +314,7 @@ describe('storageService journal records', () => {
     await AsyncStorage.setItem(SIGHTINGS_BACKUP_INDEX_KEY, '[]');
     await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, 'not-json');
 
-    await storageService.startFreshJournal();
+    await journalRepository.startFreshJournal();
 
     expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('[]');
     expect(await storedBackupKeys()).toEqual([journalBackupStorageKey('orphan1')]);
@@ -315,7 +333,7 @@ describe('storageService journal records', () => {
     });
 
     try {
-      await storageService.startFreshJournal();
+      await journalRepository.startFreshJournal();
       expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('[]');
       expect(await storedBackupKeys()).toEqual([journalBackupStorageKey('orphan1')]);
       expect(await AsyncStorage.getItem(SIGHTINGS_BACKUP_INDEX_KEY)).toBe('[]');
@@ -334,7 +352,9 @@ describe('storageService journal records', () => {
     });
 
     try {
-      await expect(storageService.startFreshJournal()).rejects.toThrow(/index failed|listy kopii/);
+      await expect(journalRepository.startFreshJournal()).rejects.toThrow(
+        /index failed|listy kopii/,
+      );
       expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('not-json');
       expect(await storedBackupKeys()).toEqual([]);
     } finally {
@@ -358,7 +378,9 @@ describe('storageService journal records', () => {
     });
 
     try {
-      await expect(storageService.startFreshJournal()).rejects.toThrow(/index failed|listy kopii/);
+      await expect(journalRepository.startFreshJournal()).rejects.toThrow(
+        /index failed|listy kopii/,
+      );
       expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('not-json');
       expect(await storedBackupKeys()).toHaveLength(1);
     } finally {
@@ -366,7 +388,7 @@ describe('storageService journal records', () => {
       if (originalRemove) removeItem.mockImplementation(originalRemove);
     }
 
-    await storageService.startFreshJournal();
+    await journalRepository.startFreshJournal();
 
     expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('[]');
     expect(await storedBackupKeys()).toHaveLength(1);
@@ -378,7 +400,7 @@ describe('storageService journal records', () => {
 
     for (let i = 0; i < MAX_JOURNAL_BACKUPS + 3; i += 1) {
       await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, `corrupt-${i}`);
-      await expect(storageService.getSightings()).rejects.toBeInstanceOf(JournalReadError);
+      await expect(journalRepository.getSightings()).rejects.toBeInstanceOf(JournalReadError);
     }
 
     const values = await journalBackupValues();
@@ -389,7 +411,7 @@ describe('storageService journal records', () => {
     expect(await storedBackupKeys()).toHaveLength(MAX_JOURNAL_BACKUPS);
     expect(await AsyncStorage.getItem(SIGHTINGS_BACKUP_KEY)).toBe('legacy-raw');
 
-    await expect(storageService.getSightings()).rejects.toBeInstanceOf(JournalReadError);
+    await expect(journalRepository.getSightings()).rejects.toBeInstanceOf(JournalReadError);
     expect(await journalBackupValues()).toEqual(values);
   });
 
@@ -410,7 +432,9 @@ describe('storageService journal records', () => {
     });
 
     try {
-      await expect(storageService.startFreshJournal()).rejects.toThrow(/wyczyszczenia dziennika/);
+      await expect(journalRepository.startFreshJournal()).rejects.toThrow(
+        /wyczyszczenia dziennika/,
+      );
     } finally {
       if (originalGet) getItem.mockImplementation(originalGet);
       if (originalSet) setItem.mockImplementation(originalSet);
@@ -418,11 +442,11 @@ describe('storageService journal records', () => {
   });
 
   it('does nothing when start fresh is asked for a journal that can be read', async () => {
-    await storageService.saveSighting(unclearEntry('keep-me'));
+    await journalRepository.saveSighting(unclearEntry('keep-me'));
 
-    await storageService.startFreshJournal();
+    await journalRepository.startFreshJournal();
 
-    const ids = (await storageService.getSightings()).map((item) => item.id);
+    const ids = (await journalRepository.getSightings()).map((item) => item.id);
     expect(ids).toEqual(['keep-me']);
     expect(await AsyncStorage.getItem(SIGHTINGS_BACKUP_INDEX_KEY)).toBeNull();
   });
@@ -430,9 +454,11 @@ describe('storageService journal records', () => {
   it('backs up a journal that is not a list and does not replace it', async () => {
     await AsyncStorage.setItem(SIGHTINGS_STORAGE_KEY, '{"no":"list"}');
 
-    await expect(storageService.getSightings()).rejects.toBeInstanceOf(JournalReadError);
+    await expect(journalRepository.getSightings()).rejects.toBeInstanceOf(JournalReadError);
     expect(await journalBackupValues()).toEqual(['{"no":"list"}']);
-    await expect(storageService.saveSighting(unclearEntry('new'))).rejects.toBeInstanceOf(JournalReadError);
+    await expect(journalRepository.saveSighting(unclearEntry('new'))).rejects.toBeInstanceOf(
+      JournalReadError,
+    );
     expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('{"no":"list"}');
   });
 
@@ -453,8 +479,8 @@ describe('storageService journal records', () => {
     });
 
     try {
-      const first = storageService.saveSighting(unclearEntry('sighting_a'));
-      const second = storageService.saveSighting({
+      const first = journalRepository.saveSighting(unclearEntry('sighting_a'));
+      const second = journalRepository.saveSighting({
         ...unclearEntry('sighting_b'),
         id: 'sighting_b',
         photoFile: undefined,
@@ -463,7 +489,7 @@ describe('storageService journal records', () => {
       release();
       await Promise.all([first, second]);
 
-      const ids = (await storageService.getSightings()).map((item) => item.id).sort();
+      const ids = (await journalRepository.getSightings()).map((item) => item.id).sort();
       expect(ids).toEqual(['sighting_a', 'sighting_b']);
     } finally {
       if (original) getItem.mockImplementation(original);
@@ -472,21 +498,21 @@ describe('storageService journal records', () => {
 
   it('notifies subscribers on write operations and allows unsubscribing', async () => {
     let callCount = 0;
-    const unsubscribe = storageService.subscribe(() => {
+    const unsubscribe = journalRepository.subscribe(() => {
       callCount++;
     });
 
-    await storageService.saveSighting(unclearEntry('sub_1'));
+    await journalRepository.saveSighting(unclearEntry('sub_1'));
     expect(callCount).toBe(1);
 
-    await storageService.updateSightingNotes('sub_1', 'notatka');
+    await journalRepository.updateSightingNotes('sub_1', 'notatka');
     expect(callCount).toBe(2);
 
-    await storageService.deleteSighting('sub_1');
+    await journalRepository.deleteSighting('sub_1');
     expect(callCount).toBe(3);
 
     unsubscribe();
-    await storageService.saveSighting(unclearEntry('sub_2'));
+    await journalRepository.saveSighting(unclearEntry('sub_2'));
     expect(callCount).toBe(3);
   });
 });

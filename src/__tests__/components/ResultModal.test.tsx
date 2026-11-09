@@ -4,7 +4,8 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { ResultModal } from '../../components/ResultModal';
-import { SIGHTINGS_STORAGE_KEY, storageService } from '../../services/storageService';
+import { SIGHTINGS_STORAGE_KEY } from '../../services/storage/keys';
+import { journalRepository } from '../../services/storage/journalRepository';
 import { LanguageProvider } from '../../contexts/LanguageContext';
 import { ClassificationResult } from '../../services/classifierService';
 import { SpeciesCandidate } from '../../services/recognitionDecision';
@@ -32,8 +33,13 @@ function renderModal(
 ) {
   return render(
     <LanguageProvider>
-      <ResultModal visible result={result} onClose={onClose} onOpenAtlasSpecies={onOpenAtlasSpecies} />
-    </LanguageProvider>
+      <ResultModal
+        visible
+        result={result}
+        onClose={onClose}
+        onOpenAtlasSpecies={onOpenAtlasSpecies}
+      />
+    </LanguageProvider>,
   );
 }
 
@@ -63,7 +69,7 @@ describe('ResultModal when recognition is unavailable', () => {
     const { getByTestId, getByText, queryByText } = await renderModal();
 
     expect(getByTestId('recognition-unavailable-title').props.children).toBe(
-      'Rozpoznawanie niedostępne'
+      'Rozpoznawanie niedostępne',
     );
     expect(getByText(/Nie ma modelu, który odczytuje piksele zdjęcia/)).toBeTruthy();
     expect(getByText(/To nie jest wynik rozpoznawania/)).toBeTruthy();
@@ -80,9 +86,7 @@ describe('ResultModal when recognition is unavailable', () => {
     const { findByText, queryByText } = await renderModal();
 
     expect(await findByText('Recognition unavailable')).toBeTruthy();
-    expect(
-      await findByText(/There is no model that reads the pixels of a photo/)
-    ).toBeTruthy();
+    expect(await findByText(/There is no model that reads the pixels of a photo/)).toBeTruthy();
     expect(queryByText(/TFLite/i)).toBeNull();
     expect(queryByText(/%/)).toBeNull();
     expect(queryByText(/Borowik/)).toBeNull();
@@ -139,14 +143,17 @@ describe('ResultModal recognition outcomes', () => {
 
   it('warns for a dangerous genus, shows honest confidence, and hides edibility', async () => {
     const onOpenAtlasSpecies = jest.fn();
-    const { getByTestId, getByText, queryByText } = await renderModal({
-      status: 'candidates',
-      processedImageUri: 'file://camera/capture.jpg',
-      inferenceTimeMs: 18,
-      expertVerificationRequired: true,
-      warningReasons: ['dangerous_genus'],
-      top3,
-    }, onOpenAtlasSpecies);
+    const { getByTestId, getByText, queryByText } = await renderModal(
+      {
+        status: 'candidates',
+        processedImageUri: 'file://camera/capture.jpg',
+        inferenceTimeMs: 18,
+        expertVerificationRequired: true,
+        warningReasons: ['dangerous_genus'],
+        top3,
+      },
+      onOpenAtlasSpecies,
+    );
 
     expect(getByTestId('expert-verification-banner')).toBeTruthy();
     expect(getByTestId('dangerous-genus-warning').props.children).toMatch(/Amanita/);
@@ -163,39 +170,42 @@ describe('ResultModal recognition outcomes', () => {
 
   it('warns when confidence is low even for a bolete', async () => {
     const onOpenAtlasSpecies = jest.fn();
-    const { getByTestId, queryByTestId } = await renderModal({
-      status: 'candidates',
-      processedImageUri: 'file://camera/capture.jpg',
-      inferenceTimeMs: 12,
-      expertVerificationRequired: true,
-      warningReasons: ['low_confidence'],
-      top3: [
-        {
-          id: 'boletus_edulis',
-          namePl: 'Borowik szlachetny',
-          nameLatin: 'Boletus edulis',
-          genus: 'Boletus',
-          confidence: 0.5735153692074483,
-          rank: 1,
-        },
-        {
-          id: 'tylopilus_felleus',
-          namePl: 'Goryczak żółciowy',
-          nameLatin: 'Tylopilus felleus',
-          genus: 'Tylopilus',
-          confidence: 0.22,
-          rank: 2,
-        },
-        {
-          id: 'suillus_luteus',
-          namePl: 'Maślak zwyczajny',
-          nameLatin: 'Suillus luteus',
-          genus: 'Suillus',
-          confidence: 0.05,
-          rank: 3,
-        },
-      ],
-    }, onOpenAtlasSpecies);
+    const { getByTestId, queryByTestId } = await renderModal(
+      {
+        status: 'candidates',
+        processedImageUri: 'file://camera/capture.jpg',
+        inferenceTimeMs: 12,
+        expertVerificationRequired: true,
+        warningReasons: ['low_confidence'],
+        top3: [
+          {
+            id: 'boletus_edulis',
+            namePl: 'Borowik szlachetny',
+            nameLatin: 'Boletus edulis',
+            genus: 'Boletus',
+            confidence: 0.5735153692074483,
+            rank: 1,
+          },
+          {
+            id: 'tylopilus_felleus',
+            namePl: 'Goryczak żółciowy',
+            nameLatin: 'Tylopilus felleus',
+            genus: 'Tylopilus',
+            confidence: 0.22,
+            rank: 2,
+          },
+          {
+            id: 'suillus_luteus',
+            namePl: 'Maślak zwyczajny',
+            nameLatin: 'Suillus luteus',
+            genus: 'Suillus',
+            confidence: 0.05,
+            rank: 3,
+          },
+        ],
+      },
+      onOpenAtlasSpecies,
+    );
 
     expect(getByTestId('low-confidence-warning')).toBeTruthy();
     expect(getByTestId('expert-verification-banner')).toBeTruthy();
@@ -275,7 +285,9 @@ describe('ResultModal recognition outcomes', () => {
     });
 
     expect(getByTestId('recognition-rejected-title').props.children).toBe('Nie rozpoznano grzyba');
-    expect(getByTestId('recognition-rejected-body').props.children).toMatch(/Gatunek nie został podany/);
+    expect(getByTestId('recognition-rejected-body').props.children).toMatch(
+      /Gatunek nie został podany/,
+    );
     expect(queryByText(/%/)).toBeNull();
     expect(queryByText(/Borowik/)).toBeNull();
     expect(queryByText(/Muchomor/)).toBeNull();
@@ -320,7 +332,7 @@ describe('ResultModal recognition outcomes', () => {
       await withoutLocation?.onPress?.();
     });
 
-    const saved = await storageService.getSightings();
+    const saved = await journalRepository.getSightings();
     expect(saved).toHaveLength(1);
     expect(saved[0].recognition).toEqual({ status: 'rejected', reason: 'unclear' });
     expect(saved[0].photoFile).toMatch(/^[A-Za-z0-9_-]+\.jpg$/);
@@ -333,7 +345,9 @@ describe('ResultModal recognition outcomes', () => {
 
   it('saves without coordinates when location permission is denied', async () => {
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-    (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'denied' });
+    (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({
+      status: 'denied',
+    });
     (Location.getCurrentPositionAsync as jest.Mock).mockClear();
     const { getByTestId } = await render(
       <LanguageProvider>
@@ -360,7 +374,7 @@ describe('ResultModal recognition outcomes', () => {
       await withLocation?.onPress?.();
     });
 
-    const saved = await storageService.getSightings();
+    const saved = await journalRepository.getSightings();
     expect(saved).toHaveLength(1);
     expect(saved[0].recognition).toEqual({ status: 'unavailable' });
     expect(saved[0].latitude).toBeUndefined();
@@ -368,12 +382,16 @@ describe('ResultModal recognition outcomes', () => {
     expect(Location.getCurrentPositionAsync).not.toHaveBeenCalled();
     const messages = (Alert.alert as jest.Mock).mock.calls.map((call) => String(call[1]));
     expect(messages.join(' ')).toMatch(/bez współrzędnych/);
-    (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
+    (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({
+      status: 'granted',
+    });
   });
 
   it('saves the copied photo and coordinates when location is allowed', async () => {
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-    (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
+    (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({
+      status: 'granted',
+    });
     (Location.getCurrentPositionAsync as jest.Mock).mockResolvedValue({
       coords: { latitude: 49.12345, longitude: 20.54321 },
     });
@@ -402,7 +420,7 @@ describe('ResultModal recognition outcomes', () => {
       await withLocation?.onPress?.();
     });
 
-    const saved = await storageService.getSightings();
+    const saved = await journalRepository.getSightings();
     expect(saved).toHaveLength(1);
     expect(saved[0].photoFile).toMatch(/^[A-Za-z0-9_-]+\.jpg$/);
     expect(saved[0].latitude).toBe(49.12345);

@@ -82,7 +82,10 @@ class JournalRepository {
     }
     if (!Array.isArray(parsed)) {
       await this.rememberCorruptJournal(data);
-      throw new JournalReadError('Dziennik ma nieprawidłowy kształt i nie został nadpisany', 'corrupt');
+      throw new JournalReadError(
+        'Dziennik ma nieprawidłowy kształt i nie został nadpisany',
+        'corrupt',
+      );
     }
     return parsed.flatMap((item) => {
       const sighting = sanitizeSighting(item);

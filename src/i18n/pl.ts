@@ -297,8 +297,10 @@ export const pl = {
     sulphurHoney: {
       title: 'Maślanka wiązkowa, opieńka i hełmówka jadowita',
       lead: 'Maślanka wiązkowa nie ma błoniastego pierścienia. Zostaje najwyżej słaba strefa włókien, przyciemniona zarodnikami, albo resztki na brzegu kapelusza. Opieńka miodowa zwykle ma wyraźny, błoniasty pierścień. Hełmówka jadowita też może mieć cienki, nietrwały pierścień, więc sam pierścień nie odróżnia jej od opieńki.',
-      limit: 'Zdjęcia nie pozwalają wykluczyć gatunku trującego. Ocena owocnika należy do grzyboznawcy.',
-      scope: 'Zdjęcia opieńki pokazują Armillaria mellea. Karta w atlasie obejmuje też inne opieńki.',
+      limit:
+        'Zdjęcia nie pozwalają wykluczyć gatunku trującego. Ocena owocnika należy do grzyboznawcy.',
+      scope:
+        'Zdjęcia opieńki pokazują Armillaria mellea. Karta w atlasie obejmuje też inne opieńki.',
       galerinaHeading: 'Hełmówka jadowita (Galerina marginata) – śmiertelnie trująca',
       warning:
         'Zawiera amatoksyny. Żadna pojedyncza cecha, w tym pierścień, nie potwierdza opieńki.',
@@ -315,7 +317,8 @@ export const pl = {
           title: 'Zasnówka i pierścień',
           hypholoma:
             'Młode owocniki mają żółtą, pajęczynowatą zasnówkę. Później na trzonie zostaje nieregularna, ciemna od zarodników strefa włókien, a u części okazów tylko resztki na brzegu kapelusza.',
-          armillaria: 'Pierścień jest cienki, błoniasty i zwykle trwały: biały, często z żółtawym brzegiem.',
+          armillaria:
+            'Pierścień jest cienki, błoniasty i zwykle trwały: biały, często z żółtawym brzegiem.',
           galerina:
             'Pierścień bywa cienki i błoniasty albo tylko włóknista strefa. Często jest białawy i rdzawo przyprószony zarodnikami, a z wiekiem może zniknąć.',
         },
@@ -323,7 +326,8 @@ export const pl = {
           title: 'Blaszki',
           hypholoma:
             'Blaszki są najpierw siarkowożółte, potem oliwkowozielone, a w miarę dojrzewania zarodników ciemnieją.',
-          armillaria: 'Blaszki są białawe do kremowych, przyrośnięte albo lekko zbiegające po trzonie.',
+          armillaria:
+            'Blaszki są białawe do kremowych, przyrośnięte albo lekko zbiegające po trzonie.',
           galerina:
             'Blaszki są przyrośnięte albo lekko zbiegające. Zaczynają jako żółtawe do kremowo-ochrowych, a później stają się rdzawobrązowe.',
         },
@@ -344,7 +348,8 @@ export const pl = {
         },
         stem: {
           title: 'Trzon poniżej pierścienia',
-          hypholoma: 'Trzon jest żółty do płowego i od podstawy w górę przebarwia się rdzawobrązowo.',
+          hypholoma:
+            'Trzon jest żółty do płowego i od podstawy w górę przebarwia się rdzawobrązowo.',
           armillaria:
             'Trzon jest grubszy i dość twardy. U młodych owocników bywa kłaczkowaty od resztek osłony, a ku dołowi szarawy do brązowawego.',
           galerina:
@@ -368,7 +373,8 @@ export const pl = {
       captions: {
         hypholomaStem: 'Górna część trzonu z nieregularnymi, rdzawymi włóknami zasnówki.',
         hypholomaGills: 'Zielonkawożółte blaszki i ciemne włókna na trzonie.',
-        hypholomaYoung: 'Młode owocniki z pajęczynowatymi resztkami zasnówki przy brzegu kapelusza.',
+        hypholomaYoung:
+          'Młode owocniki z pajęczynowatymi resztkami zasnówki przy brzegu kapelusza.',
         hypholomaMargin: 'Ciemne resztki osłony na brzegu kapelusza.',
         hypholomaFlesh: 'Żółty miąższ na przekroju.',
         armillariaRing: 'Błoniasty, biały pierścień z żółtawą krawędzią.',
@@ -388,8 +394,7 @@ export const pl = {
     takePhoto: 'Zrób zdjęcie i rozpoznaj',
     fromGallery: 'Wybierz z galerii',
     quickDemo: 'Przykłady z atlasu — to nie jest rozpoznawanie:',
-    atlasScopeHint:
-      'To kilka kart z krótkiego atlasu, a nie pełna lista grzybów Polski.',
+    atlasScopeHint: 'To kilka kart z krótkiego atlasu, a nie pełna lista grzybów Polski.',
     macroTips: 'Porady kadrowania makro:',
     tipCap: '1. Sfotografuj kapelusz z góry (kolor i faktura)',
     tipUnder: '2. Pokaż spód kapelusza (rurki czy blaszki)',
@@ -405,7 +410,8 @@ export const pl = {
     photoFailedTitle: 'Nie udało się zrobić zdjęcia',
     photoFailedBody: 'Rozpoznawanie nie zostało uruchomione. Nie użyto zdjęcia zastępczego.',
     cameraUnavailableTitle: 'Aparat niedostępny',
-    cameraUnavailableBody: 'Nie udało się uruchomić aparatu. Rozpoznawanie nie zostało uruchomione.',
+    cameraUnavailableBody:
+      'Nie udało się uruchomić aparatu. Rozpoznawanie nie zostało uruchomione.',
     rejectedTitle: 'Nie rozpoznano grzyba',
     rejectedNotMushroom:
       'Zdjęcie nie zostało uznane za grzyba z zestawu klas albo leży poza rozkładem, którego model się nauczył. Gatunek nie został podany.',
@@ -466,7 +472,8 @@ export const pl = {
     savedWithoutLocationChoice: 'Wpis zapisano bez lokalizacji. Notatkę dopiszesz przy wpisie.',
     savedWithoutGps:
       'Brak zgody na lokalizację albo GPS jest niedostępny. Wpis zapisano bez współrzędnych.',
-    photoNotKept: 'Zdjęcia nie udało się skopiować do pamięci aplikacji, więc nie zostało dołączone.',
+    photoNotKept:
+      'Zdjęcia nie udało się skopiować do pamięci aplikacji, więc nie zostało dołączone.',
     saveFailed: 'Nie udało się zapisać wpisu.',
     saveFailedDamaged:
       'Dziennik jest uszkodzony, więc wpis nie został zapisany. Otwórz Dziennik i wybierz „Zacznij nowy dziennik”.',
@@ -517,7 +524,8 @@ export const pl = {
     subtitle: 'Złote zasady, toksykologia i telefony alarmowe',
     emergencyNumbers: 'Całodobowe Ośrodki Toksykologiczne',
     emergency112: 'Ogólny numer alarmowy 112',
-    sanepidNotice: 'Pamiętaj: Sanepid oferuje bezpłatną ocenę grzybów przez certyfikowanych grzyboznawców.',
+    sanepidNotice:
+      'Pamiętaj: Sanepid oferuje bezpłatną ocenę grzybów przez certyfikowanych grzyboznawców.',
   },
   lookalike: {
     incompleteTitle: 'Informacja o sobowtórach jest niepełna',
@@ -591,7 +599,8 @@ export const pl = {
     symptomsLabel: 'Objawy:',
     actionLabel: '🚨 Postępowanie:',
     centersTitle: '📞 Ośrodki Toksykologiczne w Polsce',
-    centersSub: 'Linie konsultacyjne służą głównie lekarzom i placówkom. Przy objawach zatrucia pierwszym krokiem jest numer alarmowy 112 lub 999.',
+    centersSub:
+      'Linie konsultacyjne służą głównie lekarzom i placówkom. Przy objawach zatrucia pierwszym krokiem jest numer alarmowy 112 lub 999.',
     callCenterA11y: 'Zadzwoń: {city} {phone}',
     availabilityLabel: 'Dostępność:',
     hours247: 'Całodobowo 24/7',
@@ -601,7 +610,8 @@ export const pl = {
     preparationSub: 'Poradnik czyszczenia, gotowania i przechowywania',
     reopenDisclaimer: '📄 Przeczytaj ponownie Regulamin i Ostrzeżenie AI',
     callNotSupportedTitle: 'Połączenie niedostępne',
-    callNotSupportedBody: 'To urządzenie nie obsługuje połączeń telefonicznych. Zadzwoń ręcznie pod podany numer.',
+    callNotSupportedBody:
+      'To urządzenie nie obsługuje połączeń telefonicznych. Zadzwoń ręcznie pod podany numer.',
     rules: {
       rule_tubes_first: {
         title: 'Dla początkujących: tylko grzyby z rurkami (z "gąbką")',
@@ -653,15 +663,18 @@ export const pl = {
         name: 'Zespół muskarynowy (cholinergiczny)',
         species: 'Strzępiaki (Inocybe), lejkówki (Clitocybe)',
         latency: '15 – 30 minut od spożycia',
-        symptoms: 'Obfite poty, silny ślinotok, łzawienie, zwężenie źrenic, duszność, zwolnienie akcji serca.',
+        symptoms:
+          'Obfite poty, silny ślinotok, łzawienie, zwężenie źrenic, duszność, zwolnienie akcji serca.',
         action: 'Wezwać pogotowie, odtrutką specyficzną jest atropina podawana przez lekarza.',
       },
       gastric: {
         name: 'Zespół gastryczny / żołądkowo-jelitowy',
         species: 'Goryczak żółciowy, mleczaj wełnianka, lisówka pomarańczowa, tęgoskóry',
         latency: '1 – 3 godziny od spożycia',
-        symptoms: 'Nudności, wymioty, ból brzucha, biegunka. Zwykle mija po 1-2 dniach nawadniania.',
-        action: 'Wypić dużo wody, podać węgiel aktywny, skonsultować się z lekarzem celem wykluczenia amatoksyn.',
+        symptoms:
+          'Nudności, wymioty, ból brzucha, biegunka. Zwykle mija po 1-2 dniach nawadniania.',
+        action:
+          'Wypić dużo wody, podać węgiel aktywny, skonsultować się z lekarzem celem wykluczenia amatoksyn.',
       },
     },
   },

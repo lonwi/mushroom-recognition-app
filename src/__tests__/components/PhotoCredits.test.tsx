@@ -3,7 +3,11 @@ import { BackHandler, Linking, Platform } from 'react-native';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { PhotoCredits } from '../../components/PhotoCredits';
 import { LanguageProvider } from '../../contexts/LanguageContext';
-import { creditLicenseUrl, creditsFromJsonl, type PhotoCredit } from '../../services/attributionPackage';
+import {
+  creditLicenseUrl,
+  creditsFromJsonl,
+  type PhotoCredit,
+} from '../../services/attributionPackage';
 
 const credit: PhotoCredit = {
   creator: 'Ada',
@@ -32,10 +36,19 @@ describe('PhotoCredits', () => {
     expect(creditLicenseUrl({ ...credit, license: 'CC-BY', licenseNormalized: 'CC0' })).toBe(
       'https://creativecommons.org/publicdomain/zero/1.0/',
     );
-    expect(creditLicenseUrl({ ...credit, license: 'CC BY', licenseNormalized: 'CC BY' })).toBeNull();
-    expect(creditLicenseUrl({ ...credit, license: 'CC BY 4.0', licenseNormalized: 'CC BY 4.0' })).toBeNull();
     expect(
-      creditLicenseUrl({ ...credit, license: 'CC BY 4.0', licenseNormalized: 'CC BY 4.0', licenseUrl: undefined }),
+      creditLicenseUrl({ ...credit, license: 'CC BY', licenseNormalized: 'CC BY' }),
+    ).toBeNull();
+    expect(
+      creditLicenseUrl({ ...credit, license: 'CC BY 4.0', licenseNormalized: 'CC BY 4.0' }),
+    ).toBeNull();
+    expect(
+      creditLicenseUrl({
+        ...credit,
+        license: 'CC BY 4.0',
+        licenseNormalized: 'CC BY 4.0',
+        licenseUrl: undefined,
+      }),
     ).toBeNull();
     expect(
       creditLicenseUrl({
@@ -126,14 +139,22 @@ describe('PhotoCredits', () => {
     const named = { ...credit, license: 'CC BY 4.0', licenseNormalized: 'CC BY 4.0' };
 
     expect(creditLicenseUrl({ ...named, licenseUrl: httpBy })).toBeNull();
-    expect(creditLicenseUrl({ ...named, licenseUrl: 'HTTP://creativecommons.org/licenses/by/4.0/' })).toBeNull();
+    expect(
+      creditLicenseUrl({ ...named, licenseUrl: 'HTTP://creativecommons.org/licenses/by/4.0/' }),
+    ).toBeNull();
     expect(creditLicenseUrl({ ...named, license: httpBy })).toBeNull();
-    expect(creditLicenseUrl({ ...named, license: 'HTTP://creativecommons.org/licenses/by/4.0/' })).toBeNull();
+    expect(
+      creditLicenseUrl({ ...named, license: 'HTTP://creativecommons.org/licenses/by/4.0/' }),
+    ).toBeNull();
     expect(creditLicenseUrl({ ...named, licenseNormalized: httpZero })).toBeNull();
 
     expect(creditLicenseUrl({ ...named, licenseUrl: httpBy, license: httpsBy })).toBe(httpsBy);
-    expect(creditLicenseUrl({ ...credit, license: httpZero, licenseNormalized: 'CC0' })).toBe(httpsZero);
-    expect(creditLicenseUrl({ ...named, license: httpBy, licenseUrl: httpsBy })).not.toMatch(/^http:\/\//i);
+    expect(creditLicenseUrl({ ...credit, license: httpZero, licenseNormalized: 'CC0' })).toBe(
+      httpsZero,
+    );
+    expect(creditLicenseUrl({ ...named, license: httpBy, licenseUrl: httpsBy })).not.toMatch(
+      /^http:\/\//i,
+    );
   });
 
   it('shows a load failure instead of the empty-model message', async () => {

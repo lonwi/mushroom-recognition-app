@@ -8,8 +8,8 @@ import {
   SIGHTINGS_BACKUP_INDEX_KEY,
   SIGHTINGS_STORAGE_KEY,
   journalBackupStorageKey,
-  storageService,
-} from '../../services/storageService';
+} from '../../services/storage/keys';
+import { journalRepository } from '../../services/storage/journalRepository';
 import { LanguageProvider } from '../../contexts/LanguageContext';
 import type { SightingRecord } from '../../types/mushroom';
 
@@ -80,7 +80,7 @@ describe('JournalScreen', () => {
   });
 
   it('reloads a saved find when the refresh signal changes and keeps the open editor', async () => {
-    await storageService.saveSighting(unclear);
+    await journalRepository.saveSighting(unclear);
     const screen = await render(
       <LanguageProvider>
         <JournalScreen refreshSignal={0} onOpenAtlasSpecies={jest.fn()} />
@@ -90,7 +90,7 @@ describe('JournalScreen', () => {
     await fireEvent.press(screen.getByTestId('journal-edit-notes-sighting_unclear'));
     expect(screen.getByTestId('journal-notes-input').props.value).toBe('');
 
-    await storageService.saveSighting(unknown);
+    await journalRepository.saveSighting(unknown);
     screen.rerender(
       <LanguageProvider>
         <JournalScreen refreshSignal={1} onOpenAtlasSpecies={jest.fn()} />
@@ -103,10 +103,12 @@ describe('JournalScreen', () => {
   });
 
   it('shows an unclear find without a species, a confidence, or a map', async () => {
-    await storageService.saveSighting(unclear);
+    await journalRepository.saveSighting(unclear);
     const screen = await renderJournal();
 
-    expect(await screen.findByTestId('journal-title-sighting_unclear')).toHaveTextContent('Niepewny wynik');
+    expect(await screen.findByTestId('journal-title-sighting_unclear')).toHaveTextContent(
+      'Niepewny wynik',
+    );
     expect(screen.getByTestId('journal-no-location-sighting_unclear')).toHaveTextContent(
       'Brak zapisanej lokalizacji',
     );
@@ -117,7 +119,7 @@ describe('JournalScreen', () => {
   });
 
   it('warns that an unknown mushroom may be deadly and names an expert check', async () => {
-    await storageService.saveSighting(unknown);
+    await journalRepository.saveSighting(unknown);
     const screen = await renderJournal();
 
     expect(await screen.findByTestId('journal-unknown-sighting_unknown')).toHaveTextContent(
@@ -126,16 +128,20 @@ describe('JournalScreen', () => {
     expect(screen.getByTestId('journal-unknown-deadly-sighting_unknown')).toHaveTextContent(
       'Ten grzyb może być śmiertelnie trujący.',
     );
-    expect(screen.getByTestId('journal-unknown-verify-sighting_unknown')).toHaveTextContent(/grzyboznawcy/);
+    expect(screen.getByTestId('journal-unknown-verify-sighting_unknown')).toHaveTextContent(
+      /grzyboznawcy/,
+    );
     expect(screen.queryByText(/%/)).toBeNull();
     expect(screen.queryByText(/JADALNY/)).toBeNull();
   });
 
   it('opens the saved spot in maps and keeps the candidate confidence', async () => {
-    await storageService.saveSighting(located);
+    await journalRepository.saveSighting(located);
     const screen = await renderJournal();
 
-    expect(await screen.findByTestId('journal-candidate-sighting_spot-1')).toHaveTextContent(/57\.4%/);
+    expect(await screen.findByTestId('journal-candidate-sighting_spot-1')).toHaveTextContent(
+      /57\.4%/,
+    );
     expect(screen.getByTestId('journal-low-confidence-sighting_spot')).toBeTruthy();
     expect(screen.getByTestId('journal-not-edible-sighting_spot')).toBeTruthy();
     expect(screen.queryByText('JADALNY')).toBeNull();
@@ -156,7 +162,7 @@ describe('JournalScreen', () => {
   });
 
   it('removes the stored photo when the entry is deleted', async () => {
-    await storageService.saveSighting(located);
+    await journalRepository.saveSighting(located);
     const screen = await renderJournal();
     await screen.findByTestId('journal-delete-sighting_spot');
 
@@ -175,11 +181,11 @@ describe('JournalScreen', () => {
       'file:///mock/document/journal-photos/sighting_spot.jpg',
       { idempotent: true },
     );
-    expect(await storageService.getSightings()).toEqual([]);
+    expect(await journalRepository.getSightings()).toEqual([]);
   });
 
   it('labels an older entry that has no recognition result', async () => {
-    await storageService.saveSighting({
+    await journalRepository.saveSighting({
       id: 'sighting_old',
       timestamp: 1_720_000_200_000,
       recognition: {
@@ -214,14 +220,16 @@ describe('JournalScreen', () => {
   });
 
   it('shows a missing timestamp as no date', async () => {
-    await storageService.saveSighting({
+    await journalRepository.saveSighting({
       id: 'sighting_nodate',
       timestamp: 0,
       recognition: { status: 'unavailable' },
     });
     const screen = await renderJournal();
 
-    expect(await screen.findByTestId('journal-date-sighting_nodate')).toHaveTextContent(/brak daty/i);
+    expect(await screen.findByTestId('journal-date-sighting_nodate')).toHaveTextContent(
+      /brak daty/i,
+    );
     expect(screen.queryByText(/1970/)).toBeNull();
   });
 
@@ -261,7 +269,7 @@ describe('JournalScreen', () => {
     expect(screen.queryByTestId('journal-damaged')).toBeNull();
     expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('[]');
     expect(await journalBackupValues()).toEqual(['not-json']);
-    expect(await storageService.getSightings()).toEqual([]);
+    expect(await journalRepository.getSightings()).toEqual([]);
   });
 
   it('shows a message and keeps the damaged journal when the backup cannot be written', async () => {
@@ -287,9 +295,9 @@ describe('JournalScreen', () => {
         await buttons?.[1].onPress?.();
       });
 
-      expect((Alert.alert as jest.Mock).mock.calls.map((call) => String(call[1])).join(' ')).toMatch(
-        /dziennik nie został wyczyszczony/i,
-      );
+      expect(
+        (Alert.alert as jest.Mock).mock.calls.map((call) => String(call[1])).join(' '),
+      ).toMatch(/dziennik nie został wyczyszczony/i);
       expect(await AsyncStorage.getItem(SIGHTINGS_STORAGE_KEY)).toBe('not-json');
       expect(screen.getByTestId('journal-damaged')).toBeTruthy();
     } finally {
@@ -298,10 +306,10 @@ describe('JournalScreen', () => {
   });
 
   it('tells the user when deleting an entry fails and leaves the card in place', async () => {
-    await storageService.saveSighting(located);
+    await journalRepository.saveSighting(located);
     const screen = await renderJournal();
     await screen.findByTestId('journal-delete-sighting_spot');
-    jest.spyOn(storageService, 'deleteSighting').mockRejectedValue(new Error('locked'));
+    jest.spyOn(journalRepository, 'deleteSighting').mockRejectedValue(new Error('locked'));
 
     await fireEvent.press(screen.getByTestId('journal-delete-sighting_spot'));
     const buttons = (Alert.alert as jest.Mock).mock.calls.at(-1)?.[2] as Array<{
@@ -315,14 +323,14 @@ describe('JournalScreen', () => {
       /Nie udało się usunąć wpisu/,
     );
     expect(screen.getByTestId('journal-entry-sighting_spot')).toBeTruthy();
-    expect(await storageService.getSightings()).toHaveLength(1);
+    expect(await journalRepository.getSightings()).toHaveLength(1);
   });
 
   it('tells the user when a note cannot be saved and keeps the editor open', async () => {
-    await storageService.saveSighting(located);
+    await journalRepository.saveSighting(located);
     const screen = await renderJournal();
     await screen.findByTestId('journal-edit-notes-sighting_spot');
-    jest.spyOn(storageService, 'updateSightingNotes').mockRejectedValue(new Error('locked'));
+    jest.spyOn(journalRepository, 'updateSightingNotes').mockRejectedValue(new Error('locked'));
 
     await fireEvent.press(screen.getByTestId('journal-edit-notes-sighting_spot'));
     await fireEvent.changeText(screen.getByTestId('journal-notes-input'), 'nowa notatka');
@@ -331,17 +339,17 @@ describe('JournalScreen', () => {
     });
 
     await waitFor(() => {
-      expect((Alert.alert as jest.Mock).mock.calls.map((call) => String(call[0])).join(' ')).toMatch(
-        /Nie udało się zapisać notatki/,
-      );
+      expect(
+        (Alert.alert as jest.Mock).mock.calls.map((call) => String(call[0])).join(' '),
+      ).toMatch(/Nie udało się zapisać notatki/);
     });
     expect(screen.getByTestId('journal-notes-input').props.value).toBe('nowa notatka');
-    const stored = await storageService.getSightings();
+    const stored = await journalRepository.getSightings();
     expect(stored[0].notes).toBe('stary dukt');
   });
 
   it('keeps an edited note after the journal is opened again', async () => {
-    await storageService.saveSighting(located);
+    await journalRepository.saveSighting(located);
     const screen = await renderJournal();
     await screen.findByTestId('journal-edit-notes-sighting_spot');
 
@@ -352,7 +360,9 @@ describe('JournalScreen', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId('journal-notes-sighting_spot')).toHaveTextContent(/pod dębami, 4 sztuki/);
+      expect(screen.getByTestId('journal-notes-sighting_spot')).toHaveTextContent(
+        /pod dębami, 4 sztuki/,
+      );
     });
 
     screen.unmount();
@@ -360,7 +370,9 @@ describe('JournalScreen', () => {
     expect(await reopened.findByTestId('journal-notes-sighting_spot')).toHaveTextContent(
       /pod dębami, 4 sztuki/,
     );
-    expect(reopened.getByTestId('journal-title-sighting_spot')).toHaveTextContent('Kandydaci ze skanu');
+    expect(reopened.getByTestId('journal-title-sighting_spot')).toHaveTextContent(
+      'Kandydaci ze skanu',
+    );
     expect(reopened.getByTestId('journal-candidate-sighting_spot-1')).toHaveTextContent(/57\.4%/);
   });
 });

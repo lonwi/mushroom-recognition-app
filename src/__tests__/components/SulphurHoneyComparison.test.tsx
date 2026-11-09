@@ -99,26 +99,31 @@ describe('sulphur tuft and honey fungus comparison', () => {
       );
     }
     const root = path.resolve(__dirname, '../../..');
-    expect(fs.readFileSync(path.join(root, 'src/services/attributionPackage.ts'), 'utf8')).not.toMatch(
-      /licenses\/by\//,
-    );
-    expect(fs.readFileSync(path.join(root, 'src/components/SulphurHoneyComparison.tsx'), 'utf8')).not.toMatch(
-      /licenses\/by\//,
-    );
+    expect(
+      fs.readFileSync(path.join(root, 'src/services/attributionPackage.ts'), 'utf8'),
+    ).not.toMatch(/licenses\/by\//);
+    expect(
+      fs.readFileSync(path.join(root, 'src/components/SulphurHoneyComparison.tsx'), 'utf8'),
+    ).not.toMatch(/licenses\/by\//);
     expect(photosForSpecies(HONEY_FUNGUS_ID)).toEqual([]);
-    expect(photosForSpecies(SULPHUR_TUFT_ID).some((item) => item.assetPath.includes('porownanie'))).toBe(
-      false,
-    );
-    expect(photosForSpecies(FUNERAL_BELL_ID).some((item) => item.assetPath.includes('porownanie'))).toBe(
-      false,
-    );
-    expect(COMPARISON_PHOTOS.some((photo) => `${photo.imageUrl} ${photo.sourceUrl}`.includes('331784845'))).toBe(
-      false,
-    );
+    expect(
+      photosForSpecies(SULPHUR_TUFT_ID).some((item) => item.assetPath.includes('porownanie')),
+    ).toBe(false);
+    expect(
+      photosForSpecies(FUNERAL_BELL_ID).some((item) => item.assetPath.includes('porownanie')),
+    ).toBe(false);
+    expect(
+      COMPARISON_PHOTOS.some((photo) =>
+        `${photo.imageUrl} ${photo.sourceUrl}`.includes('331784845'),
+      ),
+    ).toBe(false);
     expect(COMPARISON_PHOTOS.filter((photo) => photo.license === 'CC BY 4.0')).toHaveLength(8);
     expectGalerinaSporePrintCredit();
     const formerCommons = COMPARISON_PHOTOS.filter((photo) => photo.inaturalistPhotoUrl);
-    expect(formerCommons.map((photo) => photo.author).sort()).toEqual(['Gabriel Mayrhofer', 'sugarsnap_t']);
+    expect(formerCommons.map((photo) => photo.author).sort()).toEqual([
+      'Gabriel Mayrhofer',
+      'sugarsnap_t',
+    ]);
     for (const photo of formerCommons) {
       expect(photo.license).toBe('CC BY 4.0');
       expect(photo.licenseUrl).toBe('https://creativecommons.org/licenses/by/4.0/');
@@ -131,14 +136,18 @@ describe('sulphur tuft and honey fungus comparison', () => {
       expect(photo.sourceUrl).not.toMatch(/commons\.wikimedia\.org/);
     }
     expect(POISONOUS_MISS_ALLOWLIST).toEqual([]);
-    expect(JSON.stringify(COMPARISON_TRAITS)).not.toMatch(/cortina present|bald; dry|Spore print:/i);
+    expect(JSON.stringify(COMPARISON_TRAITS)).not.toMatch(
+      /cortina present|bald; dry|Spore print:/i,
+    );
   });
 
   it('pins the approved Galerina heading, captions, and warning', async () => {
     const headingPl = 'Hełmówka jadowita (Galerina marginata) – śmiertelnie trująca';
     const headingEn = 'Deadly Galerina (Galerina marginata) – deadly poisonous';
-    const warningPl = 'Zawiera amatoksyny. Żadna pojedyncza cecha, w tym pierścień, nie potwierdza opieńki.';
-    const warningEn = 'Contains amatoxins. No single feature, including the ring, confirms honey fungus.';
+    const warningPl =
+      'Zawiera amatoksyny. Żadna pojedyncza cecha, w tym pierścień, nie potwierdza opieńki.';
+    const warningEn =
+      'Contains amatoxins. No single feature, including the ring, confirms honey fungus.';
     const captionsPl = {
       galerinaClump: 'Kępa na próchniejącym drewnie, jak u opieńki.',
       galerinaRing: 'Cienki, nietrwały pierścień; blaszki żółtawe do rdzawobrązowych.',
@@ -269,8 +278,12 @@ describe('sulphur tuft and honey fungus comparison', () => {
       </LanguageProvider>,
     );
     const comparison = within(screen.getByTestId('sulphur-honey-comparison'));
-    expect(comparison.getByTestId('comparison-lead')).toHaveTextContent(pl.comparison.sulphurHoney.lead);
-    expect(comparison.getByTestId('comparison-limit')).toHaveTextContent(pl.comparison.sulphurHoney.limit);
+    expect(comparison.getByTestId('comparison-lead')).toHaveTextContent(
+      pl.comparison.sulphurHoney.lead,
+    );
+    expect(comparison.getByTestId('comparison-limit')).toHaveTextContent(
+      pl.comparison.sulphurHoney.limit,
+    );
     expect(comparison.queryByText(TASTE)).toBeNull();
     expect(comparison.getByTestId('comparison-trait-ring')).toBeTruthy();
     expect(comparison.getByTestId('comparison-trait-gills')).toBeTruthy();
@@ -287,19 +300,27 @@ describe('sulphur tuft and honey fungus comparison', () => {
       pl.comparison.sulphurHoney.captions.galerinaSpore,
     );
     expectDecorativeComparisonImage(
-      comparison.getByTestId('comparison-image-spore-galerina-wysyp', { includeHiddenElements: true }),
+      comparison.getByTestId('comparison-image-spore-galerina-wysyp', {
+        includeHiddenElements: true,
+      }),
     );
     expectDecorativeComparisonImage(
-      comparison.getByTestId('comparison-image-cap-galerina-kapelusz', { includeHiddenElements: true }),
+      comparison.getByTestId('comparison-image-cap-galerina-kapelusz', {
+        includeHiddenElements: true,
+      }),
     );
-    expect(comparison.queryByLabelText(pl.comparison.sulphurHoney.captions.galerinaSpore)).toBeNull();
+    expect(
+      comparison.queryByLabelText(pl.comparison.sulphurHoney.captions.galerinaSpore),
+    ).toBeNull();
     expect(comparison.getByTestId('comparison-author-spore-galerina-wysyp')).toHaveTextContent(
       /Shirley Zundell/,
     );
     expect(comparison.getByText(pl.comparison.sulphurHoney.traits.spore.galerina)).toBeTruthy();
     expect(comparison.queryByTestId('comparison-no-photo-galerina-flesh')).toBeNull();
     expect(comparison.getByTestId('comparison-no-claim-galerina-flesh')).toBeTruthy();
-    expect(comparison.getByTestId('comparison-warning')).toHaveTextContent(pl.comparison.sulphurHoney.warning);
+    expect(comparison.getByTestId('comparison-warning')).toHaveTextContent(
+      pl.comparison.sulphurHoney.warning,
+    );
     expect(comparison.getByTestId('comparison-galerina-heading-ring')).toHaveTextContent(
       pl.comparison.sulphurHoney.galerinaHeading,
     );
@@ -314,7 +335,12 @@ describe('sulphur tuft and honey fungus comparison', () => {
     expect(comparison.queryByText(/justanotherbirdbrain/)).toBeNull();
     const galerinaSide = StyleSheet.flatten(
       comparison.getByTestId('comparison-side-galerina-ring').props.style,
-    ) as { minWidth?: number; borderRadius?: number; borderLeftWidth?: number; borderRightWidth?: number };
+    ) as {
+      minWidth?: number;
+      borderRadius?: number;
+      borderLeftWidth?: number;
+      borderRightWidth?: number;
+    };
     expect(galerinaSide.minWidth).toBeGreaterThanOrEqual(148);
     expect(galerinaSide.borderRadius).toBeGreaterThanOrEqual(3);
     expect(galerinaSide.borderRadius).toBeLessThanOrEqual(6);
@@ -328,51 +354,73 @@ describe('sulphur tuft and honey fungus comparison', () => {
     expect(warningStyle.borderLeftWidth).toBeUndefined();
     expect(textColor(warning)).toBe(textColor(comparison.getByTestId('comparison-lead')));
     const latin = comparison.getByTestId('comparison-galerina-latin-ring');
-    expect((StyleSheet.flatten(latin.props.style) as { fontStyle?: string }).fontStyle).toBe('italic');
+    expect((StyleSheet.flatten(latin.props.style) as { fontStyle?: string }).fontStyle).toBe(
+      'italic',
+    );
 
     for (const photo of COMPARISON_PHOTOS) {
-      const authors = comparison.getAllByTestId(new RegExp(`^comparison-author-[a-z]+-${photo.id}$`));
+      const authors = comparison.getAllByTestId(
+        new RegExp(`^comparison-author-[a-z]+-${photo.id}$`),
+      );
       expect(authors.length).toBeGreaterThan(0);
       expect(authors[0]).toHaveTextContent(new RegExp(photo.author.replace(/[()]/g, '\\$&')));
-      const sources = comparison.getAllByTestId(new RegExp(`^comparison-source-[a-z]+-${photo.id}$`));
+      const sources = comparison.getAllByTestId(
+        new RegExp(`^comparison-source-[a-z]+-${photo.id}$`),
+      );
       expect(sources[0]).toHaveTextContent(photo.sourceUrl);
       expect(sources[0].props.accessibilityRole).toBe('link');
     }
 
     await fireEvent.press(comparison.getByTestId('comparison-license-ring-hypholoma-strefa-trzon'));
     expect(openURL).toHaveBeenCalledWith('https://creativecommons.org/licenses/by/4.0/');
-    await fireEvent.press(comparison.getByTestId('comparison-license-ring-hypholoma-brzeg-kapelusza'));
-    expect(openURL).toHaveBeenCalledWith('https://creativecommons.org/licenses/by/4.0/');
-    expect(comparison.getByTestId('comparison-author-ring-hypholoma-brzeg-kapelusza')).toHaveTextContent(
-      /sugarsnap_t/,
+    await fireEvent.press(
+      comparison.getByTestId('comparison-license-ring-hypholoma-brzeg-kapelusza'),
     );
+    expect(openURL).toHaveBeenCalledWith('https://creativecommons.org/licenses/by/4.0/');
+    expect(
+      comparison.getByTestId('comparison-author-ring-hypholoma-brzeg-kapelusza'),
+    ).toHaveTextContent(/sugarsnap_t/);
     expect(comparison.getByTestId('comparison-author-flesh-hypholoma-miazsz')).toHaveTextContent(
       /Gabriel Mayrhofer/,
     );
     expect(comparison.queryByText(/Commons listed this file as CC0/)).toBeNull();
-    await fireEvent.press(comparison.getByTestId('comparison-license-ring-armillaria-pierscien-blaszki'));
+    await fireEvent.press(
+      comparison.getByTestId('comparison-license-ring-armillaria-pierscien-blaszki'),
+    );
     expect(openURL).toHaveBeenCalledWith('https://creativecommons.org/publicdomain/zero/1.0/');
     await fireEvent.press(comparison.getByTestId('comparison-license-cap-galerina-kapelusz'));
     expect(openURL).toHaveBeenCalledWith('https://creativecommons.org/licenses/by/4.0/');
     await fireEvent.press(comparison.getByTestId('comparison-license-wood-galerina-skupisko'));
     expect(openURL).toHaveBeenCalledWith('https://creativecommons.org/publicdomain/zero/1.0/');
-    expect(comparison.getByTestId('comparison-author-cap-galerina-kapelusz')).toHaveTextContent(/Peter Boyer/);
+    expect(comparison.getByTestId('comparison-author-cap-galerina-kapelusz')).toHaveTextContent(
+      /Peter Boyer/,
+    );
     await fireEvent.press(comparison.getByTestId('comparison-source-link-ring-0'));
-    expect(openURL).toHaveBeenCalledWith('https://www.mushroomexpert.com/hypholoma_fasciculare.html');
+    expect(openURL).toHaveBeenCalledWith(
+      'https://www.mushroomexpert.com/hypholoma_fasciculare.html',
+    );
     await fireEvent.press(comparison.getByTestId('comparison-source-ring-hypholoma-strefa-trzon'));
     expect(openURL).toHaveBeenCalledWith('https://www.inaturalist.org/photos/57083848');
 
     const lead = comparison.getByTestId('comparison-lead');
     expect(contrastRatio(textColor(lead), nearestBackground(lead))).toBeGreaterThanOrEqual(4.5);
     const caption = comparison.getByTestId('comparison-caption-ring-galerina-pierscien');
-    expect(contrastRatio(textColor(caption), nearestBackground(caption))).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(textColor(caption), nearestBackground(caption))).toBeGreaterThanOrEqual(
+      4.5,
+    );
     const warningText = comparison.getByTestId('comparison-warning');
-    expect(contrastRatio(textColor(warningText), nearestBackground(warningText))).toBeGreaterThanOrEqual(4.5);
+    expect(
+      contrastRatio(textColor(warningText), nearestBackground(warningText)),
+    ).toBeGreaterThanOrEqual(4.5);
     const heading = comparison.getByTestId('comparison-galerina-heading-ring');
-    expect(contrastRatio(textColor(heading), nearestBackground(heading))).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(textColor(heading), nearestBackground(heading))).toBeGreaterThanOrEqual(
+      4.5,
+    );
     const license = comparison.getByTestId('comparison-license-ring-armillaria-pierscien-trzony');
     const licenseText = within(license).getByText('CC BY 4.0');
-    expect(contrastRatio(textColor(licenseText), nearestBackground(licenseText))).toBeGreaterThanOrEqual(4.5);
+    expect(
+      contrastRatio(textColor(licenseText), nearestBackground(licenseText)),
+    ).toBeGreaterThanOrEqual(4.5);
     openURL.mockRestore();
   });
 
@@ -389,14 +437,20 @@ describe('sulphur tuft and honey fungus comparison', () => {
       return node;
     });
     expect(contrastRatio(textColor(lead), nearestBackground(lead))).toBeGreaterThanOrEqual(4.5);
-    const license = within(screen.getByTestId('comparison-license-gills-hypholoma-blaszki')).getByText(
-      'CC BY 4.0',
+    const license = within(
+      screen.getByTestId('comparison-license-gills-hypholoma-blaszki'),
+    ).getByText('CC BY 4.0');
+    expect(contrastRatio(textColor(license), nearestBackground(license))).toBeGreaterThanOrEqual(
+      4.5,
     );
-    expect(contrastRatio(textColor(license), nearestBackground(license))).toBeGreaterThanOrEqual(4.5);
     const caption = screen.getByTestId('comparison-caption-cap-galerina-kapelusz');
     expect(caption).toHaveTextContent(en.comparison.sulphurHoney.captions.galerinaCap);
-    expect(contrastRatio(textColor(caption), nearestBackground(caption))).toBeGreaterThanOrEqual(4.5);
-    expect(screen.getByTestId('comparison-warning')).toHaveTextContent(en.comparison.sulphurHoney.warning);
+    expect(contrastRatio(textColor(caption), nearestBackground(caption))).toBeGreaterThanOrEqual(
+      4.5,
+    );
+    expect(screen.getByTestId('comparison-warning')).toHaveTextContent(
+      en.comparison.sulphurHoney.warning,
+    );
     expect(screen.getByTestId('comparison-galerina-heading-cap')).toHaveTextContent(
       en.comparison.sulphurHoney.galerinaHeading,
     );

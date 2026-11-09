@@ -205,7 +205,12 @@ export interface AtlasFeatureFields {
 }
 
 /** Values with these provenance statuses are in the app. `ok` is stored as `zweryfikowane`. */
-export const PRESENT_STATUSES = ['zweryfikowane', 'wniosek_z_klucza', 'istniejace', 'pominiete'] as const;
+export const PRESENT_STATUSES = [
+  'zweryfikowane',
+  'wniosek_z_klucza',
+  'istniejace',
+  'pominiete',
+] as const;
 
 export const WITHHELD_STATUS = 'do_weryfikacji';
 
@@ -266,7 +271,8 @@ function knownField(field: string, value: unknown): boolean {
   if (field === 'ring') return value === null || typeof value === 'boolean';
   if (field === 'capSizeCm') return isCapSize(value);
   if (NULLABLE_TOKEN_FIELDS.has(field)) return isNullableTokens(field, value);
-  if (Object.prototype.hasOwnProperty.call(ATLAS_TOKEN_VOCAB, field)) return isRequiredTokens(field, value);
+  if (Object.prototype.hasOwnProperty.call(ATLAS_TOKEN_VOCAB, field))
+    return isRequiredTokens(field, value);
   return false;
 }
 

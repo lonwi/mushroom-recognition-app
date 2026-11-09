@@ -84,7 +84,12 @@ function resizeAxis(
   return output;
 }
 
-function resizeAreaUint8(rgb: ArrayLike<number>, width: number, height: number, size: number): Uint8Array {
+function resizeAreaUint8(
+  rgb: ArrayLike<number>,
+  width: number,
+  height: number,
+  size: number,
+): Uint8Array {
   const byHeight = resizeAxis(rgb, width, height, size, 'y');
   const byWidth = resizeAxis(byHeight, width, size, size, 'x');
   const output = new Uint8Array(size * size * 3);

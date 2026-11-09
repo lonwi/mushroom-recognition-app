@@ -1,9 +1,5 @@
 import type { EdibilityStatus, MushroomSpecies } from '../types/mushroom';
-import {
-  FEATURE_KEYS,
-  structureProblem,
-  type AtlasFeatureFields,
-} from './atlasFeatureVocab';
+import { FEATURE_KEYS, structureProblem, type AtlasFeatureFields } from './atlasFeatureVocab';
 import table from './atlasFilterFacts.json';
 import { POISONOUS_MISS_ALLOWLIST } from './poisonousMissAllowlist';
 
@@ -136,7 +132,9 @@ function loadFacts(
   return facts;
 }
 
-export const ATLAS_FILTER_FACTS = loadFacts(table) satisfies Readonly<Record<SpeciesId, StructureFacts>>;
+export const ATLAS_FILTER_FACTS = loadFacts(table) satisfies Readonly<
+  Record<SpeciesId, StructureFacts>
+>;
 
 function filterFacts(speciesId: string): StructureFacts | undefined {
   return ATLAS_FILTER_FACTS[speciesId];
@@ -324,7 +322,9 @@ function toxicSpecies(species: MushroomSpecies): boolean {
 }
 
 function missAllowlisted(speciesId: string, chipId: string): boolean {
-  return POISONOUS_MISS_ALLOWLIST.some((pair) => pair.speciesId === speciesId && pair.chipId === chipId);
+  return POISONOUS_MISS_ALLOWLIST.some(
+    (pair) => pair.speciesId === speciesId && pair.chipId === chipId,
+  );
 }
 
 function onStableTrait(selected: readonly FilterChip[]): boolean {
@@ -336,7 +336,10 @@ function onStableTrait(selected: readonly FilterChip[]): boolean {
  * or the pair is allowlisted. Null stable facts never reach this: an undefined
  * field is already unverified.
  */
-function contradictoryPoisonousHolds(species: MushroomSpecies, selected: readonly FilterChip[]): boolean {
+function contradictoryPoisonousHolds(
+  species: MushroomSpecies,
+  selected: readonly FilterChip[],
+): boolean {
   if (!toxicSpecies(species) || onStableTrait(selected)) return false;
   return !selected.every((chip) => missAllowlisted(species.id, chip.id));
 }
@@ -404,7 +407,8 @@ export function activePanelChips(chipIds: ReadonlySet<string>): readonly ActiveP
   const selected: ActivePanelChip[] = [];
   for (const group of ATLAS_PANEL_GROUPS) {
     for (const chip of group.chips) {
-      if (chipIds.has(chip.id)) selected.push({ id: chip.id, group: group.label, label: chip.label });
+      if (chipIds.has(chip.id))
+        selected.push({ id: chip.id, group: group.label, label: chip.label });
     }
   }
   return selected;

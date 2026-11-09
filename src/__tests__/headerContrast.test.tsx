@@ -21,7 +21,7 @@ describe('app header contrast', () => {
     expect(subtitleColor).toBe(colors.emerald50);
     expect(subtitleBackground).toBe(colors.primary);
     expect(subtitleContrast).toBeGreaterThanOrEqual(4.5);
-    expect(subtitleContrast).toBeCloseTo(11.76, 2);
+    expect(subtitleContrast).toBeCloseTo(12.1, 2);
 
     expect(offlineColor).toBe(colors.onPrimary);
     expect(offlineBackground).toBe(colors.emerald900);

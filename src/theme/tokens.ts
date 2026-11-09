@@ -1,25 +1,36 @@
 /**
- * Single source for colour, spacing, radius, and type size.
- * Screens import these tokens instead of hex literals.
- * Status colours match `paperTheme`. The deadly badge keeps a lighter label
- * than its border: `#FF4560` on `#2A080C` is 5.51:1 (the old chip was 5.18:1
- * for `#FF4560` on `#3E000C`). Border `#FF1744` on the species header
- * `#064E3B` is 2.53:1; `#D50000` there was only 1.77:1.
+ * Single source for colour, spacing, radius, and typography.
+ * Screens and components import these tokens instead of hardcoded literals.
+ * Aligned with Grzybobranie Design System v1.0.
  */
 export const colors = {
   white: '#FFFFFF',
   black: '#000000',
   transparent: 'transparent',
 
-  primary: '#1B3B22',
+  // Grzybobranie Design System v1.0 canonical tokens (DESIGN.md)
+  primaryGreen: '#1b382b',
+  primaryGreenHover: '#152e23',
+  paper: '#f6f5f1',
+  paperActive: '#eae6dc',
+  surfaceCard: '#ffffff',
+  borderSubtle: '#dcdad3',
+  softGreenBg: '#f4f7f4',
+  accentRed: '#ad1414',
+  accentRedSoft: '#fdf2f2',
+  warningAmber: '#d97706',
+  warningSoft: '#fef3c7',
+
+  // Semantic mappings
+  primary: '#1b382b',
   onPrimary: '#FFFFFF',
-  primaryContainer: '#D1E7D5',
-  onPrimaryContainer: '#0B2613',
+  primaryContainer: '#eae6dc',
+  onPrimaryContainer: '#1b382b',
 
   secondary: '#2C5E37',
   onSecondary: '#FFFFFF',
-  secondaryContainer: '#E8F5E9',
-  onSecondaryContainer: '#133519',
+  secondaryContainer: '#f4f7f4',
+  onSecondaryContainer: '#152e23',
 
   tertiary: '#8D5B28',
   onTertiary: '#FFFFFF',
@@ -40,29 +51,17 @@ export const colors = {
 
   deadly: '#FF1744',
   deadlyBg: '#2A080C',
-  /** Badge label. Lighter than `deadly` so text on `deadlyBg` stays above 5.18:1. */
+  /** Badge label. Contrast on `deadlyBg` stays above 5.5:1 (WCAG AA+). */
   deadlyText: '#FF4560',
-  /** Same red as `deadly`. Darker `#D50000` fails on the `#064E3B` species header. */
   deadlyBorder: '#FF1744',
 
-  background: '#F8FAFC',
-  surface: '#FFFFFF',
-  surfaceVariant: '#F1F5F9',
-  outline: '#CBD5E1',
+  background: '#f6f5f1',
+  appBg: '#f6f5f1',
+  surface: '#ffffff',
+  surfaceVariant: '#eae6dc',
+  outline: '#dcdad3',
 
-  // Nordic Field Guide v3.1 canonical tokens (Stitch / docs/DESIGN.md)
-  primaryGreen: '#1b382b',
-  primaryGreenHover: '#152e23',
-  paper: '#f6f5f1',
-  paperActive: '#eae6dc',
-  surfaceCard: '#ffffff',
-  borderSubtle: '#dcdad3',
-  softGreenBg: '#f4f7f4',
-  accentRed: '#ad1414',
-  accentRedSoft: '#fdf2f2',
-  warningAmber: '#d97706',
-  warningSoft: '#fef3c7',
-
+  // Tailwind neutral & slate palette
   slate200: '#E2E8F0',
   slate400: '#94A3B8',
   slate500: '#64748B',
@@ -70,6 +69,10 @@ export const colors = {
   slate700: '#334155',
   slate800: '#1E293B',
   slate900: '#0F172A',
+
+  neutral700: '#374151',
+  neutral800: '#1f2937',
+  neutral900: '#171717',
 
   emerald50: '#ECFDF5',
   emerald100: '#D1FAE5',
@@ -79,9 +82,7 @@ export const colors = {
   emerald500: '#10B981',
   emerald600: '#059669',
   emerald700: '#047857',
-  /** Tailwind emerald-800. */
   emerald800: '#065F46',
-  /** Tailwind emerald-900. Species-card header. */
   emerald900: '#064E3B',
 
   green400: '#4ADE80',
@@ -127,9 +128,7 @@ export const colors = {
   blue300: '#93C5FD',
   blueInk: '#1E3A5F',
 
-  /** Dim layer behind the atlas filter sheet. slate900 at 45%. */
   scrim: 'rgba(15, 23, 42, 0.45)',
-  /** Camera overlays and transparent controls. */
   overlayDark50: 'rgba(0, 0, 0, 0.5)',
   overlayDark55: 'rgba(0, 0, 0, 0.55)',
   overlayDark65: 'rgba(0, 0, 0, 0.65)',
@@ -158,7 +157,6 @@ export const edibilityColors = {
   },
   INEDIBLE: {
     background: colors.inedibleBg,
-    // `#E65100` on `#FFF3E0` is 3.46:1. `orange700` on the same fill is 4.72:1.
     text: colors.orange700,
     border: colors.inedibleBorder,
   },
@@ -181,34 +179,98 @@ export const spacing = {
   md: 12,
   lg: 16,
   xl: 24,
+  gutter: 16,
 } as const;
 
 export const radius = {
-  /** Comparison cards. Stay in the 3–6 px range; do not use a pill. */
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 14,
-  xl: 24,
+  /** 4px: Inner image crops, subtle tags */
+  sm: 4,
+  /** 6px: Default compact chips */
+  md: 6,
+  /** 8px: Standard buttons, inputs, checkboxes, Skaner CTA pill */
+  lg: 8,
+  /** 12px: Contained cards and modules */
+  xl: 12,
+  /** 16px: Modal sheets, detail panels */
+  '2xl': 16,
+  /** 9999px: Full pills, filter chips, status badges */
   full: 9999,
-  pill: 12,
+  /** Legacy alias for compatibility */
+  xs: 4,
+  pill: 9999,
 } as const;
 
 export const typography = {
+  // Legacy scalar scale for compatibility
   caption: 10,
   small: 12,
-  body: 14,
-  title: 16,
-  headline: 20,
-  /** Line height for 12px caption copy. */
+  body: 13,
+  title: 18,
+  headline: 24,
   lineHeightSmall: 18,
+
+  // Canonical type tokens matching DESIGN.md
+  headlineLg: {
+    fontSize: 30,
+    lineHeight: 36,
+    fontWeight: '800' as const,
+    letterSpacing: -0.025,
+  },
+  headlineLgMobile: {
+    fontSize: 24,
+    lineHeight: 32,
+    fontWeight: '800' as const,
+    letterSpacing: -0.025,
+  },
+  headlineMd: {
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '800' as const,
+    letterSpacing: -0.01,
+  },
+  headlineSm: {
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '800' as const,
+  },
+  speciesLatin: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '600' as const,
+    fontStyle: 'italic' as const,
+  },
+  bodyDefault: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '400' as const,
+  },
+  bodyMedium: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '600' as const,
+  },
+  labelMicro: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '700' as const,
+    letterSpacing: 0.025,
+  },
+  labelBadge: {
+    fontSize: 10,
+    lineHeight: 12,
+    fontWeight: '800' as const,
+    letterSpacing: 0.05,
+  },
 } as const;
 
 export const sizing = {
-  galleryPhotoHeight: 220,
+  galleryPhotoHeight: 210,
+  cardPhotoHeight: 210,
+  shutterButtonSize: 68,
+  skanerPillWidth: 52,
+  skanerPillHeight: 40,
 } as const;
 
-/** Dev-only inference overlay. Light and dark, no separate side accent. */
 export const devOverlayColors = {
   light: {
     background: colors.surface,

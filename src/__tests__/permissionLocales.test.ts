@@ -7,9 +7,7 @@ const polish = JSON.parse(fs.readFileSync(path.join(root, 'locales', 'pl.json'),
 const english = JSON.parse(fs.readFileSync(path.join(root, 'locales', 'en.json'), 'utf8'));
 
 function pluginOptions(name: string): Record<string, unknown> {
-  const entry = app.plugins.find(
-    (plugin: unknown) => Array.isArray(plugin) && plugin[0] === name,
-  );
+  const entry = app.plugins.find((plugin: unknown) => Array.isArray(plugin) && plugin[0] === name);
   if (!entry) {
     throw new Error(`Missing ${name} plugin`);
   }
@@ -25,7 +23,9 @@ describe('permission locales', () => {
       pl: './locales/pl.json',
       en: './locales/en.json',
     });
-    expect(fs.existsSync(path.join(root, 'plugins', 'withDefaultPermissionStrings.js'))).toBe(false);
+    expect(fs.existsSync(path.join(root, 'plugins', 'withDefaultPermissionStrings.js'))).toBe(
+      false,
+    );
     expect(app.plugins).not.toContain('./plugins/withDefaultPermissionStrings.js');
 
     expect(app.ios.infoPlist.NSCameraUsageDescription).toBeUndefined();

@@ -1,7 +1,7 @@
 import type { ClassificationResult } from './classifierService';
 import { readFindLocation, type FindCoordinates } from './journalLocation';
 import { deleteManagedJournalPhoto, isLocalCaptureUri, persistJournalPhoto } from './journalPhotos';
-import { storageService } from './storageService';
+import { journalRepository } from './storage/journalRepository';
 import type { JournalCandidate, JournalRecognition, SightingRecord } from '../types/mushroom';
 
 function createSightingId(now = Date.now(), random = Math.random()): string {
@@ -74,7 +74,8 @@ export async function createJournalEntryFromScan(
   const now = dependencies.now ?? Date.now;
   const readLocation = dependencies.readLocation ?? readFindLocation;
   const persistPhoto = dependencies.persistPhoto ?? persistJournalPhoto;
-  const save = dependencies.save ?? ((record: SightingRecord) => storageService.saveSighting(record));
+  const save =
+    dependencies.save ?? ((record: SightingRecord) => journalRepository.saveSighting(record));
 
   const id = createId();
   const recognition = recognitionFromClassification(result);

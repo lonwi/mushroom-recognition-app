@@ -12,7 +12,10 @@ describe('atlas example chip labels', () => {
       atlasExampleLabel({ namePl: 'Muchomor sromotnikowy', nameLatin: 'Amanita phalloides' }, 'en'),
     ).toBe('Amanita phalloides');
     expect(
-      atlasExampleLabel({ namePl: '   ', nameEn: ' ', nameLatin: '  Cantharellus cibarius  ' }, 'pl'),
+      atlasExampleLabel(
+        { namePl: '   ', nameEn: ' ', nameLatin: '  Cantharellus cibarius  ' },
+        'pl',
+      ),
     ).toBe('Cantharellus cibarius');
     expect(atlasExampleLabel({ namePl: ' ', nameEn: '', nameLatin: ' \n ' }, 'en')).toBe('');
   });

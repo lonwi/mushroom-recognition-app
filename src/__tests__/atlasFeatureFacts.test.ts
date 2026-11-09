@@ -30,7 +30,9 @@ interface ProvenanceFile {
   records: ProvenanceRecord[];
 }
 
-const provenance = JSON.parse(readFileSync('data/sources/atlas_cechy_20261022.json', 'utf8')) as ProvenanceFile;
+const provenance = JSON.parse(
+  readFileSync('data/sources/atlas_cechy_20261022.json', 'utf8'),
+) as ProvenanceFile;
 const POISONOUS = new Set(['POISONOUS', 'DEADLY_POISONOUS']);
 const NULLABLE = new Set<string>(NULLABLE_IMPORT_FIELDS);
 const ALLOWED_STATUS = new Set<string>([...PRESENT_STATUSES, WITHHELD_STATUS]);
@@ -77,7 +79,13 @@ describe('atlas species features', () => {
   });
 
   test('keeps pominiete and istniejace distinct from zweryfikowane', () => {
-    const counts = { zweryfikowane: 0, wniosek_z_klucza: 0, istniejace: 0, pominiete: 0, do_weryfikacji: 0 };
+    const counts = {
+      zweryfikowane: 0,
+      wniosek_z_klucza: 0,
+      istniejace: 0,
+      pominiete: 0,
+      do_weryfikacji: 0,
+    };
     for (const record of provenance.records) {
       const status = record.status as keyof typeof counts;
       counts[status] += 1;
@@ -93,11 +101,15 @@ describe('atlas species features', () => {
       (record) => record.field === 'taste' && record.status === 'pominiete',
     );
     expect(withheldTaste).toHaveLength(19);
-    expect(withheldTaste.every((record) => Array.isArray(record.value) && record.value[0] === 'nie_podaje_sie')).toBe(
+    expect(
+      withheldTaste.every(
+        (record) => Array.isArray(record.value) && record.value[0] === 'nie_podaje_sie',
+      ),
+    ).toBe(true);
+    const existing = provenance.records.filter((record) => record.status === 'istniejace');
+    expect(existing.every((record) => ['ring', 'volva', 'sporePrint'].includes(record.field))).toBe(
       true,
     );
-    const existing = provenance.records.filter((record) => record.status === 'istniejace');
-    expect(existing.every((record) => ['ring', 'volva', 'sporePrint'].includes(record.field))).toBe(true);
   });
 
   test('keeps withheld values out of the app and inside the vocabulary', () => {

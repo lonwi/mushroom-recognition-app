@@ -4,7 +4,7 @@ import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import App from '../../../App';
 import { HARDWARE_BACK_EVENT } from '../../navigation/hardwareBack';
-import { storageService } from '../../services/storageService';
+import { journalRepository } from '../../services/storage/journalRepository';
 import { pl } from '../../i18n/pl';
 
 type BackHandlerFn = () => boolean | null | undefined;
@@ -64,7 +64,12 @@ function speciesCardScrollHost(anchor: HostNode): HostNode {
 
 function galleryPageWidth(style: Parameters<typeof StyleSheet.flatten>[0]): number {
   const flat: unknown = StyleSheet.flatten(style);
-  if (typeof flat !== 'object' || flat === null || !('width' in flat) || typeof flat.width !== 'number') {
+  if (
+    typeof flat !== 'object' ||
+    flat === null ||
+    !('width' in flat) ||
+    typeof flat.width !== 'number'
+  ) {
     throw new Error('Gallery page width is not a number');
   }
   return flat.width;
@@ -144,7 +149,7 @@ describe('Android hardware back', () => {
   it('returns from a look-alike to the previous card and from the journal to that tab', async () => {
     const back = installBackHandler();
     try {
-      await storageService.saveSighting({
+      await journalRepository.saveSighting({
         id: 'sighting_spot',
         timestamp: 1_720_000_100_000,
         recognition: {
@@ -230,7 +235,9 @@ describe('Android hardware back', () => {
       await fireEvent(screen.getByTestId('species-gallery'), 'layout', {
         nativeEvent: { layout: { x: 0, y: 0, width: parkedWidth, height: 120 } },
       });
-      expect(galleryPageWidth(screen.getByTestId('species-gallery-slide-0').props.style)).toBe(parkedWidth);
+      expect(galleryPageWidth(screen.getByTestId('species-gallery-slide-0').props.style)).toBe(
+        parkedWidth,
+      );
 
       await fireEvent.press(screen.getByTestId('lookalike-link-amanita_citrina'));
       expect(screen.getByText('Amanita citrina')).toBeTruthy();

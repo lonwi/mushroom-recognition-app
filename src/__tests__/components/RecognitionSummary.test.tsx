@@ -10,7 +10,8 @@ const TOXIC_NAME = 'Maślanka wiązkowa';
 const GENUS_WARNING = /Amanita, Cortinarius, Galerina albo Gyromitra/;
 const EXPERT_BODY = /Nie zbieraj tego do jedzenia na podstawie skanu/;
 const NOT_EDIBILITY = 'Ten skan nie jest oceną jadalności.';
-const UNKNOWN_BODY = 'To wygląda na grzyba, którego aplikacja nie zna. Nie zbieraj go ani nie jedz na podstawie skanu.';
+const UNKNOWN_BODY =
+  'To wygląda na grzyba, którego aplikacja nie zna. Nie zbieraj go ani nie jedz na podstawie skanu.';
 const UNKNOWN_DEADLY = 'Ten grzyb może być śmiertelnie trujący.';
 const NOT_MUSHROOM_BODY = /Gatunek nie został podany/;
 const VERIFY = /grzyboznawcy albo w Sanepidzie/;
@@ -63,7 +64,9 @@ describe('RecognitionSummary warnings', () => {
     const journal = await renderSummary(recognition, 'journal');
     expect(journal.getByText(GENUS_WARNING)).toBeTruthy();
     expect(journal.getByTestId(`journal-expert-${ENTRY_ID}`).props.children).toMatch(EXPERT_BODY);
-    expect(journal.getByTestId(`journal-not-edible-${ENTRY_ID}`).props.children).toBe(NOT_EDIBILITY);
+    expect(journal.getByTestId(`journal-not-edible-${ENTRY_ID}`).props.children).toBe(
+      NOT_EDIBILITY,
+    );
     expect(journal.getByText(/Muchomor sromotnikowy \(zielonawy\)/)).toBeTruthy();
     expect(journal.queryByTestId(`journal-low-confidence-${ENTRY_ID}`)).toBeNull();
     expectNoEdibilityBadge(journal.queryByText);
@@ -116,8 +119,12 @@ describe('RecognitionSummary warnings', () => {
     const journal = await renderSummary(recognition, 'journal');
     expect(journal.getByTestId(`journal-title-${ENTRY_ID}`).props.children).toBe('Nieznany grzyb');
     expect(journal.getByTestId(`journal-unknown-${ENTRY_ID}`).props.children).toBe(UNKNOWN_BODY);
-    expect(journal.getByTestId(`journal-unknown-deadly-${ENTRY_ID}`).props.children).toBe(UNKNOWN_DEADLY);
-    expect(journal.getByTestId(`journal-unknown-verify-${ENTRY_ID}`).props.children).toMatch(VERIFY);
+    expect(journal.getByTestId(`journal-unknown-deadly-${ENTRY_ID}`).props.children).toBe(
+      UNKNOWN_DEADLY,
+    );
+    expect(journal.getByTestId(`journal-unknown-verify-${ENTRY_ID}`).props.children).toMatch(
+      VERIFY,
+    );
     expect(journal.queryByText(DEADLY_NAME)).toBeNull();
     expectNoEdibilityBadge(journal.queryByText);
   });
@@ -126,7 +133,9 @@ describe('RecognitionSummary warnings', () => {
     const recognition: RecognitionSummaryData = { status: 'rejected', reason: 'not_a_mushroom' };
 
     const modal = await renderSummary(recognition, 'modal');
-    expect(modal.getByTestId('recognition-rejected-body').props.children).toMatch(NOT_MUSHROOM_BODY);
+    expect(modal.getByTestId('recognition-rejected-body').props.children).toMatch(
+      NOT_MUSHROOM_BODY,
+    );
     expect(modal.getByText(VERIFY)).toBeTruthy();
     expect(modal.queryByText(UNKNOWN_DEADLY)).toBeNull();
     expect(modal.queryByTestId('expert-verification-banner')).toBeNull();
@@ -134,7 +143,9 @@ describe('RecognitionSummary warnings', () => {
     expectNoEdibilityBadge(modal.queryByText);
 
     const journal = await renderSummary(recognition, 'journal');
-    expect(journal.getByTestId(`journal-title-${ENTRY_ID}`).props.children).toBe('To nie jest grzyb z modelu');
+    expect(journal.getByTestId(`journal-title-${ENTRY_ID}`).props.children).toBe(
+      'To nie jest grzyb z modelu',
+    );
     expect(journal.getByText(NOT_MUSHROOM_BODY)).toBeTruthy();
     expect(journal.queryByText(UNKNOWN_DEADLY)).toBeNull();
     expect(journal.queryByText(DEADLY_NAME)).toBeNull();
@@ -154,7 +165,9 @@ describe('RecognitionSummary warnings', () => {
     expectNoEdibilityBadge(modal.queryByText);
 
     const journal = await renderSummary(recognition, 'journal');
-    expect(journal.getByTestId(`journal-legacy-${ENTRY_ID}`).props.children).toMatch(/starszej wersji/);
+    expect(journal.getByTestId(`journal-legacy-${ENTRY_ID}`).props.children).toMatch(
+      /starszej wersji/,
+    );
     expect(journal.getByTestId(`journal-title-${ENTRY_ID}`).props.children).toBe('Starszy wpis');
     expect(journal.getByTestId(`journal-legacy-name-${ENTRY_ID}`).props.children).toEqual([
       'Zachowana nazwa',
@@ -162,7 +175,9 @@ describe('RecognitionSummary warnings', () => {
       'Borowik szlachetny',
       ' (Boletus edulis)',
     ]);
-    expect(journal.getByTestId(`journal-legacy-edibility-${ENTRY_ID}`).props.children).toMatch(/Nie jedz grzyba/);
+    expect(journal.getByTestId(`journal-legacy-edibility-${ENTRY_ID}`).props.children).toMatch(
+      /Nie jedz grzyba/,
+    );
     expect(journal.queryByText('JADALNY')).toBeNull();
     expectNoEdibilityBadge(journal.queryByText);
   });
@@ -171,14 +186,18 @@ describe('RecognitionSummary warnings', () => {
     const recognition: RecognitionSummaryData = { status: 'unavailable' };
 
     const modal = await renderSummary(recognition, 'modal');
-    expect(modal.getByTestId('recognition-unavailable-body').props.children).toMatch(/Nie ma modelu/);
+    expect(modal.getByTestId('recognition-unavailable-body').props.children).toMatch(
+      /Nie ma modelu/,
+    );
     expect(modal.getByText(/To nie jest wynik rozpoznawania/)).toBeTruthy();
     expect(modal.queryByText(DEADLY_NAME)).toBeNull();
     expect(modal.queryByText(/%/)).toBeNull();
     expectNoEdibilityBadge(modal.queryByText);
 
     const journal = await renderSummary(recognition, 'journal');
-    expect(journal.getByTestId(`journal-title-${ENTRY_ID}`).props.children).toBe('Rozpoznawanie niedostępne');
+    expect(journal.getByTestId(`journal-title-${ENTRY_ID}`).props.children).toBe(
+      'Rozpoznawanie niedostępne',
+    );
     expect(journal.getByText(/To nie jest wynik rozpoznawania/)).toBeTruthy();
     expect(journal.queryByText(DEADLY_NAME)).toBeNull();
     expectNoEdibilityBadge(journal.queryByText);

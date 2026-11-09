@@ -12,7 +12,7 @@ import {
   Linking,
   Platform,
 } from 'react-native';
-import { JournalReadError, storageService } from '../services/storageService';
+import { JournalReadError, journalRepository } from '../services/storage/journalRepository';
 import { resolveJournalPhotoUri } from '../services/journalPhotos';
 import { openSpotInMaps } from '../services/mapsLink';
 import { SightingRecord } from '../types/mushroom';
@@ -28,7 +28,9 @@ interface Props {
   refreshSignal?: number;
 }
 
-function hasGps(item: SightingRecord): item is SightingRecord & { latitude: number; longitude: number } {
+function hasGps(
+  item: SightingRecord,
+): item is SightingRecord & { latitude: number; longitude: number } {
   return typeof item.latitude === 'number' && typeof item.longitude === 'number';
 }
 
@@ -43,7 +45,7 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies, refreshSign
   const loadSightings = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await storageService.getSightings();
+      const data = await journalRepository.getSightings();
       setSightings(data);
       setJournalDamaged(false);
     } catch (error) {
@@ -66,7 +68,7 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies, refreshSign
   }, [refreshSignal]);
 
   useEffect(() => {
-    return storageService.subscribe(() => {
+    return journalRepository.subscribe(() => {
       void loadSightingsRef.current();
     });
   }, []);
@@ -79,7 +81,7 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies, refreshSign
         style: 'destructive',
         onPress: async () => {
           try {
-            await storageService.deleteSighting(item.id);
+            await journalRepository.deleteSighting(item.id);
             await loadSightings();
           } catch (error) {
             console.error('Błąd podczas usuwania znaleziska:', error);
@@ -98,7 +100,7 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies, refreshSign
   const saveNotes = async () => {
     if (!editing) return;
     try {
-      await storageService.updateSightingNotes(editing.id, draftNotes);
+      await journalRepository.updateSightingNotes(editing.id, draftNotes);
       setEditing(null);
       setDraftNotes('');
       await loadSightings();
@@ -116,7 +118,7 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies, refreshSign
         style: 'destructive',
         onPress: async () => {
           try {
-            await storageService.startFreshJournal();
+            await journalRepository.startFreshJournal();
             await loadSightings();
           } catch (error) {
             console.error('Błąd podczas zakładania nowego dziennika:', error);
@@ -163,7 +165,11 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies, refreshSign
       <View key={item.id} style={styles.card} testID={`journal-entry-${item.id}`}>
         <View style={styles.cardMain}>
           {photoUri ? (
-            <Image source={{ uri: photoUri }} style={styles.thumbnail} testID={`journal-photo-${item.id}`} />
+            <Image
+              source={{ uri: photoUri }}
+              style={styles.thumbnail}
+              testID={`journal-photo-${item.id}`}
+            />
           ) : (
             <View style={styles.thumbPlaceholder}>
               <Text style={{ fontSize: 24 }}>🍄</Text>
@@ -179,7 +185,8 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies, refreshSign
             {located ? (
               <View>
                 <Text style={styles.gpsText} testID={`journal-coordinates-${item.id}`}>
-                  📍 {t('journal.coordinates')}: {item.latitude.toFixed(6)}, {item.longitude.toFixed(6)}
+                  📍 {t('journal.coordinates')}: {item.latitude.toFixed(6)},{' '}
+                  {item.longitude.toFixed(6)}
                 </Text>
                 <TouchableOpacity
                   style={styles.mapBtn}
@@ -215,7 +222,11 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies, refreshSign
                   >
                     <Text style={journalActionStyles.actionBtnText}>{t('journal.cancel')}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.mapBtn} onPress={saveNotes} testID="journal-notes-save">
+                  <TouchableOpacity
+                    style={styles.mapBtn}
+                    onPress={saveNotes}
+                    testID="journal-notes-save"
+                  >
                     <Text style={styles.mapBtnText}>{t('journal.notesSave')}</Text>
                   </TouchableOpacity>
                 </View>
@@ -250,31 +261,35 @@ export const JournalScreen: React.FC<Props> = ({ onOpenAtlasSpecies, refreshSign
 
   return (
     <ScreenFrame title={t('journal.title')} subtitle={t('journal.subtitle')}>
-        <ScrollView
-          contentContainerStyle={styles.listContent}
-          refreshControl={<RefreshControl refreshing={loading} onRefresh={loadSightings} />}
-        >
-          {journalDamaged && !loading ? (
-            <View style={styles.emptyContainer} testID="journal-damaged">
-              <Text style={styles.emptyIcon}>🧺</Text>
-              <Text style={styles.emptyTitle}>{t('journal.readFailedTitle')}</Text>
-              <Text style={styles.damagedBody} testID="journal-damaged-message">
-                {t('journal.damagedBody')}
-              </Text>
-              <TouchableOpacity style={styles.mapBtn} onPress={confirmStartFresh} testID="journal-start-fresh">
-                <Text style={styles.mapBtnText}>{t('journal.startFresh')}</Text>
-              </TouchableOpacity>
-            </View>
-          ) : null}
-          {sightings.length === 0 && !loading && !journalDamaged ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyIcon}>🧺</Text>
-              <Text style={styles.emptyTitle}>{t('journal.emptyTitle')}</Text>
-              <Text style={styles.emptyDesc}>{t('journal.emptyDesc')}</Text>
-            </View>
-          ) : null}
-          {!journalDamaged ? sightings.map((item) => renderItem({ item })) : null}
-        </ScrollView>
+      <ScrollView
+        contentContainerStyle={styles.listContent}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={loadSightings} />}
+      >
+        {journalDamaged && !loading ? (
+          <View style={styles.emptyContainer} testID="journal-damaged">
+            <Text style={styles.emptyIcon}>🧺</Text>
+            <Text style={styles.emptyTitle}>{t('journal.readFailedTitle')}</Text>
+            <Text style={styles.damagedBody} testID="journal-damaged-message">
+              {t('journal.damagedBody')}
+            </Text>
+            <TouchableOpacity
+              style={styles.mapBtn}
+              onPress={confirmStartFresh}
+              testID="journal-start-fresh"
+            >
+              <Text style={styles.mapBtnText}>{t('journal.startFresh')}</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+        {sightings.length === 0 && !loading && !journalDamaged ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyIcon}>🧺</Text>
+            <Text style={styles.emptyTitle}>{t('journal.emptyTitle')}</Text>
+            <Text style={styles.emptyDesc}>{t('journal.emptyDesc')}</Text>
+          </View>
+        ) : null}
+        {!journalDamaged ? sightings.map((item) => renderItem({ item })) : null}
+      </ScrollView>
     </ScreenFrame>
   );
 };

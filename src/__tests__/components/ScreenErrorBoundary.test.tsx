@@ -70,7 +70,9 @@ describe('ScreenErrorBoundary', () => {
 
     expect(screen.getByTestId('screen-error-fallback')).toBeTruthy();
     expect(screen.getByText(pl.screenError.title)).toBeTruthy();
-    expect(screen.getByTestId('call-112').props.accessibilityLabel).toBe(pl.safetyGuide.call112Title);
+    expect(screen.getByTestId('call-112').props.accessibilityLabel).toBe(
+      pl.safetyGuide.call112Title,
+    );
     const polishTab = String(screen.getByTestId('nav-safety-label').props.children);
     expect(polishTab).toBe(pl.nav.safety);
     const polishBody = String(screen.getByTestId('screen-error-body').props.children);

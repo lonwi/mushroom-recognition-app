@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
+import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLanguage } from '../contexts/LanguageContext';
 import { colors } from '../theme/tokens';
@@ -38,28 +31,32 @@ export const SafetyDisclaimerModal: React.FC<Props> = ({ visible, onAccept }) =>
             <View style={styles.pointRow}>
               <Text style={styles.pointNum}>1</Text>
               <Text style={styles.pointText}>
-                <Text style={styles.bold}>{t('disclaimer.point1Label')}</Text> {t('disclaimer.point1Body')}
+                <Text style={styles.bold}>{t('disclaimer.point1Label')}</Text>{' '}
+                {t('disclaimer.point1Body')}
               </Text>
             </View>
 
             <View style={styles.pointRow}>
               <Text style={styles.pointNum}>2</Text>
               <Text style={styles.pointText}>
-                <Text style={styles.bold}>{t('disclaimer.point2Label')}</Text> {t('disclaimer.point2Body')}
+                <Text style={styles.bold}>{t('disclaimer.point2Label')}</Text>{' '}
+                {t('disclaimer.point2Body')}
               </Text>
             </View>
 
             <View style={styles.pointRow}>
               <Text style={styles.pointNum}>3</Text>
               <Text style={styles.pointText}>
-                <Text style={styles.bold}>{t('disclaimer.point3Label')}</Text> {t('disclaimer.point3Body')}
+                <Text style={styles.bold}>{t('disclaimer.point3Label')}</Text>{' '}
+                {t('disclaimer.point3Body')}
               </Text>
             </View>
 
             <View style={styles.pointRow}>
               <Text style={styles.pointNum}>4</Text>
               <Text style={styles.pointText}>
-                <Text style={styles.bold}>{t('disclaimer.point4Label')}</Text> {t('disclaimer.point4Body')}
+                <Text style={styles.bold}>{t('disclaimer.point4Label')}</Text>{' '}
+                {t('disclaimer.point4Body')}
               </Text>
             </View>
 

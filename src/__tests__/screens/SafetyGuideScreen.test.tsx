@@ -43,7 +43,9 @@ describe('SafetyGuideScreen foraging rules', () => {
 
     expect(await findByText(en.safetyGuide.rules.rule_whole_mushroom.title)).toBeTruthy();
     expect(await findByText(en.safetyGuide.rules.rule_tube_mushrooms_cut.description)).toBeTruthy();
-    expect(await findByText(en.safetyGuide.rules.rule_protect_forest_floor.description)).toBeTruthy();
+    expect(
+      await findByText(en.safetyGuide.rules.rule_protect_forest_floor.description),
+    ).toBeTruthy();
     expect(await findByText(en.safetyGuide.rules.rule_tubes_first.title)).toBeTruthy();
     expect(queryByText(pl.safetyGuide.rules.rule_whole_mushroom.title)).toBeNull();
   });
@@ -109,9 +111,15 @@ describe('SafetyGuideScreen — toxicology centres', () => {
     const first = TOXICOLOGY_CENTERS[0];
     expect(first).toBeDefined();
     expect(tree.indexOf(pl.safetyGuide.call112Title)).toBeGreaterThan(-1);
-    expect(tree.indexOf(pl.safetyGuide.call112Title)).toBeLessThan(tree.indexOf(first?.address ?? ''));
-    expect(tree.indexOf(pl.safetyGuide.call112Title)).toBeLessThan(tree.indexOf(pl.safetyGuide.call999Title));
-    expect(tree.indexOf(pl.safetyGuide.call999Title)).toBeLessThan(tree.indexOf(first?.address ?? ''));
+    expect(tree.indexOf(pl.safetyGuide.call112Title)).toBeLessThan(
+      tree.indexOf(first?.address ?? ''),
+    );
+    expect(tree.indexOf(pl.safetyGuide.call112Title)).toBeLessThan(
+      tree.indexOf(pl.safetyGuide.call999Title),
+    );
+    expect(tree.indexOf(pl.safetyGuide.call999Title)).toBeLessThan(
+      tree.indexOf(first?.address ?? ''),
+    );
   });
 
   it('calls 999 from its own button next to 112', async () => {
@@ -165,12 +173,18 @@ describe('SafetyGuideScreen — toxicology centres', () => {
 
     expect(await findByText(en.safetyGuide.centersSub)).toBeTruthy();
     expect(
-      await findByText(`${en.safetyGuide.availabilityLabel} ${en.safetyGuide.hours247DoctorAdvice}`),
+      await findByText(
+        `${en.safetyGuide.availabilityLabel} ${en.safetyGuide.hours247DoctorAdvice}`,
+      ),
     ).toBeTruthy();
     expect(
-      await findByText(`${en.safetyGuide.availabilityLabel} ${en.safetyGuide.hours247DoctorOnDuty}`),
+      await findByText(
+        `${en.safetyGuide.availabilityLabel} ${en.safetyGuide.hours247DoctorOnDuty}`,
+      ),
     ).toBeTruthy();
-    expect((await findByTestId('call-999')).props.accessibilityLabel).toBe(en.safetyGuide.call999Title);
+    expect((await findByTestId('call-999')).props.accessibilityLabel).toBe(
+      en.safetyGuide.call999Title,
+    );
     const tree = JSON.stringify(toJSON());
     for (const hours of TOXICOLOGY_CENTERS.map((c) => c.hours).filter(Boolean)) {
       expect(tree).not.toContain(hours);

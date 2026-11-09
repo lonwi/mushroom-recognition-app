@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { ClassificationResult } from '../services/classifierService';
 import { createJournalEntryFromScan, type SavedJournalEntry } from '../services/journalEntry';
-import { JournalReadError } from '../services/storageService';
+import { JournalReadError } from '../services/storage/journalRepository';
 import { isDisplayableCaptureUri } from '../services/journalPhotos';
 import { modalRecognitionChrome, RecognitionSummary } from './RecognitionSummary';
 import { colors, radius, spacing } from '../theme/tokens';
@@ -71,7 +71,10 @@ export const ResultModal: React.FC<Props> = ({
     } catch (error) {
       console.error('Błąd zapisu znaleziska:', error);
       const damaged = error instanceof JournalReadError && error.kind === 'corrupt';
-      Alert.alert(t('journal.savedTitle'), damaged ? t('journal.saveFailedDamaged') : t('journal.saveFailed'));
+      Alert.alert(
+        t('journal.savedTitle'),
+        damaged ? t('journal.saveFailedDamaged') : t('journal.saveFailed'),
+      );
     } finally {
       persistStarted.current = false;
       saveLock.current = false;

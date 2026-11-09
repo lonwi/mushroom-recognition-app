@@ -27,7 +27,9 @@ import { satisfiesNode } from './node-engine.mjs';
 const loadConfig = createRequire(import.meta.url);
 const cruiseConfig = loadConfig('../.dependency-cruiser.cjs');
 const { adapters } = loadConfig('./adapter-allowlist.cjs');
-const packageJson = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+const packageJson = JSON.parse(
+  fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
+);
 
 const nodeRange = packageJson.engines?.node;
 if (!nodeRange || !satisfiesNode(process.versions.node, nodeRange)) {
@@ -83,7 +85,8 @@ function assertOneImporter(adapter, outside) {
   const rule = ruleByName(`${IMPORTER_PREFIX}${adapter.name}`);
   if (!rule) fail(`Missing importer rule for ${adapter.name}.`);
   if (rule.to?.path !== adapter.to) fail(`Importer target drifted for ${adapter.name}.`);
-  if (joined(rule.from?.pathNot) !== joined(adapter.importers)) fail(`Importer list drifted for ${adapter.name}.`);
+  if (joined(rule.from?.pathNot) !== joined(adapter.importers))
+    fail(`Importer list drifted for ${adapter.name}.`);
   if (rule.to?.reachable || rule.to?.dependencyTypesNot) {
     fail(`${adapter.name} importer rule must match every import, including import type.`);
   }
@@ -91,7 +94,9 @@ function assertOneImporter(adapter, outside) {
 }
 
 function assertImporterRulesMatchAllowlist() {
-  const importerRules = cruiseConfig.forbidden.filter((rule) => rule.name.startsWith(IMPORTER_PREFIX));
+  const importerRules = cruiseConfig.forbidden.filter((rule) =>
+    rule.name.startsWith(IMPORTER_PREFIX),
+  );
   if (importerRules.length !== adapters.length) {
     fail(`Expected ${adapters.length} importer rules, found ${importerRules.length}.`);
   }
@@ -102,7 +107,11 @@ function assertImporterRulesMatchAllowlist() {
 function assertPlatformLayer() {
   const platformRule = ruleByName(platformRuleName);
   const platformReachable = ruleByName(platformReachableName);
-  if (!platformRule?.from?.pathNot || !platformReachable?.to?.path || !platformReachable.from?.path) {
+  if (
+    !platformRule?.from?.pathNot ||
+    !platformReachable?.to?.path ||
+    !platformReachable.from?.path
+  ) {
     fail('Platform layer rules in .dependency-cruiser.cjs are incomplete.');
   }
 
@@ -137,10 +146,14 @@ function assertPlatformLayer() {
       'src/stories/JournalScreen.stories.tsx',
       'src/services/storage/keyValueStore.ts',
       'src/services/keyValueStore.ts',
-      'src/services/storageService.ts',
       'src/services/journalPhotos.ts',
     ],
-    ['src/contexts/LanguageContext.tsx', 'src/screens/ScannerScreen.tsx', outsideWrapper, 'src/services/journalEntry.ts'],
+    [
+      'src/contexts/LanguageContext.tsx',
+      'src/screens/ScannerScreen.tsx',
+      outsideWrapper,
+      'src/services/journalEntry.ts',
+    ],
   );
 }
 
@@ -232,7 +245,11 @@ function isSameViolation(left, right) {
     );
   }
   if (left.via && right.via) {
-    return left.from === right.from && left.to === right.to && sameMembers(viaNames(left), viaNames(right));
+    return (
+      left.from === right.from &&
+      left.to === right.to &&
+      sameMembers(viaNames(left), viaNames(right))
+    );
   }
   return left.from === right.from && left.to === right.to;
 }
@@ -252,7 +269,12 @@ function preferShorterVia(violations) {
 }
 
 function sortKey(violation) {
-  return [violation.rule?.name ?? '', violation.from ?? '', violation.to ?? '', violation.type ?? ''].join('\0');
+  return [
+    violation.rule?.name ?? '',
+    violation.from ?? '',
+    violation.to ?? '',
+    violation.type ?? '',
+  ].join('\0');
 }
 
 function readKnown() {
@@ -270,7 +292,9 @@ function isExactViolation(violation) {
 function rejectBaselinedExact(violations) {
   const leaked = violations.filter(isExactViolation);
   if (leaked.length === 0) return;
-  console.error('Exact dependency rules must not be baselined (importer allowlist and i18n-not-to-data):');
+  console.error(
+    'Exact dependency rules must not be baselined (importer allowlist and i18n-not-to-data):',
+  );
   for (const violation of leaked) {
     console.error(`  ${violation.rule?.name}: ${violation.from} → ${violation.to}`);
   }
@@ -280,7 +304,9 @@ function rejectBaselinedExact(violations) {
 function grandfatheredFrom(violations) {
   return new Set(
     violations
-      .filter((violation) => violation.type === 'dependency' && violation.rule?.name === platformRuleName)
+      .filter(
+        (violation) => violation.type === 'dependency' && violation.rule?.name === platformRuleName,
+      )
       .map((violation) => violation.from),
   );
 }
@@ -311,7 +337,10 @@ function graphFrom(modules) {
     const edges = [];
     for (const dependency of module.dependencies ?? []) {
       if (dependency.resolved) {
-        edges.push({ resolved: dependency.resolved, dependencyTypes: dependency.dependencyTypes ?? [] });
+        edges.push({
+          resolved: dependency.resolved,
+          dependencyTypes: dependency.dependencyTypes ?? [],
+        });
       }
     }
     graph.set(module.source, edges);
@@ -415,15 +444,21 @@ if (update) {
     process.exit(1);
   }
   writeKnown(current);
-  console.log(`Wrote ${current.length} dependency violations to ${path.relative(process.cwd(), knownPath)}`);
+  console.log(
+    `Wrote ${current.length} dependency violations to ${path.relative(process.cwd(), knownPath)}`,
+  );
   process.exit(0);
 }
 
 if (shrink) {
   rejectBaselinedExact(known);
-  const kept = known.filter((violation) => current.some((item) => isSameViolation(item, violation)));
+  const kept = known.filter((violation) =>
+    current.some((item) => isSameViolation(item, violation)),
+  );
   writeKnown(kept);
-  console.log(`Dependency baseline shrink: kept ${kept.length}, dropped ${known.length - kept.length} stale`);
+  console.log(
+    `Dependency baseline shrink: kept ${kept.length}, dropped ${known.length - kept.length} stale`,
+  );
   process.exit(0);
 }
 
@@ -433,8 +468,13 @@ if (!fs.existsSync(knownPath)) {
 
 rejectBaselinedExact(known);
 
-const fresh = current.filter((violation) => isExactViolation(violation) || !known.some((item) => isSameViolation(item, violation)));
-const stale = known.filter((violation) => !current.some((item) => isSameViolation(item, violation)));
+const fresh = current.filter(
+  (violation) =>
+    isExactViolation(violation) || !known.some((item) => isSameViolation(item, violation)),
+);
+const stale = known.filter(
+  (violation) => !current.some((item) => isSameViolation(item, violation)),
+);
 
 console.log(
   `Dependency baseline: ${known.length} grandfathered, ${current.length} current, ${fresh.length} new, ${stale.length} stale`,

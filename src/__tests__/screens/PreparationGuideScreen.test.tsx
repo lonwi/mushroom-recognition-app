@@ -8,7 +8,7 @@ describe('PreparationGuideScreen RTL Tests', () => {
     const { getByText } = await render(
       <LanguageProvider>
         <PreparationGuideScreen />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     expect(getByText('Poradnik Przygotowania')).toBeTruthy();
@@ -21,7 +21,7 @@ describe('PreparationGuideScreen RTL Tests', () => {
     const { getByTestId, getByText, queryByText } = await render(
       <LanguageProvider>
         <PreparationGuideScreen />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     const cleanTab = getByTestId('tab-prep-clean');

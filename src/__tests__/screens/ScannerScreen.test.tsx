@@ -129,9 +129,9 @@ describe('ScannerScreen does not invent a recognition result', () => {
     await fireEvent.press(torch);
     expect(screen.getByTestId('scanner-torch').props.accessibilityState).toEqual({ checked: true });
 
-    expect(screen.getByText('🖼', { includeHiddenElements: true }).props.importantForAccessibility).toBe(
-      'no',
-    );
+    expect(
+      screen.getByText('🖼', { includeHiddenElements: true }).props.importantForAccessibility,
+    ).toBe('no');
   });
 
   it('does not fall back to a stock photo when the camera fails', async () => {
@@ -143,7 +143,7 @@ describe('ScannerScreen does not invent a recognition result', () => {
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith(
         pl.scanner.photoFailedTitle,
-        pl.scanner.photoFailedBody
+        pl.scanner.photoFailedBody,
       );
     });
     await settle();
@@ -162,7 +162,7 @@ describe('ScannerScreen does not invent a recognition result', () => {
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith(
         pl.scanner.photoFailedTitle,
-        pl.scanner.photoFailedBody
+        pl.scanner.photoFailedBody,
       );
     });
     await settle();
@@ -203,7 +203,10 @@ describe('ScannerScreen does not invent a recognition result', () => {
         1,
         expect.objectContaining({ ...SKIP_PROCESSING_CAPTURE, exif: true }),
       );
-      const retry = takePictureAsync.mock.calls[1][0] as { exif?: boolean; skipProcessing?: boolean };
+      const retry = takePictureAsync.mock.calls[1][0] as {
+        exif?: boolean;
+        skipProcessing?: boolean;
+      };
       expect(retry.exif).toBeUndefined();
       expect(retry).toEqual(expect.objectContaining(SKIP_PROCESSING_CAPTURE));
       expect(Alert.alert).not.toHaveBeenCalled();
@@ -246,13 +249,13 @@ describe('ScannerScreen does not invent a recognition result', () => {
     await waitFor(() => {
       expect(classifySpy).toHaveBeenCalledWith('file://camera/portrait.jpg', 3024);
     });
-    expect(takePictureAsync).toHaveBeenCalledWith(
-      expect.objectContaining(SKIP_PROCESSING_CAPTURE),
-    );
+    expect(takePictureAsync).toHaveBeenCalledWith(expect.objectContaining(SKIP_PROCESSING_CAPTURE));
   });
 
   it('does not fall back to a stock photo when the gallery picker fails', async () => {
-    (ImagePicker.launchImageLibraryAsync as jest.Mock).mockRejectedValue(new Error('picker failed'));
+    (ImagePicker.launchImageLibraryAsync as jest.Mock).mockRejectedValue(
+      new Error('picker failed'),
+    );
     const { getByTestId, queryByText } = await renderScanner();
 
     await fireEvent.press(getByTestId('scanner-gallery'));
@@ -391,8 +394,12 @@ describe('ScannerScreen shows the real model outcome', () => {
     await fireEvent.press(getByTestId('scanner-shutter'));
 
     expect(await findByText(pl.scanner.candidatesTitle)).toBeTruthy();
-    expect(getByTestId('dangerous-genus-warning')).toHaveTextContent(pl.scanner.dangerousGenusWarning);
-    expect(getByTestId('low-confidence-warning')).toHaveTextContent(pl.scanner.lowConfidenceWarning);
+    expect(getByTestId('dangerous-genus-warning')).toHaveTextContent(
+      pl.scanner.dangerousGenusWarning,
+    );
+    expect(getByTestId('low-confidence-warning')).toHaveTextContent(
+      pl.scanner.lowConfidenceWarning,
+    );
     expect(getByTestId('expert-verification-banner')).toHaveTextContent(
       /Nie zbieraj tego do jedzenia na podstawie skanu/,
     );
@@ -404,6 +411,8 @@ describe('ScannerScreen shows the real model outcome', () => {
     expect(queryByText('JADALNY')).toBeNull();
     expect(queryByText('ŚMIERTELNIE TRUJĄCY')).toBeNull();
     expect(pl.scanner.expertWarningBody).toMatch(/Nie zbieraj/);
-    expect(pl.scanner.dangerousGenusWarning).toMatch(/Amanita, Cortinarius, Galerina albo Gyromitra/);
+    expect(pl.scanner.dangerousGenusWarning).toMatch(
+      /Amanita, Cortinarius, Galerina albo Gyromitra/,
+    );
   });
 });

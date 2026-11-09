@@ -41,11 +41,20 @@ function unwrapExpression(node) {
 }
 
 function isPlatformRequire(node) {
-  if (node?.type !== 'CallExpression' || node.callee?.type !== 'Identifier' || node.callee.name !== 'require') {
+  if (
+    node?.type !== 'CallExpression' ||
+    node.callee?.type !== 'Identifier' ||
+    node.callee.name !== 'require'
+  ) {
     return false;
   }
   const arg = node.arguments[0];
-  return Boolean(arg && arg.type === 'Literal' && typeof arg.value === 'string' && platformPackagePattern.test(arg.value));
+  return Boolean(
+    arg &&
+    arg.type === 'Literal' &&
+    typeof arg.value === 'string' &&
+    platformPackagePattern.test(arg.value),
+  );
 }
 
 function isPlatformValue(node, tainted) {
@@ -58,7 +67,8 @@ function isPlatformValue(node, tainted) {
 
 function collectPlatformImports(node, tainted) {
   if (node.importKind === 'type') return;
-  if (typeof node.source?.value !== 'string' || !platformPackagePattern.test(node.source.value)) return;
+  if (typeof node.source?.value !== 'string' || !platformPackagePattern.test(node.source.value))
+    return;
   for (const specifier of node.specifiers) {
     if (specifier.importKind === 'type') continue;
     tainted.add(specifier.local.name);
@@ -114,7 +124,9 @@ const DECLARED_ID = new Set(['VariableDeclarator', 'FunctionDeclaration', 'Class
 const PATTERN_PARENT = new Set(['ObjectPattern', 'ArrayPattern']);
 
 function isPatternBinding(parent, node) {
-  return parent.type === 'Property' && parent.value === node && PATTERN_PARENT.has(parent.parent?.type);
+  return (
+    parent.type === 'Property' && parent.value === node && PATTERN_PARENT.has(parent.parent?.type)
+  );
 }
 
 function isDeclaredName(node) {
@@ -129,7 +141,13 @@ function isDeclaredName(node) {
 
 function reportBarePlatformUse(node, tainted, context) {
   if (node.type !== 'Identifier' || !tainted.has(node.name)) return;
-  if (isImportBinding(node) || isTypePosition(node) || isNonComputedProperty(node) || isDeclaredName(node)) return;
+  if (
+    isImportBinding(node) ||
+    isTypePosition(node) ||
+    isNonComputedProperty(node) ||
+    isDeclaredName(node)
+  )
+    return;
   const parent = node.parent;
   if (parent?.type === 'MemberExpression' && parent.object === node) return;
   if (parent?.type === 'ChainExpression') return;
@@ -153,7 +171,8 @@ function reportObjectAssign(node, tainted, context) {
   if (callee.object?.type !== 'Identifier' || callee.object.name !== 'Object') return;
   if (callee.property?.type !== 'Identifier' || callee.property.name !== 'assign') return;
   for (const argument of node.arguments) {
-    if (platformRooted(argument, tainted)) context.report({ node: argument, messageId: 'reexport' });
+    if (platformRooted(argument, tainted))
+      context.report({ node: argument, messageId: 'reexport' });
   }
 }
 
@@ -169,12 +188,14 @@ function reportNamedExport(node, tainted, context) {
   }
   if (node.declaration?.type === 'VariableDeclaration') {
     for (const declarator of node.declaration.declarations) {
-      if (isPlatformValue(declarator.init, tainted)) context.report({ node: declarator, messageId: 'reexport' });
+      if (isPlatformValue(declarator.init, tainted))
+        context.report({ node: declarator, messageId: 'reexport' });
     }
   }
   for (const specifier of node.specifiers) {
     if (specifier.exportKind === 'type') continue;
-    if (tainted.has(specifier.local.name)) context.report({ node: specifier, messageId: 'reexport' });
+    if (tainted.has(specifier.local.name))
+      context.report({ node: specifier, messageId: 'reexport' });
   }
 }
 
@@ -358,23 +379,17 @@ export default tseslint.config(
     },
   },
   {
-    // TODO: lower each cap toward 500 (the default above) as these files are split.
-    // Counts skip blank lines and comments. The extra lines above today's
-    // count are slack for the in-flight refactor.
-    files: ['src/services/storageService.ts'],
-    rules: { 'max-lines': ['error', { max: 460, skipBlankLines: true, skipComments: true }] },
-  },
-  {
+    // Screen line caps tightened to actual sizes after component extraction.
     files: ['src/screens/ScannerScreen.tsx'],
-    rules: { 'max-lines': ['error', { max: 560, skipBlankLines: true, skipComments: true }] },
+    rules: { 'max-lines': ['error', { max: 320, skipBlankLines: true, skipComments: true }] },
   },
   {
     files: ['src/screens/JournalScreen.tsx'],
-    rules: { 'max-lines': ['error', { max: 640, skipBlankLines: true, skipComments: true }] },
+    rules: { 'max-lines': ['error', { max: 480, skipBlankLines: true, skipComments: true }] },
   },
   {
     files: ['src/screens/SpeciesDetailScreen.tsx'],
-    rules: { 'max-lines': ['error', { max: 720, skipBlankLines: true, skipComments: true }] },
+    rules: { 'max-lines': ['error', { max: 120, skipBlankLines: true, skipComments: true }] },
   },
   {
     // Metro bundles offline images from a string literal require(). This file

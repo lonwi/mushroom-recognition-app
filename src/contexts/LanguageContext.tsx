@@ -20,7 +20,11 @@ export function interpolate(template: string, params: TranslationParams): string
   );
 }
 
-export function translate(language: LanguageType, path: string, params?: TranslationParams): string {
+export function translate(
+  language: LanguageType,
+  path: string,
+  params?: TranslationParams,
+): string {
   const dict = language === 'en' ? en : pl;
   const keys = path.split('.');
   let current: unknown = dict;

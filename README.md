@@ -1,6 +1,8 @@
 # Grzybobranie AI 🍄📱
 ### Aplikacja mobilna na Android & iOS do rozpoznawania grzybów w trybie offline (On-Device AI)
 
+> 🇬🇧 [English version](README.en.md)
+
 Aplikacja stworzona z myślą o miłośnikach leśnych wypraw i zbierania grzybów w Polsce i Europie Środkowej. Działa w **100% offline** (w głębi lasu, bez dostępu do Internetu ani zasięgu GSM).
 
 ---

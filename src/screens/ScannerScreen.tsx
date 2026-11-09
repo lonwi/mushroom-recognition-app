@@ -11,7 +11,11 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { classifierService, ClassificationResult } from '../services/classifierService';
-import { SKIP_PROCESSING_CAPTURE, uprightCaptureWidth, widthForCapture } from '../services/photoPixels';
+import {
+  SKIP_PROCESSING_CAPTURE,
+  uprightCaptureWidth,
+  widthForCapture,
+} from '../services/photoPixels';
 import { DevInferenceOverlay } from '../components/DevInferenceOverlay';
 import { ResultModal } from '../components/ResultModal';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -31,7 +35,9 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
   const [permission, requestPermission] = useCameraPermissions();
   const [torchEnabled, setTorchEnabled] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [classificationResult, setClassificationResult] = useState<ClassificationResult | null>(null);
+  const [classificationResult, setClassificationResult] = useState<ClassificationResult | null>(
+    null,
+  );
   const [resultModalVisible, setResultModalVisible] = useState(false);
 
   const cameraRef = useRef<any>(null);
@@ -186,10 +192,7 @@ export const ScannerScreen: React.FC<Props> = ({ onOpenAtlasSpecies, onSavedToJo
 
         <ScannerReticle />
 
-        <ScannerExamples
-          onOpenAtlasSample={openAtlasSample}
-          disabled={isAnalyzing}
-        />
+        <ScannerExamples onOpenAtlasSample={openAtlasSample} disabled={isAnalyzing} />
 
         <ScannerControls
           isAnalyzing={isAnalyzing}

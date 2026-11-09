@@ -12,7 +12,8 @@ This document defines specialized AI agent instructions for the Python Machine L
    - `CC BY-NC`, `CC BY-SA` (versioned `1.0`, `2.0`, `2.5`, `3.0`, `4.0`), and `pd-self` are restricted strictly to model training (`usage=training_only`).
    - `DF20` (Danish Fungi 2020) is experimental only (`--include-df20`) and always sets `shippable=false`.
    - Never ingest or permit ND (No-Derivatives), NC-SA, NC-ND, or unlicensed media.
-3. **Environment & Testing:**
+3. **Data Contract**: Follow the authoritative schema, split matrix, and normalization formula defined in [`ml/DATA_CONTRACT.md`](DATA_CONTRACT.md).
+4. **Environment & Testing:**
    - Python 3.12+ / 3.14 (`.python-version`).
    - Dependencies: `ml/requirements.txt` and `ml/requirements-dev.txt`.
    - Run tests: `python -m unittest discover -s ml/tests -v`.

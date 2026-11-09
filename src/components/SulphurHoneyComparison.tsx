@@ -162,15 +162,7 @@ function PhotoBlock({
   );
 }
 
-function GalerinaHeading({
-  traitId,
-  tone,
-  t,
-}: {
-  traitId: string;
-  tone: Tone;
-  t: Translate;
-}) {
+function GalerinaHeading({ traitId, tone, t }: { traitId: string; tone: Tone; t: Translate }) {
   const heading = t('comparison.sulphurHoney.galerinaHeading');
   const at = heading.indexOf(GALERINA_LATIN);
   const testID = `comparison-galerina-heading-${traitId}`;
@@ -184,7 +176,10 @@ function GalerinaHeading({
   return (
     <Text style={[styles.sideName, { color: tone.text }]} testID={testID}>
       {heading.slice(0, at)}
-      <Text style={[styles.italic, { color: tone.text }]} testID={`comparison-galerina-latin-${traitId}`}>
+      <Text
+        style={[styles.italic, { color: tone.text }]}
+        testID={`comparison-galerina-latin-${traitId}`}
+      >
         {GALERINA_LATIN}
       </Text>
       {heading.slice(at + GALERINA_LATIN.length)}
@@ -240,7 +235,10 @@ function SideColumn({
       )}
       {photos.length === 0 ? (
         claimKey ? (
-          <Text style={[styles.meta, { color: tone.muted }]} testID={`comparison-no-photo-${side}-${trait.id}`}>
+          <Text
+            style={[styles.meta, { color: tone.muted }]}
+            testID={`comparison-no-photo-${side}-${trait.id}`}
+          >
             {t('comparison.sulphurHoney.noPhoto')}
           </Text>
         ) : null
@@ -266,7 +264,9 @@ function SourceList({
 }) {
   return (
     <View style={styles.sources} testID={`comparison-sources-${id}`}>
-      <Text style={[styles.meta, { color: tone.muted }]}>{t('comparison.sulphurHoney.sources')}</Text>
+      <Text style={[styles.meta, { color: tone.muted }]}>
+        {t('comparison.sulphurHoney.sources')}
+      </Text>
       {urls.map((url, index) => (
         <Pressable
           key={url}
@@ -316,7 +316,9 @@ function TraitBlock({ trait, tone, t }: { trait: ComparisonTrait; tone: Tone; t:
   );
 }
 
-export const SulphurHoneyComparison: React.FC<{ colorScheme?: ComparisonScheme }> = ({ colorScheme }) => {
+export const SulphurHoneyComparison: React.FC<{ colorScheme?: ComparisonScheme }> = ({
+  colorScheme,
+}) => {
   const { t } = useLanguage();
   const system = useColorScheme();
   const scheme: ComparisonScheme = colorScheme ?? (system === 'dark' ? 'dark' : 'light');
