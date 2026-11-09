@@ -1,8 +1,8 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
 type StyledNode = {
   parent?: unknown;
-  props?: { style?: unknown };
+  props?: { style?: StyleProp<ViewStyle> };
 };
 
 /** WCAG 2 contrast ratio from sRGB hex colours. */

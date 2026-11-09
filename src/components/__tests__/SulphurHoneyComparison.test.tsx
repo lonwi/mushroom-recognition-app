@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import React from 'react';
-import { Linking, StyleSheet } from 'react-native';
+import { Linking, StyleSheet, type StyleProp, type TextStyle } from 'react-native';
 import { fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AtlasFilterSheet } from '../../components/AtlasFilterSheet';
@@ -35,8 +35,8 @@ function species(id: string) {
   return match;
 }
 
-function textColor(node: { props?: { style?: unknown } }): string {
-  const flat = StyleSheet.flatten(node.props?.style ?? {}) as { color?: unknown } | undefined;
+function textColor(node: { props?: { style?: StyleProp<TextStyle> } }): string {
+  const flat = StyleSheet.flatten(node.props?.style) as { color?: unknown } | undefined;
   if (typeof flat?.color !== 'string') {
     throw new Error('missing text colour');
   }
