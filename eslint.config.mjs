@@ -272,6 +272,7 @@ export default tseslint.config(
       'test-results/**',
       'playwright-report/**',
       'report/**',
+      '.agents/**',
     ],
   },
   js.configs.recommended,
