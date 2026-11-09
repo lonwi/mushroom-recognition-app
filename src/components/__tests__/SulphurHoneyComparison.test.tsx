@@ -22,7 +22,7 @@ import { photosForSpecies } from '../../data/speciesGallery';
 import { en } from '../../i18n/en';
 import { pl } from '../../i18n/pl';
 import { SpeciesDetailScreen } from '../../screens/SpeciesDetailScreen';
-import { contrastRatio, nearestBackground } from '../helpers/contrast';
+import { contrastRatio, nearestBackground } from '../../test/helpers/contrast';
 import { creditLicenseUrl } from '../../services/attributionPackage';
 
 const TASTE = /gorzk|smak|bitter|\btaste\b|kwask|acidic/i;
@@ -36,7 +36,7 @@ function species(id: string) {
 }
 
 function textColor(node: { props?: { style?: unknown } }): string {
-  const flat = StyleSheet.flatten(node.props?.style) as { color?: unknown } | undefined;
+  const flat = StyleSheet.flatten(node.props?.style ?? {}) as { color?: unknown } | undefined;
   if (typeof flat?.color !== 'string') {
     throw new Error('missing text colour');
   }

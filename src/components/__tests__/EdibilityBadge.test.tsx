@@ -2,7 +2,7 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 import { EdibilityBadge } from '../../components/EdibilityBadge';
 import { colors, edibilityColors } from '../../theme/tokens';
-import { contrastRatio } from '../helpers/contrast';
+import { contrastRatio } from '../../test/helpers/contrast';
 
 describe('EdibilityBadge RTL Component Tests', () => {
   it('renders correctly for EDIBLE status', async () => {

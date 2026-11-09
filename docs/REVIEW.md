@@ -24,6 +24,7 @@ Any change affecting mushroom edibility, toxicity, look-alikes, or emergency con
 - [ ] **Adapter pattern**: Direct imports of platform packages (`@react-native-async-storage/async-storage`, `expo-camera`, `expo-location`, `expo-file-system`, `react-native-fast-tflite`) are strictly confined to the adapter files in `scripts/adapter-allowlist.cjs`.
 - [ ] **No platform re-exports**: Adapters must not re-export raw platform objects (enforced by custom ESLint rule `grzybobranie/no-platform-reexport`).
 - [ ] **i18n layer separation**: `src/i18n` must never import `src/data` (enforced by dependency-cruiser rule `i18n-not-to-data`).
+- [ ] **Component-level tests**: React Testing Library tests live in the module under test's own `__tests__/` folder (e.g. `src/components/__tests__/ResultModal.test.tsx`); flat root-level test folders (e.g. `src/__tests__/components/`) are rejected.
 - [ ] **Full validation pass**:
   ```bash
   pnpm typecheck

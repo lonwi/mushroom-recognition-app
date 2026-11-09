@@ -58,7 +58,7 @@ RULES:
 | **Framework** | **React Native 0.86** + **Expo SDK 57** + TypeScript | Keep compatibility with Expo Go, React Native Web, and native builds. |
 | **UI** | `react-native-paper` 5 (MD3) is installed and `PaperProvider` wraps the app in `App.tsx`. Most screens use the project's own components styled with `src/theme/tokens.ts`. | New UI: take colors, spacing, and typography from `src/theme/tokens.ts` (the Paper theme in `src/theme/paperTheme.ts` is built from the same tokens). Never hardcode colors. The canonical design language is **Nordic Field Guide v3.1** (see the _UI Design System_ section below). Prefer Paper components for new widgets; a gradual migration to Paper is planned. Do **not** add MUI (`@mui/*`) – it is a web library and is not used here. |
 | **Safe Areas** | `react-native-safe-area-context` | **NEVER** import `SafeAreaView` from `'react-native'`. Always import from `'react-native-safe-area-context'`. |
-| **Component Testing** | Jest + `@testing-library/react-native` 14 | `pnpm test`. Use `await render(...)` (RNTL v14 / React 19) and `waitFor(...)` for state transitions. |
+| **Component Testing** | Jest + `@testing-library/react-native` 14 | `pnpm test`. Use `await render(...)` (RNTL v14 / React 19) and `waitFor(...)` for state transitions. Component (React Testing Library) tests live in the module under test's own `__tests__/` folder, e.g. `src/components/__tests__/ResultModal.test.tsx` — never in a flat root-level test folder such as `src/__tests__/components/`. |
 | **E2E Testing** | Playwright (`@playwright/test`) against static Storybook | `pnpm build-storybook && pnpm test:e2e`. Specs in `e2e/`. |
 | **Component Catalog** | Storybook 8 for Web (`@storybook/react-vite`) | `pnpm storybook` / `pnpm build-storybook`. Stories in `src/stories/`. |
 | **Internationalization** | Custom `LanguageContext` (`pl` / `en`) | Default language is Polish. Strings in `src/i18n/pl.ts` and `src/i18n/en.ts`; always add both. `src/i18n` must not import `src/data` (dependency-cruiser rule `i18n-not-to-data`). |
@@ -100,7 +100,7 @@ mushroom-app/
 │   ├── theme/               # tokens.ts (design tokens), paperTheme.ts (MD3 theme built from tokens)
 │   ├── types/               # TypeScript models
 │   ├── utils/               # Small shared utilities
-│   └── __tests__/           # Jest & RNTL tests
+│   └── __tests__/           # Jest & RNTL tests (module-level `__tests__/` folders next to the source, e.g. src/components/__tests__/)
 ├── App.tsx                  # Root (PaperProvider, LanguageProvider)
 ├── .dependency-cruiser.cjs  # Architecture rules (+ .dependency-cruiser-known-violations.json)
 ├── .jscpd.json              # Copy-paste detection (+ .jscpd-baseline.json)
