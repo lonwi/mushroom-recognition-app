@@ -160,6 +160,7 @@ function AppContent() {
       {/* Top, bottom, and side insets are applied once, here. Tab screens sit in
           `content`, between the header and the tab bar, and must not add them again. */}
       <SafeAreaView style={styles.container} edges={['top', 'right', 'bottom', 'left']}>
+        {/* @ts-expect-error backgroundColor is a valid runtime prop missing from RN types */}
         <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
 
         <View style={styles.topHeader}>
