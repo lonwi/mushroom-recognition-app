@@ -93,7 +93,8 @@
           "isIosBackgroundLocationEnabled": false,
           "isAndroidBackgroundLocationEnabled": false
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "extra": {
       "eas": {
