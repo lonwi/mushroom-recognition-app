@@ -11,6 +11,8 @@
 // spawned by file path from scripts/depcruise-gate.mjs, so Knip does not
 // see the package name in an npm script. Real unused packages belong
 // in quality/knip-baseline.json, not in that ignore list.
+// `ignoreFiles` drops vendored Expo agent skills under `.agents/**`. Those
+// scripts are not app entries; do not add them to the baseline.
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
