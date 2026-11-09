@@ -11,6 +11,7 @@ Full specification: [`AGENTS.md`](../../AGENTS.md) · Design: [`docs/DESIGN.md`]
 - **Platform Adapters**: Platform packages (`@react-native-async-storage/async-storage`, `expo-camera`, `expo-location`, `expo-file-system`, `react-native-fast-tflite`) are strictly restricted to the adapter modules defined in `scripts/adapter-allowlist.cjs`. Never import them directly into screens or UI components.
 - **No Platform Re-exports**: Adapters must wrap platform methods, never re-export raw platform objects (enforced by ESLint rule `grzybobranie/no-platform-reexport`).
 - **No TensorFlow.js**: Never import or bundle `@tensorflow/tfjs*` in the app runtime.
+- **Component-Level Tests**: Component React Testing Library tests live in `src/components/__tests__/`, e.g. `src/components/__tests__/DevInferenceOverlay.test.tsx`. Do not put component tests in `src/__tests__/components/`. Screen tests stay in `src/__tests__/screens/`, and shared suites such as `headerContrast` stay in `src/__tests__/`.
 
 ## 2. UI Design System (Nordic Field Guide v3.1)
 - **Token Source of Truth**: Read colors, spacing, radius, and typography exclusively from `src/theme/tokens.ts`. Never hardcode hex values.

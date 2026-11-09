@@ -94,7 +94,7 @@ Small differences: use `Platform.select` / `Platform.OS`. For larger ones, split
 ## Colocate styles and tests
 
 - **Styles:** keep the `StyleSheet.create({ ... })` object at the bottom of the component file rather than in a separate `.styles` file.
-- **Tests:** put `format-date.test.ts` next to `format-date.ts` (preferred over a separate `__tests__/` folder) so tested files are obvious at a glance.
+- **Tests:** put the test next to the module under test — `format-date.test.ts` beside `format-date.ts`, or in the module's `__tests__/` folder for UI modules (e.g. `src/components/__tests__/button.test.tsx`). Component-level React Testing Library tests belong in that component folder, not in `src/__tests__/components/`. Screen and other non-component suites may stay under `src/__tests__/`.
 
 ## AI and config files
 

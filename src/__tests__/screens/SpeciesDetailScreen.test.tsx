@@ -4,7 +4,7 @@ import { fireEvent, render, within } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SpeciesDetailScreen } from '../../screens/SpeciesDetailScreen';
 import { colors } from '../../theme/tokens';
-import { contrastRatio, nearestBackground } from '../helpers/contrast';
+import { contrastRatio, nearestBackground } from '../../test/helpers/contrast';
 import { MUSHROOMS_DATABASE, showsKitchenSection } from '../../data/mushrooms';
 import { LanguageProvider } from '../../contexts/LanguageContext';
 import { en } from '../../i18n/en';

@@ -36,7 +36,7 @@ const adapters = [
       '^src/screens/SettingsScreen\\.tsx$',
       '^src/components/PhotoCredits\\.tsx$',
       '^src/__tests__/screens/SettingsScreen\\.test\\.tsx$',
-      '^src/__tests__/components/PhotoCredits\\.test\\.tsx$',
+      '^src/components/__tests__/PhotoCredits\\.test\\.tsx$',
       ownTests('attributionPackage'),
     ],
   },

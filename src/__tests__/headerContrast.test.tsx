@@ -4,7 +4,7 @@ import { render } from '@testing-library/react-native';
 import App from '../../App';
 import { pl } from '../i18n/pl';
 import { colors } from '../theme/tokens';
-import { contrastRatio, nearestBackground } from './helpers/contrast';
+import { contrastRatio, nearestBackground } from '../test/helpers/contrast';
 
 describe('app header contrast', () => {
   it('keeps the subtitle and OFFLINE label at WCAG AA on the dark bar', async () => {

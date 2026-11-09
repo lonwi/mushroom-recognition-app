@@ -160,8 +160,9 @@ function AppContent() {
       {/* Top, bottom, and side insets are applied once, here. Tab screens sit in
           `content`, between the header and the tab bar, and must not add them again. */}
       <SafeAreaView style={styles.container} edges={['top', 'right', 'bottom', 'left']}>
-        {/* @ts-expect-error backgroundColor is a valid runtime prop missing from RN types */}
-        <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+        {/* RN 0.88 removed StatusBar backgroundColor with edge-to-edge. The primary
+            container already fills the top inset, so icon style is the only prop left. */}
+        <StatusBar barStyle="light-content" />
 
         <View style={styles.topHeader}>
           <TouchableOpacity

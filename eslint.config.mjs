@@ -352,7 +352,7 @@ export default tseslint.config(
     files: [
       'src/data/**/*.{js,ts,tsx}',
       'src/i18n/**/*.{js,ts,tsx}',
-      'src/__tests__/**/*.{js,jsx,ts,tsx}',
+      'src/**/__tests__/**/*.{js,jsx,ts,tsx}',
       'e2e/**/*.{js,jsx,ts,tsx}',
       '**/*.d.ts',
     ],
