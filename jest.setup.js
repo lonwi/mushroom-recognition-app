@@ -77,10 +77,15 @@ jest.mock('expo-router', () => {
     return React.createElement(React.Fragment, null, children);
   }
   Tabs.Screen = Screen;
+  function Redirect({ href }) {
+    const { Text } = require('react-native');
+    return React.createElement(Text, null, `redirect:${href}`);
+  }
   return {
     Stack,
     Tabs,
     Link: ({ children }) => children,
+    Redirect,
     router: { push: jest.fn(), back: jest.fn() },
   };
 });

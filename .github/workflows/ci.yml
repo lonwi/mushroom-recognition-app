@@ -28,6 +28,11 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      # Fails on high and critical advisories. This tree has none, so
+      # auditConfig.ignoreCves is empty. If a high advisory has no published
+      # fix, add the CVE there (pnpm-workspace.yaml) and say why in this comment.
+      - name: Audit dependencies
+        run: pnpm audit --audit-level high
       - name: Quality gates
         run: pnpm quality
         env:
@@ -70,3 +75,5 @@ jobs:
         run: pnpm export:android
         env:
           EXPO_NO_TELEMETRY: '1'
+          # Drops src/app/dev from the bundle. See metro.config.js.
+          NODE_ENV: production

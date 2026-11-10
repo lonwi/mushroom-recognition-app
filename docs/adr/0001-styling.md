@@ -10,7 +10,7 @@ Tokeny Pileus w `src/ui/tokens.ts` są jedynym źródłem kolorów, siatki 8 i p
 
 ## Co jest w tej gałęzi
 
-NativeWind 4.2.7 stoi na tokenach: `themeVars()` wstawia kolory jako zmienne, a klasy (`bg-paper`, `text-ink`) je czytają. `react-native-css-interop` jest zależnością bezpośrednią, bo pnpm nie wynosi jej z NativeWind, a Metro szuka `react-native-css-interop/jsx-runtime`. Ekran deweloperski `src/app/dev/styling.tsx` przełącza trzy motywy i mierzy czas do drugiej klatki (`requestAnimationFrame` dwa razy). Przyciski motywu na tym ekranie są prymitywem `@rn-primitives/slot` (`Pressable`) z rolą, etykietą i stanem `selected`.
+NativeWind 4.2.7 stoi na tokenach: `themeVars()` wstawia kolory jako zmienne, a klasy (`bg-paper`, `text-ink`) je czytają. `react-native-css-interop` jest zależnością bezpośrednią, bo pnpm nie wynosi jej z NativeWind, a Metro szuka `react-native-css-interop/jsx-runtime`. Ekran deweloperski `src/app/dev/styling.tsx` przełącza trzy motywy i mierzy czas do drugiej klatki (`requestAnimationFrame` dwa razy). W paczce produkcyjnej Metro pomija `src/app/dev`, gdy `NODE_ENV=production` (tak robi krok eksportu w CI). Gdy plik jednak wejdzie do bundla release, ekran przy `!__DEV__` robi `Redirect` na `/`, więc `grzybobranie://dev/styling` nie otwiera spike'a. Przyciski motywu na tym ekranie są prymitywem `@rn-primitives/slot` (`Pressable`) z rolą, etykietą i stanem `selected`.
 
 To nie zamyka spike'a. Status zostaje `proposed`, dopóki Wojciech nie zmierzy kryteriów na telefonach.
 

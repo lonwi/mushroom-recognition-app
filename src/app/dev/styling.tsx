@@ -1,4 +1,5 @@
 import { Pressable } from '@rn-primitives/slot';
+import { Redirect } from 'expo-router';
 import { useRef, useState } from 'react';
 import { View } from 'react-native';
 
@@ -21,7 +22,16 @@ const exampleLoad = loadModelManifest(exampleManifest, schema, {
   productionBuild: false,
 });
 
-export default function StylingSpikeScreen() {
+export default function StylingSpikeRoute() {
+  // Release builds keep this file out of the navigator. A grzybobranie://dev/styling
+  // deep link must not mount the spike if the module is still in the bundle.
+  if (!__DEV__) {
+    return <Redirect href="/" />;
+  }
+  return <StylingSpikeScreen />;
+}
+
+function StylingSpikeScreen() {
   const theme = useSettings((state) => state.theme);
   const englishEnabled = useSettings((state) => state.englishEnabled);
   const setTheme = useSettings((state) => state.setTheme);

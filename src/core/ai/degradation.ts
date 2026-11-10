@@ -9,6 +9,23 @@ import addFormats from 'ajv-formats';
 const ajv = new Ajv2020({ allErrors: true, strict: false });
 addFormats(ajv);
 
+const compiledValidators = new WeakMap<object, ReturnType<typeof ajv.compile>>();
+let schemaCompileCount = 0;
+
+function validatorFor(schema: object): ReturnType<typeof ajv.compile> {
+  const cached = compiledValidators.get(schema);
+  if (cached !== undefined) return cached;
+  schemaCompileCount += 1;
+  const compiled = ajv.compile(schema);
+  compiledValidators.set(schema, compiled);
+  return compiled;
+}
+
+/** How many distinct schema objects have been compiled. Tests pin the cache. */
+export function manifestSchemaCompileCount(): number {
+  return schemaCompileCount;
+}
+
 const SUPPORTED_SCHEMA_MAJOR = 1;
 const MAX_SPECIES_OUTPUTS = 67;
 /** Próg ECE z D-10 na czas F0. Trener może go zmienić razem ze schematem. */
@@ -91,7 +108,7 @@ function emptyCapabilities(reasons: readonly string[]): ScannerCapabilities {
 }
 
 function validateModelManifest(document: unknown, schema: object): string[] {
-  const validate = ajv.compile(schema);
+  const validate = validatorFor(schema);
   if (validate(document)) return [];
   return (validate.errors ?? []).map(
     (error) =>

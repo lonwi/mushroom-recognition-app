@@ -3,6 +3,7 @@ import schema from '../../../schemas/model-manifest.schema.json';
 import {
   assessDegradation,
   loadModelManifest,
+  manifestSchemaCompileCount,
   type LoadContext,
   type ModelManifest,
 } from '@/core/ai/degradation';
@@ -114,6 +115,14 @@ test('an unsupported major is a schema failure and a degradation reason', () => 
   future.schemaVersion = '2.0.0';
   expect(loadModelManifest(future, schema, context()).valid).toBe(false);
   expect(assessDegradation(future, context()).reasons).toContain('schema_major');
+});
+
+test('compiles each schema object once', () => {
+  const before = manifestSchemaCompileCount();
+  loadModelManifest(exampleManifest, schema, context());
+  loadModelManifest(exampleManifest, schema, context());
+  expect(manifestSchemaCompileCount() - before).toBeLessThanOrEqual(1);
+  expect(manifestSchemaCompileCount()).toBeGreaterThan(0);
 });
 
 test('a broken document does not become a scanner', () => {
