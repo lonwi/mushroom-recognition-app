@@ -1,0 +1,181 @@
+{
+  "note": "PRZESTARZAŁE. Zamrożony wycinek kart atlasu prototypu (44 id i status) z tagu prototype-final. To nie jest kanon 67 gatunków mini+. Służy tylko testom starego kontraktu labels.json. Patrz ml/OUTDATED.md.",
+  "cards": [
+    {
+      "id": "boletus_edulis",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "amanita_phalloides",
+      "status": "DEADLY_POISONOUS"
+    },
+    {
+      "id": "macrolepiota_procera",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "cantharellus_cibarius",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "imleria_badia",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "suillus_luteus",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "leccinum_scabrum",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "tylopilus_felleus",
+      "status": "INEDIBLE"
+    },
+    {
+      "id": "amanita_muscaria",
+      "status": "POISONOUS"
+    },
+    {
+      "id": "lactarius_deliciosus",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "gyromitra_esculenta",
+      "status": "DEADLY_POISONOUS"
+    },
+    {
+      "id": "paxillus_involutus",
+      "status": "DEADLY_POISONOUS"
+    },
+    {
+      "id": "russula_virescens",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "agaricus_campestris",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "chlorophyllum_rhacodes",
+      "status": "POISONOUS"
+    },
+    {
+      "id": "hygrophoropsis_aurantiaca",
+      "status": "POISONOUS"
+    },
+    {
+      "id": "lactarius_torminosus",
+      "status": "POISONOUS"
+    },
+    {
+      "id": "morchella_esculenta",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "hydnum_repandum",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "amanita_pantherina",
+      "status": "POISONOUS"
+    },
+    {
+      "id": "amanita_virosa",
+      "status": "DEADLY_POISONOUS"
+    },
+    {
+      "id": "agaricus_xanthodermus",
+      "status": "POISONOUS"
+    },
+    {
+      "id": "inocybe_erubescens",
+      "status": "DEADLY_POISONOUS"
+    },
+    {
+      "id": "hypholoma_fasciculare",
+      "status": "POISONOUS"
+    },
+    {
+      "id": "tricholoma_equestre",
+      "status": "POISONOUS"
+    },
+    {
+      "id": "neoboletus_luridiformis",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "xerocomellus_chrysenteron",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "leccinum_aurantiacum",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "xerocomus_subtomentosus",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "suillus_grevillei",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "suillus_bovinus",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "suillus_variegatus",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "armillaria_mellea",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "kuehneromyces_mutabilis",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "galerina_marginata",
+      "status": "DEADLY_POISONOUS"
+    },
+    {
+      "id": "amanita_rubescens",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "amanita_citrina",
+      "status": "POISONOUS"
+    },
+    {
+      "id": "cortinarius_orellanus",
+      "status": "DEADLY_POISONOUS"
+    },
+    {
+      "id": "cortinarius_rubellus",
+      "status": "DEADLY_POISONOUS"
+    },
+    {
+      "id": "amanita_excelsa",
+      "status": "INEDIBLE"
+    },
+    {
+      "id": "calocybe_gambosa",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "suillellus_luridus",
+      "status": "POISONOUS"
+    },
+    {
+      "id": "hypholoma_capnoides",
+      "status": "EDIBLE"
+    },
+    {
+      "id": "rubroboletus_satanas",
+      "status": "POISONOUS"
+    }
+  ]
+}

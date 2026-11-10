@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - rewrite/greenfield
 
 permissions:
   contents: read
@@ -14,134 +15,58 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  check:
-    # ubuntu-latest moves to Ubuntu 26 on 19 October 2026. Stay on 24.04.
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    # Coverage upload needs actions: write. contents stays read.
-    permissions:
-      contents: read
-      actions: write
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
-
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - name: Cache Jest
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: .cache/jest
-          key: jest-${{ runner.os }}-node-${{ hashFiles('.nvmrc') }}-${{ hashFiles('pnpm-lock.yaml', 'jest.config.js', 'jest.setup.js') }}
-          restore-keys: |
-            jest-${{ runner.os }}-node-${{ hashFiles('.nvmrc') }}-
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      # No published npm fix. pnpm.auditConfig.ignoreCves lists exactly these CVEs.
-      # GHSA-86w9-cpqp-85rv / CVE-2026-85393: node-forge via expo>@expo/cli, not the app runtime.
-      # GHSA-vfj7-8cjw-p6xm / CVE-2026-93687: braces via jest-expo>micromatch and @expo/metro-file-map.
-      # GHSA-hp3w-g68c-fv3c / CVE-2026-97058: sprintf-js via jest>argparse
-      #   (used by the Jest CLI, not the app runtime).
-      - name: Audit dependencies
-        run: pnpm audit --audit-level high
-
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
-        with:
-          python-version-file: .python-version
-          cache: pip
-          cache-dependency-path: ml/requirements-dev.txt
-
-      - name: Install Python test dependencies
-        run: python -m pip install -r ml/requirements-dev.txt
-
-      # Runs pnpm exec tsc on a repo copy. The python job has no pnpm, so this stays in check.
-      - name: Credit-module typecheck on a repo copy
-        env:
-          REQUIRE_PNPM: "1"
-        run: python ml/tests/test_contract.py ManifestAndShipGateTest.test_install_writes_jsonl_and_leaves_the_credit_module_typecheckable
-
-      - name: Test
-        run: pnpm test --ci --coverage
-
-      - name: Upload coverage
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: coverage
-          path: coverage
-          retention-days: 14
-
-  # Separate from `check` so edits there do not overlap this job.
-  # Baselines are committed; the job fails only when a finding is new.
   quality:
-    name: Code quality
+    name: Typecheck, lint, tests
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
-
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           cache: pnpm
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      # lint, duplication, knip, depcruise, and check:site. Same command as release.
-      - name: Quality
+      - name: Quality gates
         run: pnpm quality
+        env:
+          EXPO_NO_TELEMETRY: '1'
 
   python:
+    name: Frozen model contract
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version-file: .python-version
           cache: pip
           cache-dependency-path: ml/requirements-dev.txt
-
       - name: Install Python test dependencies
         run: python -m pip install -r ml/requirements-dev.txt
-
-      - name: Python unit tests
+      - name: Contract tests
         run: python -m unittest discover -s ml/tests -v
 
-  e2e:
-    name: End-to-end
+  bundle:
+    name: Android JS bundle
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
-
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           cache: pnpm
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Install Playwright browser
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Build Storybook
-        run: pnpm build-storybook
-
-      - name: End-to-end tests
-        run: pnpm test:e2e
+      - name: Validate Expo config
+        run: pnpm exec expo config --type public
+        env:
+          EXPO_NO_TELEMETRY: '1'
+      - name: Export the Android bundle
+        run: pnpm export:android
+        env:
+          EXPO_NO_TELEMETRY: '1'

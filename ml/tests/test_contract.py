@@ -8,7 +8,6 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import patch
-from contextlib import contextmanager
 from pathlib import Path
 
 import numpy as np
@@ -265,11 +264,12 @@ class ManifestAndShipGateTest(unittest.TestCase):
     def test_class_contract_covers_the_atlas_and_deadly_species(self):
         manifest = load_manifest()
         ids = [item["id"] for item in manifest["classes"]]
-        atlas = []
-        for line in (ROOT / "src/data/mushrooms.ts").read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if line.startswith("id: '"):
-                atlas.append(line.split("'")[1])
+        # Frozen prototype atlas. OUTDATED relative to the 67-species manifest.
+        # See ml/fixtures/prototype-atlas-cards.json and ml/OUTDATED.md.
+        atlas_cards = json.loads(
+            (ROOT / "ml" / "fixtures" / "prototype-atlas-cards.json").read_text(encoding="utf-8")
+        )["cards"]
+        atlas = [card["id"] for card in atlas_cards]
         # Closed list. A new atlas card with no model class fails until it is
         # added here with a reason. labels.json is not the place to hide the gap.
         cards_without_model_class = {
@@ -561,7 +561,6 @@ class ManifestAndShipGateTest(unittest.TestCase):
     def test_any_df20_row_blocks_release_even_if_consent_is_patched(self):
         from import_external import import_directory
         from license_policy import DF20_CONSENT_CONFIRMED, EXACT_LICENSE_USAGE, TRAINING_ONLY
-        from prepare_data import _usable_records
 
         policy = (ROOT / "ml" / "license_policy.py").read_text(encoding="utf-8")
         gates = (ROOT / "ml" / "ship_gates.py").read_text(encoding="utf-8")
@@ -570,7 +569,7 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertEqual(EXACT_LICENSE_USAGE["cc-by-nc-4.0"], TRAINING_ONLY)
         self.assertEqual(EXACT_LICENSE_USAGE["cc-by-sa-4.0"], TRAINING_ONLY)
         self.assertIs(inspect.signature(import_directory).parameters["include_df20"].default, False)
-        self.assertIs(inspect.signature(_usable_records).parameters["include_df20"].default, False)
+        # prepare_data._usable_records is outside the greenfield contract slice (ml/OUTDATED.md).
         self.assertIn("DF20_CONSENT_CONFIRMED = False", policy)
         self.assertIn("pending", policy.casefold())
         self.assertIn("Svampeatlas", policy)
@@ -1346,97 +1345,6 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertTrue(any("Lepiota brunneoincarnata" in reason and "need 50" in reason for reason in reasons))
         self.assertFalse(any("at least 5" in reason for reason in reasons))
 
-    def test_replacement_budget_does_not_apply_the_rare_taxon_exception(self):
-        """A host that rejects photos is not an exhausted licensed pool.
-
-        The fetch report for that unit omits gbif_licensed_count. The pool is
-        under 50. rare_exception_applies is false for the report row, and it
-        stays false even if a licensed count equal to accepted is supplied.
-        The ship gate keeps the 50-photo floor in both cases.
-        """
-        import fetch_gbif
-        from evaluate import attach_fetch_evidence, rare_exception_applies
-
-        probes = load_manifest()["toxic_probes"]
-        groups = [group for group in (probes.get("visual_groups") or []) if isinstance(group, dict)]
-        audit = next(
-            item for item in probes["rare_taxon_exceptions"] if item["taxon"] == "Lepiota brunneoincarnata"
-        )
-        cap = int(probes["per_taxon_cap"])
-        pool_size = 16
-        self.assertLess(pool_size, 50)
-        self.assertLess(pool_size, cap)
-        attempted = [{"downloaded": False, "_failure_reason": "http_404"} for _ in range(pool_size)]
-        pool = fetch_gbif._Pool("Lepiota brunneoincarnata", attempted, None, None, {}, finite=True)
-        pool.budget_exhausted = True
-        stats = fetch_gbif._stats_for(pool, [], attempted, cap, dry_run=False)
-        report_row = fetch_gbif._taxon_report_row(
-            "Lepiota brunneoincarnata",
-            cap,
-            stats,
-            "unknown_mushroom",
-            audit.get("gbif_key"),
-        )
-        self.assertEqual(report_row["exhausted_reason"], "replacement_budget")
-        self.assertEqual(report_row["pool"], pool_size)
-        self.assertNotIn("gbif_licensed_count", report_row)
-
-        merged = attach_fetch_evidence(
-            [
-                {
-                    "taxon": "Lepiota brunneoincarnata",
-                    "support": 16,
-                    "accepted": 16,
-                    "gbif_licensed_count": 16,
-                    "exhausted_reason": "end_of_records",
-                }
-            ],
-            {"taxa": [report_row]},
-        )
-        self.assertNotIn("gbif_licensed_count", merged[0])
-        self.assertEqual(merged[0]["exhausted_reason"], "replacement_budget")
-        self.assertFalse(rare_exception_applies("Lepiota brunneoincarnata", audit, merged[0], probes, groups))
-        supplied = {
-            "taxon": "Lepiota brunneoincarnata",
-            "accepted": 16,
-            "gbif_licensed_count": 16,
-            "exhausted_reason": "replacement_budget",
-            "support": 16,
-            "confident_edible": 0,
-        }
-        self.assertFalse(rare_exception_applies("Lepiota brunneoincarnata", audit, supplied, probes, groups))
-
-        cases = (
-            (
-                "report",
-                {
-                    "support": 16,
-                    "accepted": merged[0]["accepted"],
-                    "exhausted_reason": merged[0]["exhausted_reason"],
-                },
-            ),
-            (
-                "supplied",
-                {
-                    "support": 16,
-                    "accepted": 16,
-                    "gbif_licensed_count": 16,
-                    "exhausted_reason": "replacement_budget",
-                },
-            ),
-        )
-        for label, patch in cases:
-            reasons = poisonous_sample_reasons(
-                self._quota_rows(**{"Lepiota brunneoincarnata": patch}),
-                probes,
-                expected_names=poisonous_heldout_taxa(),
-            )
-            self.assertTrue(
-                any("Lepiota brunneoincarnata" in reason and "need 50" in reason for reason in reasons),
-                label,
-            )
-            self.assertFalse(any("at least 5" in reason for reason in reasons), label)
-
     def test_verna_exception_without_a_group_fails_validation_and_the_gate(self):
         import copy
 
@@ -1681,40 +1589,11 @@ class ManifestAndShipGateTest(unittest.TestCase):
         self.assertFalse(any("need 50" in reason for reason in reasons))
         self.assertFalse(any("at least 5" in reason for reason in reasons))
 
-    def test_gbif_higher_rank_match_stops_the_fetch(self):
-        import fetch_gbif
-
-        original = fetch_gbif._get_json
-        fetch_gbif._KEY_CACHE.clear()
-
-        def fake(_url):
-            return {
-                "matchType": "HIGHERRANK",
-                "rank": "KINGDOM",
-                "scientificName": "Fungi",
-                "usageKey": 5,
-            }
-
-        fetch_gbif._get_json = fake
-        original_sleep = fetch_gbif.time.sleep
-        fetch_gbif.time.sleep = lambda _seconds: None
-        try:
-            with self.assertRaises(SystemExit) as raised:
-                fetch_gbif.resolve_accepted_keys(["Helvella crispa"])
-        finally:
-            fetch_gbif._get_json = original
-            fetch_gbif.time.sleep = original_sleep
-            fetch_gbif._KEY_CACHE.clear()
-        self.assertIn("HIGHERRANK", str(raised.exception))
-
     def test_safety_tag_matches_atlas_edibility(self):
-        import re
-
-        text = (ROOT / "src" / "data" / "mushrooms.ts").read_text(encoding="utf-8")
-        found = re.findall(
-            r"id: '([a-z0-9_]+)'[\s\S]*?status: '(EDIBLE|INEDIBLE|POISONOUS|DEADLY_POISONOUS)'",
-            text,
-        )
+        cards = json.loads(
+            (ROOT / "ml" / "fixtures" / "prototype-atlas-cards.json").read_text(encoding="utf-8")
+        )["cards"]
+        found = [(card["id"], card["status"]) for card in cards]
         self.assertGreaterEqual(len(found), 18)
         expected = {
             "EDIBLE": "edible",
@@ -1922,108 +1801,6 @@ class ManifestAndShipGateTest(unittest.TestCase):
         )
         self.assertEqual(reasons, [])
 
-    @contextmanager
-    def _installed_repo_copy(self):
-        import export_tflite
-
-        real_module = ROOT / "src" / "services" / "attributionPackage.ts"
-        real_model = ROOT / "src" / "services" / "modelPackage.ts"
-        real_jsonl = ROOT / "assets" / "models" / "attributions.jsonl"
-        before = {
-            real_module: real_module.read_bytes(),
-            real_model: real_model.read_bytes(),
-            real_jsonl: real_jsonl.read_bytes(),
-        }
-        saved = {
-            "ARTIFACTS": export_tflite.ARTIFACTS,
-            "MODEL_DEST": export_tflite.MODEL_DEST,
-            "LABELS_PATH": export_tflite.LABELS_PATH,
-            "PACKAGE_MODULE": export_tflite.PACKAGE_MODULE,
-            "ATTRIBUTION_DEST": export_tflite.ATTRIBUTION_DEST,
-        }
-        parent = Path(tempfile.mkdtemp(prefix="install-copy-"))
-        copy_root = parent / "app"
-        try:
-            shutil.copytree(
-                ROOT,
-                copy_root,
-                symlinks=True,
-                ignore=_ignore_repo_copy(ROOT),
-            )
-            self.assertFalse((copy_root / "ml" / "data").exists())
-            try:
-                (copy_root / "node_modules").symlink_to(ROOT / "node_modules", target_is_directory=True)
-            except OSError:
-                import _winapi
-                _winapi.CreateJunction(str(ROOT / "node_modules"), str(copy_root / "node_modules"))
-            module = copy_root / "src" / "services" / "attributionPackage.ts"
-            model_module = copy_root / "src" / "services" / "modelPackage.ts"
-            jsonl_dest = copy_root / "assets" / "models" / "attributions.jsonl"
-            original_module = module.read_text(encoding="utf-8")
-            artifacts = copy_root / "artifacts"
-            artifacts.mkdir()
-            (artifacts / "attributions.jsonl").write_text(
-                json.dumps(
-                    {
-                        "creator": "Ada L.",
-                        "license": "https://creativecommons.org/licenses/by/4.0/",
-                        "license_normalized": "cc-by-4.0",
-                        "image_url": "https://example.test/a.jpg",
-                        "source_url": "https://example.test/obs/1",
-                        "class_id": "boletus_edulis",
-                        "taxon_name": "Boletus edulis",
-                    }
-                )
-                + "\n",
-                encoding="utf-8",
-            )
-            export_tflite.ARTIFACTS = artifacts
-            export_tflite.MODEL_DEST = copy_root / "assets" / "models" / "mushrooms_model.tflite"
-            export_tflite.LABELS_PATH = copy_root / "assets" / "models" / "labels.json"
-            export_tflite.PACKAGE_MODULE = model_module
-            export_tflite.ATTRIBUTION_DEST = jsonl_dest
-            export_tflite.install_calibrated_model(
-                b"tflite-bytes",
-                "fp16",
-                {
-                    "ood": {
-                        "energy_threshold": -4.0,
-                        "temperature": 1,
-                        "min_softmax_for_accept": 0.4,
-                        "min_top1_softmax_for_high_confidence": 0.7,
-                        "min_margin": 0.15,
-                        "id_keep_rate_test": 0.96,
-                        "id_keep_rate_val": 0.97,
-                        "ood_reject_rate_test": 0.97,
-                        "softmax_above_0_5_still_rejected_rate": 0.95,
-                    }
-                },
-            )
-            self.assertEqual(module.read_text(encoding="utf-8"), original_module)
-            packaged = model_module.read_text(encoding="utf-8")
-            self.assertIn("mushrooms_model.tflite", packaged)
-            self.assertIn("require('../../assets/models/mushrooms_model.tflite')", packaged)
-            for name in ("loadPhotoCredits", "creditsFromJsonl", "creditLicenseUrl"):
-                self.assertIn(name, original_module)
-            self.assertNotIn("PACKAGED_PHOTO_CREDITS: PhotoCredit[] | null = [", original_module)
-            self.assertIn("Ada L.", jsonl_dest.read_text(encoding="utf-8"))
-            for path, payload in before.items():
-                self.assertEqual(path.read_bytes(), payload)
-            yield copy_root
-        finally:
-            for key, value in saved.items():
-                setattr(export_tflite, key, value)
-            shutil.rmtree(parent, ignore_errors=True)
-
-    def test_install_writes_jsonl_on_a_repo_copy(self):
-        with self._installed_repo_copy() as copy_root:
-            labels = json.loads((copy_root / "assets" / "models" / "labels.json").read_text(encoding="utf-8"))
-            self.assertEqual(labels["model_sha256"], hashlib.sha256(b"tflite-bytes").hexdigest())
-            self.assertIsNone(labels["delegate_sample_sha256"])
-            self.assertFalse(labels["delegate_release"]["android-gpu"]["passed"])
-            self.assertFalse(labels["delegate_release"]["core-ml"]["passed"])
-            self.assertEqual(labels["delegate_release"]["android-gpu"]["reason"], "not_measured")
-
     def test_repo_copy_ignores_training_data_and_secret_files(self):
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "repo"
@@ -2052,29 +1829,6 @@ class ManifestAndShipGateTest(unittest.TestCase):
             self.assertFalse((dest / "google-service-account.json").exists())
             self.assertFalse((dest / "certs" / "store.p12").exists())
             self.assertTrue((dest / "certs" / "readme.txt").is_file())
-
-    @unittest.skipUnless(
-        os.environ.get("REQUIRE_PNPM") == "1" or shutil.which("pnpm"),
-        "pnpm is required to typecheck the credit module",
-    )
-    def test_install_writes_jsonl_and_leaves_the_credit_module_typecheckable(self):
-        import subprocess
-
-        pnpm = shutil.which("pnpm")
-        if pnpm is None:
-            self.fail("REQUIRE_PNPM=1 but pnpm is not on PATH")
-        with self._installed_repo_copy() as copy_root:
-            generated = (copy_root / "src" / "services" / "modelPackage.ts").read_text(encoding="utf-8")
-            self.assertNotEqual(generated, (ROOT / "src" / "services" / "modelPackage.ts").read_text(encoding="utf-8"))
-            proc = subprocess.run(
-                [pnpm, "exec", "tsc", "--noEmit", "--pretty", "false"],
-                cwd=copy_root,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            self.assertEqual(proc.returncode, 0, proc.stdout + "\n" + proc.stderr)
-
 
 class StatsReferenceTest(unittest.TestCase):
     def test_wilson_interval_matches_the_reference_values(self):

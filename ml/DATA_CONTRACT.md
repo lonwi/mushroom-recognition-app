@@ -1,3 +1,5 @@
+> **PRZESTARZAŁE (2026-11-10).** Ten dokument opisuje kontrakt prototypu: 54 wyjścia (52 gatunki + `unknown_mushroom` + `not_a_mushroom`) oraz `class_cap` 2500 dla klas zbiorczych. Obowiązująca decyzja mini+: do 67 wyjść gatunkowych (cel 67), bez klas zbiorczych, odrzucanie progiem energii (OOD), gatunki bez danych w `uncoveredSpecies` manifestu. Potoku treningowego nie przepisujemy — prowadzi go osobny bot. Aktualny kontrakt aplikacji: [`schemas/model-manifest.schema.json`](../schemas/model-manifest.schema.json) (szkic v1.0.0-draft). Szczegóły cięcia: [`ml/OUTDATED.md`](OUTDATED.md).
+
 # Machine Learning Data Contract — Grzybobranie AI 🍄📋
 
 This document specifies the authoritative data contract between dataset preparation (`@agent-data-curator`) and model training / evaluation (`@agent-trainer`).

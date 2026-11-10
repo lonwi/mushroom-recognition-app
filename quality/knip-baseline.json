@@ -1,6 +1,0 @@
-{
-  "note": "Grandfathered Knip issues. A new dependency, unlisted import, unresolved import (including require), file, export, or type fails immediately. pnpm knip:update rewrites this list from the current tree.",
-  "issues": [
-    "unresolved\tsrc/__tests__/services/tfliteRuntime.test.ts\t../../../assets/models/mushrooms_model.tflite"
-  ]
-}

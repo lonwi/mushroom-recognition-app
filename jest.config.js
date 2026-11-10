@@ -1,13 +1,9 @@
-const expoPreset = require('jest-expo/jest-preset');
-
 module.exports = {
   preset: 'jest-expo',
+  testMatch: ['**/*.test.ts', '**/*.test.tsx'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  testMatch: ['**/__tests__/**/*.test.[jt]s?(x)'],
   moduleNameMapper: {
-    ...(expoPreset.moduleNameMapper || {}),
-    '\\.tflite$': '<rootDir>/src/__tests__/mocks/tfliteModule.js',
+    '^@/(.*)$': '<rootDir>/src/$1',
+    '\\.css$': '<rootDir>/jest/css-mock.js',
   },
-  // Stable path so GitHub Actions can restore the transform cache between runs.
-  cacheDirectory: '<rootDir>/.cache/jest',
 };
