@@ -1,3 +1,5 @@
+> **PRZESTARZAŁE (2026-11-10).** Ten dokument opisuje kontrakt prototypu: 54 wyjścia (52 gatunki + `unknown_mushroom` + `not_a_mushroom`) oraz `class_cap` 2500 dla klas zbiorczych. Obowiązująca decyzja mini+: do 67 wyjść gatunkowych (cel 67), bez klas zbiorczych, odrzucanie progiem energii (OOD), gatunki bez danych w `uncoveredSpecies` manifestu. Potoku treningowego nie przepisujemy — prowadzi go osobny bot. Aktualny kontrakt aplikacji: [`schemas/model-manifest.schema.json`](../schemas/model-manifest.schema.json) (szkic v1.0.0-draft). Szczegóły cięcia: [`ml/OUTDATED.md`](OUTDATED.md).
+
 # Training an on-device mushroom model
 
 This directory is not part of the Expo bundle. It downloads openly licensed photos, trains a small MobileNetV3-Small classifier, measures it, and can export TFLite. The app does not currently contain `assets/models/mushrooms_model.tflite`. Until `export_tflite.py` installs a model that passes the ship gates, the scanner stays on “recognition unavailable”.

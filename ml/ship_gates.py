@@ -1,3 +1,5 @@
+# OUTDATED prototype contract: 54 outputs, unknown_mushroom, not_a_mushroom, class_cap 2500.
+# Not the mini+ contract (up to 67 species, no aggregate classes, OOD by energy). See ml/OUTDATED.md.
 """Whether measured metrics are good enough to copy weights into the app.
 
 A missing metric fails closed. This module does not invent scores.

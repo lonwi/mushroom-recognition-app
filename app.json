@@ -2,95 +2,48 @@
   "expo": {
     "name": "Grzybobranie AI",
     "slug": "mushroom-recognition-app",
-    "version": "1.0.0",
+    "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
+    "scheme": "grzybobranie",
     "userInterfaceStyle": "light",
-    "backgroundColor": "#1B3B22",
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.grzybobranie.ai",
-      "buildNumber": "1",
-      "infoPlist": {
-        "CFBundleAllowMixedLocalizations": true,
-        "CFBundleDevelopmentRegion": "pl",
-        "NSPhotoLibraryUsageDescription": "Aplikacja potrzebuje dostępu do zdjęć, aby analizować wcześniej wykonane fotografie grzybów.",
-        "NSLocationWhenInUseUsageDescription": "Grzybobranie AI może zapisać miejsce znalezienia w dzienniku na tym urządzeniu, żeby łatwiej było tu wrócić."
-      }
+    "newArchEnabled": true,
+    "backgroundColor": "#F6F5F1",
+    "updates": {
+      "enabled": false
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1B3B22"
-      },
       "package": "com.grzybobranie.ai",
       "versionCode": 1,
       "allowBackup": false,
-      "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION"
-      ]
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F6F5F1"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.grzybobranie.ai",
+      "supportsTablet": true
     },
     "web": {
       "favicon": "./assets/favicon.png",
-      "backgroundColor": "#1B3B22",
-      "themeColor": "#1B3B22",
-      "lang": "pl",
-      "splash": {
-        "image": "./assets/splash-icon.png",
-        "resizeMode": "contain",
-        "backgroundColor": "#1B3B22"
-      }
-    },
-    "locales": {
-      "pl": "./locales/pl.json",
-      "en": "./locales/en.json"
+      "output": "static"
     },
     "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-sqlite",
+      "expo-sharing",
+      "expo-system-ui",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#1B3B22",
+          "backgroundColor": "#F6F5F1",
           "image": "./assets/splash-icon.png",
           "resizeMode": "contain",
           "imageWidth": 200
         }
-      ],
-      "./plugins/withAndroidGeoQueries.js",
-      [
-        "react-native-fast-tflite",
-        {
-          "enableCoreMLDelegate": true,
-          "enableAndroidGpuLibraries": ["libOpenCL-pixel.so", "libGLES_mali.so", "libPVROCL.so"]
-        }
-      ],
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "Zezwól aplikacji Grzybobranie AI na używanie aparatu do rozpoznawania grzybów.",
-          "microphonePermission": false,
-          "recordAudioAndroid": false
-        }
-      ],
-      [
-        "expo-image-picker",
-        {
-          "microphonePermission": false
-        }
-      ],
-      [
-        "expo-location",
-        {
-          "locationWhenInUsePermission": "Grzybobranie AI może zapisać miejsce znalezienia w dzienniku na tym urządzeniu, żeby łatwiej było tu wrócić.",
-          "locationAlwaysAndWhenInUsePermission": false,
-          "locationAlwaysPermission": false,
-          "motionUsagePermission": false,
-          "isIosBackgroundLocationEnabled": false,
-          "isAndroidBackgroundLocationEnabled": false
-        }
-      ],
-      "expo-asset"
+      ]
     ],
     "extra": {
       "eas": {

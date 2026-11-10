@@ -1,3 +1,5 @@
+# OUTDATED prototype contract: 54 outputs, unknown_mushroom, not_a_mushroom, class_cap 2500.
+# Not the mini+ contract (up to 67 species, no aggregate classes, OOD by energy). See ml/OUTDATED.md.
 """Species decision shared with src/services/recognitionDecision.ts.
 
 Energy score follows Liu et al., NeurIPS 2020:

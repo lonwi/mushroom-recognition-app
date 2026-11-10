@@ -9,9 +9,6 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
-      },
-      "ios": {
-        "simulator": true
       }
     },
     "preview": {
@@ -35,11 +32,6 @@
         "track": "internal",
         "releaseStatus": "draft",
         "applicationId": "com.grzybobranie.ai"
-      },
-      "ios": {
-        "ascAppId": "REPLACE_WITH_APP_STORE_CONNECT_APPLE_ID",
-        "appleTeamId": "REPLACE_WITH_APPLE_TEAM_ID",
-        "bundleIdentifier": "com.grzybobranie.ai"
       }
     }
   }

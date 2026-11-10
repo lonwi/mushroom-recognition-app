@@ -1,0 +1,1248 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://grzybobranie.ai/schemas/model-manifest.schema.json",
+  "title": "Grzybobranie AI: model-manifest.json v1 (SZKIC)",
+  "description": "Kontrakt między botem treningowym a aplikacją (D-07). SZKIC v1.0.0-draft z 2026-11-10, do akceptacji w M0. Reguły degradacji (x-degradation) wykonuje aplikacja przy ładowaniu. Model nigdy nie zwraca informacji o jadalności (U6), bo jadalność pochodzi z species.db. Projekt Grzybobranie AI (decyzje 2026-11-10): do 67 wyjść gatunków mini+ (docelowo 67), odrzucanie progami energy/OOD, bez klas zbiorczych. Głowica (classes) zawiera tylko gatunki z wystarczającymi danymi; pozostałe z listy 67 trafiają do opcjonalnego uncoveredSpecies (Atlas je pokazuje, skaner ich nie zwraca) — nie jako classes z in_model: false. Pole rejectClasses pozostaje w schemacie jako opcjonalne (zgodność JSON Schema), ale w tym projekcie jest nieużywane i nie należy go wypełniać.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "modelVersion",
+    "channel",
+    "createdAt",
+    "model",
+    "preprocessing",
+    "classes",
+    "ood",
+    "dangerousGenera",
+    "minAtlasVersion",
+    "shipGates"
+  ],
+  "x-degradation": [
+    "schemaVersion: major różny od obsługiwanego -> scannerAvailable = false",
+    "model.sha256 różny od pliku lub minAtlasVersion > wersja species.db -> scannerAvailable = false",
+    "brak ood.energyThreshold -> scannerAvailable = false (reason: gate_not_calibrated)",
+    "brak calibration lub calibration.calibrated = false -> ukryj procenty i fuzję, pokaż przedziały słowne albo samo top-3",
+    "calibration.eceTest > progu ECE aplikacji -> ukryj procenty (D-10)",
+    "brak ood.fusion[m] -> brak fuzji dla m zdjęć, decyzje pojedynczych zdjęć obok siebie (fusion_unavailable)",
+    "channel = test -> znak 'MODEL TESTOWY'; build produkcyjny odrzuca manifest",
+    "shipGates.passed != true w buildzie produkcyjnym -> scannerAvailable = false",
+    "delegat GPU tylko gdy delegates['android-gpu'].passed = true dla tego samego sha256",
+    "gatunki z uncoveredSpecies: Atlas je pokazuje, skaner ich nie zwraca"
+  ],
+  "properties": {
+    "$comment": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^1\\.\\d+\\.\\d+$",
+      "description": "Semver schematu. Ten szkic obsługuje major 1."
+    },
+    "modelVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$",
+      "description": "Semver modelu. Modele pośrednie mają sufiks pre-release, np. 0.3.0-int51."
+    },
+    "channel": {
+      "enum": [
+        "test",
+        "beta",
+        "production"
+      ],
+      "description": "test = model pośredni lub atrapa; beta = zamknięta beta (D-13 C); production = po shipGates i podpisie."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256",
+        "sizeBytes",
+        "format",
+        "architecture",
+        "input",
+        "output"
+      ],
+      "properties": {
+        "file": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._-]+\\.tflite$"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "format": {
+          "const": "tflite"
+        },
+        "converter": {
+          "type": "string",
+          "description": "Np. litert-torch 0.10.0."
+        },
+        "litertVersionTested": {
+          "type": "string",
+          "description": "Wersja LiteRT, w której plik sprawdzono (cel: 2.1.3 w fast-tflite 3.0.1)."
+        },
+        "architecture": {
+          "type": "string",
+          "description": "Np. timm/mobilenetv4_conv_medium.e500_r256_in1k."
+        },
+        "baseWeightsLicense": {
+          "type": "string",
+          "description": "Licencja wag bazowych, np. apache-2.0."
+        },
+        "input": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "shape",
+            "dtype",
+            "layout"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "shape": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "minItems": 4,
+              "maxItems": 4,
+              "description": "[1, H, W, 3]"
+            },
+            "dtype": {
+              "enum": [
+                "float32",
+                "float16",
+                "int8",
+                "uint8"
+              ]
+            },
+            "layout": {
+              "const": "NHWC"
+            },
+            "quantization": {
+              "$ref": "#/$defs/quantParams"
+            }
+          }
+        },
+        "output": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "shape",
+            "dtype",
+            "kind"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "shape": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "minItems": 2,
+              "maxItems": 2,
+              "description": "[1, K], K = liczba wpisów w classes (wyjścia głowicy), K ≤ 67, docelowo 67."
+            },
+            "dtype": {
+              "enum": [
+                "float32",
+                "float16",
+                "int8",
+                "uint8"
+              ]
+            },
+            "kind": {
+              "const": "logits",
+              "description": "Surowe logity bez softmaxu (energia ich wymaga)."
+            },
+            "quantization": {
+              "$ref": "#/$defs/quantParams"
+            }
+          }
+        },
+        "weightQuantization": {
+          "enum": [
+            "none",
+            "fp16",
+            "dynamic_range",
+            "int8_full"
+          ]
+        }
+      }
+    },
+    "preprocessing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inputSize",
+        "exifOrientation",
+        "colorOrder",
+        "resize",
+        "crop",
+        "rounding",
+        "normalization"
+      ],
+      "properties": {
+        "inputSize": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "width",
+            "height"
+          ],
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 32
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 32
+            }
+          }
+        },
+        "exifOrientation": {
+          "const": "apply",
+          "description": "Obrót wg EXIF przed resize."
+        },
+        "colorOrder": {
+          "enum": [
+            "RGB",
+            "BGR"
+          ]
+        },
+        "decodeMinWidth": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Dekoder podpróbkowuje do najmniejszej szerokości ≥ tej wartości (D9 §8.3: 448)."
+        },
+        "resize": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "steps"
+          ],
+          "properties": {
+            "steps": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "op",
+                  "filter"
+                ],
+                "properties": {
+                  "op": {
+                    "enum": [
+                      "to_width",
+                      "to_size",
+                      "shorter_side"
+                    ]
+                  },
+                  "value": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Dla to_size pomijane (używa inputSize)."
+                  },
+                  "filter": {
+                    "enum": [
+                      "box",
+                      "area",
+                      "bilinear",
+                      "bicubic",
+                      "nearest"
+                    ]
+                  },
+                  "antialias": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "crop": {
+          "enum": [
+            "none_stretch",
+            "center",
+            "letterbox"
+          ],
+          "description": "Jak powstaje kwadrat; prototyp: none_stretch (box do 224x224)."
+        },
+        "letterboxFill": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "rounding": {
+          "enum": [
+            "half_up_uint8",
+            "none_float"
+          ],
+          "description": "Zaokrąglenie po resize przed normalizacją."
+        },
+        "normalization": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "scale",
+                "offset"
+              ],
+              "properties": {
+                "type": {
+                  "const": "scale_offset"
+                },
+                "scale": {
+                  "type": "number"
+                },
+                "offset": {
+                  "type": "number"
+                }
+              },
+              "description": "x = pixel * scale + offset; prototyp: scale = 1/127.5, offset = -1."
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "mean",
+                "std"
+              ],
+              "properties": {
+                "type": {
+                  "const": "mean_std"
+                },
+                "mean": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "std": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "pixelScale": {
+                  "type": "number",
+                  "description": "Najpierw pixel * pixelScale (np. 1/255), potem (x - mean) / std."
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "const": "none_uint8"
+                }
+              },
+              "description": "Model int8/uint8 przyjmuje surowe piksele; parametry w model.input.quantization."
+            }
+          ]
+        },
+        "parityFixturesSha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "Hash paczki fixture'ów P1."
+        }
+      }
+    },
+    "classes": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Indeks wyjścia -> classId -> speciesIds. Indeksy 0..K-1 bez luk, w kolejności wyjścia. W tym projekcie K ≤ 67 (docelowo 67): tylko gatunki mini+ w głowicy, wszystkie z in_model: true. Nieumieszczamy tu klas odrzucenia ani gatunków bez danych (te drugie są w uncoveredSpecies). Schemat nadal wymaga pola in_model przy każdym wpisie i dopuszcza rejectClasses dla zgodności, ale wydanie tego projektu nie powinno mieć martwych wyjść ani klas zbiorczych.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "index",
+          "classId",
+          "speciesIds",
+          "in_model"
+        ],
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "classId": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$"
+          },
+          "speciesIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]+$"
+            },
+            "description": "Slugi z species.db; pusta lista tylko dla rejectClasses."
+          },
+          "genus": {
+            "type": "string"
+          },
+          "in_model": {
+            "type": "boolean",
+            "description": "W tym projekcie wszystkie wpisy w classes mają in_model: true. Gatunków mini+ bez wystarczających danych nie umieszczamy tutaj z in_model: false — trafiają do uncoveredSpecies. Pole zostaje w schemacie (wymagane przy wpisie classes) dla zgodności. false = wyjście istnieje, ale jest wyłączone (nie używamy tego trybu w Grzybobranie AI)."
+          },
+          "highStakes": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "uncoveredSpecies": {
+      "type": "array",
+      "description": "OPCJONALNE. Gatunki mini+ jeszcze nieobecne w głowicy (brak wystarczających danych treningowych). Nie są wyjściami modelu i nie wolno ich dublować w classes. Aplikacja: Atlas pokazuje te gatunki, skaner ich nie zwraca (łagodna degradacja). W tym projekcie: zbiór speciesId tutaj oraz speciesIds z classes są rozłączne, a ich suma to pełna lista 67 gatunków mini+ (K + |uncoveredSpecies| = 67).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "speciesId"
+        ],
+        "properties": {
+          "speciesId": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$",
+            "description": "Slug z species.db, ten sam format co classes[].speciesIds."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Opcjonalny powód, np. brak danych treningowych."
+          }
+        }
+      }
+    },
+    "rejectClasses": {
+      "type": "array",
+      "description": "OPCJONALNE, zachowane dla zgodności schematu. W projekcie Grzybobranie AI (decyzja 2026-11-10) NIEUŻYWANE: brak klas zbiorczych not_a_mushroom i unknown_mushroom, odrzucanie wyłącznie progami OOD (energyThreshold, minTop1Prob). Wydanie produkcyjne i testowe tego projektu nie powinno zawierać tego pola (albo zostawia je puste).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "classId",
+          "reason",
+          "acceptThreshold"
+        ],
+        "properties": {
+          "classId": {
+            "type": "string"
+          },
+          "reason": {
+            "enum": [
+              "not_a_mushroom",
+              "unknown_mushroom"
+            ]
+          },
+          "acceptThreshold": {
+            "$ref": "#/$defs/prob"
+          }
+        }
+      }
+    },
+    "calibration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "calibrated"
+      ],
+      "properties": {
+        "calibrated": {
+          "type": "boolean"
+        },
+        "method": {
+          "const": "temperature"
+        },
+        "temperature": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "fitSplit": {
+          "const": "val"
+        },
+        "eceBins": {
+          "type": "integer",
+          "minimum": 5
+        },
+        "eceVal": {
+          "$ref": "#/$defs/prob"
+        },
+        "eceTest": {
+          "$ref": "#/$defs/prob"
+        },
+        "eceTestCi95": {
+          "$ref": "#/$defs/interval"
+        },
+        "nTest": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "measuredOn": {
+          "enum": [
+            "tflite",
+            "float"
+          ],
+          "description": "Musi być tflite dla channel != test."
+        },
+        "displayBands": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "high": {
+              "$ref": "#/$defs/prob"
+            },
+            "medium": {
+              "$ref": "#/$defs/prob"
+            }
+          },
+          "description": "Dolne granice przedziałów słownych (D-10)."
+        }
+      },
+      "if": {
+        "properties": {
+          "calibrated": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "calibrated",
+          "method",
+          "temperature",
+          "eceTest",
+          "nTest",
+          "measuredOn"
+        ]
+      }
+    },
+    "ood": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method"
+      ],
+      "properties": {
+        "method": {
+          "const": "energy"
+        },
+        "energyTemperature": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "T w E = -T·logsumexp(z/T); domyślnie = calibration.temperature."
+        },
+        "energyThreshold": {
+          "type": "number",
+          "description": "E > próg -> rejected/out_of_distribution. Brak -> skaner niedostępny."
+        },
+        "minTop1Prob": {
+          "$ref": "#/$defs/prob",
+          "description": "top-1 poniżej -> rejected/unclear."
+        },
+        "lowConfidenceBelow": {
+          "$ref": "#/$defs/prob"
+        },
+        "dangerousGenusMinProbability": {
+          "$ref": "#/$defs/prob",
+          "description": "Rodzaj groźny na pozycji 2–3 ostrzega od tej wartości (prototyp 0,10); pozycja 1 zawsze."
+        },
+        "dataset": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "sha256"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "nCalibration": {
+              "type": "integer"
+            },
+            "nTest": {
+              "type": "integer"
+            }
+          }
+        },
+        "metricsTest": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "auroc": {
+              "$ref": "#/$defs/prob"
+            },
+            "fprAt95Tpr": {
+              "$ref": "#/$defs/prob"
+            },
+            "knownKeepRate": {
+              "$ref": "#/$defs/prob"
+            },
+            "confidentEdibleRate": {
+              "$ref": "#/$defs/prob"
+            }
+          }
+        },
+        "fusion": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Progi dla m zaakceptowanych zdjęć (m = 2, 3). Brak klucza -> brak fuzji dla m.",
+          "properties": {
+            "2": {
+              "$ref": "#/$defs/fusionThresholds"
+            },
+            "3": {
+              "$ref": "#/$defs/fusionThresholds"
+            }
+          }
+        }
+      }
+    },
+    "fusionWeights": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "maxPhotos"
+      ],
+      "properties": {
+        "method": {
+          "const": "entropy_weighted_logits",
+          "description": "c_v = 1 - H_v/ln K, w_v = c_v/Σc_u (równe wagi gdy Σc = 0), z̄ = Σ w_v z_v (D9 §8.7)."
+        },
+        "maxPhotos": {
+          "const": 3
+        },
+        "gateBeforeFusion": {
+          "const": true
+        }
+      }
+    },
+    "dangerousGenera": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Z][a-z]+$"
+      },
+      "description": "Co najmniej Amanita, Galerina, Gyromitra, Inosperma, Cortinarius, Lepiota (D-11)."
+    },
+    "perClassMetrics": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z0-9_]+$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "nTest",
+          "precision",
+          "recall"
+        ],
+        "properties": {
+          "nTrain": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "nTest": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "precision": {
+            "$ref": "#/$defs/prob"
+          },
+          "recall": {
+            "$ref": "#/$defs/prob"
+          },
+          "recallWilsonLow": {
+            "$ref": "#/$defs/prob"
+          }
+        }
+      }
+    },
+    "shipGates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "passed",
+        "evaluatedAt",
+        "gates"
+      ],
+      "properties": {
+        "passed": {
+          "type": "boolean"
+        },
+        "evaluatedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "reportSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "gates": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/gate"
+          },
+          "description": "Zalecane klucze: confidentToxicAsEdible (max 0), dangerousPairRateMax (max 0.05), highStakesRecallMin (min 0.85), tfliteAgreement (min 0.99), tfliteAgreementHighRisk (min 0.99), deviceParityP3 (min 0.99), oodKnownKeepRate (min 0.95), openSetConfidentEdible (max 0.02), fusionGates, latencyP95Single (max 2000 ms), latencyP95Session3 (max 5000 ms)."
+        },
+        "modelCard": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "$ref": "#/$defs/sha256"
+            }
+          }
+        },
+        "reviewer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "signedAt"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "signedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        "closedBeta": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "completed": {
+              "type": "boolean"
+            },
+            "reportPath": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "passed": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "passed",
+              "evaluatedAt",
+              "gates",
+              "reportSha256",
+              "modelCard",
+              "reviewer"
+            ]
+          }
+        }
+      ]
+    },
+    "delegates": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "android-gpu": {
+          "$ref": "#/$defs/delegateReport"
+        },
+        "core-ml": {
+          "$ref": "#/$defs/delegateReport"
+        }
+      }
+    },
+    "minAtlasVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "trainingDataset": {
+          "type": "string"
+        },
+        "trainingDatasetSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "splitMethod": {
+          "type": "string"
+        },
+        "licensesUsed": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "CC0",
+              "CC BY",
+              "CC BY-NC",
+              "CC BY-SA",
+              "pd_self"
+            ]
+          }
+        },
+        "excludedSources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "generatedImagesUsed": {
+          "const": false,
+          "description": "Ryciny i obrazy generowane nigdy nie są w treningu (D-17)."
+        },
+        "gitCommit": {
+          "type": "string"
+        },
+        "trackioRun": {
+          "type": "string"
+        },
+        "modelRepo": {
+          "type": "string",
+          "description": "Prywatne repozytorium HF z artefaktami modelu, osobne od zbioru zdjęć. Propozycja: lonwi/grzybobranie-model."
+        },
+        "modelRevision": {
+          "type": "string",
+          "description": "Tag lub commit wydania manifestu i pliku .tflite w repo modelu."
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "channel": {
+            "const": "production"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "shipGates": {
+            "properties": {
+              "passed": {
+                "const": true
+              }
+            }
+          },
+          "calibration": {
+            "properties": {
+              "measuredOn": {
+                "const": "tflite"
+              }
+            }
+          }
+        },
+        "required": [
+          "calibration",
+          "fusionWeights",
+          "perClassMetrics",
+          "provenance"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "prob": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "interval": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "quantParams": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scale",
+        "zeroPoint"
+      ],
+      "properties": {
+        "scale": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "zeroPoint": {
+          "type": "integer"
+        }
+      }
+    },
+    "fusionThresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "energyThreshold",
+        "minTop1Prob"
+      ],
+      "properties": {
+        "energyThreshold": {
+          "type": "number"
+        },
+        "minTop1Prob": {
+          "$ref": "#/$defs/prob"
+        },
+        "nGroupsTest": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "passed"
+      ],
+      "properties": {
+        "value": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "support": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "delegateReport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "modelSha256",
+        "passed"
+      ],
+      "properties": {
+        "modelSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "device": {
+          "type": "string"
+        },
+        "decisionAgreement": {
+          "$ref": "#/$defs/prob"
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "reportPath": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "$comment": "PRZYKŁAD. Wszystkie liczby i hashe są fikcyjne, to nie wynik żadnego treningu. Skrócono: głowica ma 2 klasy, jeden gatunek mini+ jest poza modelem. Prawdziwy mini+ ma do 67 wyjść (docelowo 67); K + |uncoveredSpecies| = 67. Pola rejectClasses celowo nie ma (nieużywane). Niepokrytego gatunku nie ma w classes jako in_model: false — jest w uncoveredSpecies (decyzja 2026-11-10).",
+      "schemaVersion": "1.0.0",
+      "modelVersion": "0.1.0-example",
+      "channel": "test",
+      "createdAt": "2026-11-10T19:00:00+01:00",
+      "model": {
+        "file": "grzybobranie-example.tflite",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "sizeBytes": 10485760,
+        "format": "tflite",
+        "converter": "litert-torch 0.10.0",
+        "litertVersionTested": "2.1.3",
+        "architecture": "timm/mobilenetv4_conv_medium.e500_r256_in1k",
+        "baseWeightsLicense": "apache-2.0",
+        "input": {
+          "name": "image",
+          "shape": [
+            1,
+            256,
+            256,
+            3
+          ],
+          "dtype": "float32",
+          "layout": "NHWC"
+        },
+        "output": {
+          "name": "logits",
+          "shape": [
+            1,
+            2
+          ],
+          "dtype": "float32",
+          "kind": "logits"
+        },
+        "weightQuantization": "fp16"
+      },
+      "preprocessing": {
+        "inputSize": {
+          "width": 256,
+          "height": 256
+        },
+        "exifOrientation": "apply",
+        "colorOrder": "RGB",
+        "decodeMinWidth": 448,
+        "resize": {
+          "steps": [
+            {
+              "op": "to_width",
+              "value": 448,
+              "filter": "box",
+              "antialias": true
+            },
+            {
+              "op": "to_size",
+              "filter": "box",
+              "antialias": true
+            }
+          ]
+        },
+        "crop": "none_stretch",
+        "rounding": "half_up_uint8",
+        "normalization": {
+          "type": "scale_offset",
+          "scale": 0.00784313725490196,
+          "offset": -1.0
+        },
+        "parityFixturesSha256": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      "classes": [
+        {
+          "index": 0,
+          "classId": "amanita_phalloides",
+          "speciesIds": [
+            "amanita_phalloides"
+          ],
+          "genus": "Amanita",
+          "in_model": true,
+          "highStakes": true
+        },
+        {
+          "index": 1,
+          "classId": "boletus_edulis",
+          "speciesIds": [
+            "boletus_edulis"
+          ],
+          "genus": "Boletus",
+          "in_model": true,
+          "highStakes": false
+        }
+      ],
+      "calibration": {
+        "calibrated": true,
+        "method": "temperature",
+        "temperature": 1.42,
+        "fitSplit": "val",
+        "eceBins": 15,
+        "eceVal": 0.031,
+        "eceTest": 0.038,
+        "eceTestCi95": [
+          0.029,
+          0.047
+        ],
+        "nTest": 1200,
+        "measuredOn": "tflite",
+        "displayBands": {
+          "high": 0.8,
+          "medium": 0.5
+        }
+      },
+      "ood": {
+        "method": "energy",
+        "energyTemperature": 1.42,
+        "energyThreshold": -6.1,
+        "minTop1Prob": 0.4,
+        "lowConfidenceBelow": 0.7,
+        "dangerousGenusMinProbability": 0.1,
+        "dataset": {
+          "name": "lonwi/grzybobranie-zdjecia:data/ood-v1",
+          "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+          "nCalibration": 2200,
+          "nTest": 2200
+        },
+        "metricsTest": {
+          "auroc": 0.93,
+          "fprAt95Tpr": 0.31,
+          "knownKeepRate": 0.95,
+          "confidentEdibleRate": 0.015
+        },
+        "fusion": {
+          "2": {
+            "energyThreshold": -6.4,
+            "minTop1Prob": 0.45,
+            "nGroupsTest": 310
+          }
+        }
+      },
+      "fusionWeights": {
+        "method": "entropy_weighted_logits",
+        "maxPhotos": 3,
+        "gateBeforeFusion": true
+      },
+      "dangerousGenera": [
+        "Amanita",
+        "Galerina",
+        "Gyromitra",
+        "Inosperma",
+        "Cortinarius",
+        "Lepiota"
+      ],
+      "perClassMetrics": {
+        "amanita_phalloides": {
+          "nTrain": 900,
+          "nTest": 180,
+          "precision": 0.94,
+          "recall": 0.91,
+          "recallWilsonLow": 0.86
+        },
+        "boletus_edulis": {
+          "nTrain": 1500,
+          "nTest": 300,
+          "precision": 0.92,
+          "recall": 0.95,
+          "recallWilsonLow": 0.92
+        }
+      },
+      "shipGates": {
+        "passed": false,
+        "evaluatedAt": "2026-11-10T19:00:00+01:00",
+        "gates": {
+          "confidentToxicAsEdible": {
+            "value": 0,
+            "max": 0,
+            "passed": true
+          },
+          "dangerousPairRateMax": {
+            "value": 0.03,
+            "max": 0.05,
+            "passed": true
+          },
+          "tfliteAgreement": {
+            "value": 0.995,
+            "min": 0.99,
+            "passed": true
+          },
+          "deviceParityP3": {
+            "value": null,
+            "min": 0.99,
+            "passed": false,
+            "note": "nie zmierzone na Xiaomi"
+          }
+        }
+      },
+      "delegates": {
+        "android-gpu": {
+          "modelSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "device": "Samsung S23",
+          "decisionAgreement": 0.97,
+          "passed": false
+        }
+      },
+      "minAtlasVersion": "0.1.0",
+      "provenance": {
+        "trainingDataset": "lonwi/grzybobranie-zdjecia (_v3 20261108)",
+        "trainingDatasetSha256": "3333333333333333333333333333333333333333333333333333333333333333",
+        "splitMethod": "70/15/15, grupy autor+obserwacja (ml/split.py)",
+        "licensesUsed": [
+          "CC0",
+          "CC BY",
+          "CC BY-NC",
+          "CC BY-SA",
+          "pd_self"
+        ],
+        "excludedSources": [
+          "DF20",
+          "DF24",
+          "DF20-trained-weights",
+          "DF24-trained-weights"
+        ],
+        "generatedImagesUsed": false,
+        "gitCommit": "example",
+        "trackioRun": "example",
+        "modelRepo": "lonwi/grzybobranie-model",
+        "modelRevision": "example"
+      },
+      "uncoveredSpecies": [
+        {
+          "speciesId": "macrolepiota_procera",
+          "reason": "brak wystarczających danych treningowych (przykład)"
+        }
+      ]
+    }
+  ]
+}

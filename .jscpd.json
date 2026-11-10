@@ -1,27 +1,16 @@
 {
-  "minTokens": 50,
-  "minLines": 5,
-  "mode": "mild",
-  "format": ["javascript", "jsx", "typescript", "tsx"],
-  "pattern": "**/*.{js,jsx,mjs,cjs,ts,tsx}",
+  "threshold": 1.5,
+  "reporters": ["console"],
+  "absolute": true,
+  "minLines": 8,
+  "minTokens": 60,
   "ignore": [
     "**/node_modules/**",
-    "**/__tests__/**",
-    "**/*.{test,spec}.{js,jsx,ts,tsx}",
-    "**/e2e/**",
-    "**/storybook-static/**",
-    "**/dist/**",
-    "**/coverage/**",
-    "**/.expo/**",
-    "**/.cache/**",
-    "**/ml/**",
-    "**/android/**",
-    "**/ios/**",
-    "**/test-results/**",
-    "**/playwright-report/**"
-  ],
-  "reporters": ["console"],
-  "gitignore": true,
-  "absolute": false,
-  "threshold": 2
+    "ml/**",
+    "schemas/**",
+    ".agents/**",
+    "coverage/**",
+    "dist/**",
+    "pnpm-lock.yaml"
+  ]
 }

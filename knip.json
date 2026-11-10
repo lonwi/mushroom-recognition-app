@@ -1,12 +1,5 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": ["scripts/*.{js,mjs,cjs}", "plugins/**/*.js", ".storybook/mock*.js"],
-  "ignoreFiles": [".agents/**"],
-  "ignoreDependencies": [
-    "@babel/core",
-    "expo-updates",
-    "expo-system-ui",
-    "@resvg/resvg-js",
-    "dependency-cruiser"
-  ]
+  "entry": ["src/app/**/*.{ts,tsx}", "src/**/*.test.{ts,tsx}"],
+  "project": ["src/**/*.{ts,tsx}"]
 }

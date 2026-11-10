@@ -2,7 +2,12 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    "resolveJsonModule": true,
-    "types": ["node", "jest", "react"]
-  }
+    "noUncheckedIndexedAccess": true,
+    "types": ["jest", "node"],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "nativewind-env.d.ts", ".expo/types/**/*.ts"],
+  "exclude": ["node_modules", "ml", "dist"]
 }

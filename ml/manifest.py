@@ -1,3 +1,5 @@
+# OUTDATED prototype contract: 54 outputs, unknown_mushroom, not_a_mushroom, class_cap 2500.
+# Not the mini+ contract (up to 67 species, no aggregate classes, OOD by energy). See ml/OUTDATED.md.
 """Load the committed class contract. The app and the trainer share one file."""
 
 from __future__ import annotations
