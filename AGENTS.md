@@ -8,7 +8,7 @@ Właściciel: Wojciech (GitHub `lonwi`). Pisze po polsku. Identyfikatory w kodzi
 
 Grzybobranie AI pomaga oznaczać grzyby w Polsce i Europie Środkowej. Działa offline, bez konta i bez sieci. Rozpoznawanie jest na telefonie. Aplikacja podpowiada nazwę. Nie mówi, czy grzyb jest jadalny.
 
-Faza 0 to szkielet: trzy zakładki (Atlas, Skaner, Pomoc), ustawienia w nagłówku, tokeny, magazyn ustawień, i18n, atrapa modelu i lokalny dziennik. Atlas, skaner i baza gatunków przychodzą w kolejnych fazach.
+Faza 0 to szkielet: trzy zakładki (Atlas, Skaner, Pomoc), ustawienia w nagłówku, tokeny, magazyn ustawień, i18n, atrapa modelu i lokalny dziennik. Faza 1 dokłada kanon gatunków i niemodyfikowalną `species.db` (`pnpm build:species`). Ekrany Atlasu są dopiero w Fazie 2.
 
 ## Stos
 
@@ -39,8 +39,9 @@ Silnik JS na telefonie to Hermes (ten z React Native). To nie jest agent Hermes.
 
 - Model nigdy nie orzeka o jadalności. W decyzji nie ma pola jadalności. Status przyjdzie z bazy gatunków, po identyfikatorze.
 - `CONDITIONALLY_EDIBLE` nie dostaje zielonego koloru jadalności i nie dostaje instrukcji obróbki. W tokenach jest to przypięte testem.
-- W UI wolno pokazać tylko zdjęcia CC0 i CC BY, z atrybucją. W Fazie 0 zdjęć gatunków nie ma.
-- Obraz wygenerowany ma etykietę „ilustracja”. W Fazie 0 takich obrazów nie ma.
+- W UI wolno pokazać tylko zdjęcia CC0 i CC BY, z atrybucją. Import z Hugging Face jest w `pnpm build:species` i odpada bez sekretu `HF_TOKEN_READONLY`.
+- Obraz wygenerowany ma etykietę „ilustracja”. W bazie są metadane pilotażu. Bez pliku rycina ma status `pending` i nie jest do pokazania.
+- Numery alarmowe są tylko w `src/core/safety/emergency-contacts.ts`. Pola są puste, dopóki Q19 nie wskaże źródła.
 - Brak telemetrii i brak aktualizacji OTA. W `app.json` jest `updates.enabled: false`. Dziennik diagnostyczny zostaje na telefonie i wychodzi tylko przez arkusz udostępniania. Bez współrzędnych. Patrz Q14 w `docs/decyzje-f0.md`.
 - Nie dodawaj `@tensorflow/tfjs` do aplikacji.
 
@@ -58,7 +59,7 @@ Zero wyciszeń. Nie dodawaj baseline'u knip, jscpd, ESLint ani dependency-cruise
 - dependency-cruiser
 - Jest i React Native Testing Library
 
-Osobno: `python -m unittest discover -s ml/tests -v`.
+Osobno: `python -m unittest discover -s ml/tests -v` oraz `pnpm build:species` (baza gatunków i bramki treści).
 
 Eksport paczki JS Androida: `pnpm export:android`. Pełnego APK w CI nie ma. Powód jest w ADR 0001.
 
@@ -81,5 +82,5 @@ Eksport paczki JS Androida: `pnpm export:android`. Pełnego APK w CI nie ma. Pow
 ## Czego nie ruszać przy okazji
 
 - Potoku treningowego. Osobny bot go prowadzi.
-- Spike'a B (dekoder) i spike'a C (`species.db`) poza jawnym zadaniem. Zostały po nich tylko pliki TODO.
-- Numerów alarmowych, dopóki nie ma jednego zweryfikowanego źródła.
+- Spike'a B (dekoder) poza jawnym zadaniem. Został po nim plik TODO.
+- Numerów alarmowych w `emergency-contacts.ts`, dopóki nie ma zweryfikowanego źródła (Q19). Nie dopisuj numeru z pamięci.

@@ -91,3 +91,22 @@ export const edibilityPresentation = {
   POISONOUS: 'poisonous',
   DEADLY_POISONOUS: 'deadly',
 } as const;
+
+/** Jedyne zielone tokeny jadalności. Nowy zielony kolor dopisz tutaj, inaczej test go nie pilnuje. */
+export const greenEdibilityTokens = {
+  edible: edibilityInk.edible,
+} as const;
+
+export type StoredEdibility = keyof typeof edibilityPresentation;
+
+function edibilityTone(
+  status: StoredEdibility,
+  statusDisputed: boolean,
+): keyof typeof edibilityInk {
+  if (statusDisputed || status === 'CONDITIONALLY_EDIBLE') return 'disputed';
+  return edibilityPresentation[status];
+}
+
+export function edibilityColor(status: StoredEdibility, statusDisputed: boolean): string {
+  return edibilityInk[edibilityTone(status, statusDisputed)];
+}

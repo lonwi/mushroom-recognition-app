@@ -1,11 +1,14 @@
 import { contrastRatio } from '@/ui/contrast';
 import {
   deadlyBadge,
+  edibilityColor,
   edibilityInk,
   edibilityPresentation,
+  greenEdibilityTokens,
   space,
   themes,
   touchTargetMinDp,
+  type StoredEdibility,
 } from '@/ui/tokens';
 
 test('keeps an 8 point grid, a 48 dp target, and readable themes', () => {
@@ -24,4 +27,14 @@ test('keeps an 8 point grid, a 48 dp target, and readable themes', () => {
 test('conditionally edible is never the edible green', () => {
   expect(edibilityPresentation.CONDITIONALLY_EDIBLE).toBe('disputed');
   expect(edibilityInk.disputed).not.toBe(edibilityInk.edible);
+});
+
+test('conditional and disputed statuses are not tied to a green token', () => {
+  const greens = new Set<string>(Object.values(greenEdibilityTokens));
+  const statuses = Object.keys(edibilityPresentation) as StoredEdibility[];
+  for (const status of statuses) {
+    expect(greens.has(edibilityColor(status, true))).toBe(false);
+  }
+  expect(greens.has(edibilityColor('CONDITIONALLY_EDIBLE', false))).toBe(false);
+  expect(edibilityColor('EDIBLE', false)).toBe(greenEdibilityTokens.edible);
 });

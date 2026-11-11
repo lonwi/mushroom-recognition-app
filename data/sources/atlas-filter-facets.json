@@ -1,0 +1,184 @@
+{
+  "extracted_from": "prototype-final:src/data/atlasFilterFacts.json",
+  "tag": "prototype-final",
+  "commit": "a74fc2b2ea6a050f1a6f2f86b3498556265a0617",
+  "note": "Tylko fasety hymenoforu i podłoża. Reszta słownika dawcy nie wchodzi do tej fazy.",
+  "facets": {
+    "agaricus_campestris": {
+      "hymenophore": "blaszki",
+      "substrate": ["gleba"]
+    },
+    "agaricus_xanthodermus": {
+      "hymenophore": "blaszki",
+      "substrate": ["gleba"]
+    },
+    "amanita_citrina": {
+      "hymenophore": "blaszki",
+      "substrate": ["gleba"]
+    },
+    "amanita_excelsa": {
+      "hymenophore": "blaszki",
+      "substrate": ["gleba"]
+    },
+    "amanita_muscaria": {
+      "hymenophore": "blaszki",
+      "substrate": ["gleba"]
+    },
+    "amanita_pantherina": {
+      "hymenophore": "blaszki",
+      "substrate": ["gleba"]
+    },
+    "amanita_phalloides": {
+      "hymenophore": "blaszki",
+      "substrate": ["gleba"]
+    },
+    "amanita_rubescens": {
+      "hymenophore": "blaszki",
+      "substrate": ["gleba"]
+    },
+    "amanita_virosa": {
+      "hymenophore": "blaszki",
+      "substrate": ["gleba"]
+    },
+    "armillaria_mellea": {
+      "hymenophore": "blaszki",
+      "substrate": ["zywe_drzewo", "martwe_drewno"]
+    },
+    "boletus_edulis": {
+      "hymenophore": "rurki",
+      "substrate": ["gleba"]
+    },
+    "calocybe_gambosa": {
+      "hymenophore": "blaszki",
+      "substrate": ["gleba"]
+    },
+    "cantharellus_cibarius": {
+      "hymenophore": "listwy",
+      "substrate": ["gleba"]
+    },
+    "chlorophyllum_rhacodes": {
+      "hymenophore": "blaszki",
+      "substrate": ["gleba"]
+    },
+    "cortinarius_orellanus": {
+      "hymenophore": "blaszki",
+      "substrate": ["gleba"]
+    },
+    "cortinarius_rubellus": {
+      "hymenophore": null,
+      "substrate": ["gleba"]
+    },
+    "galerina_marginata": {
+      "hymenophore": "blaszki",
+      "substrate": ["martwe_drewno"]
+    },
+    "gyromitra_esculenta": {
+      "hymenophore": "inne",
+      "substrate": ["gleba"]
+    },
+    "hydnum_repandum": {
+      "hymenophore": "kolce",
+      "substrate": ["gleba"]
+    },
+    "hygrophoropsis_aurantiaca": {
+      "hymenophore": "blaszki",
+      "substrate": ["sciolka", "martwe_drewno"]
+    },
+    "hypholoma_capnoides": {
+      "hymenophore": "blaszki",
+      "substrate": ["martwe_drewno"]
+    },
+    "hypholoma_fasciculare": {
+      "hymenophore": "blaszki",
+      "substrate": ["martwe_drewno"]
+    },
+    "imleria_badia": {
+      "hymenophore": "rurki",
+      "substrate": ["gleba"]
+    },
+    "inocybe_erubescens": {
+      "hymenophore": "blaszki",
+      "substrate": ["gleba"]
+    },
+    "kuehneromyces_mutabilis": {
+      "hymenophore": "blaszki",
+      "substrate": ["martwe_drewno"]
+    },
+    "lactarius_deliciosus": {
+      "hymenophore": "blaszki",
+      "substrate": ["gleba"]
+    },
+    "lactarius_torminosus": {
+      "hymenophore": "blaszki",
+      "substrate": ["gleba"]
+    },
+    "leccinum_aurantiacum": {
+      "hymenophore": "rurki",
+      "substrate": ["gleba"]
+    },
+    "leccinum_scabrum": {
+      "hymenophore": "rurki",
+      "substrate": ["gleba"]
+    },
+    "macrolepiota_procera": {
+      "hymenophore": "blaszki",
+      "substrate": ["gleba"]
+    },
+    "morchella_esculenta": {
+      "hymenophore": "inne",
+      "substrate": ["gleba"]
+    },
+    "neoboletus_luridiformis": {
+      "hymenophore": "rurki",
+      "substrate": ["gleba"]
+    },
+    "paxillus_involutus": {
+      "hymenophore": "blaszki",
+      "substrate": ["gleba"]
+    },
+    "rubroboletus_satanas": {
+      "hymenophore": "rurki",
+      "substrate": ["gleba"]
+    },
+    "russula_virescens": {
+      "hymenophore": "blaszki",
+      "substrate": ["gleba"]
+    },
+    "suillellus_luridus": {
+      "hymenophore": "rurki",
+      "substrate": ["gleba"]
+    },
+    "suillus_bovinus": {
+      "hymenophore": "rurki",
+      "substrate": ["gleba"]
+    },
+    "suillus_grevillei": {
+      "hymenophore": "rurki",
+      "substrate": ["gleba"]
+    },
+    "suillus_luteus": {
+      "hymenophore": "rurki",
+      "substrate": ["gleba"]
+    },
+    "suillus_variegatus": {
+      "hymenophore": "rurki",
+      "substrate": ["gleba"]
+    },
+    "tricholoma_equestre": {
+      "hymenophore": "blaszki",
+      "substrate": ["gleba"]
+    },
+    "tylopilus_felleus": {
+      "hymenophore": "rurki",
+      "substrate": ["gleba", "martwe_drewno"]
+    },
+    "xerocomellus_chrysenteron": {
+      "hymenophore": "rurki",
+      "substrate": ["gleba"]
+    },
+    "xerocomus_subtomentosus": {
+      "hymenophore": "rurki",
+      "substrate": ["gleba"]
+    }
+  }
+}

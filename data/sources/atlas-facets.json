@@ -1,0 +1,10 @@
+{
+  "note": "Rodzaj (genus) jest wyłączony do rozstrzygnięcia Q18. Włączenie filtra to zmiana enabled w tym pliku, nie zmiana kodu.",
+  "facets": [
+    { "facet": "edibility", "enabled": true },
+    { "facet": "hymenophore", "enabled": true },
+    { "facet": "season", "enabled": true },
+    { "facet": "habitat", "enabled": true },
+    { "facet": "genus", "enabled": false }
+  ]
+}

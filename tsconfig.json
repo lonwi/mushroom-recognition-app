@@ -8,6 +8,12 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "nativewind-env.d.ts", ".expo/types/**/*.ts"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "scripts/**/*.ts",
+    "nativewind-env.d.ts",
+    ".expo/types/**/*.ts"
+  ],
   "exclude": ["node_modules", "ml", "dist"]
 }

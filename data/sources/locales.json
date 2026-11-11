@@ -1,0 +1,7 @@
+{
+  "note": "Angielski jest wyłączony, dopóki treści nie przejdą bramek (D-05). Włączenie locale bez ostrzeżeń wywali bramkę.",
+  "locales": [
+    { "locale": "pl", "enabled": true },
+    { "locale": "en", "enabled": false }
+  ]
+}
