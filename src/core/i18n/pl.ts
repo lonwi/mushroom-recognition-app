@@ -33,7 +33,7 @@ export const pl = {
     title: 'Pomoc',
     body: 'Aplikacja podpowiada nazwę grzyba. Nie mówi, czy można go jeść. Instrukcji obróbki tu nie będzie.',
     numbers:
-      'Numery alarmowe będą w jednym module w fazie treści. Ta wersja ich nie pokazuje, żeby nie było drugiego źródła.',
+      'Numery alarmowe są w jednym module i czekają na weryfikację. Ta wersja ich nie pokazuje.',
   },
   spike: {
     title: 'Spike stylowania',

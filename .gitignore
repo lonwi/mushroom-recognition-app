@@ -55,6 +55,10 @@ google-service-account.json
 
 # ML pipeline local data. The training/ lines stay during the rename so
 # leftover files under the old directories are not committed by accident.
+# species.db i zdjęcia kart buduje `pnpm build:species`. Binariów nie commitujemy.
+/assets/db/
+/assets/species-photos/
+
 ml/data/
 ml/artifacts/
 training/data/

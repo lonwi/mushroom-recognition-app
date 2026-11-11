@@ -1,0 +1,1131 @@
+{
+  "contentVersion": "2026-11-11.1",
+  "builtAt": "2026-11-11T14:10:04.864Z",
+  "photoImport": "skipped_no_token",
+  "photoCount": 0,
+  "photoProblems": [],
+  "speciesCount": 89,
+  "classLinks": 69,
+  "pairReviewStatus": "proposed",
+  "redactions": [
+    {
+      "id": "amanita_rubescens",
+      "field": "flesh",
+      "phrases": ["gotowan"]
+    },
+    {
+      "id": "amanita_rubescens",
+      "field": "warning",
+      "phrases": ["gotowan"]
+    },
+    {
+      "id": "amanita_rubescens",
+      "field": "note",
+      "phrases": ["obrobce"]
+    },
+    {
+      "id": "armillaria_mellea",
+      "field": "warning",
+      "phrases": ["obrobce"]
+    },
+    {
+      "id": "gyromitra_esculenta",
+      "field": "warning",
+      "phrases": ["gotowan"]
+    },
+    {
+      "id": "hydnum_repandum",
+      "field": "flesh",
+      "phrases": ["obrobce"]
+    },
+    {
+      "id": "hydnum_repandum",
+      "field": "warning",
+      "phrases": ["obrobce"]
+    },
+    {
+      "id": "lactarius_torminosus",
+      "field": "note",
+      "phrases": ["moczeniu"]
+    },
+    {
+      "id": "leccinum_aurantiacum",
+      "field": "warning",
+      "phrases": ["gotowan"]
+    },
+    {
+      "id": "macrolepiota_procera",
+      "field": "flesh",
+      "phrases": ["trzony sie odrzuca"]
+    },
+    {
+      "id": "macrolepiota_procera",
+      "field": "note",
+      "phrases": ["obrobce"]
+    },
+    {
+      "id": "morchella_esculenta",
+      "field": "warning",
+      "phrases": ["gotowan"]
+    },
+    {
+      "id": "neoboletus_luridiformis",
+      "field": "warning",
+      "phrases": ["obrobce"]
+    },
+    {
+      "id": "neoboletus_luridiformis",
+      "field": "note",
+      "phrases": ["gotowan"]
+    },
+    {
+      "id": "suillellus_luridus",
+      "field": "note",
+      "phrases": ["gotowan"]
+    },
+    {
+      "id": "tylopilus_felleus",
+      "field": "taste",
+      "phrases": ["gotowan"]
+    },
+    {
+      "id": "amanita_pantherina__amanita_rubescens__0",
+      "field": "traits",
+      "phrases": ["obrobce"]
+    },
+    {
+      "id": "amanita_rubescens__amanita_pantherina__0",
+      "field": "traits",
+      "phrases": ["obrobce"]
+    },
+    {
+      "id": "armillaria_mellea__hypholoma_fasciculare__0",
+      "field": "traits",
+      "phrases": ["obrobce"]
+    },
+    {
+      "id": "armillaria_ostoyae__hypholoma_fasciculare__0",
+      "field": "traits",
+      "phrases": ["gotowan", "ugotow"]
+    },
+    {
+      "id": "hypholoma_fasciculare__armillaria_ostoyae__1",
+      "field": "traits",
+      "phrases": ["gotowan", "ugotow"]
+    },
+    {
+      "id": "morchella_esculenta__gyromitra_esculenta__0",
+      "field": "traits",
+      "phrases": ["obrobce"]
+    },
+    {
+      "id": "neoboletus_luridiformis__rubroboletus_satanas__0",
+      "field": "traits",
+      "phrases": ["gotowan"]
+    },
+    {
+      "id": "suillellus_luridus__neoboletus_luridiformis__0",
+      "field": "traits",
+      "phrases": ["gotowan"]
+    }
+  ],
+  "excludedPairs": [
+    {
+      "para": ["cortinarius_orellanus", "cortinarius_rubellus"],
+      "powod": "Klasy scalone w _v3 do cortinarius_orellanus — pary nie ma w 67 wyjściach."
+    }
+  ],
+  "statusReview": [
+    {
+      "id": "agaricus_campestris",
+      "latin": "Agaricus campestris",
+      "polish": "Pieczarka polna",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "agaricus_xanthodermus",
+      "latin": "Agaricus xanthodermus",
+      "polish": "Pieczarka żółtawa",
+      "edibility": "POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "amanita_citrina",
+      "latin": "Amanita citrina",
+      "polish": "Muchomor cytrynowy",
+      "edibility": "POISONOUS",
+      "statusDisputed": true,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": "Karta dawcy: POISONOUS. Propozycja: niejadalny."
+    },
+    {
+      "id": "amanita_excelsa",
+      "latin": "Amanita excelsa (syn. Amanita spissa)",
+      "polish": "Muchomor twardawy",
+      "edibility": "INEDIBLE",
+      "statusDisputed": true,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": "SPORNY: GPL2021 jadalny, dane projektu niejadalny"
+    },
+    {
+      "id": "amanita_muscaria",
+      "latin": "Amanita muscaria",
+      "polish": "Muchomor czerwony",
+      "edibility": "POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "amanita_pantherina",
+      "latin": "Amanita pantherina",
+      "polish": "Muchomor plamisty",
+      "edibility": "POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "amanita_phalloides",
+      "latin": "Amanita phalloides",
+      "polish": "Muchomor sromotnikowy (zielonawy)",
+      "edibility": "DEADLY_POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "amanita_rubescens",
+      "latin": "Amanita rubescens",
+      "polish": "Muchomor czerwieniejący",
+      "edibility": "EDIBLE",
+      "statusDisputed": true,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": "WARUNKOWY: tylko po obróbce, niezalecany dla początkujących"
+    },
+    {
+      "id": "amanita_virosa",
+      "latin": "Amanita virosa",
+      "polish": "Muchomor jadowity",
+      "edibility": "DEADLY_POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "armillaria_mellea",
+      "latin": "Armillaria mellea, Armillaria ostoyae, Armillaria gallica",
+      "polish": "Opieńki",
+      "edibility": "EDIBLE",
+      "statusDisputed": true,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": "WARUNKOWY: surowy trujący; kompleks gatunków"
+    },
+    {
+      "id": "boletus_edulis",
+      "latin": "Boletus edulis, Boletus reticulatus, Boletus pinophilus",
+      "polish": "Prawdziwki",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "calocybe_gambosa",
+      "latin": "Calocybe gambosa (syn. Tricholoma gambosum)",
+      "polish": "Gęśnica wiosenna",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "cantharellus_cibarius",
+      "latin": "Cantharellus cibarius",
+      "polish": "Pieprznik jadalny (Kurka)",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": "reguła tylko-Europa (kompleks)"
+    },
+    {
+      "id": "chlorophyllum_rhacodes",
+      "latin": "Chlorophyllum rhacodes",
+      "polish": "Czubajnik czerwieniejący",
+      "edibility": "POISONOUS",
+      "statusDisputed": true,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": "WARUNKOWY: bywa źle tolerowany Karta dawcy: POISONOUS. Propozycja: jadalny."
+    },
+    {
+      "id": "cortinarius_caperatus",
+      "latin": "Cortinarius caperatus",
+      "polish": "płachetka zwyczajna",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": ""
+    },
+    {
+      "id": "cortinarius_orellanus",
+      "latin": "Cortinarius orellanus",
+      "polish": "Zasłonak rudy",
+      "edibility": "DEADLY_POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": "klasa scalona z C. rubellus; klasa scalona z Cortinarius rubellus klasa scalona z C. rubellus"
+    },
+    {
+      "id": "entoloma_sinuatum",
+      "latin": "Entoloma sinuatum",
+      "polish": "wieruszka zatokowata",
+      "edibility": "POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": ""
+    },
+    {
+      "id": "galerina_marginata",
+      "latin": "Galerina marginata",
+      "polish": "Hełmówka jadowita",
+      "edibility": "DEADLY_POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "gyromitra_esculenta",
+      "latin": "Gyromitra esculenta",
+      "polish": "Piestrzenica kasztanowata",
+      "edibility": "DEADLY_POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "gyroporus_castaneus",
+      "latin": "Gyroporus castaneus",
+      "polish": "piaskowiec kasztanowaty",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": ""
+    },
+    {
+      "id": "hydnum_repandum",
+      "latin": "Hydnum repandum",
+      "polish": "Kolczak obłączasty",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "hygrophoropsis_aurantiaca",
+      "latin": "Hygrophoropsis aurantiaca",
+      "polish": "Lisówka pomarańczowa",
+      "edibility": "POISONOUS",
+      "statusDisputed": true,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": "Karta dawcy: POISONOUS. Propozycja: niejadalny."
+    },
+    {
+      "id": "hypholoma_capnoides",
+      "latin": "Hypholoma capnoides (syn. Psilocybe capnoides)",
+      "polish": "Maślanka łagodna",
+      "edibility": "EDIBLE",
+      "statusDisputed": true,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": "WARUNKOWY wg _podsumowanie; brak statusu w indeksie"
+    },
+    {
+      "id": "hypholoma_fasciculare",
+      "latin": "Hypholoma fasciculare",
+      "polish": "Maślanka wiązkowa",
+      "edibility": "POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "imleria_badia",
+      "latin": "Imleria badia",
+      "polish": "Podgrzybek brunatny",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "inocybe_erubescens",
+      "latin": "Inosperma erubescens (syn. Inocybe erubescens)",
+      "polish": "Strzępiak ceglasty",
+      "edibility": "DEADLY_POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": "slug historyczny inocybe_erubescens (nazwa przyjęta: Inosperma erubescens)"
+    },
+    {
+      "id": "inocybe_geophylla",
+      "latin": "Inocybe geophylla",
+      "polish": "strzępiak ziemistoblaszkowy (pl.wikipedia)",
+      "edibility": "POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": "BRAK w indeksie książek – status z en.wikipedia"
+    },
+    {
+      "id": "kuehneromyces_mutabilis",
+      "latin": "Kuehneromyces mutabilis",
+      "polish": "Łuskwiak zmienny",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": "pomyłka z Galerina marginata (indeks)"
+    },
+    {
+      "id": "lactarius_deliciosus",
+      "latin": "Lactarius deliciosus, Lactarius deterrimus",
+      "polish": "Rydze",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "lactarius_torminosus",
+      "latin": "Lactarius torminosus",
+      "polish": "Mleczaj wełnianka",
+      "edibility": "POISONOUS",
+      "statusDisputed": true,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": "WARUNKOWY: surowy trujący, w Fin./Rosji jadany po moczeniu"
+    },
+    {
+      "id": "leccinum_aurantiacum",
+      "latin": "Leccinum aurantiacum, Leccinum versipelle",
+      "polish": "Koźlarze czerwone",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "leccinum_scabrum",
+      "latin": "Leccinum scabrum",
+      "polish": "Koźlarz babka",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "lycoperdon_perlatum",
+      "latin": "Lycoperdon perlatum",
+      "polish": "purchawka chropowata",
+      "edibility": "EDIBLE",
+      "statusDisputed": true,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": "WARUNKOWY: tylko młode, białe wewnątrz"
+    },
+    {
+      "id": "macrolepiota_procera",
+      "latin": "Macrolepiota procera",
+      "polish": "Czubajka kania",
+      "edibility": "EDIBLE",
+      "statusDisputed": true,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": "WARUNKOWY: tylko kapelusze, po obróbce"
+    },
+    {
+      "id": "morchella_esculenta",
+      "latin": "Morchella esculenta",
+      "polish": "Smardz jadalny",
+      "edibility": "EDIBLE",
+      "statusDisputed": true,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": "WARUNKOWY: surowy trujący; reguła tylko-Europa"
+    },
+    {
+      "id": "neoboletus_luridiformis",
+      "latin": "Neoboletus luridiformis, Neoboletus erythropus",
+      "polish": "Borowik ceglastopory",
+      "edibility": "EDIBLE",
+      "statusDisputed": true,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": "WARUNKOWY: po dokładnym gotowaniu; klasa obejmuje N. erythropus"
+    },
+    {
+      "id": "paxillus_involutus",
+      "latin": "Paxillus involutus",
+      "polish": "Krowiak podwinięty (Olszówka)",
+      "edibility": "DEADLY_POISONOUS",
+      "statusDisputed": true,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": "dawniej jadalny wg indeksu Karta dawcy: DEADLY_POISONOUS. Propozycja: trujący."
+    },
+    {
+      "id": "rubroboletus_satanas",
+      "latin": "Rubroboletus satanas (syn. Boletus satanas)",
+      "polish": "Borowik szatański",
+      "edibility": "POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "russula_emetica",
+      "latin": "Russula emetica",
+      "polish": "gołąbek wymiotny",
+      "edibility": "POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": ""
+    },
+    {
+      "id": "russula_virescens",
+      "latin": "Russula virescens",
+      "polish": "Gołąbek zielonawy",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "scleroderma_citrinum",
+      "latin": "Scleroderma citrinum",
+      "polish": "tęgoskór pospolity (cytrynowy)",
+      "edibility": "POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": ""
+    },
+    {
+      "id": "sparassis_crispa",
+      "latin": "Sparassis crispa",
+      "polish": "siedzuń sosnowy (szmaciak gałęzisty)",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": ""
+    },
+    {
+      "id": "suillellus_luridus",
+      "latin": "Suillellus luridus (syn. Boletus luridus)",
+      "polish": "Borowik ponury",
+      "edibility": "POISONOUS",
+      "statusDisputed": true,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": "SPORNY: książki niejadalny/trujący surowy, część źródeł jadalny po gotowaniu"
+    },
+    {
+      "id": "suillus_bovinus",
+      "latin": "Suillus bovinus",
+      "polish": "Maślak sitarz",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "suillus_grevillei",
+      "latin": "Suillus grevillei",
+      "polish": "Maślak żółty",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "suillus_luteus",
+      "latin": "Suillus luteus, Suillus granulatus",
+      "polish": "Maślak zwyczajny i ziarnisty",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "suillus_variegatus",
+      "latin": "Suillus variegatus",
+      "polish": "Maślak pstry",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "tricholoma_equestre",
+      "latin": "Tricholoma equestre (syn. T. flavovirens, T. auratum)",
+      "polish": "Gąska zielonka",
+      "edibility": "POISONOUS",
+      "statusDisputed": true,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": "SPORNY: dawniej jadalny (Orłoś), dziś trujący/niezalecany"
+    },
+    {
+      "id": "tylopilus_felleus",
+      "latin": "Tylopilus felleus",
+      "polish": "Goryczak żółciowy",
+      "edibility": "INEDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "xerocomellus_chrysenteron",
+      "latin": "Xerocomellus chrysenteron",
+      "polish": "Podgrzybek złotawy",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "xerocomus_subtomentosus",
+      "latin": "Xerocomus subtomentosus",
+      "polish": "Podgrzybek zamszowy",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "donor",
+      "sourceFlag": ""
+    },
+    {
+      "id": "agaricus_moelleri",
+      "latin": "Agaricus moelleri",
+      "polish": "pieczarka szarołuskowa (pl.wikipedia)",
+      "edibility": "POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": ""
+    },
+    {
+      "id": "agaricus_sylvaticus",
+      "latin": "Agaricus sylvaticus",
+      "polish": "pieczarka lśniąca",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": ""
+    },
+    {
+      "id": "amanita_porphyria",
+      "latin": "Amanita porphyria",
+      "polish": "muchomor porfirowy",
+      "edibility": "INEDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": ""
+    },
+    {
+      "id": "amanita_regalis",
+      "latin": "Amanita regalis",
+      "polish": "muchomor królewski",
+      "edibility": "POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": ""
+    },
+    {
+      "id": "amanita_verna",
+      "latin": "Amanita verna",
+      "polish": "muchomor wiosenny",
+      "edibility": "DEADLY_POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": "iNat PL RG = 0 obserwacji: rzadki/niezgłaszany w PL; zostaje ze względów bezpieczeństwa"
+    },
+    {
+      "id": "armillaria_ostoyae",
+      "latin": "Armillaria ostoyae",
+      "polish": "opieńka ciemna",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": "KOMPLEKS: kandydat do klasy scalonej „opieńki” z A. mellea; reguła tylko-Europa"
+    },
+    {
+      "id": "caloboletus_calopus",
+      "latin": "Caloboletus calopus",
+      "polish": "borowik żółtopory",
+      "edibility": "INEDIBLE",
+      "statusDisputed": true,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": "SPORNY: BG trujący, GPL2021 niejadalny"
+    },
+    {
+      "id": "clitocybe_phyllophila",
+      "latin": "Clitocybe phyllophila",
+      "polish": "lejkówka liściowa",
+      "edibility": "POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": "strona 45 nieobecna w dostarczonym PDF (44 strony); status z TOC i s.44"
+    },
+    {
+      "id": "lepiota_brunneoincarnata",
+      "latin": "Lepiota brunneoincarnata",
+      "polish": "czubajeczka brązowoczerwonawa (pl.wikipedia)",
+      "edibility": "DEADLY_POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": "BRAK w indeksie książek"
+    },
+    {
+      "id": "leucocoprinus_leucothites",
+      "latin": "Leucocoprinus leucothites",
+      "polish": "czubnik pospolity (pl.wikipedia)",
+      "edibility": "INEDIBLE",
+      "statusDisputed": true,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": "SPORNY"
+    },
+    {
+      "id": "marasmius_oreades",
+      "latin": "Marasmius oreades",
+      "polish": "twardzioszek przydrożny",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": ""
+    },
+    {
+      "id": "omphalotus_olearius",
+      "latin": "Omphalotus olearius",
+      "polish": "kielichowiec pomarańczowy (pl.wikipedia)",
+      "edibility": "POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": "iNat PL RG = 0 – rzadki w PL"
+    },
+    {
+      "id": "paragyromitra_infula",
+      "latin": "Paragyromitra infula",
+      "polish": "piestrzenica infułowata (pl.wikipedia)",
+      "edibility": "POISONOUS",
+      "statusDisputed": true,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": "SPORNY; w indeksie jako Gyromitra infula"
+    },
+    {
+      "id": "russula_vesca",
+      "latin": "Russula vesca",
+      "polish": "gołąbek wyborny (w indeksie: cukrówka)",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": ""
+    },
+    {
+      "id": "tricholoma_portentosum",
+      "latin": "Tricholoma portentosum",
+      "polish": "gąska niekształtna",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": ""
+    },
+    {
+      "id": "tricholoma_sulphureum",
+      "latin": "Tricholoma sulphureum",
+      "polish": "gąska siarkowa",
+      "edibility": "POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "class_list",
+      "sourceFlag": ""
+    },
+    {
+      "id": "cortinarius_rubellus",
+      "latin": "Cortinarius rubellus",
+      "polish": "Zasłonak rudawy",
+      "edibility": "DEADLY_POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": false,
+      "inModel": true,
+      "cardOrigin": "merged_class_member",
+      "sourceFlag": ""
+    },
+    {
+      "id": "neoboletus_erythropus",
+      "latin": "Neoboletus erythropus",
+      "polish": "Neoboletus erythropus",
+      "edibility": null,
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": true,
+      "cardOrigin": "merged_class_member",
+      "sourceFlag": "Klasa neoboletus_luridiformis obejmuje ten gatunek (pokrycie-67). Brak osobnej karty dawcy."
+    },
+    {
+      "id": "amanita_caesarea",
+      "latin": "Amanita caesarea",
+      "polish": "muchomor cesarski",
+      "edibility": null,
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": false,
+      "cardOrigin": "out_of_model",
+      "sourceFlag": "poza modelem / pomyłka z gatunkiem jadalnym poza modelem"
+    },
+    {
+      "id": "pholiota_squarrosa",
+      "latin": "Pholiota squarrosa",
+      "polish": "łuskwiak nastroszony",
+      "edibility": null,
+      "statusDisputed": true,
+      "incompleteCard": true,
+      "inModel": false,
+      "cardOrigin": "out_of_model",
+      "sourceFlag": "poza modelem / niejadalny (w części źródeł sporny)"
+    },
+    {
+      "id": "cortinarius_inne",
+      "latin": "Cortinarius",
+      "polish": "inne zasłonaki (poza scaloną klasą C. orellanus)",
+      "edibility": null,
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": false,
+      "cardOrigin": "out_of_model",
+      "sourceFlag": "poza modelem / śmiertelny (część gatunków)"
+    },
+    {
+      "id": "craterellus_tubaeformis",
+      "latin": "Craterellus tubaeformis",
+      "polish": "pieprznik trąbkowy",
+      "edibility": null,
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": false,
+      "cardOrigin": "out_of_model",
+      "sourceFlag": "poza modelem / śmiertelny"
+    },
+    {
+      "id": "clitocybe_nebularis",
+      "latin": "Clitocybe nebularis",
+      "polish": "lejkówka szarawa",
+      "edibility": null,
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": false,
+      "cardOrigin": "out_of_model",
+      "sourceFlag": "poza modelem / trujący"
+    },
+    {
+      "id": "psilocybe",
+      "latin": "Psilocybe",
+      "polish": "łysiczki (Psilocybe spp.)",
+      "edibility": null,
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": false,
+      "cardOrigin": "out_of_model",
+      "sourceFlag": "poza modelem / śmiertelny"
+    },
+    {
+      "id": "gyroporus_cyanescens",
+      "latin": "Gyroporus cyanescens",
+      "polish": "piaskowiec modrzak",
+      "edibility": "EDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": false,
+      "cardOrigin": "out_of_model",
+      "sourceFlag": "jadalny / jadalny (poza modelem)"
+    },
+    {
+      "id": "lepiota_subincarnata",
+      "latin": "Lepiota subincarnata",
+      "polish": "Lepiota subincarnata (syn. L. josserandii)",
+      "edibility": "DEADLY_POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": false,
+      "cardOrigin": "out_of_model",
+      "sourceFlag": "śmiertelny / śmiertelny"
+    },
+    {
+      "id": "lepiota_castanea",
+      "latin": "Lepiota castanea",
+      "polish": "Lepiota castanea",
+      "edibility": "DEADLY_POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": false,
+      "cardOrigin": "out_of_model",
+      "sourceFlag": "śmiertelny / śmiertelny"
+    },
+    {
+      "id": "lepiota_clypeolaria",
+      "latin": "Lepiota clypeolaria",
+      "polish": "Lepiota clypeolaria",
+      "edibility": "INEDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": false,
+      "cardOrigin": "out_of_model",
+      "sourceFlag": "niejadalny / niejadalny"
+    },
+    {
+      "id": "clitocybe_rivulosa",
+      "latin": "Clitocybe rivulosa",
+      "polish": "lejkówka strumykowa/jadowita (C. rivulosa; także C. dealbata — poza scaleniem)",
+      "edibility": "DEADLY_POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": false,
+      "cardOrigin": "out_of_model",
+      "sourceFlag": "śmiertelny / śmiertelny"
+    },
+    {
+      "id": "verpa_bohemica",
+      "latin": "Verpa bohemica",
+      "polish": "naparstniczka czeska",
+      "edibility": null,
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": false,
+      "cardOrigin": "out_of_model",
+      "sourceFlag": "poza modelem / niejadalny/niezalecany w karcie smardza"
+    },
+    {
+      "id": "imperator_rhodopurpureus",
+      "latin": "Imperator rhodopurpureus",
+      "polish": "borowik purpurowy (Imperator rhodopurpureus)",
+      "edibility": null,
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": false,
+      "cardOrigin": "out_of_model",
+      "sourceFlag": "poza modelem / trujący"
+    },
+    {
+      "id": "russula_czerwone",
+      "latin": "Russula",
+      "polish": "inne czerwone gołąbki (np. R. paludosa, R. xerampelina)",
+      "edibility": null,
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": false,
+      "cardOrigin": "out_of_model",
+      "sourceFlag": "poza modelem / trujący"
+    },
+    {
+      "id": "tuber",
+      "latin": "Tuber",
+      "polish": "trufle (Tuber spp.)",
+      "edibility": null,
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": false,
+      "cardOrigin": "out_of_model",
+      "sourceFlag": "poza modelem / trujący"
+    },
+    {
+      "id": "sparassis_brevipes",
+      "latin": "Sparassis brevipes",
+      "polish": "siedzuń dębowy",
+      "edibility": null,
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": false,
+      "cardOrigin": "out_of_model",
+      "sourceFlag": "poza modelem / chroniony"
+    },
+    {
+      "id": "ramaria",
+      "latin": "Ramaria",
+      "polish": "koralówki (Ramaria spp.)",
+      "edibility": null,
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": false,
+      "cardOrigin": "out_of_model",
+      "sourceFlag": "poza modelem / część niejadalna/przeczyszczająca"
+    },
+    {
+      "id": "chalciporus_piperatus",
+      "latin": "Chalciporus piperatus",
+      "polish": "pieprzowiec",
+      "edibility": null,
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": false,
+      "cardOrigin": "out_of_model",
+      "sourceFlag": "poza modelem / niejadalny"
+    },
+    {
+      "id": "tricholoma_pardinum",
+      "latin": "Tricholoma pardinum",
+      "polish": "gąska tygrysia",
+      "edibility": "POISONOUS",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": false,
+      "cardOrigin": "out_of_model",
+      "sourceFlag": "trujący / trujący"
+    },
+    {
+      "id": "tricholoma_virgatum",
+      "latin": "Tricholoma virgatum",
+      "polish": "gąska pieprzna",
+      "edibility": "INEDIBLE",
+      "statusDisputed": false,
+      "incompleteCard": true,
+      "inModel": false,
+      "cardOrigin": "out_of_model",
+      "sourceFlag": "niejadalny / niejadalny"
+    }
+  ],
+  "gates": {
+    "ok": true,
+    "violations": []
+  },
+  "bytes": {
+    "database": 385024,
+    "photos": 0,
+    "total": 385024,
+    "apkBudget": 104857600,
+    "withinBudget": true,
+    "note": "To jest sam wycinek bazy i zdjęć. Budżet 100 MB dotyczy całego APK, razem z JS i modelem, których tu nie ma."
+  }
+}

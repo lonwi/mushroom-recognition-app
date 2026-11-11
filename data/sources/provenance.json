@@ -1,0 +1,726 @@
+{
+  "project": "Grzybobranie AI",
+  "decision": "D-17",
+  "set": "ryciny-pilot",
+  "created": "2026-11-10",
+  "timezone": "Europe/Warsaw",
+  "label": "ilustracja",
+  "style": {
+    "template": "/workspace/wzorce/wojciech/prompt-wzorcowy.md",
+    "style_reference": "/workspace/wzorce/wojciech/kania-przekroj.png",
+    "design_md_current": {
+      "repo": "lonwi/mushroom-recognition-app",
+      "path": "docs/DESIGN.md",
+      "name": "Grzybobranie Design System",
+      "version": "1.0.0",
+      "commit": "a786aaccdc8ce80ac641f00044f8ef4782f2255d",
+      "commit_date_warsaw": "2026-11-09 08:55",
+      "local_copy": "/workspace/wzorce/wojciech/DESIGN.md",
+      "sections_used": [
+        "§1 Visual Archetype",
+        "§2 Typography (zestawienie only)",
+        "§3 Color Tokens paper #f6f5f1",
+        "§3 Edibility colors excluded from plates"
+      ]
+    },
+    "design_md_historic_name": {
+      "name": "Nordic Field Guide",
+      "version": "3.1",
+      "commit": "ff4d2c3",
+      "local_copy": "/workspace/wzorce/wojciech/DESIGN-nordic-field-guide-v3.1.md",
+      "note": "Nazwa, której użył Wojciech i szablon promptu. Estetyka i token papieru są te same co w v1.0.0."
+    }
+  },
+  "tool": "cursor.GenerateImage",
+  "policy": {
+    "no_text_on_plates": true,
+    "no_edibility_status_colors_on_plates": true,
+    "photos_sent_to_generator": "none",
+    "cc0_photos_inspected_only": true,
+    "excluded_from_training": true
+  },
+  "images": [
+    {
+      "species": "imleria_badia",
+      "species_latin": "Imleria badia",
+      "species_polish": "podgrzybek brunatny",
+      "view": "whole_section",
+      "file": "imleria_badia/whole_section.png",
+      "width": 1152,
+      "height": 864,
+      "bytes": 780998,
+      "sha256": "2647f3e2b358ad572349842ff442126dab3050f5072b671b3b5772d4a950bbe9",
+      "label": "ilustracja",
+      "kind": "rycina",
+      "tool": "PIL stain edit of accepted r3 plate (left half pixel-identical)",
+      "model": "nieujawniony przez narzędzie GenerateImage (raster)",
+      "date": "2026-11-10",
+      "timezone": "Europe/Warsaw",
+      "iteration_count": 8,
+      "reference_images": [
+        {
+          "path": "_iterations/imleria_badia_whole_section_before_r4.png",
+          "role": "accepted_plate_edited_in_place",
+          "license": "generated_this_pilot",
+          "note": "Wzmocniony jasnoniebieski odcień dokładnie na granicy rurek i miąższu kapelusza."
+        }
+      ],
+      "base_photo_ids": null,
+      "photos_sent_to_generator": [],
+      "final_prompt": "(no new full-plate generation) Surgical PIL edit of the accepted whole_section.png: painted a delicate but clearly visible light-blue (approx. 140,172,186) tint in the cap flesh immediately above the tube layer, exactly at the tubes–flesh junction, on both sides of the stem, consistent with the bruising on the close-up. Left fruiting body is pixel-identical. Feature close-up unchanged.",
+      "notes": "Runda 4: delikatny, ale przy 320 px wyraźnie czytelny jasnoniebieski odcień dokładnie na łączeniu rurek z miąższem. Lewy owocnik i zbliżenie bez zmian. W osi kapelusza może zostać bardzo słaby sercowaty ślad po wcześniejszym retuszu.",
+      "review_iterations_this_pass": 2,
+      "reviewed_by": "Wojciech (mycology reviewer), recenzja 2026-11-10 23:35 Europe/Warsaw, runda 4",
+      "review_pass": "2026-11-10-r4",
+      "accepted_iteration": "r4_pil_junction_blue"
+    },
+    {
+      "species": "imleria_badia",
+      "species_latin": "Imleria badia",
+      "species_polish": "podgrzybek brunatny",
+      "view": "feature",
+      "file": "imleria_badia/feature.png",
+      "width": 1152,
+      "height": 864,
+      "bytes": 1820689,
+      "sha256": "fe28e1e5c55f0f97e28fc7841f68f1560a15a41cca56a1b9246314d11ac9de2a",
+      "label": "ilustracja",
+      "kind": "zblizenie_cechy",
+      "tool": "cursor.GenerateImage",
+      "model": "nieujawniony przez narzędzie GenerateImage (raster)",
+      "date": "2026-11-10",
+      "timezone": "Europe/Warsaw",
+      "iteration_count": 3,
+      "reference_images": [
+        {
+          "path": "/workspace/wzorce/wojciech/kania-przekroj.png",
+          "role": "style",
+          "license": "generated_by_wojciech",
+          "note": "Własna rycina Wojciecha. Tylko styl."
+        },
+        {
+          "path": "_iterations/imleria_badia_feature_v1.png",
+          "role": "previous_accepted_pore_texture",
+          "license": "generated_this_pilot"
+        }
+      ],
+      "base_photo_ids": null,
+      "photos_sent_to_generator": [],
+      "final_prompt": "Scientific Scandinavian botanical field-guide close-up, same style as the second reference: warm off-white paper #f6f5f1, crisp ink plus watercolor, single tight underside view filling the frame, no text, no labels, no arrows. Yellow to yellow-green sponge of tiny round pores, not gills. Chestnut-brown cap rim. Pale brown stem entering at the bottom, no ring. The blue-green bruising must look like real messy FINGERPRINT stains: one larger uneven blotch slightly off-center, with soft watercolor bleed into the pores, ragged uneven edges, not a clean silhouette; plus a smaller second smudge of a completely different size and irregular shape, not mirrored, not a heart, not a fan, not two matching leaves. The stains should look accidental, as if someone pressed a dirty fingertip onto the pores. Unbruised pores remain yellow-green. strictly NO two matching fan or heart shapes, strictly NO neat diagrammatic marks, strictly NO gills, strictly NO ring, strictly NO volva, no text.",
+      "notes": "Poprawka po recenzji Wojciecha. v1 pilotażu: dwa zbyt regularne „wachlarze”. review v1: nadal dość schematyczne plamy. Przyjęte review v2: jeden większy nieregularny odcisk i mniejsza, inna plama — wygląda jak odcisk palca, nie jak diagram.",
+      "review_iterations_this_pass": 2,
+      "reviewed_by": "Wojciech (styl OK; poprawka wskazanych błędów anatomicznych)",
+      "review_pass": "2026-11-10-evening-anatomy"
+    },
+    {
+      "species": "leccinum_scabrum",
+      "species_latin": "Leccinum scabrum",
+      "species_polish": "koźlarz babka",
+      "view": "whole_section",
+      "file": "leccinum_scabrum/whole_section.png",
+      "width": 1152,
+      "height": 864,
+      "bytes": 813321,
+      "sha256": "83d997f21ce0867d231d6ae9f6f3e2af2934642c44c1501f4af0475a26785820",
+      "label": "ilustracja",
+      "kind": "rycina",
+      "tool": "PIL horizontal warp of accepted r3 plate (interior of cap and entire right half pixel-identical)",
+      "model": "nieujawniony przez narzędzie GenerateImage (raster)",
+      "date": "2026-11-10",
+      "timezone": "Europe/Warsaw",
+      "iteration_count": 7,
+      "reference_images": [
+        {
+          "path": "_iterations/leccinum_scabrum_whole_section_before_r4.png",
+          "role": "accepted_plate_edited_in_place",
+          "license": "generated_this_pilot",
+          "note": "Delikatne pogrubienie lewego trzonu ku podstawie (kształt maczugowaty), bez zmian przekroju i kapelusza."
+        }
+      ],
+      "base_photo_ids": null,
+      "photos_sent_to_generator": [],
+      "final_prompt": "(no new full-plate generation) Surgical PIL edit of the accepted whole_section.png: horizontally scaled the LEFT fruiting-body stem from mid-stem down, easing from scale 1.0 at y=510 to 1.20 at the base (club-shaped, to match the already accepted section). Cap (y<500) and the entire right half are pixel-identical. Deep interior scabers of the original stem footprint were restored unstretched. Feature close-up unchanged.",
+      "notes": "Runda 4: lewy trzon delikatnie pogrubiony ku podstawie, maczugowaty, spójny z przekrojem. Przekrój i zbliżenie bez zmian. Zastrzeżenie: łuseczki na rozszerzonych bokach podstawy trochę rozciągnięte/zmiękczone przez warp.",
+      "review_iterations_this_pass": 2,
+      "reviewed_by": "Wojciech (mycology reviewer), recenzja 2026-11-10 23:35 Europe/Warsaw, runda 4",
+      "review_pass": "2026-11-10-r4",
+      "accepted_iteration": "r4_pil_warp_club"
+    },
+    {
+      "species": "leccinum_scabrum",
+      "species_latin": "Leccinum scabrum",
+      "species_polish": "koźlarz babka",
+      "view": "feature",
+      "file": "leccinum_scabrum/feature.png",
+      "width": 1152,
+      "height": 864,
+      "bytes": 774203,
+      "sha256": "1102a5ec4abc23413a3fa94cb10086a248f9b6d28188c6c3bf665eed33608238",
+      "label": "ilustracja",
+      "kind": "zblizenie_cechy",
+      "tool": "cursor.GenerateImage",
+      "model": "nieujawniony przez narzędzie GenerateImage (raster)",
+      "date": "2026-11-10",
+      "timezone": "Europe/Warsaw",
+      "iteration_count": 2,
+      "reference_images": [
+        {
+          "path": "/workspace/wzorce/wojciech/kania-przekroj.png",
+          "role": "style",
+          "license": "generated_by_wojciech",
+          "note": "Własna rycina Wojciecha (Macrolepiota procera). Użyta wyłącznie jako referencja stylu (papier, kreska, akwarela, układ dwóch figur), nie anatomii."
+        },
+        {
+          "path": "_iterations/leccinum_scabrum_whole_section_v2.jpg",
+          "role": "scaber_texture_from_left_specimen",
+          "license": "generated_this_pilot"
+        }
+      ],
+      "base_photo_ids": null,
+      "photos_sent_to_generator": [],
+      "final_prompt": "Single close-up botanical illustration, not a two-panel plate, of the stem of Leccinum scabrum (koźlarz babka) on warm off-white paper (#f6f5f1). Scientific Scandinavian botanical field guide style, crisp ink and watercolor. Use the stem texture of the LEFT mushroom in the second reference: the scabers are small, dense, dark grey-black rough flecks or tiny pointed scales covering the pale whitish stem, like a rough sandpaper or woolly-scurfy surface — NOT large thorns, NOT big triangular spikes, NOT cactus spines. Tight close-up of the mid and upper stem just below a dry grey-brown cap, pale greyish pore edge slightly visible. No ring. No text labels. strictly NO huge spikes, strictly NO ring, strictly NO volva, strictly NO reticulum, strictly NO gills.",
+      "notes": "v1: przesadzone kolce. v2 przyjęte: drobne gęste łuseczki."
+    },
+    {
+      "species": "suillus_luteus",
+      "species_latin": "Suillus luteus",
+      "species_polish": "maślak zwyczajny",
+      "view": "whole_section",
+      "file": "suillus_luteus/whole_section.png",
+      "width": 1152,
+      "height": 864,
+      "bytes": 703544,
+      "sha256": "1529dd658420daa40e84fce0c334dffc061a515054b99a73e420a46b7ff1014e",
+      "label": "ilustracja",
+      "kind": "rycina",
+      "tool": "PIL warp + edge granules on accepted r3 plate (left half pixel-identical)",
+      "model": "nieujawniony przez narzędzie GenerateImage (raster)",
+      "date": "2026-11-10",
+      "timezone": "Europe/Warsaw",
+      "iteration_count": 9,
+      "reference_images": [
+        {
+          "path": "_iterations/suillus_luteus_whole_section_before_r4.png",
+          "role": "accepted_plate_edited_in_place",
+          "license": "generated_this_pilot",
+          "note": "Przekrój: grubszy, lekko wygięty trzon; drobne brązowo-żółte gruczołki na krawędziach tuż nad pierścieniem."
+        }
+      ],
+      "base_photo_ids": null,
+      "photos_sent_to_generator": [],
+      "final_prompt": "(no new full-plate generation) Surgical PIL edit of the accepted whole_section.png, section only: widened the section stem by about 25% (approx. 74→98 px mid-shaft) with a gentle natural bow (max ~6 px) and slight width irregularity; painted small brown/yellow glandular droplets along both outer stem contours just ABOVE the ring (not on the cut flesh face). Left fruiting body is pixel-identical. Ring flaps preserved without a gap.",
+      "notes": "Runda 4: trzon w przekroju grubszy i lekko naturalnie wygięty, nie linijka. Drobne brązowo-żółte kropelki na obu krawędziach tuż nad pierścieniem. Strefa nad pierścieniem jest krótka, więc grudki na całej tablicy 320 px są drobne, ale zauważalne. Lewy owocnik bez zmian.",
+      "review_iterations_this_pass": 3,
+      "reviewed_by": "Wojciech (mycology reviewer), recenzja 2026-11-10 23:35 Europe/Warsaw, runda 4",
+      "review_pass": "2026-11-10-r4",
+      "accepted_iteration": "r4_pil_thicker_curved_stem_plus_dots"
+    },
+    {
+      "species": "suillus_luteus",
+      "species_latin": "Suillus luteus",
+      "species_polish": "maślak zwyczajny",
+      "view": "feature",
+      "file": "suillus_luteus/feature.png",
+      "width": 1152,
+      "height": 864,
+      "bytes": 1120605,
+      "sha256": "018abcc23a5ffae3252cb66679425d61c79ddfca967f765ce1d5192ff90fb2cf",
+      "label": "ilustracja",
+      "kind": "zblizenie_cechy",
+      "tool": "PIL recolor/enhancement of accepted glandular-dot field on the stem above the ring",
+      "model": "nieujawniony przez narzędzie GenerateImage (raster)",
+      "date": "2026-11-10",
+      "timezone": "Europe/Warsaw",
+      "iteration_count": 3,
+      "reference_images": [
+        {
+          "path": "_iterations/suillus_luteus_feature_before_r4.png",
+          "role": "accepted_plate_edited_in_place",
+          "license": "generated_this_pilot",
+          "note": "Przebarwienie bladych kropelek na wyraźne brązowe i ochrowe ziarnistości na trzonie tuż nad pierścieniem."
+        }
+      ],
+      "base_photo_ids": null,
+      "photos_sent_to_generator": [],
+      "final_prompt": "(no new full-plate generation) Surgical PIL edit of the accepted feature.png: recolored the existing pale raised droplets on the stem just ABOVE the ring into clearly visible small brown and yellowish glandular granules, and filled a few coverage gaps with similar small dots. Cap, pores, ring, and stem below the ring left unchanged (max diff outside the stem mask = 0). Dots sized and contrasted to remain readable at ~200 px display width.",
+      "notes": "Runda 4: ziarnistości nad pierścieniem na zbliżeniu są teraz wyraźnie brązowo-żółte i czytelne przy 200 px szerokości ryciny. Kapelusz, pory, pierścień i trzon pod pierścieniem bez zmian.",
+      "review_iterations_this_pass": 3,
+      "accepted_iteration": "r4_pil_visible_glandular_dots",
+      "reviewed_by": "Wojciech (mycology reviewer), recenzja 2026-11-10 23:35 Europe/Warsaw, runda 4",
+      "review_pass": "2026-11-10-r4"
+    },
+    {
+      "species": "boletus_edulis",
+      "species_latin": "Boletus edulis",
+      "species_polish": "borowik szlachetny",
+      "view": "whole_section",
+      "file": "boletus_edulis/whole_section.png",
+      "width": 1152,
+      "height": 864,
+      "bytes": 842114,
+      "sha256": "3e07b587da518d3753309bbb5387b4c07564cdffc38c62290e4e33e1a1653c39",
+      "label": "ilustracja",
+      "kind": "rycina",
+      "tool": "cursor.GenerateImage",
+      "model": "nieujawniony przez narzędzie GenerateImage (raster)",
+      "date": "2026-11-10",
+      "timezone": "Europe/Warsaw",
+      "iteration_count": 8,
+      "reference_images": [
+        {
+          "path": "_iterations/boletus_edulis_whole_section_before_r3.png",
+          "role": "accepted_plate_as_edit_reference",
+          "license": "generated_this_pilot",
+          "note": "Referencja dla r3v1–v3: zachować lewy owocnik i pękaty pokrój, złamać tylko geometrię przekroju."
+        }
+      ],
+      "base_photo_ids": null,
+      "photos_sent_to_generator": [],
+      "final_prompt": "Botanical field-guide plate, Scientific Scandinavian ink and watercolor, warm off-white paper #f6f5f1, no text. Two views side by side. LEFT (keep almost identical to the reference's left mushroom): a stocky mature Boletus edulis, convex chestnut-brown cap with a paler cream rim, very thick barrel-shaped cream stem, fine white raised reticulum only on the upper third of the stem, smooth pale belly below, cream pores, a little soil at the base, no ring, no volva. RIGHT: a vertical median cross-section of the SAME stocky porcini, white dense solid flesh, shallow cream-yellow tube layer ONLY under the cap (does not enter the stem), SINGLE fine ink outline, no rind, no double line. The section must look HAND-DRAWN and slightly irregular, not a perfect geometric shape: the left cap half in section is noticeably flatter and a little lower than the more rounded, slightly longer right cap half; the stem belly is thicker on the left side than the right (an offset, lopsided barrel, still very stocky); the bottom is an uneven blunt curve, one side a bit more rounded than the other. Subtle handmade wobble in the contour. strictly NO mirrored CAD symmetry, strictly NO thin or stick-like stem, strictly NO pores or sponge inside the stem, strictly NO gills, strictly NO ring, strictly NO volva, strictly NO blueing, no text.",
+      "notes": "Runda 3: trzy iteracje GenerateImage z poprzednią tablicą jako referencją. Przyjęte r3v3: pękaty pokrój zachowany, rurki tylko pod kapeluszem, pojedynczy kontur; lewa połowa kapelusza w przekroju trochę bardziej płaska, prawa bardziej zaokrąglona i nieco dłuższa, spód lekko nierówny. Brzuch trzonu w przekroju nadal dość regularny (pozostała wątpliwość). r3v1 zbyt geometryczny; r3v2 plus warping PIL rozmazał kreskę — odrzucone. Zbliżenie siateczki bez zmian.",
+      "review_iterations_this_pass": 3,
+      "reviewed_by": "Wojciech (mycology reviewer), dopracowanie 4 punktów, runda 3, 2026-11-10 23:29 Europe/Warsaw",
+      "review_pass": "2026-11-10-r3",
+      "accepted_iteration": "r3v3"
+    },
+    {
+      "species": "boletus_edulis",
+      "species_latin": "Boletus edulis",
+      "species_polish": "borowik szlachetny",
+      "view": "feature",
+      "file": "boletus_edulis/feature.png",
+      "width": 1152,
+      "height": 864,
+      "bytes": 993218,
+      "sha256": "69c26f9d2f1ece35d0ec7a4633aec6b2bdace9f768273ebdfe1d91e5e46a018f",
+      "label": "ilustracja",
+      "kind": "zblizenie_cechy",
+      "tool": "cursor.GenerateImage",
+      "model": "nieujawniony przez narzędzie GenerateImage (raster)",
+      "date": "2026-11-10",
+      "timezone": "Europe/Warsaw",
+      "iteration_count": 2,
+      "reference_images": [
+        {
+          "path": "/workspace/wzorce/wojciech/kania-przekroj.png",
+          "role": "style",
+          "license": "generated_by_wojciech",
+          "note": "Własna rycina Wojciecha (Macrolepiota procera). Użyta wyłącznie jako referencja stylu (papier, kreska, akwarela, układ dwóch figur), nie anatomii."
+        },
+        {
+          "path": "boletus_edulis/whole_section.png",
+          "role": "style_and_species_anatomy",
+          "license": "generated_this_pilot"
+        }
+      ],
+      "base_photo_ids": null,
+      "photos_sent_to_generator": [],
+      "final_prompt": "Single close-up botanical illustration, not a two-panel plate, of the key diagnostic feature of Boletus edulis (porcini, borowik szlachetny) on a clean warm off-white paper background (#f6f5f1). Scientific Scandinavian botanical field guide illustration style, crisp ink lines and delicate watercolor, same technique as the references but a tight close-up filling the frame. View: tight close-up of the thick pale cream upper stem just below a chestnut-brown cap, showing a fine raised WHITE reticulum — a delicate pale white net or mesh standing out on the stem surface, most distinct on the UPPER third of the stem; the lower swollen part may be smoother. The net is white or very pale cream, never dark brown or black. A little of the white to pale yellow pore surface (tiny tubes, not gills) may be visible under the cap. The stem is stout. No ring. Elegant, informative, no text labels, no letters, no arrows, no captions. strictly NO ring, strictly NO volva, strictly NO dark brown coarse reticulum, strictly NO red pores, strictly NO gills, strictly NO scabers.",
+      "notes": "v1 utracone przy odmontowaniu magazynu narzędzi (kopia w _iterations/*lost_store*). v2 (remake) przyjęte: siateczka mocniej w górnej części trzonu."
+    },
+    {
+      "species": "hydnum_repandum",
+      "species_latin": "Hydnum repandum",
+      "species_polish": "kolczak obłączasty",
+      "view": "whole_section",
+      "file": "hydnum_repandum/whole_section.png",
+      "width": 1152,
+      "height": 864,
+      "bytes": 769420,
+      "sha256": "ef5b91aabb05923363c0d376964438bf931f73c684d166d81fe0b3a986f66115",
+      "label": "ilustracja",
+      "kind": "rycina",
+      "tool": "cursor.GenerateImage",
+      "model": "nieujawniony przez narzędzie GenerateImage (raster)",
+      "date": "2026-11-10",
+      "timezone": "Europe/Warsaw",
+      "iteration_count": 6,
+      "reference_images": [
+        {
+          "path": "/workspace/wzorce/wojciech/kania-przekroj.png",
+          "role": "style",
+          "license": "generated_by_wojciech",
+          "note": "Własna rycina Wojciecha. Tylko styl, nie anatomia kani."
+        },
+        {
+          "path": "_iterations/hydnum_repandum_whole_section_habit_v2.jpg",
+          "role": "previous_iteration_stocky_habit",
+          "license": "generated_this_pilot"
+        },
+        {
+          "path": "_refs/habit/hydnum_repandum.jpg",
+          "role": "habit_and_proportions",
+          "license": "CC BY 3.0",
+          "author": "Holger Krisp",
+          "source": "https://commons.wikimedia.org/wiki/File:Semmel-Stoppelpilz_Semmelgelber_Stacheling_Hydnum_repandum.JPG",
+          "license_url": "https://creativecommons.org/licenses/by/3.0/",
+          "note": "Krępy, nieregularny pokrój."
+        }
+      ],
+      "base_photo_ids": null,
+      "photos_sent_to_generator": [],
+      "final_prompt": "Scientific Scandinavian botanical field-guide plate of Hydnum repandum, paper #f6f5f1, crisp ink and watercolor, two-panel, no text. Keep the successful stocky, short-stemmed, wavy-capped habit of the second reference, and the spine texture. The photograph shows stems attached off-center. Improve only this: the stem must be clearly ECCENTRIC — shifted to the left under the cap, so a wider cap lobe hangs over the right side. Both the left whole mushroom and the right section should show that offset attachment. Keep short thick stem, irregular wavy margin, decurrent cream-apricot spines, solid white flesh, no ring.\n\nSection outline: ONE single thin ink line, flesh uniform to the edge, strictly NO double contour or rind. strictly NO centered slender goblet, strictly NO gills, strictly NO tubes, strictly NO ring, no text.",
+      "notes": "Poprawka po recenzji 22:44. habit_v1: nadal wysmukły kielich. habit_v2: krępszy, krótki trzon, ale jeszcze dość osiowy. Przyjęte habit_v3: wyraźnie mimośrodowy, krótki trzon, nieregularny pofalowany kapelusz, kolce zbiegające. Przekrój nadal trochę bardziej osiowy niż owocnik z lewej.",
+      "review_iterations_this_pass": 3,
+      "accepted_iteration": "habit_v3",
+      "reviewed_by": "Wojciech (mycology reviewer), recenzja 2026-11-10 22:44 Europe/Warsaw",
+      "review_pass": "2026-11-10-2244-habit"
+    },
+    {
+      "species": "hydnum_repandum",
+      "species_latin": "Hydnum repandum",
+      "species_polish": "kolczak obłączasty",
+      "view": "feature",
+      "file": "hydnum_repandum/feature.png",
+      "width": 1152,
+      "height": 864,
+      "bytes": 1025623,
+      "sha256": "f523aadee96bd9aabda3f8a1c9bf0feee64d9b601c9fc3e2f4905bced449da8d",
+      "label": "ilustracja",
+      "kind": "zblizenie_cechy",
+      "tool": "cursor.GenerateImage",
+      "model": "nieujawniony przez narzędzie GenerateImage (raster)",
+      "date": "2026-11-10",
+      "timezone": "Europe/Warsaw",
+      "iteration_count": 4,
+      "reference_images": [
+        {
+          "path": "/workspace/wzorce/wojciech/kania-przekroj.png",
+          "role": "style",
+          "license": "generated_by_wojciech",
+          "note": "Tylko styl."
+        },
+        {
+          "path": "_iterations/hydnum_repandum_feature_v3.png",
+          "role": "previous_accepted_spine_texture",
+          "license": "generated_this_pilot"
+        },
+        {
+          "path": "hydnum_repandum/whole_section.png",
+          "role": "irregular_wavy_cap_margin_from_plate",
+          "license": "generated_this_pilot"
+        }
+      ],
+      "base_photo_ids": null,
+      "photos_sent_to_generator": [],
+      "final_prompt": "Keep the EXACT same Scientific Scandinavian botanical field-guide style as the existing Hydnum repandum close-up: warm off-white paper #f6f5f1, crisp ink and watercolor, single tight underside close-up filling the frame, no text. Keep the dense field of short, separate, clearly individual cream to pale apricot SPINES (teeth), 2 to 6 mm, hanging like hedgehog quills, slightly decurrent onto the pale cream stem. strictly NOT gills, not long continuous plates. The required change: the cap MARGIN must be IRREGULAR and WAVY, lobed and undulating, exactly like the cap edge of the LEFT mushroom on the third reference (the two-panel plate) — not a smooth regular semicircle. Cream to pale apricot-orange cap. strictly NO gills, strictly NO pores or tubes, strictly NO ring, strictly NO volva, no text labels.",
+      "notes": "Poprawka po recenzji Wojciecha. v3 pilotażu: kolce już oddzielne, ale brzeg kapelusza zbyt regularny. Przyjęte review v1 (łącznie 4. ujęcie): brzeg nieregularny, falisty, jak na tablicy całego owocnika; kolce nadal osobne, zbiegające.",
+      "review_iterations_this_pass": 1,
+      "reviewed_by": "Wojciech (styl OK; poprawka wskazanych błędów anatomicznych)",
+      "review_pass": "2026-11-10-evening-anatomy"
+    },
+    {
+      "species": "xerocomus_subtomentosus",
+      "species_latin": "Xerocomus subtomentosus",
+      "species_polish": "podgrzybek zajączek / zajączek",
+      "view": "whole_section",
+      "file": "xerocomus_subtomentosus/whole_section.png",
+      "width": 1152,
+      "height": 864,
+      "bytes": 854419,
+      "sha256": "812a3b92570a235676c589cb074fcdfa8d5cbec9137a0074f0bff52a83c248a0",
+      "label": "ilustracja",
+      "kind": "rycina",
+      "tool": "GenerateImage v3 (v1–v2 odrzucone: pusta komora u podstawy przekroju i zbyt buławkowaty trzon)",
+      "model": "nieujawniony przez narzędzie GenerateImage (raster)",
+      "date": "2026-11-10",
+      "timezone": "Europe/Warsaw",
+      "iteration_count": 3,
+      "reference_images": [
+        {
+          "path": "_refs/habit/xerocomus_subtomentosus_habit.jpg",
+          "role": "habit_and_proportions",
+          "license": "CC BY 3.0",
+          "author": "Holger Krisp",
+          "commons_title": "File:Ziegenlippe Xerocomus subtomentosus.jpg",
+          "commons_url": "https://commons.wikimedia.org/wiki/File:Ziegenlippe_Xerocomus_subtomentosus.jpg",
+          "note": "Referencja pokroju. Tła nie kopiować."
+        },
+        {
+          "path": "_refs/habit/xerocomus_subtomentosus_cut.jpg",
+          "role": "section_and_pores",
+          "license": "CC0",
+          "author": "mangoblatt (iNaturalist user 1908828)",
+          "commons_title": "File:Xerocomus subtomentosus cut.jpg",
+          "commons_url": "https://commons.wikimedia.org/wiki/File:Xerocomus_subtomentosus_cut.jpg",
+          "note": "Referencja przekroju i żółtych porów. Tła nie kopiować."
+        },
+        {
+          "path": "_iterations/xerocomus_subtomentosus_whole_section_v1.jpg",
+          "role": "rejected_v1",
+          "license": "generated_this_pilot"
+        },
+        {
+          "path": "_iterations/xerocomus_subtomentosus_whole_section_v2.jpg",
+          "role": "rejected_v2",
+          "license": "generated_this_pilot"
+        }
+      ],
+      "base_photo_ids": null,
+      "photos_sent_to_generator": [
+        "_refs/habit/xerocomus_subtomentosus_habit.jpg",
+        "_refs/habit/xerocomus_subtomentosus_cut.jpg"
+      ],
+      "final_prompt": "Clear botanical anatomical diagram and vertical median cross-section illustration of Xerocomus subtomentosus (suede bolete, podgrzybek zajączek / zajączek) on a clean warm off-white paper background (#f6f5f1). Scientific Scandinavian botanical field guide illustration style. Crisp, clean scientific lines, watercolor and ink detailing, elegant, informative, no text labels, pure botanical illustration.\n\nLAYOUT: a two-part plate in one 4:3 image. LEFT: one whole mature fruiting body in three-quarter view, standing on a tiny bit of forest soil. RIGHT: a matching vertical median cross-section of the same species, slightly separated, same scale.\n\nLEFT — distinct species habit (do not copy the proportions of Imleria badia, Boletus edulis, Leccinum or Suillus). A moderately slender bolete, usually more slender than a bay bolete, with a dry (not slimy) velvety/tomentose cap in yellow-olive, ochre or dull brownish-yellow, slightly convex to almost plane at maturity, faintly irregular, not perfectly circular or mirror-symmetric. Cap surface looks finely suede-like / felty. The pore surface at the cap margin is bright yellow. Stem moderately slender, often slightly tapered toward the apex or faintly uneven, pale yellow to whitish-yellow with fine brownish longitudinal fibrils or streaks; strictly NO ring, strictly NO scabers, strictly NO reticulate net. Stem may lean very slightly. A little soil at the base.\n\nRIGHT — median longitudinal section. Pale yellowish flesh, solid and uniform al [...] + v3 edit prompt: fill hollow chamber, slim the club somewhat.",
+      "notes": "Trzy iteracje. Przyjęte v3: lite jednolite miąższ, pojedynczy kontur, żółte rurki, delikatny błękit na granicy, filcowaty żółtooliwkowy kapelusz, trzon bez pierścienia z włókienkami. Zastrzeżenie: lewy trzon nadal dość zgrubiały u podstawy (bardziej niż typowy smukły zajączek).",
+      "review_iterations_this_pass": 3,
+      "reviewed_by": "self-check (nowe gatunki rezerwowe, po recenzji 23:35); czeka na recenzję Wojciecha",
+      "review_pass": "2026-11-10-r4-extension",
+      "accepted_iteration": "v3"
+    },
+    {
+      "species": "xerocomus_subtomentosus",
+      "species_latin": "Xerocomus subtomentosus",
+      "species_polish": "podgrzybek zajączek / zajączek",
+      "view": "feature",
+      "file": "xerocomus_subtomentosus/feature.png",
+      "width": 1152,
+      "height": 864,
+      "bytes": 1376623,
+      "sha256": "9be8f65a896b7713314c5549ecb89221cba3a3352972e1fb1fc0f74c6613502b",
+      "label": "ilustracja",
+      "kind": "rycina",
+      "tool": "GenerateImage v2 (v1 odrzucone: dwa schematyczne, zbyt mocne okrągłe siniaki)",
+      "model": "nieujawniony przez narzędzie GenerateImage (raster)",
+      "date": "2026-11-10",
+      "timezone": "Europe/Warsaw",
+      "iteration_count": 2,
+      "reference_images": [
+        {
+          "path": "_refs/habit/xerocomus_subtomentosus_cut.jpg",
+          "role": "section_and_pores",
+          "license": "CC0",
+          "author": "mangoblatt (iNaturalist user 1908828)",
+          "commons_title": "File:Xerocomus subtomentosus cut.jpg",
+          "commons_url": "https://commons.wikimedia.org/wiki/File:Xerocomus_subtomentosus_cut.jpg",
+          "note": "Referencja przekroju i żółtych porów. Tła nie kopiować."
+        },
+        {
+          "path": "_refs/habit/xerocomus_subtomentosus_habit.jpg",
+          "role": "habit_and_proportions",
+          "license": "CC BY 3.0",
+          "author": "Holger Krisp",
+          "commons_title": "File:Ziegenlippe Xerocomus subtomentosus.jpg",
+          "commons_url": "https://commons.wikimedia.org/wiki/File:Ziegenlippe_Xerocomus_subtomentosus.jpg",
+          "note": "Referencja pokroju. Tła nie kopiować."
+        },
+        {
+          "path": "_iterations/xerocomus_subtomentosus_feature_v1.jpg",
+          "role": "rejected_v1_strong_schematic_bruises",
+          "license": "generated_this_pilot"
+        }
+      ],
+      "base_photo_ids": null,
+      "photos_sent_to_generator": [
+        "_refs/habit/xerocomus_subtomentosus_cut.jpg",
+        "_refs/habit/xerocomus_subtomentosus_habit.jpg"
+      ],
+      "final_prompt": "Close-up scientific botanical illustration of the key diagnostic features of Xerocomus subtomentosus (suede bolete, podgrzybek zajączek) on a clean warm off-white paper background (#f6f5f1). Scientific Scandinavian botanical field guide illustration style. Crisp, clean scientific lines, watercolor and ink detailing, elegant, informative, no text labels.\n\nA tight three-quarter close-up from slightly below, filling the frame: the dry velvety/tomentose yellow-olive to ochre cap margin (suede-like, felty, NOT slimy, NOT dark bay-brown), and beneath it a bright yellow pore surface with relatively large, slightly angular pores. A few pores may show a slight delicate blue-green bruise from pressure. The upper stem, if visible, is pale yellowish with fine brownish fibrils and strictly has NO ring. This is the feature that distinguishes the suede bolete: dry felty yellowish cap and yellow pores, no ring.\n\nUse the attached cut/pore photograph ONLY for the real colour and scale of the yellow pores and pale flesh; do not copy the photo background or photographic texture. Render in ink and watercolor.\n\nstrictly NO gills, strictly NO ring, strictly NO slimy cap, strictly NO dark chestnut or bay-brown cap, strictly NO scabers, strictly NO text or labels, strictly NO volva.\n",
+      "notes": "Przyjęte v2: suche filcowate żółtooliwkowe obrzeże kapelusza, jaskrawożółte, dość szerokie pory, trzon bez pierścienia z włókienkami. Silne, schematyczne sine koła z v1 usunięte (gatunek sinieje tylko słabo). Zastrzeżenie: kapelusz ma lekkie siodełko z prawej; sinienie jest teraz bardzo subtelne albo nieobecne.",
+      "review_iterations_this_pass": 2,
+      "reviewed_by": "self-check (nowe gatunki rezerwowe, po recenzji 23:35); czeka na recenzję Wojciecha",
+      "review_pass": "2026-11-10-r4-extension",
+      "accepted_iteration": "v2"
+    },
+    {
+      "species": "suillus_grevillei",
+      "species_latin": "Suillus grevillei",
+      "species_polish": "maślak żółty / maślak modrzewiowy",
+      "view": "whole_section",
+      "file": "suillus_grevillei/whole_section.png",
+      "width": 1152,
+      "height": 864,
+      "bytes": 914137,
+      "sha256": "00331eeba692317ecce0499433c00710447f835dde91add5d811d82f0ec2a764",
+      "label": "ilustracja",
+      "kind": "rycina",
+      "tool": "GenerateImage v3 + PIL (wypełnienie słabego wewnętrznego obrysu u podstawy przekroju)",
+      "model": "nieujawniony przez narzędzie GenerateImage (raster)",
+      "date": "2026-11-10",
+      "timezone": "Europe/Warsaw",
+      "iteration_count": 3,
+      "reference_images": [
+        {
+          "path": "_refs/habit/suillus_grevillei_habit.jpg",
+          "role": "habit_and_proportions",
+          "license": "CC BY 3.0",
+          "author": "Holger Krisp",
+          "commons_title": "File:Gold-Röhrling Suillus grevillei 2.jpg",
+          "commons_url": "https://commons.wikimedia.org/wiki/File:Gold-R%C3%B6hrling_Suillus_grevillei_2.jpg",
+          "note": "Referencja pokroju, złotożółtego kapelusza i pierścienia. Tła nie kopiować."
+        },
+        {
+          "path": "_refs/habit/suillus_grevillei_cap.jpg",
+          "role": "cap_color_pores_and_ring",
+          "license": "CC BY 3.0",
+          "author": "Holger Krisp",
+          "commons_title": "File:Suillus-grevillei-Goldroehrling.jpg",
+          "commons_url": "https://commons.wikimedia.org/wiki/File:Suillus-grevillei-Goldroehrling.jpg",
+          "note": "Referencja jaskrawożółtej skórki i żółtawego pierścienia. Tła nie kopiować."
+        },
+        {
+          "path": "_iterations/suillus_grevillei_whole_section_v1.jpg",
+          "role": "rejected_v1",
+          "license": "generated_this_pilot"
+        },
+        {
+          "path": "_iterations/suillus_grevillei_whole_section_v2.jpg",
+          "role": "rejected_v2",
+          "license": "generated_this_pilot"
+        },
+        {
+          "path": "_iterations/suillus_grevillei_whole_section_v3.jpg",
+          "role": "accepted_v3_before_pil_heal",
+          "license": "generated_this_pilot"
+        }
+      ],
+      "base_photo_ids": null,
+      "photos_sent_to_generator": [
+        "_refs/habit/suillus_grevillei_habit.jpg",
+        "_refs/habit/suillus_grevillei_cap.jpg"
+      ],
+      "final_prompt": "Clear botanical anatomical diagram and vertical median cross-section illustration of Suillus grevillei (larch bolete, maślak żółty / maślak modrzewiowy) on a clean warm off-white paper background (#f6f5f1). Scientific Scandinavian botanical field guide illustration style. Crisp, clean scientific lines, watercolor and ink detailing, elegant, informative, no text labels, pure botanical illustration.\n\nLAYOUT: a two-part plate in one 4:3 image. LEFT: one whole mature fruiting body in three-quarter view, standing on a tiny bit of forest soil or larch needles. RIGHT: a matching vertical median cross-section of the same species, slightly separated, same scale.\n\nLEFT — distinct species habit, clearly different from Suillus luteus (which has a dark chestnut-brown slimy cap and a purplish-white ring). This is the larch bolete: a bright golden-yellow to orange-gold SLIMY, glutinous, shining cap, convex, slightly irregular, not perfectly circular. Pore surface yellow. A distinct yellowish to pale-cream, slightly slimy ring (annulus) on the stem — NOT purple, NOT violet, NOT brown. Stem yellow, moderately stout, slightly uneven or gently curved, not ruler-straight; it may show small brownish or yellowish glandular dots, especially above the ring, and some rusty-brown staining below the ring is allowed. No volva. Cap colour must read as yellow-gold even at a glance, never as the dark brown cap of S. luteus.\n\nRIGHT — median longitudinal section. Pale yellow flesh, solid and uniform all the  [...] + v3 edit + PIL heal of residual inner contour at section base.",
+      "notes": "Trzy iteracje GenerateImage. v1–v2: pusta komora w podstawie przekroju i wełnisty, zbyt gruby pierścień. v3: złotożółty śluzowaty kapelusz, błoniasty zwisający żółtawy pierścień, ziarnistości na trzonie, igły modrzewia; przekrój lity, klapki pierścienia miększe. PIL usunął pozostały wewnętrzny U-obrys u buławki przekroju (zostać może bardzo słaby ślad na samym czubku). Zastrzeżenie: trzon w przekroju jest cieńszy w środku i bardziej zgrubiały u podstawy niż krępy, wygięty trzon z lewej.",
+      "review_iterations_this_pass": 3,
+      "reviewed_by": "self-check (nowe gatunki rezerwowe, po recenzji 23:35); czeka na recenzję Wojciecha",
+      "review_pass": "2026-11-10-r4-extension",
+      "accepted_iteration": "v3_plus_pil_rind_heal"
+    },
+    {
+      "species": "suillus_grevillei",
+      "species_latin": "Suillus grevillei",
+      "species_polish": "maślak żółty / maślak modrzewiowy",
+      "view": "feature",
+      "file": "suillus_grevillei/feature.png",
+      "width": 1152,
+      "height": 864,
+      "bytes": 1136371,
+      "sha256": "571f73fa33c6b4c29df3043bcf926c62e58049aed9ebaff72d73d988ecf222d4",
+      "label": "ilustracja",
+      "kind": "rycina",
+      "tool": "GenerateImage v1 + PIL (ziarnistości na trzonie tuż nad pierścieniem)",
+      "model": "nieujawniony przez narzędzie GenerateImage (raster)",
+      "date": "2026-11-10",
+      "timezone": "Europe/Warsaw",
+      "iteration_count": 1,
+      "reference_images": [
+        {
+          "path": "_refs/habit/suillus_grevillei_habit.jpg",
+          "role": "habit_and_proportions",
+          "license": "CC BY 3.0",
+          "author": "Holger Krisp",
+          "commons_title": "File:Gold-Röhrling Suillus grevillei 2.jpg",
+          "commons_url": "https://commons.wikimedia.org/wiki/File:Gold-R%C3%B6hrling_Suillus_grevillei_2.jpg",
+          "note": "Referencja pokroju, złotożółtego kapelusza i pierścienia. Tła nie kopiować."
+        },
+        {
+          "path": "_refs/habit/suillus_grevillei_cap.jpg",
+          "role": "cap_color_pores_and_ring",
+          "license": "CC BY 3.0",
+          "author": "Holger Krisp",
+          "commons_title": "File:Suillus-grevillei-Goldroehrling.jpg",
+          "commons_url": "https://commons.wikimedia.org/wiki/File:Suillus-grevillei-Goldroehrling.jpg",
+          "note": "Referencja jaskrawożółtej skórki i żółtawego pierścienia. Tła nie kopiować."
+        }
+      ],
+      "base_photo_ids": null,
+      "photos_sent_to_generator": [
+        "_refs/habit/suillus_grevillei_habit.jpg",
+        "_refs/habit/suillus_grevillei_cap.jpg"
+      ],
+      "final_prompt": "Close-up scientific botanical illustration of the key diagnostic features of Suillus grevillei (larch bolete, maślak żółty) on a clean warm off-white paper background (#f6f5f1). Scientific Scandinavian botanical field guide illustration style. Crisp, clean scientific lines, watercolor and ink detailing, elegant, informative, no text labels.\n\nA tight three-quarter close-up filling the frame, showing together: (1) the bright golden-yellow to orange-gold SLIMY, shining cap margin (not dark brown), (2) the yellowish to pale-cream, slightly slimy hanging ring on the stem, and (3) the yellow stem just ABOVE the ring, with small brownish or yellowish glandular dots/granules clearly visible. Yellow pores may be seen under the cap edge. This combination — yellow slimy cap + yellowish ring + dots above the ring — distinguishes it from Suillus luteus (brown slimy cap and purplish-white ring) and from Suillus granulatus (dots but no ring).\n\nUse the attached photographs ONLY for real colours of the yellow cap, pores and ring; do not copy photo backgrounds or photographic texture. Render in ink and watercolor. Dots must be clearly visible at display size.\n\nstrictly NO dark chestnut-brown cap, strictly NO purple or violet ring, strictly NO missing ring, strictly NO gills, strictly NO volva, strictly NO scabers, strictly NO text or labels.\n",
+      "notes": "Przyjęte v1: świetny złotożółty śluzowaty kapelusz, żółte pory, błoniasty zwisający żółtawy pierścień (wyraźnie inny niż białofioletowy u S. luteus). Ziarnistości pod pierścieniem były już na generacji; drobne brązowo-żółte grudki tuż NAD pierścieniem dorysowano PIL, żeby cecha była czytelna. Zastrzeżenie: grudki nad pierścieniem są trochę bardziej regularne i płaskie niż naturalnie błyszczące krople pod pierścieniem.",
+      "review_iterations_this_pass": 1,
+      "reviewed_by": "self-check (nowe gatunki rezerwowe, po recenzji 23:35); czeka na recenzję Wojciecha",
+      "review_pass": "2026-11-10-r4-extension",
+      "accepted_iteration": "v1_plus_pil_dots_above_ring"
+    }
+  ],
+  "contact_sheet": {
+    "file": "zestawienie.jpg",
+    "sha256": "f4791546a0759de1386796f205d24b845a0345b34a05579892b7d86b5fc826f3",
+    "typography": "Plus Jakarta Sans (DESIGN.md §2), variable axes weight set",
+    "background": "#f6f5f1",
+    "bytes": 698676,
+    "size": [1310, 2886],
+    "updated": "2026-11-10T23:58:00+01:00",
+    "rows": 7
+  },
+  "review_pass": {
+    "date": "2026-11-10",
+    "timezone": "Europe/Warsaw",
+    "reviewer": "Wojciech",
+    "verdict": "Styl OK, popraw wskazane błędy anatomiczne",
+    "images_replaced": [
+      "imleria_badia/whole_section.png",
+      "imleria_badia/feature.png",
+      "leccinum_scabrum/whole_section.png",
+      "boletus_edulis/whole_section.png",
+      "suillus_luteus/whole_section.png",
+      "hydnum_repandum/feature.png"
+    ],
+    "images_unchanged": [
+      "leccinum_scabrum/feature.png",
+      "suillus_luteus/feature.png",
+      "boletus_edulis/feature.png",
+      "hydnum_repandum/whole_section.png"
+    ]
+  },
+  "review_pass_2244": {
+    "date": "2026-11-10",
+    "time_warsaw": "22:44",
+    "timezone": "Europe/Warsaw",
+    "reviewer": "Wojciech (mycology reviewer)",
+    "images_replaced": [
+      "imleria_badia/whole_section.png",
+      "leccinum_scabrum/whole_section.png",
+      "suillus_luteus/whole_section.png",
+      "suillus_luteus/feature.png",
+      "boletus_edulis/whole_section.png",
+      "hydnum_repandum/whole_section.png"
+    ],
+    "photos_sent_to_generator": "CC BY habit photos only, recorded in _refs/habit/manifest.json"
+  },
+  "review_pass_r3": {
+    "date": "2026-11-10",
+    "time_warsaw": "23:29",
+    "timezone": "Europe/Warsaw",
+    "reviewer": "Wojciech (mycology reviewer)",
+    "instruction": "Dopracuj 4 częściowo poprawione punkty",
+    "images_replaced": [
+      "leccinum_scabrum/whole_section.png",
+      "imleria_badia/whole_section.png",
+      "suillus_luteus/whole_section.png",
+      "boletus_edulis/whole_section.png"
+    ],
+    "method": "Prefer edit of the current final so already accepted parts stay the same. Leccinum and Imleria: surgical PIL on the accepted plate (left halves pixel-identical). Suillus: GenerateImage r3v1 from the accepted plate + conservative PIL at the section base. Boletus: GenerateImage r3v3 (three iterations) with the accepted plate as reference."
+  },
+  "review_pass_r4": {
+    "date": "2026-11-10",
+    "time_warsaw": "23:35",
+    "timezone": "Europe/Warsaw",
+    "reviewer": "Wojciech (mycology reviewer)",
+    "instruction": "Ogromny postęp; dopieść 3 drobne detale (L. scabrum lewy trzon maczugowaty; S. luteus ziarnistości nad pierścieniem na zbliżeniu i przekroju + grubszy, nieprostoliniowy trzon przekroju; I. badia błękit na łączeniu rurek z miąższem). Potem kolejne gatunki atlasu.",
+    "images_replaced": [
+      "leccinum_scabrum/whole_section.png",
+      "imleria_badia/whole_section.png",
+      "suillus_luteus/whole_section.png",
+      "suillus_luteus/feature.png"
+    ],
+    "method": "PIL edits of accepted r3 plates so already accepted parts stay pixel-identical where possible. Phone-size check at 200–320 px.",
+    "edit_completed": "2026-11-10T23:50:00+01:00"
+  },
+  "extension_r4": {
+    "date": "2026-11-10",
+    "time_warsaw": "23:58",
+    "timezone": "Europe/Warsaw",
+    "folder": "/workspace/ryciny-pilot/<slug>/  (nie tworzyłem osobnego /workspace/ryciny-atlas/ — te dwa gatunki są kontynuacją tego samego pilotażu, ten sam szablon i zasady)",
+    "species_added": ["xerocomus_subtomentosus", "suillus_grevillei"],
+    "images_added": [
+      "xerocomus_subtomentosus/whole_section.png",
+      "xerocomus_subtomentosus/feature.png",
+      "suillus_grevillei/whole_section.png",
+      "suillus_grevillei/feature.png"
+    ]
+  }
+}

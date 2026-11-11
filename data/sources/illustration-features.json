@@ -1,0 +1,20 @@
+{
+  "acceptance": "proposal",
+  "note": "Klasyfikacja planszy pilotażu pod kolumnę feature. whole_section to przekrój. Zbliżenie wynika z tego, co opisuje final_prompt (pory, kolce, trzon albo mieszany kadr). Recenzent zmienia wartość tutaj, nie w kodzie.",
+  "by_file": {
+    "imleria_badia/whole_section.png": "przekroj",
+    "imleria_badia/feature.png": "hymenofor",
+    "leccinum_scabrum/whole_section.png": "przekroj",
+    "leccinum_scabrum/feature.png": "trzon",
+    "suillus_luteus/whole_section.png": "przekroj",
+    "suillus_luteus/feature.png": "trzon",
+    "boletus_edulis/whole_section.png": "przekroj",
+    "boletus_edulis/feature.png": "trzon",
+    "hydnum_repandum/whole_section.png": "przekroj",
+    "hydnum_repandum/feature.png": "hymenofor",
+    "xerocomus_subtomentosus/whole_section.png": "przekroj",
+    "xerocomus_subtomentosus/feature.png": "glowny",
+    "suillus_grevillei/whole_section.png": "przekroj",
+    "suillus_grevillei/feature.png": "glowny"
+  }
+}

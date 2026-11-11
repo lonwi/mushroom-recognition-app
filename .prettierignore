@@ -9,3 +9,5 @@ ml
 schemas
 assets
 .agents
+data/sources/*.csv
+data/sources/*.txt

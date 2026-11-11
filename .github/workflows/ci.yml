@@ -37,6 +37,11 @@ jobs:
         run: pnpm quality
         env:
           EXPO_NO_TELEMETRY: '1'
+      - name: Zbuduj species.db
+        run: pnpm build:species
+        env:
+          EXPO_NO_TELEMETRY: '1'
+          HF_TOKEN_READONLY: ${{ secrets.HF_TOKEN_READONLY }}
 
   python:
     name: Frozen model contract

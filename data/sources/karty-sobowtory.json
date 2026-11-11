@@ -1,0 +1,2703 @@
+{
+  "_meta": {
+    "status": "propozycja_do_zatwierdzenia_przez_Wojciecha",
+    "nie_zatwierdzone": true,
+    "data": "2026-11-10",
+    "strefa": "Europe/Warsaw",
+    "opis": "Karty sobowtórów dla 67 klas mini+ oraz proponowane DANGEROUS_PAIRS. To materiał wejściowy dla lokalnego bota treningowego — lista par wymaga akceptacji Wojciecha. Fakty mykologiczne pochodzą wyłącznie z materiałów projektu (broszura LP 2016 — parafraza, karty atlasu, karty /workspace/grzyby, model_tiers/LOOK_PAIRS, porównania hełmówka/opieńka). Gdzie nie było pewnego opisu cech, pole cechy_odrozniajace jest null.",
+    "nie_uprawnia_do_zbioru": "Karty mają charakter informacyjny i nie uprawniają do zbioru ani spożycia.",
+    "zrodla": {
+      "BG": "Bielawska, Bezpieczne grzybobranie, CILP+WSSE 2016 (parafraza, bez cytatu ciągłego)",
+      "ATLAS": "Karty atlasu aplikacji (pr109/src/data/mushrooms.ts, confusionRisks) — teksty projektu",
+      "KARTA": "Karty gatunków /workspace/grzyby/karty/*/karta.json",
+      "KARTA_SOB": "Istniejące /workspace/karty_sobowtory.json oraz /workspace/grzyby/karty-sobowtory/",
+      "TIERS": "model_tiers_proposed.csv / species-expansion/build.py (LOOK_PAIRS, lookalike_of)",
+      "POROWNANIE": "Porównania projektu: /workspace/grzyby/porownanie-helmowka, porownanie-maslanka-opienka"
+    },
+    "zasady": [
+      "DANGEROUS_PAIRS w grupie propozycja_glowna: obie klasy w mini+, typowo jadalny ↔ trujący/śmiertelny.",
+      "Grupa dodatkowa: pary klasyczne lub z obecnego recognition_math, których status nie jest czysto jadalny↔trujący.",
+      "Sobowtóry poza mini+ są na kartach z flagą poza_modelem (m.in. C. rivulosa, L. subincarnata, L. castanea, T. pardinum) — nie wchodzą do DANGEROUS_PAIRS.",
+      "Usunięto parę cortinarius_orellanus–cortinarius_rubellus (klasy scalone).",
+      "Rozbieżności statusu (C. rhacodes, H. aurantiaca, A. citrina, C. calopus, T. equestre, L. leucothites, P. infula, S. luridus, A. excelsa) są oznaczone i nie przesądzają listy."
+    ],
+    "klasy_bez_rozpisanych_sobowtorow_w_zrodlach": []
+  },
+  "karty": [
+    {
+      "slug": "agaricus_campestris",
+      "nazwa_lacinska": "Agaricus campestris",
+      "nazwa_pl": "pieczarka polna (łąkowa)",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "amanita_phalloides",
+          "nazwa": "muchomor zielonawy (także formy blade)",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Pieczarka: blaszki różowe potem ciemnobrązowe, brak pochwy. Muchomor: zawsze białe blaszki i pochwa. Owocnika z białymi blaszkami nie zbieraj jako pieczarki.",
+          "zrodla": ["ATLAS", "KARTA"]
+        },
+        {
+          "slug": "amanita_virosa",
+          "nazwa": "muchomor jadowity",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Jak wyżej: pochwa i zawsze białe blaszki u muchomora. Para stron broszury s.12/13.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.12/13"]
+        },
+        {
+          "slug": "amanita_verna",
+          "nazwa": "muchomor wiosenny",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Ta sama reguła białych muchomorów. Broszura s.41: A. verna mylony z młodymi pieczarkami.",
+          "zrodla": ["BG s.41"]
+        },
+        {
+          "slug": "agaricus_xanthodermus",
+          "nazwa": "pieczarka karbolowa",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Karbolowa żółknie chromowo u nasady i pachnie fenolem/karbolowo. Polna tak nie żółknie i nie ma tego zapachu.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.14/15"]
+        },
+        {
+          "slug": "agaricus_moelleri",
+          "nazwa": "pieczarka szarołuskowa",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": null,
+          "zrodla": ["TIERS"],
+          "uwaga": "W materiałach projektu odnotowano parę, ale brak zwięzłego, pewnego opisu cech odróżniających — do uzupełnienia przed zatwierdzeniem."
+        },
+        {
+          "slug": "leucocoprinus_leucothites",
+          "nazwa": "czubnik pospolity",
+          "status_jadalnosci": "niejadalny",
+          "poziom_ryzyka": "niejadalny (sporny)",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": null,
+          "zrodla": ["TIERS"],
+          "uwaga": "W materiałach projektu odnotowano parę, ale brak zwięzłego, pewnego opisu cech odróżniających — do uzupełnienia przed zatwierdzeniem."
+        },
+        {
+          "slug": "entoloma_sinuatum",
+          "nazwa": "wieruszka zatokowata",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Pieczarki mają pierścień i czekoladowy wysyp; wieruszka — brak pierścienia, różowy wysyp.",
+          "zrodla": ["KARTA"]
+        }
+      ]
+    },
+    {
+      "slug": "agaricus_moelleri",
+      "nazwa_lacinska": "Agaricus moelleri",
+      "nazwa_pl": "pieczarka szarołuskowa (pl.wikipedia)",
+      "status_jadalnosci": "trujący",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "miniplus-new16",
+      "sobowtory": [
+        {
+          "slug": "agaricus_campestris",
+          "nazwa": "pieczarka polna",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": null,
+          "zrodla": ["TIERS (en.wikipedia: toksyczność jak A. xanthodermus; LOOK_PAIRS)"],
+          "uwaga": "Trująca pieczarka, toksyczność jak u A. xanthodermus. Cech odróżniających nie rozpisano — do uzupełnienia."
+        },
+        {
+          "slug": "agaricus_sylvaticus",
+          "nazwa": "pieczarka lśniąca",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": null,
+          "zrodla": ["TIERS (pieczarki jadalne)"],
+          "uwaga": "Uogólnienie LOOK_PAIRS „pieczarki jadalne”. Wojciech może ograniczyć parę do A. campestris."
+        }
+      ]
+    },
+    {
+      "slug": "agaricus_sylvaticus",
+      "nazwa_lacinska": "Agaricus sylvaticus",
+      "nazwa_pl": "pieczarka lśniąca",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "miniplus-new16",
+      "sobowtory": [
+        {
+          "slug": "entoloma_sinuatum",
+          "nazwa": "wieruszka zatokowata",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Pieczarka lśniąca: pierścień, blaszki do czekoladowobrązowych, wszystkie części po uszkodzeniu czerwienieją, zwykle lasy iglaste pod świerkami. Wieruszka: bez pierścienia, blaszki potem różowawe, zatokowato wycięte, lasy liściaste na wapieniu, silnie trująca.",
+          "zrodla": ["BG s.16/17", "KARTA"]
+        },
+        {
+          "slug": "agaricus_moelleri",
+          "nazwa": "pieczarka szarołuskowa",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": null,
+          "zrodla": ["TIERS (pieczarki jadalne)"],
+          "uwaga": "W materiałach projektu odnotowano parę, ale brak zwięzłego, pewnego opisu cech odróżniających — do uzupełnienia przed zatwierdzeniem."
+        }
+      ]
+    },
+    {
+      "slug": "agaricus_xanthodermus",
+      "nazwa_lacinska": "Agaricus xanthodermus",
+      "nazwa_pl": "pieczarka karbolowa",
+      "status_jadalnosci": "trujący",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "agaricus_campestris",
+          "nazwa": "pieczarka polna",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Żółtawa (karbolowa) po potarciu, zwłaszcza u nasady trzonu, żółknie chromowo i pachnie fenolem/karbolowo albo atramentem. Polna tak nie żółknie i nie ma tego zapachu.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.14/15"]
+        },
+        {
+          "slug": "amanita_virosa",
+          "nazwa": "muchomor jadowity",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Muchomor ma białe blaszki i pochwę. Pieczarka żółtawa pochwy nie ma, a blaszki różowieją. Żółknięcie u nasady nie wyklucza muchomora, jeśli są białe blaszki i pochwa.",
+          "zrodla": ["ATLAS"]
+        }
+      ]
+    },
+    {
+      "slug": "amanita_citrina",
+      "nazwa_lacinska": "Amanita citrina",
+      "nazwa_pl": "muchomor cytrynowy",
+      "status_jadalnosci": "niejadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "amanita_phalloides",
+          "nazwa": "muchomor zielonawy",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Kolor kapelusza nie rozstrzyga. Rozstrzyga nasada: sromotnikowy — luźna workowata pochwa; cytrynowy — bulwa z rąbkiem. Białe blaszki i pierścień mają oba. W modelu cytrynowy jest niejadalny; atlas oznacza go jako trujący.",
+          "zrodla": ["ATLAS"]
+        }
+      ]
+    },
+    {
+      "slug": "amanita_excelsa",
+      "nazwa_lacinska": "Amanita excelsa",
+      "nazwa_pl": "muchomor twardawy",
+      "status_jadalnosci": "niejadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "amanita_pantherina",
+          "nazwa": "muchomor plamisty",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Plamisty: wyraźna odstająca pochwa/kołnierz, pierścień nieprążkowany. Twardawy: karbowany pierścień, bulwa bez odstającej pochwy. Status twardawego jest sporny (GPL2021: jadalny; w modelu: niejadalny, nie zbierać).",
+          "zrodla": ["ATLAS", "KARTA_SOB"]
+        },
+        {
+          "slug": "amanita_porphyria",
+          "nazwa": "muchomor porfirowy",
+          "status_jadalnosci": "niejadalny",
+          "poziom_ryzyka": "niejadalny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Porfirowy ma pochwę postrzępioną i blaszki różnej długości; twardawy nie ma wyraźnej pochwy.",
+          "zrodla": ["ATLAS", "KARTA_SOB"]
+        },
+        {
+          "slug": "amanita_rubescens",
+          "nazwa": "muchomor czerwieniejący",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "niejadalny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Czerwieniejący szybko czerwienieje po uszkodzeniu. Twardawy nie czerwienieje. Brak czerwienienia nie oznacza, że grzyb jest jadalny.",
+          "zrodla": ["ATLAS", "KARTA_SOB"]
+        }
+      ],
+      "flagi": "SPORNY: GPL2021 jadalny, dane projektu niejadalny"
+    },
+    {
+      "slug": "amanita_muscaria",
+      "nazwa_lacinska": "Amanita muscaria",
+      "nazwa_pl": "muchomor czerwony",
+      "status_jadalnosci": "trujący",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "amanita_rubescens",
+          "nazwa": "muchomor czerwieniejący",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Czerwieniejący: kapelusz różowawy do czerwonobrązowego, czerwienieje po uszkodzeniu, pierścień prążkowany. Czerwony: jaskrawoczerwony kapelusz, miąższ nie czerwienieje, pierścień nieprążkowany.",
+          "zrodla": ["ATLAS", "KARTA"]
+        },
+        {
+          "slug": "poza:amanita_caesarea",
+          "nazwa": "muchomor cesarski",
+          "status_jadalnosci": "poza modelem",
+          "poziom_ryzyka": "pomyłka z gatunkiem jadalnym poza modelem",
+          "w_mini_plus": false,
+          "poza_modelem": true,
+          "cechy_odrozniajace": "Cesarski: blaszki i trzon intensywnie żółte, wyraźna biała workowata pochwa, zwykle bez białych łatek. Czerwony: blaszki i trzon białe do kremowych, bulwa z brodawkowatymi wałeczkami. W Polsce praktycznie nie występuje.",
+          "zrodla": ["ATLAS", "KARTA"]
+        }
+      ]
+    },
+    {
+      "slug": "amanita_pantherina",
+      "nazwa_lacinska": "Amanita pantherina",
+      "nazwa_pl": "muchomor plamisty",
+      "status_jadalnosci": "trujący",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "amanita_rubescens",
+          "nazwa": "muchomor czerwieniejący",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Plamisty: pierścień gładki, nie czerwienieje, bulwa z odstającym rąbkiem. Czerwieniejący: pierścień prążkowany, miąższ i uszkodzenia różowieją. Brzeg kapelusza nie jest pewną różnicą (forma górska plamistego bywa gładka). Czerwieniejący jadalny tylko po obróbce, nie dla początkujących.",
+          "zrodla": ["ATLAS", "KARTA", "KARTA_SOB"]
+        },
+        {
+          "slug": "macrolepiota_procera",
+          "nazwa": "czubajka kania",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Kania: ruchomy pierścień, brak pochwy, łuski nie kosmki. Plamisty: przyrośnięty pierścień, kołnierz na bulwie, białe łatki na brązowym kapeluszu. Zapach bywa rzodkiewkowy.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.10/11"]
+        },
+        {
+          "slug": "amanita_excelsa",
+          "nazwa": "muchomor twardawy",
+          "status_jadalnosci": "niejadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Twardawy: karbowany pierścień, bulwa bez odstającej pochwy, nie czerwienieje. Plamisty: gładki pierścień i wyraźna odstająca pochwa/kołnierz.",
+          "zrodla": ["ATLAS", "KARTA_SOB"]
+        }
+      ]
+    },
+    {
+      "slug": "amanita_phalloides",
+      "nazwa_lacinska": "Amanita phalloides",
+      "nazwa_pl": "muchomor zielonawy (sromotnikowy)",
+      "status_jadalnosci": "śmiertelny",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "russula_virescens",
+          "nazwa": "gołąbek zielonawy (także R. aeruginea — poza modelem)",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Gołąbki nie mają pierścienia ani pochwy; miąższ jest kruchy i łamliwy jak kreda. Kapelusz R. virescens pęka w poletka. Gładki zielony kapelusz z białymi blaszkami traktuj jak muchomora, dopóki nie masz pewności.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.6/7"],
+          "uwaga": "R. aeruginea jest poza mini+."
+        },
+        {
+          "slug": "macrolepiota_procera",
+          "nazwa": "czubajka kania",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Kania ma pierścień ruchomy i nie ma luźnej pochwy. Muchomor ma pierścień przyrośnięty oraz bulwę w białej, workowatej pochwie. Zygzak na trzonie niczego nie rozstrzyga. Nie zbieraj zamkniętych „jajek”.",
+          "zrodla": ["ATLAS", "KARTA"]
+        },
+        {
+          "slug": "agaricus_campestris",
+          "nazwa": "pieczarka polna (i inne pieczarki)",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Dojrzała pieczarka ma blaszki różowe, potem czekoladowobrązowe, i nie ma pochwy. Muchomor ma zawsze białe blaszki i pochwę. Owocnika z wciąż białymi blaszkami nie zbieraj jako pieczarki.",
+          "zrodla": ["ATLAS", "KARTA"]
+        },
+        {
+          "slug": "amanita_citrina",
+          "nazwa": "muchomor cytrynowy",
+          "status_jadalnosci": "niejadalny",
+          "poziom_ryzyka": "pomyłka dwóch muchomorów",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Kolor kapelusza nie rozstrzyga: sromotnikowy bywa bladozielony albo biały. Rozstrzyga nasada — sromotnikowy ma luźną workowatą pochwę, cytrynowy bulwę z rąbkiem. Oba mają białe blaszki i pierścień.",
+          "zrodla": ["ATLAS"],
+          "uwaga": "W model_tiers A. citrina jest niejadalna; atlas oznacza ją jako trującą."
+        },
+        {
+          "slug": "tricholoma_equestre",
+          "nazwa": "gąska zielonka",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "pomyłka historycznie jadalnej gąski z muchomorem",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Gąska ma blaszki żółte oraz brak pierścienia i pochwy. Muchomor ma białe blaszki, pierścień i pochwę. GIS/BG wskazują zielonkę jako często myloną z sromotnikowym.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.30"]
+        }
+      ]
+    },
+    {
+      "slug": "amanita_porphyria",
+      "nazwa_lacinska": "Amanita porphyria",
+      "nazwa_pl": "muchomor porfirowy",
+      "status_jadalnosci": "niejadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "miniplus-new16",
+      "sobowtory": [
+        {
+          "slug": "tricholoma_portentosum",
+          "nazwa": "gąska niekształtna",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "niejadalny / BG „słabo trujący”",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Gąska: kapelusz szarawy z czarnymi promienistymi włóknami, bez pierścienia i pochwy; na starość blaszki i trzon z żółtozielonym połyskiem. Porfirowy: białe gęste blaszki, pierścień, bulwa z pochwą, łatki, zapach stęchłych ziemniaków, smak rzodkwi.",
+          "zrodla": ["BG s.32/33"]
+        },
+        {
+          "slug": "amanita_rubescens",
+          "nazwa": "muchomor czerwieniejący",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "niejadalny / słabo trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Broszura: porfirowy mylony także z muchomorem czerwieniejącym. Czerwieniejący różowieje po uszkodzeniu. Szczegółowego porównania w atlasie brak.",
+          "zrodla": ["BG s.33", "TIERS"],
+          "uwaga": "Część cech porfirowego vs twardawy jest w karcie A. excelsa."
+        },
+        {
+          "slug": "amanita_excelsa",
+          "nazwa": "muchomor twardawy",
+          "status_jadalnosci": "niejadalny",
+          "poziom_ryzyka": "pomyłka dwóch niejadalnych muchomorów",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Porfirowy ma postrzępioną pochwę i blaszki różnej długości. Twardawy nie ma wyraźnej pochwy, ma karbowany pierścień.",
+          "zrodla": ["KARTA_SOB", "ATLAS"]
+        }
+      ]
+    },
+    {
+      "slug": "amanita_regalis",
+      "nazwa_lacinska": "Amanita regalis",
+      "nazwa_pl": "muchomor królewski",
+      "status_jadalnosci": "trujący",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "miniplus-new16",
+      "sobowtory": [
+        {
+          "slug": "macrolepiota_procera",
+          "nazwa": "czubajka kania",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": null,
+          "zrodla": ["TIERS (en.wikipedia; GPL2021: pomylony z kanią, Finlandia)"],
+          "uwaga": "Para w LOOK_PAIRS (Finlandia). Brak pewnego opisu cech w materiałach projektu — do uzupełnienia."
+        }
+      ]
+    },
+    {
+      "slug": "amanita_rubescens",
+      "nazwa_lacinska": "Amanita rubescens",
+      "nazwa_pl": "muchomor czerwieniejący",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "amanita_pantherina",
+          "nazwa": "muchomor plamisty",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Plamisty: pierścień gładki, nie czerwienieje, bulwa z rąbkiem. Czerwieniejący: pierścień prążkowany, miąższ i blaszki różowieją. Jadalny tylko po obróbce, niezalecany dla początkujących.",
+          "zrodla": ["ATLAS", "KARTA"]
+        },
+        {
+          "slug": "amanita_excelsa",
+          "nazwa": "muchomor twardawy",
+          "status_jadalnosci": "niejadalny",
+          "poziom_ryzyka": "niejadalny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Twardawy nie czerwienieje. Czerwieniejący różowieje po uszkodzeniu. Gładki brzeg nie rozstrzyga.",
+          "zrodla": ["ATLAS"]
+        },
+        {
+          "slug": "amanita_porphyria",
+          "nazwa": "muchomor porfirowy",
+          "status_jadalnosci": "niejadalny",
+          "poziom_ryzyka": "niejadalny / słabo trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Wskazanie broszury (s.33) bez szczegółowego porównania w atlasie.",
+          "zrodla": ["BG s.33"],
+          "uwaga": "Cechy szczegółowe do ewentualnego uzupełnienia."
+        },
+        {
+          "slug": "amanita_muscaria",
+          "nazwa": "muchomor czerwony",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Czerwony: jaskrawoczerwony kapelusz, miąższ nie czerwienieje, pierścień nieprążkowany. Czerwieniejący: kapelusz różowawobrązowy, czerwienieje, pierścień prążkowany.",
+          "zrodla": ["ATLAS"]
+        }
+      ],
+      "flagi": "WARUNKOWY: tylko po obróbce, niezalecany dla początkujących"
+    },
+    {
+      "slug": "amanita_verna",
+      "nazwa_lacinska": "Amanita verna",
+      "nazwa_pl": "muchomor wiosenny",
+      "status_jadalnosci": "śmiertelny",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "miniplus-new16",
+      "sobowtory": [
+        {
+          "slug": "calocybe_gambosa",
+          "nazwa": "gęśnica wiosenna",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Gęśnica nie ma pierścienia ani pochwy, pachnie mącznie. Muchomor wiosenny ma cienki biały pierścień i bulwę w odstającej, porozrywanej pochwie; blaszki białe. Broszura: mylony z majówką i młodymi pieczarkami.",
+          "zrodla": ["BG s.40/41", "ATLAS"]
+        },
+        {
+          "slug": "agaricus_campestris",
+          "nazwa": "pieczarki (młode)",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Pieczarka nie ma pochwy, a blaszki z wiekiem różowieją i brązowieją. Muchomor wiosenny ma zawsze białe blaszki oraz pochwę.",
+          "zrodla": ["BG s.41"]
+        },
+        {
+          "slug": "agaricus_sylvaticus",
+          "nazwa": "pieczarka lśniąca (jako „pieczarki”)",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Ta sama reguła co u pieczarki polnej. Para uogólniona z broszury „mylony z młodymi pieczarkami”.",
+          "zrodla": ["BG s.41", "TIERS"],
+          "uwaga": "Wojciech może ograniczyć parę do A. campestris."
+        }
+      ],
+      "flagi": "iNat PL RG = 0 obserwacji: rzadki/niezgłaszany w PL; zostaje ze względów bezpieczeństwa"
+    },
+    {
+      "slug": "amanita_virosa",
+      "nazwa_lacinska": "Amanita virosa",
+      "nazwa_pl": "muchomor jadowity",
+      "status_jadalnosci": "śmiertelny",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "agaricus_campestris",
+          "nazwa": "pieczarka polna i inne pieczarki",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Pieczarki nie mają pochwy, a blaszki dojrzałych owocników są różowe, potem ciemnobrązowe. Muchomor jadowity ma zawsze białe blaszki i pochwę.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.12/13"]
+        },
+        {
+          "slug": "macrolepiota_procera",
+          "nazwa": "czubajka kania",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Kania ma ruchomy pierścień i nie ma pochwy. Muchomor jadowity jest białawy, z pochwą i włóknistymi łuskami na trzonie. Nie zbieraj zamkniętych owocników.",
+          "zrodla": ["ATLAS"]
+        },
+        {
+          "slug": "calocybe_gambosa",
+          "nazwa": "gęśnica wiosenna",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Białe muchomory mają pierścień i bulwę w pochwie; gęśnica nie ma ani pierścienia, ani pochwy i pachnie mącznie.",
+          "zrodla": ["ATLAS", "BG s.40"]
+        },
+        {
+          "slug": "lycoperdon_perlatum",
+          "nazwa": "purchawka chropowata (młode „jaja”)",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Młode „jajo” muchomora po przekrojeniu wzdłuż pokazuje zarys kapelusza, blaszek i trzonu. Każdą purchawkę przekrój.",
+          "zrodla": ["KARTA"]
+        }
+      ]
+    },
+    {
+      "slug": "armillaria_mellea",
+      "nazwa_lacinska": "Armillaria mellea",
+      "nazwa_pl": "opieńka miodowa",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "hypholoma_fasciculare",
+          "nazwa": "maślanka wiązkowa",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Maślanka: siarkowożółte, potem zielonkawe blaszki, brak trwałego pierścienia. Opieńki: jaśniejsze blaszki i pierścień. Surowa opieńka szkodliwa — jadalna warunkowo po obróbce.",
+          "zrodla": ["ATLAS", "KARTA", "POROWNANIE"]
+        },
+        {
+          "slug": "galerina_marginata",
+          "nazwa": "hełmówka jadowita",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Hełmówka mniejsza, cynamonowobrązowe blaszki, rdzawy wysyp. Opieńki w większych kępach, jaśniejsze blaszki, biały wysyp. Pierścień nie rozstrzyga.",
+          "zrodla": ["ATLAS", "KARTA", "POROWNANIE"]
+        },
+        {
+          "slug": "poza:pholiota_squarrosa",
+          "nazwa": "łuskwiak nastroszony",
+          "status_jadalnosci": "poza modelem",
+          "poziom_ryzyka": "niejadalny (w części źródeł sporny)",
+          "w_mini_plus": false,
+          "poza_modelem": true,
+          "cechy_odrozniajace": "Duże, odstające łuski na kapeluszu i trzonie, rdzawy wysyp.",
+          "zrodla": ["KARTA"]
+        }
+      ],
+      "flagi": "WARUNKOWY: surowy trujący; kompleks gatunków"
+    },
+    {
+      "slug": "armillaria_ostoyae",
+      "nazwa_lacinska": "Armillaria ostoyae",
+      "nazwa_pl": "opieńka ciemna",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "miniplus-new16",
+      "sobowtory": [
+        {
+          "slug": "hypholoma_fasciculare",
+          "nazwa": "maślanka wiązkowa",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Para broszury s.24/25. Opieńka ciemna: kępki, ciemne łuski, wyraźny pierścień, ryzomorfy; tylko kapelusze po ugotowaniu. Maślanka: zrośnięta wiązka, brak trwałego pierścienia, trująca.",
+          "zrodla": ["BG s.24/25", "POROWNANIE"]
+        },
+        {
+          "slug": "galerina_marginata",
+          "nazwa": "hełmówka jadowita",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Te same różnice co przy A. mellea (wielkość, kolor blaszek, wysyp). LOOK_PAIRS uwzględnia tę parę.",
+          "zrodla": ["TIERS", "POROWNANIE"]
+        }
+      ],
+      "flagi": "KOMPLEKS: kandydat do klasy scalonej „opieńki” z A. mellea; reguła tylko-Europa"
+    },
+    {
+      "slug": "boletus_edulis",
+      "nazwa_lacinska": "Boletus edulis",
+      "nazwa_pl": "borowik szlachetny",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "tylopilus_felleus",
+          "nazwa": "goryczak żółciowy",
+          "status_jadalnosci": "niejadalny",
+          "poziom_ryzyka": "niejadalny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Goryczak: rurki różowe, ciemna gruba siatka, gorzki smak. Prawdziwek: rurki białe potem żółtooliwkowe, jasna siateczka.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.36/37"]
+        },
+        {
+          "slug": "rubroboletus_satanas",
+          "nazwa": "borowik szatański",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Szatański: kapelusz białawoszary, pory czerwone, trzon z czerwoną siateczką, miąższ sinieje. Prawdziwek nigdy nie ma czerwonych porów.",
+          "zrodla": ["ATLAS", "KARTA"]
+        }
+      ]
+    },
+    {
+      "slug": "caloboletus_calopus",
+      "nazwa_lacinska": "Caloboletus calopus",
+      "nazwa_pl": "borowik żółtopory",
+      "status_jadalnosci": "niejadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "miniplus-new16",
+      "sobowtory": [
+        {
+          "slug": "neoboletus_luridiformis",
+          "nazwa": "borowik ceglastopory",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "niejadalny / BG „Trujący!”",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Ceglastopory: ciemnobrązowy zamszowy kapelusz, spód z wiekiem ceglastoczerwony, trzon z czerwonymi kosmkami/ziarenkami bez siateczki, smak łagodny, silnie sinieje. Żółtopory: szarobrązowy kapelusz, spód żółty, trzon gruby strefowany (góra żółta, środek czerwony) z wyraźną siateczką; smak potem gorzki. BG: „Trujący!”; GPL2021: niejadalny (SPORNY).",
+          "zrodla": ["BG s.38/39", "TIERS"]
+        }
+      ],
+      "flagi": "SPORNY: BG trujący, GPL2021 niejadalny"
+    },
+    {
+      "slug": "calocybe_gambosa",
+      "nazwa_lacinska": "Calocybe gambosa",
+      "nazwa_pl": "gęśnica wiosenna",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "amanita_verna",
+          "nazwa": "muchomor wiosenny",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Gęśnica: bez pierścienia i pochwy, zapach mączny. Muchomor wiosenny: pierścień i pochwa, zawsze białe blaszki.",
+          "zrodla": ["BG s.40/41", "ATLAS"]
+        },
+        {
+          "slug": "amanita_virosa",
+          "nazwa": "muchomor jadowity (białe muchomory)",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Białe muchomory mają pierścień i pochwę; gęśnica nie.",
+          "zrodla": ["ATLAS", "BG s.40"]
+        },
+        {
+          "slug": "inocybe_erubescens",
+          "nazwa": "strzępiak ceglasty",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Strzępiak czerwienieje, kapelusz włóknisty/popękany. Gęśnica nie czerwienieje, pachnie mącznie. Oba wiosną.",
+          "zrodla": ["ATLAS", "BG s.35 i s.40"]
+        },
+        {
+          "slug": "inocybe_geophylla",
+          "nazwa": "strzępiak ziemistoblaszkowy",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": null,
+          "zrodla": ["TIERS"],
+          "uwaga": "W materiałach projektu odnotowano parę, ale brak zwięzłego, pewnego opisu cech odróżniających — do uzupełnienia przed zatwierdzeniem."
+        },
+        {
+          "slug": "entoloma_sinuatum",
+          "nazwa": "wieruszka zatokowata",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Starsze wieruszki: różowe blaszki i różowy wysyp. Gęśnica: białe blaszki, biały wysyp, wiosna. Młode owocniki bardzo podobne.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.17 i s.40"]
+        }
+      ]
+    },
+    {
+      "slug": "cantharellus_cibarius",
+      "nazwa_lacinska": "Cantharellus cibarius",
+      "nazwa_pl": "pieprznik jadalny",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "hygrophoropsis_aurantiaca",
+          "nazwa": "lisówka pomarańczowa",
+          "status_jadalnosci": "niejadalny",
+          "poziom_ryzyka": "niejadalny / w atlasie trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Lisówka: cienkie, gęste, prawdziwe blaszki. Kurka: grube, zbiegające listewki, miąższ białawy.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.18/19"]
+        },
+        {
+          "slug": "omphalotus_olearius",
+          "nazwa": "kielichowiec pomarańczowy",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Kielichowiec rośnie kępami na drewnie, ma ostre, cienkie blaszki. Kurka rośnie na ziemi, ma listewki.",
+          "zrodla": ["KARTA", "TIERS"]
+        },
+        {
+          "slug": "cortinarius_orellanus",
+          "nazwa": "zasłonak rudy (klasa z C. rubellus)",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Zasłonaki mają prawdziwe rdzawe blaszki i pajęczynowatą zasnówkę; uszkodzenie nerek bywa opóźnione. Kurka ma listewki, nie zasnówkę.",
+          "zrodla": ["ATLAS", "KARTA", "TIERS"]
+        },
+        {
+          "slug": "inocybe_erubescens",
+          "nazwa": "strzępiak ceglasty",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Młody strzępiak ma prawdziwe blaszki, po uszkodzeniu czerwienieje. Kurka ma grube żółte listewki i nie czerwienieje.",
+          "zrodla": ["ATLAS"]
+        }
+      ],
+      "flagi": "reguła tylko-Europa (kompleks)"
+    },
+    {
+      "slug": "chlorophyllum_rhacodes",
+      "nazwa_lacinska": "Chlorophyllum rhacodes",
+      "nazwa_pl": "czubajka czerwieniejąca",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "macrolepiota_procera",
+          "nazwa": "czubajka kania",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "rozbieżność statusu czubajnika",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Czubajnik czerwienieje po uszkodzeniu, bez łuskowatego wzoru na trzonie typowego dla kani.",
+          "zrodla": ["ATLAS", "KARTA"]
+        },
+        {
+          "slug": "amanita_phalloides",
+          "nazwa": "muchomor zielonawy",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Muchomor ma luźną pochwę i nie czerwienieje po przekrojeniu. Młodych, zamkniętych owocników nie zbieraj.",
+          "zrodla": ["ATLAS"]
+        }
+      ],
+      "flagi": "WARUNKOWY: bywa źle tolerowany"
+    },
+    {
+      "slug": "clitocybe_phyllophila",
+      "nazwa_lacinska": "Clitocybe phyllophila",
+      "nazwa_pl": "lejkówka liściowa",
+      "status_jadalnosci": "trujący",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "miniplus-new16",
+      "sobowtory": [
+        {
+          "slug": "marasmius_oreades",
+          "nazwa": "twardzioszek przydrożny",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Twardzioszek (BG s.44): łąki, pobocza, czarcie kręgi; blaszki dość grube i rzadkie; trzon łykowaty; jadalne tylko kapelusze. Broszura nazywa lejkówkę liściową trującym sobowtórem. Strona 45 nie jest w dostarczonym PDF — brak pewnego opisu cech C. phyllophila.",
+          "zrodla": ["BG s.44 i TOC s.45", "TIERS"],
+          "uwaga": "Cechy lejkówki do uzupełnienia, gdy będzie s.45 lub inne pewne źródło."
+        }
+      ],
+      "flagi": "strona 45 nieobecna w dostarczonym PDF (44 strony); status z TOC i s.44"
+    },
+    {
+      "slug": "cortinarius_caperatus",
+      "nazwa_lacinska": "Cortinarius caperatus",
+      "nazwa_pl": "płachetka zwyczajna",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "inocybe_erubescens",
+          "nazwa": "strzępiak ceglasty (Inosperma erubescens)",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Płachetka: wąski błoniasty pierścień (zanika z czasem), nie czerwienieje. Strzępiak: kapelusz promieniście popękany, czerwienieje po uszkodzeniu; śmiertelnie trujący.",
+          "zrodla": ["BG s.34/35", "KARTA"]
+        },
+        {
+          "slug": "poza:cortinarius_inne",
+          "nazwa": "inne zasłonaki (poza scaloną klasą C. orellanus)",
+          "status_jadalnosci": "poza modelem",
+          "poziom_ryzyka": "śmiertelny (część gatunków)",
+          "w_mini_plus": false,
+          "poza_modelem": true,
+          "cechy_odrozniajace": "Większość zasłonaków ma pajęczynowatą zasnówkę zamiast błoniastego pierścienia.",
+          "zrodla": ["KARTA"]
+        }
+      ]
+    },
+    {
+      "slug": "cortinarius_orellanus",
+      "nazwa_lacinska": "Cortinarius orellanus",
+      "nazwa_pl": "zasłonak rudy",
+      "status_jadalnosci": "śmiertelny",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "cantharellus_cibarius",
+          "nazwa": "pieprznik jadalny",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Kurka ma grube, zbiegające listewki, nie rdzawe blaszki i nie pajęczynowatą zasnówkę. Zasłonak rudy (klasa obejmuje C. rubellus) ma suche, filcowate, rudopomarańczowe owocniki i rdzawe blaszki. Uszkodzenie nerek bywa opóźnione o dni–tygodnie.",
+          "zrodla": ["ATLAS", "KARTA"]
+        },
+        {
+          "slug": "poza:craterellus_tubaeformis",
+          "nazwa": "pieprznik trąbkowy",
+          "status_jadalnosci": "poza modelem",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": false,
+          "poza_modelem": true,
+          "cechy_odrozniajace": "Pieprznik trąbkowy ma zbiegające listewki i lejkowaty, cieńszy owocnik. Zasłonak ma rdzawe blaszki i u młodych zasnówkę.",
+          "zrodla": ["ATLAS"],
+          "uwaga": "W kartach projektu wstrzymany do weryfikacji siedliska; poza mini+."
+        }
+      ],
+      "flagi": "klasa scalona z C. rubellus",
+      "uwaga_taksonomiczna": "Klasa scalona z Cortinarius rubellus — nie ma osobnego wyjścia rubellus."
+    },
+    {
+      "slug": "entoloma_sinuatum",
+      "nazwa_lacinska": "Entoloma sinuatum",
+      "nazwa_pl": "wieruszka zatokowata",
+      "status_jadalnosci": "trujący",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "agaricus_sylvaticus",
+          "nazwa": "pieczarka lśniąca",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Pieczarka lśniąca: pierścień, blaszki z wiekiem czekoladowe, wszystkie części po uszkodzeniu czerwienieją (BG s.16). Wieruszka: bez pierścienia, blaszki potem różowawe, zatokowato wycięte, wysyp różowy; silnie trująca. Młode owocniki bardzo podobne.",
+          "zrodla": ["BG s.16/17", "KARTA"]
+        },
+        {
+          "slug": "agaricus_campestris",
+          "nazwa": "pieczarki (ogólnie)",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Pieczarki mają pierścień i czekoladowy wysyp; wieruszka — brak pierścienia, różowy wysyp.",
+          "zrodla": ["KARTA"]
+        },
+        {
+          "slug": "calocybe_gambosa",
+          "nazwa": "gęśnica wiosenna",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Gęśnica: wiosna, blaszki białe, wysyp biały, zapach mączny. Starsze wieruszki: blaszki różowe, wysyp różowy. Młode owocniki bardzo podobne.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.17 i s.40"]
+        },
+        {
+          "slug": "poza:clitocybe_nebularis",
+          "nazwa": "lejkówka szarawa",
+          "status_jadalnosci": "poza modelem",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": false,
+          "poza_modelem": true,
+          "cechy_odrozniajace": "Lejkówka szarawa: blaszki kremowe, zbiegające, wysyp kremowy.",
+          "zrodla": ["KARTA"]
+        }
+      ]
+    },
+    {
+      "slug": "galerina_marginata",
+      "nazwa_lacinska": "Galerina marginata",
+      "nazwa_pl": "hełmówka jadowita (obrzeżona)",
+      "status_jadalnosci": "śmiertelny",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "kuehneromyces_mutabilis",
+          "nazwa": "łuszczak zmienny",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Łuszczak ma pod pierścieniem odstające łuseczki na trzonie; hełmówka ma trzon włóknisty, bez takich łuseczek. Na pniaku zostaw owocnik, jeśli łuseczek nie widać.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.42/43", "POROWNANIE"]
+        },
+        {
+          "slug": "armillaria_mellea",
+          "nazwa": "opieńka miodowa",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Opieńki rosną zwykle w większych kępach, mają jaśniejsze blaszki i biały wysyp. Hełmówka jest mniejsza, z blaszkami cynamonowobrązowymi i rdzawym wysypem. Obecność pierścienia nie potwierdza opieńki.",
+          "zrodla": ["ATLAS", "KARTA", "POROWNANIE"]
+        },
+        {
+          "slug": "armillaria_ostoyae",
+          "nazwa": "opieńka ciemna",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Te same cechy co przy opieńce miodowej. A. ostoyae ma ciemne łuski na kapeluszu i ryzomorfy (BG s.24).",
+          "zrodla": ["TIERS", "POROWNANIE", "BG s.24"]
+        },
+        {
+          "slug": "hypholoma_capnoides",
+          "nazwa": "maślanka łagodna",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Maślanka łagodna ma blaszki szare do fioletowobrązowych; hełmówka — cynamonowobrązowe oraz wąski, często zanikający pierścień. Same szare blaszki nie dowodzą gatunku.",
+          "zrodla": ["ATLAS"]
+        },
+        {
+          "slug": "poza:psilocybe",
+          "nazwa": "łysiczki (Psilocybe spp.)",
+          "status_jadalnosci": "poza modelem",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": false,
+          "poza_modelem": true,
+          "cechy_odrozniajace": null,
+          "zrodla": ["ATLAS"],
+          "uwaga": "W atlasie wpis bez rozpisanych cech. Poza mini+."
+        }
+      ]
+    },
+    {
+      "slug": "gyromitra_esculenta",
+      "nazwa_lacinska": "Gyromitra esculenta",
+      "nazwa_pl": "piestrzenica kasztanowata",
+      "status_jadalnosci": "śmiertelny",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "morchella_esculenta",
+          "nazwa": "smardz jadalny",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Smardz ma główkę żebrowato-plastrowatą i w środku jedną pustą komorę. Piestrzenica ma główkę mózgowato pofałdowaną; młoda bywa pełna lub wielokomorowa. Gyromitryna jest groźna także w oparach wywaru.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.26/27"]
+        }
+      ]
+    },
+    {
+      "slug": "gyroporus_castaneus",
+      "nazwa_lacinska": "Gyroporus castaneus",
+      "nazwa_pl": "piaskowiec kasztanowaty",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "tylopilus_felleus",
+          "nazwa": "goryczak żółciowy",
+          "status_jadalnosci": "niejadalny",
+          "poziom_ryzyka": "niejadalny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Goryczak: różowe rurki, pełny trzon z siatką, gorzki.",
+          "zrodla": ["KARTA"]
+        },
+        {
+          "slug": "poza:gyroporus_cyanescens",
+          "nazwa": "piaskowiec modrzak",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "jadalny (poza modelem)",
+          "w_mini_plus": false,
+          "poza_modelem": true,
+          "cechy_odrozniajace": "Słomkowy kapelusz, miąższ natychmiast intensywnie chabrowy; też jadalny, w wykazie MZ.",
+          "zrodla": ["KARTA"]
+        }
+      ]
+    },
+    {
+      "slug": "hydnum_repandum",
+      "nazwa_lacinska": "Hydnum repandum",
+      "nazwa_pl": "kolczak obłączasty",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "cantharellus_cibarius",
+          "nazwa": "pieprznik jadalny",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "jadalny (para niegroźna)",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Kurka ma listewki, kolczak ma kolce. Młode owocniki obejrzyj od spodu.",
+          "zrodla": ["ATLAS"]
+        }
+      ]
+    },
+    {
+      "slug": "hygrophoropsis_aurantiaca",
+      "nazwa_lacinska": "Hygrophoropsis aurantiaca",
+      "nazwa_pl": "lisówka pomarańczowa",
+      "status_jadalnosci": "niejadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "cantharellus_cibarius",
+          "nazwa": "pieprznik jadalny",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "niejadalny / w atlasie trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Kurka: grube, zbiegające listewki, barwa raczej jajecznożółta, miąższ białawy. Lisówka: cienkie, gęste, prawdziwe blaszki, bywa jaskrawo pomarańczowa, trzon często węższy i u podstawy przyciemniony.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.18/19"],
+          "uwaga": "Rozbieżność statusu: model_tiers = niejadalny; atlas = trujący. W obecnym recognition_math para jest. Do decyzji."
+        }
+      ]
+    },
+    {
+      "slug": "hypholoma_capnoides",
+      "nazwa_lacinska": "Hypholoma capnoides",
+      "nazwa_pl": "maślanka łagodna (pl.wikipedia)",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "hypholoma_fasciculare",
+          "nazwa": "maślanka wiązkowa",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Wiązkowa: zielonkawożółte blaszki i siarkowożółty kapelusz. Łagodna: blaszki szare do fioletowobrązowych, bez zieleni. Status łagodnej jest warunkowy.",
+          "zrodla": ["ATLAS"]
+        },
+        {
+          "slug": "galerina_marginata",
+          "nazwa": "hełmówka jadowita",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Hełmówka: blaszki cynamonowobrązowe, wąski pierścień, włóknisty trzon. Łagodna: blaszki szare do fioletowobrązowych, nigdy zielonkawe.",
+          "zrodla": ["ATLAS"]
+        }
+      ],
+      "flagi": "WARUNKOWY wg _podsumowanie; brak statusu w indeksie"
+    },
+    {
+      "slug": "hypholoma_fasciculare",
+      "nazwa_lacinska": "Hypholoma fasciculare",
+      "nazwa_pl": "maślanka wiązkowa",
+      "status_jadalnosci": "trujący",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "armillaria_mellea",
+          "nazwa": "opieńka miodowa",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Maślanka wiązkowa: blaszki siarkowożółte, potem zielonkawe, brak trwałego błoniastego pierścienia (u młodych zasnowa). Opieńki: jaśniejsze blaszki i zwykle wyraźny pierścień. Żółte blaszki na pniaku — zostaw wiązkę. Smak maślanki bardzo gorzki, wysyp ciemny.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.24/25", "POROWNANIE"]
+        },
+        {
+          "slug": "armillaria_ostoyae",
+          "nazwa": "opieńka ciemna",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Para stron broszury s.24/25. Opieńka ciemna: kępki na pniakach, drobne ciemne łuski, wyraźny pierścień, ryzomorfy; jadalne tylko kapelusze po ugotowaniu. Maślanka: żółty/rdzawy kapelusz, zrośnięta wiązka, brak trwałego pierścienia, trująca.",
+          "zrodla": ["BG s.24/25", "POROWNANIE"]
+        },
+        {
+          "slug": "kuehneromyces_mutabilis",
+          "nazwa": "łuszczak zmienny",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Maślanka jest siarkowożółta i nie ma trwałego pierścienia. Łuszczak ma cynamonowe blaszki, pierścień i łuseczkowaty trzon pod pierścieniem.",
+          "zrodla": ["ATLAS"]
+        },
+        {
+          "slug": "hypholoma_capnoides",
+          "nazwa": "maślanka łagodna",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Wiązkowa ma zielonkawożółte blaszki i siarkowożółty kapelusz. Łagodna ma blaszki szare do fioletowobrązowych, bez zieleni.",
+          "zrodla": ["ATLAS"]
+        }
+      ]
+    },
+    {
+      "slug": "imleria_badia",
+      "nazwa_lacinska": "Imleria badia",
+      "nazwa_pl": "podgrzybek brunatny",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "tylopilus_felleus",
+          "nazwa": "goryczak żółciowy",
+          "status_jadalnosci": "niejadalny",
+          "poziom_ryzyka": "niejadalny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Rurki podgrzybka po naciśnięciu sinieją; goryczak ma ciemną siatkę i rurki różowiejące, nie sinieje na niebiesko.",
+          "zrodla": ["ATLAS"]
+        }
+      ]
+    },
+    {
+      "slug": "inocybe_erubescens",
+      "nazwa_lacinska": "Inosperma erubescens",
+      "nazwa_pl": "strzępiak ceglasty",
+      "status_jadalnosci": "śmiertelny",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "cortinarius_caperatus",
+          "nazwa": "płachetka zwyczajna",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Strzępiak: kapelusz promieniście popękany; blaszki i miąższ po uszkodzeniu czerwienieją; z wiekiem ceglasty; śmiertelnie trujący (muskaryna). Płachetka: wąski błoniasty pierścień (zanika z czasem), nie czerwienieje.",
+          "zrodla": ["BG s.34/35"]
+        },
+        {
+          "slug": "calocybe_gambosa",
+          "nazwa": "gęśnica wiosenna",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Gęśnica nie czerwienieje, pachnie mącznie, ma gładki kapelusz. Strzępiak czerwienieje, kapelusz popękany. Oba wyrastają wiosną.",
+          "zrodla": ["ATLAS", "BG s.35 i s.40"]
+        },
+        {
+          "slug": "cantharellus_cibarius",
+          "nazwa": "pieprznik jadalny",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Kurka ma grube, zbiegające listewki. Strzępiak ma cienkie blaszki, które czerwienieją. Młody, jasny strzępiak jest najłatwiejszy do pomylenia.",
+          "zrodla": ["ATLAS"],
+          "uwaga": "Para z atlasu; mniej klasyczna niż pary broszurowe."
+        }
+      ],
+      "uwaga_taksonomiczna": "Slug historyczny inocybe_erubescens; nazwa przyjęta Inosperma erubescens."
+    },
+    {
+      "slug": "inocybe_geophylla",
+      "nazwa_lacinska": "Inocybe geophylla",
+      "nazwa_pl": "strzępiak ziemistoblaszkowy (pl.wikipedia)",
+      "status_jadalnosci": "trujący",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "calocybe_gambosa",
+          "nazwa": "gęśnica wiosenna",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": null,
+          "zrodla": ["TIERS (en.wikipedia; brak w indeksie książek)"],
+          "uwaga": "Para tylko ze wskazania en.wikipedia w model_tiers — do uzupełnienia."
+        }
+      ],
+      "flagi": "BRAK w indeksie książek – status z en.wikipedia"
+    },
+    {
+      "slug": "kuehneromyces_mutabilis",
+      "nazwa_lacinska": "Kuehneromyces mutabilis",
+      "nazwa_pl": "łuszczak zmienny",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "galerina_marginata",
+          "nazwa": "hełmówka jadowita",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Hełmówka: trzon pod pierścieniem włóknisty, bez odstających łuseczek. Łuszczak: łuseczkowaty trzon pod pierścieniem.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.42/43", "POROWNANIE"]
+        },
+        {
+          "slug": "hypholoma_fasciculare",
+          "nazwa": "maślanka wiązkowa",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Maślanka jest siarkowożółta, bez trwałego pierścienia. Łuszczak ma cynamonowe blaszki i pierścień.",
+          "zrodla": ["ATLAS"]
+        }
+      ],
+      "flagi": "pomyłka z Galerina marginata (indeks)"
+    },
+    {
+      "slug": "lactarius_deliciosus",
+      "nazwa_lacinska": "Lactarius deliciosus",
+      "nazwa_pl": "mleczaj rydz",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "lactarius_torminosus",
+          "nazwa": "mleczaj wełnianka",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Wełnianka: wełnisty brzeg, białe mleczko, pod brzozami. Rydz: pomarańczowe mleczko, zwykle pod sosnami.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.20–22"]
+        },
+        {
+          "slug": "paxillus_involutus",
+          "nazwa": "krowiak podwinięty",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Krowiak nie wydziela mleczka, ma podwinięty oliwkowobrązowy kapelusz, blaszki ciemnieją po dotknięciu.",
+          "zrodla": ["ATLAS", "BG s.22/23"]
+        }
+      ]
+    },
+    {
+      "slug": "lactarius_torminosus",
+      "nazwa_lacinska": "Lactarius torminosus",
+      "nazwa_pl": "mleczaj wełnianka",
+      "status_jadalnosci": "trujący",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "lactarius_deliciosus",
+          "nazwa": "mleczaj rydz",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Wełnianka: wełnisto owłosiony brzeg, białe mleczko, pod brzozami. Rydz: mleczko pomarańczowe, zwykle pod sosnami.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.20–22"]
+        }
+      ],
+      "flagi": "WARUNKOWY: surowy trujący, w Fin./Rosji jadany po moczeniu"
+    },
+    {
+      "slug": "leccinum_aurantiacum",
+      "nazwa_lacinska": "Leccinum aurantiacum",
+      "nazwa_pl": "koźlarz czerwony",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "tylopilus_felleus",
+          "nazwa": "goryczak żółciowy",
+          "status_jadalnosci": "niejadalny",
+          "poziom_ryzyka": "niejadalny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Koźlarz ma kosmki, nie siatkę; goryczak — ciemną siatkę i różowiejące rurki.",
+          "zrodla": ["ATLAS"]
+        }
+      ]
+    },
+    {
+      "slug": "leccinum_scabrum",
+      "nazwa_lacinska": "Leccinum scabrum",
+      "nazwa_pl": "koźlarz babka",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "tylopilus_felleus",
+          "nazwa": "goryczak żółciowy",
+          "status_jadalnosci": "niejadalny",
+          "poziom_ryzyka": "niejadalny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Koźlarz: czarne łuseczki, rurki szare. Goryczak: siateczka, rurki brudnoróżowe.",
+          "zrodla": ["ATLAS", "KARTA"]
+        }
+      ]
+    },
+    {
+      "slug": "lepiota_brunneoincarnata",
+      "nazwa_lacinska": "Lepiota brunneoincarnata",
+      "nazwa_pl": "czubajeczka brązowoczerwonawa (pl.wikipedia)",
+      "status_jadalnosci": "śmiertelny",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "miniplus-new16",
+      "sobowtory": [
+        {
+          "slug": "marasmius_oreades",
+          "nazwa": "twardzioszek przydrożny",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": null,
+          "zrodla": ["TIERS", "en.wikipedia (wskazanie pary w build.py)"],
+          "uwaga": "Najgroźniejsza czubajeczka; para w model_tiers/LOOK_PAIRS, bez pewnego opisu cech — do uzupełnienia."
+        },
+        {
+          "slug": "macrolepiota_procera",
+          "nazwa": "czubajka kania",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Ogólna reguła z karty kani: czubajeczki są małe (zwykle <10 cm), kaniopodobne, część zawiera amatoksyny. Nie zbieraj „małych kań”. Osobnego opisu L. brunneoincarnata w kartach brak.",
+          "zrodla": ["KARTA (ogólnie Lepiota spp.)", "TIERS"],
+          "uwaga": "Cechy gatunkowe do uzupełnienia."
+        }
+      ],
+      "flagi": "BRAK w indeksie książek"
+    },
+    {
+      "slug": "leucocoprinus_leucothites",
+      "nazwa_lacinska": "Leucocoprinus leucothites",
+      "nazwa_pl": "czubnik pospolity (pl.wikipedia)",
+      "status_jadalnosci": "niejadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "miniplus-new16",
+      "sobowtory": [
+        {
+          "slug": "agaricus_campestris",
+          "nazwa": "pieczarki",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "niejadalny (status sporny)",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": null,
+          "zrodla": ["TIERS"],
+          "uwaga": "Para ze wskazania en.wikipedia. Status sporny — w modelu niejadalny. Cech brak, do uzupełnienia."
+        },
+        {
+          "slug": "amanita_virosa",
+          "nazwa": "białe muchomory (A. virosa / A. verna / blady A. phalloides)",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": null,
+          "zrodla": ["TIERS"],
+          "uwaga": "Wskazanie „muchomory białe” bez rozpisanych cech; ogólna reguła (pochwa + zawsze białe blaszki) jest w innych kartach — do uzupełnienia na tej karcie."
+        }
+      ],
+      "flagi": "SPORNY"
+    },
+    {
+      "slug": "lycoperdon_perlatum",
+      "nazwa_lacinska": "Lycoperdon perlatum",
+      "nazwa_pl": "purchawka chropowata",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "scleroderma_citrinum",
+          "nazwa": "tęgoskór pospolity",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Purchawka: cienka skórka z kolcami, młode wnętrze jednolicie białe (jadalna tylko wtedy). Tęgoskór: gruba łuskowata skórka, ciemne wnętrze. Zawsze przekrawaj.",
+          "zrodla": ["KARTA", "BG s.28/29"]
+        },
+        {
+          "slug": "amanita_phalloides",
+          "nazwa": "„jajo” muchomora zielonawego",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Po przekrojeniu wzdłuż w „jaju” muchomora widać zarys kapelusza, blaszek i trzonu.",
+          "zrodla": ["KARTA"]
+        },
+        {
+          "slug": "amanita_virosa",
+          "nazwa": "„jajo” muchomora jadowitego",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Ta sama próba przekroju co przy A. phalloides.",
+          "zrodla": ["KARTA"]
+        }
+      ],
+      "flagi": "WARUNKOWY: tylko młode, białe wewnątrz"
+    },
+    {
+      "slug": "macrolepiota_procera",
+      "nazwa_lacinska": "Macrolepiota procera",
+      "nazwa_pl": "czubajka kania",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "amanita_phalloides",
+          "nazwa": "muchomor zielonawy",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Pierścień kani jest ruchomy; u muchomora przyrośnięty. Kania nie ma luźnej pochwy; muchomor ją ma. Zygzak na trzonie nie jest dowodem. Nie zbieraj zamkniętych owocników.",
+          "zrodla": ["ATLAS", "KARTA"]
+        },
+        {
+          "slug": "amanita_virosa",
+          "nazwa": "muchomor jadowity",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Muchomor jadowity jest białawy, z pochwą i włóknistymi łuskami na trzonie. Kania nie ma pochwy, pierścień daje się przesuwać.",
+          "zrodla": ["ATLAS"]
+        },
+        {
+          "slug": "amanita_pantherina",
+          "nazwa": "muchomor plamisty",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Plamisty: brązowy kapelusz z białymi łatkami, przyrośnięty pierścień, kołnierz na bulwie. Kania: ruchomy pierścień, brak pochwy, łuski nie kosmki.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.10/11"]
+        },
+        {
+          "slug": "amanita_regalis",
+          "nazwa": "muchomor królewski",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": null,
+          "zrodla": ["TIERS"],
+          "uwaga": "Para z LOOK_PAIRS (Finlandia / en.wikipedia). Cech brak — do uzupełnienia."
+        },
+        {
+          "slug": "lepiota_brunneoincarnata",
+          "nazwa": "czubajeczka brązowoczerwonawa",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Ogólna reguła karty kani: nie zbieraj „małych kań” (czubajeczki zwykle <10 cm, część z amatoksynami). Opisu gatunkowego L. brunneoincarnata brak.",
+          "zrodla": ["KARTA", "TIERS"],
+          "uwaga": "Cechy gatunkowe do uzupełnienia."
+        },
+        {
+          "slug": "chlorophyllum_rhacodes",
+          "nazwa": "czubajnik czerwieniejący",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "rozbieżność statusu",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Czubajnik po uszkodzeniu czerwienieje, na trzonie nie ma łuskowatego wzoru kani. Opis kani jako jadalnej nie przenosi się automatycznie na czubajnika.",
+          "zrodla": ["ATLAS", "KARTA"],
+          "uwaga": "Atlas: trujący; model_tiers: jadalny warunkowo. Para jest w obecnym recognition_math."
+        },
+        {
+          "slug": "poza:lepiota_subincarnata",
+          "nazwa": "Lepiota subincarnata (syn. L. josserandii)",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": false,
+          "poza_modelem": true,
+          "cechy_odrozniajace": null,
+          "zrodla": ["TIERS", "ood-v1/README"],
+          "uwaga": "W materiałach projektu odnotowano parę, ale brak zwięzłego, pewnego opisu cech odróżniających — do uzupełnienia przed zatwierdzeniem."
+        },
+        {
+          "slug": "poza:lepiota_castanea",
+          "nazwa": "Lepiota castanea",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": false,
+          "poza_modelem": true,
+          "cechy_odrozniajace": null,
+          "zrodla": ["TIERS", "ood-v1/README"],
+          "uwaga": "W materiałach projektu odnotowano parę, ale brak zwięzłego, pewnego opisu cech odróżniających — do uzupełnienia przed zatwierdzeniem."
+        },
+        {
+          "slug": "poza:lepiota_clypeolaria",
+          "nazwa": "Lepiota clypeolaria",
+          "status_jadalnosci": "niejadalny",
+          "poziom_ryzyka": "niejadalny",
+          "w_mini_plus": false,
+          "poza_modelem": true,
+          "cechy_odrozniajace": null,
+          "zrodla": ["TIERS"],
+          "uwaga": "W materiałach projektu odnotowano parę, ale brak zwięzłego, pewnego opisu cech odróżniających — do uzupełnienia przed zatwierdzeniem."
+        }
+      ],
+      "flagi": "WARUNKOWY: tylko kapelusze, po obróbce"
+    },
+    {
+      "slug": "marasmius_oreades",
+      "nazwa_lacinska": "Marasmius oreades",
+      "nazwa_pl": "twardzioszek przydrożny",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "miniplus-new16",
+      "sobowtory": [
+        {
+          "slug": "clitocybe_phyllophila",
+          "nazwa": "lejkówka liściowa",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Twardzioszek: łąki i pobocza, czarcie kręgi, rzadkie blaszki, łykowaty trzon, tylko kapelusze. Lejkówka liściowa wskazana jako trujący sobowtór (BG s.44); brak s.45 z jej opisem.",
+          "zrodla": ["BG s.44", "TIERS"],
+          "uwaga": "Opis lejkówki do uzupełnienia."
+        },
+        {
+          "slug": "lepiota_brunneoincarnata",
+          "nazwa": "czubajeczka brązowoczerwonawa",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": null,
+          "zrodla": ["TIERS (en.wikipedia)"],
+          "uwaga": "W materiałach projektu odnotowano parę, ale brak zwięzłego, pewnego opisu cech odróżniających — do uzupełnienia przed zatwierdzeniem."
+        },
+        {
+          "slug": "poza:clitocybe_rivulosa",
+          "nazwa": "lejkówka strumykowa/jadowita (C. rivulosa; także C. dealbata — poza scaleniem)",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": false,
+          "poza_modelem": true,
+          "cechy_odrozniajace": null,
+          "zrodla": ["TIERS", "ood-v1/README"],
+          "uwaga": "W materiałach projektu odnotowano parę, ale brak zwięzłego, pewnego opisu cech odróżniających — do uzupełnienia przed zatwierdzeniem."
+        }
+      ]
+    },
+    {
+      "slug": "morchella_esculenta",
+      "nazwa_lacinska": "Morchella esculenta",
+      "nazwa_pl": "smardz jadalny",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "gyromitra_esculenta",
+          "nazwa": "piestrzenica kasztanowata",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Smardz: główka plastrowata, jedna pusta komora. Piestrzenica: zwoje mózgowate, wnętrze pełne lub wielokomorowe. Smardz jadalny tylko po obróbce; reguła tylko-Europa.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.26/27"]
+        },
+        {
+          "slug": "paragyromitra_infula",
+          "nazwa": "piestrzenica infułowata",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący (status sporny)",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": null,
+          "zrodla": ["TIERS"],
+          "uwaga": "W materiałach projektu odnotowano parę, ale brak zwięzłego, pewnego opisu cech odróżniających — do uzupełnienia przed zatwierdzeniem."
+        },
+        {
+          "slug": "poza:verpa_bohemica",
+          "nazwa": "naparstniczka czeska",
+          "status_jadalnosci": "poza modelem",
+          "poziom_ryzyka": "niejadalny/niezalecany w karcie smardza",
+          "w_mini_plus": false,
+          "poza_modelem": true,
+          "cechy_odrozniajace": "Kapelusz przyrośnięty tylko na szczycie, wisi jak naparstek; trzon z watowatym rdzeniem.",
+          "zrodla": ["KARTA"]
+        }
+      ],
+      "flagi": "WARUNKOWY: surowy trujący; reguła tylko-Europa"
+    },
+    {
+      "slug": "neoboletus_luridiformis",
+      "nazwa_lacinska": "Neoboletus luridiformis",
+      "nazwa_pl": "borowik ceglastopory",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "rubroboletus_satanas",
+          "nazwa": "borowik szatański",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Szatański: jasny kapelusz, czerwona siateczka, słabsze sinienie, chroniony. Ceglastopory: ciemnobrązowy kapelusz, czerwone kropki, mocno sinieje; jadalny po dokładnym gotowaniu.",
+          "zrodla": ["ATLAS", "KARTA"]
+        },
+        {
+          "slug": "suillellus_luridus",
+          "nazwa": "borowik ponury",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Ponury ma siateczkę na trzonie; ceglastopory — czerwone punkciki, bez siatki.",
+          "zrodla": ["ATLAS", "KARTA"]
+        },
+        {
+          "slug": "caloboletus_calopus",
+          "nazwa": "borowik żółtopory",
+          "status_jadalnosci": "niejadalny",
+          "poziom_ryzyka": "niejadalny / BG „Trujący!”",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Żółtopory: spód żółty (nie ceglasty), trzon strefowany z wyraźną siateczką, smak gorzki. Ceglastopory: ceglastoczerwone pory, trzon w ziarnkach, bez siateczki, smak łagodny.",
+          "zrodla": ["BG s.38/39"]
+        },
+        {
+          "slug": "tylopilus_felleus",
+          "nazwa": "goryczak żółciowy",
+          "status_jadalnosci": "niejadalny",
+          "poziom_ryzyka": "niejadalny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Goryczak: brudnoróżowe rurki, ciemna siatka, nie sinieje. Ceglastopory: czerwone pory, punkciki, sinieje.",
+          "zrodla": ["ATLAS"]
+        },
+        {
+          "slug": "poza:imperator_rhodopurpureus",
+          "nazwa": "borowik purpurowy (Imperator rhodopurpureus)",
+          "status_jadalnosci": "poza modelem",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": false,
+          "poza_modelem": true,
+          "cechy_odrozniajace": "Kapelusz z różowopurpurowym odcieniem i trzon z czerwoną siatką — powód, żeby owocnik zostawić. Nie mylić z C. calopus (w mini+ „borowik żółtopory” to Caloboletus calopus, nie Imperator torosus z atlasu).",
+          "zrodla": ["ATLAS"]
+        }
+      ],
+      "flagi": "WARUNKOWY: po dokładnym gotowaniu; klasa obejmuje N. erythropus"
+    },
+    {
+      "slug": "omphalotus_olearius",
+      "nazwa_lacinska": "Omphalotus olearius",
+      "nazwa_pl": "kielichowiec pomarańczowy (pl.wikipedia)",
+      "status_jadalnosci": "trujący",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "miniplus-new16",
+      "sobowtory": [
+        {
+          "slug": "cantharellus_cibarius",
+          "nazwa": "pieprznik jadalny",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Kurka ma grube, zbiegające listewki i rośnie na ziemi. Kielichowiec rośnie kępami na drewnie (dęby, oliwki; głównie Europa Południowa, w PL rzadki), ma ostre, cienkie blaszki; powoduje silne wymioty. W projekcie tylko europejski wariant O. olearius.",
+          "zrodla": ["KARTA", "TIERS"]
+        }
+      ],
+      "flagi": "iNat PL RG = 0 – rzadki w PL"
+    },
+    {
+      "slug": "paragyromitra_infula",
+      "nazwa_lacinska": "Paragyromitra infula",
+      "nazwa_pl": "piestrzenica infułowata (pl.wikipedia)",
+      "status_jadalnosci": "trujący",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "miniplus-new16",
+      "sobowtory": [
+        {
+          "slug": "morchella_esculenta",
+          "nazwa": "smardz jadalny (smardze)",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": null,
+          "zrodla": ["TIERS (en.wikipedia: false morels; LOOK_PAIRS)"],
+          "uwaga": "Status sporny (indeks: Gyromitra infula; en.wikipedia: uważana za trującą, badanie 2023 to podważa). Cechy smardza vs G. esculenta są w tych kartach; osobnego opisu P. infula brak — do uzupełnienia."
+        }
+      ],
+      "flagi": "SPORNY; w indeksie jako Gyromitra infula"
+    },
+    {
+      "slug": "paxillus_involutus",
+      "nazwa_lacinska": "Paxillus involutus",
+      "nazwa_pl": "krowiak podwinięty",
+      "status_jadalnosci": "trujący",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "lactarius_deliciosus",
+          "nazwa": "mleczaj rydz",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Rydz po uszkodzeniu wydziela pomarańczowe mleczko. Krowiak mleczka nie ma, ma podwinięty oliwkowobrązowy kapelusz, blaszki ciemnieją po dotknięciu. Dawniej jadany, dziś groźny (zespół paksillusowy); atlas oznacza go jako śmiertelnie trującego.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.22/23"]
+        }
+      ],
+      "flagi": "dawniej jadalny wg indeksu"
+    },
+    {
+      "slug": "rubroboletus_satanas",
+      "nazwa_lacinska": "Rubroboletus satanas",
+      "nazwa_pl": "borowik szatański",
+      "status_jadalnosci": "trujący",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "neoboletus_luridiformis",
+          "nazwa": "borowik ceglastopory",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Ceglastopory: ciemnobrązowy kapelusz, czerwone kropki (nie siatka) na trzonie, miąższ mocno sinieje. Szatański: kapelusz białawy do szarego, czerwona siateczka na baryłkowatym trzonie, słabsze sinienie; na wapieniu pod dębem/bukiem, w PL pod ochroną ścisłą.",
+          "zrodla": ["ATLAS", "KARTA"]
+        },
+        {
+          "slug": "boletus_edulis",
+          "nazwa": "borowik szlachetny",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Prawdziwek ma rurki białe, potem zielonkawe, nigdy czerwonych porów. Szatański ma czerwone pory.",
+          "zrodla": ["ATLAS", "KARTA"]
+        },
+        {
+          "slug": "suillellus_luridus",
+          "nazwa": "borowik ponury",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Szatański: białawy/szary kapelusz, czerwona siateczka, słabsze sinienie. Ponury też ma siateczkę; czerwone pory nie rozstrzygają gatunku.",
+          "zrodla": ["ATLAS"]
+        }
+      ]
+    },
+    {
+      "slug": "russula_emetica",
+      "nazwa_lacinska": "Russula emetica",
+      "nazwa_pl": "gołąbek wymiotny",
+      "status_jadalnosci": "trujący",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "russula_vesca",
+          "nazwa": "gołąbek wyborny",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Wymiotny: ostry, piekący smak, zwykle czysto biały trzon, zapach owocowy. Wyborny bywa odbarwiony na ochrowo, skórka często nie dochodzi do brzegu, nie jest piekący. Rozróżnianie czerwonych gołąbków jest trudne. Para wnioskowana z układu stron broszury.",
+          "zrodla": ["BG s.8/9", "KARTA"],
+          "uwaga": "Smak jest cechą z broszury, nie zaleceniem testowania w terenie jako jedynego kryterium."
+        },
+        {
+          "slug": "poza:russula_czerwone",
+          "nazwa": "inne czerwone gołąbki (np. R. paludosa, R. xerampelina)",
+          "status_jadalnosci": "poza modelem",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": false,
+          "poza_modelem": true,
+          "cechy_odrozniajace": "Część czerwonych gołąbków ma łagodny smak; rozróżnienie jest trudne.",
+          "zrodla": ["KARTA"]
+        }
+      ]
+    },
+    {
+      "slug": "russula_vesca",
+      "nazwa_lacinska": "Russula vesca",
+      "nazwa_pl": "gołąbek wyborny (w indeksie: cukrówka)",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "miniplus-new16",
+      "sobowtory": [
+        {
+          "slug": "russula_emetica",
+          "nazwa": "gołąbek wymiotny",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Wymiotny: ostry, piekący smak, zwykle czysto biały trzon. Wyborny: skórka często nie dochodzi do brzegu, bywa odbarwiony na ochrowo, nie piekący. Para wnioskowana z układu stron broszury.",
+          "zrodla": ["BG s.8/9", "TIERS"]
+        }
+      ]
+    },
+    {
+      "slug": "russula_virescens",
+      "nazwa_lacinska": "Russula virescens",
+      "nazwa_pl": "gołąbek zielonawy",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "amanita_phalloides",
+          "nazwa": "muchomor zielonawy",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Muchomor: pierścień i luźna pochwa, miąższ włóknisty. Gołąbek: ani pierścienia, ani pochwy, miąższ kruchy, kapelusz w poletka.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.6/7"]
+        }
+      ]
+    },
+    {
+      "slug": "scleroderma_citrinum",
+      "nazwa_lacinska": "Scleroderma citrinum",
+      "nazwa_pl": "tęgoskór pospolity (cytrynowy)",
+      "status_jadalnosci": "trujący",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "lycoperdon_perlatum",
+          "nazwa": "purchawka chropowata",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Purchawka ma cienką skórkę z kolcami i u młodych jednolicie białe wnętrze. Tęgoskór ma grubą, łuskowatą skórkę i ciemne, fioletowoczarne wnętrze. Zawsze przekrawaj.",
+          "zrodla": ["KARTA", "BG s.28/29"]
+        },
+        {
+          "slug": "poza:tuber",
+          "nazwa": "trufle (Tuber spp.)",
+          "status_jadalnosci": "poza modelem",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": false,
+          "poza_modelem": true,
+          "cechy_odrozniajace": "Trufle rosną pod ziemią i mają marmurkowe, zbite wnętrze; tęgoskór rośnie na powierzchni.",
+          "zrodla": ["KARTA"]
+        }
+      ]
+    },
+    {
+      "slug": "sparassis_crispa",
+      "nazwa_lacinska": "Sparassis crispa",
+      "nazwa_pl": "siedzuń sosnowy (szmaciak gałęzisty)",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "poza:sparassis_brevipes",
+          "nazwa": "siedzuń dębowy",
+          "status_jadalnosci": "poza modelem",
+          "poziom_ryzyka": "chroniony",
+          "w_mini_plus": false,
+          "poza_modelem": true,
+          "cechy_odrozniajace": "Rośnie przy dębach, płatki szersze, mniej kędzierzawe. Pod ochroną — nie zbierać.",
+          "zrodla": ["KARTA"]
+        },
+        {
+          "slug": "poza:ramaria",
+          "nazwa": "koralówki (Ramaria spp.)",
+          "status_jadalnosci": "poza modelem",
+          "poziom_ryzyka": "część niejadalna/przeczyszczająca",
+          "w_mini_plus": false,
+          "poza_modelem": true,
+          "cechy_odrozniajace": "Rozgałęzienia prosto w górę jak koral, nie płaskie płatki.",
+          "zrodla": ["KARTA"]
+        }
+      ]
+    },
+    {
+      "slug": "suillellus_luridus",
+      "nazwa_lacinska": "Suillellus luridus",
+      "nazwa_pl": "borowik ponury",
+      "status_jadalnosci": "trujący",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "neoboletus_luridiformis",
+          "nazwa": "borowik ceglastopory",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Ceglastopory nie ma siateczki — trzon w czerwonych łuseczkach/kropkach. Ponury ma wyraźną siateczkę. Status ponurego jest sporny (część źródeł: jadalny po gotowaniu; w modelu: trujący).",
+          "zrodla": ["ATLAS", "KARTA", "TIERS"]
+        },
+        {
+          "slug": "rubroboletus_satanas",
+          "nazwa": "borowik szatański",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Szatański: białawy/szary kapelusz, czerwona siateczka na baryłkowatym trzonie, słabsze sinienie; chroniony.",
+          "zrodla": ["ATLAS"]
+        }
+      ],
+      "flagi": "SPORNY: książki niejadalny/trujący surowy, część źródeł jadalny po gotowaniu"
+    },
+    {
+      "slug": "suillus_bovinus",
+      "nazwa_lacinska": "Suillus bovinus",
+      "nazwa_pl": "maślak sitarz",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "suillus_luteus",
+          "nazwa": "maślak zwyczajny",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "jadalny (para niegroźna)",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Sitarz nie ma pierścienia, rurki szerokie jak sitko. Zwyczajny ma pierścień i drobne rurki.",
+          "zrodla": ["ATLAS"]
+        },
+        {
+          "slug": "poza:chalciporus_piperatus",
+          "nazwa": "pieprzowiec",
+          "status_jadalnosci": "poza modelem",
+          "poziom_ryzyka": "niejadalny",
+          "w_mini_plus": false,
+          "poza_modelem": true,
+          "cechy_odrozniajace": "Bardzo ostry, pieprzny smak, rdzawe pory.",
+          "zrodla": ["KARTA"]
+        }
+      ]
+    },
+    {
+      "slug": "suillus_grevillei",
+      "nazwa_lacinska": "Suillus grevillei",
+      "nazwa_pl": "maślak żółty",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "suillus_luteus",
+          "nazwa": "maślak zwyczajny",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "jadalny (para niegroźna)",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Żółty pod modrzewiem; zwyczajny pod sosną, czekoladowy kapelusz.",
+          "zrodla": ["ATLAS"]
+        }
+      ]
+    },
+    {
+      "slug": "suillus_luteus",
+      "nazwa_lacinska": "Suillus luteus",
+      "nazwa_pl": "maślak zwyczajny",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "suillus_grevillei",
+          "nazwa": "maślak żółty",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "jadalny (para niegroźna)",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Maślak żółty rośnie pod modrzewiem. Zwyczajny — pod sosną.",
+          "zrodla": ["ATLAS"],
+          "uwaga": "Para jadalny–jadalny; nie do DANGEROUS_PAIRS."
+        }
+      ]
+    },
+    {
+      "slug": "suillus_variegatus",
+      "nazwa_lacinska": "Suillus variegatus",
+      "nazwa_pl": "maślak pstry",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "imleria_badia",
+          "nazwa": "podgrzybek brunatny",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "jadalny (para niegroźna)",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Maślak pstry: łuseczkowaty, piaskowy kapelusz. Podgrzybek: gładki kasztanowy kapelusz.",
+          "zrodla": ["ATLAS"]
+        }
+      ]
+    },
+    {
+      "slug": "tricholoma_equestre",
+      "nazwa_lacinska": "Tricholoma equestre",
+      "nazwa_pl": "gąska zielonka",
+      "status_jadalnosci": "trujący",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "amanita_phalloides",
+          "nazwa": "muchomor zielonawy",
+          "status_jadalnosci": "śmiertelny",
+          "poziom_ryzyka": "śmiertelny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Muchomor: białe blaszki, pierścień i pochwa. Gąska zielonka: żółte blaszki, bez pierścienia i pochwy. W modelu obie klasy są wysokiego ryzyka — zielonka jest dziś trująca/niezalecana (rabdomioliza przy regularnym spożyciu, BG s.30).",
+          "zrodla": ["ATLAS", "KARTA", "BG s.30"]
+        },
+        {
+          "slug": "tricholoma_sulphureum",
+          "nazwa": "gąska siarkowa",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Siarkowa: siarkowożółty miąższ, nieprzyjemny karbidowy zapach i smak, blaszki dość rzadkie i grube. Zielonka: łagodny smak, miąższ białawy, typowo bory sosnowe na piasku. Broszura 2016 podawała zielonkę jako jadalną z ostrzeżeniem; w mini+ obie są trujące.",
+          "zrodla": ["BG s.30/31", "KARTA"]
+        }
+      ],
+      "flagi": "SPORNY: dawniej jadalny (Orłoś), dziś trujący/niezalecany"
+    },
+    {
+      "slug": "tricholoma_portentosum",
+      "nazwa_lacinska": "Tricholoma portentosum",
+      "nazwa_pl": "gąska niekształtna",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "miniplus-new16",
+      "sobowtory": [
+        {
+          "slug": "amanita_porphyria",
+          "nazwa": "muchomor porfirowy",
+          "status_jadalnosci": "niejadalny",
+          "poziom_ryzyka": "niejadalny / BG słabo trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Gąska: promieniste czarne włókna, bez pierścienia i pochwy. Porfirowy: pierścień, bulwa z pochwą, łatki, zapach stęchłych ziemniaków.",
+          "zrodla": ["BG s.32/33"]
+        },
+        {
+          "slug": "poza:tricholoma_pardinum",
+          "nazwa": "gąska tygrysia",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": false,
+          "poza_modelem": true,
+          "cechy_odrozniajace": null,
+          "zrodla": ["TIERS", "ood-v1/README"],
+          "uwaga": "W materiałach projektu odnotowano parę, ale brak zwięzłego, pewnego opisu cech odróżniających — do uzupełnienia przed zatwierdzeniem."
+        },
+        {
+          "slug": "poza:tricholoma_virgatum",
+          "nazwa": "gąska pieprzna",
+          "status_jadalnosci": "niejadalny",
+          "poziom_ryzyka": "niejadalny",
+          "w_mini_plus": false,
+          "poza_modelem": true,
+          "cechy_odrozniajace": null,
+          "zrodla": ["TIERS"],
+          "uwaga": "W materiałach projektu odnotowano parę, ale brak zwięzłego, pewnego opisu cech odróżniających — do uzupełnienia przed zatwierdzeniem."
+        }
+      ]
+    },
+    {
+      "slug": "tricholoma_sulphureum",
+      "nazwa_lacinska": "Tricholoma sulphureum",
+      "nazwa_pl": "gąska siarkowa",
+      "status_jadalnosci": "trujący",
+      "high_stakes": true,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "miniplus-new16",
+      "sobowtory": [
+        {
+          "slug": "tricholoma_equestre",
+          "nazwa": "gąska zielonka",
+          "status_jadalnosci": "trujący",
+          "poziom_ryzyka": "trujący",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Siarkowa: karbidowy zapach i smak, miąższ siarkowożółty, blaszki dość rzadkie. Zielonka: łagodny smak, miąższ białawy, typowo bory sosnowe. W broszurze 2016 zielonka była po stronie jadalnych; w mini+ obie są trujące.",
+          "zrodla": ["BG s.30/31", "KARTA"]
+        }
+      ]
+    },
+    {
+      "slug": "tylopilus_felleus",
+      "nazwa_lacinska": "Tylopilus felleus",
+      "nazwa_pl": "goryczak żółciowy",
+      "status_jadalnosci": "niejadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "boletus_edulis",
+          "nazwa": "borowik szlachetny",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "niejadalny (gorzki)",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Goryczak: rurki brudnoróżowe, ciemna gruba siatka, smak silnie gorzki. Prawdziwek: rurki białe potem żółtooliwkowe, jasna drobna siateczka. Smaku nie używaj jako jedynego testu w terenie.",
+          "zrodla": ["ATLAS", "KARTA", "BG s.36/37"]
+        },
+        {
+          "slug": "leccinum_scabrum",
+          "nazwa": "koźlarz babka",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "niejadalny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Koźlarz: czarne łuseczki na trzonie, rurki szare. Goryczak: siateczka i rurki brudnoróżowe.",
+          "zrodla": ["ATLAS", "KARTA"]
+        },
+        {
+          "slug": "neoboletus_luridiformis",
+          "nazwa": "borowik ceglastopory",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "niejadalny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Ceglastopory: czerwone pory, trzon w czerwonych punkcikach, miąższ sinieje. Goryczak nie sinieje na niebiesko.",
+          "zrodla": ["ATLAS"]
+        },
+        {
+          "slug": "imleria_badia",
+          "nazwa": "podgrzybek brunatny",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "niejadalny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Rurki podgrzybka po naciśnięciu sinieją; goryczak ma ciemną siatkę i rurki różowiejące.",
+          "zrodla": ["ATLAS"]
+        },
+        {
+          "slug": "leccinum_aurantiacum",
+          "nazwa": "koźlarz czerwony",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "niejadalny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Koźlarz ma kosmki na trzonie, nie siatkę.",
+          "zrodla": ["ATLAS"]
+        },
+        {
+          "slug": "gyroporus_castaneus",
+          "nazwa": "piaskowiec kasztanowaty",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "niejadalny",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Goryczak: różowe rurki, pełny trzon z siatką, gorzki.",
+          "zrodla": ["KARTA"]
+        }
+      ]
+    },
+    {
+      "slug": "xerocomellus_chrysenteron",
+      "nazwa_lacinska": "Xerocomellus chrysenteron",
+      "nazwa_pl": "podgrzybek złotawy",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "imleria_badia",
+          "nazwa": "podgrzybek brunatny",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "jadalny (para niegroźna)",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Złotawy pęka na różowawe poletka; brunatny ma ciemniejszy, niepękający kapelusz.",
+          "zrodla": ["ATLAS"]
+        }
+      ]
+    },
+    {
+      "slug": "xerocomus_subtomentosus",
+      "nazwa_lacinska": "Xerocomus subtomentosus",
+      "nazwa_pl": "podgrzybek zajączek",
+      "status_jadalnosci": "jadalny",
+      "high_stakes": false,
+      "w_mini_plus": true,
+      "zrodlo_klasy": "v3",
+      "sobowtory": [
+        {
+          "slug": "imleria_badia",
+          "nazwa": "podgrzybek brunatny",
+          "status_jadalnosci": "jadalny",
+          "poziom_ryzyka": "jadalny (para niegroźna)",
+          "w_mini_plus": true,
+          "poza_modelem": false,
+          "cechy_odrozniajace": "Zamszowy: matowy, oliwkowy, pory jaskrawożółte. Brunatny: ciemniejszy, w deszczu lepki, pory wyraźniej sinieją.",
+          "zrodla": ["ATLAS"]
+        }
+      ]
+    }
+  ],
+  "proponowane_DANGEROUS_PAIRS": [
+    {
+      "klasy": ["russula_virescens", "amanita_phalloides"],
+      "nazwy": ["Russula virescens (jadalny)", "Amanita phalloides (śmiertelny)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["macrolepiota_procera", "amanita_phalloides"],
+      "nazwy": ["Macrolepiota procera (jadalny)", "Amanita phalloides (śmiertelny)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["macrolepiota_procera", "amanita_virosa"],
+      "nazwy": ["Macrolepiota procera (jadalny)", "Amanita virosa (śmiertelny)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["macrolepiota_procera", "amanita_pantherina"],
+      "nazwy": ["Macrolepiota procera (jadalny)", "Amanita pantherina (trujący)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["macrolepiota_procera", "amanita_regalis"],
+      "nazwy": ["Macrolepiota procera (jadalny)", "Amanita regalis (trujący)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["macrolepiota_procera", "lepiota_brunneoincarnata"],
+      "nazwy": ["Macrolepiota procera (jadalny)", "Lepiota brunneoincarnata (śmiertelny)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["agaricus_campestris", "amanita_phalloides"],
+      "nazwy": ["Agaricus campestris (jadalny)", "Amanita phalloides (śmiertelny)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["agaricus_campestris", "amanita_virosa"],
+      "nazwy": ["Agaricus campestris (jadalny)", "Amanita virosa (śmiertelny)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["agaricus_campestris", "amanita_verna"],
+      "nazwy": ["Agaricus campestris (jadalny)", "Amanita verna (śmiertelny)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["agaricus_campestris", "agaricus_xanthodermus"],
+      "nazwy": ["Agaricus campestris (jadalny)", "Agaricus xanthodermus (trujący)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["agaricus_campestris", "agaricus_moelleri"],
+      "nazwy": ["Agaricus campestris (jadalny)", "Agaricus moelleri (trujący)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["agaricus_sylvaticus", "entoloma_sinuatum"],
+      "nazwy": ["Agaricus sylvaticus (jadalny)", "Entoloma sinuatum (trujący)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["agaricus_sylvaticus", "agaricus_moelleri"],
+      "nazwy": ["Agaricus sylvaticus (jadalny)", "Agaricus moelleri (trujący)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["calocybe_gambosa", "amanita_verna"],
+      "nazwy": ["Calocybe gambosa (jadalny)", "Amanita verna (śmiertelny)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["calocybe_gambosa", "amanita_virosa"],
+      "nazwy": ["Calocybe gambosa (jadalny)", "Amanita virosa (śmiertelny)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["calocybe_gambosa", "inocybe_erubescens"],
+      "nazwy": ["Calocybe gambosa (jadalny)", "Inosperma erubescens (śmiertelny)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["calocybe_gambosa", "inocybe_geophylla"],
+      "nazwy": ["Calocybe gambosa (jadalny)", "Inocybe geophylla (trujący)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["calocybe_gambosa", "entoloma_sinuatum"],
+      "nazwy": ["Calocybe gambosa (jadalny)", "Entoloma sinuatum (trujący)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["cantharellus_cibarius", "omphalotus_olearius"],
+      "nazwy": ["Cantharellus cibarius (jadalny)", "Omphalotus olearius (trujący)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["cantharellus_cibarius", "cortinarius_orellanus"],
+      "nazwy": ["Cantharellus cibarius (jadalny)", "Cortinarius orellanus (śmiertelny)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["cantharellus_cibarius", "inocybe_erubescens"],
+      "nazwy": ["Cantharellus cibarius (jadalny)", "Inosperma erubescens (śmiertelny)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["morchella_esculenta", "gyromitra_esculenta"],
+      "nazwy": ["Morchella esculenta (jadalny)", "Gyromitra esculenta (śmiertelny)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["morchella_esculenta", "paragyromitra_infula"],
+      "nazwy": ["Morchella esculenta (jadalny)", "Paragyromitra infula (trujący)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["kuehneromyces_mutabilis", "galerina_marginata"],
+      "nazwy": ["Kuehneromyces mutabilis (jadalny)", "Galerina marginata (śmiertelny)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["kuehneromyces_mutabilis", "hypholoma_fasciculare"],
+      "nazwy": ["Kuehneromyces mutabilis (jadalny)", "Hypholoma fasciculare (trujący)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["armillaria_mellea", "hypholoma_fasciculare"],
+      "nazwy": ["Armillaria mellea (jadalny)", "Hypholoma fasciculare (trujący)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["armillaria_mellea", "galerina_marginata"],
+      "nazwy": ["Armillaria mellea (jadalny)", "Galerina marginata (śmiertelny)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["armillaria_ostoyae", "hypholoma_fasciculare"],
+      "nazwy": ["Armillaria ostoyae (jadalny)", "Hypholoma fasciculare (trujący)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["armillaria_ostoyae", "galerina_marginata"],
+      "nazwy": ["Armillaria ostoyae (jadalny)", "Galerina marginata (śmiertelny)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["lactarius_deliciosus", "lactarius_torminosus"],
+      "nazwy": ["Lactarius deliciosus (jadalny)", "Lactarius torminosus (trujący)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["lactarius_deliciosus", "paxillus_involutus"],
+      "nazwy": ["Lactarius deliciosus (jadalny)", "Paxillus involutus (trujący)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["lycoperdon_perlatum", "scleroderma_citrinum"],
+      "nazwy": ["Lycoperdon perlatum (jadalny)", "Scleroderma citrinum (trujący)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["lycoperdon_perlatum", "amanita_phalloides"],
+      "nazwy": ["Lycoperdon perlatum (jadalny)", "Amanita phalloides (śmiertelny)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["lycoperdon_perlatum", "amanita_virosa"],
+      "nazwy": ["Lycoperdon perlatum (jadalny)", "Amanita virosa (śmiertelny)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["cortinarius_caperatus", "inocybe_erubescens"],
+      "nazwy": ["Cortinarius caperatus (jadalny)", "Inosperma erubescens (śmiertelny)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["marasmius_oreades", "lepiota_brunneoincarnata"],
+      "nazwy": ["Marasmius oreades (jadalny)", "Lepiota brunneoincarnata (śmiertelny)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["marasmius_oreades", "clitocybe_phyllophila"],
+      "nazwy": ["Marasmius oreades (jadalny)", "Clitocybe phyllophila (trujący)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["russula_vesca", "russula_emetica"],
+      "nazwy": ["Russula vesca (jadalny)", "Russula emetica (trujący)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["amanita_rubescens", "amanita_pantherina"],
+      "nazwy": ["Amanita rubescens (jadalny)", "Amanita pantherina (trujący)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["hypholoma_capnoides", "hypholoma_fasciculare"],
+      "nazwy": ["Hypholoma capnoides (jadalny)", "Hypholoma fasciculare (trujący)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["hypholoma_capnoides", "galerina_marginata"],
+      "nazwy": ["Hypholoma capnoides (jadalny)", "Galerina marginata (śmiertelny)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["neoboletus_luridiformis", "rubroboletus_satanas"],
+      "nazwy": ["Neoboletus luridiformis (jadalny)", "Rubroboletus satanas (trujący)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["neoboletus_luridiformis", "suillellus_luridus"],
+      "nazwy": ["Neoboletus luridiformis (jadalny)", "Suillellus luridus (trujący)"],
+      "grupa": "propozycja_glowna"
+    },
+    {
+      "klasy": ["boletus_edulis", "rubroboletus_satanas"],
+      "nazwy": ["Boletus edulis (jadalny)", "Rubroboletus satanas (trujący)"],
+      "grupa": "propozycja_glowna"
+    }
+  ],
+  "dodatkowe_pary_do_rozważenia": [
+    {
+      "para": ["cantharellus_cibarius", "hygrophoropsis_aurantiaca"],
+      "powod": "Klasyczna para broszury i obecny recognition_math; lisówka w model_tiers jest niejadalna, w atlasie trująca."
+    },
+    {
+      "para": ["boletus_edulis", "tylopilus_felleus"],
+      "powod": "Klasyczna pomyłka kulinarna (gorzki, nie toksyczny); była w recognition_math."
+    },
+    {
+      "para": ["neoboletus_luridiformis", "tylopilus_felleus"],
+      "powod": "Była w recognition_math; goryczak jest niejadalny, nie trujący."
+    },
+    {
+      "para": ["neoboletus_luridiformis", "caloboletus_calopus"],
+      "powod": "Para broszury s.38/39; BG „Trujący!”, model_tiers = niejadalny (SPORNY)."
+    },
+    {
+      "para": ["macrolepiota_procera", "chlorophyllum_rhacodes"],
+      "powod": "Była w recognition_math; atlas: czubajnik trujący, model_tiers: jadalny warunkowo."
+    },
+    {
+      "para": ["amanita_phalloides", "amanita_citrina"],
+      "powod": "Była w recognition_math; cytrynowy niejadalny (atlas: trujący), nie jadalny."
+    },
+    {
+      "para": ["amanita_phalloides", "tricholoma_equestre"],
+      "powod": "Była w recognition_math i jest w GIS/BG; dziś obie klasy nie są do jedzenia (zielonka trująca)."
+    },
+    {
+      "para": ["tricholoma_equestre", "tricholoma_sulphureum"],
+      "powod": "Para broszury s.30/31 z czasów, gdy zielonka była po stronie jadalnych; dziś obie trujące."
+    },
+    {
+      "para": ["tricholoma_portentosum", "amanita_porphyria"],
+      "powod": "Para broszury s.32/33; porfirowy w modelu niejadalny, w BG „słabo trujący”."
+    },
+    {
+      "para": ["amanita_rubescens", "amanita_porphyria"],
+      "powod": "Wskazanie broszury; porfirowy niejadalny/słabo trujący."
+    },
+    {
+      "para": ["agaricus_campestris", "leucocoprinus_leucothites"],
+      "powod": "LOOK_PAIRS; czubnik niejadalny, status sporny."
+    }
+  ],
+  "pary_usuwane_wzgledem_starego_recognition_math": [
+    {
+      "para": ["cortinarius_orellanus", "cortinarius_rubellus"],
+      "powod": "Klasy scalone w _v3 do cortinarius_orellanus — pary nie ma w 67 wyjściach."
+    }
+  ]
+}

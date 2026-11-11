@@ -1,0 +1,68 @@
+class,nazwa_lacinska,nazwa_pl,zrodlo,cc0,cc_by,cc_by_nc,cc_by_sa,pd_self,total,ui_safe,high_stakes,prog,przechodzi,uwagi
+agaricus_campestris,Agaricus campestris,pieczarka polna (łąkowa),v3,139,475,600,266,1,1481,614,false,40,true,
+agaricus_xanthodermus,Agaricus xanthodermus,pieczarka karbolowa,v3,174,435,600,363,0,1572,609,true,55,true,
+amanita_citrina,Amanita citrina,muchomor cytrynowy,v3,166,499,600,155,8,1428,665,false,40,true,
+amanita_excelsa,Amanita excelsa,muchomor twardawy,v3,152,471,600,79,2,1304,623,false,40,true,"SPORNY: GPL2021 jadalny, dane projektu niejadalny"
+amanita_muscaria,Amanita muscaria,muchomor czerwony,v3,251,1054,600,1745,43,3693,1305,true,55,true,
+amanita_pantherina,Amanita pantherina,muchomor plamisty,v3,147,503,598,246,3,1497,650,true,55,true,
+amanita_phalloides,Amanita phalloides,muchomor zielonawy (sromotnikowy),v3,166,491,600,789,12,2058,657,true,55,true,
+amanita_rubescens,Amanita rubescens,muchomor czerwieniejący,v3,175,518,600,476,9,1778,693,false,40,true,"WARUNKOWY: tylko po obróbce, niezalecany dla początkujących"
+amanita_virosa,Amanita virosa,muchomor jadowity,v3,36,108,600,40,0,784,144,true,55,true,
+armillaria_mellea,Armillaria mellea,opieńka miodowa,v3,69,184,200,111,0,564,253,false,40,true,WARUNKOWY: surowy trujący; kompleks gatunków
+boletus_edulis,Boletus edulis,borowik szlachetny,v3,126,630,599,899,21,2275,756,false,40,true,
+calocybe_gambosa,Calocybe gambosa,gęśnica wiosenna,v3,208,403,600,103,3,1317,611,false,40,true,
+cantharellus_cibarius,Cantharellus cibarius,pieprznik jadalny,v3,119,428,546,64,3,1160,547,false,40,true,reguła tylko-Europa (kompleks)
+chlorophyllum_rhacodes,Chlorophyllum rhacodes,czubajka czerwieniejąca,v3,165,446,599,344,3,1557,611,false,40,true,WARUNKOWY: bywa źle tolerowany
+cortinarius_caperatus,Cortinarius caperatus,płachetka zwyczajna,v3,129,472,599,359,1,1560,601,false,40,true,
+cortinarius_orellanus,Cortinarius orellanus,zasłonak rudy,v3,13,146,664,33,0,856,159,true,55,true,klasa scalona z C. rubellus; klasa scalona z Cortinarius rubellus
+entoloma_sinuatum,Entoloma sinuatum,wieruszka zatokowata,v3,2,35,281,73,0,391,37,true,55,true,
+galerina_marginata,Galerina marginata,hełmówka jadowita (obrzeżona),v3,150,480,600,1002,0,2232,630,true,55,true,
+gyromitra_esculenta,Gyromitra esculenta,piestrzenica kasztanowata,v3,156,456,600,274,2,1488,612,true,55,true,
+gyroporus_castaneus,Gyroporus castaneus,piaskowiec kasztanowaty,v3,64,329,599,246,2,1240,393,false,40,true,
+hydnum_repandum,Hydnum repandum,kolczak obłączasty,v3,146,474,598,231,4,1453,620,false,40,true,
+hygrophoropsis_aurantiaca,Hygrophoropsis aurantiaca,lisówka pomarańczowa,v3,154,479,600,530,1,1764,633,false,40,true,
+hypholoma_capnoides,Hypholoma capnoides,maślanka łagodna (pl.wikipedia),v3,150,459,599,351,2,1561,609,false,40,true,WARUNKOWY wg _podsumowanie; brak statusu w indeksie
+hypholoma_fasciculare,Hypholoma fasciculare,maślanka wiązkowa,v3,218,547,600,1076,4,2445,765,true,55,true,
+imleria_badia,Imleria badia,podgrzybek brunatny,v3,154,487,600,358,10,1609,641,false,40,true,
+inocybe_erubescens,Inosperma erubescens,strzępiak ceglasty,v3,6,18,142,14,0,180,24,true,55,true,slug historyczny inocybe_erubescens (nazwa przyjęta: Inosperma erubescens)
+inocybe_geophylla,Inocybe geophylla,strzępiak ziemistoblaszkowy (pl.wikipedia),v3,69,664,472,7,0,1212,733,true,55,true,BRAK w indeksie książek – status z en.wikipedia
+kuehneromyces_mutabilis,Kuehneromyces mutabilis,łuszczak zmienny,v3,131,491,598,180,0,1400,622,false,40,true,pomyłka z Galerina marginata (indeks)
+lactarius_deliciosus,Lactarius deliciosus,mleczaj rydz,v3,133,483,600,107,6,1329,616,false,40,true,
+lactarius_torminosus,Lactarius torminosus,mleczaj wełnianka,v3,145,462,599,99,2,1307,607,true,55,true,"WARUNKOWY: surowy trujący, w Fin./Rosji jadany po moczeniu"
+leccinum_aurantiacum,Leccinum aurantiacum,koźlarz czerwony,v3,103,373,600,125,2,1203,476,false,40,true,
+leccinum_scabrum,Leccinum scabrum,koźlarz babka,v3,116,520,600,358,1,1595,636,false,40,true,
+lycoperdon_perlatum,Lycoperdon perlatum,purchawka chropowata,v3,152,562,600,1030,6,2350,714,false,40,true,"WARUNKOWY: tylko młode, białe wewnątrz"
+macrolepiota_procera,Macrolepiota procera,czubajka kania,v3,186,567,600,621,26,2000,753,false,40,true,"WARUNKOWY: tylko kapelusze, po obróbce"
+morchella_esculenta,Morchella esculenta,smardz jadalny,v3,37,154,537,61,0,789,191,false,40,true,WARUNKOWY: surowy trujący; reguła tylko-Europa
+neoboletus_luridiformis,Neoboletus luridiformis,borowik ceglastopory,v3,118,449,556,211,6,1340,567,false,40,true,WARUNKOWY: po dokładnym gotowaniu; klasa obejmuje N. erythropus
+paxillus_involutus,Paxillus involutus,krowiak podwinięty,v3,143,489,599,447,1,1679,632,true,55,true,dawniej jadalny wg indeksu
+rubroboletus_satanas,Rubroboletus satanas,borowik szatański,v3,18,180,600,69,0,867,198,true,55,true,
+russula_emetica,Russula emetica,gołąbek wymiotny,v3,13,44,563,71,8,699,57,true,55,true,
+russula_virescens,Russula virescens,gołąbek zielonawy,v3,53,240,600,94,1,988,293,false,40,true,
+scleroderma_citrinum,Scleroderma citrinum,tęgoskór pospolity (cytrynowy),v3,182,507,600,590,1,1880,689,true,55,true,
+sparassis_crispa,Sparassis crispa,siedzuń sosnowy (szmaciak gałęzisty),v3,162,462,600,129,3,1356,624,false,40,true,
+suillellus_luridus,Suillellus luridus,borowik ponury,v3,134,482,600,250,6,1472,616,true,55,true,"SPORNY: książki niejadalny/trujący surowy, część źródeł jadalny po gotowaniu"
+suillus_bovinus,Suillus bovinus,maślak sitarz,v3,153,450,600,91,1,1295,603,false,40,true,
+suillus_grevillei,Suillus grevillei,maślak żółty,v3,190,616,600,151,2,1559,806,false,40,true,
+suillus_luteus,Suillus luteus,maślak zwyczajny,v3,153,468,600,316,7,1544,621,false,40,true,
+suillus_variegatus,Suillus variegatus,maślak pstry,v3,136,430,600,58,0,1224,566,false,40,true,
+tricholoma_equestre,Tricholoma equestre,gąska zielonka,v3,45,184,600,275,1,1105,229,true,55,true,"SPORNY: dawniej jadalny (Orłoś), dziś trujący/niezalecany"
+tylopilus_felleus,Tylopilus felleus,goryczak żółciowy,v3,117,500,600,527,5,1749,617,false,40,true,
+xerocomellus_chrysenteron,Xerocomellus chrysenteron,podgrzybek złotawy,v3,178,443,600,329,5,1555,621,false,40,true,
+xerocomus_subtomentosus,Xerocomus subtomentosus,podgrzybek zajączek,v3,116,378,599,201,2,1296,494,false,40,true,
+agaricus_moelleri,Agaricus moelleri,pieczarka szarołuskowa (pl.wikipedia),new16,37,74,661,10,0,782,111,true,55,true,
+agaricus_sylvaticus,Agaricus sylvaticus,pieczarka lśniąca,new16,27,202,736,37,0,1002,229,false,40,true,
+amanita_porphyria,Amanita porphyria,muchomor porfirowy,new16,19,74,909,0,0,1002,93,false,40,true,
+amanita_regalis,Amanita regalis,muchomor królewski,new16,12,110,873,5,0,1000,122,true,55,true,
+amanita_verna,Amanita verna,muchomor wiosenny,new16+addendum,1,7,52,5,2,67,8,true,55,true,iNat PL RG = 0 obserwacji: rzadki/niezgłaszany w PL; zostaje ze względów bezpieczeństwa
+armillaria_ostoyae,Armillaria ostoyae,opieńka ciemna,new16,41,134,820,5,0,1000,175,false,40,true,KOMPLEKS: kandydat do klasy scalonej „opieńki” z A. mellea; reguła tylko-Europa
+caloboletus_calopus,Caloboletus calopus,borowik żółtopory,new16,24,118,855,3,0,1000,142,false,40,true,"SPORNY: BG trujący, GPL2021 niejadalny"
+clitocybe_phyllophila,Clitocybe phyllophila,lejkówka liściowa,new16,13,99,696,4,0,812,112,true,55,true,strona 45 nieobecna w dostarczonym PDF (44 strony); status z TOC i s.44
+lepiota_brunneoincarnata,Lepiota brunneoincarnata,czubajeczka brązowoczerwonawa (pl.wikipedia),new16+addendum,3,11,188,24,0,226,14,true,55,true,BRAK w indeksie książek
+leucocoprinus_leucothites,Leucocoprinus leucothites,czubnik pospolity (pl.wikipedia),new16,58,96,838,8,0,1000,154,false,40,true,SPORNY
+marasmius_oreades,Marasmius oreades,twardzioszek przydrożny,new16,36,122,842,0,0,1000,158,false,40,true,
+omphalotus_olearius,Omphalotus olearius,kielichowiec pomarańczowy (pl.wikipedia),new16,31,89,876,5,0,1001,120,true,55,true,iNat PL RG = 0 – rzadki w PL
+paragyromitra_infula,Paragyromitra infula,piestrzenica infułowata (pl.wikipedia),new16,7,101,893,0,0,1001,108,true,55,true,SPORNY; w indeksie jako Gyromitra infula
+russula_vesca,Russula vesca,gołąbek wyborny (w indeksie: cukrówka),new16,17,109,874,0,0,1000,126,false,40,true,
+tricholoma_portentosum,Tricholoma portentosum,gąska niekształtna,new16,3,199,770,28,0,1000,202,false,40,true,
+tricholoma_sulphureum,Tricholoma sulphureum,gąska siarkowa,new16,48,93,857,3,0,1001,141,true,55,true,

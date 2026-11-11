@@ -36,7 +36,7 @@ export const en: typeof pl = {
     title: 'Help',
     body: 'The app suggests a mushroom name. It does not say whether you can eat it. There will be no preparation instructions.',
     numbers:
-      'Emergency numbers will live in one module in the content phase. This build does not show them, so there is no second source.',
+      'Emergency numbers live in one module and still need verification. This build does not show them.',
   },
   spike: {
     title: 'Styling spike',
