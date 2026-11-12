@@ -101,15 +101,17 @@ jest.mock('expo-router', () => {
 jest.mock('expo-camera', () => {
   const React = require('react');
   const { View } = require('react-native');
+  const mockTakePictureAsync = jest.fn(async () => ({ uri: 'file://mock-photo.jpg' }));
   const CameraView = React.forwardRef((props, ref) => {
     React.useImperativeHandle(ref, () => ({
-      takePictureAsync: jest.fn(async () => ({ uri: 'file://mock-photo.jpg' })),
+      takePictureAsync: mockTakePictureAsync,
     }));
     return React.createElement(View, { testID: 'camera-view', ...props }, props.children);
   });
   CameraView.displayName = 'CameraView';
   return {
     CameraView,
+    __mockTakePictureAsync: mockTakePictureAsync,
     useCameraPermissions: jest.fn(() => [
       { granted: true, canAskAgain: true, status: 'granted' },
       jest.fn().mockResolvedValue({ granted: true, status: 'granted' }),
@@ -123,6 +125,16 @@ jest.mock('expo-image-picker', () => ({
     assets: [{ uri: 'file://gallery-mock-photo.jpg' }],
   })),
 }));
+
+jest.mock('react-native-safe-area-context', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return {
+    useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+    SafeAreaProvider: ({ children }) => React.createElement(View, null, children),
+    SafeAreaView: ({ children }) => React.createElement(View, null, children),
+  };
+});
 
 jest.mock('react-native-svg', () => {
   const React = require('react');

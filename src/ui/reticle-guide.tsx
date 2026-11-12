@@ -9,6 +9,7 @@ export interface ReticleGuideProps {
   step: ScannerStep;
   theme?: ThemeName;
   size?: number;
+  accessibilityLabel?: string;
 }
 
 /**
@@ -18,7 +19,12 @@ export interface ReticleGuideProps {
  *  - Krok 2: Spód kapelusza / hymenofor (promieniste blaszki, pierścienie)
  *  - Krok 3: Trzon z pierścieniem i podstawą (kontur trzonu, pierścień, pochwa/bulwa)
  */
-export function ReticleGuide({ step, theme = 'light', size = 260 }: ReticleGuideProps) {
+export function ReticleGuide({
+  step,
+  theme = 'light',
+  size = 260,
+  accessibilityLabel,
+}: ReticleGuideProps) {
   const isHc = theme === 'highContrast';
   const bracketStroke = '#FFFFFF';
   const guideStroke = isHc ? '#FFFFFF' : 'rgba(255, 255, 255, 0.85)';
@@ -30,7 +36,7 @@ export function ReticleGuide({ step, theme = 'light', size = 260 }: ReticleGuide
       className="items-center justify-center pointer-events-none"
       style={{ width: size, height: size }}
       accessibilityRole="image"
-      accessibilityLabel={`Celownik skanera - krok ${step}`}
+      accessibilityLabel={accessibilityLabel ?? `Celownik skanera - krok ${step}`}
     >
       <Svg width={size} height={size} viewBox="0 0 260 260">
         {/* Narożne ramki celownika wizjera */}

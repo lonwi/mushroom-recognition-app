@@ -37,6 +37,7 @@
       "expo-sharing",
       "expo-system-ui",
       "expo-camera",
+      "expo-image-picker",
       [
         "expo-splash-screen",
         {
