@@ -1,8 +1,19 @@
 export const pl = {
   tabs: {
     atlas: 'Atlas',
+    journal: 'Dziennik',
     scanner: 'Skaner',
     help: 'Pomoc',
+    profile: 'Profil',
+  },
+  placeholders: {
+    journalTitle: 'Dziennik Zbiorów',
+    journalMessage:
+      'Rejestracja leśnych wypraw, trasa GPS i waga koszyka będą dostępne w kolejnej wersji.',
+    profileTitle: 'Profil Grzybiarza',
+    profileMessage:
+      'Statystyki wypraw, pakiety map offline i ustawienia polowe będą dostępne w kolejnej wersji.',
+    comingSoon: 'Faza kolejna · W przygotowaniu',
   },
   settings: {
     open: 'Ustawienia',
@@ -136,6 +147,12 @@ export const pl = {
     notAVerdict: 'To podpowiedź rozpoznania, nie ocena jadalności.',
   },
   plurals: {
+    species: {
+      one: '{n} gatunek',
+      few: '{n} gatunki',
+      many: '{n} gatunków',
+      other: '{n} gatunków',
+    },
     photos: {
       one: '{n} zdjęcie',
       few: '{n} zdjęcia',

@@ -34,6 +34,7 @@ export interface SpeciesListItem {
   incompleteCard: boolean;
   hymenophore: string | null;
   months: number[];
+  habitat?: string;
   primaryPhoto: {
     file: string;
     license: string;
@@ -195,6 +196,7 @@ function buildSpeciesSearchQuery(filter: SpeciesFilter): SqlClause {
       s.months_json,
       t.name,
       t.warning,
+      t.habitat,
       p.file AS photo_file,
       p.license AS photo_license,
       p.author AS photo_author
@@ -244,6 +246,7 @@ interface RawListItemRow {
   months_json: string;
   name: string;
   warning: string;
+  habitat?: string;
   photo_file: string | null;
   photo_license: string | null;
   photo_author: string | null;
@@ -273,6 +276,7 @@ export function searchSpecies(db: SpeciesSql, filter: SpeciesFilter): SpeciesLis
       incompleteCard: Boolean(row.incomplete_card),
       hymenophore: row.hymenophore,
       months,
+      habitat: row.habitat || undefined,
       primaryPhoto: row.photo_file
         ? {
             file: row.photo_file,

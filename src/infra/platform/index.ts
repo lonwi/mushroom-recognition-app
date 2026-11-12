@@ -8,3 +8,7 @@ export function platformName(): string {
   if (Platform.OS === 'android') return 'android';
   return Platform.OS;
 }
+
+export function isPlatformWeb(): boolean {
+  return Platform.OS === 'web';
+}

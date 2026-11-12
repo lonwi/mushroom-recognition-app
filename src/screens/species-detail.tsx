@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useMemo } from 'react';
-import { Image, ScrollView, View } from 'react-native';
+import { Image, Pressable, ScrollView, View } from 'react-native';
 
 import { getSpeciesDetail } from '@/core/db/species-search';
 import { messagesFor } from '@/core/i18n';
@@ -12,7 +12,7 @@ import { LatinBinomial } from '@/ui/latin-binomial';
 import { PileusButton } from '@/ui/pileus-button';
 import { Surface } from '@/ui/surface';
 import { AppText } from '@/ui/text';
-import { themes } from '@/ui/tokens';
+import { themes, touchTargetMinDp } from '@/ui/tokens';
 
 const ROMAN_MONTHS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 
@@ -93,6 +93,32 @@ export function SpeciesDetailScreen({ id }: SpeciesDetailScreenProps) {
 
   return (
     <ThemeFrame>
+      {/* Pasek nawigacyjny Stitch: Powrót do Atlasu */}
+      <View
+        className="flex-row items-center border-b border-borderSubtle px-4"
+        style={{
+          backgroundColor: colors.surface,
+          minHeight: touchTargetMinDp,
+        }}
+      >
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={messages.speciesDetail.backToAtlas}
+          onPress={() => router.back()}
+          className="flex-row items-center py-2"
+          style={{
+            minHeight: touchTargetMinDp,
+            minWidth: touchTargetMinDp,
+            justifyContent: 'center',
+          }}
+        >
+          <AppText className="mr-1.5 text-base text-ink">←</AppText>
+          <AppText emphasis className="text-sm font-bold text-ink">
+            {messages.tabs.atlas}
+          </AppText>
+        </Pressable>
+      </View>
+
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 40 }}
       >

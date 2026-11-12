@@ -4,8 +4,10 @@ import { FlatList, ScrollView, View } from 'react-native';
 
 import { searchSpecies, type SpeciesListItem } from '@/core/db/species-search';
 import { messagesFor } from '@/core/i18n';
+import { formatCount } from '@/core/i18n/plurals';
 import { getSpeciesDb } from '@/infra/db/species-db';
 import { useSettings } from '@/infra/settings/use-settings-store';
+import { SettingsButton } from '@/screens/settings-button';
 import { SpeciesCard } from '@/screens/species-card';
 import { ThemeFrame } from '@/screens/theme-frame';
 import { FilterChip } from '@/ui/chip';
@@ -50,7 +52,10 @@ export default function AtlasScreen() {
         limit,
         offset: 0,
       });
-    } catch {
+    } catch (err) {
+      if (__DEV__) {
+        console.warn('[AtlasScreen] searchSpecies error:', err);
+      }
       return [];
     }
   }, [db, query, edibilityFilter, hymenophoreFilter, limit]);
@@ -75,6 +80,12 @@ export default function AtlasScreen() {
     setLimit(PAGE_SIZE);
   };
 
+  const locale = englishEnabled ? 'en' : 'pl';
+  const countLabel = useMemo(
+    () => formatCount(messages.plurals.species, locale, items.length),
+    [items.length, locale, messages.plurals.species],
+  );
+
   return (
     <ThemeFrame>
       <FlatList
@@ -93,9 +104,21 @@ export default function AtlasScreen() {
           }
         }}
         onEndReachedThreshold={0.5}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 32 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 32 }}
         ListHeaderComponent={
           <View className="mb-4">
+            {/* Tytuł Atlasu, licznik i przycisk ustawień wg Stitch */}
+            <View className="mb-3 flex-row items-center justify-between pt-1">
+              <View>
+                <AppText emphasis className="text-3xl font-extrabold tracking-tight text-ink">
+                  {messages.tabs.atlas}
+                </AppText>
+                <AppText className="mt-0.5 text-xs font-medium text-muted">{countLabel}</AppText>
+              </View>
+              <SettingsButton />
+            </View>
+
+            {/* Pasek wyszukiwania */}
             <SearchBar
               value={query}
               onChangeText={(text) => {
@@ -107,6 +130,8 @@ export default function AtlasScreen() {
               textColor={colors.ink}
               clearAccessibilityLabel={messages.atlas.searchClear}
             />
+
+            {/* Pigułki filtrów terenowych */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-3 py-1">
               <FilterChip
                 label={messages.atlas.filterAll}
@@ -180,7 +205,8 @@ export default function AtlasScreen() {
         }
         ListEmptyComponent={
           <View className="items-center justify-center py-12">
-            <AppText emphasis className="text-lg text-ink">
+            <AppText className="text-4xl opacity-40">🔍</AppText>
+            <AppText emphasis className="mt-3 text-lg text-ink">
               {messages.atlas.emptyTitle}
             </AppText>
             <AppText className="mt-2 text-center text-sm text-muted">
