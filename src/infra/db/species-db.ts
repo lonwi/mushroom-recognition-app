@@ -141,27 +141,34 @@ function seedFallbackDatabase(db: SQLiteDatabase): void {
 
       if (card.confusionRisks) {
         card.confusionRisks.forEach((risk, index) => {
-          const pairId = `${card.id}__${risk.confusedWithId}`;
+          const pairId = `${card.id}__${risk.confusedWithId}__${index}`;
           db.runSync(
             `INSERT OR REPLACE INTO look_alike_pairs (
-              id, source_species_id, lookalike_species_id, fatal, review_status, order_index
-            ) VALUES (?, ?, ?, ?, ?, ?)`,
+              id, species_id, lookalike_species_id, fatal, review_status, pair_group, sort_index
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
             pairId,
             card.id,
             risk.confusedWithId,
             risk.fatal ? 1 : 0,
             'approved',
+            'karta',
             index,
           );
           db.runSync(
             `INSERT OR REPLACE INTO look_alike_texts (
-              pair_id, locale, key_differences_json, source_trait, lookalike_trait
-            ) VALUES (?, ?, ?, ?, ?)`,
+              pair_id, locale, traits
+            ) VALUES (?, ?, ?)`,
             pairId,
             'pl',
-            JSON.stringify(risk.keyDifferences),
-            '',
-            '',
+            risk.keyDifferences.join('\n'),
+          );
+          db.runSync(
+            `INSERT OR REPLACE INTO look_alike_texts (
+              pair_id, locale, traits
+            ) VALUES (?, ?, ?)`,
+            pairId,
+            'en',
+            risk.keyDifferences.join('\n'),
           );
         });
       }
