@@ -38,6 +38,7 @@ Silnik JS na telefonie to Hermes (ten z React Native). To nie jest agent Hermes.
 ## Bezpieczeństwo
 
 - Model nigdy nie orzeka o jadalności. W decyzji nie ma pola jadalności. Status przyjdzie z bazy gatunków, po identyfikatorze.
+- Nie zwracaj gatunku, pewności ani opóźnienia, dopóki rzeczywisty model na urządzeniu nie przetworzy pikseli. Brak lub niekalibrowany model zwraca „rozpoznawanie niedostępne”.
 - `CONDITIONALLY_EDIBLE` nie dostaje zielonego koloru jadalności i nie dostaje instrukcji obróbki. W tokenach jest to przypięte testem.
 - W UI wolno pokazać tylko zdjęcia CC0 i CC BY, z atrybucją. Import z Hugging Face jest w `pnpm build:species` i odpada bez sekretu `HF_TOKEN_READONLY`.
 - Obraz wygenerowany ma etykietę „ilustracja”. W bazie są metadane pilotażu. Bez pliku rycina ma status `pending` i nie jest do pokazania.

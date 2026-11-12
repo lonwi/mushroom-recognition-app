@@ -19,7 +19,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F6F5F1"
-      }
+      },
+      "permissions": ["android.permission.CAMERA"]
     },
     "ios": {
       "bundleIdentifier": "com.grzybobranie.ai",
@@ -35,6 +36,8 @@
       "expo-sqlite",
       "expo-sharing",
       "expo-system-ui",
+      "expo-camera",
+      "expo-image-picker",
       [
         "expo-splash-screen",
         {
