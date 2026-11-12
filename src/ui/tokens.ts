@@ -244,17 +244,20 @@ export type StoredEdibility = keyof typeof edibilityPresentation;
 function edibilityTone(
   status: StoredEdibility,
   statusDisputed: boolean,
+  incompleteCard = false,
 ): keyof typeof edibilityPresentation {
-  if (statusDisputed || status === 'CONDITIONALLY_EDIBLE') return 'CONDITIONALLY_EDIBLE';
+  if (statusDisputed || incompleteCard || status === 'CONDITIONALLY_EDIBLE')
+    return 'CONDITIONALLY_EDIBLE';
   return status;
 }
 
 export function edibilityColor(
   status: StoredEdibility,
   statusDisputed = false,
+  incompleteCard = false,
   theme: ThemeName = 'light',
 ): string {
-  const tone = edibilityTone(status, statusDisputed);
+  const tone = edibilityTone(status, statusDisputed, incompleteCard);
   const key = edibilityPresentation[tone];
   return themes[theme][key].text;
 }
@@ -263,12 +266,13 @@ export function getStatusBadgeColors(
   status: StoredEdibility,
   statusDisputed = false,
   theme: ThemeName = 'light',
+  incompleteCard = false,
 ): SemanticBadgeColors {
   if (status === 'DEADLY_POISONOUS') {
     const d = getDeadlyBadgeColors(theme);
     return { bg: d.background, text: d.text, border: d.border };
   }
-  const tone = edibilityTone(status, statusDisputed);
+  const tone = edibilityTone(status, statusDisputed, incompleteCard);
   const key = edibilityPresentation[tone];
   return themes[theme][key];
 }

@@ -100,15 +100,19 @@ test('conditionally edible is never the edible green', () => {
   expect(edibilityInk.disputed).not.toBe(edibilityInk.edible);
 });
 
-test('conditional and disputed statuses are not tied to a green token', () => {
+test('conditional, disputed, and incomplete statuses are not tied to a green token', () => {
   const greens = new Set<string>(Object.values(greenEdibilityTokens));
   const statuses = Object.keys(edibilityPresentation) as StoredEdibility[];
   for (const status of statuses) {
     expect(greens.has(edibilityColor(status, true))).toBe(false);
+    expect(greens.has(edibilityColor(status, false, true))).toBe(false);
   }
   expect(greens.has(edibilityColor('CONDITIONALLY_EDIBLE', false))).toBe(false);
   expect(edibilityColor('EDIBLE', false)).toBe(greenEdibilityTokens.edible);
 
   const disputedColors = getStatusBadgeColors('CONDITIONALLY_EDIBLE', false, 'light');
   expect(greens.has(disputedColors.text)).toBe(false);
+
+  const incompleteColors = getStatusBadgeColors('EDIBLE', false, 'light', true);
+  expect(greens.has(incompleteColors.text)).toBe(false);
 });

@@ -42,6 +42,7 @@ export function DeadlyBadge({ label = 'ŚMIERTELNIE TRUJĄCY', theme = 'light' }
 export interface EdibilityBadgeProps {
   status: StoredEdibility | null;
   statusDisputed?: boolean;
+  incompleteCard?: boolean;
   label: string;
   theme?: ThemeName;
 }
@@ -54,6 +55,7 @@ export interface EdibilityBadgeProps {
 export function EdibilityBadge({
   status,
   statusDisputed = false,
+  incompleteCard = false,
   label,
   theme = 'light',
 }: EdibilityBadgeProps) {
@@ -63,7 +65,7 @@ export function EdibilityBadge({
     return <DeadlyBadge label={label} theme={theme} />;
   }
 
-  const badgeColors = getStatusBadgeColors(status, statusDisputed, theme);
+  const badgeColors = getStatusBadgeColors(status, statusDisputed, theme, incompleteCard);
 
   return (
     <View

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react-native';
 
 import { DeadlyBadge, EdibilityBadge, IllustrationBadge } from '@/ui/badge';
-import { deadlyBadge } from '@/ui/tokens';
+import { deadlyBadge, greenEdibilityTokens } from '@/ui/tokens';
 
 describe('DeadlyBadge', () => {
   it('renders deadly badge with warning symbol and default label', async () => {
@@ -43,6 +43,12 @@ describe('EdibilityBadge', () => {
   it('renders disputed status when statusDisputed is true', async () => {
     await render(<EdibilityBadge status="EDIBLE" statusDisputed label="Sporny" />);
     expect(screen.getByText('Sporny')).toBeTruthy();
+  });
+
+  it('does NOT render green token for incompleteCard even if status is EDIBLE', async () => {
+    await render(<EdibilityBadge status="EDIBLE" incompleteCard label="Jadalny" theme="light" />);
+    const text = screen.getByText('Jadalny');
+    expect(text.props.style?.color).not.toBe(greenEdibilityTokens.edible);
   });
 });
 
