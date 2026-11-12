@@ -66,7 +66,10 @@ Eksport paczki JS Androida: `pnpm export:android`. Pełnego APK w CI nie ma. Pow
 ## Gałęzie i pull requesty
 
 - `main` to zamrożony prototyp (tag `prototype-final`). Nie commituj na `main`.
-- Praca greenfield idzie na gałęzie od `rewrite/greenfield`. Pull request celuje w `rewrite/greenfield`, nie w `main`.
+- `rewrite/greenfield` to gałąź bazowa dla nowego kodu (odpowiednik `main` dla rewizji). **Nigdy nie commituj bezpośrednio na `rewrite/greenfield`**.
+- Każde zadanie/funkcja wymaga nowej gałęzi (np. `feat/...`, `fix/...`) odchodzącej od `rewrite/greenfield`.
+- Po zakończeniu implementacji i przejściu `pnpm quality`, wypchnij gałąź na zdalne repozytorium (`git push -u origin <branch>`) i otwórz Pull Request celujący w `rewrite/greenfield` (`gh pr create`).
+- Przejście do kolejnego zadania następuje dopiero po zmergowaniu PR do `rewrite/greenfield` lub na wyraźną dyspozycję.
 - Przełączenie na `main` jest dopiero po Fazie 2.
 - Commity po angielsku, w stylu Conventional Commits.
 

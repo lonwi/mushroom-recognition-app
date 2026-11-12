@@ -516,3 +516,152 @@ export function getSpeciesDetail(db: SpeciesSql, id: string, locale = 'pl'): Spe
     })),
   };
 }
+
+export interface LookAlikeSpeciesInfo {
+  id: string;
+  name: string;
+  latinName: string;
+  edibility: Edibility | null;
+  statusDisputed: boolean;
+  hymenophore: string | null;
+  cap: string;
+  hymenophoreDescription: string;
+  stem: string;
+  flesh: string;
+  habitat: string;
+  taste: string;
+  photo: { file: string; license: string; author: string } | null;
+}
+
+export interface LookAlikePairDetail {
+  id: string;
+  fatal: boolean;
+  reviewStatus: string;
+  pairGroup: string;
+  traits: string;
+  sourceSpecies: LookAlikeSpeciesInfo;
+  lookalikeSpecies: LookAlikeSpeciesInfo;
+}
+
+interface RawPairRecord {
+  id: string;
+  species_id: string;
+  lookalike_species_id: string;
+  fatal: number;
+  review_status: string;
+  pair_group: string;
+  traits: string | null;
+}
+
+interface RawSpeciesDetailRecord {
+  id: string;
+  latin_name: string;
+  edibility: string | null;
+  status_disputed: number;
+  hymenophore: string | null;
+  name: string | null;
+  cap: string | null;
+  hymenophore_desc: string | null;
+  stem: string | null;
+  flesh: string | null;
+  habitat: string | null;
+  taste: string | null;
+  photo_file: string | null;
+  photo_license: string | null;
+  photo_author: string | null;
+}
+
+function fetchSpeciesLookAlikeInfo(
+  db: SpeciesSql,
+  speciesId: string,
+  locale: string,
+): LookAlikeSpeciesInfo | null {
+  const rows = db.all<RawSpeciesDetailRecord & Record<string, SqlValue>>(
+    `SELECT
+       s.id,
+       s.latin_name,
+       s.edibility,
+       s.status_disputed,
+       s.hymenophore,
+       t.name,
+       t.cap,
+       t.hymenophore AS hymenophore_desc,
+       t.stem,
+       t.flesh,
+       t.habitat,
+       t.taste,
+       p.file AS photo_file,
+       p.license AS photo_license,
+       p.author AS photo_author
+     FROM species s
+     LEFT JOIN species_texts t ON t.species_id = s.id AND t.locale = ?
+     LEFT JOIN species_photos p ON p.species_id = s.id AND p.sort_index = 0
+     WHERE s.id = ?`,
+    [locale, speciesId],
+  );
+
+  const row = rows[0];
+  if (!row) return null;
+
+  return {
+    id: row.id,
+    name: row.name ?? '',
+    latinName: row.latin_name,
+    edibility: (row.edibility as Edibility) ?? null,
+    statusDisputed: Boolean(row.status_disputed),
+    hymenophore: row.hymenophore,
+    cap: row.cap ?? '',
+    hymenophoreDescription: row.hymenophore_desc ?? '',
+    stem: row.stem ?? '',
+    flesh: row.flesh ?? '',
+    habitat: row.habitat ?? '',
+    taste: row.taste ?? '',
+    photo: row.photo_file
+      ? {
+          file: row.photo_file,
+          license: row.photo_license ?? '',
+          author: row.photo_author ?? '',
+        }
+      : null,
+  };
+}
+
+/** Pobiera dane pary sobowtórów do porównania 50/50 */
+export function getLookAlikePairDetail(
+  db: SpeciesSql,
+  pairId: string,
+  locale = 'pl',
+): LookAlikePairDetail | null {
+  const pairRows = db.all<RawPairRecord & Record<string, SqlValue>>(
+    `SELECT
+       p.id,
+       p.species_id,
+       p.lookalike_species_id,
+       p.fatal,
+       p.review_status,
+       p.pair_group,
+       lt.traits
+     FROM look_alike_pairs p
+     LEFT JOIN look_alike_texts lt ON lt.pair_id = p.id AND lt.locale = ?
+     WHERE p.id = ?`,
+    [locale, pairId],
+  );
+
+  const pairRow = pairRows[0];
+  if (!pairRow) return null;
+
+  const sourceSpecies = fetchSpeciesLookAlikeInfo(db, pairRow.species_id, locale);
+  const lookalikeSpecies = fetchSpeciesLookAlikeInfo(db, pairRow.lookalike_species_id, locale);
+
+  if (!sourceSpecies || !lookalikeSpecies) return null;
+
+  return {
+    id: pairRow.id,
+    fatal: Boolean(pairRow.fatal),
+    reviewStatus: pairRow.review_status,
+    pairGroup: pairRow.pair_group,
+    traits: pairRow.traits ?? '',
+    sourceSpecies,
+    lookalikeSpecies,
+  };
+}
