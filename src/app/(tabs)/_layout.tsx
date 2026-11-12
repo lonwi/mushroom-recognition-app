@@ -3,29 +3,24 @@ import { Tabs } from 'expo-router';
 import { messagesFor } from '@/core/i18n';
 import { useSettings } from '@/infra/settings/use-settings-store';
 import { SettingsButton } from '@/screens/settings-button';
-import { fontFamily, themes, touchTargetMinDp } from '@/ui/tokens';
+import { TabBar } from '@/ui/navigation/tab-bar';
+import { fontFamily, themes } from '@/ui/tokens';
 
 export default function TabLayout() {
   const theme = useSettings((state) => state.theme);
   const englishEnabled = useSettings((state) => state.englishEnabled);
   const messages = messagesFor(englishEnabled);
   const colors = themes[theme];
+
   return (
     <Tabs
+      tabBar={(props) => <TabBar {...props} theme={theme} />}
       screenOptions={{
         headerShadowVisible: false,
         headerStyle: { backgroundColor: colors.paper },
         headerTintColor: colors.ink,
         headerTitleStyle: { fontFamily: fontFamily.semibold },
         headerRight: () => <SettingsButton />,
-        tabBarActiveTintColor: colors.ink,
-        tabBarInactiveTintColor: colors.muted,
-        tabBarStyle: {
-          backgroundColor: colors.paper,
-          borderTopColor: colors.border,
-          minHeight: touchTargetMinDp,
-        },
-        tabBarItemStyle: { minHeight: touchTargetMinDp },
         sceneStyle: { backgroundColor: colors.paper },
       }}
     >

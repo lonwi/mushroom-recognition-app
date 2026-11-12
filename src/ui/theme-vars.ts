@@ -1,7 +1,6 @@
 import { vars } from 'nativewind';
 
 import type { ThemeName } from '@/core/theme';
-
 import { themes } from '@/ui/tokens';
 
 /** Zmienne NativeWind z tokenów. Jedno źródło prawdy zostaje w `tokens.ts`. */
@@ -14,6 +13,11 @@ export function themeVars(theme: ThemeName) {
     '--color-accent': colors.accent,
     '--color-on-accent': colors.onAccent,
     '--color-surface': colors.surface,
+    '--color-surface-raised': colors.surfaceRaised,
     '--color-border': colors.border,
+    '--color-border-strong': colors.borderStrong,
+    '--color-focus': colors.focus,
+    '--color-danger': colors.danger,
+    '--color-warning': colors.warning,
   });
 }

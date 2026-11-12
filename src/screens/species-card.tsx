@@ -2,6 +2,7 @@ import { Pressable, View } from 'react-native';
 
 import type { SpeciesListItem } from '@/core/db/species-search';
 import { EdibilityBadge } from '@/ui/badge';
+import { LatinBinomial } from '@/ui/latin-binomial';
 import { AppText } from '@/ui/text';
 import { touchTargetMinDp } from '@/ui/tokens';
 
@@ -38,7 +39,7 @@ export function SpeciesCard({ item, onPress, edibilityLabel }: SpeciesCardProps)
             {item.name}
           </AppText>
         </View>
-        <AppText className="text-xs italic text-muted">{item.latinName}</AppText>
+        <LatinBinomial name={item.latinName} className="text-xs" />
         {hymenophoreText ? (
           <AppText className="mt-1 text-xs text-muted">{hymenophoreText}</AppText>
         ) : null}
