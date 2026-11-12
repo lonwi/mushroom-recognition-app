@@ -9,9 +9,10 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { messagesFor } from '@/core/i18n';
+import { initSpeciesDbAsync } from '@/infra/db/species-db';
 import { diagnosticLog } from '@/infra/diagnostics/file-log';
 import { platformName } from '@/infra/platform';
 import { useSettings } from '@/infra/settings/use-settings-store';
@@ -24,6 +25,7 @@ export default function RootLayout() {
   const englishEnabled = useSettings((state) => state.englishEnabled);
   const messages = messagesFor(englishEnabled);
   const colors = themes[theme];
+  const [dbReady, setDbReady] = useState(false);
   const [loaded, error] = useFonts({
     PlusJakartaSans_400Regular,
     PlusJakartaSans_600SemiBold,
@@ -31,13 +33,23 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (loaded || error) {
+    let active = true;
+    void initSpeciesDbAsync().finally(() => {
+      if (active) setDbReady(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if ((loaded || error) && dbReady) {
       diagnosticLog.append(`start platform=${platformName()}`);
       void SplashScreen.hideAsync();
     }
-  }, [loaded, error]);
+  }, [loaded, error, dbReady]);
 
-  if (!loaded && !error) return null;
+  if ((!loaded && !error) || !dbReady) return null;
 
   return (
     <>

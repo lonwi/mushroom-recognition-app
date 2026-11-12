@@ -50,7 +50,10 @@ export default function AtlasScreen() {
         limit,
         offset: 0,
       });
-    } catch {
+    } catch (err) {
+      if (__DEV__) {
+        console.warn('[AtlasScreen] searchSpecies error:', err);
+      }
       return [];
     }
   }, [db, query, edibilityFilter, hymenophoreFilter, limit]);
@@ -75,6 +78,13 @@ export default function AtlasScreen() {
     setLimit(PAGE_SIZE);
   };
 
+  const countLabel = useMemo(() => {
+    const count = items.length;
+    if (count === 1) return 'gatunek';
+    if (count >= 2 && count <= 4) return 'gatunki';
+    return 'gatunków';
+  }, [items.length]);
+
   return (
     <ThemeFrame>
       <FlatList
@@ -93,9 +103,23 @@ export default function AtlasScreen() {
           }
         }}
         onEndReachedThreshold={0.5}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 32 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 32 }}
         ListHeaderComponent={
           <View className="mb-4">
+            {/* Tytuł Atlasu i licznik gatunków wg wzorca Stitch */}
+            <View className="mb-3 flex-row items-baseline justify-between pt-1">
+              <AppText emphasis className="text-3xl font-extrabold tracking-tight text-ink">
+                Atlas
+              </AppText>
+              <View className="flex-row items-baseline">
+                <AppText emphasis className="text-base font-bold italic text-ink">
+                  {items.length}
+                </AppText>
+                <AppText className="ml-1 text-xs text-muted">{countLabel}</AppText>
+              </View>
+            </View>
+
+            {/* Pasek wyszukiwania */}
             <SearchBar
               value={query}
               onChangeText={(text) => {
@@ -107,6 +131,8 @@ export default function AtlasScreen() {
               textColor={colors.ink}
               clearAccessibilityLabel={messages.atlas.searchClear}
             />
+
+            {/* Pigułki filtrów terenowych */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-3 py-1">
               <FilterChip
                 label={messages.atlas.filterAll}
@@ -180,7 +206,8 @@ export default function AtlasScreen() {
         }
         ListEmptyComponent={
           <View className="items-center justify-center py-12">
-            <AppText emphasis className="text-lg text-ink">
+            <AppText className="text-4xl opacity-40">🔍</AppText>
+            <AppText emphasis className="mt-3 text-lg text-ink">
               {messages.atlas.emptyTitle}
             </AppText>
             <AppText className="mt-2 text-center text-sm text-muted">
