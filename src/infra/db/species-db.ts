@@ -1,9 +1,9 @@
-import { importDatabaseFromAssetAsync, openDatabaseSync, type SQLiteDatabase } from 'expo-sqlite';
+import { openDatabaseSync, type SQLiteDatabase } from 'expo-sqlite';
 
-import speciesDbAsset from '../../../assets/db/species.db';
 import { foldForSearch } from '@/core/db/fold-search';
 import { SPECIES_DDL } from '@/core/db/species-ddl';
 import type { SpeciesSql, SqlValue } from '@/core/db/sql-db';
+import donorCardsData from '../../../data/sources/donor-cards.json';
 
 let overrideDb: SpeciesSql | null = null;
 let instance: SpeciesSql | null = null;
@@ -26,154 +26,65 @@ function checkDatabasePopulated(db: SQLiteDatabase): boolean {
   }
 }
 
-interface FallbackSpeciesSeed {
-  id: string;
-  latinName: string;
-  genus: string;
-  edibility: string;
-  hymenophore: string;
-  months: number[];
-  name: string;
-  warning: string;
-  habitat: string;
-  cap: string;
-  stem: string;
-  flesh: string;
-  nicknames: string;
+interface DonorCardConfusionRisk {
+  confusedWithId: string;
+  confusedWithName: string;
+  confusedWithStatus: string;
+  keyDifferences: string[];
+  fatal: boolean;
 }
 
-const FALLBACK_SPECIES: FallbackSpeciesSeed[] = [
-  {
-    id: 'boletus_edulis',
-    latinName: 'Boletus edulis',
-    genus: 'Boletus',
-    edibility: 'EDIBLE',
-    hymenophore: 'TUBES',
-    months: [6, 7, 8, 9, 10, 11],
-    name: 'Borowik szlachetny',
-    warning: '',
-    habitat: 'Lasy iglaste i mieszane, pod świerkami i sosnami',
-    cap: 'Poduszkowaty, brązowy, gładki, 6-25 cm',
-    stem: 'Baryłkowaty, z białą siateczką w górnej części',
-    flesh: 'Biały, niezmienny po przekrojeniu, orzechowy zapach',
-    nicknames: 'prawdziwek, borowik, prawdziwka',
-  },
-  {
-    id: 'amanita_phalloides',
-    latinName: 'Amanita phalloides',
-    genus: 'Amanita',
-    edibility: 'DEADLY_POISONOUS',
-    hymenophore: 'GILLS',
-    months: [7, 8, 9, 10],
-    name: 'Muchomor zielonawy',
-    warning: 'Śmiertelnie trujący! Zawiera amanitotoksyny niszczące wątrobę i nerki.',
-    habitat: 'Lasy liściaste i mieszane, pod dębami, bukami i grabami',
-    cap: 'Oliwkowozielony do żółtawozielonego, gładki z delikatnymi promienistymi włókienkami',
-    stem: 'Białawy z zielonkawym zygzakowatym wzorem, wyraźny wiszący pierścień, bulwa w wiotkiej pochwie',
-    flesh: 'Biały, pod skórką lekko zielonawy, słodkawy mdlący zapach',
-    nicknames: 'muchomor sromotnikowy, sromotnik',
-  },
-  {
-    id: 'cantharellus_cibarius',
-    latinName: 'Cantharellus cibarius',
-    genus: 'Cantharellus',
-    edibility: 'EDIBLE',
-    hymenophore: 'FOLDS',
-    months: [6, 7, 8, 9, 10],
-    name: 'Pieprznik jadalny',
-    warning: '',
-    habitat: 'Lasy iglaste i liściaste, w mchu, pod sosnami i świerkami',
-    cap: 'Lejkowaty o pofałdowanym brzegu, intensywnie żółty',
-    stem: 'Zwężający się ku dołowi, barwy kapelusza',
-    flesh: 'Białawy, twardy, zapach owocowy (morelowy), lekko pieprzny smak',
-    nicknames: 'kurka, lisica, pieprzyk',
-  },
-  {
-    id: 'macrolepiota_procera',
-    latinName: 'Macrolepiota procera',
-    genus: 'Macrolepiota',
-    edibility: 'EDIBLE',
-    hymenophore: 'GILLS',
-    months: [7, 8, 9, 10, 11],
-    name: 'Czubajka kania',
-    warning: 'Spożywać tylko kapelusze po usmażeniu. Trzon zdrewniały.',
-    habitat: 'Obrzeża lasów, polany, zręby, pobocza leśnych dróg',
-    cap: 'Parasolowaty z brunatnymi łuskami i garbkiem pośrodku, 10-30 cm',
-    stem: 'Wysoki, smukły, poprzecznie łuskowaty, z ruchomym pierścieniem',
-    flesh: 'Biały, miękki, watowaty w kapeluszu, przyjemny orzechowy zapach',
-    nicknames: 'kania, sowa, parasolnik',
-  },
-  {
-    id: 'tylopilus_felleus',
-    latinName: 'Tylopilus felleus',
-    genus: 'Tylopilus',
-    edibility: 'INEDIBLE',
-    hymenophore: 'TUBES',
-    months: [6, 7, 8, 9, 10],
-    name: 'Goryczak żółciowy',
-    warning: 'Niejadalny z powodu skrajnie gorzkiego smaku. Psuje całą potrawę.',
-    habitat: 'Lasy iglaste, piaszczyste gleby, kwaśne podłoże pod sosnami',
-    cap: 'Gładki, poduszkowaty, jasnobrązowy do szarobrązowego',
-    stem: 'Z wyrazistą, ciemną, wypukłą siateczką na oliwkowobrązowym tle',
-    flesh: 'Białawy, na przekroju lekko różowiejący, gorzki smak',
-    nicknames: 'szatan, goryczak, borowik szatański (błędnie)',
-  },
-  {
-    id: 'amanita_muscaria',
-    latinName: 'Amanita muscaria',
-    genus: 'Amanita',
-    edibility: 'POISONOUS',
-    hymenophore: 'GILLS',
-    months: [6, 7, 8, 9, 10, 11],
-    name: 'Muchomor czerwony',
-    warning: 'Trujący! Zawiera kwas ibotenowy i muscymol. Powoduje zaburzenia neurologiczne.',
-    habitat: 'Lasy iglaste i liściaste, zwłaszcza pod brzozami i świerkami',
-    cap: 'Czerwony do pomarańczowoczerwonego z białymi łatkami, 8-20 cm',
-    stem: 'Biały z trwałym zwisającym pierścieniem i bulwiastą podstawą z brodawkami',
-    flesh: 'Biały, pod skórką żółtawoczerwony, bez wyraźnego zapachu',
-    nicknames: 'muchar, muchomor',
-  },
-  {
-    id: 'leccinum_scabrum',
-    latinName: 'Leccinum scabrum',
-    genus: 'Leccinum',
-    edibility: 'EDIBLE',
-    hymenophore: 'TUBES',
-    months: [6, 7, 8, 9, 10],
-    name: 'Koźlarz babka',
-    warning: '',
-    habitat: 'Wyłącznie pod brzozami w lasach liściastych i na torfowiskach',
-    cap: 'Poduszkowaty, szarobrązowy do ciemnobrązowego, suchy',
-    stem: 'Smukły, białawy, pokryty gęstymi ciemnobrązowymi łuseczkami',
-    flesh: 'Biały, niezmieniający barwy na przekroju, łagodny smak',
-    nicknames: 'babka, koźlak, kozak',
-  },
-];
+interface DonorCardSeed {
+  id: string;
+  namePl: string;
+  nameLatin: string;
+  commonNicknames: string[];
+  family: string;
+  status: string;
+  incompleteCard?: boolean;
+  hymenophore: string;
+  months: number[];
+  habitat: string;
+  capDescription: string;
+  hymenophoreDescription: string;
+  stemDescription: string;
+  fleshDescription: string;
+  tasteAndSmell: string;
+  confusionRisks: DonorCardConfusionRisk[];
+  warningNotes?: string;
+}
 
 function seedFallbackDatabase(db: SQLiteDatabase): void {
   try {
     db.execSync(SPECIES_DDL);
 
-    for (const item of FALLBACK_SPECIES) {
+    const cards = (donorCardsData as { cards: DonorCardSeed[] }).cards;
+
+    for (const card of cards) {
+      const genus = card.nameLatin.split(' ')[0] ?? '';
+      const isDeadly = card.status === 'DEADLY_POISONOUS';
+      const warning =
+        card.warningNotes ?? (isDeadly ? 'Śmiertelnie trujący! Zawiera groźne toksyny.' : '');
+
       db.runSync(
         `INSERT OR REPLACE INTO species (
           id, latin_name, genus, edibility, status_disputed, in_model,
           incomplete_card, content_version, hymenophore, months_json,
           family, high_stakes, card_origin, incomplete_fields
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        item.id,
-        item.latinName,
-        item.genus,
-        item.edibility,
+        card.id,
+        card.nameLatin,
+        genus,
+        card.status,
         0,
         1,
-        0,
-        '2026-11-fallback',
-        item.hymenophore,
-        JSON.stringify(item.months),
-        null,
-        item.edibility === 'DEADLY_POISONOUS' ? 1 : 0,
-        'fallback_seed',
+        card.incompleteCard ? 1 : 0,
+        '2026-11-seed',
+        card.hymenophore,
+        JSON.stringify(card.months),
+        card.family,
+        isDeadly ? 1 : 0,
+        'donor_cards',
         '[]',
       );
 
@@ -181,24 +92,26 @@ function seedFallbackDatabase(db: SQLiteDatabase): void {
         `INSERT OR REPLACE INTO species_texts (
           species_id, locale, name, warning, note, cap, hymenophore, stem, flesh, habitat, taste, nicknames
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        item.id,
+        card.id,
         'pl',
-        item.name,
-        item.warning,
+        card.namePl,
+        warning,
         '',
-        item.cap,
-        item.hymenophore,
-        item.stem,
-        item.flesh,
-        item.habitat,
-        '',
-        item.nicknames,
+        card.capDescription,
+        card.hymenophoreDescription,
+        card.stemDescription,
+        card.fleshDescription,
+        card.habitat,
+        card.tasteAndSmell,
+        card.commonNicknames.join(', '),
       );
 
-      const folded = foldForSearch(`${item.name} ${item.latinName} ${item.nicknames}`);
+      const folded = foldForSearch(
+        `${card.namePl} ${card.nameLatin} ${card.commonNicknames.join(' ')}`,
+      );
       db.runSync(
         'INSERT OR REPLACE INTO species_fts (species_id, search_folded) VALUES (?, ?)',
-        item.id,
+        card.id,
         folded,
       );
 
@@ -208,22 +121,49 @@ function seedFallbackDatabase(db: SQLiteDatabase): void {
 
       db.runSync(
         "INSERT OR REPLACE INTO atlas_feature (species_id, facet, value) VALUES (?, 'hymenophore', ?)",
-        item.id,
-        item.hymenophore,
+        card.id,
+        card.hymenophore,
       );
 
       db.runSync(
         "INSERT OR REPLACE INTO atlas_feature (species_id, facet, value) VALUES (?, 'edibility', ?)",
-        item.id,
-        item.edibility,
+        card.id,
+        card.status,
       );
 
-      for (const month of item.months) {
+      for (const month of card.months) {
         db.runSync(
           "INSERT OR REPLACE INTO atlas_feature (species_id, facet, value) VALUES (?, 'season', ?)",
-          item.id,
+          card.id,
           String(month),
         );
+      }
+
+      if (card.confusionRisks) {
+        card.confusionRisks.forEach((risk, index) => {
+          const pairId = `${card.id}__${risk.confusedWithId}`;
+          db.runSync(
+            `INSERT OR REPLACE INTO look_alike_pairs (
+              id, source_species_id, lookalike_species_id, fatal, review_status, order_index
+            ) VALUES (?, ?, ?, ?, ?, ?)`,
+            pairId,
+            card.id,
+            risk.confusedWithId,
+            risk.fatal ? 1 : 0,
+            'approved',
+            index,
+          );
+          db.runSync(
+            `INSERT OR REPLACE INTO look_alike_texts (
+              pair_id, locale, key_differences_json, source_trait, lookalike_trait
+            ) VALUES (?, ?, ?, ?, ?)`,
+            pairId,
+            'pl',
+            JSON.stringify(risk.keyDifferences),
+            '',
+            '',
+          );
+        });
       }
     }
   } catch (err) {
@@ -235,18 +175,6 @@ function seedFallbackDatabase(db: SQLiteDatabase): void {
 export async function initSpeciesDbAsync(databaseName = 'species.db'): Promise<void> {
   if (overrideDb) return;
   try {
-    const db = openDatabaseSync(databaseName);
-    if (!checkDatabasePopulated(db)) {
-      try {
-        await importDatabaseFromAssetAsync(databaseName, {
-          assetId: speciesDbAsset,
-          forceOverwrite: true,
-        });
-        instance = null;
-      } catch (assetErr) {
-        console.warn('[species-db] Asset import skipped/failed:', assetErr);
-      }
-    }
     const freshDb = openDatabaseSync(databaseName);
     if (!checkDatabasePopulated(freshDb)) {
       seedFallbackDatabase(freshDb);
