@@ -11,6 +11,14 @@ jest.mock('expo-sqlite/kv-store', () => {
   };
 });
 
+jest.mock('expo-sqlite', () => ({
+  openDatabaseSync: () => ({
+    execSync: () => {},
+    runSync: () => ({ changes: 0, lastInsertRowId: 0 }),
+    getAllSync: () => [],
+  }),
+}));
+
 jest.mock('expo-file-system', () => {
   const files = new Map();
   class File {
