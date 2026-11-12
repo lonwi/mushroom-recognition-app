@@ -81,16 +81,43 @@ export const pl = {
     uncoveredWarning:
       'Gatunki podobne, których model skanera nie rozpoznaje w aparacie. Zachowaj szczególną ostrożność.',
   },
+  lookAlikesComparison: {
+    title: 'Porównanie sobowtórów',
+    notFoundTitle: 'Nie znaleziono pary sobowtórów',
+    notFoundMessage: 'Wybrana para nie istnieje w bazie danych.',
+    backButton: 'Wróć',
+    fatalWarning: 'Śmiertelnie niebezpieczna pomyłka!',
+    fatalDescription: 'Pomyłka między tymi gatunkami grozi ciężkim zatruciem lub śmiercią.',
+    keyDifferencesTitle: 'Kluczowe cechy różnicujące',
+    viewSpeciesCard: 'Karta gatunku',
+    featureCap: 'Kapelusz',
+    featureHymenophore: 'Hymenofor',
+    featureStem: 'Trzon',
+    featureFlesh: 'Miąższ',
+    featureHabitat: 'Siedlisko',
+    featureTaste: 'Zapach i smak',
+  },
   scanner: {
     title: 'Skaner',
     unavailable:
       'Rozpoznawanie jest niedostępne. Ta wersja nie ma modelu w pakiecie. Model nie ocenia jadalności.',
   },
   help: {
-    title: 'Pomoc',
+    title: 'Pomoc i bezpieczeństwo',
     body: 'Aplikacja podpowiada nazwę grzyba. Nie mówi, czy można go jeść. Instrukcji obróbki tu nie będzie.',
     numbers:
       'Numery alarmowe są w jednym module i czekają na weryfikację. Ta wersja ich nie pokazuje.',
+    rulesTitle: 'Zasady bezpiecznego grzybobrania',
+    rule1: 'Zbieraj wyłącznie grzyby, co do których masz 100% pewności.',
+    rule2:
+      'Początkujący grzybiarze powinni unikać grzybów z blaszkami (ryzyko śmiertelnego pomylenia z muchomorem sromotnikowym).',
+    rule3:
+      'Nie niszcz grzybów trujących i niejadalnych – są kluczowym elementem ekosystemu leśnego.',
+    rule4:
+      'W razie wątpliwości skonsultuj zbiory z grzyboznawcą w stacji sanitarno-epidemiologicznej (Sanepid).',
+    disclaimerTitle: 'Zastrzeżenie prawne',
+    disclaimerBody:
+      'Aplikacja ma charakter wyłącznie edukacyjny i pomocniczy. Nigdy nie polegaj na samej aplikacji przy podejmowaniu decyzji o spożyciu grzyba.',
   },
   spike: {
     title: 'Spike stylowania',

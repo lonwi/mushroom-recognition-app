@@ -84,16 +84,40 @@ export const en: typeof pl = {
     uncoveredWarning:
       'Similar species that the scanner model cannot yet recognize in camera. Exercise extreme caution.',
   },
+  lookAlikesComparison: {
+    title: 'Look-alikes comparison',
+    notFoundTitle: 'Pair not found',
+    notFoundMessage: 'The selected look-alike pair does not exist in the database.',
+    backButton: 'Back',
+    fatalWarning: 'Fatal danger if confused!',
+    fatalDescription: 'Confusing these species may result in severe poisoning or death.',
+    keyDifferencesTitle: 'Key differentiating traits',
+    viewSpeciesCard: 'Species profile',
+    featureCap: 'Cap',
+    featureHymenophore: 'Hymenophore',
+    featureStem: 'Stem',
+    featureFlesh: 'Flesh',
+    featureHabitat: 'Habitat',
+    featureTaste: 'Smell & taste',
+  },
   scanner: {
     title: 'Scanner',
     unavailable:
       'Recognition is unavailable. This build has no model package. The model does not judge edibility.',
   },
   help: {
-    title: 'Help',
+    title: 'Help & safety',
     body: 'The app suggests a mushroom name. It does not say whether you can eat it. There will be no preparation instructions.',
     numbers:
       'Emergency numbers live in one module and still need verification. This build does not show them.',
+    rulesTitle: 'Foraging safety rules',
+    rule1: 'Only forage mushrooms you are 100% certain about.',
+    rule2: 'Beginners should avoid gilled mushrooms (fatal risk of confusing with death cap).',
+    rule3: 'Do not destroy poisonous or inedible mushrooms – they are vital to forest ecosystems.',
+    rule4: 'When in doubt, consult a certified mycologist at your local sanitary station.',
+    disclaimerTitle: 'Disclaimer',
+    disclaimerBody:
+      'This app is for educational and advisory purposes only. Never rely on the app alone to decide whether to consume a mushroom.',
   },
   spike: {
     title: 'Styling spike',

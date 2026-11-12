@@ -53,6 +53,7 @@ export default function RootLayout() {
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="species/[id]" options={{ presentation: 'modal', title: '' }} />
+        <Stack.Screen name="look-alikes/[pair-id]" options={{ presentation: 'modal', title: '' }} />
         <Stack.Screen name="settings" options={{ title: messages.settings.title }} />
         {__DEV__ ? (
           <Stack.Screen name="dev/styling" options={{ title: messages.spike.title }} />

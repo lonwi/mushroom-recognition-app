@@ -8,6 +8,7 @@ import {
   buildSpeciesMatch,
   countSpecies,
   foldForSearch,
+  getLookAlikePairDetail,
   getSpeciesDetail,
   searchSpecies,
 } from '@/core/db/species-search';
@@ -177,6 +178,31 @@ describe('species-search', () => {
 
     it('returns null for nonexistent species id', () => {
       expect(getSpeciesDetail(db, 'nonexistent_mushroom')).toBeNull();
+    });
+
+    it('loads full lookalike pair detail for 50/50 comparison', () => {
+      const detail = getSpeciesDetail(db, 'amanita_phalloides');
+      expect(detail).not.toBeNull();
+      if (!detail || detail.lookAlikes.length === 0) return;
+
+      const firstPair = detail.lookAlikes[0];
+      if (!firstPair) return;
+      const pairId = firstPair.id;
+      const pair = getLookAlikePairDetail(db, pairId);
+      expect(pair).not.toBeNull();
+      if (!pair) return;
+
+      expect(pair.id).toBe(pairId);
+      expect(pair.sourceSpecies.id).toBe('amanita_phalloides');
+      expect(pair.sourceSpecies.name).toBe('Muchomor sromotnikowy (zielonawy)');
+      expect(pair.sourceSpecies.latinName).toBe('Amanita phalloides');
+      expect(pair.lookalikeSpecies.id).toBeTruthy();
+      expect(pair.lookalikeSpecies.name).toBeTruthy();
+      expect(pair.lookalikeSpecies.latinName).toBeTruthy();
+    });
+
+    it('returns null for nonexistent pair id', () => {
+      expect(getLookAlikePairDetail(db, 'nonexistent_pair')).toBeNull();
     });
   });
 });
