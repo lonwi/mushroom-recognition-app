@@ -1,43 +1,44 @@
 # Agent Guidelines for Grzybobranie AI 🍄📱
 
-This document is the compact operational rulebook for IDE agents (Cursor, Copilot, Claude, Antigravity). All rules are mandatory.
-Full specification: [`AGENTS.md`](../../AGENTS.md) · Design: [`docs/DESIGN.md`](../../docs/DESIGN.md) · Quality: [`docs/QUALITY.md`](../../docs/QUALITY.md) · Reviews: [`docs/REVIEW.md`](../../docs/REVIEW.md).
+This document is the compact operational rulebook for IDE agents (Antigravity, Cursor, Claude Code, local Hermes). All rules are mandatory.
+Full specification: [`AGENTS.md`](../../AGENTS.md) · Decisions: [`docs/decyzje-f0.md`](../../docs/decyzje-f0.md) · Architecture: [`docs/adr/0001-styling.md`](../../docs/adr/0001-styling.md).
 
 ---
 
 ## 1. Core Engineering & Platform Guardrails
-- **Package Manager**: Use `pnpm` exclusively (`pnpm.cmd` on Windows). Never use or commit `package-lock.json` or `yarn.lock`.
+- **Branch Target**: Work always branches from `rewrite/greenfield` and PRs target `rewrite/greenfield`. **NEVER target or commit to `main`** (frozen prototype).
+- **Commit Messages**: Conventional Commits in English (`feat:`, `fix:`, `chore:`, etc.). Enforced by `commitlint` and `lefthook`.
+- **Package Manager**: Use `pnpm` exclusively (`pnpm.cmd` on Windows). Never commit `package-lock.json` or `yarn.lock`.
 - **Safe Area**: ALWAYS import `SafeAreaView` from `'react-native-safe-area-context'`. NEVER import it from `'react-native'`.
-- **Platform Adapters**: Platform packages (`@react-native-async-storage/async-storage`, `expo-camera`, `expo-location`, `expo-file-system`, `react-native-fast-tflite`) are strictly restricted to the adapter modules defined in `scripts/adapter-allowlist.cjs`. Never import them directly into screens or UI components.
-- **No Platform Re-exports**: Adapters must wrap platform methods, never re-export raw platform objects (enforced by ESLint rule `grzybobranie/no-platform-reexport`).
+- **5-Layer Architecture**:
+  - `src/app/` -> routes only.
+  - `src/screens/` -> screen layouts. Cannot import `src/app`.
+  - `src/ui/` -> Pileus design tokens and dumb presentational views. Cannot import `src/app`, `src/screens`, `src/infra`.
+  - `src/core/` -> domain logic, i18n, schemas. **Pure TypeScript!** No React, no React Native, no Expo, no `ui`, no `screens`, no `infra`.
+  - `src/infra/` -> I/O adapters (SQLite, files, kv-store, platform). Cannot import `src/app`, `src/screens`, `src/ui`.
+- **Platform Isolation (Q13)**: `Platform.OS` and `Platform.select` are allowed ONLY in `src/infra/platform/`. Android/iOS-only APIs (`BackHandler`, `ToastAndroid`, etc.) are forbidden.
 - **No TensorFlow.js**: Never import or bundle `@tensorflow/tfjs*` in the app runtime.
-- **Component-Level Tests**: Component React Testing Library tests live in `src/components/__tests__/`, e.g. `src/components/__tests__/DevInferenceOverlay.test.tsx`. Do not put component tests in `src/__tests__/components/`. Screen tests stay in `src/__tests__/screens/`, and shared suites such as `headerContrast` stay in `src/__tests__/`.
 
-## 2. UI Design System (Nordic Field Guide v3.1)
-- **Token Source of Truth**: Read colors, spacing, radius, and typography exclusively from `src/theme/tokens.ts`. Never hardcode hex values.
-- **Typography**: Exclusively **Plus Jakarta Sans** (`font-sans`). Monospace and serif fonts are prohibited in app UI.
-- **Prohibitions**: No neon greens, laser scan lines, dark cyberpunk HUDs, fake mobile status bars, blur shadows > 4 px, or horizontal comparison sliders on mobile.
-- **Locked Components**:
-  - `BottomNavigationBar`: Tabs in order **Atlas · Dziennik · Skaner · Pomoc · Profil**. Skaner uses the `primaryGreen` pill CTA.
-  - `Deadly Poisonous Badge`: `#2A080C` background, `#FF4560` text, `1.5px solid #FF1744` border with skull (☠️).
+## 2. UI Design System (Nordic Field Guide & Pileus Tokens)
+- **Token Source of Truth**: Colors, spacing, radius, and typography come strictly from `src/ui/tokens.ts`. Never hardcode hex values.
+- **Typography**: Exclusively **Plus Jakarta Sans** (`font-sans`).
+- **CONDITIONALLY_EDIBLE Guard**: Status `CONDITIONALLY_EDIBLE` NEVER receives green color and NEVER receives cooking/preparation instructions.
 
 ## 3. Life-Safety & Domain Rules
-- **Emergency Numbers Single Source**: Emergency contact numbers exist **only** in `src/data/safetyRules.ts`. Never hardcode phone numbers elsewhere.
-- **Edibility Categories**: Every species uses strictly one `EdibilityStatus` (`EDIBLE`, `INEDIBLE`, `POISONOUS`, `DEADLY_POISONOUS`).
-- **Look-Alike (Sobowtór) Rules**: Distinguishing morphological traits must be listed in `confusionRisks`. If confused with a deadly species, set `fatal: true`.
-- **Recognition Honesty**: Never return an inferred species, confidence, or latency unless a real on-device model processed pixels. Uncalibrated/missing model returns "recognition unavailable". Never output an edibility verdict from model weights.
+- **Recognition Honesty**: The ML model NEVER predicts edibility. Edibility is resolved strictly by species slug from `species.db`.
+- **Emergency Contacts**: Emergency contact information lives **only** in `src/core/safety/emergency-contacts.ts`. Never hardcode emergency numbers elsewhere.
+- **Look-Alikes**: Confusions with deadly poisonous species must be marked with `fatal: true`.
+- **Licensing**: Only **`CC0`** and **`CC BY`** images (with full attribution) may be displayed in the mobile app UI (`src/`).
 
-## 4. Licensing & Data Boundaries
-- **UI Images**: Only images licensed under **`CC0`** or **`CC BY`** may be bundled or displayed in the mobile app UI (`src/`).
-- **Training Data**: `CC BY-NC`, `CC BY-SA`, and `pd-self` are restricted to the ML training pipeline (`ml/`).
-- **No Data in Git**: Never commit `.csv` manifests, raw images, or external dataset archives to Git.
-
-## 5. Local Validation Suite
+## 4. Local Validation Suite & Zero Suppression
 Run all checks before completing any task:
 ```bash
-pnpm typecheck                                     # tsc --noEmit
-pnpm test                                          # Jest + RNTL unit & component tests
-pnpm quality                                       # ESLint, jscpd, knip, depcruise, site check
-pnpm build-storybook && pnpm test:e2e              # Storybook & Playwright E2E
+pnpm quality    # tsc, eslint --max-warnings 0, prettier --check, jscpd (1.5%), knip, depcruise, jest --ci
 ```
-Never loosen a quality gate or expand baselines to make CI pass.
+**Zero-Suppression Policy**: Never add `eslint-disable`, knip ignores, jscpd baseline, or depcruise overrides to make CI pass. Fix the underlying code.
+
+## 5. Dedicated Project Skills
+- `grzybobranie-quality-gate` (`.agents/skills/grzybobranie-quality-gate/SKILL.md`)
+- `grzybobranie-safety-and-domain` (`.agents/skills/grzybobranie-safety-and-domain/SKILL.md`)
+- `grzybobranie-layer-guardrails` (`.agents/skills/grzybobranie-layer-guardrails/SKILL.md`)
+- `grzybobranie-pr-review` (`.agents/skills/grzybobranie-pr-review/SKILL.md`)

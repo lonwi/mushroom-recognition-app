@@ -1,0 +1,27 @@
+# Lefthook Git Hooks configuration for Grzybobranie AI
+# Reference: AGENTS.md
+
+rc: ~/.lefthookrc
+
+commit-msg:
+  commands:
+    commitlint:
+      run: pnpm commitlint --edit {1}
+
+pre-commit:
+  parallel: true
+  commands:
+    prettier:
+      glob: '*.{js,cjs,mjs,ts,tsx,json,css,md,yml,yaml}'
+      run: pnpm prettier --check {staged_files}
+    eslint:
+      glob: '*.{js,cjs,mjs,ts,tsx}'
+      run: pnpm eslint {staged_files}
+
+pre-push:
+  parallel: false
+  commands:
+    typecheck:
+      run: pnpm typecheck
+    depcruise:
+      run: pnpm depcruise
