@@ -89,6 +89,7 @@ export default function AtlasScreen() {
   return (
     <ThemeFrame>
       <FlatList
+        testID="species-flat-list"
         data={items}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
@@ -96,6 +97,7 @@ export default function AtlasScreen() {
             item={item}
             onPress={(id) => router.push(`/species/${id}`)}
             edibilityLabel={getEdibilityLabel(item)}
+            theme={theme}
           />
         )}
         onEndReached={() => {
@@ -120,6 +122,7 @@ export default function AtlasScreen() {
 
             {/* Pasek wyszukiwania */}
             <SearchBar
+              testID="search-input"
               value={query}
               onChangeText={(text) => {
                 setQuery(text);
@@ -134,11 +137,13 @@ export default function AtlasScreen() {
             {/* Pigułki filtrów terenowych */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-3 py-1">
               <FilterChip
+                testID="filter-chip-all"
                 label={messages.atlas.filterAll}
                 selected={!selectedEdibility && !selectedHymenophore}
                 onPress={handleClearFilters}
               />
               <FilterChip
+                testID="filter-chip-edible"
                 label={messages.atlas.filterEdible}
                 selected={selectedEdibility === 'EDIBLE'}
                 onPress={() => {
@@ -147,6 +152,7 @@ export default function AtlasScreen() {
                 }}
               />
               <FilterChip
+                testID="filter-chip-poisonous"
                 label={messages.atlas.filterPoisonous}
                 selected={selectedEdibility === 'POISONOUS_ALL'}
                 onPress={() => {
@@ -157,6 +163,7 @@ export default function AtlasScreen() {
                 }}
               />
               <FilterChip
+                testID="filter-chip-deadly"
                 label={messages.atlas.filterDeadly}
                 selected={selectedEdibility === 'DEADLY_POISONOUS'}
                 onPress={() => {
@@ -167,6 +174,7 @@ export default function AtlasScreen() {
                 }}
               />
               <FilterChip
+                testID="filter-chip-inedible"
                 label={messages.atlas.filterInedible}
                 selected={selectedEdibility === 'INEDIBLE'}
                 onPress={() => {
@@ -175,6 +183,7 @@ export default function AtlasScreen() {
                 }}
               />
               <FilterChip
+                testID="filter-chip-disputed"
                 label={messages.atlas.filterDisputed}
                 selected={selectedEdibility === 'CONDITIONALLY_EDIBLE'}
                 onPress={() => {
@@ -185,6 +194,7 @@ export default function AtlasScreen() {
                 }}
               />
               <FilterChip
+                testID="filter-chip-tubes"
                 label={messages.atlas.filterTubes}
                 selected={selectedHymenophore === 'rurki'}
                 onPress={() => {
@@ -193,6 +203,7 @@ export default function AtlasScreen() {
                 }}
               />
               <FilterChip
+                testID="filter-chip-gills"
                 label={messages.atlas.filterGills}
                 selected={selectedHymenophore === 'blaszki'}
                 onPress={() => {
@@ -204,7 +215,7 @@ export default function AtlasScreen() {
           </View>
         }
         ListEmptyComponent={
-          <View className="items-center justify-center py-12">
+          <View testID="species-empty-state" className="items-center justify-center py-12">
             <AppText className="text-4xl opacity-40">🔍</AppText>
             <AppText emphasis className="mt-3 text-lg text-ink">
               {messages.atlas.emptyTitle}
