@@ -48,7 +48,8 @@ jobs:
             }
 
             // Ogranicz wielkość diffa dla promptu
-            const truncatedDiff = diff.length > 50000 ? diff.substring(0, 50000) + '\n... [diff truncated]' : diff;
+            const isTruncated = diff.length > 50000;
+            const truncatedDiff = isTruncated ? diff.substring(0, 50000) + '\n... [diff truncated]' : diff;
 
             const systemInstruction = `Jesteś rygorystycznym recenzentem kodu w projekcie Grzybobranie AI (aplikacja mobilna React Native / Expo do rozpoznawania grzybów).
             Twoim zadaniem jest sprawdzenie zmian pod kątem wytycznych projektu:
@@ -112,15 +113,27 @@ jobs:
               }
 
               const result = JSON.parse(text);
-              const header = '### 🤖 Grzybobranie AI — Recenzja Architektury i Zasad';
-              let commentBody = `${header}\n\n${result.summary}\n\n`;
+              if (!result || typeof result !== 'object' || typeof result.summary !== 'string' || !Array.isArray(result.concerns)) {
+                throw new Error('Niepoprawny format odpowiedzi modelu AI: wymagane pola "summary" (string) oraz "concerns" (array).');
+              }
 
-              if (result.concerns && result.concerns.length > 0) {
+              const header = '### 🤖 Grzybobranie AI — Recenzja Architektury i Zasad';
+              let commentBody = `${header}\n\n`;
+
+              if (isTruncated) {
+                commentBody += `> ⚠️ **Uwaga:** Diff przekroczył limit 50 000 znaków i został obcięty. Jest to recenzja częściowa.\n\n`;
+              }
+
+              commentBody += `${result.summary}\n\n`;
+
+              if (result.concerns.length > 0) {
                 commentBody += `#### Zidentyfikowane uwagi:\n\n`;
                 for (const item of result.concerns) {
                   const icon = item.severity === 'CRITICAL' ? '🚨 **[KRYTYCZNE]**' : item.severity === 'WARNING' ? '⚠️ **[OSTRZEŻENIE]**' : '💡 **[SUGESTIA]**';
                   commentBody += `- ${icon} \`${item.file}\`: ${item.message}\n`;
                 }
+              } else if (isTruncated) {
+                commentBody += `⚠️ **Brak uwag w przeanalizowanej części diffa:** W obciętej części diffa nie wykryto naruszeń, jednak ze względu na częściową recenzję (obcięcie powyżej 50 000 znaków) nie można zagwarantować pełnej zgodności.\n`;
               } else {
                 commentBody += `✅ **Brak uwag:** Zmiany spełniają rygorystyczne wymagania bezpieczeństwa, warstw i jakości \`AGENTS.md\`.\n`;
               }

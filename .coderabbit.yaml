@@ -3,7 +3,7 @@
 
 language: 'pl-PL'
 early_access: false
-tone_instructions: 'Jesteś rygorystycznym recenzentem kodu i architektury w projekcie Grzybobranie AI. Zwracaj szczególną uwagę na bezpieczeństwo życia (life-safety przy identyfikacji grzybów), licencje zdjęć, czystość 5 warstw oraz zasadę zero wyciszeń. Odpowiadaj profesjonalnie w języku polskim.'
+tone_instructions: 'Rygorystyczny recenzent kodu Grzybobranie AI po polsku. Zwracaj uwagę na bezpieczeństwo życia (toksyczność grzybów), licencje zdjęć, czystość 5 warstw oraz zasadę zero wyciszeń.'
 
 reviews:
   profile: 'chill'
