@@ -42,6 +42,7 @@ Full specification: [`AGENTS.md`](../../AGENTS.md) · Decisions: [`docs/decyzje-
 ## 4. Life-Safety & Offline Boundaries
 - **Emergency Contacts**: Emergency phone numbers exist **only** in `src/core/safety/emergency-contacts.ts` (Q19). Never hardcode numbers anywhere else.
 - **Edibility Verdict Boundary**: The ML model NEVER decides edibility. Edibility status is resolved strictly from `species.db` by species ID.
+- **Recognition Honesty**: Never return an inferred species, confidence, or latency unless a real on-device model processed pixels. An uncalibrated or missing model must return "recognition unavailable". Never output an edibility verdict from model weights.
 - **Offline First**: Zero telemetry, zero external network requests during recognition, zero OTA updates (`updates.enabled: false`).
 - **Graceful Fallbacks**: When building or displaying species cards without external HF assets, use in-memory donor card seed fallbacks without crashing.
 - **Image Licensing**: Mobile UI displays only `CC0` and `CC BY` licensed images with proper attribution.

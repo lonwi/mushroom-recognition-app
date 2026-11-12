@@ -50,7 +50,7 @@ describe('SpeciesCard', () => {
     const onPress = jest.fn();
     await render(<SpeciesCard item={baseItem} onPress={onPress} edibilityLabel="Jadalny" />);
 
-    fireEvent.press(screen.getByTestId('species-card-boletus_edulis'));
+    await fireEvent.press(screen.getByTestId('species-card-boletus_edulis'));
     expect(onPress).toHaveBeenCalledWith('boletus_edulis');
   });
 
