@@ -4,8 +4,19 @@ import { pl } from '@/core/i18n/pl';
 export const en: typeof pl = {
   tabs: {
     atlas: 'Atlas',
+    journal: 'Journal',
     scanner: 'Scanner',
     help: 'Help',
+    profile: 'Profile',
+  },
+  placeholders: {
+    journalTitle: 'Foraging Journal',
+    journalMessage:
+      'Trip recording, GPS tracking, and harvest weights will be available in the next release.',
+    profileTitle: 'Forager Profile',
+    profileMessage:
+      'Field stats, offline map packs, and telemetry settings will be available in the next release.',
+    comingSoon: 'Upcoming phase · Coming soon',
   },
   settings: {
     open: 'Settings',
@@ -136,6 +147,12 @@ export const en: typeof pl = {
     notAVerdict: 'This is a recognition hint, not an edibility verdict.',
   },
   plurals: {
+    species: {
+      one: '{n} species',
+      few: '{n} species',
+      many: '{n} species',
+      other: '{n} species',
+    },
     photos: {
       one: '{n} photo',
       few: '{n} photos',

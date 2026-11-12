@@ -4,8 +4,10 @@ import { FlatList, ScrollView, View } from 'react-native';
 
 import { searchSpecies, type SpeciesListItem } from '@/core/db/species-search';
 import { messagesFor } from '@/core/i18n';
+import { formatCount } from '@/core/i18n/plurals';
 import { getSpeciesDb } from '@/infra/db/species-db';
 import { useSettings } from '@/infra/settings/use-settings-store';
+import { SettingsButton } from '@/screens/settings-button';
 import { SpeciesCard } from '@/screens/species-card';
 import { ThemeFrame } from '@/screens/theme-frame';
 import { FilterChip } from '@/ui/chip';
@@ -78,12 +80,11 @@ export default function AtlasScreen() {
     setLimit(PAGE_SIZE);
   };
 
-  const countLabel = useMemo(() => {
-    const count = items.length;
-    if (count === 1) return 'gatunek';
-    if (count >= 2 && count <= 4) return 'gatunki';
-    return 'gatunków';
-  }, [items.length]);
+  const locale = englishEnabled ? 'en' : 'pl';
+  const countLabel = useMemo(
+    () => formatCount(messages.plurals.species, locale, items.length),
+    [items.length, locale, messages.plurals.species],
+  );
 
   return (
     <ThemeFrame>
@@ -106,17 +107,15 @@ export default function AtlasScreen() {
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 32 }}
         ListHeaderComponent={
           <View className="mb-4">
-            {/* Tytuł Atlasu i licznik gatunków wg wzorca Stitch */}
-            <View className="mb-3 flex-row items-baseline justify-between pt-1">
-              <AppText emphasis className="text-3xl font-extrabold tracking-tight text-ink">
-                Atlas
-              </AppText>
-              <View className="flex-row items-baseline">
-                <AppText emphasis className="text-base font-bold italic text-ink">
-                  {items.length}
+            {/* Tytuł Atlasu, licznik i przycisk ustawień wg Stitch */}
+            <View className="mb-3 flex-row items-center justify-between pt-1">
+              <View>
+                <AppText emphasis className="text-3xl font-extrabold tracking-tight text-ink">
+                  {messages.tabs.atlas}
                 </AppText>
-                <AppText className="ml-1 text-xs text-muted">{countLabel}</AppText>
+                <AppText className="mt-0.5 text-xs font-medium text-muted">{countLabel}</AppText>
               </View>
+              <SettingsButton />
             </View>
 
             {/* Pasek wyszukiwania */}

@@ -12,14 +12,27 @@ export interface SpeciesCardProps {
   edibilityLabel: string;
 }
 
-const ROMAN_MONTHS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+const POLISH_MONTHS = [
+  'Sty',
+  'Lut',
+  'Mar',
+  'Kwi',
+  'Maj',
+  'Cze',
+  'Lip',
+  'Sie',
+  'Wrz',
+  'Paź',
+  'Lis',
+  'Gru',
+];
 
 function formatMonthsRange(months: number[]): string {
   if (!months || months.length === 0) return '';
   const min = Math.min(...months);
   const max = Math.max(...months);
-  if (min === max) return ROMAN_MONTHS[min - 1] ?? '';
-  return `${ROMAN_MONTHS[min - 1]} – ${ROMAN_MONTHS[max - 1]}`;
+  if (min === max) return POLISH_MONTHS[min - 1] ?? '';
+  return `${POLISH_MONTHS[min - 1]} – ${POLISH_MONTHS[max - 1]}`;
 }
 
 export function SpeciesCard({ item, onPress, edibilityLabel }: SpeciesCardProps) {
@@ -102,13 +115,14 @@ export function SpeciesCard({ item, onPress, edibilityLabel }: SpeciesCardProps)
 
           {seasonText ? (
             <View
-              className={`rounded-full px-2.5 py-0.5 ${
+              className={`flex-row items-center rounded-full px-2.5 py-0.5 ${
                 inSeasonNow ? 'bg-paperActive' : 'bg-transparent'
               }`}
             >
+              {inSeasonNow ? <View className="mr-1.5 h-1.5 w-1.5 rounded-full bg-accent" /> : null}
               <AppText
-                className={`text-[11px] font-semibold ${
-                  inSeasonNow ? 'text-ink font-bold' : 'text-muted'
+                className={`text-[11px] ${
+                  inSeasonNow ? 'font-bold text-ink' : 'font-medium text-muted'
                 }`}
               >
                 {inSeasonNow ? `W sezonie (${seasonText})` : `Sezon: ${seasonText}`}

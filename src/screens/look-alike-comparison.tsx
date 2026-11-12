@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useMemo } from 'react';
-import { Image, ScrollView, View } from 'react-native';
+import { Image, Pressable, ScrollView, View } from 'react-native';
 
 import { getLookAlikePairDetail, type LookAlikeSpeciesInfo } from '@/core/db/species-search';
 import { messagesFor } from '@/core/i18n';
@@ -13,7 +13,7 @@ import { LatinBinomial } from '@/ui/latin-binomial';
 import { PileusButton } from '@/ui/pileus-button';
 import { Surface } from '@/ui/surface';
 import { AppText } from '@/ui/text';
-import { themes } from '@/ui/tokens';
+import { themes, touchTargetMinDp } from '@/ui/tokens';
 
 export interface LookAlikeComparisonScreenProps {
   pairId: string;
@@ -169,6 +169,32 @@ export function LookAlikeComparisonScreen({ pairId }: LookAlikeComparisonScreenP
 
   return (
     <ThemeFrame>
+      {/* Pasek nawigacyjny Stitch: Powrót */}
+      <View
+        className="flex-row items-center border-b border-borderSubtle px-4"
+        style={{
+          backgroundColor: colors.surface,
+          minHeight: touchTargetMinDp,
+        }}
+      >
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={messages.lookAlikesComparison.backButton}
+          onPress={() => router.back()}
+          className="flex-row items-center py-2"
+          style={{
+            minHeight: touchTargetMinDp,
+            minWidth: touchTargetMinDp,
+            justifyContent: 'center',
+          }}
+        >
+          <AppText className="mr-1.5 text-base text-ink">←</AppText>
+          <AppText emphasis className="text-sm font-bold text-ink">
+            {messages.lookAlikesComparison.backButton}
+          </AppText>
+        </Pressable>
+      </View>
+
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 40 }}
       >

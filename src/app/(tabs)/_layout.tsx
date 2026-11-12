@@ -24,9 +24,11 @@ export default function TabLayout() {
         sceneStyle: { backgroundColor: colors.paper },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: messages.tabs.atlas }} />
+      <Tabs.Screen name="index" options={{ title: messages.tabs.atlas, headerShown: false }} />
+      <Tabs.Screen name="journal" options={{ title: messages.tabs.journal }} />
       <Tabs.Screen name="scanner" options={{ title: messages.tabs.scanner }} />
       <Tabs.Screen name="help" options={{ title: messages.tabs.help }} />
+      <Tabs.Screen name="profile" options={{ title: messages.tabs.profile }} />
     </Tabs>
   );
 }
