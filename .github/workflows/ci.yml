@@ -2,6 +2,7 @@ name: CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, edited]
   push:
     branches:
       - main
@@ -15,10 +16,37 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  branch-guard:
+    name: Target branch guard
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Verify base branch is not main
+        if: github.base_ref == 'main'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const message = '❌ **Błąd bazy PR:** Ten Pull Request celuje w gałąź `main`. Zgodnie z `AGENTS.md`, `main` jest zamrożonym prototypem. Wszelkie prace greenfield muszą celować w gałąź `rewrite/greenfield`.\n\n👉 Zmień bazę tego PR na `rewrite/greenfield` w interfejsie GitHub.';
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: message
+            });
+            core.setFailed('Pull Request cannot target main. Target rewrite/greenfield instead.');
+
   quality:
     name: Typecheck, lint, tests
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
@@ -34,14 +62,64 @@ jobs:
       - name: Audit dependencies
         run: pnpm audit --audit-level high
       - name: Quality gates
+        id: quality_gate
         run: pnpm quality
         env:
           EXPO_NO_TELEMETRY: '1'
       - name: Zbuduj species.db
+        id: species_db
         run: pnpm build:species
         env:
           EXPO_NO_TELEMETRY: '1'
           HF_TOKEN_READONLY: ${{ secrets.HF_TOKEN_READONLY }}
+      - name: Report QA Status
+        uses: actions/github-script@v7
+        if: always() && github.event_name == 'pull_request'
+        with:
+          script: |
+            const header = '### 🍄 Raport Automatycznego QA (CI)';
+            const qOutcome = '${{ steps.quality_gate.outcome }}';
+            const sOutcome = '${{ steps.species_db.outcome }}';
+
+            const badge = (outcome) => {
+              if (outcome === 'success') return '✅ Zaliczone';
+              if (outcome === 'failure') return '❌ Błąd';
+              return '⏭️ Pominięte';
+            };
+
+            const body = `${header}\n\n` +
+              `| Zadanie | Status |\n` +
+              `|---|---|\n` +
+              `| **Bramki jakości** (\`pnpm quality\`: tsc, eslint, prettier, jscpd, knip, depcruise, jest) | ${badge(qOutcome)} |\n` +
+              `| **Baza gatunków** (\`pnpm build:species\`) | ${badge(sOutcome)} |\n\n` +
+              `> *Commit: \`${context.sha.substring(0, 7)}\` · Uruchomienie: [Podgląd akcji](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})*`;
+
+            try {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+
+              const existingComment = comments.find(c => c.body && c.body.includes(header));
+              if (existingComment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existingComment.id,
+                  body: body
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: body
+                });
+              }
+            } catch (error) {
+              console.warn('Nie udało się opublikować komentarza QA w PR:', error);
+            }
 
   python:
     name: Frozen model contract

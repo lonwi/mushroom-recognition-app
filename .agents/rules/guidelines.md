@@ -1,6 +1,6 @@
 # Agent Guidelines for Grzybobranie AI 🍄📱
 
-This document is the compact operational rulebook for IDE agents (Cursor, Copilot, Claude, Antigravity, Hermes). All rules are mandatory.
+This document is the compact operational rulebook for IDE agents (Cursor, Copilot, Claude, Antigravity, local Hermes). All rules are mandatory.
 Full specification: [`AGENTS.md`](../../AGENTS.md) · Decisions: [`docs/decyzje-f0.md`](../../docs/decyzje-f0.md).
 
 ---
@@ -8,6 +8,7 @@ Full specification: [`AGENTS.md`](../../AGENTS.md) · Decisions: [`docs/decyzje-
 ## 1. Branching, PR Lifecycle & Quality Gates
 - **Base Branch**: `rewrite/greenfield`. **NEVER commit directly to `rewrite/greenfield` or `main`**.
 - **Feature Branches**: Every task/feature requires a dedicated branch (e.g. `feat/...`, `fix/...`) created from `rewrite/greenfield`.
+- **Commit Messages**: Conventional Commits in English (`feat:`, `fix:`, `chore:`, etc.). Enforced by `commitlint` and `lefthook`.
 - **Pre-Push Validation**: Always run `pnpm format && pnpm quality` and `pnpm export:android`.
 - **Pull Request**: Push branch (`git push -u origin <branch>`) and open PR targeting `rewrite/greenfield` via `gh pr create --base rewrite/greenfield`.
 - **Task Progression**: Do not start subsequent tasks until the current PR is merged into `rewrite/greenfield` or explicitly approved by the user.
@@ -30,6 +31,7 @@ Full specification: [`AGENTS.md`](../../AGENTS.md) · Decisions: [`docs/decyzje-
 - **Tokens Single Source of Truth**: Colors, spacing, radii, typography come strictly from `src/ui/tokens.ts`. Never hardcode hex colors or arbitrary spacing.
 - **Typography & Polish i18n**: User-facing copy strictly in Polish via `src/core/i18n/pl.ts` with symmetrical English keys in `src/core/i18n/en.ts`. Identifiers in English.
 - **Touch Target**: Strict minimum 48×48 dp for all touchable/interactive elements.
+- **CONDITIONALLY_EDIBLE Guard**: Status `CONDITIONALLY_EDIBLE` NEVER receives green color and NEVER receives cooking/preparation instructions.
 - **Navigation & Bottom Bar**:
   - 5 tabs in exact order: **Atlas (`index`) · Dziennik (`journal`) · Skaner (`scanner`) · Pomoc (`help`) · Profil (`profile`)**.
   - Skaner tab features elevated center CTA pill (52×38 dp, deep forest green `#1b382b`, white icon).
@@ -56,3 +58,9 @@ Full specification: [`AGENTS.md`](../../AGENTS.md) · Decisions: [`docs/decyzje-
   pnpm quality           # tsc, ESLint 9 (0 warnings), Prettier, Knip, jscpd (<1.5%), depcruise, Jest
   pnpm export:android    # Hermes Android JS bundle build check
   ```
+
+## 6. Dedicated Project Skills
+- `grzybobranie-quality-gate` (`.agents/skills/grzybobranie-quality-gate/SKILL.md`)
+- `grzybobranie-safety-and-domain` (`.agents/skills/grzybobranie-safety-and-domain/SKILL.md`)
+- `grzybobranie-layer-guardrails` (`.agents/skills/grzybobranie-layer-guardrails/SKILL.md`)
+- `grzybobranie-pr-review` (`.agents/skills/grzybobranie-pr-review/SKILL.md`)

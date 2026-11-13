@@ -1,0 +1,55 @@
+# CodeRabbit Configuration for Grzybobranie AI
+# Reference: AGENTS.md
+
+language: 'pl-PL'
+early_access: false
+tone_instructions: 'Rygorystyczny recenzent kodu Grzybobranie AI po polsku. Zwracaj uwagę na bezpieczeństwo życia (toksyczność grzybów), licencje zdjęć, czystość 5 warstw oraz zasadę zero wyciszeń.'
+
+reviews:
+  profile: 'chill'
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - 'rewrite/greenfield'
+
+  path_filters:
+    - '!**/node_modules/**'
+    - '!dist/**'
+    - '!ml/data/**'
+    - '!coverage/**'
+    - '!pnpm-lock.yaml'
+
+  path_instructions:
+    - path: 'src/core/**'
+      instructions: |
+        Warstwa CORE musi być czystym TypeScriptem bez jakichkolwiek zależności od React, React Native, Expo ani widoków UI.
+        Zgłoś błąd krytyczny, jeśli plik w src/core importuje 'react', 'react-native', 'expo', 'src/ui', 'src/screens' lub 'src/infra'.
+
+    - path: 'src/**'
+      instructions: |
+        Platform.OS i Platform.select są dozwolone WYŁĄCZNIE w katalogu src/infra/platform/.
+        Zakaz importowania API specyficznych dla Androida/iOS z 'react-native' (np. BackHandler, ToastAndroid).
+        SafeAreaView musi być importowany z 'react-native-safe-area-context', NIGDY z 'react-native'.
+
+    - path: 'src/ui/**'
+      instructions: |
+        Kolory, typografia, promienie i odstępy muszą pochodzić z tokenów Pileus w src/ui/tokens.ts. Zakaz hardkodowania wartości HEX.
+        Wyłącznie czcionka Plus Jakarta Sans (font-sans).
+        Status CONDITIONALLY_EDIBLE nie może mieć zielonego koloru jadalności (ani w badge, ani w tle).
+
+    - path: 'src/core/safety/**'
+      instructions: |
+        Numery alarmowe i kontakty do ośrodków zatruć mogą znajdować się wyłącznie w src/core/safety/emergency-contacts.ts.
+
+    - path: '.github/**'
+      instructions: |
+        Upewnij się, że PR nie zmienia bramek jakości w sposób, który wycisza błędy (zero baseline, zero wyciszeń).
+
+chat:
+  auto_reply: true

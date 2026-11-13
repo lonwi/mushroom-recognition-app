@@ -20,7 +20,8 @@
     "test": "jest --ci",
     "quality": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm duplication && pnpm knip && pnpm depcruise && pnpm test",
     "export:android": "expo export --platform android --output-dir dist",
-    "build:species": "tsx scripts/build-species-db.ts"
+    "build:species": "tsx scripts/build-species-db.ts",
+    "prepare": "lefthook install"
   },
   "dependencies": {
     "@expo-google-fonts/plus-jakarta-sans": "^0.4.2",
@@ -59,6 +60,8 @@
     "zustand": "5.1.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
     "@eslint/js": "9.39.5",
     "@testing-library/react-native": "14.1.0",
     "@types/jest": "30.0.0",
@@ -73,6 +76,7 @@
     "jest-expo": "58.0.14",
     "jscpd": "5.4.3",
     "knip": "6.44.2",
+    "lefthook": "^2.2.2",
     "prettier": "3.9.10",
     "sharp": "0.35.5",
     "tsx": "4.23.15",
