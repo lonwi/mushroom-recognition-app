@@ -24,7 +24,7 @@ config.server.enhanceMiddleware = (middleware, metroServer) => {
 
 // Dev routes are not part of a production bundle. CI sets NODE_ENV=production
 // for `pnpm export:android` before Metro loads this file. Release bundles that
-// do not set it still hit the !__DEV__ redirect in src/app/dev/styling.tsx.
+// do not set it still hit the !__DEV__ redirect in src/app/dev/*.tsx.
 if (process.env.NODE_ENV === 'production') {
   const devRoutes = /[/\\]src[/\\]app[/\\]dev[/\\]/;
   const blockList = config.resolver.blockList;

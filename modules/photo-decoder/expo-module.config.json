@@ -1,0 +1,9 @@
+{
+  "platforms": ["android", "apple"],
+  "apple": {
+    "modules": ["PhotoDecoderModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.photodecoder.PhotoDecoderModule"]
+  }
+}

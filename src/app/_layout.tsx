@@ -70,6 +70,9 @@ export default function RootLayout() {
         {__DEV__ ? (
           <Stack.Screen name="dev/styling" options={{ title: messages.spike.title }} />
         ) : null}
+        {__DEV__ ? (
+          <Stack.Screen name="dev/decoder" options={{ title: messages.decoderSpike.title }} />
+        ) : null}
       </Stack>
     </>
   );
