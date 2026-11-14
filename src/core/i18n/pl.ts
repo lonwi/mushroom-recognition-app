@@ -30,6 +30,7 @@ export const pl = {
     share: 'Udostępnij dziennik',
     shareFailed: 'Nie udało się otworzyć arkusza udostępniania.',
     spike: 'Spike stylowania',
+    decoderSpike: 'Spike dekodera',
   },
   atlas: {
     title: 'Atlas',
@@ -192,6 +193,28 @@ export const pl = {
     manifestNote: 'To fixture przykładu, nie model w telefonie.',
     reasons: 'Flagi przykładu: {reasons}',
     primitive: 'Przycisk na prymitywie dostępności',
+  },
+  decoderSpike: {
+    title: 'Spike dekodera',
+    intro:
+      'Wybierz albo zrób trzy zdjęcia w pełnej rozdzielczości. Ekran dekoduje je po kolei i zapisuje czas oraz szczyt pamięci. To nie jest rozpoznanie grzyba.',
+    criteria:
+      'Kryteria do wpisania w raporcie Fazy 0, nie werdykt z tego telefonu. Xiaomi Mi 11: szczyt PSS ≤ 400 MB na trzy zdjęcia, a czas jest częścią budżetu sesji ≤ 5 s p95. Huawei P smart 2019: bez OOM i bez ubicia procesu, czas bez progu.',
+    platform: 'Platforma: {name}',
+    empty: 'Miejsce {n}: puste',
+    filled: 'Zdjęcie {n}: {name}',
+    camera: 'Zrób zdjęcie',
+    gallery: 'Wybierz z galerii',
+    clear: 'Wyczyść',
+    decode: 'Dekoduj trzy zdjęcia',
+    running: 'Dekodowanie…',
+    pickFailed: 'Nie udało się odczytać zdjęcia.',
+    failed: 'Pomiar nie wystartował.',
+    copyHint: 'Przytrzymaj raport, żeby go skopiować.',
+    reportLanguage: 'Raport pomiaru jest po polsku.',
+    noReport: 'Raportu jeszcze nie ma.',
+    share: 'Udostępnij raport',
+    shareFailed: 'Nie udało się otworzyć arkusza udostępniania.',
   },
   safety: {
     notAVerdict: 'To podpowiedź rozpoznania, nie ocena jadalności.',

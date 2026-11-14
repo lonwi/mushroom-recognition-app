@@ -86,5 +86,5 @@ Eksport paczki JS Androida: `pnpm export:android`. Pełnego APK w CI nie ma. Pow
 ## Czego nie ruszać przy okazji
 
 - Potoku treningowego. Osobny bot go prowadzi.
-- Spike'a B (dekoder) poza jawnym zadaniem. Został po nim plik TODO.
+- Modułu `modules/photo-decoder` poza zadaniem, które go dotyczy. Kontrakt jest w `modules/photo-decoder/README.md`, pomiar w `docs/spikes/F0-raport.md`.
 - Numerów alarmowych w `emergency-contacts.ts`, dopóki nie ma zweryfikowanego źródła (Q19). Nie dopisuj numeru z pamięci.
