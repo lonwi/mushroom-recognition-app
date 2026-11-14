@@ -44,6 +44,12 @@ test('ImageDecoder target size hits the short side and keeps aspect', () => {
     height: 448,
     scaled: true,
   });
+  // 1025 * 0.5 = 512.5. Połówka idzie w stronę +∞, nie do parzystej.
+  expect(targetSizeForShortSide(1025, 896, floor)).toEqual({
+    width: 513,
+    height: 448,
+    scaled: true,
+  });
 });
 
 test('the spike floor is the decoder minimum, not a model input size', () => {

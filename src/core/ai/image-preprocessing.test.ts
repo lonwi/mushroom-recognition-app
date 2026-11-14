@@ -45,11 +45,21 @@ function expectedFloats(entry: ParityCase): Float32Array {
 function maxAbsDiff(actual: Float32Array, expected: Float32Array): number {
   let max = 0;
   for (let i = 0; i < actual.length; i += 1) {
-    const delta = Math.abs((actual[i] ?? 0) - (expected[i] ?? 0));
+    const left = actual[i];
+    const right = expected[i];
+    if (left === undefined || right === undefined) return Number.POSITIVE_INFINITY;
+    if (!Number.isFinite(left) || !Number.isFinite(right)) return Number.POSITIVE_INFINITY;
+    const delta = Math.abs(left - right);
     if (delta > max) max = delta;
   }
   return max;
 }
+
+test('niefinitywna wartość nie przechodzi porównania parytetu', () => {
+  expect(maxAbsDiff(Float32Array.from([Number.NaN]), Float32Array.from([1]))).toBe(
+    Number.POSITIVE_INFINITY,
+  );
+});
 
 test('P1 opisuje zgodność z ml/preprocess.py, nie z dekoderem JPEG', () => {
   expect(file.description).toContain('ml.preprocess.preprocess_rgb_uint8');

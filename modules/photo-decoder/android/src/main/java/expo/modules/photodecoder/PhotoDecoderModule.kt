@@ -21,7 +21,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.util.Locale
 import kotlin.math.min
-import kotlin.math.round
+import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -29,7 +29,8 @@ import kotlinx.coroutines.withContext
  * Geometria jest ta sama co w `src/core/ai/decode-plan.ts`.
  * Przykłady przypięte testem: 4000×3000 → sample 4 i cel 597×448;
  * 900×1600 → sample 2 i cel 448×796; 895×1000 → sample 1 i cel 448×501;
- * 400×300 bez skalowania; 896×896 → sample 2 i cel 448×448.
+ * 400×300 bez skalowania; 896×896 → sample 2 i cel 448×448;
+ * 1025×896 → cel 513×448 (połówka w stronę +∞, jak Math.round).
  */
 internal class PhotoDecoderException(code: String, message: String) :
   CodedException(code, message, null)
@@ -50,8 +51,8 @@ internal fun targetSize(width: Int, height: Int, minShortSide: Int): PlannedSize
   val shortSide = min(width, height)
   if (shortSide <= minShortSide) return PlannedSize(width, height, false)
   val scale = minShortSide.toDouble() / shortSide.toDouble()
-  var targetWidth = round(width * scale).toInt().coerceAtLeast(1)
-  var targetHeight = round(height * scale).toInt().coerceAtLeast(1)
+  var targetWidth = (width * scale).roundToInt().coerceAtLeast(1)
+  var targetHeight = (height * scale).roundToInt().coerceAtLeast(1)
   if (min(targetWidth, targetHeight) < minShortSide) {
     if (targetWidth <= targetHeight) targetWidth = minShortSide else targetHeight = minShortSide
   }
@@ -285,14 +286,16 @@ private fun decodePhotoBody(context: Context, rawUri: String, minShortSide: Int)
   var bitmap: Bitmap? = null
   var oriented: Bitmap? = null
   try {
-    val sampleSize: Int
-    val usedTarget: Boolean
+    var sampleSize = 1
+    var usedTarget = false
+    var fromImageDecoder = false
     if (Build.VERSION.SDK_INT >= 28) {
       try {
         val decoded = decodeWithImageDecoder(context, uri, minShortSide)
         bitmap = decoded.first
         usedTarget = decoded.second
         sampleSize = 1
+        fromImageDecoder = true
       } catch (oom: OutOfMemoryError) {
         throw oom
       } catch (error: PhotoDecoderException) {
@@ -311,7 +314,10 @@ private fun decodePhotoBody(context: Context, rawUri: String, minShortSide: Int)
     }
     val decodedBitmap = bitmap ?: throw PhotoDecoderException("decode_failed", "Nie udało się zdekodować zdjęcia.")
     peak.note()
-    oriented = applyExif(decodedBitmap, orientation)
+    // ImageDecoder sam stosuje EXIF. Drugi obrót odwróciłby zdjęcie.
+    // BitmapFactory zostawia piksele surowe, więc obrót jest tutaj.
+    oriented = if (fromImageDecoder) decodedBitmap else applyExif(decodedBitmap, orientation)
+    peak.note()
     if (oriented !== decodedBitmap) decodedBitmap.recycle()
     peak.note()
     val rgb = packRgb(oriented ?: decodedBitmap)

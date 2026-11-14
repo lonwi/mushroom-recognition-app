@@ -9,7 +9,7 @@ Dla adresu `file://` albo `content://` (aparat, galeria):
 1. Czyta orientację EXIF, bez trzymania pełnego obrazu.
 2. Dekoduje z podpróbkowaniem, tak aby **krótszy bok** miał co najmniej `minShortSide` pikseli, o ile źródło w ogóle jest większe. Mniejszego zdjęcia nie powiększa.
 3. Od Androida 9 (API 28) używa `ImageDecoder.setTargetSize`. Na starszych wersjach używa `inSampleSize` (potęga dwójki). Wzór jest ten sam co w `src/core/ai/decode-plan.ts`.
-4. Obraca bitmapę według EXIF (tagi 2–8), potem zwalnia bitmapę źródłową.
+4. `ImageDecoder` sam stosuje EXIF, więc ten wynik nie jest obracany drugi raz. Ścieżka `BitmapFactory` obraca tagi 2–8 i mierzy pamięć, zanim zwolni pierwszą bitmapę.
 5. Kopiuje piksele do bufora RGB (3 bajty na piksel, bez kanału alfa) i **od razu** woła `bitmap.recycle()`.
 
 Wynik: wymiary RGB, wymiary źródła, numer EXIF, `sampleSize`, flaga `usedTargetSize` oraz szczyt PSS, sterty natywnej i sterty Javy **zmierzone w trakcie** dekodowania, zanim bitmapa zniknie.
