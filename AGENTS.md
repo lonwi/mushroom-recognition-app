@@ -76,7 +76,8 @@ Eksport paczki JS Androida: `pnpm export:android`. Pełnego APK w CI nie ma. Pow
 
 ## Gdzie leżą decyzje
 
-- D-01…D-17: dokumenty planu poza repozytorium (KROK 3 i KROK 4). W repozytorium skrót rozstrzygnięć Fazy 0 jest w `docs/decyzje-f0.md`.
+- D-01…D-17: dokumenty planu poza repozytorium (KROK 3 i KROK 4). W repozytorium skrót rozstrzygnięć Fazy 0 jest w [docs/decyzje-f0.md](docs/decyzje-f0.md).
+- Plan faz: [docs/faza-1.md](docs/faza-1.md), [docs/faza-2.md](docs/faza-2.md), [docs/faza-3.md](docs/faza-3.md), [docs/faza-4.md](docs/faza-4.md), [docs/faza-5.md](docs/faza-5.md).
 - Stylowanie: `docs/adr/0001-styling.md`
 - Kontrakt modelu: `schemas/model-manifest.schema.json` (szkic v1.0.0-draft)
 - Stary kontrakt 54 klas: `ml/OUTDATED.md`. Nie traktuj go jako aktualnego.
