@@ -124,6 +124,10 @@ jest.mock('expo-image-picker', () => ({
     canceled: false,
     assets: [{ uri: 'file://gallery-mock-photo.jpg' }],
   })),
+  launchCameraAsync: jest.fn(async () => ({
+    canceled: false,
+    assets: [{ uri: 'file://camera-mock-photo.jpg' }],
+  })),
 }));
 
 jest.mock('react-native-safe-area-context', () => {
