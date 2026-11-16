@@ -17,7 +17,7 @@ Atlas i Pomoc działają w 100% offline na `species.db`, gotowe do wewnętrznego
    - oznaczenie „nierozpoznawany przez skaner”, gdy `in_model = false` (`krok2-ocena.md` §4 p. 9);
    - brak zielonej plakietki przy `incompleteCard` (D9 S7; D13 l. 51).
 4. **Porównanie 50/50** `src/app/look-alikes/[pair-id].tsx`: sztywny podział, bez suwaka (D1/D2 §2.1; D13 l. 52).
-5. **Pomoc** `src/app/(tabs)/help.tsx` (nazwa trasy **[OTWARTE Q20]**):
+5. **Pomoc** `src/app/(tabs)/help.tsx` (nazwa trasy **[OTWARTE Q20]**; rozstrzygnięte — trasa `help`, zob. [docs/decyzje-f0.md](decyzje-f0.md)):
    - statyczna, bez I/O (D9 l. 624; D13 l. 54);
    - numery alarmowe;
    - zasady bezpieczeństwa;

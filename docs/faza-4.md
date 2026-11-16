@@ -1,6 +1,6 @@
 # Faza 4: stabilizacja terenowa, Maestro, zamknięta beta
 
-Źródło: D13 l. 86–90; D9 §14 Faza 8. D9, D13, D8, D10 i `krok2-ocena.md` są dokumentami poza tym repozytorium.
+Źródło: D13 l. 86–90; D9 §14 Faza 8 „Wydanie” l. 630. D9, D13, D8, D10 i `krok2-ocena.md` są dokumentami poza tym repozytorium.
 
 Pełna ścieżka offline zweryfikowana na 3 telefonach. Zamknięta beta z grzybiarzami zbiera dane terenowe (D-13 C).
 

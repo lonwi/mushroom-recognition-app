@@ -23,7 +23,7 @@ Działa i jest przetestowany na trzech warstwach modeli zastępczych (D-08), a p
    - maszyna stanów `capturing → analyzing → result | failed` z `runId`;
    - sesja trzyma tylko URI + logity (D8 §4.4; D9 K1, l. 292);
    - `expo-camera` + `expo-image-picker` (D9 l. 143);
-   - odmontowanie `CameraView` po utracie fokusu na Androidzie (D9 l. 300). Czy to zachowanie łamie zasadę z D-02 C, to **[OTWARTE Q13]**.
+   - odmontowanie `CameraView` po utracie fokusu na Androidzie (D9 l. 300). Czy to zachowanie łamie zasadę z D-02 C, to **[OTWARTE Q13]** (rozstrzygnięte — tylko w szwie `src/infra/platform/`, ekran skanera tego nie robi; zob. [docs/decyzje-f0.md](decyzje-f0.md)).
 3. **Potok obrazu:** `photo-decoder` (≥448 px) → `image-preprocessing.ts` wg sekcji `preprocessing` manifestu (rozmiar, kolejność kanałów, skala, filtr). **Wartości dostarcza bot trenujący (M0)** (U5). Kod nie zawiera stałych `(px/127.5)−1` (D9 K2) inaczej niż jako domyślny przypadek testowy.
 4. **Inferencja:**
    - `model-runtime.ts` z singletonem i rozgrzewką na tensorze zerowym;
