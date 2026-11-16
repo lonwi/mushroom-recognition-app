@@ -11,3 +11,5 @@ pnpm quality
 ```
 
 Pomiar motywów na telefonie: Ustawienia → Spike stylowania. Kroki są w [docs/spikes/F0-raport.md](docs/spikes/F0-raport.md).
+
+Plan faz: [faza 1](docs/faza-1.md), [faza 2](docs/faza-2.md), [faza 3](docs/faza-3.md), [faza 4](docs/faza-4.md), [faza 5](docs/faza-5.md). Rozstrzygnięcia Fazy 0: [docs/decyzje-f0.md](docs/decyzje-f0.md).
