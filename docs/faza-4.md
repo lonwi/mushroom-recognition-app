@@ -19,7 +19,8 @@ Pełna ścieżka offline zweryfikowana na 3 telefonach. Zamknięta beta z grzybi
 3. **Zamknięta beta** w Play (tor zamknięty) z grzybiarzami:
    - Play Console vitals (D-16);
    - lokalny dziennik diagnostyczny eksportowany ręcznie;
-   - kanał zbierania zdjęć z terenu do bota zdjęciowego. Licencja i zgody uczestników to **[OTWARTE Q23]**.
+   - kanał zbierania zdjęć z terenu do bota zdjęciowego. Licencja i zgody uczestników to **[OTWARTE Q23]**. Jeśli kanałem ma być formularz na `site/`, najpierw decyzja Q27 i aktualizacja polityki prywatności. **[OTWARTE Q27]:** Czy i kiedy na `site/` pojawia się formularz uploadu zdjęć? Wymaga zmiany D-16 (zbieranie danych), zgód i licencji (por. Q23), miejsca przechowywania i nowej wersji polityki prywatności oraz sekcji danych w Play;
+   - polityka prywatności z `site/` (F2) podpięta w Play Console przed startem toru zamkniętego.
 4. **Huawei a GMS:** według GSMArena P smart 2019 ma Google Play Services, co trzeba potwierdzić w F0. Jeśli GMS nie ma, build trafia na urządzenie przez APK z `adb` (testy, Maestro) i nie dostarcza vitals **[OTWARTE Q3]**.
 5. **Karta modelu (D-13):** `docs/model-card.md` z metrykami z manifestu, osobno dla 8 klas śmiertelnych i słabych klas (`krok2-ocena.md` §4 p. 9; D10 §7).
 6. **Dokumentacja:** `AGENTS.md`, `docs/ARCHITECTURE.md` (D13 l. 89).

@@ -14,7 +14,7 @@ Podmiana modelu na docelowy przez nowe wydanie oraz zaliczenie bramki D-13.
    - osobno dla 8 klas śmiertelnych.
 4. **Podpis recenzenta mykologa** na treści atlasu, tabeli statusów (D-12), `uncovered_look_alikes` (D-11) i `dangerousGenera` **[OTWARTE Q6]**.
 5. Przegląd wersji bibliotek przed wydaniem, jeden raz (`krok3-decyzje.md`, „Harmonogram wydań”).
-6. Polityka prywatności i sekcja danych w Play, przy założeniu „brak zbierania danych” (D-16).
+6. Polityka prywatności i sekcja danych w Play, przy założeniu „brak zbierania danych” (D-16). Strona `site/` powstaje w F2 (pkt 11); tu tylko przegląd i aktualizacja treści przed publicznym wydaniem.
 7. **Publiczne wydanie Androida.**
 
 ## Kryteria wyjścia

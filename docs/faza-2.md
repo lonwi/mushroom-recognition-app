@@ -36,6 +36,18 @@ Atlas i Pomoc działają w 100% offline na `species.db`, gotowe do wewnętrznego
    - mapowanie statusów bez zieleni (D-12; D9 §13.1).
 9. **Przełączenie na `main`** jednym PR-em (D9 l. 166, zmienione przez D-01).
 10. **Pierwszy build w wewnętrznym torze Play** (Atlas + Pomoc; skaner jako `unavailable` lub „MODEL TESTOWY”).
+11. **Strona statyczna `site/`** (dopisane 2026-11-16 na prośbę Wojciecha; w prototypie `site/` w tagu `prototype-final`, usunięte w F0 przy PR #125, gdzie recenzja wpisała lokalizację polityki prywatności i licencji jako warunek przed przełączeniem na `main`):
+    - przywrócenie `site/` z `prototype-final` jako punktu wyjścia (`index.html`, `icon.svg`, `css/`, `en/`, `prywatnosc/`, `licencje/`), z treścią zaktualizowaną do nowej aplikacji;
+    - opis aplikacji (PL; EN za flagą jak w D-05);
+    - polityka prywatności zgodna z D-16 (brak zbierania danych, brak telemetrii) pod stałym publicznym URL, wymaganym w Play Console;
+    - licencje i atrybucja zdjęć CC0/CC BY (spójne z ekranem atrybucji z pkt 5, D-06);
+    - materiały pod wymagania sklepu: treści do sekcji bezpieczeństwa danych, kontakt, ewentualnie strona usuwania danych (przy braku kont: deklaracja, że nie dotyczy);
+    - hosting statyczny (np. GitHub Pages z katalogu `site/`), wybór **[OTWARTE Q26]**;
+    - **formularz do uploadu zdjęć: poza MVP strony**. Zmienia założenie D-16 „brak zbierania danych”, więc wymaga osobnej decyzji (zgody, licencja, miejsce przechowywania, nowa wersja polityki), powiązanej z Q23 **[OTWARTE Q27]**.
+
+**[OTWARTE Q26]:** Gdzie hostujemy stronę `site/` (GitHub Pages z repo, Cloudflare Pages, inny) i pod jaką domeną?
+
+**[OTWARTE Q27]:** Czy i kiedy na `site/` pojawia się formularz uploadu zdjęć? Wymaga zmiany D-16 (zbieranie danych), zgód i licencji (por. Q23), miejsca przechowywania i nowej wersji polityki prywatności oraz sekcji danych w Play.
 
 ## Artefakty
 
@@ -43,6 +55,7 @@ Atlas i Pomoc działają w 100% offline na `species.db`, gotowe do wewnętrznego
 - Storybook.
 - Testy Jest.
 - Build AAB w wewnętrznym torze Play.
+- `site/` opublikowana pod publicznym URL (opis, polityka prywatności, licencje).
 
 ## Kryteria wyjścia
 
@@ -52,6 +65,7 @@ Atlas i Pomoc działają w 100% offline na `species.db`, gotowe do wewnętrznego
 - Bramka kontrastu i pól dotyku zielona (D9 l. 624).
 - Atlas działa w trybie samolotowym na 3 telefonach.
 - `main` = nowa aplikacja.
+- Polityka prywatności i licencje dostępne pod publicznym URL przed przełączeniem na `main` (warunek z recenzji PR #125).
 
 ## Zależności
 
@@ -61,3 +75,10 @@ F0 (tokeny, styling), F1 (`species.db`).
 
 - Przycięcia listy przy zdjęciach; mitygacja: paginacja, miniatury WebP, indeksy (D13 l. 58).
 - Wydajność na Huaweiu P smart 2019 (najgorszy przypadek): akceptowalna wolniejsza praca, byle bez awarii.
+
+## Q13 i Q20 już w repozytorium
+
+Plan powyżej zostawia oba pytania otwarte. To nie jest nowe wymaganie. `docs/decyzje-f0.md` już je rozstrzyga.
+
+- **Q20** (pkt 5, nazwa trasy Pomocy): „W Fazie 0 trasa to `help` (`src/app/(tabs)/help.tsx`), bo zakładka nazywa się Pomoc. D8 i D13 pisały `safety`. Zmiana nazwy przed Fazą 2 jest tania.”
+- **Q13** (faza 3, odmontowanie `CameraView`): „`Platform.OS` i `Platform.select` są dozwolone tylko w `src/infra/platform/`. To jedyny szew, w którym w Fazie 3 może wylądować odmontowanie `CameraView` po utracie fokusu. Ekran skanera tego nie robi.”
