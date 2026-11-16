@@ -19,7 +19,7 @@ Atlas i Pomoc działają w 100% offline na `species.db`, gotowe do wewnętrznego
 4. **Porównanie 50/50** `src/app/look-alikes/[pair-id].tsx`: sztywny podział, bez suwaka (D1/D2 §2.1; D13 l. 52).
 5. **Pomoc** `src/app/(tabs)/help.tsx` (nazwa trasy **[OTWARTE Q20]**; rozstrzygnięte — trasa `help`, zob. [docs/decyzje-f0.md](decyzje-f0.md)):
    - statyczna, bez I/O (D9 l. 624; D13 l. 54);
-   - numery alarmowe;
+   - numery alarmowe z `src/core/safety/emergency-contacts.ts` tylko po zweryfikowaniu źródła (Q19); bez zweryfikowanego źródła sekcja nie pokazuje numeru;
    - zasady bezpieczeństwa;
    - **lista 67 gatunków znanych modelowi** (D-11);
    - ekran atrybucji (D-06).
@@ -44,6 +44,8 @@ Atlas i Pomoc działają w 100% offline na `species.db`, gotowe do wewnętrznego
     - materiały pod wymagania sklepu: treści do sekcji bezpieczeństwa danych, kontakt, ewentualnie strona usuwania danych (przy braku kont: deklaracja, że nie dotyczy);
     - hosting statyczny (np. GitHub Pages z katalogu `site/`), wybór **[OTWARTE Q26]**;
     - **formularz do uploadu zdjęć: poza MVP strony**. Zmienia założenie D-16 „brak zbierania danych”, więc wymaga osobnej decyzji (zgody, licencja, miejsce przechowywania, nowa wersja polityki), powiązanej z Q23 **[OTWARTE Q27]**.
+
+**[OTWARTE Q19]:** Numery alarmowe pokazujemy tylko po zweryfikowaniu jednego źródła (`src/core/safety/emergency-contacts.ts`). Bez zweryfikowanego źródła sekcja nie pokazuje numeru.
 
 **[OTWARTE Q26]:** Gdzie hostujemy stronę `site/` (GitHub Pages z repo, Cloudflare Pages, inny) i pod jaką domeną?
 
