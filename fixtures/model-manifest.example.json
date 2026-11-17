@@ -1,6 +1,6 @@
 {
   "$comment": "PRZYKŁAD. Wszystkie liczby i hashe są fikcyjne, to nie wynik żadnego treningu. Skrócono: głowica ma 2 klasy, jeden gatunek mini+ jest poza modelem. Prawdziwy mini+ ma do 67 wyjść (docelowo 67); K + |uncoveredSpecies| = 67. Pola rejectClasses celowo nie ma (nieużywane). Niepokrytego gatunku nie ma w classes jako in_model: false — jest w uncoveredSpecies (decyzja 2026-11-10).",
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.0.1",
   "modelVersion": "0.1.0-example",
   "channel": "test",
   "createdAt": "2026-11-10T19:00:00+01:00",

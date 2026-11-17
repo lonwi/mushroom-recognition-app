@@ -16,7 +16,7 @@ Działa i jest przetestowany na trzech warstwach modeli zastępczych (D-08), a p
 ## Zakres
 
 1. **Ładowanie manifestu:**
-   - `src/core/ai/model-manifest.ts` waliduje JSON Schema v1 (D-07);
+   - `src/core/ai/model-manifest.ts` waliduje JSON Schema v1.0.1 (D-07);
    - sprawdza `sha256` pliku `.tflite` i `minAtlasVersion` względem `species.db` (D9 §9.4);
    - wylicza **flagi możliwości**: `canShowPercent`, `canFuse[2|3]`, `scannerAvailable` (reguły degradacji D-07; U4).
 2. **Przechwytywanie** (`use-scan-session-store`):

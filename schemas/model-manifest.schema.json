@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://grzybobranie.ai/schemas/model-manifest.schema.json",
-  "title": "Grzybobranie AI: model-manifest.json v1 (SZKIC)",
-  "description": "Kontrakt między botem treningowym a aplikacją (D-07). SZKIC v1.0.0-draft z 2026-11-10, do akceptacji w M0. Reguły degradacji (x-degradation) wykonuje aplikacja przy ładowaniu. Model nigdy nie zwraca informacji o jadalności (U6), bo jadalność pochodzi z species.db. Projekt Grzybobranie AI (decyzje 2026-11-10): do 67 wyjść gatunków mini+ (docelowo 67), odrzucanie progami energy/OOD, bez klas zbiorczych. Głowica (classes) zawiera tylko gatunki z wystarczającymi danymi; pozostałe z listy 67 trafiają do opcjonalnego uncoveredSpecies (Atlas je pokazuje, skaner ich nie zwraca) — nie jako classes z in_model: false. Pole rejectClasses pozostaje w schemacie jako opcjonalne (zgodność JSON Schema), ale w tym projekcie jest nieużywane i nie należy go wypełniać.",
+  "title": "Grzybobranie AI: model-manifest.json v1.0.1",
+  "description": "Kontrakt między botem treningowym a aplikacją (D-07). Wersja 1.0.1 (doprecyzowania z 2026-11-16; major 1 bez nowych pól). Reguły degradacji (x-degradation) wykonuje aplikacja przy ładowaniu. Model nigdy nie zwraca informacji o jadalności (U6), bo jadalność pochodzi z species.db. Projekt Grzybobranie AI (decyzje 2026-11-10 i 2026-11-16): do 67 wyjść gatunków mini+ (docelowo 67), odrzucanie progami energy/OOD ze statusami out_of_distribution oraz unclear (brak klasy not_a_mushroom). Głowica (classes) zawiera tylko gatunki z wystarczającymi danymi; pozostałe z listy 67 trafiają do opcjonalnego uncoveredSpecies (Atlas je pokazuje, skaner ich nie zwraca) — nie jako classes z in_model: false. Pole rejectClasses pozostaje w schemacie jako opcjonalne (zgodność JSON Schema), ale w tym projekcie jest nieużywane i nie należy go wypełniać. Rozmiar wejścia N (224 lub 256) ustala manifest w preprocessing.inputSize.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -28,7 +28,8 @@
     "channel = test -> znak 'MODEL TESTOWY'; build produkcyjny odrzuca manifest",
     "shipGates.passed != true w buildzie produkcyjnym -> scannerAvailable = false",
     "delegat GPU tylko gdy delegates['android-gpu'].passed = true dla tego samego sha256",
-    "gatunki z uncoveredSpecies: Atlas je pokazuje, skaner ich nie zwraca"
+    "gatunki z uncoveredSpecies: Atlas je pokazuje, skaner ich nie zwraca",
+    "gatunek z uncoveredSpecies, który ma sobowtóra w głowicy: skaner go nie zwraca; aplikacja ostrzega w ResultSheet przez uncovered_look_alikes"
   ],
   "properties": {
     "$comment": {
@@ -37,7 +38,7 @@
     "schemaVersion": {
       "type": "string",
       "pattern": "^1\\.\\d+\\.\\d+$",
-      "description": "Semver schematu. Ten szkic obsługuje major 1."
+      "description": "Semver schematu. Ten dokument opisuje 1.0.1; obsługiwany jest major 1."
     },
     "modelVersion": {
       "type": "string",
@@ -215,7 +216,8 @@
               "type": "integer",
               "minimum": 32
             }
-          }
+          },
+          "description": "Rozmiar wejścia N (width × height) nie jest stałą schematu. Typowe wartości to 224 lub 256; obowiązuje wartość zapisana w manifeście."
         },
         "exifOrientation": {
           "const": "apply",
@@ -269,10 +271,12 @@
                       "bilinear",
                       "bicubic",
                       "nearest"
-                    ]
+                    ],
+                    "description": "Baseline preprocessingu: filter `box`."
                   },
                   "antialias": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "description": "Baseline: true (skalowanie box z antialias)."
                   }
                 }
               }
@@ -285,7 +289,7 @@
             "center",
             "letterbox"
           ],
-          "description": "Jak powstaje kwadrat; prototyp: none_stretch (box do 224x224)."
+          "description": "Jak powstaje kwadrat. Baseline: `none_stretch`. N (224 lub 256) pochodzi z `inputSize`, nie jest tu zaszyte."
         },
         "letterboxFill": {
           "type": "array",
@@ -428,7 +432,7 @@
     },
     "uncoveredSpecies": {
       "type": "array",
-      "description": "OPCJONALNE. Gatunki mini+ jeszcze nieobecne w głowicy (brak wystarczających danych treningowych). Nie są wyjściami modelu i nie wolno ich dublować w classes. Aplikacja: Atlas pokazuje te gatunki, skaner ich nie zwraca (łagodna degradacja). W tym projekcie: zbiór speciesId tutaj oraz speciesIds z classes są rozłączne, a ich suma to pełna lista 67 gatunków mini+ (K + |uncoveredSpecies| = 67).",
+      "description": "OPCJONALNE. Gatunki mini+ jeszcze nieobecne w głowicy (brak wystarczających danych treningowych; progi to minimalna liczba zdjęć treningowych: ≥ 55 dla high_stakes/toksycznych, ≥ 40 dla pozostałych). Nie są wyjściami modelu i nie wolno ich dublować w classes. Aplikacja: Atlas pokazuje te gatunki, skaner ich nie zwraca (łagodna degradacja). Jeśli gatunek z tej listy ma sobowtóra w głowicy, skaner i tak go nie zwraca, ale ResultSheet ostrzega przez `uncovered_look_alikes`. W tym projekcie: zbiór speciesId tutaj oraz speciesIds z classes są rozłączne, a ich suma to pełna lista 67 gatunków mini+ (K + |uncoveredSpecies| = 67).",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -490,7 +494,8 @@
         },
         "temperature": {
           "type": "number",
-          "exclusiveMinimum": 0
+          "exclusiveMinimum": 0,
+          "description": "T używane we wszystkich prawdopodobieństwach: softmax(z/T), w tym wagi fuzji. Energia E(x) = -T·logsumexp(z/T) używa ood.energyTemperature, a gdy tego pola nie ma — tego T. Jeśli obecne jest tylko jedno z pól calibration.temperature i ood.energyTemperature, to jedno T służy zarówno prawdopodobieństwom, jak i energii."
         },
         "fitSplit": {
           "const": "val"
@@ -564,15 +569,15 @@
         "energyTemperature": {
           "type": "number",
           "exclusiveMinimum": 0,
-          "description": "T w E = -T·logsumexp(z/T); domyślnie = calibration.temperature."
+          "description": "T w E(x) = -T·logsumexp(z/T). Jeśli pole jest nieobecne, użyj calibration.temperature. Jeśli obecne jest tylko jedno z pól ood.energyTemperature i calibration.temperature, to jedno T służy zarówno energii, jak i wszystkim prawdopodobieństwom (softmax(z/T), wagi fuzji)."
         },
         "energyThreshold": {
           "type": "number",
-          "description": "E > próg -> rejected/out_of_distribution. Brak -> skaner niedostępny."
+          "description": "E > próg -> rejected/out_of_distribution. Brak pola -> skaner niedostępny."
         },
         "minTop1Prob": {
           "$ref": "#/$defs/prob",
-          "description": "top-1 poniżej -> rejected/unclear."
+          "description": "Próg top-1 liczony na softmax(z/T) z T = calibration.temperature (ten sam T co wagi fuzji). Poniżej progu: rejected/unclear."
         },
         "lowConfidenceBelow": {
           "$ref": "#/$defs/prob"
@@ -624,7 +629,7 @@
         "fusion": {
           "type": "object",
           "additionalProperties": false,
-          "description": "Progi dla m zaakceptowanych zdjęć (m = 2, 3). Brak klucza -> brak fuzji dla m.",
+          "description": "Progi fuzji po bramkach per-zdjęcie. m = liczba zaakceptowanych zdjęć (nie liczba zdjęć wejściowych). Na uśrednionych logitach z̄ ponownie liczy się obie bramki (energię i minTop1Prob) z progami ood.fusion[m] i tymi samymi regułami T. Brak klucza m -> brak fuzji dla tego m.",
           "properties": {
             "2": {
               "$ref": "#/$defs/fusionThresholds"
@@ -634,7 +639,8 @@
             }
           }
         }
-      }
+      },
+      "description": "Bramka energii OOD, bez klas zbiorczych. Statusy odrzucenia: `out_of_distribution` (E > energyThreshold) oraz `unclear` (top-1 < minTop1Prob). Nie ma klasy `not_a_mushroom`."
     },
     "fusionWeights": {
       "type": "object",
@@ -652,7 +658,8 @@
           "const": 3
         },
         "gateBeforeFusion": {
-          "const": true
+          "const": true,
+          "description": "Stałe true: najpierw bramki per-zdjęcie (energia i minTop1Prob). Do fuzji wchodzą tylko zdjęcia zaakceptowane; m jest ich liczbą. Następnie obie bramki są ponownie liczone na z̄ z progami ood.fusion[m] i tymi samymi regułami T."
         }
       }
     },
@@ -855,7 +862,7 @@
         },
         "modelRepo": {
           "type": "string",
-          "description": "Prywatne repozytorium HF z artefaktami modelu, osobne od zbioru zdjęć. Propozycja: lonwi/grzybobranie-model."
+          "description": "Prywatne repozytorium HF z artefaktami modelu, osobne od zbioru zdjęć. Identyfikator bierze się z HF_MODEL_REPO, nie jest stałą schematu."
         },
         "modelRevision": {
           "type": "string",
@@ -943,16 +950,19 @@
       ],
       "properties": {
         "energyThreshold": {
-          "type": "number"
+          "type": "number",
+          "description": "Próg energii na z̄; E(z̄) > próg -> rejected/out_of_distribution."
         },
         "minTop1Prob": {
-          "$ref": "#/$defs/prob"
+          "$ref": "#/$defs/prob",
+          "description": "Próg top-1 na softmax(z̄/T); poniżej -> rejected/unclear. T jak dla prawdopodobieństw (calibration.temperature)."
         },
         "nGroupsTest": {
           "type": "integer",
           "minimum": 0
         }
-      }
+      },
+      "description": "Progi obu bramek (energia i minTop1Prob) stosowane do uśrednionych/sfuzjowanych logitów z̄ dla danego m, z tymi samymi regułami T co dla pojedynczego zdjęcia."
     },
     "gate": {
       "type": "object",
@@ -1014,7 +1024,7 @@
   "examples": [
     {
       "$comment": "PRZYKŁAD. Wszystkie liczby i hashe są fikcyjne, to nie wynik żadnego treningu. Skrócono: głowica ma 2 klasy, jeden gatunek mini+ jest poza modelem. Prawdziwy mini+ ma do 67 wyjść (docelowo 67); K + |uncoveredSpecies| = 67. Pola rejectClasses celowo nie ma (nieużywane). Niepokrytego gatunku nie ma w classes jako in_model: false — jest w uncoveredSpecies (decyzja 2026-11-10).",
-      "schemaVersion": "1.0.0",
+      "schemaVersion": "1.0.1",
       "modelVersion": "0.1.0-example",
       "channel": "test",
       "createdAt": "2026-11-10T19:00:00+01:00",
@@ -1130,7 +1140,7 @@
         "lowConfidenceBelow": 0.7,
         "dangerousGenusMinProbability": 0.1,
         "dataset": {
-          "name": "lonwi/grzybobranie-zdjecia:data/ood-v1",
+          "name": "HF_DATASET_REPO:data/ood-v1",
           "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
           "nCalibration": 2200,
           "nTest": 2200
@@ -1215,7 +1225,7 @@
       },
       "minAtlasVersion": "0.1.0",
       "provenance": {
-        "trainingDataset": "lonwi/grzybobranie-zdjecia (_v3 20261108)",
+        "trainingDataset": "HF_DATASET_REPO (_v3 20261108)",
         "trainingDatasetSha256": "3333333333333333333333333333333333333333333333333333333333333333",
         "splitMethod": "70/15/15, grupy autor+obserwacja (ml/split.py)",
         "licensesUsed": [
@@ -1234,7 +1244,7 @@
         "generatedImagesUsed": false,
         "gitCommit": "example",
         "trackioRun": "example",
-        "modelRepo": "lonwi/grzybobranie-model",
+        "modelRepo": "HF_MODEL_REPO",
         "modelRevision": "example"
       },
       "uncoveredSpecies": [
