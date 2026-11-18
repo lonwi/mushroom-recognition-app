@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preload" as="image" href="../icon.svg" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'"
+    />
+    <meta
+      name="description"
+      content="Polityka prywatności i bezpieczeństwo danych Grzybobranie AI. Rozpoznawanie na urządzeniu, brak konta, brak telemetrii i analityki."
+    />
+    <meta name="theme-color" content="#1B382B" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121614" media="(prefers-color-scheme: dark)" />
+    <title>Polityka prywatności — Grzybobranie AI</title>
+    <link rel="icon" href="../icon.svg" type="image/svg+xml" />
+    <link rel="canonical" href="./" />
+    <link rel="stylesheet" href="../css/site.css" />
+  </head>
+  <body>
+    <a class="skip" href="#tresc">Przejdź do treści</a>
+    <header class="site-header">
+      <div class="wrap bar">
+        <a class="brand" href="../"
+          ><img src="../icon.svg" width="40" height="40" alt="" /><span>Grzybobranie AI</span></a
+        >
+        <nav class="nav" aria-label="Nawigacja główna">
+          <a href="../">Start</a><a href="../prywatnosc/" aria-current="page">Prywatność</a
+          ><a href="../usuniecie-danych/">Usuwanie danych</a><a href="../licencje/">Licencje</a>
+        </nav>
+      </div>
+    </header>
+    <main id="tresc" class="wrap page">
+      <article>
+        <header>
+          <h1>Polityka prywatności</h1>
+          <p class="badge">Data wejścia w życie: 18 listopada 2026 roku (Wersja 1.0.0)</p>
+          <p class="lead">
+            Dokument określa zasady prywatności w aplikacji mobilnej Grzybobranie AI oraz na
+            niniejszej stronie informacyjnej, zgodnie z RODO i wymaganiami Google Play Console.
+          </p>
+        </header>
+        <section aria-labelledby="admin-heading">
+          <h2 id="admin-heading">Administrator danych</h2>
+          <p>
+            Administratorem aplikacji i serwisu jest Wojciech Bubolka. Kontakt w sprawach związanych
+            z prywatnością i działaniem aplikacji: hello@astigmatic.dev.
+          </p>
+        </section>
+        <section aria-labelledby="collection-heading">
+          <h2 id="collection-heading">Brak gromadzenia danych osobowych</h2>
+          <p>
+            Aplikacja Grzybobranie AI została zaprojektowana w architekturze „privacy by design”
+            (zasada D-16 projektu):
+          </p>
+          <ul class="list-styled">
+            <li>
+              Brak kont użytkowników: aplikacja nie wymaga logowania, podawania adresu e-mail ani
+              numeru telefonu.
+            </li>
+            <li>
+              Brak serwera w chmurze: zdjęcia z aparatu i galerii są przetwarzane wyłącznie lokalnie
+              w pamięci urządzenia przez silnik inferencji.
+            </li>
+            <li>
+              Brak zewnętrznej telemetrii i analityki: nie korzystamy z Google Analytics, Firebase,
+              Facebook SDK ani innych bibliotek profilujących.
+            </li>
+            <li>
+              Brak plików cookies: niniejsza strona WWW jest w pełni statyczna i nie zapisuje
+              żadnych ciasteczek ani identyfikatorów śledzących.
+            </li>
+          </ul>
+        </section>
+        <section aria-labelledby="permissions-heading">
+          <h2 id="permissions-heading">Uprawnienia aplikacji na Androidzie</h2>
+          <p>Aplikacja prosi wyłącznie o uprawnienia niezbędne do działania jej funkcji:</p>
+          <ul class="list-styled">
+            <li>
+              Aparat (CAMERA): umożliwia wykonanie zdjęcia grzyba w module Skanera. Zdjęcie trafia
+              do lokalnego modelu i nie opuszcza telefonu.
+            </li>
+            <li>
+              Pamięć / Zdjęcia (READ_MEDIA_IMAGES): umożliwia wskazanie zapisanego zdjęcia z galerii
+              w celu analizy na urządzeniu.
+            </li>
+          </ul>
+        </section>
+        <section aria-labelledby="diagnostics-heading">
+          <h2 id="diagnostics-heading">Lokalny dziennik diagnostyczny</h2>
+          <p>
+            Aplikacja posiada lokalny bufor diagnostyczny o ograniczonym rozmiarze (maksymalnie 256
+            KiB) zapisywany wyłącznie w pamięci wewnętrznej telefonu. Służy wyłącznie rozwiązywaniu
+            problemów technicznych. Dziennik nie zawiera współrzędnych geograficznych ani zdjęć.
+            Eksport dziennika następuje WYŁĄCZNIE na jawne żądanie użytkownika (poprzez systemowy
+            arkusz udostępniania na ekranie Ustawień). Jest to jedyny przypadek, w którym
+            jakiekolwiek dane opuszczają telefon z woli użytkownika.
+          </p>
+        </section>
+        <section aria-labelledby="datasafety-heading">
+          <h2 id="datasafety-heading">Bezpieczeństwo danych w Google Play (Data Safety)</h2>
+          <p>
+            Poniższe zestawienie stanowi oficjalną deklarację dla sekcji Data Safety w sklepie
+            Google Play:
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Kategoria</th>
+                  <th scope="col">Czy zbierane?</th>
+                  <th scope="col">Czy udostępniane podmiotom trzecim?</th>
+                  <th scope="col">Cel</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Dane osobowe (imię, e-mail, telefon, ID)</th>
+                  <td>NIE</td>
+                  <td>NIE</td>
+                  <td>—</td>
+                </tr>
+                <tr>
+                  <th scope="row">Zdjęcia i pliki multimedialne</th>
+                  <td>NIE</td>
+                  <td>NIE</td>
+                  <td>Przetwarzanie wyłącznie lokalnie na urządzeniu (brak wysyłania)</td>
+                </tr>
+                <tr>
+                  <th scope="row">Lokalizacja (dokładna lub przybliżona)</th>
+                  <td>NIE</td>
+                  <td>NIE</td>
+                  <td>—</td>
+                </tr>
+                <tr>
+                  <th scope="row">Dzienniki diagnostyczne i awarie</th>
+                  <td>NIE</td>
+                  <td>NIE</td>
+                  <td>Opcjonalny ręczny eksport przez użytkownika w celach serwisowych</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            <a href="../usuniecie-danych/"
+              >Więcej informacji o usuwaniu danych znajdziesz na dedykowanej stronie Usuwanie
+              danych.</a
+            >
+          </p>
+        </section>
+      </article>
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <p class="footer-safety">
+          Aplikacja nie zastępuje grzyboznawcy ani klasyfikatora grzybów. Nigdy nie spożywaj grzyba
+          wyłącznie na podstawie wskazań aplikacji lub modelu sztucznej inteligencji. Model może
+          pomylić gatunek ze względu na oświetlenie, stopień dojrzałości, zanieczyszczenia lub
+          uszkodzenia owocnika.
+        </p>
+        <ul class="footer-links">
+          <li><a href="../prywatnosc/">Prywatność</a></li>
+          <li><a href="../usuniecie-danych/">Usuwanie danych</a></li>
+          <li><a href="../licencje/">Licencje</a></li>
+          <li>
+            <a
+              href="https://github.com/lonwi/mushroom-recognition-app"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Kod źródłowy</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://github.com/lonwi/mushroom-recognition-app/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Zgłoszenia</a
+            >
+          </li>
+          <li>
+            <a href="mailto:hello@astigmatic.dev">hello@astigmatic.dev</a>
+          </li>
+        </ul>
+        <p class="copyright">© 2026 Grzybobranie AI. Wszelkie prawa zastrzeżone.</p>
+      </div>
+    </footer>
+  </body>
+</html>

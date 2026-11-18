@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preload" as="image" href="../icon.svg" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'"
+    />
+    <meta
+      name="description"
+      content="Grzybobranie AI: on-device mushroom classification and botanical field guide for Central Europe. Completely offline and privacy-first."
+    />
+    <meta name="theme-color" content="#1B382B" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121614" media="(prefers-color-scheme: dark)" />
+    <title>Grzybobranie AI — Offline Mushroom Atlas &amp; Recognition</title>
+    <link rel="icon" href="../icon.svg" type="image/svg+xml" />
+    <link rel="canonical" href="./" />
+    <link rel="alternate" hreflang="pl" href="../" />
+    <link rel="stylesheet" href="../css/site.css" />
+  </head>
+  <body>
+    <a class="skip" href="#tresc">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap bar">
+        <a class="brand" href="../en/"
+          ><img src="../icon.svg" width="40" height="40" alt="" /><span>Grzybobranie AI</span></a
+        >
+        <nav class="nav" aria-label="Main navigation">
+          <a href="../en/" aria-current="page">Home</a><a href="../en/privacy/">Privacy</a
+          ><a href="../en/data-deletion/">Data deletion</a><a href="../en/licenses/">Licenses</a
+          ><a href="../" lang="pl" hreflang="pl">Polski</a>
+        </nav>
+      </div>
+    </header>
+    <main id="tresc" class="wrap page">
+      <article>
+        <header class="hero">
+          <span class="badge">Greenfield Preview</span>
+          <h1>Grzybobranie AI</h1>
+          <p class="lead">
+            A field companion for foraging and identifying mushrooms in Poland and Central Europe.
+            Runs entirely offline, requires no registration, and keeps your photos on your device.
+          </p>
+          <p>
+            Under active development for Google Play (Android). Development and source code are
+            maintained openly.
+          </p>
+        </header>
+        <section class="safety" aria-labelledby="safety-heading">
+          <h2 id="safety-heading">Safety Warning</h2>
+          <p>
+            <strong
+              >This application does not replace a qualified mycologist or official mushroom
+              inspector.</strong
+            >
+          </p>
+          <p>
+            Never consume any wild mushroom solely based on suggestions from this application or any
+            AI model. Algorithms can misclassify species due to lighting, age, specimen decay, or
+            dirt.
+          </p>
+          <p>
+            If mushroom poisoning is suspected, immediately seek emergency medical assistance or
+            visit the nearest toxicology unit. Everyone who consumed the meal should seek medical
+            attention, even if asymptomatic.
+          </p>
+          <p>
+            Free identification and inspection of collected mushrooms is provided by certified
+            mycologists at state sanitary-epidemiological stations (Sanepid). When in doubt, leave
+            the mushroom in the woods.
+          </p>
+          <p>
+            Safety guidelines source:
+            <a
+              href="https://www.gov.pl/web/gis/bezpieczne-grzybobranie"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Chief Sanitary Inspectorate (GIS), „Bezpieczne grzybobranie”</a
+            >
+          </p>
+          <p>
+            <em
+              >The application suggests probable species names, but NEVER issues an edibility
+              verdict. Edibility statuses come strictly from curated mycological references.</em
+            >
+          </p>
+        </section>
+        <section aria-labelledby="pillars-heading">
+          <h2 id="pillars-heading">Three Core Pillars</h2>
+          <div class="grid grid-3">
+            <article class="card">
+              <h3>On-Device Recognition</h3>
+              <p>
+                Neural network inference runs locally on your smartphone via TensorFlow Lite. Photos
+                never leave your phone. In development builds without a calibrated model, the app
+                transparently reports: “recognition unavailable”.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Species Field Atlas</h3>
+              <p>
+                Rich species cards with Polish, English, and scientific Latin binomials,
+                morphological field keys (spores, cap, stem), seasonal fruiting calendars, and fatal
+                look-alike comparisons.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Safety &amp; Help Guidelines</h3>
+              <p>
+                First-aid procedures, official guidelines from the Chief Sanitary Inspectorate,
+                emergency contact guidance, and photo author attributions.
+              </p>
+            </article>
+          </div>
+        </section>
+        <section aria-labelledby="privacy-heading">
+          <h2 id="privacy-heading">Privacy-First Architecture</h2>
+          <p>
+            Forests rarely have reliable mobile connectivity. Grzybobranie AI packages all necessary
+            databases and models directly inside the app installer. Zero telemetry, no user
+            tracking, zero cloud dependencies.
+          </p>
+        </section>
+      </article>
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <p class="footer-safety">
+          This application does not replace a qualified mycologist or official mushroom inspector.
+          Never consume any wild mushroom solely based on suggestions from this application or any
+          AI model. Algorithms can misclassify species due to lighting, age, specimen decay, or
+          dirt.
+        </p>
+        <ul class="footer-links">
+          <li><a href="../en/privacy/">Privacy</a></li>
+          <li><a href="../en/data-deletion/">Data deletion</a></li>
+          <li><a href="../en/licenses/">Licenses</a></li>
+          <li>
+            <a
+              href="https://github.com/lonwi/mushroom-recognition-app"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Source Code</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://github.com/lonwi/mushroom-recognition-app/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Issues</a
+            >
+          </li>
+          <li>
+            <a href="mailto:hello@astigmatic.dev">hello@astigmatic.dev</a>
+          </li>
+        </ul>
+        <p class="copyright">© 2026 Grzybobranie AI. All rights reserved.</p>
+      </div>
+    </footer>
+  </body>
+</html>
