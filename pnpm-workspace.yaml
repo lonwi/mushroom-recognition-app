@@ -5,6 +5,13 @@ allowBuilds:
   lefthook: true
   unrs-resolver: true
 
+# GHSA-fc5q-39xc-vjpf (CVE-2026-112366): picomatch <=4.0.7, no patched
+# release. GitHub withdrew the advisory on 2026-11-18; pnpm audit still
+# reports it as high. It is transitive through Metro, not a direct dependency.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-fc5q-39xc-vjpf
+
 overrides:
   shell-quote: 1.12.0
   source-map-js: 1.2.2
