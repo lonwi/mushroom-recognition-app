@@ -1,0 +1,46 @@
+Grzybobranie AI
+Copyright 2026 Wojciech Bubółka
+
+The Apache License, Version 2.0 applies to the source code in this
+repository. Every file now in docs/ is technical documentation (phase
+plans, decisions, an ADR, the illustration-style note, and the Phase 0
+spike report) and is covered by the same license; species descriptions
+and other editorial or mycological content are not in docs/ and stay
+outside it. The license does not cover:
+
+(a) Third-party photographs and other media. Those works remain under
+    their own licenses (CC0, CC BY, and others), as listed in
+    ml/ATTRIBUTION.md. The site license pages were removed with site/
+    in Phase 0 and return in Phase 2; until then the code license
+    text is LICENSE.
+
+(b) Scientific illustrations (ryciny), species-card texts and other
+    editorial content, and trained model weights. Those are
+    © Wojciech Bubółka, all rights reserved, unless a file states
+    otherwise.
+
+(c) The names "Grzybobranie AI" and the logos. Section 6 of the
+    Apache License, Version 2.0 grants no trademark rights.
+
+The app is not a substitute for expert identification. It is
+distributed with no warranty. See sections 7–8 of the license.
+
+---
+
+Po polsku
+
+Licencja Apache 2.0 obejmuje kod źródłowy tego repozytorium. Każdy
+plik obecnie w docs/ to dokumentacja techniczna (plany faz, decyzje,
+ADR, notka o stylu rycin i raport spike'a Fazy 0) i jest objęty tą
+samą licencją; opisy gatunków i inne treści redakcyjne lub
+mykologiczne nie leżą w docs/ i pozostają poza nią. Nie obejmuje:
+(a) zdjęć i innych mediów osób trzecich, które zostają na własnych
+licencjach (CC0, CC BY i inne) według ml/ATTRIBUTION.md; strony
+licencji na site/ zostały usunięte w Fazie 0 i wrócą w Fazie 2, a do
+tego czasu tekst licencji kodu jest w pliku LICENSE; (b) rycin,
+tekstów kart gatunków i innej treści redakcyjnej oraz wytrenowanych
+wag modelu — © Wojciech Bubółka, wszystkie prawa zastrzeżone, chyba
+że plik stanowi inaczej; (c) nazw „Grzybobranie AI” i logo (paragraf 6
+nie udziela praw do znaków towarowych). Aplikacja nie zastępuje
+oznaczenia przez eksperta i jest udostępniana bez gwarancji
+(paragrafy 7–8 licencji).

@@ -56,9 +56,12 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      # Fails on high and critical advisories. This tree has none, so
-      # auditConfig.ignoreCves is empty. If a high advisory has no published
-      # fix, add the CVE there (pnpm-workspace.yaml) and say why in this comment.
+      # Fails on high and critical advisories. If a high advisory has no
+      # published fix, add its GHSA to auditConfig.ignoreGhsas in
+      # pnpm-workspace.yaml and say why here.
+      # GHSA-fc5q-39xc-vjpf (CVE-2026-112366): picomatch <=4.0.7 ReDoS, no
+      # patched release. GitHub withdrew the advisory on 2026-11-18; pnpm
+      # audit still reports it. Transitive through Metro, not direct.
       - name: Audit dependencies
         run: pnpm audit --audit-level high
       - name: Quality gates

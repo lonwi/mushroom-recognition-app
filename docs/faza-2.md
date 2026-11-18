@@ -41,6 +41,7 @@ Atlas i Pomoc działają w 100% offline na `species.db`, gotowe do wewnętrznego
     - opis aplikacji (PL; EN za flagą jak w D-05);
     - polityka prywatności zgodna z D-16 (brak zbierania danych, brak telemetrii) pod stałym publicznym URL, wymaganym w Play Console;
     - licencje i atrybucja zdjęć CC0/CC BY (spójne z ekranem atrybucji z pkt 5, D-06);
+    - strony licencji na `site/` (`site/licencje/`, `site/en/licenses/`) trzeba przepisać pod Apache-2.0, bo stara wersja na `main` mówi, że kod nie ma otwartej licencji;
     - materiały pod wymagania sklepu: treści do sekcji bezpieczeństwa danych, kontakt, ewentualnie strona usuwania danych (przy braku kont: deklaracja, że nie dotyczy);
     - hosting statyczny (np. GitHub Pages z katalogu `site/`), wybór **[OTWARTE Q26]**;
     - **formularz do uploadu zdjęć: poza MVP strony**. Zmienia założenie D-16 „brak zbierania danych”, więc wymaga osobnej decyzji (zgody, licencja, miejsce przechowywania, nowa wersja polityki), powiązanej z Q23 **[OTWARTE Q27]**.
