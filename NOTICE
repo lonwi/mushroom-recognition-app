@@ -1,0 +1,36 @@
+Grzybobranie AI
+Copyright 2026 Wojciech Bubółka
+
+The Apache License, Version 2.0 applies to the source code in this
+repository only. It does not cover:
+
+(a) Third-party photographs and other media. Those works remain under
+    their own licenses (CC0, CC BY, and others), as listed in
+    ml/ATTRIBUTION.md and on the in-app and site license pages
+    (site/licencje/, site/en/licenses/).
+
+(b) Scientific illustrations (ryciny), species-card texts and other
+    editorial content, and trained model weights. Those are
+    © Wojciech Bubółka, all rights reserved, unless a file states
+    otherwise.
+
+(c) The names "Grzybobranie AI" and the logos. Section 6 of the
+    Apache License, Version 2.0 grants no trademark rights.
+
+The app is not a substitute for expert identification. It is
+distributed with no warranty. See sections 7–8 of the license.
+
+---
+
+Po polsku
+
+Licencja Apache 2.0 obejmuje wyłącznie kod źródłowy tego repozytorium.
+Nie obejmuje: (a) zdjęć i innych mediów osób trzecich, które zostają
+na własnych licencjach (CC0, CC BY i inne) według ml/ATTRIBUTION.md
+oraz stron licencji w aplikacji i na stronie (site/licencje/,
+site/en/licenses/); (b) rycin, tekstów kart gatunków i innej treści
+redakcyjnej oraz wytrenowanych wag modelu — © Wojciech Bubółka,
+wszystkie prawa zastrzeżone, chyba że plik stanowi inaczej; (c) nazw
+„Grzybobranie AI” i logo (paragraf 6 nie udziela praw do znaków
+towarowych). Aplikacja nie zastępuje oznaczenia przez eksperta i jest
+udostępniana bez gwarancji (paragrafy 7–8 licencji).

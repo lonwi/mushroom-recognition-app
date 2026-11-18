@@ -84,6 +84,10 @@ Eksport paczki JS Androida: `pnpm export:android`. Pełnego APK w CI nie ma. Pow
 - Pomiary telefonów: `docs/spikes/F0-raport.md`
 - Szablon zadania: `.github/ISSUE_TEMPLATE/zadanie.md`
 
+## Licencja
+
+Nowe pliki źródłowe podlegają Apache-2.0 (`LICENSE`). Treści redakcyjne, media i wagi modelu nie (`NOTICE`).
+
 ## Czego nie ruszać przy okazji
 
 - Potoku treningowego. Osobny bot go prowadzi.
