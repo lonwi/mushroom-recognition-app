@@ -32,6 +32,7 @@ export const Layout: React.FC<LayoutProps> = ({
           content="default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'"
         />
         <meta name="description" content={description} />
+        {route.locale === 'en' && <meta name="robots" content="noindex, nofollow" />}
         <meta name="theme-color" content="#1B382B" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#121614" media="(prefers-color-scheme: dark)" />
         <title>{title}</title>

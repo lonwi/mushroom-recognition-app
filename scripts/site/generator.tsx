@@ -18,7 +18,10 @@ import { en } from './i18n/en';
 const ROOT_DIR = process.cwd();
 const SITE_DIR = path.join(ROOT_DIR, 'site');
 
-function computeAssetPrefix(outputFile: string): string {
+function computeAssetPrefix(outputFile: string, routeId?: string): string {
+  if (routeId === 'not-found' && process.env.SITE_BASE_PATH?.trim()) {
+    return process.env.SITE_BASE_PATH.trim().replace(/\/+$/, '');
+  }
   const depth = outputFile.split('/').length - 1;
   if (depth === 0) return '.';
   return Array.from({ length: depth }, () => '..').join('/');
@@ -79,7 +82,7 @@ export async function buildSite(): Promise<void> {
 
   // 4. Generowanie stron HTML
   for (const route of routes) {
-    const assetPrefix = computeAssetPrefix(route.outputFile);
+    const assetPrefix = computeAssetPrefix(route.outputFile, route.id);
     const { title, description } = getRouteMeta(route);
 
     const pageContent = renderPageComponent(route, assetPrefix);

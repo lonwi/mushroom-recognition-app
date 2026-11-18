@@ -111,17 +111,21 @@ function checkLangAndMetadata(file, text) {
   if (expected === 'en' && !/hreflang="pl"/i.test(text) && !rel(file).includes('404')) {
     report(`${rel(file)}: EN page missing alternate hreflang="pl"`);
   }
+  // D-05: Strony EN muszą posiadać meta robots noindex, nofollow
+  if (expected === 'en' && !text.includes('name="robots" content="noindex, nofollow"')) {
+    report(`${rel(file)}: EN page missing meta robots noindex, nofollow (D-05)`);
+  }
 }
 
-function rawLinks(text) {
-  const found = [];
-  const pattern = /\s(?:href|src)="([^"]*)"/gi;
-  let match = pattern.exec(text);
+function extractAttributeValues(html, attrName) {
+  const values = [];
+  const pattern = new RegExp(`\\s${attrName}="([^"]*)"`, 'gi');
+  let match = pattern.exec(html);
   while (match) {
-    found.push(match[1]);
-    match = pattern.exec(text);
+    values.push(match[1]);
+    match = pattern.exec(html);
   }
-  return found;
+  return values;
 }
 
 function extractElementIds(html) {
@@ -133,6 +137,68 @@ function extractElementIds(html) {
     match = pattern.exec(html);
   }
   return ids;
+}
+
+function checkSrcAttributes(fromFile, srcValues) {
+  for (const src of srcValues) {
+    if (!src) {
+      report(`${rel(fromFile)}: empty src attribute`);
+      continue;
+    }
+    // Wszelkie zewnętrzne schematy i protokoły są bezwzględnie zakazane dla zasobów osadzanych
+    if (src.startsWith('//') || /^[a-z]+:/i.test(src)) {
+      report(`${rel(fromFile)}: external or non-relative src is forbidden: ${src}`);
+      continue;
+    }
+
+    const cleanPath = src.split('#')[0].split('?')[0];
+    const target = path.normalize(path.join(path.dirname(fromFile), cleanPath));
+    if (!inside(target)) {
+      report(`${rel(fromFile)}: src leaves site/: ${src}`);
+      continue;
+    }
+
+    if (!fs.existsSync(target) || !fs.statSync(target).isFile()) {
+      report(`${rel(fromFile)}: missing local src target: ${src}`);
+    }
+  }
+}
+
+function checkCspMetaTag(file, text) {
+  const where = rel(file);
+  // Wycinamy komentarze HTML, aby uniknąć fałszywych dopasowań wewnątrz komentarzy
+  const textWithoutComments = text.replace(/<!--[\s\S]*?-->/g, '');
+
+  const metaMatch = textWithoutComments.match(
+    /<meta\s+[^>]*http-equiv=["']Content-Security-Policy["'][^>]*>/i,
+  );
+  if (!metaMatch) {
+    report(`${where}: missing <meta http-equiv="Content-Security-Policy"> tag`);
+    return;
+  }
+
+  const tagHtml = metaMatch[0];
+  const contentMatch = tagHtml.match(/content=(["'])([\s\S]*?)\1/i);
+  if (!contentMatch) {
+    report(`${where}: CSP meta tag missing content attribute`);
+    return;
+  }
+
+  const csp = contentMatch[2];
+  const requiredDirectives = [
+    "default-src 'none'",
+    "img-src 'self'",
+    "style-src 'self'",
+    "font-src 'self'",
+    "base-uri 'none'",
+    "form-action 'none'",
+  ];
+
+  for (const directive of requiredDirectives) {
+    if (!csp.includes(directive)) {
+      report(`${where}: CSP missing directive: "${directive}"`);
+    }
+  }
 }
 
 function resolvesLinkAndAnchor(fromFile, href, targetHtmlCache) {
@@ -281,9 +347,17 @@ function checkHtmlValidate() {
 function checkFreshness() {
   if (process.env.CI || process.argv.includes('--freshness')) {
     try {
-      execSync('git diff --exit-code site/', { stdio: 'pipe' });
-    } catch {
-      report('site/ is out of date with generator. Run `pnpm build:site` and commit the changes.');
+      const status = execSync('git status --porcelain site/', {
+        encoding: 'utf8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      }).trim();
+      if (status.length > 0) {
+        report(
+          `site/ is out of date with generator or has uncommitted changes:\n${status}\nRun \`pnpm build:site\` and commit the changes.`,
+        );
+      }
+    } catch (error) {
+      report(`git status check failed: ${error.message}`);
     }
   }
 }
@@ -326,7 +400,11 @@ for (const file of files) {
     report(`${where}: missing main id="tresc"`);
   }
 
-  for (const href of rawLinks(text)) {
+  const srcAttributes = extractAttributeValues(text, 'src');
+  checkSrcAttributes(file, srcAttributes);
+
+  const hrefAttributes = extractAttributeValues(text, 'href');
+  for (const href of hrefAttributes) {
     resolvesLinkAndAnchor(file, href, targetHtmlCache);
   }
 
@@ -341,12 +419,7 @@ for (const file of files) {
     }
   }
 
-  if (
-    !text.includes('http-equiv="Content-Security-Policy"') ||
-    !text.includes("default-src 'none'")
-  ) {
-    report(`${where}: missing strict Content-Security-Policy meta tag`);
-  }
+  checkCspMetaTag(file, text);
 }
 
 checkEmergencyNumbers(files);

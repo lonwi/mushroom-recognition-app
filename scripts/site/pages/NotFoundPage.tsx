@@ -11,7 +11,7 @@ interface NotFoundPageProps {
 export const NotFoundPage: React.FC<NotFoundPageProps> = ({ route, assetPrefix }) => {
   const strings = route.locale === 'pl' ? pl : en;
   const t = strings.notFound;
-  const homeHref = `${assetPrefix}/`;
+  const homeHref = assetPrefix === '.' ? './' : `${assetPrefix.replace(/\/+$/, '')}/`;
 
   return (
     <article>

@@ -14,11 +14,13 @@ export interface PhotoAttribution {
 export function loadPhotoAttributions(root = process.cwd()): PhotoAttribution[] {
   const dbPath = path.join(root, 'assets/db/species.db');
   if (!existsSync(dbPath)) {
-    return [];
+    throw new Error(
+      `Baza gatunków ${dbPath} nie istnieje. Uruchom pnpm build:species przed generowaniem strony.`,
+    );
   }
 
+  const db = new DatabaseSync(dbPath);
   try {
-    const db = new DatabaseSync(dbPath);
     const rows = db
       .prepare(
         `SELECT species_id as speciesId, author, license, license_url as licenseUrl, source, source_url as sourceUrl
@@ -26,10 +28,8 @@ export function loadPhotoAttributions(root = process.cwd()): PhotoAttribution[] 
          ORDER BY species_id, author`,
       )
       .all() as unknown as PhotoAttribution[];
-    db.close();
     return rows;
-  } catch (error) {
-    console.warn('Nie udało się odczytać tabeli photo_attributions z bazy:', error);
-    return [];
+  } finally {
+    db.close();
   }
 }
