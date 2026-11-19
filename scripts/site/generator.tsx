@@ -75,10 +75,10 @@ export async function buildSite(): Promise<void> {
   copyFileSync(iconSource, iconTarget);
   console.log('✓ Skopiowano site/icon.svg');
 
-  // 3. Generowanie robots.txt (blokada /en/ per D-05)
-  const robotsTxt = ['User-agent: *', 'Allow: /', 'Disallow: /en/', ''].join('\n');
+  // 3. Generowanie robots.txt (strony EN mają meta noindex, nofollow, co wymaga braku blokady pobierania)
+  const robotsTxt = ['User-agent: *', 'Allow: /', ''].join('\n');
   writeFileSync(path.join(SITE_DIR, 'robots.txt'), robotsTxt, 'utf8');
-  console.log('✓ Wygenerowano site/robots.txt (z Disallow: /en/)');
+  console.log('✓ Wygenerowano site/robots.txt (Allow: /)');
 
   // 4. Generowanie stron HTML
   for (const route of routes) {

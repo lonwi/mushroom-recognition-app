@@ -12,6 +12,7 @@ const textEncoding = 'utf8';
 const issuesUrl = 'https://github.com/lonwi/mushroom-recognition-app/issues';
 const contactEmail = 'hello@astigmatic.dev';
 const pageName = 'index.html';
+const basePath = process.env.SITE_BASE_PATH?.trim().replace(/\/+$/, '') ?? '';
 
 const expectedPages = [
   pageName,
@@ -151,8 +152,14 @@ function checkSrcAttributes(fromFile, srcValues) {
       continue;
     }
 
-    const cleanPath = src.split('#')[0].split('?')[0];
-    const target = path.normalize(path.join(path.dirname(fromFile), cleanPath));
+    let cleanPath = src.split('#')[0].split('?')[0];
+    if (basePath && cleanPath.startsWith(basePath)) {
+      cleanPath = cleanPath.slice(basePath.length);
+    }
+    const target = cleanPath.startsWith('/')
+      ? path.normalize(path.join(root, cleanPath.slice(1)))
+      : path.normalize(path.join(path.dirname(fromFile), cleanPath));
+
     if (!inside(target)) {
       report(`${rel(fromFile)}: src leaves site/: ${src}`);
       continue;
@@ -203,7 +210,8 @@ function checkCspMetaTag(file, text) {
 
 function resolvesLinkAndAnchor(fromFile, href, targetHtmlCache) {
   if (!href) return;
-  const [cleanPath, anchor] = href.split('#');
+  const [rawPath, anchor] = href.split('#');
+  let cleanPath = rawPath;
 
   // Dozwolone schematy zewnętrzne
   if (cleanPath.startsWith('https://') || cleanPath.startsWith('mailto:')) return;
@@ -232,8 +240,14 @@ function resolvesLinkAndAnchor(fromFile, href, targetHtmlCache) {
     return;
   }
 
+  if (basePath && cleanPath.startsWith(basePath)) {
+    cleanPath = cleanPath.slice(basePath.length);
+  }
+
   // Weryfikacja ścieżki pliku
-  const target = path.normalize(path.join(path.dirname(fromFile), cleanPath));
+  const target = cleanPath.startsWith('/')
+    ? path.normalize(path.join(root, cleanPath.slice(1)))
+    : path.normalize(path.join(path.dirname(fromFile), cleanPath));
   if (!inside(target)) {
     report(`${rel(fromFile)}: link leaves site/: ${href}`);
     return;
@@ -295,8 +309,8 @@ function checkRobotsTxt() {
     return;
   }
   const text = fs.readFileSync(robotsPath, textEncoding);
-  if (!text.includes('Disallow: /en/')) {
-    report('site/robots.txt missing Disallow: /en/ (D-05)');
+  if (!text.includes('Allow: /')) {
+    report('site/robots.txt missing Allow: /');
   }
 }
 
