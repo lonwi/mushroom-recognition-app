@@ -1,0 +1,47 @@
+import { themes, radius, spacing } from '../../src/ui/tokens';
+
+export const siteTheme = {
+  light: {
+    bg: themes.light.paper,
+    surface: themes.light.surface,
+    surfaceRaised: themes.light.surfaceRaised,
+    ink: themes.light.ink,
+    muted: themes.light.muted,
+    border: themes.light.border,
+    borderStrong: themes.light.borderStrong,
+    primary: themes.light.accent,
+    onPrimary: themes.light.onAccent,
+    danger: themes.light.danger,
+    warning: themes.light.warning,
+    link: '#14532D',
+    focus: themes.light.focus,
+  },
+  dark: {
+    bg: themes.dark.paper,
+    surface: themes.dark.surface,
+    surfaceRaised: themes.dark.surfaceRaised,
+    ink: themes.dark.ink,
+    muted: themes.dark.muted,
+    border: themes.dark.border,
+    borderStrong: themes.dark.borderStrong,
+    primary: themes.dark.accent,
+    onPrimary: themes.dark.onAccent,
+    danger: themes.dark.danger,
+    warning: themes.dark.warning,
+    link: '#86EFAC',
+    focus: themes.dark.focus,
+  },
+  radius: {
+    sm: `${radius.sm}px`,
+    md: `${radius.md}px`,
+    lg: `${radius.lg}px`,
+    xl: `${radius.xl}px`,
+  },
+  spacing: {
+    xs: `${spacing.xs}px`,
+    sm: `${spacing.sm}px`,
+    md: `${spacing.md}px`,
+    lg: `${spacing.lg}px`,
+    xl: `${spacing.xl}px`,
+  },
+} as const;

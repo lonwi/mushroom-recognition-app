@@ -1,0 +1,11 @@
+{
+  "extends": ["html-validate:recommended"],
+  "rules": {
+    "heading-level": "error",
+    "require-sri": "off",
+    "no-trailing-whitespace": "off",
+    "tel-non-breaking": "off",
+    "void-style": "off",
+    "doctype-style": "off"
+  }
+}

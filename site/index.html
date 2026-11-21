@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preload" as="image" href="./icon.svg" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'"
+    />
+    <meta
+      name="description"
+      content="Grzybobranie AI: aplikacja na telefon do rozpoznawania grzybów offline. Lokalny model na urządzeniu, atlas gatunków i pomoc. Nie zastępuje grzyboznawcy."
+    />
+    <meta name="theme-color" content="#1B382B" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121614" media="(prefers-color-scheme: dark)" />
+    <title>Grzybobranie AI — Atlas i rozpoznawanie grzybów offline</title>
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="canonical" href="./" />
+    <link rel="stylesheet" href="./css/site.css" />
+  </head>
+  <body>
+    <a class="skip" href="#tresc">Przejdź do treści</a>
+    <header class="site-header">
+      <div class="wrap bar">
+        <a class="brand" href="./"
+          ><img src="./icon.svg" width="40" height="40" alt="" /><span>Grzybobranie AI</span></a
+        >
+        <nav class="nav" aria-label="Nawigacja główna">
+          <a href="./" aria-current="page">Start</a><a href="./prywatnosc/">Prywatność</a
+          ><a href="./usuniecie-danych/">Usuwanie danych</a><a href="./licencje/">Licencje</a>
+        </nav>
+      </div>
+    </header>
+    <main id="tresc" class="wrap page">
+      <article>
+        <header class="hero">
+          <span class="badge">Wersja rozwojowa (Greenfield)</span>
+          <h1>Grzybobranie AI</h1>
+          <p class="lead">
+            Nowoczesna aplikacja terenowa wspierająca oznaczanie grzybów w Polsce i Europie
+            Środkowej. Działa w pełni offline, bez rejestracji i bez wysyłania zdjęć do chmury.
+          </p>
+          <p>
+            Aplikacja w przygotowaniu do publikacji w Google Play na platformę Android. Kod i rozwój
+            są prowadzone publicznie.
+          </p>
+        </header>
+        <section class="safety" aria-labelledby="safety-heading">
+          <h2 id="safety-heading">Ostrzeżenie o bezpieczeństwie</h2>
+          <p><strong>Aplikacja nie zastępuje grzyboznawcy ani klasyfikatora grzybów.</strong></p>
+          <p>
+            Nigdy nie spożywaj grzyba wyłącznie na podstawie wskazań aplikacji lub modelu sztucznej
+            inteligencji. Model może pomylić gatunek ze względu na oświetlenie, stopień dojrzałości,
+            zanieczyszczenia lub uszkodzenia owocnika.
+          </p>
+          <p>
+            W przypadku podejrzenia zatrucia grzybami należy natychmiast wezwać pomoc medyczną,
+            dzwoniąc pod numer alarmowy lub zgłosić się do najbliższego szpitalnego oddziału
+            ratunkowego / oddziału toksykologii. Wszyscy, którzy spożywali posiłek, powinni zgłosić
+            się do lekarza, nawet jeśli nie wykazują objawów.
+          </p>
+          <p>
+            Bezpłatną ocenę zbioru robią grzyboznawcy i klasyfikatorzy w stacji
+            sanitarno-epidemiologicznej (Sanepid). Jeśli masz jakąkolwiek wątpliwość, zostaw grzyba
+            w lesie.
+          </p>
+          <p>
+            Źródło zasad bezpieczeństwa:
+            <a
+              href="https://www.gov.pl/web/gis/bezpieczne-grzybobranie"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Główny Inspektorat Sanitarny (GIS), „Bezpieczne grzybobranie”</a
+            >
+          </p>
+          <p>
+            <em
+              >Aplikacja podpowiada prawdopodobną nazwę gatunku, ale NIGDY nie wydaje werdyktu o
+              jadalności. Informacje o statusie gatunku pochodzą z weryfikowanej bazy wiedzy.</em
+            >
+          </p>
+        </section>
+        <section aria-labelledby="pillars-heading">
+          <h2 id="pillars-heading">Trzy filary aplikacji</h2>
+          <div class="grid grid-3">
+            <article class="card">
+              <h3>Rozpoznawanie na urządzeniu</h3>
+              <p>
+                Model sieci neuronowej uruchamiany jest bezpośrednio na telefonie za pomocą
+                TensorFlow Lite. Twoje zdjęcia nie trafiają na zewnętrzne serwery. W kompilacjach
+                bez skalibrowanego modelu aplikacja uczciwie informuje: „rozpoznawanie niedostępne”.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Atlas gatunków</h3>
+              <p>
+                Karty grzybów z polskimi i łacińskimi nazwami, kluczami cech (hymenofor, trzon,
+                kapelusz), miesiącami owocowania oraz zestawieniem ryzykownych sobowtórów. Zawiera
+                ostrzeżenia o gatunkach śmiertelnie trujących.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Pomoc i bezpieczeństwo</h3>
+              <p>
+                Kompendium zasad bezpiecznego grzybobrania, wytyczne Głównego Inspektoratu
+                Sanitarnego, wykaz procedur alarmowych oraz dostęp do atrybucji autorów zdjęć.
+              </p>
+            </article>
+          </div>
+        </section>
+        <section aria-labelledby="privacy-heading">
+          <h2 id="privacy-heading">Prywatność i praca offline</h2>
+          <p>
+            W lesie często nie ma zasięgu sieci komórkowej. Grzybobranie AI ma wszystkie niezbędne
+            dane i model zaszyte w instalatorze aplikacji. Nie wymaga konta, nie zbiera danych
+            telemetrycznych i szanuje Twoją prywatność.
+          </p>
+        </section>
+      </article>
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <p class="footer-safety">
+          Aplikacja nie zastępuje grzyboznawcy ani klasyfikatora grzybów. Nigdy nie spożywaj grzyba
+          wyłącznie na podstawie wskazań aplikacji lub modelu sztucznej inteligencji. Model może
+          pomylić gatunek ze względu na oświetlenie, stopień dojrzałości, zanieczyszczenia lub
+          uszkodzenia owocnika.
+        </p>
+        <ul class="footer-links">
+          <li><a href="./prywatnosc/">Prywatność</a></li>
+          <li><a href="./usuniecie-danych/">Usuwanie danych</a></li>
+          <li><a href="./licencje/">Licencje</a></li>
+          <li>
+            <a
+              href="https://github.com/lonwi/mushroom-recognition-app"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Kod źródłowy</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://github.com/lonwi/mushroom-recognition-app/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Zgłoszenia</a
+            >
+          </li>
+          <li><a href="mailto:hello@astigmatic.dev">hello@astigmatic.dev</a></li>
+        </ul>
+        <p class="copyright">© 2026 Grzybobranie AI. Wszelkie prawa zastrzeżone.</p>
+      </div>
+    </footer>
+  </body>
+</html>
