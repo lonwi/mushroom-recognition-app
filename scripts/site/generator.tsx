@@ -58,6 +58,12 @@ function getRouteMeta(route: RouteMeta): { title: string; description: string } 
   }
 }
 
+async function writeFormattedFile(file: string, content: string): Promise<void> {
+  const config = await prettier.resolveConfig(file);
+  const formatted = await prettier.format(content, { ...config, filepath: file });
+  writeFileSync(file, formatted, 'utf8');
+}
+
 export async function buildSite(): Promise<void> {
   console.log('🍄 [build:site] Generowanie strony statycznej Grzybobranie AI...');
   mkdirSync(SITE_DIR, { recursive: true });
@@ -65,8 +71,7 @@ export async function buildSite(): Promise<void> {
 
   // 1. Generowanie CSS
   const css = generateCss();
-  const formattedCss = await prettier.format(css, { parser: 'css' });
-  writeFileSync(path.join(SITE_DIR, 'css', 'site.css'), formattedCss, 'utf8');
+  await writeFormattedFile(path.join(SITE_DIR, 'css', 'site.css'), css);
   console.log('✓ Wygenerowano site/css/site.css');
 
   // 2. Kopiowanie icon.svg
@@ -94,11 +99,9 @@ export async function buildSite(): Promise<void> {
 
     const rawMarkup = '<!DOCTYPE html>\n' + renderToStaticMarkup(fullTree);
     const unescapedMarkup = rawMarkup.replace(/&#x27;/g, "'");
-    const formattedMarkup = await prettier.format(unescapedMarkup, { parser: 'html' });
-
     const targetPath = path.join(SITE_DIR, route.outputFile);
     mkdirSync(path.dirname(targetPath), { recursive: true });
-    writeFileSync(targetPath, formattedMarkup, 'utf8');
+    await writeFormattedFile(targetPath, unescapedMarkup);
     console.log(`✓ Wygenerowano site/${route.outputFile}`);
   }
 

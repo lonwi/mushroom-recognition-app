@@ -309,8 +309,12 @@ function checkRobotsTxt() {
     return;
   }
   const text = fs.readFileSync(robotsPath, textEncoding);
-  if (!text.includes('Allow: /')) {
+  const directives = text.split(/\r?\n/).map((line) => line.split('#')[0].trim());
+  if (!directives.some((line) => /^allow:[ \t]*\/$/i.test(line))) {
     report('site/robots.txt missing Allow: /');
+  }
+  if (directives.some((line) => /^disallow:[ \t]*\S/i.test(line))) {
+    report('site/robots.txt must allow crawling so bots can read the EN noindex meta tag');
   }
 }
 
