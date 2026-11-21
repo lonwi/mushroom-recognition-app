@@ -21,6 +21,7 @@
     "test": "jest --ci",
     "quality": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm duplication && pnpm knip && pnpm depcruise && pnpm test",
     "export:android": "node ./scripts/export-android.cjs",
+    "compile:android-kotlin": "node ./scripts/compile-android-kotlin.cjs",
     "build:species": "tsx scripts/build-species-db.ts",
     "prepare": "lefthook install"
   },

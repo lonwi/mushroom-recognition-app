@@ -11,6 +11,7 @@ import android.os.Debug
 import androidx.annotation.RequiresApi
 import androidx.exifinterface.media.ExifInterface
 import expo.modules.kotlin.exception.CodedException
+import expo.modules.kotlin.functions.Coroutine
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import expo.modules.kotlin.records.Field

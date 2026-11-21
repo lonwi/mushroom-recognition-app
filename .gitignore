@@ -40,6 +40,8 @@ yarn-error.*
 # generated native folders (CNG / expo prebuild / expo run:*)
 /ios
 /android
+# Gradle output of local Expo modules (pnpm compile:android-kotlin)
+modules/**/android/build/
 
 # caches and local tooling
 .cache/
