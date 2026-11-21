@@ -20,7 +20,7 @@
     "depcruise": "depcruise src --config .dependency-cruiser.cjs",
     "test": "jest --ci",
     "quality": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm duplication && pnpm knip && pnpm depcruise && pnpm test",
-    "export:android": "expo export --platform android --output-dir dist",
+    "export:android": "env -u NODE_PATH node ./node_modules/expo/bin/cli export --platform android --output-dir dist",
     "build:species": "tsx scripts/build-species-db.ts",
     "prepare": "lefthook install"
   },
@@ -61,6 +61,7 @@
     "zustand": "5.1.0"
   },
   "devDependencies": {
+    "@babel/plugin-transform-react-jsx": "7.29.7",
     "@commitlint/cli": "^21.2.4",
     "@commitlint/config-conventional": "^21.2.4",
     "@eslint/js": "9.39.5",
