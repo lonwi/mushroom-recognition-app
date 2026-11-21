@@ -76,15 +76,20 @@ Eksport paczki JS Androida: `pnpm export:android`. Pełnego APK w CI nie ma. Pow
 
 ## Gdzie leżą decyzje
 
-- D-01…D-17: dokumenty planu poza repozytorium (KROK 3 i KROK 4). W repozytorium skrót rozstrzygnięć Fazy 0 jest w `docs/decyzje-f0.md`.
+- D-01…D-17: dokumenty planu poza repozytorium (KROK 3 i KROK 4). W repozytorium skrót rozstrzygnięć Fazy 0 jest w [docs/decyzje-f0.md](docs/decyzje-f0.md).
+- Plan faz: [docs/faza-1.md](docs/faza-1.md), [docs/faza-2.md](docs/faza-2.md), [docs/faza-3.md](docs/faza-3.md), [docs/faza-4.md](docs/faza-4.md), [docs/faza-5.md](docs/faza-5.md).
 - Stylowanie: `docs/adr/0001-styling.md`
-- Kontrakt modelu: `schemas/model-manifest.schema.json` (szkic v1.0.0-draft)
+- Kontrakt modelu: `schemas/model-manifest.schema.json` (v1.0.1)
 - Stary kontrakt 54 klas: `ml/OUTDATED.md`. Nie traktuj go jako aktualnego.
 - Pomiary telefonów: `docs/spikes/F0-raport.md`
 - Szablon zadania: `.github/ISSUE_TEMPLATE/zadanie.md`
 
+## Licencja
+
+Nowe pliki źródłowe podlegają Apache-2.0 (`LICENSE`). Treści redakcyjne, media i wagi modelu nie (`NOTICE`).
+
 ## Czego nie ruszać przy okazji
 
 - Potoku treningowego. Osobny bot go prowadzi.
-- Spike'a B (dekoder) poza jawnym zadaniem. Został po nim plik TODO.
+- Modułu `modules/photo-decoder` poza zadaniem, które go dotyczy. Kontrakt jest w `modules/photo-decoder/README.md`, pomiar w `docs/spikes/F0-raport.md`.
 - Numerów alarmowych w `emergency-contacts.ts`, dopóki nie ma zweryfikowanego źródła (Q19). Nie dopisuj numeru z pamięci.

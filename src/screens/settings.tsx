@@ -96,6 +96,18 @@ export default function SettingsScreen() {
             </Pressable>
           </Link>
         ) : null}
+        {__DEV__ ? (
+          <Link href="/dev/decoder" asChild>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={messages.settings.decoderSpike}
+              className="mt-2 justify-center"
+              style={{ minHeight: touchTargetMinDp }}
+            >
+              <AppText emphasis>{messages.settings.decoderSpike}</AppText>
+            </Pressable>
+          </Link>
+        ) : null}
       </View>
     </ThemeFrame>
   );

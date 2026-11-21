@@ -10,7 +10,7 @@ Ten katalog **nie jest** potokiem treningowym mini+. Trening prowadzi osobny bot
 - `class_cap` 2500 dla klas zbiorczych
 - preprocessing na sztywno 224 px i `(piksel / 127.5) - 1`
 
-**Obowiązująca decyzja (2026-11-10):** do 67 wyjść gatunkowych (cel 67), bez klas zbiorczych. Odrzucenie zdjęcia robi próg energii i minimalne prawdopodobieństwo top-1. Gatunki mini+ bez danych nie są wyjściami z `in_model: false`. Trafiają do `uncoveredSpecies` w manifeście. Aktualny kontrakt aplikacji to `schemas/model-manifest.schema.json` (szkic v1.0.0-draft) i `fixtures/model-manifest.example.json`.
+**Obowiązująca decyzja (2026-11-10):** do 67 wyjść gatunkowych (cel 67), bez klas zbiorczych. Odrzucenie zdjęcia robi próg energii i minimalne prawdopodobieństwo top-1. Gatunki mini+ bez danych nie są wyjściami z `in_model: false`. Trafiają do `uncoveredSpecies` w manifeście. Aktualny kontrakt aplikacji to `schemas/model-manifest.schema.json` (v1.0.1) i `fixtures/model-manifest.example.json`.
 
 `assets/models/labels.json` zostaje, bo zamrożone testy ładują ten plik. To nie jest manifest v1.
 

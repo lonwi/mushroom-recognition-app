@@ -2,6 +2,7 @@
   "name": "mushroom-recognition-app",
   "version": "0.1.0",
   "private": true,
+  "license": "Apache-2.0",
   "packageManager": "pnpm@12.16.1+sha512.091d1dee7927575661b25dab3c2ae31cafc1c54d6b71ed6a6600cf0c1cb10434a447eae14015f1b23e2e6bedeed79df94a932e2164d2832280dce3fb32f656d1",
   "engines": {
     "node": "^22 || ^24"
@@ -21,7 +22,7 @@
     "build:site": "tsx scripts/site/generator.tsx",
     "check:site": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-site.mjs",
     "quality": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm duplication && pnpm knip && pnpm depcruise && pnpm test && pnpm check:site",
-    "export:android": "expo export --platform android --output-dir dist",
+    "export:android": "node ./scripts/export-android.cjs",
     "build:species": "tsx scripts/build-species-db.ts",
     "prepare": "lefthook install"
   },
@@ -62,6 +63,7 @@
     "zustand": "5.1.0"
   },
   "devDependencies": {
+    "@babel/plugin-transform-react-jsx": "7.29.7",
     "@commitlint/cli": "^21.2.4",
     "@commitlint/config-conventional": "^21.2.4",
     "@eslint/js": "9.39.5",

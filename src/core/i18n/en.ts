@@ -33,6 +33,7 @@ export const en: typeof pl = {
     share: 'Share log',
     shareFailed: 'The share sheet could not be opened.',
     spike: 'Styling spike',
+    decoderSpike: 'Decoder spike',
   },
   atlas: {
     title: 'Atlas',
@@ -191,6 +192,28 @@ export const en: typeof pl = {
     manifestNote: 'This is the example fixture, not a model on the phone.',
     reasons: 'Example flags: {reasons}',
     primitive: 'Button on an accessibility primitive',
+  },
+  decoderSpike: {
+    title: 'Decoder spike',
+    intro:
+      'Take or pick three full-resolution photos. The screen decodes them one by one and records time and peak memory. This is not a mushroom identification.',
+    criteria:
+      'Criteria to write into the Phase 0 report, not a verdict from this phone. Xiaomi Mi 11: peak PSS ≤ 400 MB for three photos, and the time counts toward the ≤ 5 s p95 session budget. Huawei P smart 2019: no OOM and no process kill; time has no threshold.',
+    platform: 'Platform: {name}',
+    empty: 'Slot {n}: empty',
+    filled: 'Photo {n}: {name}',
+    camera: 'Take photo',
+    gallery: 'Choose from gallery',
+    clear: 'Clear',
+    decode: 'Decode three photos',
+    running: 'Decoding…',
+    pickFailed: 'The photo could not be read.',
+    failed: 'The measurement did not start.',
+    copyHint: 'Press and hold the report to copy it.',
+    reportLanguage: 'The measurement report is in Polish.',
+    noReport: 'No report yet.',
+    share: 'Share report',
+    shareFailed: 'The share sheet could not be opened.',
   },
   safety: {
     notAVerdict: 'This is a recognition hint, not an edibility verdict.',
