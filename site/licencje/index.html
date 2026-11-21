@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preload" as="image" href="../icon.svg" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'"
+    />
+    <meta
+      name="description"
+      content="Atrybucje zdjęć CC0 i CC BY, licencja Apache-2.0 dla kodu bazowego Keras oraz prawa autorskie aplikacji Grzybobranie AI."
+    />
+    <meta name="theme-color" content="#1B382B" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121614" media="(prefers-color-scheme: dark)" />
+    <title>Licencje i atrybucje — Grzybobranie AI</title>
+    <link rel="icon" href="../icon.svg" type="image/svg+xml" />
+    <link rel="canonical" href="./" />
+    <link rel="stylesheet" href="../css/site.css" />
+  </head>
+  <body>
+    <a class="skip" href="#tresc">Przejdź do treści</a>
+    <header class="site-header">
+      <div class="wrap bar">
+        <a class="brand" href="../"
+          ><img src="../icon.svg" width="40" height="40" alt="" /><span>Grzybobranie AI</span></a
+        >
+        <nav class="nav" aria-label="Nawigacja główna">
+          <a href="../">Start</a><a href="../prywatnosc/">Prywatność</a
+          ><a href="../usuniecie-danych/">Usuwanie danych</a
+          ><a href="../licencje/" aria-current="page">Licencje</a>
+        </nav>
+      </div>
+    </header>
+    <main id="tresc" class="wrap page">
+      <article>
+        <header>
+          <h1>Licencje i atrybucje</h1>
+          <p class="lead">
+            Informacje o prawach autorskich, licencjach kodu źródłowego, wag modelu oraz autorach
+            wykorzystanych zdjęć.
+          </p>
+        </header>
+        <section aria-labelledby="code-heading">
+          <h2 id="code-heading">Kod źródłowy i biblioteki bazowe</h2>
+          <p>
+            Fragmenty kodu potoku trenującego oraz architektura bazowa MobileNetV3 korzystają z kodu
+            biblioteki Keras na licencji Apache License, Version 2.0 (Copyright © Keras team). Pełny
+            tekst licencji: https://www.apache.org/licenses/LICENSE-2.0.
+          </p>
+          <p>
+            Autorski kod aplikacji mobilnej Grzybobranie AI oraz skryptów pomocniczych w niniejszym
+            repozytorium pozostaje chroniony prawem autorskim. Wszelkie prawa zastrzeżone przez
+            właściciela repozytorium (Wojciech Bubolka).
+          </p>
+        </section>
+        <section aria-labelledby="weights-heading">
+          <h2 id="weights-heading">Wagi modelu sztucznej inteligencji</h2>
+          <p>
+            Wagi startowe modelu MobileNetV3 (wytrenowane na ImageNet) podlegają warunkom
+            licencyjnym projektu ImageNet dla celów badawczo-edukacyjnych. Wagi finalne modelu
+            Grzybobranie AI, wytrenowane przez twórców projektu, stanowią utwór autorski: wszelkie
+            prawa zastrzeżone. Z wag modelu produkcyjnego wykluczone są dane Danish Fungi (DF20),
+            dla których projekt nie posiada komercyjnych zgód fotografów.
+          </p>
+        </section>
+        <section aria-labelledby="photos-heading">
+          <h2 id="photos-heading">Zdjęcia grzybów w aplikacji</h2>
+          <p>
+            Wszystkie fotografie prezentowane w aplikacji (w kartach atlasu i modułach pomocniczych)
+            pochodzą wyłącznie z licencjonowanego zbioru lonwi/grzybobranie-zdjecia na platformie
+            Hugging Face, wyselekcjonowanego z baz iNaturalist oraz GBIF na licencjach:
+          </p>
+          <ul class="list-styled">
+            <li>Creative Commons CC0 (domena publiczna)</li>
+            <li>
+              Creative Commons Attribution (CC BY 4.0 oraz wcześniejsze wersje) — wymaga zachowania
+              oznaczenia autorstwa i linku do licencji.
+            </li>
+          </ul>
+          <p>
+            Aplikacja rygorystycznie odrzuca w widokach dla użytkownika licencje z ograniczeniem
+            niekomercyjnym (CC BY-NC) oraz licencje Share-Alike (CC BY-SA). Poniżej znajduje się
+            zestawienie autorów i licencji poszczególnych fotografii.
+          </p>
+          <p>
+            <em
+              >W niniejszej kompilacji deweloperskiej baza zdjęć lokalnych jest w trakcie zasilania
+              z repozytorium Hugging Face. Pełna lista atrybucji zostanie opublikowana przed
+              wydaniem produkcyjnym.</em
+            >
+          </p>
+        </section>
+      </article>
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <p class="footer-safety">
+          Aplikacja nie zastępuje grzyboznawcy ani klasyfikatora grzybów. Nigdy nie spożywaj grzyba
+          wyłącznie na podstawie wskazań aplikacji lub modelu sztucznej inteligencji. Model może
+          pomylić gatunek ze względu na oświetlenie, stopień dojrzałości, zanieczyszczenia lub
+          uszkodzenia owocnika.
+        </p>
+        <ul class="footer-links">
+          <li><a href="../prywatnosc/">Prywatność</a></li>
+          <li><a href="../usuniecie-danych/">Usuwanie danych</a></li>
+          <li><a href="../licencje/">Licencje</a></li>
+          <li>
+            <a
+              href="https://github.com/lonwi/mushroom-recognition-app"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Kod źródłowy</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://github.com/lonwi/mushroom-recognition-app/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Zgłoszenia</a
+            >
+          </li>
+          <li><a href="mailto:hello@astigmatic.dev">hello@astigmatic.dev</a></li>
+        </ul>
+        <p class="copyright">© 2026 Grzybobranie AI. Wszelkie prawa zastrzeżone.</p>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -12,6 +12,7 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "scripts/**/*.ts",
+    "scripts/**/*.tsx",
     "nativewind-env.d.ts",
     ".expo/types/**/*.ts"
   ],
