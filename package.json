@@ -20,7 +20,7 @@
     "depcruise": "depcruise src --config .dependency-cruiser.cjs",
     "test": "jest --ci",
     "quality": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm duplication && pnpm knip && pnpm depcruise && pnpm test",
-    "export:android": "env -u NODE_PATH node ./node_modules/expo/bin/cli export --platform android --output-dir dist",
+    "export:android": "node ./scripts/export-android.cjs",
     "build:species": "tsx scripts/build-species-db.ts",
     "prepare": "lefthook install"
   },
