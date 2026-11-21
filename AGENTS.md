@@ -12,11 +12,11 @@ Faza 0 to szkielet: trzy zakładki (Atlas, Skaner, Pomoc), ustawienia w nagłów
 
 ## Stos
 
-- Expo SDK 58 (`expo` 58.0.23), React Native 0.88.1, React 19.3.1, TypeScript ~6.0.3, strict
-- Expo Router 58.0.30, trasy w `src/app/`
-- pnpm 12.16.1, Node 22
-- NativeWind 4.2.7 na tokenach z `src/ui/tokens.ts` (spike, ADR 0001, status `proposed`)
-- Zustand 5.1 i `expo-sqlite/kv-store` na ustawienia
+- Expo SDK 58, React Native, React, TypeScript (strict)
+- Expo Router, trasy w `src/app/`
+- pnpm, Node 22
+- NativeWind na tokenach z `src/ui/tokens.ts` (spike, ADR 0001, status `proposed`)
+- Zustand i `expo-sqlite/kv-store` na ustawienia
 - Tylko Android w CI i w planie wydania. iOS nie jest budowany.
 
 Wersje bibliotek nie podbijamy w trakcie MVP, chyba że wymusi to błąd bezpieczeństwa.

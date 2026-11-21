@@ -7,7 +7,6 @@
     "icon": "./assets/icon.png",
     "scheme": "grzybobranie",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "backgroundColor": "#F6F5F1",
     "updates": {
       "enabled": false
