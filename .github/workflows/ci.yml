@@ -158,6 +158,10 @@ jobs:
         env:
           EXPO_NO_TELEMETRY: '1'
       - name: Export the Android bundle
+        # pnpm injects NODE_PATH=.pnpm/node_modules, so a missing direct Babel
+        # plugin still resolves. Gradle spawns node without that path.
+        # scripts/export-android.cjs deletes NODE_PATH before the Expo CLI.
+        # The script is Node, so it also runs under cmd.exe on Windows.
         run: pnpm export:android
         env:
           EXPO_NO_TELEMETRY: '1'
