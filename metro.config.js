@@ -1,6 +1,8 @@
 const { getDefaultConfig } = require('expo/metro-config');
 const { withNativeWind } = require('nativewind/metro');
 
+const { shouldStripDevRoutes } = require('./scripts/dev-route-block.cjs');
+
 const config = withNativeWind(getDefaultConfig(__dirname), { input: './global.css' });
 
 for (const ext of ['db', 'wasm', 'tflite', 'jsonl']) {
@@ -22,10 +24,11 @@ config.server.enhanceMiddleware = (middleware, metroServer) => {
   };
 };
 
-// Dev routes are not part of a production bundle. CI sets NODE_ENV=production
-// for `pnpm export:android` before Metro loads this file. Release bundles that
-// do not set it still hit the !__DEV__ redirect in src/app/dev/*.tsx.
-if (process.env.NODE_ENV === 'production') {
+// Paczka produkcyjna nie zawiera src/app/dev, chyba że EXPO_PUBLIC_DEV_TOOLS=1
+// (profile EAS development i preview). CI ustawia NODE_ENV=production przy
+// `pnpm export:android`, zanim Metro wczyta ten plik. Gdy plik jednak wejdzie
+// do bundla, trasa i tak robi Redirect: devToolsEnabled() jest wtedy fałszem.
+if (shouldStripDevRoutes(process.env)) {
   const devRoutes = /[/\\]src[/\\]app[/\\]dev[/\\]/;
   const blockList = config.resolver.blockList;
   if (Array.isArray(blockList)) {

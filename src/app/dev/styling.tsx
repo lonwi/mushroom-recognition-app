@@ -6,6 +6,7 @@ import { View } from 'react-native';
 import exampleManifest from '../../../fixtures/model-manifest.example.json';
 import schema from '../../../schemas/model-manifest.schema.json';
 import { loadModelManifest } from '@/core/ai/degradation';
+import { devToolsEnabled } from '@/core/config/dev-tools';
 import { messagesFor } from '@/core/i18n';
 import type { ThemeName } from '@/core/theme';
 import { platformName } from '@/infra/platform';
@@ -23,9 +24,9 @@ const exampleLoad = loadModelManifest(exampleManifest, schema, {
 });
 
 export default function StylingSpikeRoute() {
-  // Release builds keep this file out of the navigator. A grzybobranie://dev/styling
-  // deep link must not mount the spike if the module is still in the bundle.
-  if (!__DEV__) {
+  // Produkcja wycina src/app/dev. Przy EXPO_PUBLIC_DEV_TOOLS=1 plik zostaje.
+  // Bez tej flagi grzybobranie://dev/styling nie może otworzyć spike'a.
+  if (!devToolsEnabled()) {
     return <Redirect href="/" />;
   }
   return <StylingSpikeScreen />;

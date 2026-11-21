@@ -1,11 +1,12 @@
 import { Redirect } from 'expo-router';
 
+import { devToolsEnabled } from '@/core/config/dev-tools';
 import DecoderSpikeScreen from '@/screens/decoder-spike';
 
 export default function DecoderSpikeRoute() {
-  // Paczka release wycina src/app/dev. Gdy plik jednak wejdzie do bundla,
-  // grzybobranie://dev/decoder nie może otworzyć spike'a.
-  if (!__DEV__) {
+  // Produkcja wycina src/app/dev. Przy EXPO_PUBLIC_DEV_TOOLS=1 plik zostaje.
+  // Bez tej flagi grzybobranie://dev/decoder nie może otworzyć spike'a.
+  if (!devToolsEnabled()) {
     return <Redirect href="/" />;
   }
   return <DecoderSpikeScreen />;

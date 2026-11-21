@@ -29,6 +29,7 @@ export const pl = {
     logHint: 'Zostaje na tym telefonie. Nie zawiera współrzędnych.',
     share: 'Udostępnij dziennik',
     shareFailed: 'Nie udało się otworzyć arkusza udostępniania.',
+    devTools: 'Narzędzia deweloperskie',
     spike: 'Spike stylowania',
     decoderSpike: 'Spike dekodera',
   },

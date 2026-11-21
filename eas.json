@@ -7,6 +7,9 @@
     "development": {
       "pnpm": "12.16.1",
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_DEV_TOOLS": "1"
+      },
       "android": {
         "buildType": "apk"
       }
@@ -14,6 +17,9 @@
     "preview": {
       "pnpm": "12.16.1",
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_DEV_TOOLS": "1"
+      },
       "android": {
         "buildType": "apk"
       }
