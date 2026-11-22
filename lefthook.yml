@@ -24,4 +24,4 @@ pre-push:
     typecheck:
       run: pnpm typecheck
     depcruise:
-      run: pnpm depcruise
+      run: pnpm check:deps

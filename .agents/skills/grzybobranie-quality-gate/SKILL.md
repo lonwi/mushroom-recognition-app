@@ -30,9 +30,10 @@ Polecenie `pnpm quality` wykonuje sekwencję:
 2. `pnpm lint` (`eslint . --max-warnings 0`) – brak jakichkolwiek błędów i ostrzeżeń ESLint.
 3. `pnpm format:check` (`prettier --check .`) – pełna zgodność z konfiguracją Prettiera. Do automatycznej naprawy: `pnpm format`.
 4. `pnpm duplication` (`jscpd --no-colors --config .jscpd.json`) – duplikacja tokenów poniżej 1.5%.
-5. `pnpm knip` (`knip`) – brak martwego kodu, nieużywanych eksportów i zbędnych zależności.
-6. `pnpm depcruise` (`depcruise src --config .dependency-cruiser.cjs`) – brak naruszeń 5 warstw architektury oraz brak zależności cyklicznych.
+5. `pnpm check:knip` (`knip`) – brak martwego kodu, nieużywanych eksportów i zbędnych zależności.
+6. `pnpm check:deps` (`depcruise src --config .dependency-cruiser.cjs`) – brak naruszeń 5 warstw architektury oraz brak zależności cyklicznych.
 7. `pnpm test` (`jest --ci`) – wszystkie testy jednostkowe i komponentowe RNTL muszą przechodzić.
+8. `pnpm check:site` – statyczna strona w `site/` przechodzi walidację.
 
 ## Dodatkowe bramki domenowe
 

@@ -165,5 +165,59 @@ jobs:
         run: pnpm export:android
         env:
           EXPO_NO_TELEMETRY: '1'
-          # Drops src/app/dev from the bundle. See metro.config.js.
+          # Bez EXPO_PUBLIC_DEV_TOOLS Metro wycina src/app/dev. Patrz metro.config.js.
+          # Skrypt eksportu sprawdza potem, że znacznik spike'a dekodera nie wszedł do paczki.
           NODE_ENV: production
+
+  android-kotlin:
+    name: Android Kotlin compile
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      # AGP 9.2 (React Native 0.88) requires JDK 17. The React Native Gradle
+      # plugin also sets the Java/Kotlin toolchain to 17.
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+      - name: Install Android SDK packages
+        # compileSdk 37 is published as platforms;android-37.0. There is no
+        # platforms;android-37 package. build-tools 37.0.0 matches the
+        # React Native 0.88 version catalog. Skip the install when the
+        # runner image already has both.
+        run: |
+          set -eu
+          if [ ! -d "$ANDROID_HOME/platforms/android-37.0" ]; then
+            sdkmanager --install "platforms;android-37.0"
+          fi
+          if [ ! -d "$ANDROID_HOME/build-tools/37.0.0" ]; then
+            sdkmanager --install "build-tools;37.0.0"
+          fi
+      # basic cache uses the Actions cache. The default "enhanced" provider
+      # talks to Gradle's hosted cache. Read-write is required because the
+      # default branch is main, so a push to rewrite/greenfield would
+      # otherwise never store a cache entry.
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          cache-provider: 'basic'
+          cache-read-only: 'false'
+      - name: Compile release Kotlin
+        # pnpm injects NODE_PATH. EAS Gradle starts node without it.
+        # scripts/compile-android-kotlin.cjs deletes NODE_PATH, runs
+        # expo prebuild (android/ stays untracked), then
+        # :photo-decoder:compileReleaseKotlin. The script is Node, so it
+        # also runs under cmd.exe on Windows.
+        run: pnpm compile:android-kotlin
+        env:
+          EXPO_NO_TELEMETRY: '1'

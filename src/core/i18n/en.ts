@@ -32,6 +32,7 @@ export const en: typeof pl = {
     logHint: 'Stays on this phone. It has no coordinates.',
     share: 'Share log',
     shareFailed: 'The share sheet could not be opened.',
+    devTools: 'Developer tools',
     spike: 'Styling spike',
     decoderSpike: 'Decoder spike',
   },
