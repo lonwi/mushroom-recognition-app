@@ -1,4 +1,4 @@
-import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
+import { act, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 
 import { settingsStore } from '@/infra/settings/use-settings-store';
 
@@ -56,6 +56,39 @@ test('the active theme is disabled and a real switch is kept with stats', async 
   await user.press(screen.getByRole('button', { name: 'Wyczyść pomiary' }));
   expect(screen.getByText('Jeszcze nie przełączono.')).toBeTruthy();
   expect(screen.queryByText('Liczba pomiarów: 1')).toBeNull();
+});
+
+test('clearing drops a switch that has not reached the second frame', async () => {
+  devFlag.__DEV__ = true;
+  process.env.EXPO_PUBLIC_DEV_TOOLS = '1';
+  settingsStore.getState().setTheme('light');
+  const frames: FrameRequestCallback[] = [];
+  jest.spyOn(global, 'requestAnimationFrame').mockImplementation((callback) => {
+    frames.push(callback);
+    return frames.length;
+  });
+
+  const user = userEvent.setup();
+  await render(<StylingSpikeRoute />);
+  await user.press(screen.getByRole('button', { name: 'Ciemny' }));
+  expect(frames.length).toBeGreaterThan(0);
+  await user.press(screen.getByRole('button', { name: 'Wyczyść pomiary' }));
+  await act(() => {
+    const queued = frames.splice(0);
+    queued.forEach((callback) => callback(0));
+    const nested = frames.splice(0);
+    nested.forEach((callback) => callback(0));
+  });
+  expect(screen.getByText('Jeszcze nie przełączono.')).toBeTruthy();
+
+  await user.press(screen.getByRole('button', { name: 'Jasny' }));
+  await act(() => {
+    const queued = frames.splice(0);
+    queued.forEach((callback) => callback(0));
+    const nested = frames.splice(0);
+    nested.forEach((callback) => callback(0));
+  });
+  expect(screen.getByText(/Ciemny → Jasny:/)).toBeTruthy();
 });
 
 test('a release build redirects the styling deep link away from the spike', async () => {

@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { launchCameraAsync, launchImageLibraryAsync } from 'expo-image-picker';
+import { useFocusEffect } from 'expo-router';
 
 import exampleManifest from '../../fixtures/model-manifest.example.json';
 import { SPIKE_MIN_SHORT_SIDE } from '@/core/ai/decode-plan';
@@ -37,6 +38,18 @@ export default function DecoderSpikeScreen() {
   const [seriesCount, setSeriesCount] = useState<number>(defaultDecoderSeriesCount);
   const [running, setRunning] = useState(false);
   const cancelRequested = useRef(false);
+  const alive = useRef(true);
+  const stopSeries = useCallback(() => {
+    alive.current = false;
+    cancelRequested.current = true;
+  }, []);
+  useEffect(() => stopSeries, [stopSeries]);
+  useFocusEffect(
+    useCallback(() => {
+      alive.current = true;
+      return stopSeries;
+    }, [stopSeries]),
+  );
   const [report, setReport] = useState<string | null>(null);
   const [pickError, setPickError] = useState<string | null>(null);
   const [shareFailed, setShareFailed] = useState(false);
@@ -67,9 +80,9 @@ export default function DecoderSpikeScreen() {
               quality: 1,
             });
       const uri = result.canceled ? null : result.assets[0]?.uri;
-      if (uri) addUri(uri);
+      if (uri && alive.current) addUri(uri);
     } catch {
-      setPickError(copy.pickFailed);
+      if (alive.current) setPickError(copy.pickFailed);
     }
   }
 
@@ -91,13 +104,17 @@ export default function DecoderSpikeScreen() {
         startedAt: new Date().toISOString(),
         shouldCancel: () => cancelRequested.current,
       });
-      setReport(formatDecoderSeriesReport(series));
+      if (alive.current) setReport(formatDecoderSeriesReport(series));
     } catch (error) {
-      const message = error instanceof Error ? error.message : copy.pickFailed;
-      setReport(`${copy.failed}\n${message}`);
+      if (alive.current) {
+        const message = error instanceof Error ? error.message : copy.pickFailed;
+        setReport(`${copy.failed}\n${message}`);
+      }
     } finally {
-      cancelRequested.current = false;
-      setRunning(false);
+      if (alive.current) {
+        cancelRequested.current = false;
+        setRunning(false);
+      }
     }
   }
 
@@ -113,7 +130,7 @@ export default function DecoderSpikeScreen() {
           <AppText className="mt-4">{copy.platform.replace('{name}', platformName())}</AppText>
           <View className="mt-4">
             {slots.map((slot, index) => (
-              <AppText key={slot ?? `empty-${index}`} className="mt-2">
+              <AppText key={`${index}-${slot ?? 'empty'}`} className="mt-2">
                 {slot
                   ? copy.filled.replace('{n}', String(index + 1)).replace('{name}', fileName(slot))
                   : copy.empty.replace('{n}', String(index + 1))}

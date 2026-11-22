@@ -211,10 +211,12 @@ export async function measurePhotos(
 
 type DecoderRunSummary = {
   index: number;
+  ok: boolean;
   decodeSumMilliseconds: number;
   preprocessSumMilliseconds: number;
   wallMilliseconds: number;
   oom: boolean;
+  errors: string[];
 };
 
 export type DecoderSeriesMeasurement = {
@@ -239,6 +241,16 @@ function preprocessSum(measurement: DecoderSpikeMeasurement): number {
 
 function runHadOom(measurement: DecoderSpikeMeasurement): boolean {
   return measurement.photos.some((photo) => photo.errorCode === 'oom');
+}
+
+function runErrors(measurement: DecoderSpikeMeasurement): string[] {
+  return measurement.photos
+    .filter((photo) => !photo.ok)
+    .map((photo) => {
+      const code = photo.errorCode ?? 'decode_failed';
+      const detail = photo.errorMessage ? ` — ${photo.errorMessage}` : '';
+      return `zdjęcie ${photo.index}: ${code}${detail}`;
+    });
 }
 
 function maxReading(current: number | null, next: number | null): number | null {
@@ -276,12 +288,15 @@ export async function measurePhotoSeries(
       break;
     }
     const measurement = await measurePhotos(uris, options);
+    const errors = runErrors(measurement);
     runs.push({
       index: index + 1,
+      ok: errors.length === 0,
       decodeSumMilliseconds: measurement.decodeSumMilliseconds,
       preprocessSumMilliseconds: preprocessSum(measurement),
       wallMilliseconds: measurement.wallMilliseconds,
       oom: runHadOom(measurement),
+      errors,
     });
     peakPssKb = maxReading(peakPssKb, measurement.peakPssKb);
     peakNativeHeapKb = maxReading(peakNativeHeapKb, measurement.peakNativeHeapKb);
@@ -331,9 +346,9 @@ function criteriaFooter(): string[] {
   ];
 }
 
-function statsLine(label: string, values: number[]): string {
+function statsLine(label: string, values: number[], empty: string): string {
   const stats = durationStats(values);
-  if (stats === null) return `${label}: brak przebiegów`;
+  if (stats === null) return `${label}: ${empty}`;
   return `${label}: ${formatDurationStats(stats)}`;
 }
 
@@ -395,28 +410,40 @@ export function formatDecoderSeriesReport(series: DecoderSeriesMeasurement): str
     'Czas ściany przebiegu to dekodowanie i preprocessing. Inferencja modelu nie wchodzi w ten pomiar.',
     '',
   ];
+  const okRuns = series.runs.filter((run) => run.ok);
+  const failedRuns = series.runs.length - okRuns.length;
+  lines.push(`Udane: ${okRuns.length}, nieudane: ${failedRuns}`);
   for (const run of series.runs) {
+    if (!run.ok) {
+      lines.push(`Przebieg ${run.index}: NIEUDANY${run.oom ? ', OOM' : ''}`);
+      for (const error of run.errors) lines.push(`  ${error}`);
+      continue;
+    }
     lines.push(
-      `Przebieg ${run.index}: dekodowanie ${oneDecimal(run.decodeSumMilliseconds)} ms, preprocessing ${oneDecimal(run.preprocessSumMilliseconds)} ms, ściana ${oneDecimal(run.wallMilliseconds)} ms${run.oom ? ', OOM' : ''}`,
+      `Przebieg ${run.index}: dekodowanie ${oneDecimal(run.decodeSumMilliseconds)} ms, preprocessing ${oneDecimal(run.preprocessSumMilliseconds)} ms, ściana ${oneDecimal(run.wallMilliseconds)} ms`,
     );
   }
   lines.push('');
+  const empty = series.runs.length === 0 ? 'brak przebiegów' : 'brak udanych przebiegów';
   lines.push(
     statsLine(
       'Czas ściany (ms)',
-      series.runs.map((run) => run.wallMilliseconds),
+      okRuns.map((run) => run.wallMilliseconds),
+      empty,
     ),
   );
   lines.push(
     statsLine(
       'Suma dekodowania (ms)',
-      series.runs.map((run) => run.decodeSumMilliseconds),
+      okRuns.map((run) => run.decodeSumMilliseconds),
+      empty,
     ),
   );
   lines.push(
     statsLine(
       'Suma preprocessingu (ms)',
-      series.runs.map((run) => run.preprocessSumMilliseconds),
+      okRuns.map((run) => run.preprocessSumMilliseconds),
+      empty,
     ),
   );
   lines.push(memoryLine('Szczyt PSS', series.peakPssKb));

@@ -119,6 +119,34 @@ test('a series repeats the three photos and reports p95 plus the peak', async ()
   expect(report).toContain('Xiaomi Mi 11 Lite 5G');
 });
 
+test('a run with a failed photo stays out of the timing stats', async () => {
+  let call = 0;
+  const series = await measurePhotoSeries(['a', 'b'], {
+    runs: 2,
+    minShortSide: 448,
+    spec,
+    startedAt: '2026-11-22T15:39:38.742Z',
+    now: () => 0,
+    readMemory: async () => ({ pssKb: 1, nativeHeapKb: 1, javaHeapKb: 1 }),
+    decode: async () => {
+      call += 1;
+      if (call <= 2) {
+        throw Object.assign(new Error('plik uszkodzony'), { code: 'decode_failed' });
+      }
+      return decoded(1, 100);
+    },
+  });
+
+  expect(series.runs.map((run) => run.ok)).toEqual([false, true]);
+  const report = formatDecoderSeriesReport(series);
+  expect(report).toContain('Udane: 1, nieudane: 1');
+  expect(report).toContain('Przebieg 1: NIEUDANY');
+  expect(report).toContain('zdjęcie 1: decode_failed — plik uszkodzony');
+  expect(report).toContain('zdjęcie 2: decode_failed — plik uszkodzony');
+  expect(report).toContain('Czas ściany (ms): n=1');
+  expect(report).not.toContain('Czas ściany (ms): n=2');
+});
+
 test('cancel is checked between runs and keeps the finished one', async () => {
   let finished = 0;
   const series = await measurePhotoSeries(['a'], {
