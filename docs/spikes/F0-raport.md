@@ -4,13 +4,13 @@ Wypełnia Wojciech na telefonach. CI tego nie mierzy. Puste komórki zostają pu
 
 Telefony:
 
-| Rola                | Telefon                                     | Co zapisujemy                           |
-| ------------------- | ------------------------------------------- | --------------------------------------- |
-| Referencyjny        | Xiaomi Mi 11 Lite 5G (RAM do potwierdzenia) | budżety, w tym motyw ≤150 ms            |
-| Najgorszy przypadek | Huawei P smart 2019                         | brak awarii, OOM i ANR; czasy bez progu |
-| Dym / GPU           | Samsung S23                                 | uruchomienie i motywy                   |
+| Rola                | Telefon              | Co zapisujemy                           |
+| ------------------- | -------------------- | --------------------------------------- |
+| Referencyjny        | Xiaomi Mi 11 Lite 5G | budżety, w tym motyw ≤200 ms            |
+| Najgorszy przypadek | Huawei P smart 2019  | brak awarii, OOM i ANR; czasy bez progu |
+| Dym / GPU           | Samsung S23          | uruchomienie i motywy                   |
 
-Pomiary z 2026-11-22 (spike A, wiersz (b), oraz spike B) pochodzą z Xiaomi Mi 11 Lite 5G, z buildu release złożonego profilem EAS `preview`. Rozmiar RAM tego telefonu nie jest znany.
+Telefon referencyjny jest potwierdzony: Xiaomi Mi 11 Lite 5G. Rozmiar RAM nie jest znany. Pomiary z 2026-11-22 (spike A, wiersz (b), oraz spike B) pochodzą z buildu release złożonego profilem EAS `preview`.
 
 ## Potwierdzenie Huaweia (Q3)
 
@@ -41,18 +41,30 @@ Oczekiwane, do potwierdzenia: model w okolicy `POT-LX1`, Android 9 (API 28) albo
 
 Kryteria z `docs/adr/0001-styling.md`. Wszystkie muszą przejść. Czas na Huaweiu nie jest progiem.
 
-| Kryterium                                                                          | Xiaomi Mi 11 Lite 5G                                                                                                                                                            | Huawei P smart 2019 | Samsung S23 |
-| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ----------- |
-| (a) release instaluje się i startuje, bez błędu Metro / Babel / Reanimated         |                                                                                                                                                                                 |                     |             |
-| (b) trzy motywy, czas do zatwierdzonej klatki (próg 150 ms tylko na Mi 11 Lite 5G) | orientacyjnie: zwykle 120–150 ms (ostatnie przełączenie, np. 128,9 ms) — niezaliczone formalnie: brak osobnych czasów dla light, dark, highContrast; górna granica dotyka progu | czas, bez progu     | dym         |
-| (c) `@rn-primitives`: fokus, rola, etykieta na przyciskach spike'a                 |                                                                                                                                                                                 |                     |             |
-| (d) brak awarii i ANR przy przełączaniu                                            |                                                                                                                                                                                 |                     |             |
-| (e) dym: start i trzy motywy                                                       |                                                                                                                                                                                 |                     |             |
-| Liczba z ekranu spike'a (ms, ostatnie przełączenie)                                | 128,9 (zakres zwykle 120–150)                                                                                                                                                   |                     |             |
+| Kryterium                                                                          | Xiaomi Mi 11 Lite 5G | Huawei P smart 2019 | Samsung S23 |
+| ---------------------------------------------------------------------------------- | -------------------- | ------------------- | ----------- |
+| (a) release instaluje się i startuje, bez błędu Metro / Babel / Reanimated         |                      |                     |             |
+| (b) trzy motywy, czas do zatwierdzonej klatki (próg 200 ms tylko na Mi 11 Lite 5G) | zaliczone            | czas, bez progu     | dym         |
+| (c) `@rn-primitives`: fokus, rola, etykieta na przyciskach spike'a                 |                      |                     |             |
+| (d) brak awarii i ANR przy przełączaniu                                            |                      |                     |             |
+| (e) dym: start i trzy motywy                                                       |                      |                     |             |
+| Liczba z ekranu spike'a (ms, ostatnie przełączenie)                                | 141,5                |                     |             |
 
 Werdykt A: `niezmierzony` (skala: `zaliczony` / `niezaliczony` / `niezmierzony`).
 
-Na Mi 11 Lite 5G jest tylko orientacja: zwykle 120–150 ms (ostatnie przełączenie, np. 128,9 ms). Górna granica dotyka progu. Żeby zaliczyć (b), potrzebne są osobne czasy dla light, dark i highContrast. Kryteria (a), (c), (d) i (e) nie były mierzone osobno, więc werdykt zostaje `niezmierzony`.
+(b) na Mi 11 Lite 5G jest `zaliczone`. Próg od 2026-11-22 to 200 ms. Pięć przełączeń na buildzie release, profil EAS `preview`, wszystkie poniżej progu. Celami były wszystkie trzy motywy.
+
+| Przejście                | ms    |
+| ------------------------ | ----- |
+| Jasny → Ciemny           | 160,7 |
+| Ciemny → Wysoki kontrast | 129,0 |
+| Wysoki kontrast → Ciemny | 129,0 |
+| Ciemny → Jasny           | 127,9 |
+| Jasny → Wysoki kontrast  | 141,5 |
+
+n=5, średnia 137,6, mediana 129,0, min 127,9, max 160,7.
+
+Kryteria (a), (c), (d) i (e) nie były mierzone, więc werdykt zostaje `niezmierzony`.
 
 Jeśli niezaliczony: przejście na Unistyles 3.8.x i aktualizacja ADR 0001.
 
@@ -66,7 +78,7 @@ Zbudowane w module `modules/photo-decoder` i w `src/core/ai/image-preprocessing.
 - To samo API na iOS. Implementacji nie ma: wywołanie kończy się kodem `unsupported`.
 - Próg krótszego boku bierze się z `preprocessing.decodeMinWidth` manifestu. Gdy pola nie ma, zostaje 448 px. To nie jest rozmiar wejścia modelu. Nazwa pola w szkicu schematu mówi o szerokości; spike B stosuje ją do krótszego boku.
 - `image-preprocessing.ts` czyta sekcję `preprocessing`: rozmiar, kolejność kanałów, filtr, kadrowanie, zaokrąglenie, skalę i offset albo średnią i odchylenie. Rozmiar wejścia nie jest wybrany.
-- Ekran deweloperski `grzybobranie://dev/decoder`, tylko w buildzie deweloperskim. Trzy zdjęcia, dekodowanie po kolei, czas każdego i łącznie, szczyt pamięci, OOM. Raport można przytrzymać (kopiowanie) albo oddać arkuszem udostępniania.
+- Ekran deweloperski `grzybobranie://dev/decoder`, tylko w buildzie deweloperskim. Trzy zdjęcia wybiera się raz. Seria 1, 5, 10 albo 20 (domyślnie 10) powtarza ten sam przebieg po kolei. Raport ma statystyki czasu ściany, sumy dekodowania i sumy preprocessingu oraz szczyt pamięci i OOM. Można go przytrzymać (kopiowanie) albo oddać arkuszem udostępniania jako `spike-b-dekoder.txt`.
 
 ### Co gwarantuje parytet P1
 
@@ -95,15 +107,16 @@ Expo Go tego modułu nie załaduje. Liczby spike'a B mają pochodzić z release,
 1. Zbuduj APK: `eas build -p android --profile preview` (albo `development`) i zainstaluj je na telefonie.
 2. Otwórz Ustawienia (nagłówek Dziennika, Pomocy albo Profilu, a na Atlasie przycisk w ekranie) i wejdź w „Narzędzia deweloperskie” → „Spike dekodera”. Deep link na tym buildzie: `adb shell am start -a android.intent.action.VIEW -d "grzybobranie://dev/decoder" com.grzybobranie.ai`.
 3. Zrób albo wybierz **trzy** zdjęcia w pełnej rozdzielczości. Nie kadruje ich edytor, a jakość jest ustawiona na maksimum. Wybór z galerii i tak może skopiować plik; nie ustawiamy maksymalnego boku.
-4. Naciśnij „Dekoduj trzy zdjęcia”. Zdjęcia idą po kolei. Przytrzymaj raport albo udostępnij go jako `spike-b-dekoder.txt`.
-5. Wpisz liczby poniżej. Jeśli proces zniknie i raportu nie ma, w rubryce „proces ubity” wpisz „tak”.
+4. Wybierz liczbę przebiegów: 1, 5, 10 albo 20. Domyślnie 10. Naciśnij „Dekoduj serię”. Te same trzy zdjęcia idą po kolei tyle razy. W trakcie serii start jest wyłączony. „Anuluj serię” przerywa przed kolejnym przebiegiem; bieżący dobiega końca.
+5. Przytrzymaj raport albo udostępnij go jako `spike-b-dekoder.txt`. Jeśli proces zniknie i raportu nie ma, w rubryce „proces ubity” wpisz „tak”.
+6. Wpisz liczby poniżej.
 
-Z raportu bierz: sumę dekodowania, czas ściany przebiegu, szczyt PSS, szczyt sterty natywnej, linię OOM. Czas preprocessingu TypeScript jest w raporcie osobno i nie jest progiem tego spike'a.
+Z raportu bierz: p95 czasu ściany do budżetu sesji ≤ 5 s, sumę dekodowania, sumę preprocessingu, szczyt PSS, szczyt sterty natywnej, linię OOM. Czas ściany to dekodowanie i preprocessing TypeScript. Inferencja modelu nie wchodzi w ten pomiar i nie jest progiem tego spike'a. Liczby już wpisane w tabeli są z jednego przebiegu, nie z p95.
 
 | Pomiar                                           | Xiaomi Mi 11 Lite 5G                                                                                                            | Huawei P smart 2019 | Samsung S23 |
 | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ----------- |
-| Suma dekodowania trzech zdjęć (ms)               | 537,8                                                                                                                           |                     |             |
-| Czas ściany przebiegu (ms)                       | 1599,8                                                                                                                          |                     |             |
+| Suma dekodowania trzech zdjęć (ms)               | 537,8 (jeden przebieg)                                                                                                          |                     |             |
+| Czas ściany przebiegu (ms)                       | 1599,8 (jeden przebieg)                                                                                                         |                     |             |
 | Szczyt PSS (MB)                                  | 152,2 (próg 400) — zaliczone                                                                                                    | bez OOM             | dym         |
 | Szczyt sterty natywnej (MB)                      | 59,9                                                                                                                            |                     |             |
 | OOM                                              | nie                                                                                                                             |                     |             |

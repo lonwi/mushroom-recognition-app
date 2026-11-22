@@ -1,4 +1,10 @@
-import { measurePhotos, formatDecoderSpikeReport, type DecodedRgb } from '@/core/ai/decoder-spike';
+import {
+  measurePhotos,
+  measurePhotoSeries,
+  formatDecoderSpikeReport,
+  formatDecoderSeriesReport,
+  type DecodedRgb,
+} from '@/core/ai/decoder-spike';
 import type { PreprocessingSpec } from '@/core/ai/image-preprocessing';
 
 const spec: PreprocessingSpec = {
@@ -79,6 +85,60 @@ test('an OOM on the second photo does not stop the third', async () => {
   expect(measurement.photos.map((photo) => photo.ok)).toEqual([true, false, true]);
   expect(measurement.photos[1]?.errorCode).toBe('oom');
   expect(formatDecoderSpikeReport(measurement)).toContain('OOM: tak');
+});
+
+test('a series repeats the three photos and reports p95 plus the peak', async () => {
+  let clock = 0;
+  let run = 0;
+  const series = await measurePhotoSeries(['a', 'b', 'c'], {
+    runs: 2,
+    minShortSide: 448,
+    spec,
+    startedAt: '2026-11-22T15:39:38.742Z',
+    now: () => clock,
+    readMemory: async () => ({ pssKb: 1000, nativeHeapKb: 100, javaHeapKb: 50 }),
+    decode: async (uri) => {
+      clock += 10;
+      const peaks = run === 0 ? { a: 10_000, b: 20_000, c: 30_000 } : { a: 400_000, b: 1, c: 1 };
+      if (uri === 'c') run += 1;
+      return decoded(1, peaks[uri as 'a' | 'b' | 'c'] ?? 0);
+    },
+  });
+
+  expect(series.runs).toHaveLength(2);
+  expect(series.cancelled).toBe(false);
+  expect(series.peakPssKb).toBe(400_000);
+  expect(series.runs[0]?.preprocessSumMilliseconds).toBe(0);
+  const report = formatDecoderSeriesReport(series);
+  expect(report).toContain('Przebieg 1:');
+  expect(report).toContain('Przebieg 2:');
+  expect(report).toContain('Czas ściany (ms): n=2');
+  expect(report).toContain('p95 30.0');
+  expect(report).toContain('390.6 MB');
+  expect(report).toContain('Inferencja');
+  expect(report).toContain('Xiaomi Mi 11 Lite 5G');
+});
+
+test('cancel is checked between runs and keeps the finished one', async () => {
+  let finished = 0;
+  const series = await measurePhotoSeries(['a'], {
+    runs: 5,
+    minShortSide: 448,
+    spec,
+    startedAt: '2026-11-22T15:39:38.742Z',
+    now: () => 0,
+    shouldCancel: () => finished >= 1,
+    readMemory: async () => ({ pssKb: 1, nativeHeapKb: 1, javaHeapKb: 1 }),
+    decode: async () => {
+      finished += 1;
+      return decoded(1, 10);
+    },
+  });
+
+  expect(finished).toBe(1);
+  expect(series.runs).toHaveLength(1);
+  expect(series.cancelled).toBe(true);
+  expect(formatDecoderSeriesReport(series)).toContain('przerwana');
 });
 
 test('a missing memory reader is reported and decoding still finishes', async () => {

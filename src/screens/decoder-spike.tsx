@@ -1,10 +1,15 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { launchCameraAsync, launchImageLibraryAsync } from 'expo-image-picker';
 
 import exampleManifest from '../../fixtures/model-manifest.example.json';
 import { SPIKE_MIN_SHORT_SIDE } from '@/core/ai/decode-plan';
-import { formatDecoderSpikeReport, measurePhotos } from '@/core/ai/decoder-spike';
+import {
+  decoderSeriesCounts,
+  defaultDecoderSeriesCount,
+  formatDecoderSeriesReport,
+  measurePhotoSeries,
+} from '@/core/ai/decoder-spike';
 import { readPreprocessingSpec } from '@/core/ai/image-preprocessing';
 import { messagesFor } from '@/core/i18n';
 import { sharePlainText } from '@/infra/diagnostics/share-log';
@@ -29,7 +34,9 @@ export default function DecoderSpikeScreen() {
   const messages = messagesFor(englishEnabled);
   const copy = messages.decoderSpike;
   const [slots, setSlots] = useState<Slots>(emptySlots);
+  const [seriesCount, setSeriesCount] = useState<number>(defaultDecoderSeriesCount);
   const [running, setRunning] = useState(false);
+  const cancelRequested = useRef(false);
   const [report, setReport] = useState<string | null>(null);
   const [pickError, setPickError] = useState<string | null>(null);
   const [shareFailed, setShareFailed] = useState(false);
@@ -69,23 +76,27 @@ export default function DecoderSpikeScreen() {
   async function decode() {
     if (!ready || running) return;
     const uris = slots.filter((slot): slot is string => slot !== null);
+    cancelRequested.current = false;
     setRunning(true);
     setShareFailed(false);
     setPickError(null);
     try {
       const spec = readPreprocessingSpec(exampleManifest.preprocessing);
-      const measurement = await measurePhotos(uris, {
+      const series = await measurePhotoSeries(uris, {
+        runs: seriesCount,
         minShortSide: spec.decodeMinWidth ?? SPIKE_MIN_SHORT_SIDE,
         spec,
         decode: decodePhoto,
         readMemory: readProcessMemory,
         startedAt: new Date().toISOString(),
+        shouldCancel: () => cancelRequested.current,
       });
-      setReport(formatDecoderSpikeReport(measurement));
+      setReport(formatDecoderSeriesReport(series));
     } catch (error) {
       const message = error instanceof Error ? error.message : copy.pickFailed;
       setReport(`${copy.failed}\n${message}`);
     } finally {
+      cancelRequested.current = false;
       setRunning(false);
     }
   }
@@ -135,6 +146,25 @@ export default function DecoderSpikeScreen() {
           >
             <AppText>{copy.gallery}</AppText>
           </Pressable>
+          <AppText className="mt-4">{copy.series}</AppText>
+          <View className="mt-2 flex-row">
+            {decoderSeriesCounts.map((count) => (
+              <Pressable
+                key={count}
+                accessibilityRole="button"
+                accessibilityLabel={copy.seriesOption.replace('{n}', String(count))}
+                accessibilityState={{ selected: seriesCount === count, disabled: running }}
+                disabled={running}
+                onPress={() => {
+                  setSeriesCount(count);
+                }}
+                className="mr-2 items-center justify-center border border-line bg-surface px-4"
+                style={{ minHeight: touchTargetMinDp, opacity: running ? 0.5 : 1 }}
+              >
+                <AppText>{String(count)}</AppText>
+              </Pressable>
+            ))}
+          </View>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={copy.clear}
@@ -152,7 +182,7 @@ export default function DecoderSpikeScreen() {
           </Pressable>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={copy.decode}
+            accessibilityLabel={copy.decode.replace('{n}', String(seriesCount))}
             accessibilityState={{ disabled: running || !ready }}
             disabled={running || !ready}
             onPress={() => {
@@ -161,7 +191,22 @@ export default function DecoderSpikeScreen() {
             className="mt-4 items-center justify-center bg-accent"
             style={{ minHeight: touchTargetMinDp, opacity: running || !ready ? 0.5 : 1 }}
           >
-            <AppText className="text-on-accent">{running ? copy.running : copy.decode}</AppText>
+            <AppText className="text-on-accent">
+              {running ? copy.running : copy.decode.replace('{n}', String(seriesCount))}
+            </AppText>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={copy.cancel}
+            accessibilityState={{ disabled: !running }}
+            disabled={!running}
+            onPress={() => {
+              cancelRequested.current = true;
+            }}
+            className="mt-2 items-center justify-center border border-line bg-surface"
+            style={{ minHeight: touchTargetMinDp, opacity: running ? 1 : 0.5 }}
+          >
+            <AppText>{copy.cancel}</AppText>
           </Pressable>
           {pickError ? <AppText className="mt-4">{pickError}</AppText> : null}
           <AppText className="mt-6 text-muted">{copy.copyHint}</AppText>
