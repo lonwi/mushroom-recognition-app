@@ -41,18 +41,18 @@ Oczekiwane, do potwierdzenia: model w okolicy `POT-LX1`, Android 9 (API 28) albo
 
 Kryteria z `docs/adr/0001-styling.md`. Wszystkie muszą przejść. Czas na Huaweiu nie jest progiem.
 
-| Kryterium                                                                          | Xiaomi Mi 11 Lite 5G                                                                              | Huawei P smart 2019 | Samsung S23 |
-| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------- | ----------- |
-| (a) release instaluje się i startuje, bez błędu Metro / Babel / Reanimated         |                                                                                                   |                     |             |
-| (b) trzy motywy, czas do zatwierdzonej klatki (próg 150 ms tylko na Mi 11 Lite 5G) | zwykle 120–150 ms (przykład 128,9 ms) — mieści się w progu 150 ms, ale górna granica dotyka progu | czas, bez progu     | dym         |
-| (c) `@rn-primitives`: fokus, rola, etykieta na przyciskach spike'a                 |                                                                                                   |                     |             |
-| (d) brak awarii i ANR przy przełączaniu                                            |                                                                                                   |                     |             |
-| (e) dym: start i trzy motywy                                                       |                                                                                                   |                     |             |
-| Liczba z ekranu spike'a (ms, ostatnie przełączenie)                                | 128,9 (zakres zwykle 120–150)                                                                     |                     |             |
+| Kryterium                                                                          | Xiaomi Mi 11 Lite 5G                                                                                                                                                            | Huawei P smart 2019 | Samsung S23 |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ----------- |
+| (a) release instaluje się i startuje, bez błędu Metro / Babel / Reanimated         |                                                                                                                                                                                 |                     |             |
+| (b) trzy motywy, czas do zatwierdzonej klatki (próg 150 ms tylko na Mi 11 Lite 5G) | orientacyjnie: zwykle 120–150 ms (ostatnie przełączenie, np. 128,9 ms) — niezaliczone formalnie: brak osobnych czasów dla light, dark, highContrast; górna granica dotyka progu | czas, bez progu     | dym         |
+| (c) `@rn-primitives`: fokus, rola, etykieta na przyciskach spike'a                 |                                                                                                                                                                                 |                     |             |
+| (d) brak awarii i ANR przy przełączaniu                                            |                                                                                                                                                                                 |                     |             |
+| (e) dym: start i trzy motywy                                                       |                                                                                                                                                                                 |                     |             |
+| Liczba z ekranu spike'a (ms, ostatnie przełączenie)                                | 128,9 (zakres zwykle 120–150)                                                                                                                                                   |                     |             |
 
 Werdykt A: `niezmierzony` (skala: `zaliczony` / `niezaliczony` / `niezmierzony`).
 
-Na Mi 11 Lite 5G przełączenie trzech motywów zmieściło się w progu 150 ms: 128,9 ms. Kryteria (a), (c), (d) i (e) nie były mierzone osobno, więc werdykt zostaje `niezmierzony`.
+Na Mi 11 Lite 5G jest tylko orientacja: zwykle 120–150 ms (ostatnie przełączenie, np. 128,9 ms). Górna granica dotyka progu. Żeby zaliczyć (b), potrzebne są osobne czasy dla light, dark i highContrast. Kryteria (a), (c), (d) i (e) nie były mierzone osobno, więc werdykt zostaje `niezmierzony`.
 
 Jeśli niezaliczony: przejście na Unistyles 3.8.x i aktualizacja ADR 0001.
 
@@ -100,16 +100,16 @@ Expo Go tego modułu nie załaduje. Liczby spike'a B mają pochodzić z release,
 
 Z raportu bierz: sumę dekodowania, czas ściany przebiegu, szczyt PSS, szczyt sterty natywnej, linię OOM. Czas preprocessingu TypeScript jest w raporcie osobno i nie jest progiem tego spike'a.
 
-| Pomiar                                           | Xiaomi Mi 11 Lite 5G                         | Huawei P smart 2019 | Samsung S23 |
-| ------------------------------------------------ | -------------------------------------------- | ------------------- | ----------- |
-| Suma dekodowania trzech zdjęć (ms)               | 537,8                                        |                     |             |
-| Czas ściany przebiegu (ms)                       | 1599,8                                       |                     |             |
-| Szczyt PSS (MB)                                  | 152,2 (próg 400) — zaliczone                 | bez OOM             | dym         |
-| Szczyt sterty natywnej (MB)                      | 59,9                                         |                     |             |
-| OOM                                              | nie                                          |                     |             |
-| Proces ubity                                     | nie                                          |                     |             |
-| ANR                                              |                                              |                     |             |
-| Zapas na sesję 3 zdjęć ≤ 5 s p95 (Mi 11 Lite 5G) | 1,6 s na 3 zdjęcia, jeden przebieg (nie p95) | nie dotyczy         | nie dotyczy |
+| Pomiar                                           | Xiaomi Mi 11 Lite 5G                                                                                                            | Huawei P smart 2019 | Samsung S23 |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ----------- |
+| Suma dekodowania trzech zdjęć (ms)               | 537,8                                                                                                                           |                     |             |
+| Czas ściany przebiegu (ms)                       | 1599,8                                                                                                                          |                     |             |
+| Szczyt PSS (MB)                                  | 152,2 (próg 400) — zaliczone                                                                                                    | bez OOM             | dym         |
+| Szczyt sterty natywnej (MB)                      | 59,9                                                                                                                            |                     |             |
+| OOM                                              | nie                                                                                                                             |                     |             |
+| Proces ubity                                     | nie                                                                                                                             |                     |             |
+| ANR                                              |                                                                                                                                 |                     |             |
+| Zapas na sesję 3 zdjęć ≤ 5 s p95 (Mi 11 Lite 5G) | wykorzystane 1,6 s z 5 s na dekodowanie i preprocessing (zapas ok. 3,4 s na inferencję i resztę sesji); jeden przebieg, nie p95 | nie dotyczy         | nie dotyczy |
 
 Werdykt B: `niezmierzony` dla p95 (skala: `zaliczony` / `niezaliczony` / `niezmierzony`).
 
