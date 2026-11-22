@@ -4,6 +4,10 @@
  */
 
 import { preprocessImage, type PreprocessingSpec } from '@/core/ai/image-preprocessing';
+import { durationStats, formatDurationStats } from '@/core/measure/duration-stats';
+
+export const decoderSeriesCounts = [1, 5, 10, 20] as const;
+export const defaultDecoderSeriesCount = 10;
 
 export type MemorySnapshot = {
   pssKb: number;
@@ -205,6 +209,121 @@ export async function measurePhotos(
   };
 }
 
+type DecoderRunSummary = {
+  index: number;
+  ok: boolean;
+  decodeSumMilliseconds: number;
+  preprocessSumMilliseconds: number;
+  wallMilliseconds: number;
+  oom: boolean;
+  errors: string[];
+};
+
+export type DecoderSeriesMeasurement = {
+  startedAt: string;
+  minShortSide: number;
+  modelWidth: number;
+  modelHeight: number;
+  normalization: string;
+  requestedRuns: number;
+  runs: DecoderRunSummary[];
+  cancelled: boolean;
+  peakPssKb: number | null;
+  peakNativeHeapKb: number | null;
+  peakJavaHeapKb: number | null;
+  memoryError?: string;
+  oom: boolean;
+};
+
+function preprocessSum(measurement: DecoderSpikeMeasurement): number {
+  return measurement.photos.reduce((sum, photo) => sum + (photo.preprocessMilliseconds ?? 0), 0);
+}
+
+function runHadOom(measurement: DecoderSpikeMeasurement): boolean {
+  return measurement.photos.some((photo) => photo.errorCode === 'oom');
+}
+
+function runErrors(measurement: DecoderSpikeMeasurement): string[] {
+  return measurement.photos
+    .filter((photo) => !photo.ok)
+    .map((photo) => {
+      const code = photo.errorCode ?? 'decode_failed';
+      const detail = photo.errorMessage ? ` — ${photo.errorMessage}` : '';
+      return `zdjęcie ${photo.index}: ${code}${detail}`;
+    });
+}
+
+function maxReading(current: number | null, next: number | null): number | null {
+  if (next === null) return current;
+  if (current === null) return next;
+  return Math.max(current, next);
+}
+
+/** Te same trzy URI, N razy po kolei. Anulowanie jest sprawdzane między przebiegami. */
+export async function measurePhotoSeries(
+  uris: readonly string[],
+  options: {
+    runs: number;
+    minShortSide: number;
+    spec: PreprocessingSpec;
+    decode: (uri: string, minShortSide: number) => Promise<DecodedRgb>;
+    readMemory: () => Promise<MemorySnapshot>;
+    startedAt: string;
+    now?: () => number;
+    shouldCancel?: () => boolean;
+  },
+): Promise<DecoderSeriesMeasurement> {
+  const requestedRuns = Math.max(0, Math.floor(options.runs));
+  const runs: DecoderRunSummary[] = [];
+  let cancelled = false;
+  let peakPssKb: number | null = null;
+  let peakNativeHeapKb: number | null = null;
+  let peakJavaHeapKb: number | null = null;
+  let memoryError: string | undefined;
+  let oom = false;
+
+  for (let index = 0; index < requestedRuns; index += 1) {
+    if (options.shouldCancel?.()) {
+      cancelled = true;
+      break;
+    }
+    const measurement = await measurePhotos(uris, options);
+    const errors = runErrors(measurement);
+    runs.push({
+      index: index + 1,
+      ok: errors.length === 0,
+      decodeSumMilliseconds: measurement.decodeSumMilliseconds,
+      preprocessSumMilliseconds: preprocessSum(measurement),
+      wallMilliseconds: measurement.wallMilliseconds,
+      oom: runHadOom(measurement),
+      errors,
+    });
+    peakPssKb = maxReading(peakPssKb, measurement.peakPssKb);
+    peakNativeHeapKb = maxReading(peakNativeHeapKb, measurement.peakNativeHeapKb);
+    peakJavaHeapKb = maxReading(peakJavaHeapKb, measurement.peakJavaHeapKb);
+    if (memoryError === undefined && measurement.memoryError !== undefined) {
+      memoryError = measurement.memoryError;
+    }
+    oom = oom || runHadOom(measurement);
+  }
+
+  return {
+    startedAt: options.startedAt,
+    minShortSide: options.minShortSide,
+    modelWidth: options.spec.inputSize.width,
+    modelHeight: options.spec.inputSize.height,
+    normalization: options.spec.normalization.type,
+    requestedRuns,
+    runs,
+    cancelled,
+    peakPssKb,
+    peakNativeHeapKb,
+    peakJavaHeapKb,
+    ...(memoryError === undefined ? {} : { memoryError }),
+    oom,
+  };
+}
+
 function oneDecimal(value: number): string {
   return value.toFixed(1);
 }
@@ -216,6 +335,21 @@ function megabytes(kb: number): string {
 function memoryLine(label: string, kb: number | null): string {
   if (kb === null) return `${label}: brak odczytu`;
   return `${label}: ${kb} kB (${megabytes(kb)} MB)`;
+}
+
+function criteriaFooter(): string[] {
+  return [
+    'To nie jest werdykt z telefonu. Liczby są z tego uruchomienia. Kryteria do wpisania ręcznie w docs/spikes/F0-raport.md:',
+    '- Xiaomi Mi 11 Lite 5G: szczyt PSS ≤ 400 MB na trzy zdjęcia; p95 czasu ściany wchodzi w budżet sesji ≤ 5 s. Inferencja modelu nie jest w tym czasie.',
+    '- Huawei P smart 2019: bez OOM i bez ubicia procesu; czas bez progu.',
+    'Ubicia procesu ten raport nie widzi: jeśli aplikacja zniknie, zapisz to osobno.',
+  ];
+}
+
+function statsLine(label: string, values: number[], empty: string): string {
+  const stats = durationStats(values);
+  if (stats === null) return `${label}: ${empty}`;
+  return `${label}: ${formatDurationStats(stats)}`;
 }
 
 /** Tekst do skopiowania. Po polsku, bo trafia do raportu spike'a. */
@@ -259,13 +393,68 @@ export function formatDecoderSpikeReport(measurement: DecoderSpikeMeasurement): 
   const oom = measurement.photos.some((photo) => photo.errorCode === 'oom');
   lines.push(oom ? 'OOM: tak, przy co najmniej jednym zdjęciu.' : 'OOM: nie zgłoszono.');
   lines.push('');
+  lines.push(...criteriaFooter());
+  return lines.join('\n');
+}
+
+/** Tekst serii do spike-b-dekoder.txt. Po polsku, jak raport jednego przebiegu. */
+export function formatDecoderSeriesReport(series: DecoderSeriesMeasurement): string {
+  const lines = [
+    'Spike B — dekoder zdjęć',
+    `Start: ${series.startedAt}`,
+    `Seria: żądane ${series.requestedRuns}, ukończone ${series.runs.length}${series.cancelled ? ', przerwana' : ''}`,
+    `Próg krótszego boku: ${series.minShortSide} px`,
+    `Wejście modelu z manifestu: ${series.modelWidth}×${series.modelHeight}`,
+    `Normalizacja: ${series.normalization}`,
+    'Dekodowanie jest natywne (podpróbkowanie). Resampling i normalizacja są w TypeScript.',
+    'Czas ściany przebiegu to dekodowanie i preprocessing. Inferencja modelu nie wchodzi w ten pomiar.',
+    '',
+  ];
+  const okRuns = series.runs.filter((run) => run.ok);
+  const failedRuns = series.runs.length - okRuns.length;
+  lines.push(`Udane: ${okRuns.length}, nieudane: ${failedRuns}`);
+  for (const run of series.runs) {
+    if (!run.ok) {
+      lines.push(`Przebieg ${run.index}: NIEUDANY${run.oom ? ', OOM' : ''}`);
+      for (const error of run.errors) lines.push(`  ${error}`);
+      continue;
+    }
+    lines.push(
+      `Przebieg ${run.index}: dekodowanie ${oneDecimal(run.decodeSumMilliseconds)} ms, preprocessing ${oneDecimal(run.preprocessSumMilliseconds)} ms, ściana ${oneDecimal(run.wallMilliseconds)} ms`,
+    );
+  }
+  lines.push('');
+  const empty = series.runs.length === 0 ? 'brak przebiegów' : 'brak udanych przebiegów';
   lines.push(
-    'To nie jest werdykt z telefonu. Liczby są z tego uruchomienia. Kryteria do wpisania ręcznie w docs/spikes/F0-raport.md:',
+    statsLine(
+      'Czas ściany (ms)',
+      okRuns.map((run) => run.wallMilliseconds),
+      empty,
+    ),
   );
   lines.push(
-    '- Xiaomi Mi 11: szczyt PSS ≤ 400 MB na trzy zdjęcia; czas wchodzi w budżet sesji ≤ 5 s p95.',
+    statsLine(
+      'Suma dekodowania (ms)',
+      okRuns.map((run) => run.decodeSumMilliseconds),
+      empty,
+    ),
   );
-  lines.push('- Huawei P smart 2019: bez OOM i bez ubicia procesu; czas bez progu.');
-  lines.push('Ubicia procesu ten raport nie widzi: jeśli aplikacja zniknie, zapisz to osobno.');
+  lines.push(
+    statsLine(
+      'Suma preprocessingu (ms)',
+      okRuns.map((run) => run.preprocessSumMilliseconds),
+      empty,
+    ),
+  );
+  lines.push(memoryLine('Szczyt PSS', series.peakPssKb));
+  lines.push(memoryLine('Szczyt sterty natywnej', series.peakNativeHeapKb));
+  lines.push(memoryLine('Szczyt sterty Javy', series.peakJavaHeapKb));
+  if (series.memoryError) lines.push(`Odczyt pamięci: ${series.memoryError}`);
+  lines.push(series.oom ? 'OOM: tak, przy co najmniej jednym zdjęciu.' : 'OOM: nie zgłoszono.');
+  lines.push('');
+  lines.push(
+    'Do budżetu sesji ≤ 5 s p95 bierz p95 czasu ściany. Inferencja nie jest w tym czasie.',
+  );
+  lines.push(...criteriaFooter());
   return lines.join('\n');
 }

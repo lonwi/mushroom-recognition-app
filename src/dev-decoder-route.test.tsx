@@ -32,4 +32,13 @@ test('a dev build still shows the decoder spike', async () => {
   delete process.env.EXPO_PUBLIC_DEV_TOOLS;
   await render(<DecoderSpikeRoute />);
   expect(screen.getByText('Spike dekodera')).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Seria 10' }).props.accessibilityState).toEqual(
+    expect.objectContaining({ selected: true }),
+  );
+  expect(
+    screen.getByRole('button', { name: 'Dekoduj serię (10)' }).props.accessibilityState,
+  ).toEqual(expect.objectContaining({ disabled: true }));
+  expect(screen.getByRole('button', { name: 'Anuluj serię' }).props.accessibilityState).toEqual(
+    expect.objectContaining({ disabled: true }),
+  );
 });

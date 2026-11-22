@@ -95,6 +95,9 @@ jest.mock('expo-router', () => {
     Link: ({ children }) => children,
     Redirect,
     router: { push: jest.fn(), back: jest.fn() },
+    useFocusEffect: (effect) => {
+      React.useEffect(() => effect(), [effect]);
+    },
   };
 });
 

@@ -14,6 +14,10 @@ NativeWind 4.2.7 stoi na tokenach: `themeVars()` wstawia kolory jako zmienne, a 
 
 To nie zamyka spike'a. Status zostaje `proposed`, dopóki Wojciech nie zmierzy kryteriów na telefonach.
 
+## Zmiana progu (2026-11-22)
+
+Próg (b) na telefonie referencyjnym zmienia się ze 150 ms na 200 ms. Decyzja właściciela po pomiarach na Xiaomi Mi 11 Lite 5G: czas poniżej 200 ms jest wystarczający. Huawei nadal zapisuje czas bez progu.
+
 ## Kryteria zaliczenia
 
 Wszystkie są wymagane. Porażka któregokolwiek oznacza przejście na Unistyles 3.8.x na tych samych tokenach.
@@ -21,14 +25,14 @@ Wszystkie są wymagane. Porażka któregokolwiek oznacza przejście na Unistyles
 |     | Kryterium                                                                                                                                                   | Gdzie                                         | Stan w CI                                                                                        |
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | (a) | Build release na SDK 58 bez błędów Metro, Babel i Reanimated 4.7                                                                                            | telefon, `expo run:android --variant release` | CI składa tylko paczkę JS (`expo export --platform android`). To nie jest build release.         |
-| (b) | Przełączenie 3 motywów ≤150 ms do zatwierdzonej klatki                                                                                                      | Xiaomi Mi 11, telefon referencyjny            | Liczba na ekranie spike'a jest pomiarem JS do drugiej klatki. Nie zastępuje nagrania z telefonu. |
+| (b) | Przełączenie 3 motywów ≤200 ms do zatwierdzonej klatki                                                                                                      | Xiaomi Mi 11 Lite 5G, telefon referencyjny    | Liczba na ekranie spike'a jest pomiarem JS do drugiej klatki. Nie zastępuje nagrania z telefonu. |
 | (c) | Działające `@rn-primitives`: fokus, rola, etykieta                                                                                                          | trzy telefony, przyciski na ekranie spike'a   | W kodzie rola i etykieta są ustawione. Fokus i czytnik ekranu wymagają telefonu.                 |
 | (d) | Huawei P smart 2019: release instaluje się i startuje. Przełączenie motywów bez awarii i bez klatek prowadzących do ANR. Czas zapisujemy, nie jest progiem. | Huawei                                        | Niemierzalne w CI.                                                                               |
 | (e) | Samsung S23: uruchomienie i motywy (dym)                                                                                                                    | S23                                           | Niemierzalne w CI.                                                                               |
 
 ## Czego CI nie rozstrzyga
 
-- Czasu do zatwierdzonej klatki na Xiaomi.
+- Czasu do zatwierdzonej klatki na Xiaomi Mi 11 Lite 5G.
 - Braku ANR i gubienia klatek na Huaweiu.
 - Dymu na S23.
 - Tego, czy natywny build release przechodzi przez Gradle. W CI nie ma kompilacji APK: runner nie dostaje tu stabilnego, krótkiego buildu Androida dla świeżego prebuildu RN 0.88. Zamiast tego jest `expo config` i eksport paczki JS, który łapie błędy Metro, Babel i NativeWind.
