@@ -41,14 +41,14 @@ Oczekiwane, do potwierdzenia: model w okolicy `POT-LX1`, Android 9 (API 28) albo
 
 Kryteria z `docs/adr/0001-styling.md`. Wszystkie muszą przejść. Czas na Huaweiu nie jest progiem.
 
-| Kryterium                                                                          | Xiaomi Mi 11 Lite 5G               | Huawei P smart 2019 | Samsung S23 |
-| ---------------------------------------------------------------------------------- | ---------------------------------- | ------------------- | ----------- |
-| (a) release instaluje się i startuje, bez błędu Metro / Babel / Reanimated         |                                    |                     |             |
-| (b) trzy motywy, czas do zatwierdzonej klatki (próg 150 ms tylko na Mi 11 Lite 5G) | 128,9 ms — zaliczone (próg 150 ms) | czas, bez progu     | dym         |
-| (c) `@rn-primitives`: fokus, rola, etykieta na przyciskach spike'a                 |                                    |                     |             |
-| (d) brak awarii i ANR przy przełączaniu                                            |                                    |                     |             |
-| (e) dym: start i trzy motywy                                                       |                                    |                     |             |
-| Liczba z ekranu spike'a (ms, ostatnie przełączenie)                                | 128,9                              |                     |             |
+| Kryterium                                                                          | Xiaomi Mi 11 Lite 5G                                                                              | Huawei P smart 2019 | Samsung S23 |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------- | ----------- |
+| (a) release instaluje się i startuje, bez błędu Metro / Babel / Reanimated         |                                                                                                   |                     |             |
+| (b) trzy motywy, czas do zatwierdzonej klatki (próg 150 ms tylko na Mi 11 Lite 5G) | zwykle 120–150 ms (przykład 128,9 ms) — mieści się w progu 150 ms, ale górna granica dotyka progu | czas, bez progu     | dym         |
+| (c) `@rn-primitives`: fokus, rola, etykieta na przyciskach spike'a                 |                                                                                                   |                     |             |
+| (d) brak awarii i ANR przy przełączaniu                                            |                                                                                                   |                     |             |
+| (e) dym: start i trzy motywy                                                       |                                                                                                   |                     |             |
+| Liczba z ekranu spike'a (ms, ostatnie przełączenie)                                | 128,9 (zakres zwykle 120–150)                                                                     |                     |             |
 
 Werdykt A: `niezmierzony` (skala: `zaliczony` / `niezaliczony` / `niezmierzony`).
 
