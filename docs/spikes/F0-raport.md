@@ -86,15 +86,13 @@ P1 jest testem Jest i `python -m unittest ml.tests.test_p1_fixtures`. Nie jest p
 
 ### Jak zmierzyć na telefonie
 
-Expo Go tego modułu nie załaduje. Potrzebny jest build deweloperski z kodem natywnym. Paczka release wycina `src/app/dev`, więc deep link spike'a działa tylko w `__DEV__`.
+Expo Go tego modułu nie załaduje. Liczby spike'a B mają pochodzić z release, nie z Metro. Profile EAS `development` i `preview` ustawiają `EXPO_PUBLIC_DEV_TOOLS=1` i składają APK release, więc ekran jest w telefonie. Profil `production` flagi nie dostaje, a Metro wycina `src/app/dev`.
 
-1. Podłącz telefon, włącz debugowanie USB.
-2. Z katalogu repozytorium: `pnpm android` (`expo run:android`). To kompiluje moduł i instaluje aplikację.
-3. Gdy APK jest już zbudowane, powtórna instalacja: `adb install -r android/app/build/outputs/apk/debug/app-debug.apk`.
-4. Otwórz ekran: `adb shell am start -a android.intent.action.VIEW -d "grzybobranie://dev/decoder" com.grzybobranie.ai`. Ten sam ekran jest w Ustawieniach jako „Spike dekodera”.
-5. Zrób albo wybierz **trzy** zdjęcia w pełnej rozdzielczości. Nie kadruje ich edytor, a jakość jest ustawiona na maksimum. Wybór z galerii i tak może skopiować plik; nie ustawiamy maksymalnego boku.
-6. Naciśnij „Dekoduj trzy zdjęcia”. Zdjęcia idą po kolei. Przytrzymaj raport albo udostępnij go jako `spike-b-dekoder.txt`.
-7. Wpisz liczby poniżej. Jeśli proces zniknie i raportu nie ma, w rubryce „proces ubity” wpisz „tak”.
+1. Zbuduj APK: `eas build -p android --profile preview` (albo `development`) i zainstaluj je na telefonie.
+2. Otwórz Ustawienia (nagłówek Dziennika, Pomocy albo Profilu, a na Atlasie przycisk w ekranie) i wejdź w „Narzędzia deweloperskie” → „Spike dekodera”. Deep link na tym buildzie: `adb shell am start -a android.intent.action.VIEW -d "grzybobranie://dev/decoder" com.grzybobranie.ai`.
+3. Zrób albo wybierz **trzy** zdjęcia w pełnej rozdzielczości. Nie kadruje ich edytor, a jakość jest ustawiona na maksimum. Wybór z galerii i tak może skopiować plik; nie ustawiamy maksymalnego boku.
+4. Naciśnij „Dekoduj trzy zdjęcia”. Zdjęcia idą po kolei. Przytrzymaj raport albo udostępnij go jako `spike-b-dekoder.txt`.
+5. Wpisz liczby poniżej. Jeśli proces zniknie i raportu nie ma, w rubryce „proces ubity” wpisz „tak”.
 
 Z raportu bierz: sumę dekodowania, czas ściany przebiegu, szczyt PSS, szczyt sterty natywnej, linię OOM. Czas preprocessingu TypeScript jest w raporcie osobno i nie jest progiem tego spike'a.
 

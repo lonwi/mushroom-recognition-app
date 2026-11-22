@@ -165,7 +165,8 @@ jobs:
         run: pnpm export:android
         env:
           EXPO_NO_TELEMETRY: '1'
-          # Drops src/app/dev from the bundle. See metro.config.js.
+          # Bez EXPO_PUBLIC_DEV_TOOLS Metro wycina src/app/dev. Patrz metro.config.js.
+          # Skrypt eksportu sprawdza potem, że znacznik spike'a dekodera nie wszedł do paczki.
           NODE_ENV: production
 
   android-kotlin:

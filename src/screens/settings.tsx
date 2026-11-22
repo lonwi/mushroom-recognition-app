@@ -2,6 +2,7 @@ import { Link } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
+import { devToolsEnabled } from '@/core/config/dev-tools';
 import { messagesFor } from '@/core/i18n';
 import type { ThemeName } from '@/core/theme';
 import { diagnosticLog } from '@/infra/diagnostics/file-log';
@@ -84,29 +85,30 @@ export default function SettingsScreen() {
           <AppText className="text-on-accent">{messages.settings.share}</AppText>
         </Pressable>
         {shareFailed ? <AppText className="mt-2">{messages.settings.shareFailed}</AppText> : null}
-        {__DEV__ ? (
-          <Link href="/dev/styling" asChild>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={messages.settings.spike}
-              className="mt-6 justify-center"
-              style={{ minHeight: touchTargetMinDp }}
-            >
-              <AppText emphasis>{messages.settings.spike}</AppText>
-            </Pressable>
-          </Link>
-        ) : null}
-        {__DEV__ ? (
-          <Link href="/dev/decoder" asChild>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={messages.settings.decoderSpike}
-              className="mt-2 justify-center"
-              style={{ minHeight: touchTargetMinDp }}
-            >
-              <AppText emphasis>{messages.settings.decoderSpike}</AppText>
-            </Pressable>
-          </Link>
+        {devToolsEnabled() ? (
+          <View>
+            <AppText className="mt-6">{messages.settings.devTools}</AppText>
+            <Link href="/dev/decoder" asChild>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={messages.settings.decoderSpike}
+                className="mt-2 justify-center"
+                style={{ minHeight: touchTargetMinDp }}
+              >
+                <AppText emphasis>{messages.settings.decoderSpike}</AppText>
+              </Pressable>
+            </Link>
+            <Link href="/dev/styling" asChild>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={messages.settings.spike}
+                className="mt-2 justify-center"
+                style={{ minHeight: touchTargetMinDp }}
+              >
+                <AppText emphasis>{messages.settings.spike}</AppText>
+              </Pressable>
+            </Link>
+          </View>
         ) : null}
       </View>
     </ThemeFrame>

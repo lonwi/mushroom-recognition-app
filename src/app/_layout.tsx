@@ -11,6 +11,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 
+import { devToolsEnabled } from '@/core/config/dev-tools';
 import { messagesFor } from '@/core/i18n';
 import { initSpeciesDbAsync } from '@/infra/db/species-db';
 import { diagnosticLog } from '@/infra/diagnostics/file-log';
@@ -67,10 +68,10 @@ export default function RootLayout() {
         <Stack.Screen name="species/[id]" options={{ presentation: 'modal', title: '' }} />
         <Stack.Screen name="look-alikes/[pair-id]" options={{ presentation: 'modal', title: '' }} />
         <Stack.Screen name="settings" options={{ title: messages.settings.title }} />
-        {__DEV__ ? (
+        {devToolsEnabled() ? (
           <Stack.Screen name="dev/styling" options={{ title: messages.spike.title }} />
         ) : null}
-        {__DEV__ ? (
+        {devToolsEnabled() ? (
           <Stack.Screen name="dev/decoder" options={{ title: messages.decoderSpike.title }} />
         ) : null}
       </Stack>
