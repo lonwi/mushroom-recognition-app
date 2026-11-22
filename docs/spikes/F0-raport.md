@@ -113,7 +113,7 @@ Z raportu bierz: sumę dekodowania, czas ściany przebiegu, szczyt PSS, szczyt s
 
 Werdykt B: `niezmierzony` dla p95 (skala: `zaliczony` / `niezaliczony` / `niezmierzony`).
 
-Jeden przebieg na Mi 11 Lite 5G mieści się w progach pamięci i czasu: szczyt PSS 152,2 MB przy progu 400 MB, czas ściany 1599,8 ms przy budżecie sesji ≤ 5 s. Huawei nadal niezmierzony.
+Jeden przebieg na Mi 11 Lite 5G mieści się w progu pamięci: szczyt PSS 152,2 MB przy progu 400 MB. Czas ściany 1599,8 ms obejmuje tylko dekodowanie i preprocessing TypeScript trzech zdjęć w jednym przebiegu; inferencja i reszta sesji nie były mierzone, więc budżet sesji ≤ 5 s p95 pozostaje niepotwierdzony (werdykt B `niezmierzony`). Huawei nadal niezmierzony.
 
 Na Mi 11 Lite 5G próg pamięci to 400 MB, a czas dekodowania wchodzi w budżet sesji ≤ 5 s p95. Na Huaweiu zaliczenie to brak OOM, brak ubicia procesu i brak ANR. Czas Huaweia tylko zapisujemy. Samsung w tym spike'u jest dymem, bez progu GPU.
 
