@@ -13,7 +13,7 @@ Pełna ścieżka offline zweryfikowana na 3 telefonach. Zamknięta beta z grzybi
    - skan przez `addMedia` z 1, 2 i 3 zdjęciami, w tym zdjęcie „nie-grzyb” (oczekiwane odrzucenie) i para niezgodnych zdjęć;
    - Pomoc.
 2. **Testy terenowe na 3 telefonach:**
-   - **Xiaomi (referencyjny):** budżety D9 i sesja 3 zdjęć ≤5 s p95. Do tego zabijanie procesu przez MIUI w trakcie sesji skanu, a po powrocie brak „wiszącego” wyniku dzięki `runId` (D8 §4.4);
+   - **Xiaomi Mi 11 Lite 5G (referencyjny):** budżety D9 i sesja 3 zdjęć ≤5 s p95. Do tego zabijanie procesu przez MIUI w trakcie sesji skanu, a po powrocie brak „wiszącego” wyniku dzięki `runId` (D8 §4.4);
    - **Huawei P smart 2019:** pełna ścieżka offline działa wolniej, ale bez awarii, OOM i ANR;
    - **S23:** GPU delegate z raportem (D9 l. 327).
 3. **Zamknięta beta** w Play (tor zamknięty) z grzybiarzami:
@@ -29,7 +29,7 @@ Pełna ścieżka offline zweryfikowana na 3 telefonach. Zamknięta beta z grzybi
 
 - Wszystkie joby CI i Maestro zielone.
 - Zero awarii krytycznych w vitals przez uzgodniony okres bety **[OTWARTE Q24]**.
-- Budżety D9 + 5 s p95 na Xiaomi.
+- Budżety D9 + 5 s p95 na Xiaomi Mi 11 Lite 5G.
 - Huawei: zero awarii, OOM i ANR w pełnej ścieżce.
 - Karta modelu dla kandydata M4.
 

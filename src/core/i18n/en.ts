@@ -184,7 +184,7 @@ export const en: typeof pl = {
   spike: {
     title: 'Styling spike',
     intro:
-      'Switch the three themes and record the time. The 150 ms budget is a frame on the Xiaomi Mi 11, not this number by itself.',
+      'Switch the three themes and record the time. The 150 ms budget is a frame on the Xiaomi Mi 11 Lite 5G, not this number by itself.',
     last: 'Last switch: {ms} ms',
     none: 'Not switched yet.',
     platform: 'Platform: {name}',
@@ -199,7 +199,7 @@ export const en: typeof pl = {
     intro:
       'Take or pick three full-resolution photos. The screen decodes them one by one and records time and peak memory. This is not a mushroom identification.',
     criteria:
-      'Criteria to write into the Phase 0 report, not a verdict from this phone. Xiaomi Mi 11: peak PSS ≤ 400 MB for three photos, and the time counts toward the ≤ 5 s p95 session budget. Huawei P smart 2019: no OOM and no process kill; time has no threshold.',
+      'Criteria to write into the Phase 0 report, not a verdict from this phone. Xiaomi Mi 11 Lite 5G: peak PSS ≤ 400 MB for three photos, and the time counts toward the ≤ 5 s p95 session budget. Huawei P smart 2019: no OOM and no process kill; time has no threshold.',
     platform: 'Platform: {name}',
     empty: 'Slot {n}: empty',
     filled: 'Photo {n}: {name}',

@@ -263,7 +263,7 @@ export function formatDecoderSpikeReport(measurement: DecoderSpikeMeasurement): 
     'To nie jest werdykt z telefonu. Liczby są z tego uruchomienia. Kryteria do wpisania ręcznie w docs/spikes/F0-raport.md:',
   );
   lines.push(
-    '- Xiaomi Mi 11: szczyt PSS ≤ 400 MB na trzy zdjęcia; czas wchodzi w budżet sesji ≤ 5 s p95.',
+    '- Xiaomi Mi 11 Lite 5G: szczyt PSS ≤ 400 MB na trzy zdjęcia; czas wchodzi w budżet sesji ≤ 5 s p95.',
   );
   lines.push('- Huawei P smart 2019: bez OOM i bez ubicia procesu; czas bez progu.');
   lines.push('Ubicia procesu ten raport nie widzi: jeśli aplikacja zniknie, zapisz to osobno.');

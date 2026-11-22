@@ -185,7 +185,7 @@ export const pl = {
   spike: {
     title: 'Spike stylowania',
     intro:
-      'Przełącz trzy motywy i zapisz czas. Budżet 150 ms dotyczy klatki na Xiaomi Mi 11, nie tej liczby samej w sobie.',
+      'Przełącz trzy motywy i zapisz czas. Budżet 150 ms dotyczy klatki na Xiaomi Mi 11 Lite 5G, nie tej liczby samej w sobie.',
     last: 'Ostatnie przełączenie: {ms} ms',
     none: 'Jeszcze nie przełączono.',
     platform: 'Platforma: {name}',
@@ -200,7 +200,7 @@ export const pl = {
     intro:
       'Wybierz albo zrób trzy zdjęcia w pełnej rozdzielczości. Ekran dekoduje je po kolei i zapisuje czas oraz szczyt pamięci. To nie jest rozpoznanie grzyba.',
     criteria:
-      'Kryteria do wpisania w raporcie Fazy 0, nie werdykt z tego telefonu. Xiaomi Mi 11: szczyt PSS ≤ 400 MB na trzy zdjęcia, a czas jest częścią budżetu sesji ≤ 5 s p95. Huawei P smart 2019: bez OOM i bez ubicia procesu, czas bez progu.',
+      'Kryteria do wpisania w raporcie Fazy 0, nie werdykt z tego telefonu. Xiaomi Mi 11 Lite 5G: szczyt PSS ≤ 400 MB na trzy zdjęcia, a czas jest częścią budżetu sesji ≤ 5 s p95. Huawei P smart 2019: bez OOM i bez ubicia procesu, czas bez progu.',
     platform: 'Platforma: {name}',
     empty: 'Miejsce {n}: puste',
     filled: 'Zdjęcie {n}: {name}',

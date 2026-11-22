@@ -13,7 +13,7 @@ Atlas i Pomoc działają w 100% offline na `species.db`, gotowe do wewnętrznego
    - sekcja sobowtórów;
    - ostrzeżenia z `uncovered_look_alikes` (D-11);
    - plakietka statusu wg D-12;
-   - **sekcja „Budowa” z rycinami D-17.** Każdy obraz `generated_images` ma widoczną etykietę „ilustracja” i atrybucję bazy. Galeria pokazuje wyłącznie `species_photos`. Testy RNTL sprawdzają etykietę i rozdział galerii od rycin. SVG renderuje `react-native-svg`. Budżet mierzony na Xiaomi, sprawdzenie działania na Huaweiu [Q-D17-10];
+   - **sekcja „Budowa” z rycinami D-17.** Każdy obraz `generated_images` ma widoczną etykietę „ilustracja” i atrybucję bazy. Galeria pokazuje wyłącznie `species_photos`. Testy RNTL sprawdzają etykietę i rozdział galerii od rycin. SVG renderuje `react-native-svg`. Budżet mierzony na Xiaomi Mi 11 Lite 5G, sprawdzenie działania na Huaweiu [Q-D17-10];
    - oznaczenie „nierozpoznawany przez skaner”, gdy `in_model = false` (`krok2-ocena.md` §4 p. 9);
    - brak zielonej plakietki przy `incompleteCard` (D9 S7; D13 l. 51).
 4. **Porównanie 50/50** `src/app/look-alikes/[pair-id].tsx`: sztywny podział, bez suwaka (D1/D2 §2.1; D13 l. 52).
@@ -62,8 +62,8 @@ Atlas i Pomoc działają w 100% offline na `species.db`, gotowe do wewnętrznego
 
 ## Kryteria wyjścia
 
-- Zapytania FTS <50 ms na **Xiaomi** (D13 l. 56).
-- Zimny start do interaktywnego Atlasu ≤3,0 s na **Xiaomi** (D9 §4.2).
+- Zapytania FTS <50 ms na **Xiaomi Mi 11 Lite 5G** (D13 l. 56).
+- Zimny start do interaktywnego Atlasu ≤3,0 s na **Xiaomi Mi 11 Lite 5G** (D9 §4.2).
 - Huawei: Atlas, wyszukiwanie, karta i 50/50 działają bez awarii i ANR; czasy raportowane.
 - Bramka kontrastu i pól dotyku zielona (D9 l. 624).
 - Atlas działa w trybie samolotowym na 3 telefonach.

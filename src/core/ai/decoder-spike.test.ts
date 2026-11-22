@@ -56,7 +56,7 @@ test('three photos run one after another and the report keeps the peak', async (
   expect(report).toContain('390.6 MB');
   expect(report).toContain('OOM: nie zgłoszono.');
   expect(report).toContain('To nie jest werdykt');
-  expect(report).toContain('Xiaomi Mi 11');
+  expect(report).toContain('Xiaomi Mi 11 Lite 5G');
   expect(report).toContain('Huawei P smart 2019');
 });
 

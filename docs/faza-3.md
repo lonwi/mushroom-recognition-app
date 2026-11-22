@@ -74,7 +74,7 @@ Działa i jest przetestowany na trzech warstwach modeli zastępczych (D-08), a p
 
 - 100% zgodności P1/P2 na fixture'ach.
 - Wszystkie warianty degradacji przetestowane (Jest + RNTL).
-- Na **Xiaomi Mi 11 (referencyjny)** (D9 §4.2; D-15):
+- Na **Xiaomi Mi 11 Lite 5G (referencyjny)** (D9 §4.2; D-15):
   - skan 1 zdjęcia ≤2,0 s p95;
   - **sesja 3 zdjęć ≤5 s p95**;
   - blokada JS ≤100 ms;
