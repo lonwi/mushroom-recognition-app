@@ -206,7 +206,7 @@ export const en: typeof pl = {
     intro:
       'Take or pick three full-resolution photos. The screen repeats their decode as many times as you choose and records time and peak memory. This is not a mushroom identification.',
     criteria:
-      'Criteria to write into the Phase 0 report, not a verdict from this phone. Xiaomi Mi 11 Lite 5G: peak PSS ≤ 400 MB for three photos, and the p95 wall time counts toward the ≤ 5 s session budget. That time does not include inference. Huawei P smart 2019: no OOM and no process kill; time has no threshold.',
+      'Criteria to write into the Phase 0 report, not a verdict from this phone. Xiaomi Mi 11 Lite 5G (reference phone): peak PSS ≤ 400 MB for three photos, and the p95 wall time counts toward the ≤ 5 s session budget. That time does not include inference. Samsung S23: smoke, with no memory, time, or GPU threshold. Verdict B stays unmeasured because inference is not included in the ≤ 5 s session budget.',
     series: 'Run count',
     seriesOption: 'Series {n}',
     platform: 'Platform: {name}',
