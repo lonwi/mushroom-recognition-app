@@ -4,15 +4,19 @@ Wypełnia Wojciech na telefonach. CI tego nie mierzy. Puste komórki zostają pu
 
 Telefony:
 
-| Rola                | Telefon              | Co zapisujemy                           |
-| ------------------- | -------------------- | --------------------------------------- |
-| Referencyjny        | Xiaomi Mi 11 Lite 5G | budżety, w tym motyw ≤200 ms            |
-| Najgorszy przypadek | Huawei P smart 2019  | brak awarii, OOM i ANR; czasy bez progu |
-| Dym / GPU           | Samsung S23          | uruchomienie i motywy                   |
+| Rola         | Telefon              | Co zapisujemy                                                                                  |
+| ------------ | -------------------- | ---------------------------------------------------------------------------------------------- |
+| Referencyjny | Xiaomi Mi 11 Lite 5G | budżety, w tym motyw ≤200 ms                                                                   |
+| Pominięty    | Huawei P smart 2019  | pominięty decyzją właściciela (2026-11-23); wcześniej: brak awarii, OOM i ANR, czasy bez progu |
+| Dym / GPU    | Samsung S23          | uruchomienie i motywy                                                                          |
 
 Telefon referencyjny jest potwierdzony: Xiaomi Mi 11 Lite 5G. Rozmiar RAM nie jest znany. Pomiary z 2026-11-22 wpisał właściciel (Wojciech). Pochodzą z buildu release złożonego profilem EAS `preview`. Seria przełączeń spike'a A i seria przebiegów spike'a B zastępują wcześniejsze pojedyncze pomiary z tego dnia.
 
+Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23). Nie będzie na nim przebiegów spike'ów F0. Wiersz zostaje, żeby nie zgubić wcześniejszego zestawu.
+
 ## Potwierdzenie Huaweia (Q3)
+
+Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23). Polecenia i pusta tabela zostają jako ślad pytania Q3. Nikt ich nie uruchamia. Puste komórki nie są brakiem pomiaru spike'a A ani B.
 
 Podłącz telefon i uruchom:
 
@@ -39,18 +43,18 @@ Oczekiwane, do potwierdzenia: model w okolicy `POT-LX1`, Android 9 (API 28) albo
 
 ## Spike A — stylowanie
 
-Kryteria z `docs/adr/0001-styling.md`. Wszystkie muszą przejść. Czas na Huaweiu nie jest progiem.
+Kryteria z `docs/adr/0001-styling.md`. Każde oceniamy na telefonie, który ADR dla niego wskazuje, nie na każdym telefonie z zestawu. (b) i próg 200 ms tylko na Xiaomi Mi 11 Lite 5G. (e) to dym na S23. (c) od 2026-11-23 jest odczytem TalkBack na Mi 11 Lite 5G. (a) i brak awarii przy przełączaniu są zapisane na Mi 11 Lite 5G i na S23. Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23). Czas na Huaweiu nie był progiem. Sam pomiar Huaweia, w ADR kryterium (d), też już nie jest wymagany. Kolumna Huaweia zostaje i ma `pominięty`, zamiast pustych komórek czekających na przebieg.
 
 | Kryterium                                                                          | Xiaomi Mi 11 Lite 5G                                   | Huawei P smart 2019 | Samsung S23                                           |
 | ---------------------------------------------------------------------------------- | ------------------------------------------------------ | ------------------- | ----------------------------------------------------- |
-| (a) release instaluje się i startuje, bez błędu Metro / Babel / Reanimated         | zaliczone                                              |                     | zaliczone                                             |
-| (b) trzy motywy, czas do zatwierdzonej klatki (próg 200 ms tylko na Mi 11 Lite 5G) | zaliczone                                              | czas, bez progu     | dym OK                                                |
-| (c) `@rn-primitives`: fokus, rola, etykieta na przyciskach spike'a                 |                                                        |                     |                                                       |
-| (d) brak awarii i ANR przy przełączaniu                                            | zaliczone                                              |                     | zaliczone                                             |
-| (e) dym: start i trzy motywy                                                       |                                                        |                     | zaliczone                                             |
-| Seria przełączeń z ekranu spike'a (ms)                                             | n=30, średnia 103,0, mediana 99,7, min 79,4, max 140,5 |                     | n=35, średnia 90,1, mediana 94,0, min 62,4, max 132,2 |
+| (a) release instaluje się i startuje, bez błędu Metro / Babel / Reanimated         | zaliczone                                              | pominięty           | zaliczone                                             |
+| (b) trzy motywy, czas do zatwierdzonej klatki (próg 200 ms tylko na Mi 11 Lite 5G) | zaliczone                                              | pominięty           | dym OK                                                |
+| (c) `@rn-primitives`: fokus, rola, etykieta na przyciskach spike'a                 | zaliczone                                              | pominięty           |                                                       |
+| (d) brak awarii i ANR przy przełączaniu                                            | zaliczone                                              | pominięty           | zaliczone                                             |
+| (e) dym: start i trzy motywy                                                       |                                                        | pominięty           | zaliczone                                             |
+| Seria przełączeń z ekranu spike'a (ms)                                             | n=30, średnia 103,0, mediana 99,7, min 79,4, max 140,5 | pominięty           | n=35, średnia 90,1, mediana 94,0, min 62,4, max 132,2 |
 
-Werdykt A: `niezmierzony` (skala: `zaliczony` / `niezaliczony` / `niezmierzony`).
+Werdykt A: `zaliczony` (skala: `zaliczony` / `niezaliczony` / `niezmierzony`).
 
 (b) na Mi 11 Lite 5G jest `zaliczone`. Próg 200 ms od 2026-11-22 dotyczy tylko tego telefonu. Seria 30 przełączeń na buildzie release, profil EAS `preview`, obejmuje wszystkie trzy motywy. Maksimum 140,5 ms jest poniżej progu. Wcześniej tego samego dnia był pomiar pięciu przełączeń; ta seria go zastępuje.
 
@@ -58,19 +62,19 @@ Samsung S23, 35 przełączeń, wszystkie trzy motywy. (b) jest dymem, bez progu 
 
 (a) jest `zaliczone` na Mi 11 Lite 5G i na S23: release instaluje się i startuje, bez błędu Metro, Babel i Reanimated. Właściciel: aplikacja startuje.
 
-(d) jest `zaliczone` na Mi 11 Lite 5G i na S23: brak awarii i ANR przy przełączaniu. Właściciel: brak awarii.
+(d) jest `zaliczone` na Mi 11 Lite 5G i na S23: brak awarii i ANR przy przełączaniu. Właściciel: brak awarii. W ADR (d) jest pomiarem Huaweia. Ten pomiar odpada z telefonem.
 
-(e) jest `zaliczone` na S23: dym startu i trzech motywów. Komórki Mi 11 Lite 5G i Huaweia zostają puste. (e) w ADR jest kryterium dymu na S23.
+(e) jest `zaliczone` na S23: dym startu i trzech motywów. Komórka Mi 11 Lite 5G zostaje pusta. (e) w ADR jest kryterium dymu na S23. Komórka Huaweia jest `pominięty`.
 
-(c) nie było sprawdzane na żadnym telefonie, więc komórki zostają puste. Do zaliczenia potrzebny jest odczyt TalkBack na przyciskach spike'a stylowania: fokus, rola i etykieta.
+(c) na Mi 11 Lite 5G jest `zaliczone`, 2026-11-23. Źródło: ręczny odczyt TalkBack właściciela (Wojciech) na buildzie release, profil EAS `preview`. Fokus dochodzi do każdego przycisku motywu. Rola jest ogłaszana jako przycisk. Etykieta jest znacząca. Przycisk aktywnego motywu jest wyłączony. Podwójne stuknięcie przełącza motyw i nie gubi fokusu. Komórka S23 zostaje pusta: tego odczytu tam nie było. Huawei jest `pominięty`.
 
-Werdykt zostaje `niezmierzony`, bo na Mi 11 Lite 5G brakuje tylko (c), a Huawei nie był mierzony. Na S23 brakuje tego samego odczytu (c).
+Werdykt jest `zaliczony`, bo po tych dwóch zmianach nic już nie brakuje. Reguła jest z akapitu, który wcześniej trzymał `niezmierzony`: na Mi 11 Lite 5G brakowało tylko (c), a Huawei nie był mierzony. (c) jest teraz `zaliczone` na Mi 11 Lite 5G. Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23), więc brak jego pomiaru nie jest już brakiem. Dym S23 to (a), (d) i (e), wszystkie `zaliczone`. (b) na S23 jest dymem bez progu 200 ms. (e) nie dotyczy Mi 11 Lite 5G. Pusta komórka (c) na S23 nie wchodzi w tę regułę: powód `niezmierzony` wymieniał (c) tylko przy Mi 11 Lite 5G.
 
 Jeśli niezaliczony: przejście na Unistyles 3.8.x i aktualizacja ADR 0001.
 
 ## Spike B — dekoder
 
-Zbudowane w module `modules/photo-decoder` i w `src/core/ai/image-preprocessing.ts`. Puste komórki zostają puste. Tych komórek nie wolno zgadywać. Liczby Mi 11 Lite 5G i S23 poniżej są z serii 10 przebiegów po trzy zdjęcia, 2026-11-22, właściciel Wojciech, build release, profil EAS `preview`. Wcześniej tego dnia na Mi 11 Lite 5G był jeden przebieg; seria go zastępuje.
+Zbudowane w module `modules/photo-decoder` i w `src/core/ai/image-preprocessing.ts`. Puste komórki zostają puste. Tych komórek nie wolno zgadywać. Liczby Mi 11 Lite 5G i S23 poniżej są z serii 10 przebiegów po trzy zdjęcia, 2026-11-22, właściciel Wojciech, build release, profil EAS `preview`. Wcześniej tego dnia na Mi 11 Lite 5G był jeden przebieg; seria go zastępuje. Kolumna Huaweia jest `pominięty`: Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23). To nie są liczby.
 
 ### Co jest w buildzie
 
@@ -115,21 +119,21 @@ Z raportu bierz: p95 czasu ściany do budżetu sesji ≤ 5 s, sumę dekodowania,
 
 | Pomiar                                           | Xiaomi Mi 11 Lite 5G                                                                                                    | Huawei P smart 2019 | Samsung S23                                                              |
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- | ------------------- | ------------------------------------------------------------------------ |
-| Udane / nieudane                                 | 10 / 0                                                                                                                  |                     | 10 / 0                                                                   |
-| Suma dekodowania trzech zdjęć (ms)               | n=10, średnia 386,4, mediana 384,0, min 375,5, max 410,8, p95 410,8                                                     |                     | n=10, średnia 502,9, mediana 503,3, min 458,0, max 565,2, p95 565,2      |
-| Suma preprocessingu trzech zdjęć (ms)            | n=10, średnia 798,5, mediana 798,2, min 788,0, max 811,3, p95 811,3                                                     |                     | n=10, średnia 571,2, mediana 556,1, min 542,3, max 632,5, p95 632,5      |
-| Czas ściany przebiegu (ms)                       | n=10, średnia 1427,2, mediana 1434,3, min 1353,3, max 1468,0, p95 1468,0                                                |                     | n=10, średnia 1321,7, mediana 1295,7, min 1254,9, max 1474,0, p95 1474,0 |
-| Szczyt PSS (MB)                                  | 205,7 (próg 400) — zaliczone                                                                                            | bez OOM             | 208,2 — dym OK                                                           |
-| Szczyt sterty natywnej (MB)                      | 105,3                                                                                                                   |                     | 98,4                                                                     |
-| Szczyt sterty Javy (MB)                          | 28,5                                                                                                                    |                     | 29,1                                                                     |
-| OOM                                              | nie                                                                                                                     |                     | nie                                                                      |
-| Proces ubity                                     | nie                                                                                                                     |                     | nie                                                                      |
-| ANR                                              | nie                                                                                                                     |                     | nie                                                                      |
-| Zapas na sesję 3 zdjęć ≤ 5 s p95 (Mi 11 Lite 5G) | p95 1,47 s z 5 s na dekodowanie i preprocessing; zapas ok. 3,5 s na inferencję i resztę sesji (inferencja niezmierzona) | nie dotyczy         | nie dotyczy                                                              |
+| Udane / nieudane                                 | 10 / 0                                                                                                                  | pominięty           | 10 / 0                                                                   |
+| Suma dekodowania trzech zdjęć (ms)               | n=10, średnia 386,4, mediana 384,0, min 375,5, max 410,8, p95 410,8                                                     | pominięty           | n=10, średnia 502,9, mediana 503,3, min 458,0, max 565,2, p95 565,2      |
+| Suma preprocessingu trzech zdjęć (ms)            | n=10, średnia 798,5, mediana 798,2, min 788,0, max 811,3, p95 811,3                                                     | pominięty           | n=10, średnia 571,2, mediana 556,1, min 542,3, max 632,5, p95 632,5      |
+| Czas ściany przebiegu (ms)                       | n=10, średnia 1427,2, mediana 1434,3, min 1353,3, max 1468,0, p95 1468,0                                                | pominięty           | n=10, średnia 1321,7, mediana 1295,7, min 1254,9, max 1474,0, p95 1474,0 |
+| Szczyt PSS (MB)                                  | 205,7 (próg 400) — zaliczone                                                                                            | pominięty           | 208,2 — dym OK                                                           |
+| Szczyt sterty natywnej (MB)                      | 105,3                                                                                                                   | pominięty           | 98,4                                                                     |
+| Szczyt sterty Javy (MB)                          | 28,5                                                                                                                    | pominięty           | 29,1                                                                     |
+| OOM                                              | nie                                                                                                                     | pominięty           | nie                                                                      |
+| Proces ubity                                     | nie                                                                                                                     | pominięty           | nie                                                                      |
+| ANR                                              | nie                                                                                                                     | pominięty           | nie                                                                      |
+| Zapas na sesję 3 zdjęć ≤ 5 s p95 (Mi 11 Lite 5G) | p95 1,47 s z 5 s na dekodowanie i preprocessing; zapas ok. 3,5 s na inferencję i resztę sesji (inferencja niezmierzona) | pominięty           | nie dotyczy                                                              |
 
 Werdykt B: `niezmierzony` (skala: `zaliczony` / `niezaliczony` / `niezmierzony`).
 
-Na Mi 11 Lite 5G próg pamięci jest zaliczony: szczyt PSS 205,7 MB przy progu 400 MB. Seria 10 przebiegów jest w całości udana (10/0). Czas dekodowania i preprocessingu też przechodzi: p95 czasu ściany to 1,47 s z budżetu 5 s na tę część sesji. Czas ściany to dekodowanie i preprocessing TypeScript; inferencja nie wchodzi w ten pomiar. Werdykt całości zostaje `niezmierzony`, dopóki Huawei P smart 2019 nie ma pomiaru (brak OOM, brak ubicia procesu, brak ANR) i dopóki inferencja nie jest wliczona.
+Na Mi 11 Lite 5G próg pamięci jest zaliczony: szczyt PSS 205,7 MB przy progu 400 MB. Seria 10 przebiegów jest w całości udana (10/0). Czas dekodowania i preprocessingu też przechodzi: p95 czasu ściany to 1,47 s z budżetu 5 s na tę część sesji. Czas ściany to dekodowanie i preprocessing TypeScript; inferencja nie wchodzi w ten pomiar. Werdykt całości zostaje `niezmierzony`, bo inferencja nie jest wliczona w budżet sesji ≤ 5 s. To czeka na model i M0. Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23) i nie jest już powodem tego werdyktu. Wcześniej powodem był też brak pomiaru Huaweia (brak OOM, brak ubicia procesu, brak ANR).
 
 Przy n=10 p95 (najbliższa ranga, bez interpolacji) jest równe maksimum.
 
@@ -137,7 +141,7 @@ Preprocessing w TypeScript to około 56% czasu ściany na Mi 11 Lite 5G (798,5 m
 
 Samsung S23: seria 10/0, dym OK, bez progu pamięci i bez progu czasu. Właściciel na obu telefonach: brak nieudanych przebiegów, brak OOM, proces nieubity, brak ANR.
 
-Na Mi 11 Lite 5G próg pamięci to 400 MB, a czas dekodowania wchodzi w budżet sesji ≤ 5 s p95. Na Huaweiu zaliczenie to brak OOM, brak ubicia procesu i brak ANR. Czas Huaweia tylko zapisujemy. Samsung w tym spike'u jest dymem, bez progu GPU.
+Na Mi 11 Lite 5G próg pamięci to 400 MB, a czas dekodowania wchodzi w budżet sesji ≤ 5 s p95. Wcześniej zaliczenie na Huaweiu to brak OOM, brak ubicia procesu i brak ANR, a czas tylko zapisujemy. Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23). Samsung w tym spike'u jest dymem, bez progu GPU.
 
 ### Surowy raport (Mi 11 Lite 5G, 2026-11-22)
 
@@ -179,6 +183,8 @@ Poza tą gałęzią (`src/core/db/TODO.md`).
 
 | Pomiar                    | Xiaomi Mi 11 Lite 5G | Huawei P smart 2019 | Samsung S23 |
 | ------------------------- | -------------------- | ------------------- | ----------- |
-| Baza otwiera się z assetu |                      |                     |             |
-| Zapytanie FTS5            | próg poniżej 50 ms   | działa, czas        | dym         |
-| ANR / awaria              |                      |                     |             |
+| Baza otwiera się z assetu |                      | pominięty           |             |
+| Zapytanie FTS5            | próg poniżej 50 ms   | pominięty           | dym         |
+| ANR / awaria              |                      | pominięty           |             |
+
+Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23). Wcześniej spike C miał na nim sprawdzić, że zapytanie FTS5 działa, i zapisać czas. Zostają Xiaomi Mi 11 Lite 5G (próg poniżej 50 ms) i Samsung S23 (dym). Komórki tych dwóch telefonów zostają puste, dopóki nie ma pomiaru.

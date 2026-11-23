@@ -13,7 +13,7 @@ Atlas i Pomoc działają w 100% offline na `species.db`, gotowe do wewnętrznego
    - sekcja sobowtórów;
    - ostrzeżenia z `uncovered_look_alikes` (D-11);
    - plakietka statusu wg D-12;
-   - **sekcja „Budowa” z rycinami D-17.** Każdy obraz `generated_images` ma widoczną etykietę „ilustracja” i atrybucję bazy. Galeria pokazuje wyłącznie `species_photos`. Testy RNTL sprawdzają etykietę i rozdział galerii od rycin. SVG renderuje `react-native-svg`. Budżet mierzony na Xiaomi Mi 11 Lite 5G, sprawdzenie działania na Huaweiu [Q-D17-10];
+   - **sekcja „Budowa” z rycinami D-17.** Każdy obraz `generated_images` ma widoczną etykietę „ilustracja” i atrybucję bazy. Galeria pokazuje wyłącznie `species_photos`. Testy RNTL sprawdzają etykietę i rozdział galerii od rycin. SVG renderuje `react-native-svg`. Budżet mierzony na Xiaomi Mi 11 Lite 5G, sprawdzenie działania na Huaweiu [Q-D17-10]. Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23), więc tego sprawdzenia nie będzie;
    - oznaczenie „nierozpoznawany przez skaner”, gdy `in_model = false` (`krok2-ocena.md` §4 p. 9);
    - brak zielonej plakietki przy `incompleteCard` (D9 S7; D13 l. 51).
 4. **Porównanie 50/50** `src/app/look-alikes/[pair-id].tsx`: sztywny podział, bez suwaka (D1/D2 §2.1; D13 l. 52).
@@ -64,9 +64,9 @@ Atlas i Pomoc działają w 100% offline na `species.db`, gotowe do wewnętrznego
 
 - Zapytania FTS <50 ms na **Xiaomi Mi 11 Lite 5G** (D13 l. 56).
 - Zimny start do interaktywnego Atlasu ≤3,0 s na **Xiaomi Mi 11 Lite 5G** (D9 §4.2).
-- Huawei: Atlas, wyszukiwanie, karta i 50/50 działają bez awarii i ANR; czasy raportowane.
+- Huawei: Atlas, wyszukiwanie, karta i 50/50 działają bez awarii i ANR; czasy raportowane. Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23). Ten punkt zostaje jako ślad i nie jest już kryterium wyjścia.
 - Bramka kontrastu i pól dotyku zielona (D9 l. 624).
-- Atlas działa w trybie samolotowym na 3 telefonach.
+- Atlas działa w trybie samolotowym na Xiaomi Mi 11 Lite 5G i na Samsungu S23. Wcześniej ten punkt mówił o 3 telefonach. Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23).
 - `main` = nowa aplikacja.
 - Polityka prywatności i licencje dostępne pod publicznym URL przed przełączeniem na `main` (warunek z recenzji PR #125).
 
@@ -77,7 +77,7 @@ F0 (tokeny, styling), F1 (`species.db`).
 ## Ryzyka
 
 - Przycięcia listy przy zdjęciach; mitygacja: paginacja, miniatury WebP, indeksy (D13 l. 58).
-- Wydajność na Huaweiu P smart 2019 (najgorszy przypadek): akceptowalna wolniejsza praca, byle bez awarii.
+- Wydajność na Huaweiu P smart 2019 (najgorszy przypadek): akceptowalna wolniejsza praca, byle bez awarii. Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23). To ryzyko odpada razem z telefonem.
 
 ## Q13 i Q20 już w repozytorium
 
