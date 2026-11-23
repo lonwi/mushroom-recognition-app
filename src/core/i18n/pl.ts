@@ -207,7 +207,7 @@ export const pl = {
     intro:
       'Wybierz albo zrób trzy zdjęcia w pełnej rozdzielczości. Ekran powtarza ich dekodowanie tyle razy, ile wybierzesz, i zapisuje czas oraz szczyt pamięci. To nie jest rozpoznanie grzyba.',
     criteria:
-      'Kryteria do wpisania w raporcie Fazy 0, nie werdykt z tego telefonu. Xiaomi Mi 11 Lite 5G: szczyt PSS ≤ 400 MB na trzy zdjęcia, a p95 czasu ściany jest częścią budżetu sesji ≤ 5 s. Ten czas nie obejmuje inferencji. Huawei P smart 2019: bez OOM i bez ubicia procesu, czas bez progu.',
+      'Kryteria do wpisania w raporcie Fazy 0, nie werdykt z tego telefonu. Xiaomi Mi 11 Lite 5G (telefon referencyjny): szczyt PSS ≤ 400 MB na trzy zdjęcia, a p95 czasu ściany jest częścią budżetu sesji ≤ 5 s. Ten czas nie obejmuje inferencji. Samsung S23: dym, bez progu pamięci, czasu i GPU. Werdykt B zostaje niezmierzony, bo inferencja nie jest wliczona w budżet sesji ≤ 5 s.',
     series: 'Liczba przebiegów',
     seriesOption: 'Seria {n}',
     platform: 'Platforma: {name}',

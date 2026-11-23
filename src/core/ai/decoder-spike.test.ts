@@ -63,7 +63,10 @@ test('three photos run one after another and the report keeps the peak', async (
   expect(report).toContain('OOM: nie zgłoszono.');
   expect(report).toContain('To nie jest werdykt');
   expect(report).toContain('Xiaomi Mi 11 Lite 5G');
-  expect(report).toContain('Huawei P smart 2019');
+  expect(report).toContain('telefon referencyjny');
+  expect(report).toContain('Samsung S23');
+  expect(report).toContain('niezmierzony');
+  expect(report).not.toMatch(/huawei|p smart/i);
 });
 
 test('an OOM on the second photo does not stop the third', async () => {
@@ -117,6 +120,9 @@ test('a series repeats the three photos and reports p95 plus the peak', async ()
   expect(report).toContain('390.6 MB');
   expect(report).toContain('Inferencja');
   expect(report).toContain('Xiaomi Mi 11 Lite 5G');
+  expect(report).toContain('Samsung S23');
+  expect(report).toContain('niezmierzony');
+  expect(report).not.toMatch(/huawei|p smart/i);
 });
 
 test('a run with a failed photo stays out of the timing stats', async () => {

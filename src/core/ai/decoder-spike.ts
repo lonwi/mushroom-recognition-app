@@ -340,8 +340,9 @@ function memoryLine(label: string, kb: number | null): string {
 function criteriaFooter(): string[] {
   return [
     'To nie jest werdykt z telefonu. Liczby są z tego uruchomienia. Kryteria do wpisania ręcznie w docs/spikes/F0-raport.md:',
-    '- Xiaomi Mi 11 Lite 5G: szczyt PSS ≤ 400 MB na trzy zdjęcia; p95 czasu ściany wchodzi w budżet sesji ≤ 5 s. Inferencja modelu nie jest w tym czasie.',
-    '- Huawei P smart 2019: bez OOM i bez ubicia procesu; czas bez progu.',
+    '- Xiaomi Mi 11 Lite 5G (telefon referencyjny): szczyt PSS ≤ 400 MB na trzy zdjęcia; p95 czasu ściany wchodzi w budżet sesji ≤ 5 s. Inferencja modelu nie jest w tym czasie.',
+    '- Samsung S23: dym, bez progu pamięci, czasu i GPU.',
+    'Werdykt B zostaje niezmierzony, bo inferencja nie jest wliczona w budżet sesji ≤ 5 s.',
     'Ubicia procesu ten raport nie widzi: jeśli aplikacja zniknie, zapisz to osobno.',
   ];
 }
