@@ -66,7 +66,7 @@ Atlas i Pomoc działają w 100% offline na `species.db`, gotowe do wewnętrznego
 - Zimny start do interaktywnego Atlasu ≤3,0 s na **Xiaomi Mi 11 Lite 5G** (D9 §4.2).
 - Huawei: Atlas, wyszukiwanie, karta i 50/50 działają bez awarii i ANR; czasy raportowane. Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23). Ten punkt zostaje jako ślad i nie jest już kryterium wyjścia.
 - Bramka kontrastu i pól dotyku zielona (D9 l. 624).
-- Atlas działa w trybie samolotowym na 3 telefonach. Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23); zostają Xiaomi Mi 11 Lite 5G i Samsung S23.
+- Atlas działa w trybie samolotowym na Xiaomi Mi 11 Lite 5G i na Samsungu S23. Wcześniej ten punkt mówił o 3 telefonach. Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23).
 - `main` = nowa aplikacja.
 - Polityka prywatności i licencje dostępne pod publicznym URL przed przełączeniem na `main` (warunek z recenzji PR #125).
 

@@ -43,7 +43,7 @@ Oczekiwane, do potwierdzenia: model w okolicy `POT-LX1`, Android 9 (API 28) albo
 
 ## Spike A — stylowanie
 
-Kryteria z `docs/adr/0001-styling.md`. Wszystkie muszą przejść na telefonach, które zostały w zestawie. Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23). Czas na Huaweiu nie był progiem. Sam pomiar Huaweia też już nie jest wymagany. Kolumna Huaweia zostaje i ma `pominięty`, zamiast pustych komórek czekających na przebieg.
+Kryteria z `docs/adr/0001-styling.md`. Każde oceniamy na telefonie, który ADR dla niego wskazuje, nie na każdym telefonie z zestawu. (b) i próg 200 ms tylko na Xiaomi Mi 11 Lite 5G. (e) to dym na S23. (c) od 2026-11-23 jest odczytem TalkBack na Mi 11 Lite 5G. (a) i brak awarii przy przełączaniu są zapisane na Mi 11 Lite 5G i na S23. Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23). Czas na Huaweiu nie był progiem. Sam pomiar Huaweia, w ADR kryterium (d), też już nie jest wymagany. Kolumna Huaweia zostaje i ma `pominięty`, zamiast pustych komórek czekających na przebieg.
 
 | Kryterium                                                                          | Xiaomi Mi 11 Lite 5G                                   | Huawei P smart 2019 | Samsung S23                                           |
 | ---------------------------------------------------------------------------------- | ------------------------------------------------------ | ------------------- | ----------------------------------------------------- |
