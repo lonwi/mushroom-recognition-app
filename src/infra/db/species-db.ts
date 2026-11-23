@@ -350,7 +350,14 @@ export async function initSpeciesDbAsync(databaseName = 'species.db'): Promise<v
   if (overrideDb) return;
   if (openInfo?.source === 'asset' && instance) return;
   if (!assetIsBundled() && openInfo && instance) return;
-  if (!opening) opening = populate(databaseName);
+  if (!opening) {
+    // Skończona próba nie zostaje w `opening`. Kolejny init powtarza import,
+    // gdy asset jest w paczce, a poprzednie kopiowanie spadło na siew.
+    const attempt = populate(databaseName).finally(() => {
+      if (opening === attempt) opening = null;
+    });
+    opening = attempt;
+  }
   await opening;
 }
 

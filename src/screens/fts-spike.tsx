@@ -50,11 +50,18 @@ export default function FtsSpikeScreen() {
   const [shareFailed, setShareFailed] = useState(false);
   const cancelRequested = useRef(false);
   const alive = useRef(true);
+  const mounted = useRef(true);
   const stopSeries = useCallback(() => {
     alive.current = false;
     cancelRequested.current = true;
   }, []);
   useEffect(() => stopSeries, [stopSeries]);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   useFocusEffect(
     useCallback(() => {
       alive.current = true;
@@ -124,7 +131,7 @@ export default function FtsSpikeScreen() {
         setRunError(error instanceof Error ? error.message : copy.failed);
       }
     } finally {
-      if (alive.current) {
+      if (mounted.current) {
         cancelRequested.current = false;
         setRunning(false);
       }
