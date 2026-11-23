@@ -27,5 +27,5 @@ Czego agent nie rusza.
 - [ ] nie
 - [ ] tak
 
-Telefony, jeśli tak: Xiaomi Mi 11 Lite 5G (referencyjny), Huawei P smart 2019 (najgorszy przypadek), Samsung S23 (dymny / GPU).
+Telefony, jeśli tak: Xiaomi Mi 11 Lite 5G (referencyjny), Samsung S23 (dymny / GPU). Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23); wcześniej był najgorszym przypadkiem.
 Wynik wpisać do `docs/spikes/F0-raport.md` albo do raportu fazy, której dotyczy zadanie.

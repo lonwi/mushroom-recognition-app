@@ -7,7 +7,7 @@ Podmiana modelu na docelowy przez nowe wydanie oraz zaliczenie bramki D-13.
 ## Zakres
 
 1. Odbiór M5: `.tflite` + `model-manifest.json` z `calibrated: true`, `ood.*`, `perClassMetrics`, `shipGates` i `sha256`.
-2. CI waliduje manifest i uruchamia P3 na Xiaomi Mi 11 Lite 5G (referencyjny). Na Huaweiu działa smoke bez awarii, a na S23 test GPU delegate.
+2. CI waliduje manifest i uruchamia P3 na Xiaomi Mi 11 Lite 5G (referencyjny). Na Huaweiu działa smoke bez awarii, a na S23 test GPU delegate. Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23). Smoke na Huaweiu zostaje jako ślad i nie jest już wymagany.
 3. Sprawdzenie `shipGates` (D-13):
    - zero pewnych pomyłek „trujący jako jadalny”;
    - wskaźnik groźnych par ≤0,05 (D9 l. 359);

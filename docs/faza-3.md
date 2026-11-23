@@ -83,6 +83,7 @@ Działa i jest przetestowany na trzech warstwach modeli zastępczych (D-08), a p
   - bez OOM, ubicia procesu i ANR;
   - czasy p50/p95 raportowane bez progu blokującego;
   - opcjonalny próg awaryjny to **[OTWARTE Q4]**.
+- Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23). Punkty powyżej o Huaweiu, w tym Q4, zostają jako ślad i nie są już kryterium wyjścia.
 - Na **S23**: test GPU delegate. Wynik zgodny z CPU w tolerancji P2, z raportem per `sha256`.
 - P3 ≥0,99 z checkpointem M1/M2, jeśli jest dostępny; inaczej przechodzi do F4.
 
@@ -97,7 +98,7 @@ Działa i jest przetestowany na trzech warstwach modeli zastępczych (D-08), a p
 
 - Preprocessing bota inny niż w D9: mitygacja przez manifest (U5).
 - Brak zbioru OOD oznacza brak `energyThreshold`, więc skaner jest `unavailable` (D-07).
-- Wydajność CPU na Huaweiu P smart 2019 (Kirin 710): może być znacznie wolniej, co jest akceptowane. Krytyczny jest tylko brak OOM i ANR.
+- Wydajność CPU na Huaweiu P smart 2019 (Kirin 710): może być znacznie wolniej, co jest akceptowane. Krytyczny jest tylko brak OOM i ANR. Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23). To ryzyko odpada razem z telefonem.
 - Wersja LiteRT eksportu niezgodna z LiteRT 2.1.3 w fast-tflite **[OTWARTE Q5]**.
 
 ## Ścieżka równoległa: pilotaż B ilustracji ze zdjęć (D-17)
