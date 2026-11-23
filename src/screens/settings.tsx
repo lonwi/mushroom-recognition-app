@@ -98,6 +98,16 @@ export default function SettingsScreen() {
                 <AppText emphasis>{messages.settings.decoderSpike}</AppText>
               </Pressable>
             </Link>
+            <Link href="/dev/fts" asChild>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={messages.settings.ftsSpike}
+                className="mt-2 justify-center"
+                style={{ minHeight: touchTargetMinDp }}
+              >
+                <AppText emphasis>{messages.settings.ftsSpike}</AppText>
+              </Pressable>
+            </Link>
             <Link href="/dev/styling" asChild>
               <Pressable
                 accessibilityRole="button"

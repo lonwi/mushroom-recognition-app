@@ -179,7 +179,22 @@ ANR: nie
 
 ## Spike C — species.db i FTS5
 
-Poza tą gałęzią (`src/core/db/TODO.md`).
+Pomiar jest na telefonie, ekranem `src/app/dev/fts.tsx`. Komórki Xiaomi i Samsunga zostają puste, dopóki właściciel nie wpisze liczb z raportu. Ten plik nie trzyma wyników.
+
+### Jak zmierzyć na telefonie
+
+Expo Go nie jest pomiarem tej bazy. Liczby mają pochodzić z APK release, nie z Metro. Profil EAS `preview` ustawia `EXPO_PUBLIC_DEV_TOOLS=1` i składa APK release, więc ekran jest w telefonie. Profil `development` też ma tę flagę; do tabeli bierz `preview`, tak jak przy spike'u B. Profil `production` flagi nie dostaje, a Metro wycina `src/app/dev`.
+
+`assets/db/species.db` nie jest w gicie. Na builderze EAS skrypt `eas-build-post-install` odpala `pnpm build:species` i Metro wkłada ten plik do paczki. Aplikacja kopiuje go do katalogu SQLite przy pierwszym otwarciu, gdy lokalny plik jest pusty albo jest siewem z `donor-cards.json`. Bez tego kroku baza byłaby siewem, a ekran pokazałby źródło `fallback`.
+
+1. W WSL, w katalogu repozytorium: `git pull`, żeby lokalna kopia miała ten ekran i hook builda. Potem `eas build -p android --profile preview` i zainstaluj APK. Nie buduj ze starego drzewa.
+2. Otwórz Ustawienia i wejdź w „Narzędzia deweloperskie” → „Spike FTS5”. Deep link: `adb shell am start -a android.intent.action.VIEW -d "grzybobranie://dev/fts" com.grzybobranie.ai`.
+3. Zapisz źródło, liczbę gatunków, liczbę wierszy `species_fts`, wersję treści i czas pierwszego otwarcia. Wiersz „Baza otwiera się z assetu” zalicz tylko wtedy, gdy źródło to `asset`. `fallback` znaczy siew z `donor-cards.json` i nie jest tym zaliczeniem. Liczby bierz z ekranu. Nie wpisuj tu liczby z pamięci.
+4. Pierwsze uruchomienie po instalacji może wliczać kopiowanie assetu w czas otwarcia (ekran mówi, czy to otwarcie kopiowało). Drugi zimny start otwiera już skopiowany plik. Oba, przy źródle `asset`, znaczą że baza jest z assetu. Do tabeli wpisz czas, który jest na ekranie, i dopisz, czy to było pierwsze uruchomienie.
+5. Seria domyślnie 20. Ta liczba to ile razy leci cała stała lista zapytań (`bor`, `borowik`, `kania`, `muśchomor`, `muchomor`, `pieprznik`, `kł`, `gaska`, `czubajka`, `zasłonak`). Każde wywołanie to `searchSpecies` z limitem 30, ta sama ścieżka co Atlas. Czas ściany jest z `performance.now` i obejmuje tylko to wywołanie.
+6. Pierwsze zapytanie serii jest zimne i nie wchodzi do n, średniej, mediany, minimum, maksimum ani p95. Reszta udanych to zapytania ciepłe. Nieudane są osobno i nie wchodzą do czasów. „Anuluj serię” przerywa przed kolejnym zapytaniem; bieżące dobiega końca. Zejście z ekranu też przerywa.
+7. Próg poniżej 50 ms to p95 ciepłych zapytań i dotyczy tylko Xiaomi Mi 11 Lite 5G. Podpowiedź na ekranie nie jest werdyktem telefonu, na którym akurat stoisz. Samsung S23: dym, bez progu. Nie wpisuj zaliczenia w kolumnie S23.
+8. Przytrzymaj raport albo udostępnij go jako `spike-c-fts.txt`. Wpisz liczby w tabeli poniżej.
 
 | Pomiar                    | Xiaomi Mi 11 Lite 5G | Huawei P smart 2019 | Samsung S23 |
 | ------------------------- | -------------------- | ------------------- | ----------- |

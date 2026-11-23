@@ -1,12 +1,43 @@
-import { openDatabaseSync, type SQLiteDatabase } from 'expo-sqlite';
+import {
+  deleteDatabaseSync,
+  importDatabaseFromAssetAsync,
+  openDatabaseSync,
+  type SQLiteDatabase,
+} from 'expo-sqlite';
 
 import { foldForSearch } from '@/core/db/fold-search';
+import {
+  FALLBACK_CONTENT_VERSION,
+  shouldReplaceDatabaseWithAsset,
+  speciesDbSourceFromVersions,
+  type SpeciesDbSource,
+} from '@/core/db/species-db-source';
 import { SPECIES_DDL } from '@/core/db/species-ddl';
 import type { SpeciesSql, SqlValue } from '@/core/db/sql-db';
+import speciesDbAssetId from '@/infra/db/species-db-asset';
 import donorCardsData from '../../../data/sources/donor-cards.json';
 
 let overrideDb: SpeciesSql | null = null;
 let instance: SpeciesSql | null = null;
+let nativeDb: SQLiteDatabase | null = null;
+let openInfo: SpeciesDbOpenInfo | null = null;
+let opening: Promise<void> | null = null;
+
+export type SpeciesDbOpenInfo = {
+  source: SpeciesDbSource;
+  openMilliseconds: number;
+  speciesCount: number | null;
+  ftsCount: number | null;
+  contentVersions: readonly string[];
+  /** Czy to otwarcie skopiowało asset nad pusty plik albo nad siew. */
+  importedAsset: boolean;
+  error: string | null;
+};
+
+/** Wynik pierwszego otwarcia w tym procesie. Ekran spike'a C stąd bierze źródło i czas. */
+export function getSpeciesDbOpenInfo(): SpeciesDbOpenInfo | null {
+  return openInfo;
+}
 
 /** Pozwala testom wstrzyknąć bazę zastępczą (np. in-memory SQLite). */
 export function setSpeciesDb(db: SpeciesSql | null): void {
@@ -79,7 +110,7 @@ function seedFallbackDatabase(db: SQLiteDatabase): void {
         0,
         1,
         card.incompleteCard ? 1 : 0,
-        '2026-11-seed',
+        FALLBACK_CONTENT_VERSION,
         card.hymenophore,
         JSON.stringify(card.months),
         card.family,
@@ -178,30 +209,16 @@ function seedFallbackDatabase(db: SQLiteDatabase): void {
   }
 }
 
-/** Inicjalizuje bazę danych gatunków przed startem UI. */
-export async function initSpeciesDbAsync(databaseName = 'species.db'): Promise<void> {
-  if (overrideDb) return;
-  try {
-    const freshDb = openDatabaseSync(databaseName);
-    if (!checkDatabasePopulated(freshDb)) {
-      seedFallbackDatabase(freshDb);
-    }
-  } catch (err) {
-    console.warn('[species-db] initSpeciesDbAsync error:', err);
-  }
+function clock(): number {
+  return globalThis.performance?.now() ?? Date.now();
 }
 
-/** Pobiera instancję bazy danych species.db w trybie odczytu. */
-export function getSpeciesDb(databaseName = 'species.db'): SpeciesSql {
-  if (overrideDb) return overrideDb;
-  if (instance) return instance;
+function errorText(error: unknown): string {
+  return error instanceof Error ? error.message : 'Nie udało się otworzyć bazy.';
+}
 
-  const db: SQLiteDatabase = openDatabaseSync(databaseName);
-  if (!checkDatabasePopulated(db)) {
-    seedFallbackDatabase(db);
-  }
-
-  instance = {
+function wrap(db: SQLiteDatabase): SpeciesSql {
+  return {
     exec: (sql: string) => {
       db.execSync(sql);
     },
@@ -215,5 +232,139 @@ export function getSpeciesDb(databaseName = 'species.db'): SpeciesSql {
       return db.getAllSync<T>(sql, ...(params as (string | number | null | Uint8Array)[]));
     },
   };
+}
+
+function readVersions(db: SQLiteDatabase): string[] {
+  const rows = db.getAllSync<{ content_version: string }>(
+    'SELECT DISTINCT content_version FROM species',
+  );
+  return rows.map((row) => row.content_version);
+}
+
+function readCount(db: SQLiteDatabase, table: 'species' | 'species_fts'): number {
+  const rows = db.getAllSync<{ count: number }>(`SELECT count(*) as count FROM ${table}`);
+  return rows[0]?.count ?? 0;
+}
+
+function remember(
+  db: SQLiteDatabase,
+  started: number,
+  importedAsset: boolean,
+  error: string | null,
+): void {
+  nativeDb = db;
+  instance = wrap(db);
+  let speciesCount: number | null = null;
+  let ftsCount: number | null = null;
+  let contentVersions: string[] = [];
+  let source: SpeciesDbSource = 'fallback';
+  try {
+    contentVersions = readVersions(db);
+    source = speciesDbSourceFromVersions(contentVersions);
+    speciesCount = readCount(db, 'species');
+    ftsCount = readCount(db, 'species_fts');
+  } catch (err) {
+    error = error ?? errorText(err);
+  }
+  openInfo = {
+    source,
+    openMilliseconds: clock() - started,
+    speciesCount,
+    ftsCount,
+    contentVersions,
+    importedAsset: importedAsset && source === 'asset',
+    error,
+  };
+}
+
+function assetIsBundled(): boolean {
+  return typeof speciesDbAssetId === 'number';
+}
+
+/**
+ * `openDatabaseSync` tworzy pusty plik, więc import musi iść z forceOverwrite.
+ * Najpierw zamykamy połączenie i kasujemy plik razem z -wal/-shm, potem kopiujemy asset.
+ * To jest ten sam import, którego używa SQLiteProvider (`assetSource`).
+ */
+async function replaceWithBundledAsset(databaseName: string, assetId: number): Promise<void> {
+  if (nativeDb) {
+    nativeDb.closeSync();
+    nativeDb = null;
+    instance = null;
+  }
+  try {
+    deleteDatabaseSync(databaseName);
+  } catch {
+    // Pusty albo już skasowany plik. Kopiowanie assetu i tak nadpisuje główny plik.
+  }
+  await importDatabaseFromAssetAsync(databaseName, { assetId, forceOverwrite: true });
+}
+
+async function populate(databaseName: string): Promise<void> {
+  const started = clock();
+  try {
+    let db = nativeDb ?? openDatabaseSync(databaseName);
+    let importedAsset = false;
+    const assetId = speciesDbAssetId;
+    if (
+      typeof assetId === 'number' &&
+      shouldReplaceDatabaseWithAsset({
+        assetBundled: true,
+        populated: checkDatabasePopulated(db),
+        source: checkDatabasePopulated(db)
+          ? speciesDbSourceFromVersions(readVersions(db))
+          : 'fallback',
+      })
+    ) {
+      db.closeSync();
+      nativeDb = null;
+      instance = null;
+      await replaceWithBundledAsset(databaseName, assetId);
+      importedAsset = true;
+      db = openDatabaseSync(databaseName);
+    }
+    if (!checkDatabasePopulated(db)) seedFallbackDatabase(db);
+    remember(db, started, importedAsset, null);
+  } catch (err) {
+    console.warn('[species-db] initSpeciesDbAsync error:', err);
+    try {
+      const db = openDatabaseSync(databaseName);
+      if (!checkDatabasePopulated(db)) seedFallbackDatabase(db);
+      remember(db, started, false, errorText(err));
+    } catch (inner) {
+      openInfo = {
+        source: 'fallback',
+        openMilliseconds: clock() - started,
+        speciesCount: null,
+        ftsCount: null,
+        contentVersions: [],
+        importedAsset: false,
+        error: errorText(inner),
+      };
+    }
+  }
+}
+
+/** Inicjalizuje bazę danych gatunków przed startem UI. */
+export async function initSpeciesDbAsync(databaseName = 'species.db'): Promise<void> {
+  if (overrideDb) return;
+  if (openInfo?.source === 'asset' && instance) return;
+  if (!assetIsBundled() && openInfo && instance) return;
+  if (!opening) opening = populate(databaseName);
+  await opening;
+}
+
+/** Pobiera instancję bazy danych species.db w trybie odczytu. */
+export function getSpeciesDb(databaseName = 'species.db'): SpeciesSql {
+  if (overrideDb) return overrideDb;
+  if (instance) return instance;
+
+  const started = clock();
+  const db = openDatabaseSync(databaseName);
+  if (!checkDatabasePopulated(db)) seedFallbackDatabase(db);
+  remember(db, started, false, null);
+  if (!instance) {
+    throw new Error('Baza gatunków nie została otwarta.');
+  }
   return instance;
 }

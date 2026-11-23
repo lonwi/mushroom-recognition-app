@@ -16,7 +16,10 @@ jest.mock('expo-sqlite', () => ({
     execSync: () => {},
     runSync: () => ({ changes: 0, lastInsertRowId: 0 }),
     getAllSync: () => [],
+    closeSync: () => {},
   }),
+  deleteDatabaseSync: () => {},
+  importDatabaseFromAssetAsync: async () => {},
 }));
 
 jest.mock('expo-file-system', () => {

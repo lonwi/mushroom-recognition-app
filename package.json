@@ -25,6 +25,7 @@
     "export:android": "node ./scripts/export-android.cjs",
     "compile:android-kotlin": "node ./scripts/compile-android-kotlin.cjs",
     "build:species": "tsx scripts/build-species-db.ts",
+    "eas-build-post-install": "pnpm build:species",
     "prepare": "lefthook install"
   },
   "dependencies": {
