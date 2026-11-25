@@ -306,14 +306,13 @@ async function populate(databaseName: string): Promise<void> {
     let db = nativeDb ?? openDatabaseSync(databaseName);
     let importedAsset = false;
     const assetId = speciesDbAssetId;
+    const populated = checkDatabasePopulated(db);
     if (
       typeof assetId === 'number' &&
       shouldReplaceDatabaseWithAsset({
         assetBundled: true,
-        populated: checkDatabasePopulated(db),
-        source: checkDatabasePopulated(db)
-          ? speciesDbSourceFromVersions(readVersions(db))
-          : 'fallback',
+        populated,
+        source: populated ? speciesDbSourceFromVersions(readVersions(db)) : 'fallback',
       })
     ) {
       db.closeSync();
