@@ -74,6 +74,9 @@ export default function RootLayout() {
         {devToolsEnabled() ? (
           <Stack.Screen name="dev/decoder" options={{ title: messages.decoderSpike.title }} />
         ) : null}
+        {devToolsEnabled() ? (
+          <Stack.Screen name="dev/fts" options={{ title: messages.ftsSpike.title }} />
+        ) : null}
       </Stack>
     </>
   );

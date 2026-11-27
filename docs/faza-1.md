@@ -2,6 +2,8 @@
 
 Baza jest tylko do odczytu. Buduje ją `pnpm build:species` przez `node:sqlite`. Plik `assets/db/species.db` jest artefaktem CI i nie wchodzi do gita. Zdjęcia kart też nie.
 
+EAS odpala ten sam build w `eas-build-post-install`, zanim Metro złoży paczkę. Aplikacja otwiera plik jako asset (`importDatabaseFromAssetAsync`, ta sama droga co `SQLiteProvider`). Gdy pliku nie ma przy bundlowaniu, zostaje siew z `donor-cards.json` (`content_version` = `2026-11-seed`). Ekran spike'a C pokazuje, które źródło naprawdę się otworzyło.
+
 ## Co jest w bazie
 
 - 67 klas z `data/sources/pokrycie-67.csv`. Każda ma wiersz w `model_class_species`.
