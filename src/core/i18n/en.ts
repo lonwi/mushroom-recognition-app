@@ -297,6 +297,7 @@ export const en: typeof pl = {
     phase: 'Stage: {phase}',
     phaseIdle: 'Stage: waiting',
     failed: 'The measurement did not start.',
+    failure: 'Error ({phase}): {message}',
     cancelled: 'The measurement stopped before the next photo.',
     copyHint: 'Press and hold the summary to copy it.',
     reportLanguage:
