@@ -179,7 +179,7 @@ ANR: nie
 
 ## Spike C — species.db i FTS5
 
-Pomiar jest na telefonie, ekranem `src/app/dev/fts.tsx`. Komórki Xiaomi i Samsunga zostają puste, dopóki właściciel nie wpisze liczb z raportu. Ten plik nie trzyma wyników.
+Pomiar jest na telefonie, ekranem `src/app/dev/fts.tsx`. Xiaomi Mi 11 Lite 5G i Samsung S23 są wpisane z raportów z 2026-11-28. Huawei P smart 2019 jest pominięty.
 
 ### Jak zmierzyć na telefonie
 
@@ -196,10 +196,48 @@ Expo Go nie jest pomiarem tej bazy. Liczby mają pochodzić z APK release, nie z
 7. Próg poniżej 50 ms to p95 ciepłych zapytań i dotyczy tylko Xiaomi Mi 11 Lite 5G. Podpowiedź na ekranie nie jest werdyktem telefonu, na którym akurat stoisz. Samsung S23: dym, bez progu. Nie wpisuj zaliczenia w kolumnie S23.
 8. Przytrzymaj raport albo udostępnij go jako `spike-c-fts.txt`. Wpisz liczby w tabeli poniżej.
 
-| Pomiar                    | Xiaomi Mi 11 Lite 5G | Huawei P smart 2019 | Samsung S23 |
-| ------------------------- | -------------------- | ------------------- | ----------- |
-| Baza otwiera się z assetu |                      | pominięty           |             |
-| Zapytanie FTS5            | próg poniżej 50 ms   | pominięty           | dym         |
-| ANR / awaria              |                      | pominięty           |             |
+| Pomiar                    | Xiaomi Mi 11 Lite 5G                                                                                                                                                                   | Huawei P smart 2019 | Samsung S23                                                                                                                                                                                                 |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Baza otwiera się z assetu | zaliczony. Źródło asset, 89 gatunków, 89 wierszy species_fts, wersja 2026-11-11.1. Otwarcie 34,7 ms obejmuje kopiowanie assetu (import przy tym otwarciu: tak)                         | pominięty           | dym OK. Źródło asset, 89 gatunków, 89 wierszy species_fts, wersja 2026-11-11.1. Otwarcie 4,2 ms jest otwarciem bazy już skopiowanej (import przy tym otwarciu: nie), nie czasem pierwszego importu z assetu |
+| Zapytanie FTS5            | zaliczony. p95 4,8 ms przy progu poniżej 50 ms. Ciepłe: n=499, średnia 3,2, mediana 3,0, min 0,9, max 28,5 (kania), p95 4,8. Zimne: bor 5,1 ms. Nieudane: 0. Seria 50 przebiegów listy | pominięty           | dym OK, bez progu. Ciepłe: n=199, średnia 4,7, mediana 4,5, min 0,9, max 9,8 (zasłonak), p95 8,5. Zimne: bor 2,6 ms. Nieudane: 0. Seria 20 przebiegów listy                                                 |
+| ANR / awaria              | 0 nieudanych zapytań w serii. Raport nie mówi o ANR ani o awarii procesu                                                                                                               | pominięty           | 0 nieudanych zapytań w serii. Raport nie mówi o ANR ani o awarii procesu                                                                                                                                    |
 
-Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23). Wcześniej spike C miał na nim sprawdzić, że zapytanie FTS5 działa, i zapisać czas. Zostają Xiaomi Mi 11 Lite 5G (próg poniżej 50 ms) i Samsung S23 (dym). Komórki tych dwóch telefonów zostają puste, dopóki nie ma pomiaru.
+Liczby są z raportów wyeksportowanych z ekranu, 2026-11-28. Właściciel potwierdził telefony: Xiaomi Mi 11 Lite 5G i Samsung S23. Seria na Mi 11 Lite 5G ma 50 przebiegów po 10 zapytań, nie domyślne 20. Seria na S23 ma 20 przebiegów po 10 zapytań. Zimne zapytanie `bor` ma w obu raportach także 7 trafień. Tego nie ma w osobnej komórce tabeli. Na S23 p95 8,5 ms nie jest werdyktem progu: próg poniżej 50 ms dotyczy tylko telefonu referencyjnego.
+
+Werdykt spike'a C: `zaliczony`. Xiaomi Mi 11 Lite 5G (telefon referencyjny) jest `zaliczony`: p95 ciepłych zapytań 4,8 ms jest poniżej progu 50 ms, a 34,7 ms otwarcia obejmuje kopiowanie assetu. Samsung S23 jest dymem bez progu: `dym OK`. Jego 4,2 ms to otwarcie bazy już skopiowanej, nie czas pierwszego importu z assetu. Huawei P smart 2019 pominięty decyzją właściciela (2026-11-23). Wcześniej spike C miał na nim sprawdzić, że zapytanie FTS5 działa, i zapisać czas.
+
+### Surowy raport (Mi 11 Lite 5G, 2026-11-28)
+
+Skrót raportu z ekranu. Seria 50 przebiegów listy. Czas ściany to `searchSpecies` z limitem 30. Pierwsze zapytanie jest zimne i nie wchodzi do statystyk. Import przy tym otwarciu był „tak”: 34,7 ms obejmuje kopiowanie assetu.
+
+```
+Źródło: asset
+Import assetu przy tym otwarciu: tak
+Gatunki: 89
+species_fts: 89
+Wersja treści: 2026-11-11.1
+Czas pierwszego otwarcia (ms): 34,7
+Seria: żądane 50, zapytań na przebieg 10
+Zimne: bor 5,1 ms, trafienia 7
+Nieudane: 0
+Ciepłe (ms): n=499, średnia 3,2, mediana 3,0, min 0,9, max 28,5, p95 4,8
+Najwolniejsze ciepłe: kania 28,5 ms
+```
+
+### Surowy raport (Samsung S23, 2026-11-28)
+
+Skrót raportu z ekranu. Dym, bez progu. Seria 20 przebiegów listy. Czas ściany to `searchSpecies` z limitem 30. Pierwsze zapytanie jest zimne i nie wchodzi do statystyk. Import przy tym otwarciu był „nie”: 4,2 ms nie jest czasem pierwszego kopiowania assetu.
+
+```
+Źródło: asset
+Import assetu przy tym otwarciu: nie
+Gatunki: 89
+species_fts: 89
+Wersja treści: 2026-11-11.1
+Czas pierwszego otwarcia (ms): 4,2
+Seria: żądane 20, zapytań na przebieg 10
+Zimne: bor 2,6 ms, trafienia 7
+Nieudane: 0
+Ciepłe (ms): n=199, średnia 4,7, mediana 4,5, min 0,9, max 9,8, p95 8,5
+Najwolniejsze ciepłe: zasłonak 9,8 ms
+```
