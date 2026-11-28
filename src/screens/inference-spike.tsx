@@ -180,6 +180,14 @@ export default function InferenceSpikeScreen() {
           </View>
           <AppText className="mt-4">{phase ? fill(copy.phase, { phase }) : copy.phaseIdle}</AppText>
           {runError ? <AppText className="mt-4">{runError}</AppText> : null}
+          {dump && dump.failures.length > 0 ? (
+            <AppText className="mt-4">
+              {fill(copy.failure, {
+                phase: dump.failures[0]?.phase ?? '',
+                message: dump.failures[0]?.message ?? '',
+              })}
+            </AppText>
+          ) : null}
           {dump?.cancelled ? <AppText className="mt-4">{copy.cancelled}</AppText> : null}
           <AppText className="mt-2 text-muted">{copy.thresholdNote}</AppText>
           <AppText className="mt-6 text-muted">{copy.copyHint}</AppText>

@@ -1,5 +1,3 @@
-import { Asset } from 'expo-asset';
-
 import { preprocessImage, readPreprocessingSpec } from '@/core/ai/image-preprocessing';
 import { readInferenceContract } from '@/core/ai/inference-contract';
 import {
@@ -11,6 +9,7 @@ import {
   type GoldenFrame,
 } from '@/core/ai/inference-measurement';
 import { buildProfileName } from '@/core/config/build-profile';
+import { resolveBundledAssetUri } from '@/infra/inference/bundled-asset-uri';
 import packaged from '@/infra/inference/package-asset';
 import { loadCpuModel, runCpuModel } from '@/infra/inference/tflite-runtime';
 import { decodePhoto, readProcessMemory } from '@/infra/photo-decoder/photo-decoder';
@@ -76,10 +75,7 @@ const uriCache = new Map<number, string>();
 async function uriFor(moduleId: number): Promise<string> {
   const cached = uriCache.get(moduleId);
   if (cached) return cached;
-  const asset = Asset.fromModule(moduleId);
-  if (!asset.localUri) await asset.downloadAsync();
-  const uri = asset.localUri ?? asset.uri;
-  if (!uri) throw new Error('Asset nie ma lokalnego URI.');
+  const uri = await resolveBundledAssetUri(moduleId);
   uriCache.set(moduleId, uri);
   return uri;
 }
@@ -150,7 +146,9 @@ export async function measureOnDevice(options: {
     shouldCancel: options.shouldCancel,
     afterEach: options.afterEach,
     onProgress: options.onProgress,
-    load: () => loadCpuModel(modelId),
+    load: async () => {
+      await loadCpuModel(await uriFor(modelId));
+    },
     preprocess: (image) => {
       const tensor = preprocessImage(image, contract.preprocessing);
       if (!(tensor.data instanceof Float32Array)) {

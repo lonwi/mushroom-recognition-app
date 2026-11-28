@@ -298,6 +298,7 @@ export const pl = {
     phase: 'Etap: {phase}',
     phaseIdle: 'Etap: oczekiwanie',
     failed: 'Pomiar nie wystartował.',
+    failure: 'Błąd ({phase}): {message}',
     cancelled: 'Pomiar przerwany przed kolejnym zdjęciem.',
     copyHint: 'Przytrzymaj skrót, żeby go skopiować.',
     reportLanguage: 'Skrót jest po polsku. Udostępniany plik JSON ocenia repozytorium modelu.',
