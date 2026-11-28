@@ -60,6 +60,8 @@ google-service-account.json
 # species.db i zdjęcia kart buduje `pnpm build:species`. Binariów nie commitujemy.
 /assets/db/
 /assets/species-photos/
+# Model TFLite i złote JPEG pobiera EAS tylko dla development/preview.
+/assets/inference/
 
 ml/data/
 ml/artifacts/

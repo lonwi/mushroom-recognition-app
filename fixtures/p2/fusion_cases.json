@@ -1,0 +1,528 @@
+{
+  "schemaVersion": "1.0.1",
+  "generator": "grzybobranie_ml.make_p2_fixtures",
+  "tolerance": 1e-05,
+  "synthetic": true,
+  "cases": [
+    {
+      "id": "fusion_m3_all_accepted",
+      "description": "Three photos pass the per-photo gates; m=3 and ood.fusion['3'] is applied to z-bar.",
+      "synthetic": true,
+      "manifest": {
+        "calibration": {
+          "temperature": 1.5
+        },
+        "ood": {
+          "energyThreshold": -6.0,
+          "minTop1Prob": 0.4,
+          "energyTemperature": 1.2,
+          "fusion": {
+            "2": {
+              "energyThreshold": -6.3,
+              "minTop1Prob": 0.45
+            },
+            "3": {
+              "energyThreshold": -6.5,
+              "minTop1Prob": 0.5
+            }
+          }
+        },
+        "classes": [
+          "syn_class_0",
+          "syn_class_1",
+          "syn_class_2",
+          "syn_class_3",
+          "syn_class_4",
+          "syn_class_5",
+          "syn_class_6",
+          "syn_class_7"
+        ]
+      },
+      "logits": [
+        [
+          9.959764725054503,
+          3.570447107700587,
+          3.570447107700587,
+          3.570447107700587,
+          3.570447107700587,
+          3.570447107700587,
+          3.570447107700587,
+          3.570447107700587
+        ],
+        [
+          9.418453148814214,
+          3.8976863421490853,
+          3.8976863421490853,
+          3.8976863421490853,
+          3.8976863421490853,
+          3.8976863421490853,
+          3.8976863421490853,
+          3.8976863421490853
+        ],
+        [
+          3.8778888566096086,
+          8.876195621872414,
+          3.8778888566096086,
+          3.8778888566096086,
+          3.8778888566096086,
+          3.8778888566096086,
+          3.8778888566096086,
+          3.8778888566096086
+        ]
+      ],
+      "expected": {
+        "status": "ok",
+        "energy": -8.321797173752536,
+        "p_top1": 0.6679156872679817,
+        "candidates": [
+          {
+            "index": 0,
+            "classId": "syn_class_0",
+            "probability": 0.6679156872679817,
+            "rank": 1
+          },
+          {
+            "index": 1,
+            "classId": "syn_class_1",
+            "probability": 0.10028450670322434,
+            "rank": 2
+          },
+          {
+            "index": 2,
+            "classId": "syn_class_2",
+            "probability": 0.038633301004799,
+            "rank": 3
+          }
+        ],
+        "m": 3
+      }
+    },
+    {
+      "id": "fusion_m2_one_rejected_before",
+      "description": "The middle photo is rejected before fusion; m=2 and ood.fusion['2'] is applied.",
+      "synthetic": true,
+      "manifest": {
+        "calibration": {
+          "temperature": 1.5
+        },
+        "ood": {
+          "energyThreshold": -6.0,
+          "minTop1Prob": 0.4,
+          "energyTemperature": 1.2,
+          "fusion": {
+            "2": {
+              "energyThreshold": -6.3,
+              "minTop1Prob": 0.45
+            },
+            "3": {
+              "energyThreshold": -6.5,
+              "minTop1Prob": 0.5
+            }
+          }
+        },
+        "classes": [
+          "syn_class_0",
+          "syn_class_1",
+          "syn_class_2",
+          "syn_class_3",
+          "syn_class_4",
+          "syn_class_5",
+          "syn_class_6",
+          "syn_class_7"
+        ]
+      },
+      "logits": [
+        [
+          9.959764725054503,
+          3.570447107700587,
+          3.570447107700587,
+          3.570447107700587,
+          3.570447107700587,
+          3.570447107700587,
+          3.570447107700587,
+          3.570447107700587
+        ],
+        [
+          0.19075705152452205,
+          -0.14395827544679296,
+          -0.3442553643835766,
+          -0.45541732261415957,
+          -0.5754813841244641,
+          -0.848963719315396,
+          -1.183679046286711,
+          -1.3839761352234943
+        ],
+        [
+          9.418453148814214,
+          3.8976863421490853,
+          3.8976863421490853,
+          3.8976863421490853,
+          3.8976863421490853,
+          3.8976863421490853,
+          3.8976863421490853,
+          3.8976863421490853
+        ]
+      ],
+      "expected": {
+        "status": "ok",
+        "energy": -9.766493806869615,
+        "p_top1": 0.8856684352849901,
+        "candidates": [
+          {
+            "index": 0,
+            "classId": "syn_class_0",
+            "probability": 0.8856684352849901,
+            "rank": 1
+          },
+          {
+            "index": 1,
+            "classId": "syn_class_1",
+            "probability": 0.016333080673572836,
+            "rank": 2
+          },
+          {
+            "index": 2,
+            "classId": "syn_class_2",
+            "probability": 0.016333080673572836,
+            "rank": 3
+          }
+        ],
+        "m": 2
+      }
+    },
+    {
+      "id": "fusion_m1_single_accepted",
+      "description": "Only one photo is accepted. There is no ood.fusion['1'] in the schema, so z-bar (the accepted logits) is scored with the single-photo thresholds.",
+      "synthetic": true,
+      "manifest": {
+        "calibration": {
+          "temperature": 1.5
+        },
+        "ood": {
+          "energyThreshold": -6.0,
+          "minTop1Prob": 0.4,
+          "energyTemperature": 1.2,
+          "fusion": {
+            "2": {
+              "energyThreshold": -6.3,
+              "minTop1Prob": 0.45
+            },
+            "3": {
+              "energyThreshold": -6.5,
+              "minTop1Prob": 0.5
+            }
+          }
+        },
+        "classes": [
+          "syn_class_0",
+          "syn_class_1",
+          "syn_class_2",
+          "syn_class_3",
+          "syn_class_4",
+          "syn_class_5",
+          "syn_class_6",
+          "syn_class_7"
+        ]
+      },
+      "logits": [
+        [
+          9.959764725054503,
+          3.570447107700587,
+          3.570447107700587,
+          3.570447107700587,
+          3.570447107700587,
+          3.570447107700587,
+          3.570447107700587,
+          3.570447107700587
+        ],
+        [
+          0.19075705152452205,
+          -0.14395827544679296,
+          -0.3442553643835766,
+          -0.45541732261415957,
+          -0.5754813841244641,
+          -0.848963719315396,
+          -1.183679046286711,
+          -1.3839761352234943
+        ],
+        [
+          6.641105936769538,
+          6.279362851544207,
+          5.601385165929621,
+          5.370159146188733,
+          4.938636037511061,
+          4.561664395089703,
+          4.056956040157883,
+          3.290717604508897
+        ]
+      ],
+      "expected": {
+        "status": "ok",
+        "energy": -10.0,
+        "p_top1": 0.9100000000000001,
+        "candidates": [
+          {
+            "index": 0,
+            "classId": "syn_class_0",
+            "probability": 0.9100000000000001,
+            "rank": 1
+          },
+          {
+            "index": 1,
+            "classId": "syn_class_1",
+            "probability": 0.012857142857142857,
+            "rank": 2
+          },
+          {
+            "index": 2,
+            "classId": "syn_class_2",
+            "probability": 0.012857142857142857,
+            "rank": 3
+          }
+        ],
+        "m": 1
+      }
+    },
+    {
+      "id": "fusion_m0_all_rejected",
+      "description": "Zero photos pass the per-photo gates; m=0 yields out_of_distribution and no z-bar (energy and p_top1 are null).",
+      "synthetic": true,
+      "manifest": {
+        "calibration": {
+          "temperature": 1.5
+        },
+        "ood": {
+          "energyThreshold": -6.0,
+          "minTop1Prob": 0.4,
+          "energyTemperature": 1.2,
+          "fusion": {
+            "2": {
+              "energyThreshold": -6.3,
+              "minTop1Prob": 0.45
+            },
+            "3": {
+              "energyThreshold": -6.5,
+              "minTop1Prob": 0.5
+            }
+          }
+        },
+        "classes": [
+          "syn_class_0",
+          "syn_class_1",
+          "syn_class_2",
+          "syn_class_3",
+          "syn_class_4",
+          "syn_class_5",
+          "syn_class_6",
+          "syn_class_7"
+        ]
+      },
+      "logits": [
+        [
+          0.19075705152452205,
+          -0.14395827544679296,
+          -0.3442553643835766,
+          -0.45541732261415957,
+          -0.5754813841244641,
+          -0.848963719315396,
+          -1.183679046286711,
+          -1.3839761352234943
+        ],
+        [
+          6.641105936769538,
+          6.279362851544207,
+          5.601385165929621,
+          5.370159146188733,
+          4.938636037511061,
+          4.561664395089703,
+          4.056956040157883,
+          3.290717604508897
+        ],
+        [
+          0.19075705152452205,
+          -0.14395827544679296,
+          -0.3442553643835766,
+          -0.45541732261415957,
+          -0.5754813841244641,
+          -0.848963719315396,
+          -1.183679046286711,
+          -1.3839761352234943
+        ]
+      ],
+      "expected": {
+        "status": "out_of_distribution",
+        "energy": null,
+        "p_top1": null,
+        "candidates": [],
+        "m": 0
+      }
+    },
+    {
+      "id": "fusion_m3_fails_fused_energy",
+      "description": "All three photos pass the single-photo energy gate, but the fused energy is above ood.fusion['3'].energyThreshold.",
+      "synthetic": true,
+      "manifest": {
+        "calibration": {
+          "temperature": 1.5
+        },
+        "ood": {
+          "energyThreshold": -6.0,
+          "minTop1Prob": 0.4,
+          "energyTemperature": 1.2,
+          "fusion": {
+            "2": {
+              "energyThreshold": -6.3,
+              "minTop1Prob": 0.45
+            },
+            "3": {
+              "energyThreshold": -6.5,
+              "minTop1Prob": 0.5
+            }
+          }
+        },
+        "classes": [
+          "syn_class_0",
+          "syn_class_1",
+          "syn_class_2",
+          "syn_class_3",
+          "syn_class_4",
+          "syn_class_5",
+          "syn_class_6",
+          "syn_class_7"
+        ]
+      },
+      "logits": [
+        [
+          5.96810207754759,
+          1.7782900633838157,
+          1.7782900633838157,
+          1.7782900633838157,
+          1.7782900633838157,
+          1.7782900633838157,
+          1.7782900633838157,
+          1.7782900633838157
+        ],
+        [
+          5.96810207754759,
+          1.7782900633838157,
+          1.7782900633838157,
+          1.7782900633838157,
+          1.7782900633838157,
+          1.7782900633838157,
+          1.7782900633838157,
+          1.7782900633838157
+        ],
+        [
+          5.96810207754759,
+          1.7782900633838157,
+          1.7782900633838157,
+          1.7782900633838157,
+          1.7782900633838157,
+          1.7782900633838157,
+          1.7782900633838157,
+          1.7782900633838157
+        ]
+      ],
+      "expected": {
+        "status": "out_of_distribution",
+        "energy": -6.2,
+        "p_top1": 0.6999999999999997,
+        "candidates": [],
+        "m": 3
+      }
+    },
+    {
+      "id": "fusion_numerical_stability_large_logits",
+      "description": "Two accepted photos with raw logits on the order of ±1e3; fused softmax and energy stay finite.",
+      "synthetic": true,
+      "manifest": {
+        "calibration": {
+          "temperature": 1.5
+        },
+        "ood": {
+          "energyThreshold": -6.0,
+          "minTop1Prob": 0.4,
+          "energyTemperature": 1.2,
+          "fusion": {
+            "2": {
+              "energyThreshold": -6.3,
+              "minTop1Prob": 0.45
+            },
+            "3": {
+              "energyThreshold": -6.5,
+              "minTop1Prob": 0.5
+            }
+          }
+        },
+        "classes": [
+          "syn_class_0",
+          "syn_class_1",
+          "syn_class_2",
+          "syn_class_3",
+          "syn_class_4",
+          "syn_class_5",
+          "syn_class_6",
+          "syn_class_7"
+        ]
+      },
+      "logits": [
+        [
+          1200.0,
+          1190.0,
+          400.0,
+          0.0,
+          -10.0,
+          -400.0,
+          -1000.0,
+          -1200.0
+        ],
+        [
+          1180.0,
+          1195.0,
+          350.0,
+          1.0,
+          -20.0,
+          -300.0,
+          -900.0,
+          -1100.0
+        ],
+        [
+          1100.0,
+          1090.0,
+          1080.0,
+          0.0,
+          -5.0,
+          -200.0,
+          -800.0,
+          -1000.0
+        ]
+      ],
+      "expected": {
+        "status": "ok",
+        "energy": -1160.3021047518457,
+        "p_top1": 0.7492412132250704,
+        "candidates": [
+          {
+            "index": 0,
+            "classId": "syn_class_0",
+            "probability": 0.7492412132250704,
+            "rank": 1
+          },
+          {
+            "index": 1,
+            "classId": "syn_class_1",
+            "probability": 0.2507587867749295,
+            "rank": 2
+          },
+          {
+            "index": 2,
+            "classId": "syn_class_2",
+            "probability": 3.25237727200005e-160,
+            "rank": 3
+          }
+        ],
+        "m": 3
+      }
+    }
+  ]
+}

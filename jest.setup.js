@@ -167,3 +167,30 @@ jest.mock('react-native-svg', () => {
     Line: createMockComponent('Line'),
   };
 });
+
+jest.mock('react-native-fast-tflite', () => ({
+  loadTensorflowModel: jest.fn(async () => ({
+    run: async () => [new ArrayBuffer(4)],
+    runSync: () => [new ArrayBuffer(4)],
+    inputs: [],
+    outputs: [],
+    delegates: [],
+  })),
+}));
+
+jest.mock('expo-asset', () => ({
+  Asset: {
+    fromModule: () => ({
+      localUri: 'file://asset',
+      uri: 'file://asset',
+      downloaded: true,
+      downloadAsync: async () => undefined,
+    }),
+  },
+}));
+
+jest.mock('expo-device', () => ({
+  brand: 'Test',
+  modelName: 'TestPhone',
+  osVersion: '14',
+}));

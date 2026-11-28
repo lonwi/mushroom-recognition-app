@@ -1,0 +1,647 @@
+{
+  "schemaVersion": "1.0.1",
+  "generator": "grzybobranie_ml.make_p2_fixtures",
+  "tolerance": 1e-05,
+  "synthetic": true,
+  "cases": [
+    {
+      "id": "clear_ok",
+      "description": "Synthetic peaked logits: energy well below threshold and top-1 well above minTop1Prob.",
+      "synthetic": true,
+      "manifest": {
+        "calibration": {
+          "temperature": 1.5
+        },
+        "ood": {
+          "energyThreshold": -6.0,
+          "minTop1Prob": 0.4,
+          "energyTemperature": 1.2,
+          "fusion": {
+            "2": {
+              "energyThreshold": -6.3,
+              "minTop1Prob": 0.45
+            },
+            "3": {
+              "energyThreshold": -6.5,
+              "minTop1Prob": 0.5
+            }
+          }
+        },
+        "classes": [
+          "syn_class_0",
+          "syn_class_1",
+          "syn_class_2",
+          "syn_class_3",
+          "syn_class_4",
+          "syn_class_5",
+          "syn_class_6",
+          "syn_class_7"
+        ]
+      },
+      "logits": [
+        7.96242418084303,
+        2.8276597482716337,
+        2.2194620861093872,
+        1.1797413152694691,
+        0.8450259882981541,
+        0.4135028796204825,
+        -0.1946947825417631,
+        -1.234415553381682
+      ],
+      "expected": {
+        "status": "ok",
+        "energy": -8.000000000000002,
+        "p_top1": 0.9200000000000003,
+        "candidates": [
+          {
+            "index": 0,
+            "classId": "syn_class_0",
+            "probability": 0.9200000000000003,
+            "rank": 1
+          },
+          {
+            "index": 1,
+            "classId": "syn_class_1",
+            "probability": 0.02999999999999999,
+            "rank": 2
+          },
+          {
+            "index": 2,
+            "classId": "syn_class_2",
+            "probability": 0.020000000000000004,
+            "rank": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "high_energy_ood",
+      "description": "Synthetic high energy (E much greater than the threshold) must yield out_of_distribution.",
+      "synthetic": true,
+      "manifest": {
+        "calibration": {
+          "temperature": 1.5
+        },
+        "ood": {
+          "energyThreshold": -6.0,
+          "minTop1Prob": 0.4,
+          "energyTemperature": 1.2,
+          "fusion": {
+            "2": {
+              "energyThreshold": -6.3,
+              "minTop1Prob": 0.45
+            },
+            "3": {
+              "energyThreshold": -6.5,
+              "minTop1Prob": 0.5
+            }
+          }
+        },
+        "classes": [
+          "syn_class_0",
+          "syn_class_1",
+          "syn_class_2",
+          "syn_class_3",
+          "syn_class_4",
+          "syn_class_5",
+          "syn_class_6",
+          "syn_class_7"
+        ]
+      },
+      "logits": [
+        0.19075705152452205,
+        -0.14395827544679296,
+        -0.3442553643835766,
+        -0.45541732261415957,
+        -0.5754813841244641,
+        -0.848963719315396,
+        -1.183679046286711,
+        -1.3839761352234943
+      ],
+      "expected": {
+        "status": "out_of_distribution",
+        "energy": -2.0,
+        "p_top1": 0.20000000000000004,
+        "candidates": []
+      }
+    },
+    {
+      "id": "low_top1_unclear",
+      "description": "Energy passes but calibrated top-1 is below minTop1Prob → unclear.",
+      "synthetic": true,
+      "manifest": {
+        "calibration": {
+          "temperature": 1.5
+        },
+        "ood": {
+          "energyThreshold": -6.0,
+          "minTop1Prob": 0.4,
+          "energyTemperature": 1.2,
+          "fusion": {
+            "2": {
+              "energyThreshold": -6.3,
+              "minTop1Prob": 0.45
+            },
+            "3": {
+              "energyThreshold": -6.5,
+              "minTop1Prob": 0.5
+            }
+          }
+        },
+        "classes": [
+          "syn_class_0",
+          "syn_class_1",
+          "syn_class_2",
+          "syn_class_3",
+          "syn_class_4",
+          "syn_class_5",
+          "syn_class_6",
+          "syn_class_7"
+        ]
+      },
+      "logits": [
+        6.641105936769538,
+        6.279362851544207,
+        5.601385165929621,
+        5.370159146188733,
+        4.938636037511061,
+        4.561664395089703,
+        4.056956040157883,
+        3.290717604508897
+      ],
+      "expected": {
+        "status": "unclear",
+        "energy": -8.0,
+        "p_top1": 0.2799999999999999,
+        "candidates": []
+      }
+    },
+    {
+      "id": "gate_order_energy_first",
+      "description": "Both gates would fail; energy is evaluated first so the status is out_of_distribution.",
+      "synthetic": true,
+      "manifest": {
+        "calibration": {
+          "temperature": 1.5
+        },
+        "ood": {
+          "energyThreshold": -6.0,
+          "minTop1Prob": 0.4,
+          "energyTemperature": 1.2,
+          "fusion": {
+            "2": {
+              "energyThreshold": -6.3,
+              "minTop1Prob": 0.45
+            },
+            "3": {
+              "energyThreshold": -6.5,
+              "minTop1Prob": 0.5
+            }
+          }
+        },
+        "classes": [
+          "syn_class_0",
+          "syn_class_1",
+          "syn_class_2",
+          "syn_class_3",
+          "syn_class_4",
+          "syn_class_5",
+          "syn_class_6",
+          "syn_class_7"
+        ]
+      },
+      "logits": [
+        0.6411059367695384,
+        0.27936285154420615,
+        -0.3986148340703797,
+        -0.6298408538112672,
+        -1.0613639624889393,
+        -1.4383356049102973,
+        -1.9430439598421172,
+        -2.709282395491103
+      ],
+      "expected": {
+        "status": "out_of_distribution",
+        "energy": -2.0000000000000004,
+        "p_top1": 0.2800000000000001,
+        "candidates": []
+      }
+    },
+    {
+      "id": "temperature_only_calibration",
+      "description": "Only calibration.temperature is set; it is used for both softmax and energy.",
+      "synthetic": true,
+      "manifest": {
+        "calibration": {
+          "temperature": 1.7
+        },
+        "ood": {
+          "energyThreshold": -6.0,
+          "minTop1Prob": 0.4,
+          "fusion": {
+            "2": {
+              "energyThreshold": -6.3,
+              "minTop1Prob": 0.45
+            },
+            "3": {
+              "energyThreshold": -6.5,
+              "minTop1Prob": 0.5
+            }
+          }
+        },
+        "classes": [
+          "syn_class_0",
+          "syn_class_1",
+          "syn_class_2",
+          "syn_class_3",
+          "syn_class_4",
+          "syn_class_5",
+          "syn_class_6",
+          "syn_class_7"
+        ]
+      },
+      "logits": [
+        7.858251264803613,
+        2.0388515745560314,
+        1.3495608907721524,
+        0.17121068382024607,
+        -0.2081333534139116,
+        -0.6971928765819388,
+        -1.3864835603658179,
+        -2.564833767317726
+      ],
+      "expected": {
+        "status": "ok",
+        "energy": -8.0,
+        "p_top1": 0.92,
+        "candidates": [
+          {
+            "index": 0,
+            "classId": "syn_class_0",
+            "probability": 0.92,
+            "rank": 1
+          },
+          {
+            "index": 1,
+            "classId": "syn_class_1",
+            "probability": 0.030000000000000006,
+            "rank": 2
+          },
+          {
+            "index": 2,
+            "classId": "syn_class_2",
+            "probability": 0.02000000000000001,
+            "rank": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "temperature_only_energy",
+      "description": "Only ood.energyTemperature is set; it is used for both softmax and energy.",
+      "synthetic": true,
+      "manifest": {
+        "ood": {
+          "energyThreshold": -6.0,
+          "minTop1Prob": 0.4,
+          "energyTemperature": 1.1,
+          "fusion": {
+            "2": {
+              "energyThreshold": -6.3,
+              "minTop1Prob": 0.45
+            },
+            "3": {
+              "energyThreshold": -6.5,
+              "minTop1Prob": 0.5
+            }
+          }
+        },
+        "classes": [
+          "syn_class_0",
+          "syn_class_1",
+          "syn_class_2",
+          "syn_class_3",
+          "syn_class_4",
+          "syn_class_5",
+          "syn_class_6",
+          "syn_class_7"
+        ]
+      },
+      "logits": [
+        7.858251264803613,
+        2.0388515745560314,
+        1.3495608907721524,
+        0.17121068382024607,
+        -0.2081333534139116,
+        -0.6971928765819388,
+        -1.3864835603658179,
+        -2.564833767317726
+      ],
+      "expected": {
+        "status": "ok",
+        "energy": -7.869228278031746,
+        "p_top1": 0.9900705231014001,
+        "candidates": [
+          {
+            "index": 0,
+            "classId": "syn_class_0",
+            "probability": 0.9900705231014001,
+            "rank": 1
+          },
+          {
+            "index": 1,
+            "classId": "syn_class_1",
+            "probability": 0.004989884789782463,
+            "rank": 2
+          },
+          {
+            "index": 2,
+            "classId": "syn_class_2",
+            "probability": 0.0026665484663963264,
+            "rank": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "temperatures_both_differing",
+      "description": "calibration.temperature and ood.energyTemperature are both set and differ.",
+      "synthetic": true,
+      "manifest": {
+        "calibration": {
+          "temperature": 1.5
+        },
+        "ood": {
+          "energyThreshold": -6.0,
+          "minTop1Prob": 0.4,
+          "energyTemperature": 1.2,
+          "fusion": {
+            "2": {
+              "energyThreshold": -6.3,
+              "minTop1Prob": 0.45
+            },
+            "3": {
+              "energyThreshold": -6.5,
+              "minTop1Prob": 0.5
+            }
+          }
+        },
+        "classes": [
+          "syn_class_0",
+          "syn_class_1",
+          "syn_class_2",
+          "syn_class_3",
+          "syn_class_4",
+          "syn_class_5",
+          "syn_class_6",
+          "syn_class_7"
+        ]
+      },
+      "logits": [
+        7.96242418084303,
+        2.8276597482716337,
+        2.2194620861093872,
+        1.1797413152694691,
+        0.8450259882981541,
+        0.4135028796204825,
+        -0.1946947825417631,
+        -1.234415553381682
+      ],
+      "expected": {
+        "status": "ok",
+        "energy": -8.000000000000002,
+        "p_top1": 0.9200000000000003,
+        "candidates": [
+          {
+            "index": 0,
+            "classId": "syn_class_0",
+            "probability": 0.9200000000000003,
+            "rank": 1
+          },
+          {
+            "index": 1,
+            "classId": "syn_class_1",
+            "probability": 0.02999999999999999,
+            "rank": 2
+          },
+          {
+            "index": 2,
+            "classId": "syn_class_2",
+            "probability": 0.020000000000000004,
+            "rank": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "boundary_energy_equal",
+      "description": "E == energyThreshold. The energy comparison is strict (E > threshold), so this is not OOD.",
+      "synthetic": true,
+      "manifest": {
+        "calibration": {
+          "temperature": 1.5
+        },
+        "ood": {
+          "energyThreshold": -6.000000000000001,
+          "minTop1Prob": 0.4,
+          "energyTemperature": 1.2,
+          "fusion": {
+            "2": {
+              "energyThreshold": -6.3,
+              "minTop1Prob": 0.45
+            },
+            "3": {
+              "energyThreshold": -6.5,
+              "minTop1Prob": 0.5
+            }
+          }
+        },
+        "classes": [
+          "syn_class_0",
+          "syn_class_1",
+          "syn_class_2",
+          "syn_class_3",
+          "syn_class_4",
+          "syn_class_5",
+          "syn_class_6",
+          "syn_class_7"
+        ]
+      },
+      "logits": [
+        5.96242418084303,
+        0.8276597482716337,
+        0.21946208610938722,
+        -0.8202586847305309,
+        -1.1549740117018459,
+        -1.5864971203795175,
+        -2.194694782541763,
+        -3.234415553381682
+      ],
+      "expected": {
+        "status": "ok",
+        "energy": -6.000000000000001,
+        "p_top1": 0.9200000000000003,
+        "candidates": [
+          {
+            "index": 0,
+            "classId": "syn_class_0",
+            "probability": 0.9200000000000003,
+            "rank": 1
+          },
+          {
+            "index": 1,
+            "classId": "syn_class_1",
+            "probability": 0.03,
+            "rank": 2
+          },
+          {
+            "index": 2,
+            "classId": "syn_class_2",
+            "probability": 0.020000000000000004,
+            "rank": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "boundary_top1_equal",
+      "description": "p_top1 == minTop1Prob. The softmax comparison is strict (p_top1 < threshold), so this is ok.",
+      "synthetic": true,
+      "manifest": {
+        "calibration": {
+          "temperature": 1.5
+        },
+        "ood": {
+          "energyThreshold": -6.0,
+          "minTop1Prob": 0.4,
+          "energyTemperature": 1.2,
+          "fusion": {
+            "2": {
+              "energyThreshold": -6.3,
+              "minTop1Prob": 0.45
+            },
+            "3": {
+              "energyThreshold": -6.5,
+              "minTop1Prob": 0.5
+            }
+          }
+        },
+        "classes": [
+          "syn_class_0",
+          "syn_class_1",
+          "syn_class_2",
+          "syn_class_3",
+          "syn_class_4",
+          "syn_class_5",
+          "syn_class_6",
+          "syn_class_7"
+        ]
+      },
+      "logits": [
+        7.0830819074621285,
+        6.3780764635935245,
+        5.611838027944539,
+        4.668925038810977,
+        3.9639195949423742,
+        3.62920426797106,
+        2.589483497131142,
+        1.549762726291224
+      ],
+      "expected": {
+        "status": "ok",
+        "energy": -8.0,
+        "p_top1": 0.4,
+        "candidates": [
+          {
+            "index": 0,
+            "classId": "syn_class_0",
+            "probability": 0.4,
+            "rank": 1
+          },
+          {
+            "index": 1,
+            "classId": "syn_class_1",
+            "probability": 0.24999999999999994,
+            "rank": 2
+          },
+          {
+            "index": 2,
+            "classId": "syn_class_2",
+            "probability": 0.15,
+            "rank": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "numerical_stability_large_logits",
+      "description": "Raw logits on the order of ±1e3; softmax and energy must stay finite and sum to 1.",
+      "synthetic": true,
+      "manifest": {
+        "calibration": {
+          "temperature": 1.5
+        },
+        "ood": {
+          "energyThreshold": -6.0,
+          "minTop1Prob": 0.4,
+          "energyTemperature": 1.2,
+          "fusion": {
+            "2": {
+              "energyThreshold": -6.3,
+              "minTop1Prob": 0.45
+            },
+            "3": {
+              "energyThreshold": -6.5,
+              "minTop1Prob": 0.5
+            }
+          }
+        },
+        "classes": [
+          "syn_class_0",
+          "syn_class_1",
+          "syn_class_2",
+          "syn_class_3",
+          "syn_class_4",
+          "syn_class_5",
+          "syn_class_6",
+          "syn_class_7"
+        ]
+      },
+      "logits": [
+        1200.0,
+        1195.0,
+        800.0,
+        0.0,
+        -50.0,
+        -800.0,
+        -1190.0,
+        -1200.0
+      ],
+      "expected": {
+        "status": "ok",
+        "energy": -1200.0184618761732,
+        "p_top1": 0.9655548043337902,
+        "candidates": [
+          {
+            "index": 0,
+            "classId": "syn_class_0",
+            "probability": 0.9655548043337902,
+            "rank": 1
+          },
+          {
+            "index": 1,
+            "classId": "syn_class_1",
+            "probability": 0.03444519566620992,
+            "rank": 2
+          },
+          {
+            "index": 2,
+            "classId": "syn_class_2",
+            "probability": 1.4890699114737196e-116,
+            "rank": 3
+          }
+        ]
+      }
+    }
+  ]
+}

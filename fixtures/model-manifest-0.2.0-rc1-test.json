@@ -1,0 +1,898 @@
+{
+  "$comment": "WYDANIE TESTOWE 0.2.0-rc1-test (channel: 'test', shipGates.passed: false). Checkpoint 4ceb7e8a, crop='none_stretch', K=66, progi: T_single=1.1330, T_multi=0.8764, theta=-2.9074, minTop1Prob=0.70, disagreement=0.70, asymetryczne weto P5: p_t<0.10 i p_e>=5.0*p_t.",
+  "schemaVersion": "1.0.1",
+  "modelVersion": "0.2.0-rc1-test",
+  "channel": "test",
+  "createdAt": "2026-11-25T18:43:43.698255Z",
+  "model": {
+    "file": "mobilenetv4_hybrid_medium_r256_fp16.tflite",
+    "sha256": "77fb25ddff9cef6395732785897763d8c281568d1ad479eb3989a89a0f50a9ed",
+    "sizeBytes": 20216416,
+    "format": "tflite",
+    "converter": "litert-torch 0.10.0",
+    "litertVersionTested": "2.3.0",
+    "architecture": "timm/mobilenetv4_hybrid_medium.e200_r256_in12k_ft_in1k",
+    "baseWeightsLicense": "apache-2.0",
+    "input": {
+      "name": "serving_default_args_0",
+      "shape": [
+        1,
+        256,
+        256,
+        3
+      ],
+      "dtype": "float32",
+      "layout": "NHWC"
+    },
+    "output": {
+      "name": "serving_default_output_0_output",
+      "shape": [
+        1,
+        66
+      ],
+      "dtype": "float32",
+      "kind": "logits"
+    },
+    "weightQuantization": "fp16"
+  },
+  "preprocessing": {
+    "inputSize": {
+      "width": 256,
+      "height": 256
+    },
+    "exifOrientation": "apply",
+    "colorOrder": "RGB",
+    "decodeMinWidth": 448,
+    "resize": {
+      "steps": [
+        {
+          "op": "to_width",
+          "value": 448,
+          "filter": "box",
+          "antialias": true
+        },
+        {
+          "op": "to_size",
+          "filter": "box",
+          "antialias": true
+        }
+      ]
+    },
+    "crop": "none_stretch",
+    "rounding": "half_up_uint8",
+    "normalization": {
+      "type": "scale_offset",
+      "scale": 0.00784313725490196,
+      "offset": -1.0
+    },
+    "parityFixturesSha256": "e5f77af0b9036bb86006964f6ac22d896b984dd7dddc5d5a05d6954c89ea4b54"
+  },
+  "classes": [
+    {
+      "index": 0,
+      "classId": "agaricus_campestris",
+      "speciesIds": [
+        "agaricus_campestris"
+      ],
+      "genus": "Agaricus",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 1,
+      "classId": "agaricus_moelleri",
+      "speciesIds": [
+        "agaricus_moelleri"
+      ],
+      "genus": "Agaricus",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 2,
+      "classId": "agaricus_sylvaticus",
+      "speciesIds": [
+        "agaricus_sylvaticus"
+      ],
+      "genus": "Agaricus",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 3,
+      "classId": "agaricus_xanthodermus",
+      "speciesIds": [
+        "agaricus_xanthodermus"
+      ],
+      "genus": "Agaricus",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 4,
+      "classId": "amanita_citrina",
+      "speciesIds": [
+        "amanita_citrina"
+      ],
+      "genus": "Amanita",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 5,
+      "classId": "amanita_excelsa",
+      "speciesIds": [
+        "amanita_excelsa"
+      ],
+      "genus": "Amanita",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 6,
+      "classId": "amanita_muscaria",
+      "speciesIds": [
+        "amanita_muscaria"
+      ],
+      "genus": "Amanita",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 7,
+      "classId": "amanita_pantherina",
+      "speciesIds": [
+        "amanita_pantherina"
+      ],
+      "genus": "Amanita",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 8,
+      "classId": "amanita_phalloides",
+      "speciesIds": [
+        "amanita_phalloides"
+      ],
+      "genus": "Amanita",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 9,
+      "classId": "amanita_porphyria",
+      "speciesIds": [
+        "amanita_porphyria"
+      ],
+      "genus": "Amanita",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 10,
+      "classId": "amanita_regalis",
+      "speciesIds": [
+        "amanita_regalis"
+      ],
+      "genus": "Amanita",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 11,
+      "classId": "amanita_rubescens",
+      "speciesIds": [
+        "amanita_rubescens"
+      ],
+      "genus": "Amanita",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 12,
+      "classId": "amanita_virosa",
+      "speciesIds": [
+        "amanita_virosa"
+      ],
+      "genus": "Amanita",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 13,
+      "classId": "armillaria_mellea",
+      "speciesIds": [
+        "armillaria_mellea"
+      ],
+      "genus": "Armillaria",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 14,
+      "classId": "armillaria_ostoyae",
+      "speciesIds": [
+        "armillaria_ostoyae"
+      ],
+      "genus": "Armillaria",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 15,
+      "classId": "boletus_edulis",
+      "speciesIds": [
+        "boletus_edulis"
+      ],
+      "genus": "Boletus",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 16,
+      "classId": "caloboletus_calopus",
+      "speciesIds": [
+        "caloboletus_calopus"
+      ],
+      "genus": "Caloboletus",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 17,
+      "classId": "calocybe_gambosa",
+      "speciesIds": [
+        "calocybe_gambosa"
+      ],
+      "genus": "Calocybe",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 18,
+      "classId": "cantharellus_cibarius",
+      "speciesIds": [
+        "cantharellus_cibarius"
+      ],
+      "genus": "Cantharellus",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 19,
+      "classId": "chlorophyllum_rhacodes",
+      "speciesIds": [
+        "chlorophyllum_rhacodes"
+      ],
+      "genus": "Chlorophyllum",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 20,
+      "classId": "clitocybe_phyllophila",
+      "speciesIds": [
+        "clitocybe_phyllophila"
+      ],
+      "genus": "Clitocybe",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 21,
+      "classId": "cortinarius_caperatus",
+      "speciesIds": [
+        "cortinarius_caperatus"
+      ],
+      "genus": "Cortinarius",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 22,
+      "classId": "cortinarius_orellanus",
+      "speciesIds": [
+        "cortinarius_orellanus"
+      ],
+      "genus": "Cortinarius",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 23,
+      "classId": "entoloma_sinuatum",
+      "speciesIds": [
+        "entoloma_sinuatum"
+      ],
+      "genus": "Entoloma",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 24,
+      "classId": "galerina_marginata",
+      "speciesIds": [
+        "galerina_marginata"
+      ],
+      "genus": "Galerina",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 25,
+      "classId": "gyromitra_esculenta",
+      "speciesIds": [
+        "gyromitra_esculenta"
+      ],
+      "genus": "Gyromitra",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 26,
+      "classId": "gyroporus_castaneus",
+      "speciesIds": [
+        "gyroporus_castaneus"
+      ],
+      "genus": "Gyroporus",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 27,
+      "classId": "hydnum_repandum",
+      "speciesIds": [
+        "hydnum_repandum"
+      ],
+      "genus": "Hydnum",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 28,
+      "classId": "hygrophoropsis_aurantiaca",
+      "speciesIds": [
+        "hygrophoropsis_aurantiaca"
+      ],
+      "genus": "Hygrophoropsis",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 29,
+      "classId": "hypholoma_capnoides",
+      "speciesIds": [
+        "hypholoma_capnoides"
+      ],
+      "genus": "Hypholoma",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 30,
+      "classId": "hypholoma_fasciculare",
+      "speciesIds": [
+        "hypholoma_fasciculare"
+      ],
+      "genus": "Hypholoma",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 31,
+      "classId": "imleria_badia",
+      "speciesIds": [
+        "imleria_badia"
+      ],
+      "genus": "Imleria",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 32,
+      "classId": "inocybe_erubescens",
+      "speciesIds": [
+        "inocybe_erubescens"
+      ],
+      "genus": "Inosperma",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 33,
+      "classId": "inocybe_geophylla",
+      "speciesIds": [
+        "inocybe_geophylla"
+      ],
+      "genus": "Inocybe",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 34,
+      "classId": "kuehneromyces_mutabilis",
+      "speciesIds": [
+        "kuehneromyces_mutabilis"
+      ],
+      "genus": "Kuehneromyces",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 35,
+      "classId": "lactarius_deliciosus",
+      "speciesIds": [
+        "lactarius_deliciosus"
+      ],
+      "genus": "Lactarius",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 36,
+      "classId": "lactarius_torminosus",
+      "speciesIds": [
+        "lactarius_torminosus"
+      ],
+      "genus": "Lactarius",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 37,
+      "classId": "leccinum_aurantiacum",
+      "speciesIds": [
+        "leccinum_aurantiacum"
+      ],
+      "genus": "Leccinum",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 38,
+      "classId": "leccinum_scabrum",
+      "speciesIds": [
+        "leccinum_scabrum"
+      ],
+      "genus": "Leccinum",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 39,
+      "classId": "lepiota_brunneoincarnata",
+      "speciesIds": [
+        "lepiota_brunneoincarnata"
+      ],
+      "genus": "Lepiota",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 40,
+      "classId": "leucocoprinus_leucothites",
+      "speciesIds": [
+        "leucocoprinus_leucothites"
+      ],
+      "genus": "Leucocoprinus",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 41,
+      "classId": "lycoperdon_perlatum",
+      "speciesIds": [
+        "lycoperdon_perlatum"
+      ],
+      "genus": "Lycoperdon",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 42,
+      "classId": "macrolepiota_procera",
+      "speciesIds": [
+        "macrolepiota_procera"
+      ],
+      "genus": "Macrolepiota",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 43,
+      "classId": "marasmius_oreades",
+      "speciesIds": [
+        "marasmius_oreades"
+      ],
+      "genus": "Marasmius",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 44,
+      "classId": "morchella_esculenta",
+      "speciesIds": [
+        "morchella_esculenta"
+      ],
+      "genus": "Morchella",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 45,
+      "classId": "neoboletus_luridiformis",
+      "speciesIds": [
+        "neoboletus_luridiformis"
+      ],
+      "genus": "Neoboletus",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 46,
+      "classId": "omphalotus_olearius",
+      "speciesIds": [
+        "omphalotus_olearius"
+      ],
+      "genus": "Omphalotus",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 47,
+      "classId": "paragyromitra_infula",
+      "speciesIds": [
+        "paragyromitra_infula"
+      ],
+      "genus": "Paragyromitra",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 48,
+      "classId": "paxillus_involutus",
+      "speciesIds": [
+        "paxillus_involutus"
+      ],
+      "genus": "Paxillus",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 49,
+      "classId": "rubroboletus_satanas",
+      "speciesIds": [
+        "rubroboletus_satanas"
+      ],
+      "genus": "Rubroboletus",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 50,
+      "classId": "russula_emetica",
+      "speciesIds": [
+        "russula_emetica"
+      ],
+      "genus": "Russula",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 51,
+      "classId": "russula_vesca",
+      "speciesIds": [
+        "russula_vesca"
+      ],
+      "genus": "Russula",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 52,
+      "classId": "russula_virescens",
+      "speciesIds": [
+        "russula_virescens"
+      ],
+      "genus": "Russula",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 53,
+      "classId": "scleroderma_citrinum",
+      "speciesIds": [
+        "scleroderma_citrinum"
+      ],
+      "genus": "Scleroderma",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 54,
+      "classId": "sparassis_crispa",
+      "speciesIds": [
+        "sparassis_crispa"
+      ],
+      "genus": "Sparassis",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 55,
+      "classId": "suillellus_luridus",
+      "speciesIds": [
+        "suillellus_luridus"
+      ],
+      "genus": "Suillellus",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 56,
+      "classId": "suillus_bovinus",
+      "speciesIds": [
+        "suillus_bovinus"
+      ],
+      "genus": "Suillus",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 57,
+      "classId": "suillus_grevillei",
+      "speciesIds": [
+        "suillus_grevillei"
+      ],
+      "genus": "Suillus",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 58,
+      "classId": "suillus_luteus",
+      "speciesIds": [
+        "suillus_luteus"
+      ],
+      "genus": "Suillus",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 59,
+      "classId": "suillus_variegatus",
+      "speciesIds": [
+        "suillus_variegatus"
+      ],
+      "genus": "Suillus",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 60,
+      "classId": "tricholoma_equestre",
+      "speciesIds": [
+        "tricholoma_equestre"
+      ],
+      "genus": "Tricholoma",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 61,
+      "classId": "tricholoma_portentosum",
+      "speciesIds": [
+        "tricholoma_portentosum"
+      ],
+      "genus": "Tricholoma",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 62,
+      "classId": "tricholoma_sulphureum",
+      "speciesIds": [
+        "tricholoma_sulphureum"
+      ],
+      "genus": "Tricholoma",
+      "in_model": true,
+      "highStakes": true
+    },
+    {
+      "index": 63,
+      "classId": "tylopilus_felleus",
+      "speciesIds": [
+        "tylopilus_felleus"
+      ],
+      "genus": "Tylopilus",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 64,
+      "classId": "xerocomellus_chrysenteron",
+      "speciesIds": [
+        "xerocomellus_chrysenteron"
+      ],
+      "genus": "Xerocomellus",
+      "in_model": true,
+      "highStakes": false
+    },
+    {
+      "index": 65,
+      "classId": "xerocomus_subtomentosus",
+      "speciesIds": [
+        "xerocomus_subtomentosus"
+      ],
+      "genus": "Xerocomus",
+      "in_model": true,
+      "highStakes": false
+    }
+  ],
+  "uncoveredSpecies": [
+    {
+      "speciesId": "amanita_verna",
+      "reason": "Niewystarczająca liczba zdjęć treningowych (poniżej progu 55 w train dla high_stakes); wykluczono z głowicy K=66."
+    }
+  ],
+  "calibration": {
+    "calibrated": true,
+    "method": "temperature",
+    "temperature": 1.133,
+    "fitSplit": "val",
+    "eceBins": 15,
+    "eceVal": 0.011551058226237598,
+    "eceTest": 0.013787178041370755,
+    "nTest": 13051,
+    "measuredOn": "tflite",
+    "displayBands": {
+      "high": 0.8,
+      "medium": 0.5
+    }
+  },
+  "ood": {
+    "method": "energy",
+    "energyTemperature": 1.133,
+    "energyThreshold": -2.9074,
+    "minTop1Prob": 0.7,
+    "lowConfidenceBelow": 0.7,
+    "dangerousGenusMinProbability": 0.1,
+    "dataset": {
+      "name": "HF_DATASET_REPO:data/ood-v1",
+      "sha256": "9d878fb2e733b07e792737b47c7139718a9035d1e1d19a63dbdfcb0a2b3365cb",
+      "nCalibration": 2230,
+      "nTest": 2230
+    },
+    "metricsTest": {
+      "knownKeepRate": 0.7155773503946058,
+      "confidentEdibleRate": 0.07085201793721974
+    },
+    "fusion": {
+      "2": {
+        "energyThreshold": -2.9074,
+        "minTop1Prob": 0.7
+      },
+      "3": {
+        "energyThreshold": -2.9074,
+        "minTop1Prob": 0.7
+      }
+    }
+  },
+  "fusionWeights": {
+    "method": "entropy_weighted_logits",
+    "maxPhotos": 3,
+    "gateBeforeFusion": true
+  },
+  "dangerousGenera": [
+    "Amanita",
+    "Cortinarius",
+    "Galerina",
+    "Gyromitra",
+    "Inocybe",
+    "Inosperma",
+    "Lepiota"
+  ],
+  "shipGates": {
+    "passed": false,
+    "evaluatedAt": "2026-11-25T18:14:06Z",
+    "reportSha256": "263d5837f67612344436a749646bee805a90c9ad605e9ca7548d0e9dc09d775c",
+    "gates": {
+      "confidentToxicAsEdible": {
+        "value": 67,
+        "max": 0,
+        "support": 13051,
+        "passed": false,
+        "note": "Wydanie testowe 0.2.0-rc1-test: 67 pojedynczych klatek toxic->edible (raw=341)."
+      },
+      "dangerousPairRateMax": {
+        "value": 0.2708333333333333,
+        "max": 0.05,
+        "support": 42,
+        "passed": false,
+        "note": "Failing pairs: 5/42."
+      },
+      "highStakesRecallMin": {
+        "value": 0.8153846153846154,
+        "min": 0.85,
+        "support": 26,
+        "passed": false,
+        "note": "Failing high_stakes species (n >= 8): 1/26."
+      },
+      "tfliteAgreement": {
+        "value": 0.9947130488085204,
+        "min": 0.99,
+        "support": 13051,
+        "passed": true
+      },
+      "tfliteAgreementHighRisk": {
+        "value": 0.996579476861167,
+        "min": 0.99,
+        "passed": true
+      },
+      "oodKnownKeepRate": {
+        "value": 0.7155773503946058,
+        "min": 0.95,
+        "support": 13051,
+        "passed": false
+      },
+      "openSetConfidentEdible": {
+        "value": 0.07085201793721974,
+        "max": 0.02,
+        "support": 2230,
+        "passed": false,
+        "note": "Wilson 95% UB: 8.23% (wymóg <= 5%); ood_nonfungi: 0.64% (6/940), ood_fungi: 11.78% (152/1290)."
+      },
+      "fusionGates": {
+        "value": 1,
+        "max": 0,
+        "support": 1891,
+        "passed": false,
+        "note": "Multi-photo conditional_accuracy=96.66%, toxic->edible=1, T_multi=0.8764."
+      },
+      "deviceParityP3": {
+        "value": null,
+        "min": 0.99,
+        "passed": false,
+        "note": "Nie zmierzone na telefonach — pakiet P7 gotowy do pomiarów."
+      },
+      "latencyP95Single": {
+        "value": null,
+        "max": 2000,
+        "passed": false,
+        "note": "Nie zmierzone na Xiaomi Mi 11 Lite 5G — do pomiaru w P7."
+      },
+      "latencyP95Session3": {
+        "value": null,
+        "max": 5000,
+        "passed": false,
+        "note": "Nie zmierzone na Xiaomi Mi 11 Lite 5G — do pomiaru w P7."
+      }
+    }
+  },
+  "minAtlasVersion": "0.1.0",
+  "provenance": {
+    "trainingDataset": "HF_DATASET_REPO (_v3 20261108 + new16 20261110 + addendum)",
+    "trainingDatasetSha256": "09a09bace369c3dc4b63d4d31bb095fa6db23c2ea3a67fe8106b986c16a64afb",
+    "splitMethod": "70/15/15 stratified HMAC-SHA256 connected components (author+observation)",
+    "licensesUsed": [
+      "CC0",
+      "CC BY",
+      "CC BY-NC",
+      "CC BY-SA",
+      "pd_self"
+    ],
+    "excludedSources": [
+      "DF20",
+      "DF24",
+      "DF20-trained-weights",
+      "DF24-trained-weights",
+      "ND",
+      "AI-generated"
+    ],
+    "generatedImagesUsed": false,
+    "gitCommit": "dd416cea803628b21d044b53637d9a3cbd1cb7e2",
+    "trackioRun": "mobilenetv4_hybrid_medium.e200_r256_in12k_ft_in1k_r256_1795616754",
+    "modelRepo": "HF_MODEL_REPO",
+    "modelRevision": "0.2.0-rc1-test"
+  }
+}

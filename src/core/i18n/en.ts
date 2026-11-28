@@ -36,6 +36,7 @@ export const en: typeof pl = {
     spike: 'Styling spike',
     decoderSpike: 'Decoder spike',
     ftsSpike: 'FTS5 spike',
+    inferenceSpike: 'Inference spike',
   },
   atlas: {
     title: 'Atlas',
@@ -275,6 +276,35 @@ export const en: typeof pl = {
     noReport: 'No report yet.',
     share: 'Share report',
     shareFailed: 'The share sheet could not be opened.',
+  },
+  inferenceSpike: {
+    title: 'Inference spike',
+    intro:
+      'Measures cold model load, single-photo time, a three-photo session, and logit agreement on the golden photos. This is not a mushroom identification. The model does not judge edibility.',
+    criteria:
+      'The bars p95 ≤ 2000 ms for one photo, p95 ≤ 5000 ms for a session, and deviceParityP3 ≥ 0.99 plus status agreement ≥ 0.99 apply only to the Xiaomi Mi 11 Lite 5G. The Samsung S23 is a smoke test, with no threshold. This is not a verdict from this phone.',
+    gpu: 'Inference runs on the CPU. The delegate list is empty, so NNAPI and the GPU stay off. GPU libraries are not in the build.',
+    platform: 'Platform: {name}',
+    profile: 'Build profile: {profile}',
+    modelLine: 'Model: {version}',
+    shaLine: 'SHA-256: {sha}',
+    goldenLine: 'Golden photos: {n}',
+    series: 'Timing repeats',
+    seriesOption: 'Series {n}',
+    run: 'Measure ({n})',
+    cancel: 'Cancel measurement',
+    running: 'Measuring…',
+    phase: 'Stage: {phase}',
+    phaseIdle: 'Stage: waiting',
+    failed: 'The measurement did not start.',
+    cancelled: 'The measurement stopped before the next photo.',
+    copyHint: 'Press and hold the summary to copy it.',
+    reportLanguage:
+      'The summary is in Polish. The shared JSON file is what the model repository scores.',
+    noReport: 'No report yet.',
+    share: 'Share JSON',
+    shareFailed: 'The share sheet could not be opened.',
+    thresholdNote: 'Samsung S23: smoke, no threshold. Do not write a pass into the S23 column.',
   },
   safety: {
     notAVerdict: 'This is a recognition hint, not an edibility verdict.',

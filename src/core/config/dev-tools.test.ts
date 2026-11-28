@@ -58,7 +58,10 @@ describe('eas.json', () => {
   test('development i preview włączają narzędzia, produkcja ich nie ma', () => {
     expect(profiles.development?.env?.EXPO_PUBLIC_DEV_TOOLS).toBe('1');
     expect(profiles.preview?.env?.EXPO_PUBLIC_DEV_TOOLS).toBe('1');
-    expect(profiles.production?.env).toBeUndefined();
+    expect(profiles.development?.env?.EXPO_PUBLIC_EAS_BUILD_PROFILE).toBe('development');
+    expect(profiles.preview?.env?.EXPO_PUBLIC_EAS_BUILD_PROFILE).toBe('preview');
+    expect(profiles.production?.env?.EXPO_PUBLIC_EAS_BUILD_PROFILE).toBe('production');
+    expect(profiles.production?.env?.EXPO_PUBLIC_DEV_TOOLS).toBeUndefined();
     expect(JSON.stringify(eas.build.production)).not.toContain('EXPO_PUBLIC_DEV_TOOLS');
   });
 });

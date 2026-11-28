@@ -79,11 +79,19 @@ child.on('exit', (code, signal) => {
   if (!releaseWithoutDevTools) {
     process.exit(0);
   }
-  const hits = filesContaining(distDir, DECODER_SPIKE_MARKER);
-  if (hits.length > 0) {
-    console.error(`Paczka produkcyjna zawiera spike dekodera (${DECODER_SPIKE_MARKER}):`);
-    for (const hit of hits) console.error(`  ${hit}`);
-    process.exit(1);
+  const markers = [
+    DECODER_SPIKE_MARKER,
+    'spike-b-inference.json',
+    'mobilenetv4_hybrid_medium_r256_fp16',
+    'TFL3',
+  ];
+  for (const marker of markers) {
+    const hits = filesContaining(distDir, marker);
+    if (hits.length > 0) {
+      console.error(`Paczka produkcyjna zawiera ${marker}:`);
+      for (const hit of hits) console.error(`  ${hit}`);
+      process.exit(1);
+    }
   }
   process.exit(0);
 });
