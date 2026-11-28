@@ -20,7 +20,7 @@
     "check:deps": "depcruise src --config .dependency-cruiser.cjs",
     "test": "jest --ci",
     "build:site": "tsx scripts/site/generator.tsx",
-    "check:site": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-site.mjs",
+    "check:site": "node scripts/check-site.mjs",
     "quality": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm duplication && pnpm check:knip && pnpm check:deps && pnpm test && pnpm check:site",
     "export:android": "node ./scripts/export-android.cjs",
     "compile:android-kotlin": "node ./scripts/compile-android-kotlin.cjs",
