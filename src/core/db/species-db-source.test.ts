@@ -44,7 +44,7 @@ test('EAS buduje species.db po instalacji zależności, zanim Metro złoży pacz
   const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as {
     scripts: Record<string, string>;
   };
-  expect(pkg.scripts['eas-build-post-install']).toBe('pnpm build:species');
+  expect(pkg.scripts['eas-build-post-install']).toBe('pnpm build:species && pnpm fetch:inference');
   const metro = readFileSync(join(root, 'metro.config.js'), 'utf8');
   expect(metro).toContain('speciesDbResolveTarget');
   const exporter = readFileSync(join(root, 'scripts/export-android.cjs'), 'utf8');

@@ -6,8 +6,12 @@ const { withNativeWind } = require('nativewind/metro');
 
 const { shouldStripDevRoutes } = require('./scripts/dev-route-block.cjs');
 const { speciesDbResolveTarget } = require('./scripts/species-db-resolve.cjs');
+const { inferenceAssetResolveTarget } = require('./scripts/inference-asset-resolve.cjs');
 
 const speciesDbFile = path.join(__dirname, 'assets/db/species.db');
+const inferenceAsset = path.join(__dirname, 'assets/inference/package-asset.js');
+const inferenceAssetsEnabled =
+  process.env.EXPO_PUBLIC_DEV_TOOLS === '1' && fs.existsSync(inferenceAsset);
 
 const config = withNativeWind(getDefaultConfig(__dirname), { input: './global.css' });
 
@@ -50,8 +54,14 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     speciesDbFile,
     fs.existsSync(speciesDbFile),
   );
-  if (target === resolved.filePath) return resolved;
-  return resolve(target);
+  if (target !== resolved.filePath) return resolve(target);
+  const inferenceTarget = inferenceAssetResolveTarget(
+    resolved.filePath,
+    inferenceAsset,
+    inferenceAssetsEnabled,
+  );
+  if (inferenceTarget !== resolved.filePath) return resolve(inferenceTarget);
+  return resolved;
 };
 
 if (shouldStripDevRoutes(process.env)) {

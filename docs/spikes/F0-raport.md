@@ -177,6 +177,46 @@ Proces ubity: nie
 ANR: nie
 ```
 
+## Spike B — inferencja (P7)
+
+Dekoder powyżej nie mierzy modelu. Ta sekcja domyka budżet sesji ≤ 5 s: preprocessing, inferencja na CPU i fuzja. Puste komórki zostają puste. Tych komórek nie wolno zgadywać. Huawei P smart 2019 jest pominięty. Progi dotyczą tylko Xiaomi Mi 11 Lite 5G. Samsung S23 jest dymem, bez progu i bez delegata GPU.
+
+### Co jest w buildzie
+
+Paczka `0.2.0-rc1-test` nie jest w gicie. Na builderze EAS, przy `EXPO_PUBLIC_DEV_TOOLS=1`, `eas-build-post-install` woła `pnpm fetch:inference`. Skrypt bierze sekret `HF_TOKEN_READONLY` i pobiera rewizję `0.2.0-rc1-test` repozytorium `lonwi/grzybobranie-ai-models` oraz złote JPEG z `lonwi/grzybobranie-zdjecia` (gałąź `main`, ścieżka `relativePath` z `golden_images.json`). Każdy plik jest sprawdzany sha256. Niezgodność przerywa build. Brak sekretu nie przerywa builda: ekran pokazuje, że modelu nie ma. Token nie wchodzi do kodu, logu ani paczki.
+
+Profil `production` nie ustawia `EXPO_PUBLIC_DEV_TOOLS`, Metro nie podmienia zaślepki na wagi i zdjęcia, a trasy `src/app/dev` wycina. Inferencja idzie na CPU (`react-native-fast-tflite` 3.0.1, pusta lista delegatów: bez NNAPI i bez GPU). Bibliotek GPU nie ma w pluginie, bo zostałyby też w produkcji.
+
+Ekran: Ustawienia → „Narzędzia deweloperskie” → „Spike inferencji”. Deep link: `adb shell am start -a android.intent.action.VIEW -d "grzybobranie://dev/inference" com.grzybobranie.ai`.
+
+### Jak zmierzyć na telefonie
+
+Expo Go tego modelu nie załaduje. Liczby mają pochodzić z APK release, profil EAS `preview`.
+
+1. W WSL, w katalogu repozytorium: `git pull`, żeby lokalna kopia miała ekran i hook builda. Potem `eas build -p android --profile preview` i zainstaluj APK. Nie buduj ze starego drzewa.
+2. Otwórz Ustawienia i wejdź w „Narzędzia deweloperskie” → „Spike inferencji”.
+3. Seria czasu domyślnie 10. To powtórzenia tego samego zdjęcia (jedno) i tej samej trójki (sesja). Rozgrzewka jest osobno i nie wchodzi do p50 ani p95. Suma jednego zdjęcia to preprocessing i inferencja. Suma sesji to preprocessing trzech zdjęć, trzy inferencje i fuzja. Dekodowanie JPEG jest w zrzucie przy zdjęciu i nie wchodzi do progów.
+4. Parytet leci po 240 złotych zdjęciach: logity urządzenia wobec `tfliteFp16Logits`, top-1 i status decyzji (`ok`, `unclear`, `out_of_distribution`) wobec `expectedDecision`. `deviceParityP3` to zgodność top-1. Mianownik to 240, także gdy zdjęcie padnie. Próg ≥ 0,99 dotyczy top-1 i osobno zgodności statusu, tylko na Mi 11 Lite 5G.
+5. „Anuluj pomiar” przerywa przed kolejnym przebiegiem albo zdjęciem. Bieżące wywołanie natywne dobiega końca. Potem „Mierz” da się nacisnąć znowu. Zejście z ekranu też przerywa.
+6. Udostępnij plik `spike-b-inference.json`. To zrzut dla `score_delegate_dump` w repozytorium modelu. Kształt jest w [delegate-dump.md](delegate-dump.md). Skrót na ekranie jest po polsku i nie zastępuje JSON-a.
+7. Wpisz liczby w tabeli. Puste komórki zostaw puste.
+
+| Pomiar                                       | Xiaomi Mi 11 Lite 5G | Huawei P smart 2019 | Samsung S23 |
+| -------------------------------------------- | -------------------- | ------------------- | ----------- |
+| Ładowanie modelu, zimne (ms)                 |                      | pominięty           |             |
+| Jedno zdjęcie, preprocessing p50 / p95 (ms)  |                      | pominięty           |             |
+| Jedno zdjęcie, inferencja p50 / p95 (ms)     |                      | pominięty           |             |
+| Jedno zdjęcie, suma p95 (ms), próg ≤ 2000    |                      | pominięty           |             |
+| Sesja 3 zdjęć, suma p95 (ms), próg ≤ 5000    |                      | pominięty           |             |
+| deviceParityP3, próg ≥ 0,99                  |                      | pominięty           |             |
+| Zgodność statusu decyzji, próg ≥ 0,99        |                      | pominięty           |             |
+| Maks. i średnia różnicy bezwzględnej logitów |                      | pominięty           |             |
+| Szczyt PSS (MB)                              |                      | pominięty           |             |
+| P1, dekoder EXIF na urządzeniu               |                      | pominięty           |             |
+| OOM / ANR                                    |                      | pominięty           |             |
+
+Werdykt inferencji: `niezmierzony`. Werdykt dekodera wyżej zostaje `niezmierzony`, dopóki ta tabela nie zamknie budżetu sesji na Mi 11 Lite 5G.
+
 ## Spike C — species.db i FTS5
 
 Pomiar jest na telefonie, ekranem `src/app/dev/fts.tsx`. Xiaomi Mi 11 Lite 5G i Samsung S23 są wpisane z raportów z 2026-11-28. Huawei P smart 2019 jest pominięty.

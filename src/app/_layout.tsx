@@ -77,6 +77,9 @@ export default function RootLayout() {
         {devToolsEnabled() ? (
           <Stack.Screen name="dev/fts" options={{ title: messages.ftsSpike.title }} />
         ) : null}
+        {devToolsEnabled() ? (
+          <Stack.Screen name="dev/inference" options={{ title: messages.inferenceSpike.title }} />
+        ) : null}
       </Stack>
     </>
   );

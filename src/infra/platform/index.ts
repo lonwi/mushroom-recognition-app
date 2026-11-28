@@ -1,3 +1,4 @@
+import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 
 /**
@@ -11,4 +12,18 @@ export function platformName(): string {
 
 export function isPlatformWeb(): boolean {
   return Platform.OS === 'web';
+}
+
+export function deviceDescription(): {
+  platform: string;
+  brand: string | null;
+  modelName: string | null;
+  osVersion: string | null;
+} {
+  return {
+    platform: platformName(),
+    brand: Device.brand,
+    modelName: Device.modelName,
+    osVersion: Device.osVersion,
+  };
 }

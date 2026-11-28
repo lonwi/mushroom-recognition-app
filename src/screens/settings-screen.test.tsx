@@ -32,6 +32,7 @@ test('ukrywa narzędzia deweloperskie w release bez flagi', async () => {
   expect(screen.queryByText('Narzędzia deweloperskie')).toBeNull();
   expect(screen.queryByText('Spike dekodera')).toBeNull();
   expect(screen.queryByText('Spike FTS5')).toBeNull();
+  expect(screen.queryByText('Spike inferencji')).toBeNull();
   expect(screen.queryByText('Spike stylowania')).toBeNull();
 });
 
@@ -42,5 +43,6 @@ test('pokazuje spike dekodera i stylowania, gdy flaga jest włączona', async ()
   expect(screen.getByText('Narzędzia deweloperskie')).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Spike dekodera' })).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Spike FTS5' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Spike inferencji' })).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Spike stylowania' })).toBeTruthy();
 });

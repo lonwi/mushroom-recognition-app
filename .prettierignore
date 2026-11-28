@@ -11,3 +11,8 @@ assets
 .agents
 data/sources/*.csv
 data/sources/*.txt
+# Bajty przypięte do sha256 paczki 0.2.0-rc1-test. Prettier zmieniłby sumę.
+fixtures/model-manifest-0.2.0-rc1-test.json
+fixtures/p1/parity.json
+fixtures/p2/decision_cases.json
+fixtures/p2/fusion_cases.json

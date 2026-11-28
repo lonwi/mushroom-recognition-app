@@ -11,6 +11,7 @@ test('one sample is its own mean, median, min, max and p95', () => {
     median: 12.5,
     min: 12.5,
     max: 12.5,
+    p50: 12.5,
     p95: 12.5,
   });
 });
@@ -41,6 +42,7 @@ test('an even count averages the two middle samples', () => {
     median: 2.5,
     min: 1,
     max: 4,
+    p50: 2,
     p95: 4,
   });
 });

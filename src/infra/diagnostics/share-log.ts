@@ -8,6 +8,7 @@ export async function sharePlainText(
   fileName: string,
   text: string,
   dialogTitle: string,
+  mimeType = 'text/plain',
 ): Promise<'shared' | 'unavailable'> {
   if (isPlatformWeb()) return 'unavailable';
   try {
@@ -17,7 +18,7 @@ export async function sharePlainText(
     const available = await Sharing.isAvailableAsync();
     if (!available) return 'unavailable';
     await Sharing.shareAsync(file.uri, {
-      mimeType: 'text/plain',
+      mimeType,
       dialogTitle,
     });
     return 'shared';
